@@ -343,12 +343,12 @@ class DiracBase(IBackend):
                         break
                 return has_submitted
 
-    def _job_script(self, subjobconfig, master_input_sandbox, tmpdir):
-        """Get the script to submit a single DIRAC job
+    def _job_script(self, subjobconfig, master_input_sandbox, tmp_dir):
+        """Get the script to submit a single DIRAC job_
         Args:
             subjobconfig (unknown):
             master_input_sandbox (list): file names which are in the master sandbox of the master sandbox (if any)
-            tmpdir: (str) This is the temp directory where files will be placed when needed
+            tmp_dir: (str) This is the temp directory where files will be placed when needed
         """
 
         j = self.getJobObject()
