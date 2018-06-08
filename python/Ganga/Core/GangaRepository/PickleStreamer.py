@@ -14,7 +14,6 @@ def from_file(fobj):
 def to_file(obj, fileobj, ignore_subs=''):
     try:
         from io import StringIO
-        logger.error("ALEX: %s %s" % (type(fileobj), isinstance(fileobj, StringIO)))
         output = pickle.dumps(obj, 1)
         fileobj.write(output.decode())
     except Exception as err:
