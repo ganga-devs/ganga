@@ -435,7 +435,7 @@ class GaudiExec(IPrepareApp):
         if rc != 0:
             logger.error("Failed to execute command: %s" % cmd_file.name)
             logger.error("Tried to execute command in: %s" % self.directory)
-            logger.error("StdErr: %s" % str(stderr))
+            logger.error("StdErr: %s" % str(stdout))
             raise GangaException("Failed to Execute command")
 
         unlink(cmd_file.name)
