@@ -5,7 +5,7 @@
 # -----------------------------------------------
 
 import sys, os
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 
 # -----------------------------------------------
 # Globals
@@ -78,7 +78,7 @@ def runSpider( ):
     cmd += "-o'[LCG]VirtualOrganisation=camont' -o'[defaults_GridProxy]voms=camont'"
     cmd += os.path.join(os.getcwd(), "runSpider.py")
     
-    print cmd
+    print(cmd)
     
     os.system( cmd )
     
@@ -87,22 +87,22 @@ def runSpider( ):
 # -----------------------------------------------
 # main
 if len(sys.argv) < 2:
-    print "Please supply a config file"
+    print("Please supply a config file")
     sys.exit(1)
 elif len(sys.argv) > 2:
-    print "Too many arguments. I just need a config file."
+    print("Too many arguments. I just need a config file.")
     sys.exit(1)
 
 conf_file = sys.argv[1]
 
-print "-----------------------------------------------"
-print "Welcome to the Imense Spidering software"
-print "\nUsing config file '" + conf_file + "'"
-print "-----------------------------------------------"
+print("-----------------------------------------------")
+print("Welcome to the Imense Spidering software")
+print("\nUsing config file '" + conf_file + "'")
+print("-----------------------------------------------")
 
 # get the config
 gConfig.read( conf_file )
 runSpider()
-print "All Done!"
+print("All Done!")
 
 sys.exit(0)

@@ -17,9 +17,9 @@ if not dq2localid_alternatename:
 db_dataset = os.environ['ATLAS_DBRELEASE']
 
 dq2=DQ2()
-db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1]
+db_locations = list(dq2.listDatasetReplicas(db_dataset).values())[0][1]
 
-print "db_locations = ", db_locations
+print("db_locations = ", db_locations)
 
 db_site = dq2localid
 for sitename in TiersOfATLAS.getAllSources():

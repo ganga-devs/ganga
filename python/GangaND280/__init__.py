@@ -14,15 +14,15 @@ if not _after_bootstrap:
 
 def loadPlugins( config = {} ):
 
-   import ND280Dataset
-   import ND280Splitter
-   import ND280Control
-   import ND280Executable
-   import ND280RecoValidation
-   import ND280Skimmer
-   import Highland
-   import Tasks
-   import ND280TPCGasInteractions
-   import ND280Checkers
+   from . import ND280Dataset
+   from . import ND280Splitter
+   from . import ND280Control
+   from . import ND280Executable
+   from . import ND280RecoValidation
+   from . import ND280Skimmer
+   from . import Highland
+   from . import Tasks
+   from . import ND280TPCGasInteractions
+   from . import ND280Checkers
 
    return None

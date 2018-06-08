@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
@@ -36,7 +36,7 @@ class TestLazyLoadingSubjobs(GangaUnitTest):
 
         self.assertEqual(len(jobs), 1)
 
-        print("len: %s" % str(len(jobs)))
+        print(("len: %s" % str(len(jobs))))
 
         j = jobs(0)
 

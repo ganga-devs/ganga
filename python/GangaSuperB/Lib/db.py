@@ -72,7 +72,7 @@ def read(query, params=None):
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     
     # Register adapter and typecaster for dict-hstore conversions.
-    psycopg2.extras.register_hstore(conn, unicode=True)
+    psycopg2.extras.register_hstore(conn, str=True)
     
     # Query the database and obtain data as Python objects
     cur.execute("SET search_path = sbk, pg_catalog;", )
@@ -109,7 +109,7 @@ def write(query, params=None):
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     
     # Register adapter and typecaster for dict-hstore conversions.
-    psycopg2.extras.register_hstore(conn, unicode=True)
+    psycopg2.extras.register_hstore(conn, str=True)
     
     # Query the database and obtain data as Python objects
     cur.execute("SET search_path = sbk, pg_catalog;", )

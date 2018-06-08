@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 import os
 import shutil
 import copy
@@ -108,7 +108,7 @@ class TestMassStorageGetPut(GangaUnitTest):
             try:
                 assert file_.localDir == ''
                 file_.get()
-                print("Unexpected localDir: %s" % file_.localDir)
+                print(("Unexpected localDir: %s" % file_.localDir))
                 failed = False
             except GangaException:
                 failed = True
@@ -117,7 +117,7 @@ class TestMassStorageGetPut(GangaUnitTest):
         # Test in the case that the localDir has been set
         for file_ in self._managed_files:
             file_.localDir = tmpdir
-            print("localDir: %s" % file_.localDir)
+            print(("localDir: %s" % file_.localDir))
             file_.get()
             assert os.path.isfile(os.path.join(tmpdir, file_.namePattern))
             file_.localDir = ''

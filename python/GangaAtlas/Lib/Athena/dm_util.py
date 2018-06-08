@@ -5,7 +5,7 @@ import sys
 import socket
 
 from threading import Thread, Lock
-from Queue import Queue, Empty
+from queue import Queue, Empty
 
 from dq2.info import TiersOfATLAS
 from dq2.common.DQException import *
@@ -118,7 +118,7 @@ def get_se_hostname(sename_replacements={}):
 
     if sename:
         # apply exceptions
-        for old,new in sename_replacements.items():
+        for old,new in list(sename_replacements.items()):
             if sename == old:
                 sename = new
 
@@ -142,22 +142,22 @@ def get_transfer_protocols(sename=None):
         cmd = 'lcg-info --list-se --vo atlas --query SE=\'%s\' --attr Protocol --sed' % sename
 
         f = os.popen(cmd)
-        outputs = map(lambda x:x.strip(), f.readlines())
+        outputs = [x.strip() for x in f.readlines()]
         rc = f.close()
 
-        print >> sys.stdout, 'resolving SE protocols with default BDII: %s | %s | %s' % (os.environ['LCG_GFAL_INFOSYS'], cmd, outputs)
+        print('resolving SE protocols with default BDII: %s | %s | %s' % (os.environ['LCG_GFAL_INFOSYS'], cmd, outputs), file=sys.stdout)
     else:
-        print >> sys.stdout, 'no default BDII defined by LCG_GFAL_INFOSYS'
+        print('no default BDII defined by LCG_GFAL_INFOSYS', file=sys.stdout)
 
     ## query to the backup BDII at CERN
     if not outputs:
         cmd = 'lcg-info --list-se --vo atlas --bdii \'%s\' --query SE=\'%s\' --attr Protocol --sed' % (backup_bdii, sename)
         f = os.popen(cmd)
-        outputs = map(lambda x:x.strip(), f.readlines())
+        outputs = [x.strip() for x in f.readlines()]
         rc = f.close()
 
 
-        print >> sys.stdout, 'resolving SE protocols with backup BDII: %s | %s | %s' % (os.environ['LCG_GFAL_INFOSYS'], cmd, outputs)
+        print('resolving SE protocols with backup BDII: %s | %s | %s' % (os.environ['LCG_GFAL_INFOSYS'], cmd, outputs), file=sys.stdout)
 
     ## parsing the query results
     if not rc:
@@ -175,7 +175,7 @@ def get_transfer_protocols(sename=None):
         protocols = list( set( protocols ) )
         try:
             protocols.remove('_UNDEF_')
-            print >> sys.stdout, 'protocol undefined for SE: %s' % sename
+            print('protocol undefined for SE: %s' % sename, file=sys.stdout)
         except ValueError:
             pass
 
@@ -248,7 +248,7 @@ def get_site_domain(domain_replacements={}):
         site_domain = re.sub('^[\w\-]+\.','',hostname)
 
         # apply exceptions
-        for old,new in domain_replacements.items():
+        for old,new in list(domain_replacements.items()):
             if site_domain == old:
                 site_domain = new
 
@@ -280,7 +280,7 @@ def resolve_dq2_local_site_id(ds_locations, site_domain, se_hostname, force_site
 
     # checking if the given site_domain in the enforcement dictionary
     if force_siteid_domain:
-        for mydomain, mysites in force_siteid_domain.items():
+        for mydomain, mysites in list(force_siteid_domain.items()):
             re_domain = re.compile(mydomain)
             if re_domain.match(site_domain):
                 dq2_local_ids = mysites
@@ -289,7 +289,7 @@ def resolve_dq2_local_site_id(ds_locations, site_domain, se_hostname, force_site
 
     # checking if the given se_hostname in the enforcement dictionary
     if force_siteid_se:
-        for myse, mysites in force_siteid_se.items():
+        for myse, mysites in list(force_siteid_se.items()):
             re_se = re.compile(myse)
             if re_se.match(se_hostname):
                 dq2_local_ids = mysites
@@ -339,7 +339,7 @@ def resolve_dq2_local_site_id(ds_locations, site_domain, se_hostname, force_site
     #  - pick the first one in the common part
     candidates = list(set(dq2_local_ids) & set(ds_locations))
 
-    print >> sys.stdout, str(candidates)
+    print(str(candidates), file=sys.stdout)
 
     if candidates:
         ## pick up the site whose corresponding se is matching the se_hostname
@@ -591,7 +591,7 @@ if os.environ.has_key('ATHENA_RUN_EVENTS'):
 
     ## create option file for FileStager
     if gridcopy:
-        pfns = map(lambda x:'gridcopy://'+x, pfns)
+        pfns = ['gridcopy://'+x for x in pfns]
 
     jOptionFS = jOptionFS.replace('###FSCOPYCMD###', repr(fs_cp_cmd))
     jOptionFS = jOptionFS.replace('###FSCOPYARGS###', repr(fs_cp_args))
@@ -655,14 +655,14 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
     the PFNs).
     '''
 
-    print >> sys.stdout, 'resolving physical locations of replicas'
+    print('resolving physical locations of replicas', file=sys.stdout)
 
     try:
         import lfcthr
     except ImportError as exp:
-        print >> sys.stderr, '%s' % str(exp)
-        print >> sys.stderr, 'unable to load LFC python module. Please check LCG UI environment.'
-        print >> sys.stderr, 'python path: %s' % repr(sys.path)
+        print('%s' % str(exp), file=sys.stderr)
+        print('unable to load LFC python module. Please check LCG UI environment.', file=sys.stderr)
+        print('python path: %s' % repr(sys.path), file=sys.stderr)
         return {}
 
     pfns = {}
@@ -691,7 +691,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
     def _resolveDummy(_pfns):
         '''resolving the dummy PFNs based on SE hostname'''
         _pfns_dummy = {}
-        for _guid in _pfns.keys():
+        for _guid in list(_pfns.keys()):
             _replicas = _pfns[_guid]
             _replicas.sort()
             seCache  = None
@@ -748,7 +748,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
             # close the LFC session
             lfcthr.lfc_endsess()
         else:
-            print >> sys.stderr, 'cannot connect to LFC'
+            print('cannot connect to LFC', file=sys.stderr)
 
     # initialize lfcthr
     lfcthr.init()

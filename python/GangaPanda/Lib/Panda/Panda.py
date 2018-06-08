@@ -5,8 +5,8 @@
 ################################################################################
                                                                                                               
 
-import os, sys, time, commands, re, tempfile, exceptions, urllib, fnmatch
-import cPickle as pickle
+import os, sys, time, subprocess, re, tempfile, exceptions, urllib.request, urllib.parse, urllib.error, fnmatch
+import pickle as pickle
 import json
 
 from Ganga.GPIDev.Base import GangaObject
@@ -43,14 +43,14 @@ try:
 except:
     logger.error("Failed to correctly configure Client.baseURL or Client.baseURLSSL ")
 
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 try:
     import simplejson
 except:
     import json as simplejson
 
 try:
-    agisinfos = simplejson.load(urllib2.urlopen("http://atlas-agis-api.cern.ch/request/site/query/list/?json&state=ACTIVE&rc_site_state=ACTIVE"))
+    agisinfos = simplejson.load(urllib.request.urlopen("http://atlas-agis-api.cern.ch/request/site/query/list/?json&state=ACTIVE&rc_site_state=ACTIVE"))
 except:
     agisinfos = []
     logger.error("Failed to load AGIS info from http://atlas-agis-api.cern.ch/request/site/query/list/?json&state=ACTI\
@@ -128,8 +128,8 @@ def convertDQ2NamesToQueueName(locations):
     # fall back to old code
     for location in locations:
         sites = []
-        for queue, queueinfo in Client.PandaSites.iteritems():
-            queuelocations = queueinfo['setokens'].values()
+        for queue, queueinfo in Client.PandaSites.items():
+            queuelocations = list(queueinfo['setokens'].values())
             for queuelocation in queuelocations:
                 if Client.convSrmV2ID(location) == Client.convSrmV2ID(queuelocation) and not queue in sites:
                     sites.append(queue)
@@ -166,7 +166,7 @@ def convertQueueNameToDQ2Names(queue):
     logger.debug("convertQueueNameToDQ2Names fall back")
     refreshPandaSpecs()
     sites = []
-    for site in Client.PandaSites[queue]['setokens'].values():
+    for site in list(Client.PandaSites[queue]['setokens'].values()):
         sites.append(Client.convSrmV2ID(site))
 
     logger.debug(sites)
@@ -221,7 +221,7 @@ def queueToAllowedSites(queue):
                 continue
 
     # add special extra tokens
-    for setoken in Client.PandaSites[queue]['setokens'].values():
+    for setoken in list(Client.PandaSites[queue]['setokens'].values()):
         if setoken not in allowed_sites:
             allowed_sites.append(setoken)
 
@@ -246,14 +246,14 @@ def runPandaBrokerage(job):
                 # RUCIO patch
                 #libdslocation = Client.getLocations(job.backend.libds,[],job.backend.requirements.cloud,False,False)
                 info = getLocations(job.backend.libds)
-                location = info.values()[0][1]
+                location = list(info.values())[0][1]
                 libdslocation = convertDQ2NamesToQueueName(location)
             except exceptions.SystemExit:
                 raise BackendError('Panda','Error in Client.getLocations for libDS')
             if not libdslocation:
                 raise ApplicationConfigurationError('Could not locate libDS %s'%job.backend.libds)
             else:
-                libdslocation = libdslocation.values()[0]
+                libdslocation = list(libdslocation.values())[0]
                 try:
                     job.backend.requirements.cloud = Client.PandaSites[libdslocation[0]]['cloud']
                 except:
@@ -284,14 +284,14 @@ def runPandaBrokerage(job):
                 # FIXME: no cloud selection
                 # dsLocationMap = Client.getLocations(dataset,fileList,job.backend.requirements.cloud,False,False,expCloud=True)
                 info = getLocations(dataset)
-                location = info.values()[0][1]
+                location = list(info.values())[0][1]
                 dsLocationMap = convertDQ2NamesToQueueName(location)
                 if not dsLocationMap:
                     logger.info('Dataset not found in cloud %s, searching all clouds...'%job.backend.requirements.cloud)
                     # RUCIO patch
                     #dsLocationMap = Client.getLocations(dataset,fileList,job.backend.requirements.cloud,False,False,expCloud=False)
                     info = getLocations(dataset)
-                    location = info.values()[0][1]
+                    location = list(info.values())[0][1]
                     dsLocationMap = convertDQ2NamesToQueueName(location)
 
             except exceptions.SystemExit:
@@ -300,11 +300,11 @@ def runPandaBrokerage(job):
             if dsLocationMap == {}:
                 raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.requirements.cloud,dataset))
             # run brokerage
-            for tmpItem in dsLocationMap.values():
+            for tmpItem in list(dsLocationMap.values()):
                 if not libdslocation or tmpItem == libdslocation:
                     tmpSites.append(tmpItem[0])
         else:
-            for site,spec in Client.PandaSites.iteritems():
+            for site,spec in Client.PandaSites.items():
                 if spec['cloud']==job.backend.requirements.cloud and spec['status']=='online' and not Client.isExcudedSite(site):
                     if not libdslocation or site == libdslocation:
                         tmpSites.append(site)
@@ -467,7 +467,7 @@ def getLibFileSpecFromLibDS(libDS):
     tmpMD5Sum  = None
     tmpFSize   = None
     tmpScope   = None
-    for fileName in tmpList.keys():
+    for fileName in list(tmpList.keys()):
         # ignore log file
         if len(re.findall('.log.tgz.\d+$',fileName)) or len(re.findall('.log.tgz$',fileName)):
             continue
@@ -572,7 +572,7 @@ def retrieveMergeJobs(job, pandaJobDefId):
 
                     if ec2 == 0:
                         
-                        for jid,jinfo in mjs.items():
+                        for jid,jinfo in list(mjs.items()):
                             mjobj = PandaMergeJob()
                             mjobj.id     = jid
                             #mjobj.status = jinfo[0]
@@ -604,9 +604,9 @@ def checkForRebrokerage(string):
     import re
     matchObj = re.match('reassigned to another site by rebrokerage. new PandaID=(\d+) JobsetID=(\d+) JobID=(\d+)', string)
     if matchObj:
-        newPandaID = long(matchObj.group(1))
-        newJobsetID = long(matchObj.group(2))
-        newJobID = long(matchObj.group(3))
+        newPandaID = int(matchObj.group(1))
+        newJobsetID = int(matchObj.group(2))
+        newJobID = int(matchObj.group(3))
         return newPandaID
     raise BackendError('Panda','Error getting new PandaID for rebrokered job. Report to DA Help')
 
@@ -1016,7 +1016,7 @@ class Panda(IBackend):
             jobIDs[job.backend.id] = job
 
         with inject_proxy(self.credential_requirements):
-                rc,jspecs = Client.getFullJobStatus(jobIDs.keys(),False)
+                rc,jspecs = Client.getFullJobStatus(list(jobIDs.keys()),False)
         if rc:
             logger.error('Return code %d retrieving job status information.',rc)
             raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
@@ -1067,7 +1067,7 @@ class Panda(IBackend):
             jobIDs[job.backend.id] = job
 
         with inject_proxy(self.credential_requirements):
-            rc,jspecs = Client.getFullJobStatus(jobIDs.keys(),False)
+            rc,jspecs = Client.getFullJobStatus(list(jobIDs.keys()),False)
         if rc:
             logger.error('Return code %d retrieving job status information.',rc)
             raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
@@ -1159,7 +1159,7 @@ class Panda(IBackend):
                         # RUCIO patch
                         #res = Client.getDatasets(tmpFile.destinationDBlock)
                         res = getDatasets(tmpFile.destinationDBlock)
-                        if not tmpFile.destinationDBlock in res.keys():
+                        if not tmpFile.destinationDBlock in list(res.keys()):
                             # DS doesn't exist - create it
                             try:
                                 with inject_proxy(self.credential_requirements):
@@ -1251,7 +1251,7 @@ class Panda(IBackend):
                 job.backend.mergejobs = []
                 
         # split into 2000-job pieces
-        allJobIDs = jobdict.keys()
+        allJobIDs = list(jobdict.keys())
         logger.debug("Monitored JobIDs: %s" % monitoredjobids)
         logger.debug("Monitored Panda JobIDs: %s" % allJobIDs)
         jIDPieces = [allJobIDs[i:i+2000] for i in range(0,len(allJobIDs),2000)]
@@ -1281,9 +1281,9 @@ class Panda(IBackend):
                 if job.backend.id == status.PandaID:
 
                     if job.backend.status != status.jobStatus:
-                        job.backend.jobSpec = dict(zip(status._attributes,status.values()))
+                        job.backend.jobSpec = dict(list(zip(status._attributes,list(status.values()))))
 
-                        for k in job.backend.jobSpec.keys():
+                        for k in list(job.backend.jobSpec.keys()):
                             if type(job.backend.jobSpec[k]) not in [type(''),type(1)]:
                                 job.backend.jobSpec[k]=str(job.backend.jobSpec[k])
 
@@ -1293,7 +1293,7 @@ class Panda(IBackend):
                         job.backend.exitcode = str(status.transExitCode)
                         job.backend.piloterrorcode = str(status.pilotErrorCode)
                         job.backend.reason = ''
-                        for k in job.backend.jobSpec.keys():
+                        for k in list(job.backend.jobSpec.keys()):
                             if k.endswith('ErrorDiag') and job.backend.jobSpec[k]!='NULL':
                                 job.backend.reason += '%s: %s, '%(k,str(job.backend.jobSpec[k]))
                         #if job.backend.jobSpec['transExitCode'] != 'NULL':
@@ -1328,7 +1328,7 @@ class Panda(IBackend):
                             # check for server side retry
                             if 'taskBufferErrorDiag' in job.backend.jobSpec and job.backend.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                 # grab the new panda ID
-                                newPandaID = long(job.backend.jobSpec['taskBufferErrorDiag'].split("=")[1])
+                                newPandaID = int(job.backend.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                 job.backend.id = newPandaID
                                 job.backend.status = None
                                 job.backend.url = 'http://panda.cern.ch/?job=%d'%newPandaID
@@ -1364,8 +1364,8 @@ class Panda(IBackend):
 
                 elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
                     if job.backend.buildjob.status != status.jobStatus:
-                        job.backend.buildjob.jobSpec = dict(zip(status._attributes,status.values()))
-                        for k in job.backend.buildjob.jobSpec.keys():
+                        job.backend.buildjob.jobSpec = dict(list(zip(status._attributes,list(status.values()))))
+                        for k in list(job.backend.buildjob.jobSpec.keys()):
                             if type(job.backend.buildjob.jobSpec[k]) not in [type(''),type(1)]:
                                 job.backend.buildjob.jobSpec[k]=str(job.backend.buildjob.jobSpec[k])
 
@@ -1388,7 +1388,7 @@ class Panda(IBackend):
                         elif status.jobStatus == 'failed':
                             if 'taskBufferErrorDiag' in job.backend.buildjob.jobSpec and job.backend.buildjob.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                 # grab the new panda ID
-                                newPandaID = long(job.backend.buildjob.jobSpec['taskBufferErrorDiag'].split("=")[1])
+                                newPandaID = int(job.backend.buildjob.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                 job.backend.buildjob.id = newPandaID
                                 job.backend.buildjob.status = None
                                 job.backend.buildjob.url = 'http://panda.cern.ch/?job=%d'%newPandaID
@@ -1412,8 +1412,8 @@ class Panda(IBackend):
                 elif job.backend.buildjobs and status.PandaID in [bj.id for bj in job.backend.buildjobs]:
                     for bj in job.backend.buildjobs:
                         if bj.id == status.PandaID and bj.status != status.jobStatus:
-                            bj.jobSpec = dict(zip(status._attributes,status.values()))
-                            for k in bj.jobSpec.keys():
+                            bj.jobSpec = dict(list(zip(status._attributes,list(status.values()))))
+                            for k in list(bj.jobSpec.keys()):
                                 if type(bj.jobSpec[k]) not in [type(''),type(1)]:
                                     bj.jobSpec[k]=str(bj.jobSpec[k])
 
@@ -1447,7 +1447,7 @@ class Panda(IBackend):
                             elif new_stat == 'failed':
                                 if 'taskBufferErrorDiag' in bj.jobSpec and bj.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                     # grab the new panda ID
-                                    newPandaID = long(bj.jobSpec['taskBufferErrorDiag'].split("=")[1])
+                                    newPandaID = int(bj.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                     bj.id = newPandaID
                                     bj.status = None
                                     bj.url = 'http://panda.cern.ch/?job=%d'%newPandaID
@@ -1475,8 +1475,8 @@ class Panda(IBackend):
                     mj = job.backend.mergejobs[ job.backend.mergejobs.index( tmp_mj ) ]
 
                     # update job spec
-                    mj.jobSpec = dict(zip(status._attributes,status.values()))
-                    for k in mj.jobSpec.keys():
+                    mj.jobSpec = dict(list(zip(status._attributes,list(status.values()))))
+                    for k in list(mj.jobSpec.keys()):
                         if type(mj.jobSpec[k]) not in [type(''),type(1)]:
                             mj.jobSpec[k]=str(mj.jobSpec[k])
 
@@ -1614,7 +1614,7 @@ class Panda(IBackend):
         #from pandatools import Client
         refreshPandaSpecs()
 
-        sites=Client.PandaSites.keys()
+        sites=list(Client.PandaSites.keys())
         spacetokens = []
         for s in sites:
             spacetokens.append(convertQueueNameToDQ2Names(s))
@@ -1632,14 +1632,14 @@ class Panda(IBackend):
                     # RUCIO patch
                     #libdslocation = Client.getLocations(self.libds,[],self.requirements.cloud,False,False)
                     info = getLocations(self.libds)
-                    location = info.values()[0][1]
+                    location = list(info.values())[0][1]
                     libdslocation = convertDQ2NamesToQueueName(location)
                 except exceptions.SystemExit:
                     raise BackendError('Panda','Error in Client.getLocations for libDS')
                 if not libdslocation:
                     raise ApplicationConfigurationError('Could not locate libDS %s'%self.libds)
                 else:
-                    libdslocation = libdslocation.values()[0]
+                    libdslocation = list(libdslocation.values())[0]
                     try:
                         self.requirements.cloud = Client.PandaSites[libdslocation[0]]['cloud']
                     except:
@@ -1647,7 +1647,7 @@ class Panda(IBackend):
                 sites = libdslocation
                 logger.info('LibDS is at %s. Run jobs will execute there.'%sites)
             else: 
-                sites=Client.PandaSites.keys()
+                sites=list(Client.PandaSites.keys())
 
             for s in sites:
                 if Client.PandaSites[s]['status'] not in ['online'] or s in self.requirements.excluded_sites or Client.PandaSites[s]['cloud'] in self.requirements.excluded_clouds or (not self.requirements.anyCloud and Client.PandaSites[s]['cloud'] != self.requirements.cloud):
@@ -1710,7 +1710,7 @@ class Panda(IBackend):
             'NET_ETH_RX_AFTERATHENA':'""'
             }
         stats = {}
-        for k in fields.keys():
+        for k in list(fields.keys()):
             try:
                 stats[k] = eval(fields[k])
             except:
@@ -1734,10 +1734,10 @@ class Panda(IBackend):
         for of in [f for f in status.Files if f.type in ["output","log"]]:
             outputdata.append("%s,%s,%s,%s,%s,%s" % (of.dataset,of.lfn,of.GUID,of.fsize,of.checksum,of.destinationSE))
             locations[of.destinationSE] = 1
-        if len(locations.keys()) > 1:
-            logger.warning("Outputfiles of job %s saved at different locations! (%s)" % (job.fqid, locations.keys()))
-        if len(locations.keys()) > 0:
-            job.outputdata.location = locations.keys()[0]
+        if len(list(locations.keys())) > 1:
+            logger.warning("Outputfiles of job %s saved at different locations! (%s)" % (job.fqid, list(locations.keys())))
+        if len(list(locations.keys())) > 0:
+            job.outputdata.location = list(locations.keys())[0]
         job.outputdata.output = outputdata
 
 # jobSpec = {'startTime': '2011-11-01 09:37:51', 'modificationTime': '2011-11-01 10:03:22', 'creationTime': '2011-11-01 09:37:40', 'endTime': '2011-11-01 09:47:16', } ,

@@ -1,7 +1,7 @@
 def standardSetup():
-   import PACKAGE
+   from . import PACKAGE
    PACKAGE.standardSetup()
 
 
 def loadPlugins( config = {} ):
-   import Lib.SAGA
+   from . import Lib.SAGA

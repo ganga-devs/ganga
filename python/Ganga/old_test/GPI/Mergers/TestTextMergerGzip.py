@@ -3,7 +3,7 @@
 #
 # $Id: TestTextMergerGzip.py,v 1.1 2009-02-03 09:31:12 wreece Exp $
 ##########################################################################
-from __future__ import division
+
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, write_file
 import gzip

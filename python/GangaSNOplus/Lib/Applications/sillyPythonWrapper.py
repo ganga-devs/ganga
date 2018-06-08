@@ -28,7 +28,7 @@ import os
 import sys
 import subprocess
 import optparse
-import job_tools
+from . import job_tools
 
 def check_el_version():
     '''Test the Enterprise Linux version.'''
@@ -41,7 +41,7 @@ def check_el_version():
             try:
                 release = int(b.strip('el'))
             except (ValueError, TypeError):
-                print "Unknown system: " + platform.release()
+                print("Unknown system: " + platform.release())
                 raise
     if release==5 or release==6:
         return release
@@ -111,5 +111,5 @@ if __name__=='__main__':
         run_script(script, options.env_file, script_args)
     else:
         parser.print_help()
-        print 'unknown lcoation:', location
+        print('unknown lcoation:', location)
         sys.exit(1)

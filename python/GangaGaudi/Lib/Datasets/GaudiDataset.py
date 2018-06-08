@@ -99,7 +99,7 @@ def string_dataset_shortcut(files, item):
     from Ganga.GPIDev.Base.Objects import ObjectMetaclass
     from Ganga.GPIDev.Base.Proxy import stripProxy
     from Ganga.GPIDev.Base.Proxy import getProxyInterface
-    filterList = [stripProxy(i)._schema.datadict['inputdata'] for i in getProxyInterface().__dict__.values()
+    filterList = [stripProxy(i)._schema.datadict['inputdata'] for i in list(getProxyInterface().__dict__.values())
                   if isinstance(stripProxy(i), ObjectMetaclass)
                   and issubclass(stripProxy(i), Job)
                   and 'inputdata' in stripProxy(i)._schema.datadict]

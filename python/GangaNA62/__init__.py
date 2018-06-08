@@ -4,14 +4,14 @@ import Ganga.Utility.Config
 
 def standardSetup():
 
-   import PACKAGE
+   from . import PACKAGE
    PACKAGE.standardSetup()
 
 
 def loadPlugins( config = {} ):
-   import Lib.Applications
-   import Lib.Tasks
-   import Lib.Requirements
+   from . import Lib.Applications
+   from . import Lib.Tasks
+   from . import Lib.Requirements
    
     #import Lib.Backends
     #import Lib.Applications

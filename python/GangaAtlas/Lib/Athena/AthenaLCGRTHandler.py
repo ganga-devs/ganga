@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, pwd, commands, re, string, time, sys
+import os, pwd, subprocess, re, string, time, sys
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -375,7 +375,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if job.inputsandbox: inputbox += job.inputsandbox   
 
         if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.tag_info:
-            if job.inputdata.tag_info[job.inputdata.tag_info.keys()[0] ]['dataset'] != '' and job.inputdata.tag_info[tag_file]['path'] == '':
+            if job.inputdata.tag_info[list(job.inputdata.tag_info.keys())[0] ]['dataset'] != '' and job.inputdata.tag_info[tag_file]['path'] == '':
                 environment['TAG_TYPE'] = 'DQ2'
             else:
                 environment['TAG_TYPE'] = 'LOCAL'                
@@ -400,7 +400,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         # Write trf parameters
         trf_params = ' '
-        for key, value in job.application.trf_parameter.iteritems():
+        for key, value in job.application.trf_parameter.items():
             if key == 'dbrelease':
                 environment['DBDATASETNAME'] = value.split(':')[0]
                 environment['DBFILENAME'] = value.split(':')[1]
@@ -690,10 +690,10 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         # Fill AtlasLCGRequirements access mode 
         if configDQ2['USE_ACCESS_INFO']:
             logger.warning("config['DQ2']['USE_ACCESS_INFO']=True - You are using the improved worker node input access method - make sure you are using at least athena version 15.0.0 or the latest FileStager tag !" )
-            import pickle, StringIO
+            import pickle, io
             #if job.backend.requirements.sites:
             info = job.backend.requirements.list_access_info()
-            fileHandle = StringIO.StringIO()
+            fileHandle = io.StringIO()
             pickle.dump(info,fileHandle)
             fileHandle.seek(-1)
             lines = fileHandle.read()

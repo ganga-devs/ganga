@@ -78,7 +78,7 @@ MAX_RETRIES = 20
 
 import optparse
 
-import urlparse, urllib, urllib2
+import urllib.parse, urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
 
 import random, time
 
@@ -95,9 +95,9 @@ except ImportError:
         @staticmethod
         def dumps(obj):
             if obj.__class__ != dict:
-                raise Exception, "Only dict serialization is implemented"
+                raise Exception("Only dict serialization is implemented")
             o = []
-            for (k,v) in obj.items():
+            for (k,v) in list(obj.items()):
                 if v is None:
                     o.append( '"%s": null' % (k, ) )
                 elif v.__class__ == str:
@@ -122,46 +122,46 @@ def record(mondir, job, attributes):
             return response
         https_response = http_response
 
-    query_string = urllib.urlencode(job)
-    mondir_url = urlparse.urljoin(APP_ROOT, mondir) + '?' + query_string
+    query_string = urllib.parse.urlencode(job)
+    mondir_url = urllib.parse.urljoin(APP_ROOT, mondir) + '?' + query_string
     attributes_json = json.dumps(attributes)
 
-    print "POST %s\n%s" % (mondir_url, attributes_json)
+    print("POST %s\n%s" % (mondir_url, attributes_json))
 
     # build auth handler
-    pswd_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+    pswd_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
     pswd_mgr.add_password(None, APP_ROOT, USERNAME, PASSWORD)
-    auth_handler = urllib2.HTTPBasicAuthHandler(pswd_mgr)
+    auth_handler = urllib.request.HTTPBasicAuthHandler(pswd_mgr)
 
     # build opener
-    opener = urllib2.build_opener(auth_handler, CustomHTTPErrorProcessor())
+    opener = urllib.request.build_opener(auth_handler, CustomHTTPErrorProcessor())
 
     attempt = 0	
     while True:
         try:
-            response = opener.open( urllib2.Request(mondir_url, attributes_json, {'Accept':'text/plain'}) )
+            response = opener.open( urllib.request.Request(mondir_url, attributes_json, {'Accept':'text/plain'}) )
             # (blech)
 	    #pdb.set_trace()
             #(Pdb) dir(response)
             #['__doc__', '__init__', '__iter__', '__module__', '__repr__', 'close', 'code', 'fileno', 'fp', 'geturl', 'headers', 'info', 'msg', 'next', 'read', 'readline', 'readlines', 'url']
-            print "%s %s" % (response.code, response.msg)
-            print response.read()
+            print("%s %s" % (response.code, response.msg))
+            print(response.read())
             break
-        except urllib2.HTTPError, e:
+        except urllib.error.HTTPError as e:
             if e.code == 400:
-                print e
-                print e.read()
-                print "Command line argument(s) invalid (detected by the database server)"
+                print(e)
+                print(e.read())
+                print("Command line argument(s) invalid (detected by the database server)")
                 return 3
             elif e.code == 404:
-                print e
-                print e.read()
-                print "MONDIR does not exist (detected by database server)"
+                print(e)
+                print(e.read())
+                print("MONDIR does not exist (detected by database server)")
                 return 3
-            print "Error: %s %s\n%s" % ( e.code, e.msg, e.read() )
+            print("Error: %s %s\n%s" % ( e.code, e.msg, e.read() ))
             if attempt < MAX_RETRIES:
                 sleep_time = random.random() * 10
-                print "--> Retrying in %s seconds" % (sleep_time, )
+                print("--> Retrying in %s seconds" % (sleep_time, ))
                 time.sleep(sleep_time)
                 attempt += 1
                 continue
@@ -235,8 +235,8 @@ if __name__ == '__main__':
     
     try:
         record(mondir, job, attributes)
-    except urllib2.HTTPError, e:
-    	print "Error: The HTTP request failed. (%s)" % (str(e), )
+    except urllib.error.HTTPError as e:
+    	print("Error: The HTTP request failed. (%s)" % (str(e), ))
         sys.exit(4)
 
     sys.exit(0)

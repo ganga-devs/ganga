@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 
 def execInThread(target, args=None, kwargs=None, timeout=None,
@@ -25,7 +25,7 @@ def execInThread(target, args=None, kwargs=None, timeout=None,
             callBackFunc(result)
         return
 
-    if not callable(target):
+    if not isinstance(target, collections.Callable):
         return False
 
     import threading
@@ -35,6 +35,7 @@ def execInThread(target, args=None, kwargs=None, timeout=None,
 # ------------------------
 
 from .util import GenericWrapper
+import collections
 
 
 class SynchronisedObject(GenericWrapper):

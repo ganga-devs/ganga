@@ -222,7 +222,7 @@ class AppName(Gaudi):
                 debug_dir = self.getJobObject().getDebugWorkspace().getPath()
                 msg2 += 'You can also view this from within ganga '\
                     'by doing job.peek(\'../debug/gaudirun.<whatever>\').'
-            except Exception, err:
+            except Exception as err:
                 logger.debug("path Error:\n%s" % str(err))
                 debug_dir = tempfile.mkdtemp()
 
@@ -315,6 +315,6 @@ class AppName(Gaudi):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-for (backend, handler) in backend_handlers().iteritems():
+for (backend, handler) in backend_handlers().items():
     allHandlers.add('AppName', backend, handler)
 

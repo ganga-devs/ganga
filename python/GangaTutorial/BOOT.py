@@ -1,5 +1,5 @@
 def getEnvironment(c):
-    import PACKAGE
+    from . import PACKAGE
     PACKAGE.standardSetup()
     return {}
     

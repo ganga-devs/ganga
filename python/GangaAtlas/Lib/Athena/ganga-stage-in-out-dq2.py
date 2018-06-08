@@ -6,13 +6,13 @@
 ###############################################################################
 # DQ2 dataset download and PoolFileCatalog.xml generation
 
-import os, sys, imp, re, time, commands, signal, popen2, socket, urllib
+import os, sys, imp, re, time, subprocess, signal, popen2, socket, urllib.request, urllib.parse, urllib.error
 import string
 import xml.dom.minidom
 from dq2.info import TiersOfATLAS 
 from dq2.info.TiersOfATLAS import _refreshToACache, ToACache
 from getopt import getopt,GetoptError
-from commands import getstatusoutput
+from subprocess import getstatusoutput
 import lfc
 from dq2.common.DQException import DQInvalidRequestException
 from dq2.content.DQContentException import DQInvalidFileMetadataException
@@ -67,13 +67,13 @@ try:
     # DQ2 server
     baseURLDQ2 = os.environ['DQ2_URL_SERVER']
 except:
-    print "ERROR : DQ2_URL_SERVER is not defined"
+    print("ERROR : DQ2_URL_SERVER is not defined")
     #sys.exit(EC_Configuration)
 try:
     # local site ID
     DQ2LOCALSITEID = os.environ['DQ2_LOCAL_SITE_ID']
 except:
-    print "ERROR : DQ2_LOCAL_SITE_ID is not defined"
+    print("ERROR : DQ2_LOCAL_SITE_ID is not defined")
 #    sys.exit(EC_Configuration)
 try:
     # local access protocol
@@ -107,29 +107,29 @@ globalVerbose = False
 ########################################################################
 def usage():
 
-    print 'Name:'
-    print '    ganga-stage-in-out-dq2.py'
-    print
-    print 'Arguments:'
-    print '    logical names'
-    print 
-    print 'Options:'
-    print '    -h, --help            this prinout'
-    print '    -i, --input file      list of logical names'
-    print '    -o, --output files    list of output files'
-    print '    -g, --guids guids     list of guid names'
-    print '    -d, --directory path  to stage the input files (default $PWD)'
-    print '    -t, --timeout seconds for the staging in (default 900)'
-    print '    -r, --retry number    for the staging command (default 3)'
-    print '    -v, --verbose         verbosity'
+    print('Name:')
+    print('    ganga-stage-in-out-dq2.py')
+    print()
+    print('Arguments:')
+    print('    logical names')
+    print() 
+    print('Options:')
+    print('    -h, --help            this prinout')
+    print('    -i, --input file      list of logical names')
+    print('    -o, --output files    list of output files')
+    print('    -g, --guids guids     list of guid names')
+    print('    -d, --directory path  to stage the input files (default $PWD)')
+    print('    -t, --timeout seconds for the staging in (default 900)')
+    print('    -r, --retry number    for the staging command (default 3)')
+    print('    -v, --verbose         verbosity')
 
 ########################################################################
 def fhandler(signum, frame):
-    print "GFAL alarm - timeout!"
+    print("GFAL alarm - timeout!")
 
 ########################################################################
 def ghandler(signum, frame):
-    print "lcg-gt alarm - timeout!"
+    print("lcg-gt alarm - timeout!")
 
 ########################################################################
 class PoolFileCatalog:
@@ -137,23 +137,23 @@ class PoolFileCatalog:
     def __init__(self,name='PoolFileCatalog.xml'):
 
         self.pfc = open(name,'w')
-        print >>self.pfc,'<?xml version="1.0" ?>'
-        print >>self.pfc,'<POOLFILECATALOG>'
+        print('<?xml version="1.0" ?>', file=self.pfc)
+        print('<POOLFILECATALOG>', file=self.pfc)
 
     def addFile(self,guid,lfn,pfn):
 
-        print >>self.pfc,'    <File ID="%s">' % guid
-        print >>self.pfc,'        <logical>'
-        print >>self.pfc,'            <lfn name="%s"/>' % lfn
-        print >>self.pfc,'        </logical>'
-        print >>self.pfc,'        <physical>'
-        print >>self.pfc,'            <pfn filetype="ROOT_All" name="%s"/>' % pfn
-        print >>self.pfc,'        </physical>'
-        print >>self.pfc,'    </File>'
+        print('    <File ID="%s">' % guid, file=self.pfc)
+        print('        <logical>', file=self.pfc)
+        print('            <lfn name="%s"/>' % lfn, file=self.pfc)
+        print('        </logical>', file=self.pfc)
+        print('        <physical>', file=self.pfc)
+        print('            <pfn filetype="ROOT_All" name="%s"/>' % pfn, file=self.pfc)
+        print('        </physical>', file=self.pfc)
+        print('    </File>', file=self.pfc)
 
     def close(self):
 
-        print >>self.pfc,'</POOLFILECATALOG>'
+        print('</POOLFILECATALOG>', file=self.pfc)
 
 ########################################################################
 # get default storage
@@ -161,7 +161,7 @@ def _getDefaultStorage(id):
     # parse
     match = re.findall('^[^:]+://([^:/]+)',id)
     if len(match) != 1:
-        print "ERROR : could not parse default storage"
+        print("ERROR : could not parse default storage")
         sys.exit(EC_Configuration)
         
     return [match[0]]
@@ -184,7 +184,7 @@ def _appendProtocol(pfnMap,protocol):
         return
     
     # loop over all LFNs
-    for lfn in pfnMap.keys():
+    for lfn in list(pfnMap.keys()):
         pfn = "%s%s" % (prefix,pfnMap[lfn])
         pfnMap[lfn] = pfn 
 
@@ -194,7 +194,7 @@ def getAggName(site):
     if site in ToACache.topology['TIER1S']:
         return site
     # look for cloud
-    for id,idSites in ToACache.topology.iteritems():
+    for id,idSites in ToACache.topology.items():
         # ignore high level names
         if id in ('ALL','TIER1S'):
             continue
@@ -220,7 +220,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
     md5sumMap = {}
     usedProtocol = ''
     
-    print 'defaultSE: %s' %defaultSE
+    print('defaultSE: %s' %defaultSE)
 
     protocols = ''
     for p in configLOCALPROTOCOL:
@@ -233,8 +233,8 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
     #enableBulkOps = False
  
     if enableBulkOps:
-        print 'LFC bulk reading...'
-        guids = guidMap.values()
+        print('LFC bulk reading...')
+        guids = list(guidMap.values())
         lfcattempts = 0
         while lfcattempts<5:
             (res, rep_entries) = lfc.lfc_getreplicas(guids, '')
@@ -242,9 +242,9 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                 break
             lfcattempts = lfcattempts + 1
             
-        print 'End of LFC bulk reading.'
+        print('End of LFC bulk reading.')
         
-        for lfn,guid in guidMap.iteritems():
+        for lfn,guid in guidMap.items():
             mapLFN[guid] = lfn
 
         for rep in rep_entries:
@@ -265,13 +265,13 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
 
                     if (surl.find('atlasmctape')>0) or (surl.find('atlasdatatape')>0):
                         if globalVerbose:
-                            print 'Skip atlasmctape or atlasdatatape replica'
+                            print('Skip atlasmctape or atlasdatatape replica')
                         continue
 
                     lfn = mapLFN[rep.guid]
                     guidReplicas[lfn] = surl
                     
-                    fsizeMap[lfn] = long(rep.filesize)
+                    fsizeMap[lfn] = int(rep.filesize)
                     md5sumMap[lfn] = rep.csumvalue
                     
                     # TURL
@@ -287,13 +287,13 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                        and usedProtocol!='file' \
                        and not 'ccsrm.in2p3.fr' in defaultSE:
 
-                        print 'Using lcg-gt for turl retrieval ...'
+                        print('Using lcg-gt for turl retrieval ...')
                         # check which version of lcg-utils we're on
                         if 'lcgutil_num' in os.environ and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
                             cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + protocols
                         else:
                             cmd = "lcg-gt -t 60 " + surl + " " + protocols
-                        print cmd
+                        print(cmd)
 
                         count = 0
                         retry = 5
@@ -314,7 +314,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                                         usedProtocol = 'file'
                                 signal.alarm(0)
                             except IOError:
-                                print 'lcg-gt time out !'
+                                print('lcg-gt time out !')
                                 pass
                             signal.alarm(0)
                             
@@ -323,31 +323,31 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                                 break
                             else:
                                 if count == retry:
-                                    print '!!! lcg-gt error after %s retries - giving up !!!' %count
+                                    print('!!! lcg-gt error after %s retries - giving up !!!' %count)
                                     count = count + 1          
                                 else:
                                     count = count + 1
-                                    print 'lcg-gt error - will start retry no. %s' %count
+                                    print('lcg-gt error - will start retry no. %s' %count)
                                     time.sleep(120)
 
-                        print turl
+                        print(turl)
                         if turl and turl[0]:
                             match = re.search('^[^:]+://([^:/]+:*\d*)/', turl[0])
                             tURLHost = match.group(1)
                             stUrlMap[sURLHost] = tURLHost
                             match = re.search('^(\S*)://.*', turl[0])
                             usedProtocol = match.group(1)
-                            print usedProtocol
+                            print(usedProtocol)
                                         
     else:
-        print 'LFC single reading...'
+        print('LFC single reading...')
         # start LFC session
         try:
             lfc.lfc_startsess('','')
         except NameError:
             pass
 
-        for lfn,guid in guidMap.iteritems():
+        for lfn,guid in guidMap.items():
             mapLFN[guid] = lfn
             if globalVerbose:
                 sys.stdout.write('.')
@@ -366,12 +366,12 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     surl = fr.sfn
                     if (surl.find('atlasmctape')>0) or (surl.find('atlasdatatape')>0):
                         if globalVerbose:
-                            print 'Skip atlasmctape or atlasdatatape replica'
+                            print('Skip atlasmctape or atlasdatatape replica')
                         continue
                     guidReplicas[lfn] = surl
 
                     res = lfc.lfc_statg("",guid,stat)
-                    fsizeMap[lfn] = long(stat.filesize)
+                    fsizeMap[lfn] = int(stat.filesize)
                     md5sumMap[lfn] = stat.csumvalue
 
                     # TURL
@@ -384,7 +384,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     if not 'gfal' in configLOCALPROTOCOL \
                            and sURLHost not in stUrlMap \
                            and not 'ccsrm.in2p3.fr' in defaultSE:
-                        print 'Using lcg-gt for turl retrieval ...'
+                        print('Using lcg-gt for turl retrieval ...')
                         # check which version of lcg-utils we're on
                         if 'lcgutil_num' in os.environ and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
                             cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + protocols
@@ -405,10 +405,10 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                                 elif line.startswith('file:'):
                                     usedProtocol = 'file'
                             else:
-                                print line, err.readline()
+                                print(line, err.readline())
                             signal.alarm(0)
                         except IOError:
-                            print 'lcg-gt time-out !'
+                            print('lcg-gt time-out !')
                             pass
                         signal.alarm(0)
 
@@ -424,13 +424,13 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
         except NameError:
             pass
 
-    print 'usedProtocol: %s' %usedProtocol
+    print('usedProtocol: %s' %usedProtocol)
     if usedProtocol=='':
         try:
             usedProtocol = configLOCALPROTOCOL[0]
         except:
             pass
-        print 'usedProtocol: %s' %usedProtocol
+        print('usedProtocol: %s' %usedProtocol)
 
     # Create TURL map
     tUrlMap = {}
@@ -441,7 +441,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
 
         turl = []
         # Determine of bulk TURL retrieval can be used
-        rc, out = commands.getstatusoutput('which lcg-getturls')
+        rc, out = subprocess.getstatusoutput('which lcg-getturls')
         if not rc:
             useBulkTurl = True
         else:
@@ -452,7 +452,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
         surlList = []
         isurl = 0
         
-        for s in guidReplicas.values():
+        for s in list(guidReplicas.values()):
             isurl = isurl + 1
             surls = surls + " " + s
             if (isurl % 50) == 0 :
@@ -478,29 +478,29 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                         cmd = "lcg-getturls --connect-timeout %s --sendreceive-timeout %s --srm-timeout %s --bdii-timeout %s -p %s %s" %(timeout, timeout, timeout, timeout, bulkprotocols, surls)
                     else:
                         cmd = "lcg-getturls -t %s -p %s %s" %(timeout, bulkprotocols, surls)
-                    print 'Using lcg-getturls for turl retrieval ...'
-                    print cmd
-                    rc, out = commands.getstatusoutput(cmd)
+                    print('Using lcg-getturls for turl retrieval ...')
+                    print(cmd)
+                    rc, out = subprocess.getstatusoutput(cmd)
                     if not rc:
                         lines = lines + out.split()
                         break
                     else:
-                        print out
+                        print(out)
                         attempt = attempt + 1
             i = 0
-            for lfn, surl in guidReplicas.iteritems():
+            for lfn, surl in guidReplicas.items():
                 tUrlMap[lfn] = lines[i]
                 i = i + 1 
         else:
             # Single file lcg-gt   
-            print 'Using lcg-gt for turl retrieval ...'
-            for lfn, surl in guidReplicas.iteritems():                
+            print('Using lcg-gt for turl retrieval ...')
+            for lfn, surl in guidReplicas.items():                
                 # check which version of lcg-utils we're on
                 if 'lcgutil_num' in os.environ and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
                     cmd = "lcg-gt --connect-timeout %s --sendreceive-timeout %s --srm-timeout %s --bdii-timeout %s " %(timeout, timeout, timeout, timeout) + surl + " " + protocols
                 else:
                     cmd = "lcg-gt -t %s " %(timeout) + surl + " " + protocols
-                print cmd
+                print(cmd)
                 try:
                     signal.signal(signal.SIGALRM, ghandler)
                     signal.alarm(240)
@@ -514,10 +514,10 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     elif line and line.find('file://')>=0:
                         turl = [line.strip()]
                     else:
-                        print line, err.readline()
+                        print(line, err.readline())
                     signal.alarm(0)
                 except IOError:
-                    print 'lcg-gt time-out !'
+                    print('lcg-gt time-out !')
                     pass
                 signal.alarm(0)
 
@@ -540,7 +540,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
         # The other protocols use search and replace
         if 'ccsrm.in2p3.fr' in defaultSE:
             usedProtocol = 'dcap'
-        for lfn, surl in guidReplicas.iteritems():
+        for lfn, surl in guidReplicas.items():
             if usedProtocol in [ "dcap", 'gsidcap', 'Xrootd', 'root' ]:
                 match = re.search('^[^:]+://([^:/]+):*\d*/', surl)
                 try:
@@ -651,7 +651,7 @@ def _makePoolFileCatalog(files):
     outFile.write(header)
     # write files
     newGUIDs = []
-    for lfn,file in files.iteritems():
+    for lfn,file in files.items():
         outFile.write(item % (file['guid'].upper(),file['pfn'],lfn))
         newGUIDs.append(file['guid'].upper())
     # write old files
@@ -666,7 +666,7 @@ def _makePoolFileCatalog(files):
                 fileFlag = True
                 outFile.write('\n')
             else:
-                print "WARNING: duplicated GUID %s in %s. Replaced" % (guid,pfcName)
+                print("WARNING: duplicated GUID %s in %s. Replaced" % (guid,pfcName))
         # write
         if fileFlag:
             outFile.write(line)
@@ -744,7 +744,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         versionString = ''
         
     # sort
-    lfns = files.keys()
+    lfns = list(files.keys())
     lfns.sort()
     # open jobO
     joName = 'input.py'
@@ -937,7 +937,7 @@ def _getFNsPFC(stringValue,fromFile=True):
             guids.append(guid)
     except:
         type, value, traceBack = sys.exc_info()
-        print "ERROR : could not parse XML - %s %s" % (type, value)
+        print("ERROR : could not parse XML - %s %s" % (type, value))
         #sys.exit(EC_STAGEOUT)
 
     # return
@@ -988,10 +988,10 @@ def getLocalFileMetadata_adler32(file):
         adler32 =  __adler32(file)
     except MemoryError:
         cmd = 'adler32 %s' % file
-        rc, out = commands.getstatusoutput(cmd)
+        rc, out = subprocess.getstatusoutput(cmd)
         if rc != 0:
-            print 'ERROR during execution of %s' %cmd
-            print rc, out
+            print('ERROR during execution of %s' %cmd)
+            print(rc, out)
             adler32 = -1
         else:
             adler32 = out.split('')[-1]
@@ -1015,10 +1015,10 @@ def getLocalFileMetadata(file):
         md5sum=hexify(md.digest())
     except MemoryError:
         cmd = 'md5sum %s' % file
-        rc, out = commands.getstatusoutput(cmd)
+        rc, out = subprocess.getstatusoutput(cmd)
         if rc != 0:
-            print 'ERROR during execution of %s' %cmd
-            print rc, out
+            print('ERROR during execution of %s' %cmd)
+            print(rc, out)
             md5sum = -1
         else:
             md5sum = out.split(' ')[0]
@@ -1037,11 +1037,11 @@ def addFileMetadata(guid, fsize= None, checksum = None, csumtype = 'AD' ):
     if rc != 0:
         err_num = lfc.cvar.serrno
         errstr = lfc.sstrerror(err_num)
-        print err_num, errstr
+        print(err_num, errstr)
         return -1
 
     if fsize:
-        filesize = long(fsize)
+        filesize = int(fsize)
     else:
         filesize = stat.filesize
 
@@ -1053,7 +1053,7 @@ def addFileMetadata(guid, fsize= None, checksum = None, csumtype = 'AD' ):
     if rc != 0:
         err_num = lfc.cvar.serrno
         errstr = lfc.sstrerror(err_num)
-        print err_num, errstr
+        print(err_num, errstr)
         return -1
 
     return 0
@@ -1069,10 +1069,10 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
     
     # Create LFC directory
     cmd = "lfc-mkdir -p %s" %(griddir) 
-    rc, out = commands.getstatusoutput(cmd)
+    rc, out = subprocess.getstatusoutput(cmd)
     if rc != 0:
-        print 'ERROR during execution of %s' %cmd
-        print rc, out
+        print('ERROR during execution of %s' %cmd)
+        print(rc, out)
         return -1, -1, -1
 
     # check which version of lcg-utils we're on
@@ -1092,7 +1092,7 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
         cmd = cmd + " -d %s -g %s -l %s file://%s" %(dest, poolguid, gridlfn, filename)
     else:
         cmd = cmd + " -d %s -l %s file://%s" %(dest, gridlfn, filename)
-    rc, out = commands.getstatusoutput(cmd)
+    rc, out = subprocess.getstatusoutput(cmd)
     
     if rc == 0:
         match = re.search('([\w]+-[\w]+-[\w]+-[\w]+-[\w]+)', out)
@@ -1102,16 +1102,16 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
             guid = out
         # Open output_guids to transfer guids back to GANGA
         f = open('output_guids','a')
-        print >>f, '%s,%s' %(guid,siteID)
+        print('%s,%s' %(guid,siteID), file=f)
         f.close()
         if globalVerbose:
-            print cmd
-            print out
-            print guid
+            print(cmd)
+            print(out)
+            print(guid)
         guid = re.sub('^guid:','',guid)
     else:
-        print 'ERROR during execution of %s' %cmd
-        print rc, out
+        print('ERROR during execution of %s' %cmd)
+        print(rc, out)
         return -1, -1, -1
 
     # size and md5sum
@@ -1119,7 +1119,7 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
 
     ret = addFileMetadata(guid, size, md5sum, 'AD')
     if ret!=0:
-        print 'Error adding file checksum to LFC'
+        print('Error adding file checksum to LFC')
     
     return guid, size, md5sum
 
@@ -1139,7 +1139,7 @@ def dataset_exists(datasetname, siteID):
         dq2_lock.release()
 
     if datasetinfo=={}:
-        print 'Dataset %s is not defined in DQ2 database !' %datasetname
+        print('Dataset %s is not defined in DQ2 database !' %datasetname)
         return -1
 
     try:
@@ -1148,7 +1148,7 @@ def dataset_exists(datasetname, siteID):
             state = dq2.getMetaDataAttribute(datasetname,['state'])
             state = state['state']
         except:
-            print 'Problem retrieving state of dataset %s !' %datasetname
+            print('Problem retrieving state of dataset %s !' %datasetname)
             return -1
     finally:
         dq2_lock.release()
@@ -1171,7 +1171,7 @@ def register_dataset_location(datasetname, siteID):
         dq2_lock.release()
 
     if datasetinfo=={}:
-        print 'Dataset %s is not defined in DQ2 database !' %datasetname
+        print('Dataset %s is not defined in DQ2 database !' %datasetname)
         return -1
 
     try:
@@ -1187,10 +1187,10 @@ def register_dataset_location(datasetname, siteID):
         try:
             datasetvuid = datasetinfo[datasetname]['vuids'][0]
         except KeyError:
-            print 'Dataset %s not found' %datasetname
+            print('Dataset %s not found' %datasetname)
             return -1
         if datasetvuid not in locations:
-            print 'Dataset %s not found' %datasetname
+            print('Dataset %s not found' %datasetname)
             return -1
         alllocations = locations[datasetvuid][0] + locations[datasetvuid][1]
 
@@ -1200,7 +1200,7 @@ def register_dataset_location(datasetname, siteID):
             try:
                 dq2.registerDatasetLocation(datasetname, siteID)
             except DQInvalidRequestException as Value:
-                print 'Error registering location %s of dataset %s: %s' %(datasetname, siteID, Value) 
+                print('Error registering location %s of dataset %s: %s' %(datasetname, siteID, Value)) 
     finally:
         dq2_lock.release()
 
@@ -1236,7 +1236,7 @@ def register_file_in_dataset(datasetname,lfn,guid, size, checksum):
         dq2_lock.release()
 
     if content=={}:
-        print 'Dataset %s is not defined in DQ2 database !' %datasetname
+        print('Dataset %s is not defined in DQ2 database !' %datasetname)
         return
     # Add file to DQ2 dataset
     ret = []
@@ -1246,7 +1246,7 @@ def register_file_in_dataset(datasetname,lfn,guid, size, checksum):
             ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum) 
             val = 0
         except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFileExistsInDatasetException) as Value:
-            print 'Warning, some files already in dataset: %s' %Value
+            print('Warning, some files already in dataset: %s' %Value)
             pass
     finally:
         dq2_lock.release()
@@ -1263,7 +1263,7 @@ def register_datasets_details(datasets,outdata):
             [dataset,lfn,guid,size,md5sum,siteID]=line.split(",")
         except ValueError:
             continue
-        size = long(size)
+        size = int(size)
         adler32='ad:'+md5sum
         if len(md5sum)==32:
             adler32='md5:'+md5sum
@@ -1271,11 +1271,11 @@ def register_datasets_details(datasets,outdata):
         siteID=siteID.strip() # remove \n from last component
         regline=dataset+","+siteID
         if regline in reglines:
-            print "Attempting to register of %s in %s already done, skipping" % (dataset,siteID)
+            print("Attempting to register of %s in %s already done, skipping" % (dataset,siteID))
             #continue
         else:
             reglines.append(regline)
-            print "Attempting to register dataset %s in %s" % (dataset,siteID)
+            print("Attempting to register dataset %s in %s" % (dataset,siteID))
             # use another version of register_dataset_location, as the "secure" one does not allow to keep track of datafiles saved in the fall-back site (CERNCAF)
             try:
                 dq2_lock.acquire()
@@ -1293,11 +1293,11 @@ def register_datasets_details(datasets,outdata):
                     try:
                         datasetinfo = dq2.registerNewDataset(dataset)
                     except (DQDatasetExistsException,Exception) as Value:
-                        print 'Error registering new dataset %s: %s' %(dataset,Value)
+                        print('Error registering new dataset %s: %s' %(dataset,Value))
                 finally:
                     dq2_lock.release()
             else:
-                print "Dataset %s already registered." % dataset
+                print("Dataset %s already registered." % dataset)
             # Register dataset location 
             attempt = 0
             while attempt < 3:
@@ -1338,7 +1338,7 @@ def register_datasets_in_container(container, dataset):
         dq2_lock.release()
 
     if containerinfo!={}:
-        print 'Container %s is already defined in DQ2 database' %containerName
+        print('Container %s is already defined in DQ2 database' %containerName)
 
     # Create output container
     attempt = 0
@@ -1347,10 +1347,10 @@ def register_datasets_in_container(container, dataset):
             dq2_lock.acquire()
             try:
                 dq2.registerContainer(containerName)
-                print 'Registered container %s' %containerName
+                print('Registered container %s' %containerName)
                 attempt = 3
             except:
-                print 'Problem registering container %s - might already exist ? Please check with dq2-ls containername' %containerName
+                print('Problem registering container %s - might already exist ? Please check with dq2-ls containername' %containerName)
                 attempt = attempt + 1
                 time.sleep(30)
         finally:
@@ -1364,7 +1364,7 @@ def register_datasets_in_container(container, dataset):
                 dq2.registerDatasetsInContainer(containerName, [ dataset ])
                 attempt = 3
             except:
-                print 'Problem registering dataset %s in container %s - might already be registered ? Please check with dq2-ls -f datasetname or containername' %(dataset, containerName)
+                print('Problem registering dataset %s in container %s - might already be registered ? Please check with dq2-ls -f datasetname or containername' %(dataset, containerName))
                 attempt = attempt + 1
                 time.sleep(30)
         finally:
@@ -1380,19 +1380,19 @@ def check_duplicates_in_dataset(datasetname, output_files):
         try:
             contents = dq2.listFilesInDataset(out_datasetname)
         except:
-            print 'Problem retrieving content info dataset %s from DQ2! ' %datasetname
+            print('Problem retrieving content info dataset %s from DQ2! ' %datasetname)
             return
     finally:
         dq2_lock.release()
 
     if not contents:
-        print 'Dataset %s is empty.' %datasetname
+        print('Dataset %s is empty.' %datasetname)
         return
 
     contents = contents[0]
     fileNames = []
 
-    for guid, keys in contents.iteritems():
+    for guid, keys in contents.items():
         fileNames.append(keys['lfn'])
 
     filePattern = []
@@ -1402,10 +1402,10 @@ def check_duplicates_in_dataset(datasetname, output_files):
             match = re.search(patName,fileName)
             if match:
                 if match.group(0) in filePattern:
-                    print '!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!'
-                    print 'Possible duplicated output file %s in output dataset %s' %(fileName, datasetname)
-                    print 'After all subjobs have finished run j.outputdata.clean_duplicates_in_dataset() or j.outputdata.clean_duplicates_in_container()'
-                    print '!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!'
+                    print('!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!')
+                    print('Possible duplicated output file %s in output dataset %s' %(fileName, datasetname))
+                    print('After all subjobs have finished run j.outputdata.clean_duplicates_in_dataset() or j.outputdata.clean_duplicates_in_container()')
+                    print('!!!!!!!!!!! ATTENTION !!!!!!!!!!!!!!')
                 else:
                     filePattern.append(match.group(0))
 
@@ -1473,7 +1473,7 @@ if __name__ == '__main__':
     except:
         atlas_release = '15.5.1'
         if not detsetype:
-            print "ERROR : ATLAS_RELEASE not defined, using %s" %(atlas_release)
+            print("ERROR : ATLAS_RELEASE not defined, using %s" %(atlas_release))
 
         pass
 
@@ -1485,7 +1485,7 @@ if __name__ == '__main__':
     except:
         datasettype = 'DQ2_LOCAL'
         if not detsetype:
-            print "ERROR : DATASETTYPE not defined, using %s" %(datasettype)
+            print("ERROR : DATASETTYPE not defined, using %s" %(datasettype))
         pass
 
     # use DQ2_LOCAL as default
@@ -1497,7 +1497,7 @@ if __name__ == '__main__':
         datatype = os.environ['DATASETDATATYPE']
     except:
         if not detsetype:
-            print "ERROR : DATASETDATATYPE not defined, using MC"
+            print("ERROR : DATASETDATATYPE not defined, using MC")
         datatype = 'MC'
         pass
     if not datatype in [ 'DATA', 'MC', 'MuonCalibStream' ]:
@@ -1508,13 +1508,13 @@ if __name__ == '__main__':
         dq2urlserver = os.environ['DQ2_URL_SERVER']
     except:
         if not detsetype:        
-            print "ERROR: Environment variable DQ2_URL_SERVER not set"
+            print("ERROR: Environment variable DQ2_URL_SERVER not set")
         #sys.exit(EC_Configuration)
     try:
         dq2urlserverssl = os.environ['DQ2_URL_SERVER_SSL']
     except:
         if not detsetype:        
-            print "ERROR: Environment variable DQ2_URL_SERVER_SSL not set"
+            print("ERROR: Environment variable DQ2_URL_SERVER_SSL not set")
         #sys.exit(EC_Configuration)
 
     if datasettype in [ 'DQ2_DOWNLOAD', 'DQ2_LOCAL', 'TAG', 'TAG_REC', 'DQ2_OUT', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
@@ -1523,7 +1523,7 @@ if __name__ == '__main__':
         localsiteid = ''
         siteID = ''
         cmd =  "grep DQ2_LOCAL_SITE_ID $VO_ATLAS_SW_DIR/ddm/latest/setup.sh |  tr '=' '\n' | tail -1"
-        rc, out = commands.getstatusoutput(cmd)
+        rc, out = subprocess.getstatusoutput(cmd)
         if not rc and not out.startswith('grep') and out.endswith('DISK'):
             dq2localsiteid = out
         else:
@@ -1570,15 +1570,15 @@ if __name__ == '__main__':
                     break
 
         if not detsetype:
-            print 'localsiteid: %s' %(localsiteid)
-            print 'DQ2_LOCAL_SITE_ID: %s' %(localsiteid)
-            print 'localsitesrm: %s' %(localsitesrm) 
-            print 'configSETYPE: %s' %(configSETYPE)
-            print 'configLOCALPROTOCOL: %s' %(configLOCALPROTOCOL)
-            print 'configLOCALPREFIX: %s' %(configLOCALPREFIX)
+            print('localsiteid: %s' %(localsiteid))
+            print('DQ2_LOCAL_SITE_ID: %s' %(localsiteid))
+            print('localsitesrm: %s' %(localsitesrm)) 
+            print('configSETYPE: %s' %(configSETYPE))
+            print('configLOCALPROTOCOL: %s' %(configLOCALPROTOCOL))
+            print('configLOCALPREFIX: %s' %(configLOCALPREFIX))
             
         else:
-            print configSETYPE.upper()
+            print(configSETYPE.upper())
             sys.exit(0)
 
         # Find LFC Catalog host and set LFC_HOST 
@@ -1588,27 +1588,27 @@ if __name__ == '__main__':
         else:
             lfc_host = ''
         os.environ[ 'LFC_HOST' ] = lfc_host
-        print 'LFC_HOST: %s' %(lfc_host)
+        print('LFC_HOST: %s' %(lfc_host))
 
         # Get location list of dataset
         try:
             datasetlocation = os.environ['DATASETLOCATION'].split(":")
         except:
             if not detsetype:
-                print "ERROR : DATASETLOCATION not defined"
+                print("ERROR : DATASETLOCATION not defined")
             datasetlocation = []
             pass
 
         for sitename in datasetlocation:
             if TiersOfATLAS.getSiteProperty(sitename,'alternateName')==dq2alternatename:
-                print 'detected DQ2_LOCAL_SITE_ID: %s' %(sitename)
+                print('detected DQ2_LOCAL_SITE_ID: %s' %(sitename))
         
         if localsitesrm!='':
             defaultSE = _getDefaultStorage(localsitesrm)
         else:
             defaultSE = ''
         
-        print 'defaultSE: %s' %(defaultSE)
+        print('defaultSE: %s' %(defaultSE))
 
     ######################################################################
     # Start input configuration
@@ -1620,31 +1620,31 @@ if __name__ == '__main__':
         # TAG DATASET ###########################################################
         if 'TAG_TYPE' in os.environ:
             
-            print "Preparing TAG Datasets..."
+            print("Preparing TAG Datasets...")
             files = {}
 
             if os.environ['TAG_TYPE'] == 'LOCAL':
                 if os.access('./tag_file_list',os.R_OK):
 
-                    print "TAG list file found in input sandbox. Using this as input..."
+                    print("TAG list file found in input sandbox. Using this as input...")
                     tag_files = {}
                     for tag_file in open("./tag_file_list").readlines():
                         filename = tag_file.strip()
                         if filename[ len(filename)-4:] == '.dat':
                             # uncompress the data files
-                            print "UNCOMPRESSING TAG FILES..."
+                            print("UNCOMPRESSING TAG FILES...")
                             cmd = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH ; ./CollInflateEventInfo.exe " + filename
                             rc, out = getstatusoutput(cmd)
-                            print out
+                            print(out)
                             
                             if (rc!=0):
-                                print "ERROR: error during CollInflateEventInfo.exe. Retrying..."
+                                print("ERROR: error during CollInflateEventInfo.exe. Retrying...")
                                 cmd = "export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH_BACKUP_ATH; export PATH=$PATH_BACKUP_ATH; export PYTHONPATH=$PYTHONPATH_BACKUP_ATH;./CollInflateEventInfo.exe " + filename
                                 rc, out = getstatusoutput(cmd)
                                 
-                                print out
+                                print(out)
                                 if (rc!=0):
-                                    print "ERROR: error during CollInflateEventInfo.exe. Giving up..."
+                                    print("ERROR: error during CollInflateEventInfo.exe. Giving up...")
                                     sys.exit(-1)
 
                             os.system("mv outColl.root %s" % filename+".root")
@@ -1653,10 +1653,10 @@ if __name__ == '__main__':
                         item = {'pfn': filename,'guid':''}
                         tag_files[filename] = item
 
-                    print "Creating JO file with this file list:"
-                    print tag_files
+                    print("Creating JO file with this file list:")
+                    print(tag_files)
                 else:
-                    print "ERROR: Local TAG selected but no local file list."
+                    print("ERROR: Local TAG selected but no local file list.")
                     sys.exit(-1)
                     
         # Sort out datasets, create PFC and input.py #####################################
@@ -1667,17 +1667,17 @@ if __name__ == '__main__':
 
             # add additional files to the poolfilecatalog:
             if os.access('add_files', os.R_OK):
-                print "old datasetnames:"
-                print datasetnames
+                print("old datasetnames:")
+                print(datasetnames)
                 new_datasetnames = [ line.strip().split(':')[0] for line in file('add_files') ]
                 for new_datasetname in new_datasetnames:
                     if not new_datasetname in datasetnames:
                         datasetnames.append(new_datasetname)
-                print "new datasetnames:"
-                print datasetnames
+                print("new datasetnames:")
+                print(datasetnames)
                 
         except:
-            print "DATASETNAME not defined !"
+            print("DATASETNAME not defined !")
             if not datasettype == 'TIER3':
                 sys.exit(EC_Configuration)
             else:
@@ -1690,17 +1690,17 @@ if __name__ == '__main__':
             lfns = [ line.strip() for line in file(input) ]
         else:
             for line in file('input_files'):
-                print "****   " + line
+                print("****   " + line)
             lfns = [ line.strip() for line in file('input_files') ]
             
             # add additional files to the poolfilecatalog:
             if os.access('add_files', os.R_OK):
-                print "Old lfns:"
-                print lfns
+                print("Old lfns:")
+                print(lfns)
                 add_lfns = [ line.strip().split(':')[1] for line in file('add_files') ]
                 lfns = lfns + add_lfns
-                print "New lfns:"
-                print lfns
+                print("New lfns:")
+                print(lfns)
 
 
         # Get rid of trailing numbers in filenames in LFC datasets
@@ -1727,12 +1727,12 @@ if __name__ == '__main__':
             
             # add additional files to the poolfilecatalog:
             if os.access('add_files', os.R_OK):
-                print "Old guids:"
-                print guids
+                print("Old guids:")
+                print(guids)
                 add_guids = [ line.strip().split(':')[2] for line in file('add_files') ]
                 guids = guids + add_guids
-                print "New guids:"
-                print guids
+                print("New guids:")
+                print(guids)
                                                                             
         # Check if ESD backnavigation files are there
         lfns_esd = []
@@ -1748,17 +1748,17 @@ if __name__ == '__main__':
             guids_esd = [ line.strip() for line in file('input_esd_guids') ]
             guids = guids + guids_esd
         except IOError:
-            print "Warning %s not found - no back navigation" % pfn
+            print("Warning %s not found - no back navigation" % pfn)
             pass
 
         # Inputfile dictionary
         ddmFileMap = {}
-        for i in xrange(0,len(lfns)):
+        for i in range(0,len(lfns)):
             ddmFileMap[lfns[i]] = guids[i]
 
         # Abort if no files are requested
         if not len(lfns):
-            print 'No files requested.'
+            print('No files requested.')
             sys.exit(EC_Configuration)
         
     # DQ2_DOWNLOAD or LFC ####################################################
@@ -1771,9 +1771,9 @@ if __name__ == '__main__':
         # Is python32 available
         cmd = 'which python32'
         pythoncmd = ''
-        rc, out = commands.getstatusoutput(cmd)
+        rc, out = subprocess.getstatusoutput(cmd)
         if (rc!=0):
-            print 'No python32 found'
+            print('No python32 found')
             pythoncmd = ''
         else:
             pythoncmd = out.strip()
@@ -1790,7 +1790,7 @@ if __name__ == '__main__':
                 dq2_get_path = None
                 rc, out = getstatusoutput('which dq2-get')
                 if rc != 0:
-                    print 'ERROR: dq2-get command not found'
+                    print('ERROR: dq2-get command not found')
                     sys.exit(EC_DQ2GET)
                 else:
                     dq2_get_path = out
@@ -1799,11 +1799,11 @@ if __name__ == '__main__':
                 flist = ','.join(lfns) 
                 #cmd = '%s %s -s %s -t %s -f %s %s' % (pythoncmd, dq2_get_path, os.environ['DQ2_LOCAL_SITE_ID'], timeout, flist, datasetname)
                 #cmdretry = '%s %s -s %s -t %s -f %s %s' % (pythoncmd, dq2_get_path, 'CERN-PROD_DATADISK', timeout, flist, datasetname)
-                print 'export %s=%s' % ('PYTHONPATH', os.environ['PYTHONPATH'])
-                print 'export %s=%s' % ('LD_LIBRARY_PATH', os.environ['LD_LIBRARY_PATH'])
-                for key in os.environ.keys():
+                print('export %s=%s' % ('PYTHONPATH', os.environ['PYTHONPATH']))
+                print('export %s=%s' % ('LD_LIBRARY_PATH', os.environ['LD_LIBRARY_PATH']))
+                for key in list(os.environ.keys()):
                     if key.find('DQ2_') == 0:
-                        print 'export %s=%s' % (key, os.environ[key])
+                        print('export %s=%s' % (key, os.environ[key]))
                 cmd = '%s %s --client-id=ganga -s %s -t %s -p lcg -D -H %s -f %s %s' % (pythoncmd, dq2_get_path, os.environ['DQ2_LOCAL_SITE_ID'], timeout, directory, flist, datasetname)
                 cmdretry = '%s %s -s %s -t %s -p lcg -D -H %s -f %s %s' % (pythoncmd, dq2_get_path, 'CERN-PROD_DATADISK', timeout, directory, flist, datasetname)
 
@@ -1814,24 +1814,24 @@ if __name__ == '__main__':
                     cmd = cmd + lfn +" "
                     cmdretry = cmdretry + lfn +" "
 
-            print 'INFO: dq2 get command: %s' % cmd
-            print 'INFO: dq2 get retry command: %s' % cmdretry
+            print('INFO: dq2 get command: %s' % cmd)
+            print('INFO: dq2 get retry command: %s' % cmdretry)
 
             # execute dq2 command
             rc, out = getstatusoutput(cmd)
-            print out
+            print(out)
             if (rc!=0):
-                print "ERROR: error during dq2-get occured"
+                print("ERROR: error during dq2-get occured")
                 # retry dq2 command
                 rc, out = getstatusoutput(cmdretry)
-                print out
+                print(out)
                 if (rc!=0):
-                    print "ERROR: error during retry of dq2-get from CERN (or BNL) occured"
+                    print("ERROR: error during retry of dq2-get from CERN (or BNL) occured")
                     sys.exit(EC_DQ2GET)
 
         # check if all files have been transfered
         pfnsnew = []
-        for key, value in ddmFileMap.iteritems():
+        for key, value in ddmFileMap.items():
             name = os.path.basename(key)
             pfn = os.path.join(directory,name)
         # check if all files exists and if file size greater 0
@@ -1839,7 +1839,7 @@ if __name__ == '__main__':
                 open(pfn)
                 fsize = os.stat(pfn).st_size
             except IOError:
-                print "ERROR %s not found" % name
+                print("ERROR %s not found" % name)
                 continue
             if (fsize>0):
                 # add to PoolFileCatalog.xml
@@ -1860,7 +1860,7 @@ if __name__ == '__main__':
         if len(pfnsnew)>0:
             returnvalue=0
         else:
-            print 'ERROR: Datasets %s are empty at %s' %(datasetnames, localsiteid)
+            print('ERROR: Datasets %s are empty at %s' %(datasetnames, localsiteid))
             returnvalue=EC_QueryFiles
 
 
@@ -1869,8 +1869,8 @@ if __name__ == '__main__':
     if datasettype in [ 'DQ2_LOCAL', 'TAG', 'TAG_REC', 'TNT_LOCAL', 'TIER3' ]:
 
         if globalVerbose:
-            print ddmFileMap
-            print defaultSE
+            print(ddmFileMap)
+            print(defaultSE)
 
         dq2tracertime.append(time.time())
         # get list of files from LFC
@@ -1884,7 +1884,7 @@ if __name__ == '__main__':
 
         # NIKHEF/SARA special case
         if len(tUrlMap)==0 and (os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('NIKHEF') or os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('SARA')):
-            print 'Special setup at NIKHEF/SARA - re-reading LFC'
+            print('Special setup at NIKHEF/SARA - re-reading LFC')
             if os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('NIKHEF') or os.environ[ 'DQ2_LOCAL_SITE_ID' ].startswith('SARA'):
                 localsitesrm = TiersOfATLAS.getSiteProperty('SARA-MATRIX_MCDISK','srm')
                 configLOCALPROTOCOL = 'gsidcap'
@@ -1900,7 +1900,7 @@ if __name__ == '__main__':
         # Check md5sum
         if len(tUrlMap)>0 and 'GANGA_CHECKMD5SUM' in os.environ and os.environ['GANGA_CHECKMD5SUM']=='1':
             tUrlMapTemp = tUrlMap
-            for lfn, turl in tUrlMap.iteritems():
+            for lfn, turl in tUrlMap.items():
 
                 if md5sumMap[lfn] == '': continue
                 
@@ -1913,31 +1913,31 @@ if __name__ == '__main__':
 
                 md5sum = ''
                 cmd = cmd + turl + ' - | md5sum'
-                rc, out = commands.getstatusoutput(cmd)
+                rc, out = subprocess.getstatusoutput(cmd)
                 if rc == 0:
                     for line in out.split("\n"):
                         match = re.search('^(\S*)  -',line)
                         if match:
                             md5sum = match.group(1)
                             if globalVerbose:
-                                print lfn, md5sumMap[lfn], md5sum
+                                print(lfn, md5sumMap[lfn], md5sum)
                             if md5sum != 'd41d8cd98f00b204e9800998ecf8427e' and md5sumMap[lfn] != md5sum:
-                                print 'ERROR: %s has wrong md5sum - local: %s, in LFC: %s - removing from input file list' %(turl, md5sum, md5sumMap[lfn])
+                                print('ERROR: %s has wrong md5sum - local: %s, in LFC: %s - removing from input file list' %(turl, md5sum, md5sumMap[lfn]))
                                 del tUrlMapTemp[lfn]
             
             tUrlMap = tUrlMapTemp
 
         if globalVerbose:
-            print sUrlMap
-            print tUrlMap
-            print fsizeMap
-            print md5sumMap
+            print(sUrlMap)
+            print(tUrlMap)
+            print(fsizeMap)
+            print(md5sumMap)
         
         # append protocol
         if not datasettype == 'TIER3':
             _appendProtocol(sUrlMap,'gfal')
             if globalVerbose:
-                print sUrlMap
+                print(sUrlMap)
 
         # Use GFAL or TURL ?
         if configLOCALPROTOCOL == 'gfal':
@@ -1949,17 +1949,17 @@ if __name__ == '__main__':
         files = {}
         doConfig = True
         name = ''
-        for lfn in dirPfnMap.keys():
+        for lfn in list(dirPfnMap.keys()):
             # get GUID
-            if lfn in ddmFileMap.keys():
+            if lfn in list(ddmFileMap.keys()):
                 guid = ddmFileMap[lfn]
             else:
                 # check generic LFN
                 genLFN = re.sub('\.\d+$','',lfn)
-                if genLFN in ddmFileMap.keys():
+                if genLFN in list(ddmFileMap.keys()):
                     guid = ddmFileMap[genLFN]
                 else:
-                    print "WARNING: %s is not found in %s : ignored" % (lfn,datasetnames)
+                    print("WARNING: %s is not found in %s : ignored" % (lfn,datasetnames))
                     continue
             # get PFN
             pfn = dirPfnMap[lfn]
@@ -1981,7 +1981,7 @@ if __name__ == '__main__':
             files[lfn] = item
 
         if globalVerbose:
-            print files
+            print(files)
 
         # make PoolFileCatalog
         if not datasettype == 'TIER3':
@@ -1993,7 +1993,7 @@ if __name__ == '__main__':
             # Remove ESD files
             if lfns_esd:
                 for lfn in lfns_esd:
-                    if lfn in files.keys():
+                    if lfn in list(files.keys()):
                         files.pop(lfn)
 
             # remove any tag-referenced files (not the tag files themselves
@@ -2003,7 +2003,7 @@ if __name__ == '__main__':
                 if add_lfns:
                     tag_flag = True
                     for lfn in add_lfns:
-                        if lfn in files.keys():
+                        if lfn in list(files.keys()):
                             files.pop(lfn)
 
                 files = tag_files
@@ -2026,16 +2026,16 @@ if __name__ == '__main__':
             #        except:
             #            pass
 
-            print 'prependJobO = %s ' %prependJobO
+            print('prependJobO = %s ' %prependJobO)
             _makeJobO(files, tag=tag_flag, version=atlas_release_major, dtype=datatype, usePrependJobO = prependJobO)
 
         if len(files)>0:
             returnvalue=0
         else:
             if datasettype == 'TIER3':
-                print 'ERROR: Dataset is/are empty' 
+                print('ERROR: Dataset is/are empty') 
             else:
-                print 'ERROR: Dataset(s) %s is/are empty at %s' %(datasetnames, localsiteid)
+                print('ERROR: Dataset(s) %s is/are empty at %s' %(datasetnames, localsiteid))
                 returnvalue=EC_QueryFiles
 
         dq2tracertime.append(time.time())
@@ -2055,7 +2055,7 @@ if __name__ == '__main__':
         cataloglfns, catalogpfns, catalogguids = _getFNsPFC('PoolFileCatalog.xml')
         catalogguidMap = {}
 
-        for i in xrange(0,len(cataloglfns)):
+        for i in range(0,len(cataloglfns)):
             catalogguidMap[cataloglfns[i]] = catalogguids[i]
 
         # Read output_files and check if it exists - if not revert to files of unparsed jobOptions
@@ -2069,7 +2069,7 @@ if __name__ == '__main__':
             output_files = args
 
         dir = os.listdir('.')
-        for i in xrange(0,len(output_files_new)):
+        for i in range(0,len(output_files_new)):
             try:
                 open(output_files_new[i],'r')
                 
@@ -2094,7 +2094,7 @@ if __name__ == '__main__':
                     sys.exit(EC_STAGEOUT)
 
         if len(output_files)==0:
-            print 'ERROR: no output files existing to stage out.'
+            print('ERROR: no output files existing to stage out.')
             sys.exit(EC_STAGEOUT)
 
         # Get datasetname
@@ -2105,7 +2105,7 @@ if __name__ == '__main__':
             sys.exit(EC_Configuration)
 
         if not len(output_files):
-            print 'No files requested.'
+            print('No files requested.')
             sys.exit(EC_Configuration)
 
         # Set siteID
@@ -2125,7 +2125,7 @@ if __name__ == '__main__':
         try:
             backup_locations = os.environ['DQ2_BACKUP_OUTPUT_LOCATIONS'].split(":")
         except:
-            print "ERROR : DQ2_BACKUP_OUTPUT_LOCATIONS not defined"
+            print("ERROR : DQ2_BACKUP_OUTPUT_LOCATIONS not defined")
             backup_locations = []
             pass
 
@@ -2135,8 +2135,8 @@ if __name__ == '__main__':
             #    temp_locations = [ siteID ]
             
         except:
-            print "ERROR: OUTPUT_LOCATION not defined or empty srm value"
-            print "Using DQ2_BACKUP_OUTPUT_LOCATIONS" 
+            print("ERROR: OUTPUT_LOCATION not defined or empty srm value")
+            print("Using DQ2_BACKUP_OUTPUT_LOCATIONS") 
             temp_locations = [ ]
 
 
@@ -2160,14 +2160,14 @@ if __name__ == '__main__':
         if 'CERN' in temp_locations:
             temp_locations.remove('CERN')
 
-        print 'Unchecked output locations: %s'  %(temp_locations)
+        print('Unchecked output locations: %s'  %(temp_locations))
         new_locations = []
 
         # Get space token names:
         try:
             space_token_names = os.environ['DQ2_OUTPUT_SPACE_TOKENS'].split(":")
         except:
-            print "ERROR : DQ2_OUTPUT_SPACE_TOKENS not defined"
+            print("ERROR : DQ2_OUTPUT_SPACE_TOKENS not defined")
             space_token_names = [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK' ]
             pass
 
@@ -2175,8 +2175,8 @@ if __name__ == '__main__':
            not 'T2ATLASSCRATCHDISK' in space_token_names or \
            not 'ATLASLOCALGROUPDISK' in space_token_names or \
            not 'T2ATLASLOCALGROUPDISK' in space_token_names: 
-            print "ERROR : DQ2_OUTPUT_SPACE_TOKENS not well defined"
-            print "Adding ['ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK', 'T2ATLASSCRATCHDISK', 'T2ATLASLOCALGROUPDISK']"
+            print("ERROR : DQ2_OUTPUT_SPACE_TOKENS not well defined")
+            print("Adding ['ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK', 'T2ATLASSCRATCHDISK', 'T2ATLASLOCALGROUPDISK']")
             space_token_names = space_token_names + ['ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK', 'T2ATLASSCRATCHDISK', 'T2ATLASLOCALGROUPDISK']
 
         for ilocation in temp_locations:
@@ -2215,7 +2215,7 @@ if __name__ == '__main__':
                 new_locations.append(temp_location)
 
         temp_locations = new_locations
-        print 'Checked output locations: %s'  %(temp_locations)
+        print('Checked output locations: %s'  %(temp_locations))
 
         # Get output lfn
         try:
@@ -2292,9 +2292,9 @@ if __name__ == '__main__':
                 output_tokenname = output_locations[siteID]['token']
                 os.environ[ 'LFC_HOST' ] = output_lfc_host
                 os.environ[ 'DQ2_LFC_HOME' ] = output_lfc_home
-                print 'LFC_HOST: %s' %os.environ[ 'LFC_HOST' ]
-                print 'DQ2_LFC_HOME: %s' %os.environ[ 'DQ2_LFC_HOME' ]
-                print 'Storing file %s at: %s' %(file, siteID)
+                print('LFC_HOST: %s' %os.environ[ 'LFC_HOST' ])
+                print('DQ2_LFC_HOME: %s' %os.environ[ 'DQ2_LFC_HOME' ])
+                print('Storing file %s at: %s' %(file, siteID))
 
                 # Create output info
                 dest = os.path.join(output_srm, output_lfn, file)
@@ -2306,8 +2306,8 @@ if __name__ == '__main__':
                 try:
                     poolguid = catalogguidMap[file]
                 except KeyError:
-                    print 'poolguid not found in PoolFileCatalog.xml'
-                    print 'Trying pool_extractFileIdentifier.py ...'
+                    print('poolguid not found in PoolFileCatalog.xml')
+                    print('Trying pool_extractFileIdentifier.py ...')
                     poolextr = """#!/bin/bash
 
 if [ n$GANGA_ATHENA_WRAPPER_MODE = n'grid' ]; then
@@ -2341,16 +2341,16 @@ pool_extractFileIdentifier.py %(filename)s
                     outFile.write(poolextr)
                     outFile.close()
 
-                    rc, out = commands.getstatusoutput('chmod +x poolextr.sh; ./poolextr.sh')
+                    rc, out = subprocess.getstatusoutput('chmod +x poolextr.sh; ./poolextr.sh')
                     if rc == 0:
                         for line in out.split():
                             match = re.search('^([\w]+-[\w]+-[\w]+-[\w]+-[\w]+)',line)
                             if match:
                                 poolguid = match.group(1)
                     else:
-                        print 'No poolguid stored in file or extraction failed.'
+                        print('No poolguid stored in file or extraction failed.')
 
-                print 'poolguid: %s' %poolguid
+                print('poolguid: %s' %poolguid)
 
                 guid, size, md5sum = save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, siteID, output_tokenname)
                 if guid!=-1:
@@ -2360,12 +2360,12 @@ pool_extractFileIdentifier.py %(filename)s
                     md5sums.append(md5sum)
                     break
                 else:
-                    print 'ERROR: file not saved to %s in attempt number %s ...' %(siteID, count)
+                    print('ERROR: file not saved to %s in attempt number %s ...' %(siteID, count))
                     if count == retry:
                         if siteCount<len(temp_locations):
                             siteCount = siteCount + 1
                             count = 0
-                            print 'ERROR: file not saved to %s - using now %s ...' %(siteID, temp_locations[siteCount] )
+                            print('ERROR: file not saved to %s - using now %s ...' %(siteID, temp_locations[siteCount] ))
                         else:
                             count = retry
                             
@@ -2373,7 +2373,7 @@ pool_extractFileIdentifier.py %(filename)s
                     time.sleep(120)
 
             if siteCount==len(temp_locations)-1:
-                print 'ERROR: file not saved to any location ...' 
+                print('ERROR: file not saved to any location ...') 
                 sys.exit(EC_STAGEOUT)
             
             # Write output_data
@@ -2392,12 +2392,12 @@ pool_extractFileIdentifier.py %(filename)s
                     break
 
             f_data_string = '%s,%s,%s,%s,%s,%s' % (out_datasetname, file, guid, size, md5sum, siteID) 
-            print >>f_data, f_data_string 
+            print(f_data_string, file=f_data) 
 
         f_data.close()
 
         f2 = open('output_location','w')
-        print >>f2, siteID 
+        print(siteID, file=f2) 
         f2.close()
 
         # Register all output file details in DQ2

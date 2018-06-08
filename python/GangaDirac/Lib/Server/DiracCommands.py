@@ -176,7 +176,7 @@ def getOutputDataInfo(id, pipe_out=True):
                 continue
             rp = dirac.getReplicas(lfn)
             if rp.get('OK', False) and lfn in rp.get('Value', {'Successful': {}})['Successful']:
-                ret[file_name]['LOCATIONS'] = rp['Value']['Successful'][lfn].keys()
+                ret[file_name]['LOCATIONS'] = list(rp['Value']['Successful'][lfn].keys())
     return ret
 
 
@@ -299,7 +299,7 @@ def getStateTime(id, status, pipe_out=True):
         checkstr = ''
 
     if checkstr == '':
-        print("%s" % None)
+        print(("%s" % None))
         return
 
     for l in L:
@@ -333,7 +333,7 @@ def monitorJobs(job_ids, status_mapping, pipe_out=True):
                 state_job_status[update_status] = []
             state_job_status[update_status].append(job_id)
     state_info = {}
-    for this_status, these_jobs in state_job_status.iteritems():
+    for this_status, these_jobs in state_job_status.items():
         state_info[this_status] = getBulkStateTime(these_jobs, this_status, pipe_out=False)
 
     return (status_info, state_info)

@@ -1,3 +1,3 @@
-from NA62MC import *
+from .NA62MC import *
 
 

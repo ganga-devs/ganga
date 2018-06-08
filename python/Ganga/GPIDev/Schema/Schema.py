@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -129,11 +129,11 @@ class Schema(object):
         return self._pluginclass._name
 
     def allItemNames(self):
-        return self.datadict.keys()
+        return list(self.datadict.keys())
 
     def allItems(self):
-        if self.datadict is None: return zip()
-        return zip(self.datadict.keys(), self.datadict.values())
+        if self.datadict is None: return list(zip())
+        return list(zip(list(self.datadict.keys()), list(self.datadict.values())))
 
     def simpleItems(self):
         return self._filter(SimpleItem)
@@ -157,7 +157,7 @@ class Schema(object):
         if self.datadict is None:
             return []
 
-        r = [(n, c) for (n, c) in self.datadict.iteritems() if issubclass(c.__class__, klass)]
+        r = [(n, c) for (n, c) in self.datadict.items() if issubclass(c.__class__, klass)]
         return r
 
     def isEqual(self, schema):
@@ -166,7 +166,7 @@ class Schema(object):
     # make a schema copy for a derived class, does not copy the pluginclass
     def inherit_copy(self):
         new_dict = {}
-        for key, val in self.datadict.iteritems():
+        for key, val in self.datadict.items():
             new_dict[key] = copy.deepcopy(val)
         return Schema(copy.deepcopy(self.version), new_dict)
 
@@ -445,7 +445,7 @@ class Item(object):
 
         what = stripProxy(_what)
 
-        if isinstance(what, types.InstanceType):
+        if isinstance(what, object):
             what = what.__class__
 
         return issubclass(self.__class__, what)
@@ -550,7 +550,7 @@ class Item(object):
             else:  # Non-sequence
                 if isinstance(self._meta['defvalue'], dict):
                     if isinstance(val, dict):
-                        for dKey, dVal in val.iteritems():
+                        for dKey, dVal in val.items():
                             if not valueTypeAllowed(dKey, validTypes) or not valueTypeAllowed(dVal, validTypes):
                                 raise TypeMismatchError('Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % (dKey, dVal, name, validTypes))
                     else:  # new value is not a dict
@@ -719,10 +719,10 @@ if __name__ == '__main__':
     assert(schema.name == 'Job')
     assert(schema.category == 'jobs')
 
-    assert(schema.allItems() == dd.items())
+    assert(schema.allItems() == list(dd.items()))
 
     cc = (schema.componentItems() + schema.simpleItems()).sort()
-    cc2 = dd.items().sort()
+    cc2 = list(dd.items()).sort()
     assert(cc == cc2)
 
     for i in schema.allItems():

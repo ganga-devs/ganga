@@ -6,7 +6,7 @@
 ###############################################################################
 # A DQ2 dataset
 
-import sys, os, re, urllib, commands, imp, threading, time, fnmatch, getpass
+import sys, os, re, urllib.request, urllib.parse, urllib.error, subprocess, imp, threading, time, fnmatch, getpass
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
@@ -39,7 +39,7 @@ def convertDQ2ToClient(dataset):
 
     try:
         #dq2_lock.acquire()
-        tmpListdq2 = dq2.listFilesInDataset(dataset, long=False)[0]
+        tmpListdq2 = dq2.listFilesInDataset(dataset, int=False)[0]
     except:
         tmpListdq2 = {}
     finally:
@@ -48,7 +48,7 @@ def convertDQ2ToClient(dataset):
 
     tmpListPanda = {}
 
-    for key, value in tmpListdq2.iteritems():
+    for key, value in tmpListdq2.items():
         tmpvalue = {}
         tmpvalue['scope'] = value['scope']
         tmpvalue['md5sum'] = value['checksum']
@@ -105,7 +105,7 @@ def listDatasets(name,filter=True):
 
     try:
         #dq2_lock.acquire()
-        datasets = [ (lfn,ids['vuids'][0]) for lfn, ids in dq2.listDatasets(name).iteritems() ]
+        datasets = [ (lfn,ids['vuids'][0]) for lfn, ids in dq2.listDatasets(name).items() ]
     finally:
         #dq2_lock.release()
         pass
@@ -134,8 +134,8 @@ def getIncompleteLocationsCE(locations, minnum = 0):
     '''helper function to access the CE associated to a list of locations from incomplete list '''
 
     ces = []
-    for dataset, info in locations.iteritems():
-        for location, num in info.iteritems():
+    for dataset, info in locations.items():
+        for location, num in info.items():
             if num >= minnum:
                 try:
                     temp_ces = ToACache.sites[location]['ce']
@@ -150,8 +150,8 @@ def getIncompleteLocations(locations, minnum = 0):
     '''helper function to access a list of locations from incomplete list '''
 
     ces = []
-    for dataset, info in locations.iteritems():
-        for location, num in info.iteritems():
+    for dataset, info in locations.items():
+        for location, num in info.items():
             if num >= minnum:
                 ces.append(location)
 
@@ -212,7 +212,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
             datasetvuid = datasetinfo[dataset]['vuids'][0]
         except KeyError:
             try:
-                datasetvuid = datasetinfo.values()[0]['vuids'][0]
+                datasetvuid = list(datasetinfo.values())[0]['vuids'][0]
             except:
                 try:
                     datasetvuid = dq2.getMetaDataAttribute(dataset,['latestvuid'])['latestvuid']
@@ -231,7 +231,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
 
         try:
             #dq2_lock.acquire()
-            contents = dq2.listFilesInDataset(dataset, long=False)
+            contents = dq2.listFilesInDataset(dataset, int=False)
         except:
             contents = {}
         finally:
@@ -247,7 +247,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
 
         completeLocations = [ str(i) for i in locations[datasetvuid][1]]
 
-        for guid, keys in contents.iteritems():
+        for guid, keys in contents.items():
             guidsDataset.append(str(guid))
             if skipReplicaLookup:
                 guidLocation[guid] = completeLocations
@@ -311,7 +311,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                 else:
                     locations_checktime[location] = True                    
 
-            for location, value in locations_checktime.iteritems():
+            for location, value in locations_checktime.items():
                 if not value:
                     allchecked = False
                     break
@@ -410,7 +410,7 @@ def _resolveSites(sites):
 def whichCloud (site):
     is_site(site)
 
-    for cloudID, eachCloud in ToACache.dbcloud.iteritems():
+    for cloudID, eachCloud in ToACache.dbcloud.items():
         sites = getSites(eachCloud)
         if site in sites:
             return cloudID
@@ -418,7 +418,7 @@ def whichCloud (site):
     info = { 'CERN' : 'T0', 'CNAF' : 'IT', 'PIC': 'ES', 'LYON': 'FR',
              'RAL' : 'UK', 'FZK': 'DE', 'SARA' : 'NL', 'ASGC' : 'TW',
              'TRIUMF' : 'CA', 'BNL' : 'US', 'NDGF' : 'NG' }
-    for sitename, cloud in info.iteritems():
+    for sitename, cloud in info.items():
         if site == sitename:
             return cloud
         
@@ -614,7 +614,7 @@ class DQ2Dataset(Dataset):
             try:
                 #dq2_lock.acquire()
                 try:
-                    contents = dq2.listFilesInDataset(dataset, long=False)
+                    contents = dq2.listFilesInDataset(dataset, int=False)
                 except:
         
                     contents = []
@@ -634,7 +634,7 @@ class DQ2Dataset(Dataset):
             # Convert 0.3 output to 0.2 style
             contents = contents[0]
             contents_new = []
-            for guid, info in contents.iteritems():
+            for guid, info in contents.items():
                 # Rucio patch
                 contents_new.append( (str(guid), info['lfn']) )
                 contents_size[guid] = info['filesize']
@@ -691,7 +691,7 @@ class DQ2Dataset(Dataset):
 
                 if numfiles>0 and numfiles<len(contents):
                     contents_new = []
-                    for i in xrange(0,numfiles):
+                    for i in range(0,numfiles):
                         contents_new.append(contents[i])
 
                     contents = contents_new
@@ -716,7 +716,7 @@ class DQ2Dataset(Dataset):
                         pass
             # Sum up dataset filesize per dataset:
             sumfilesizeDatasets = {}
-            for dataset, contents in diffcontents.iteritems():
+            for dataset, contents in diffcontents.items():
                 contentsSize = []
                 tmpInfo = []
                 sumfilesizeDataset = 0
@@ -794,7 +794,7 @@ class DQ2Dataset(Dataset):
                 datasetvuid = datasetinfo[dataset]['vuids'][0]
             except KeyError:
                 try:
-                    datasetvuid = datasetinfo.values()[0]['vuids'][0]
+                    datasetvuid = list(datasetinfo.values())[0]['vuids'][0]
                 except:
                     try:
                         datasetvuid = dq2.getMetaDataAttribute(dataset,['latestvuid'])['latestvuid']
@@ -839,7 +839,7 @@ class DQ2Dataset(Dataset):
             return
 
         for dsn, vuid in datasets:
-            print dsn
+            print(dsn)
 
     def list_contents(self,dataset=None):
         '''List dataset content'''
@@ -852,7 +852,7 @@ class DQ2Dataset(Dataset):
         for dataset in datasets:
             try:
                 #dq2_lock.acquire()
-                contents = dq2.listFilesInDataset(dataset, long=False)
+                contents = dq2.listFilesInDataset(dataset, int=False)
             except:
                 contents = {}
             finally:
@@ -860,14 +860,14 @@ class DQ2Dataset(Dataset):
                 pass
 
             if not contents:
-                print 'Dataset %s is empty.' % dataset
+                print('Dataset %s is empty.' % dataset)
                 return
 
-            print 'Dataset %s' % dataset
+            print('Dataset %s' % dataset)
             contents = contents[0]
-            for guid, info in contents.iteritems():
-                print '    %s' % info['lfn']
-            print 'In total %d files' % len(contents)
+            for guid, info in contents.items():
+                print('    %s' % info['lfn'])
+            print('In total %d files' % len(contents))
 
     def list_locations(self,dataset=None,complete=0):
         '''List dataset locations'''
@@ -915,7 +915,7 @@ class DQ2Dataset(Dataset):
                 datasetvuid = datasetinfo[dataset]['vuids'][0]
             except:
                 try:
-                    datasetvuid = datasetinfo.values()[0]['vuids'][0]
+                    datasetvuid = list(datasetinfo.values())[0]['vuids'][0]
                 except:
                     try:
                         datasetvuid = dq2.getMetaDataAttribute(dataset,['latestvuid'])['latestvuid']
@@ -925,14 +925,14 @@ class DQ2Dataset(Dataset):
                         datasetvuid = ''
 
             if datasetvuid not in locations:
-                print 'Dataset %s not found' % dataset
+                print('Dataset %s not found' % dataset)
                 return
 
             locations = locations[datasetvuid]
 
-            print 'Dataset %s' % dataset
-            if len(locations[1]): print 'Complete:', ' '.join(locations[1])
-            if len(locations[0]): print 'Incomplete:', ' '.join(locations[0])
+            print('Dataset %s' % dataset)
+            if len(locations[1]): print('Complete:', ' '.join(locations[1]))
+            if len(locations[0]): print('Incomplete:', ' '.join(locations[0]))
 
     def list_locations_ce(self,dataset=None,complete=0):
         '''List the CE associated to the dataset location'''
@@ -967,7 +967,7 @@ class DQ2Dataset(Dataset):
                 datasetvuid = datasetinfo[dataset]['vuids'][0]
             except:
                 try:
-                    datasetvuid = datasetinfo.values()[0]['vuids'][0]
+                    datasetvuid = list(datasetinfo.values())[0]['vuids'][0]
                 except:
                     try:
                         datasetvuid = dq2.getMetaDataAttribute(dataset,['latestvuid'])['latestvuid']
@@ -978,13 +978,13 @@ class DQ2Dataset(Dataset):
                         return
 
             if datasetvuid not in locations:
-                print 'Dataset %s not found' % dataset
+                print('Dataset %s not found' % dataset)
                 return
             locations = locations[datasetvuid]
 
-            print 'Dataset %s' % dataset
-            if len(locations[1]): print 'Complete:', ' '.join(getLocationsCE(locations[1]))
-            if len(locations[0]): print 'Incomplete:', ' '.join(getLocationsCE(locations[0]))
+            print('Dataset %s' % dataset)
+            if len(locations[1]): print('Complete:', ' '.join(getLocationsCE(locations[1])))
+            if len(locations[0]): print('Incomplete:', ' '.join(getLocationsCE(locations[0])))
 
     def list_locations_num_files(self,dataset=None,complete=-1,backnav=False):
         '''List the number of files replicated to the dataset locations'''
@@ -1218,7 +1218,7 @@ class DQ2OutputDataset(Dataset):
         try:
             #dq2_lock.acquire()
             try:
-                contents = dq2.listFilesInDataset(datasetname, long=False)
+                contents = dq2.listFilesInDataset(datasetname, int=False)
             except:
                 contents = ({},'')
                 pass
@@ -1231,11 +1231,11 @@ class DQ2OutputDataset(Dataset):
 
         # Convert 0.3 output to 0.2 style
         contents_new = {}
-        for guid, info in contents.iteritems():
+        for guid, info in contents.items():
             contents_new[ info['lfn'] ] = guid 
 
         # Loop over all files in dataset
-        for filename in contents_new.keys():
+        for filename in list(contents_new.keys()):
             if not filename in filenames:
                 trashFiles.append(filename)
 
@@ -1243,7 +1243,7 @@ class DQ2OutputDataset(Dataset):
         try:
             #dq2_lock.acquire()
             try:
-                location = dq2.listDatasetReplicas(datasetname).values()[0][1][0]
+                location = list(dq2.listDatasetReplicas(datasetname).values())[0][1][0]
             except:
                 location = datasetname.split('.')[-1]
                 pass
@@ -1367,7 +1367,7 @@ class DQ2OutputDataset(Dataset):
             datasetvuid = datasetinfo[datasetname]['vuids'][0]
         except:
             try:
-                datasetvuid = datasetinfo.values()[0]['vuids'][0]
+                datasetvuid = list(datasetinfo.values())[0]['vuids'][0]
             except:
                 try:
                     datasetvuid = dq2.getMetaDataAttribute(datasetname,['latestvuid'])['latestvuid']
@@ -1548,7 +1548,7 @@ class DQ2OutputDataset(Dataset):
                 [dataset,lfn,guid,size,md5sum,siteID]=line.split(",")
             except ValueError:
                 continue
-            size = long(size)
+            size = int(size)
             adler32='ad:'+md5sum
             if len(md5sum)==32:
                 adler32='md5:'+md5sum
@@ -1595,7 +1595,7 @@ class DQ2OutputDataset(Dataset):
             try:
                 #dq2_lock.acquire()
                 try:
-                    contents = dq2.listFilesInDataset(dataset, long=False)
+                    contents = dq2.listFilesInDataset(dataset, int=False)
                 except:
                     contents = []
                     pass
@@ -1613,7 +1613,7 @@ class DQ2OutputDataset(Dataset):
             contents = contents[0]
             contents_new = []
             contents_files = []
-            for guid, info in contents.iteritems():
+            for guid, info in contents.items():
                 contents_new.append( (guid, info['lfn']) )
                 contents_files.append( info['lfn'] ) 
             contents = contents_new

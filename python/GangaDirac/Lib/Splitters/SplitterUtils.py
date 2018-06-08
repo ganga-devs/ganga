@@ -13,7 +13,7 @@ def igroup(iterable, num, leftovers=False):
     Generator producing sequential groups of size num from input iterable
     '''
     size = len(iterable)
-    for i in xrange(0, size, num):
+    for i in range(0, size, num):
         if i + num > size and not leftovers:
             return
         yield iterable[i: i + num]

@@ -159,7 +159,7 @@ class IMerger(IPostProcessor):
                                                    'This can be overridden with the ignorefailed flag.' % (f, j.fqid))
                 # files[f].extend(matchedFiles)
 
-        for k in files.keys():
+        for k in list(files.keys()):
             # make sure we are not going to over write anything
             outputfile = os.path.join(outputdir, k)
             if os.path.exists(outputfile) and not overwrite:

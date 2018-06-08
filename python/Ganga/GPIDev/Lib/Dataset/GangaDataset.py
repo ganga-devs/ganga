@@ -40,7 +40,7 @@ class GangaDataset(Dataset):
             result = len(self.files)
         return result
 
-    def __nonzero__(self):
+    def __bool__(self):
         """This is always True, as with an object."""
         return True
 

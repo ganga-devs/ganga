@@ -1,6 +1,6 @@
 '''SuperB setup of Application and RTHandler Ganga methods'''
 
-import ConfigParser
+import configparser
 import datetime
 import os
 import subprocess
@@ -19,13 +19,13 @@ from Ganga.Lib.Mergers.Merger import TextMerger
 from Ganga.Utility.Config import *
 import Ganga.Utility.logging
 
-import db
-import SBDatasetManager
-import SBInputDataset
-import SBOutputDataset
-import SBSubmission
-import objectid
-import utils
+from . import db
+from . import SBDatasetManager
+from . import SBInputDataset
+from . import SBOutputDataset
+from . import SBSubmission
+from . import objectid
+from . import utils
 
 
 class SBApp(IApplication):
@@ -155,7 +155,7 @@ class SBApp(IApplication):
         masterjob = job._getParent()
         
         # creating the configuration file needed by the job wrapper
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
         
         config.add_section('REST')
         config.set('REST', 'PROXYVAR', 'X509_USER_PROXY')
@@ -213,7 +213,7 @@ class SBApp(IApplication):
         
         config.add_section('OUTPUT_DATASET')
         if isinstance(job.outputdata, SBOutputDataset.SBOutputDataset):
-            for key, value in job.outputdata.pairs.items():
+            for key, value in list(job.outputdata.pairs.items()):
                 config.set('OUTPUT_DATASET', key, value)
         
         config.add_section('TARGETSITE')

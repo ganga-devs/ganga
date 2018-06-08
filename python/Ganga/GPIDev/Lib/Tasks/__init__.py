@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 from Ganga.Core.GangaRepository import addRegistry
 from Ganga.GPIDev.Lib.Tasks.TaskRegistry import TaskRegistry
 

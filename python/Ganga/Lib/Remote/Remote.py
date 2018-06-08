@@ -769,8 +769,8 @@ print("***_FINISHED_***")
             '###APPLICATIONARGS###', repr(jobconfig.getArgStrings()))
 
         # get a string describing the required backend
-        import cStringIO
-        be_out = cStringIO.StringIO()
+        import io
+        be_out = io.StringIO()
         job.backend.remote_backend.printTree(be_out, "copyable")
         be_str = be_out.getvalue()
         script = script.replace('###BACKEND###', be_str)

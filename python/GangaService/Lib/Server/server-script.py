@@ -2,7 +2,7 @@ import os
 import sys
 import pickle
 import traceback
-import StringIO
+import io
 import time
 from socket import *
 import threading
@@ -149,7 +149,7 @@ while True:
         break
     else:
         # set the stdout/stderr
-        codeOut = StringIO.StringIO()
+        codeOut = io.StringIO()
 
 
         tstamp = time.time()

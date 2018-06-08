@@ -1,1 +1,1 @@
-from GaudiInputDataSplitter import GaudiInputDataSplitter
+from .GaudiInputDataSplitter import GaudiInputDataSplitter

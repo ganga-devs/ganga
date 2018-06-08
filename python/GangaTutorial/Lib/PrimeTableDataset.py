@@ -28,7 +28,7 @@ class PrimeTableDataset(Dataset):
         super(PrimeTableDataset,self).__init__()
 
     def get_dataset(self):
-        from urlparse import urlparse
+        from urllib.parse import urlparse
         tables = []
 
         ## switching lower and upper if different order is given

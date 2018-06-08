@@ -9,7 +9,7 @@
 # Version 1.0: 051228
 
 """Package initialisation file"""
-from __future__ import absolute_import
+
 
 __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "28 July 2006"

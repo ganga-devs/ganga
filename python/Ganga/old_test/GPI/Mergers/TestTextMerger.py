@@ -3,7 +3,7 @@
 #
 # $Id: TestTextMerger.py,v 1.1 2008-07-17 16:41:12 moscicki Exp $
 ##########################################################################
-from __future__ import division
+
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file, sleep_until_state
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException

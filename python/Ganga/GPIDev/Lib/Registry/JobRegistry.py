@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -109,11 +109,11 @@ class JobRegistrySlice(RegistrySlice):
         bg = Background()
         try:
             status_colours = config['jobs_status_colours']
-            self.status_colours = dict([(k, eval(v)) for k, v in status_colours.iteritems()])
+            self.status_colours = dict([(k, eval(v, {'fx': fx, 'fg': fg, 'bg': bg})) for k, v in status_colours.items()])
         except Exception as x:
             logger.warning('configuration problem with colour specification: "%s"', str(x))
             status_colours = config.options['jobs_status_colours'].default_value
-            self.status_colours = dict([(k, eval(v)) for k, v in status_colours.iteritems()])
+            self.status_colours = dict([(k, eval(v, {'fx': fx, 'fg': fg, 'bg': bg})) for k, v in status_colours.items()])
         self.fx = fx
         self._proxyClass = JobRegistrySliceProxy
 

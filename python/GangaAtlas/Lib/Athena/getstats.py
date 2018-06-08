@@ -7,14 +7,14 @@ if __name__ == '__main__':
 
     stats = {}
 
-    print '-------------------'
-    print 'getstats called ...'
+    print('-------------------')
+    print('getstats called ...')
 
     # Determine dataset access mode
     try:
         datasettype = os.environ['DATASETTYPE']
     except:
-        print "ERROR : DATASETTYPE not defined, using DQ2_LOCAL"
+        print("ERROR : DATASETTYPE not defined, using DQ2_LOCAL")
         datasettype = 'DQ2_LOCAL'
         pass
     # use DQ2_LOCAL as default
@@ -80,7 +80,7 @@ if __name__ == '__main__':
                 zfile.close()
 
     except MemoryError:
-        print 'ERROR stderr logfiles too large to be parsed.'
+        print('ERROR stderr logfiles too large to be parsed.')
         pass
     
     # collect stats from stdout
@@ -175,7 +175,7 @@ if __name__ == '__main__':
                 zfile.close()
 
     except MemoryError:
-        print 'ERROR stderr logfile too large to be parsed.'
+        print('ERROR stderr logfile too large to be parsed.')
         pass
 
     # collect stats from AthSummary.txt
@@ -194,15 +194,15 @@ if __name__ == '__main__':
                 zfile.close()
 
     except MemoryError:
-        print 'ERROR AthSummary.txt logfile too large to be parsed.'
+        print('ERROR AthSummary.txt logfile too large to be parsed.')
         pass
 
-    print stats
+    print(stats)
 
     f = open('stats.pickle','w')
     pickle.dump(stats,f)
     f.close()
 
-    print 'getstats finished...' 
-    print '-------------------'
+    print('getstats finished...') 
+    print('-------------------')
 

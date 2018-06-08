@@ -8,7 +8,7 @@ from Ganga.Utility.logging import getLogger
 import Ganga.Utility.Config
 from GangaRobot.Framework.exceptions import *
 
-import os, urllib, datetime, time
+import os, urllib.request, urllib.parse, urllib.error, datetime, time
 from os.path import join
 
 logger = getLogger()
@@ -55,7 +55,7 @@ class Installer(IAction):
 
         """ Calls the ganga installation script """
         try: 
-            f, inf = urllib.urlretrieve("http://ganga.web.cern.ch/ganga/download/ganga-install")
+            f, inf = urllib.request.urlretrieve("http://ganga.web.cern.ch/ganga/download/ganga-install")
         except IOError as e:
             raise GangaRobotBreakError(e, IOError)
             

@@ -213,34 +213,34 @@ class ShareRef(GangaObject):
         master_index = 0
         for item in objectlist:
             try:
-                item.keys()[0].is_prepared.name
-                if item.keys()[0].is_prepared.name == sharedir:
-                    logger.info('ShareDir %s is referenced by item #%s in %s repository' % (sharedir, stripProxy(item.keys()[0])._registry_id, item.values()[0]))
-                    run_unp = item.keys()[0]
+                list(item.keys())[0].is_prepared.name
+                if list(item.keys())[0].is_prepared.name == sharedir:
+                    logger.info('ShareDir %s is referenced by item #%s in %s repository' % (sharedir, stripProxy(list(item.keys())[0])._registry_id, list(item.values())[0]))
+                    run_unp = list(item.keys())[0]
                     master_index += 1
 
             except AttributeError as err:
                 logger.debug("Err: %s" % err)
                 try:
-                    item.keys()[0].application.is_prepared.name
-                    if item.keys()[0].application.is_prepared.name == sharedir:
-                        logger.info('ShareDir %s is referenced by item #%s in %s repository' % (sharedir, stripProxy(item.keys()[0])._registry_id, item.values()[0]))
-                        run_unp = item.keys()[0].application
+                    list(item.keys())[0].application.is_prepared.name
+                    if list(item.keys())[0].application.is_prepared.name == sharedir:
+                        logger.info('ShareDir %s is referenced by item #%s in %s repository' % (sharedir, stripProxy(list(item.keys())[0])._registry_id, list(item.values())[0]))
+                        run_unp = list(item.keys())[0].application
                         master_index += 1
                 except AttributeError as err2:
                     logger.debug("Err2: %s" % err2)
                     try:
-                        item.keys()[0].analysis.application.is_prepared.name
-                        if item.keys()[0].analysis.application.is_prepared.name == sharedir:
-                            logger.info('ShareDir %s is referenced by item #%s in %s repository' % (sharedir, stripProxy(item.keys()[0])._registry_id, item.values()[0]))
-                            run_unp = item.keys()[0].analysis.application
+                        list(item.keys())[0].analysis.application.is_prepared.name
+                        if list(item.keys())[0].analysis.application.is_prepared.name == sharedir:
+                            logger.info('ShareDir %s is referenced by item #%s in %s repository' % (sharedir, stripProxy(list(item.keys())[0])._registry_id, list(item.values())[0]))
+                            run_unp = list(item.keys())[0].analysis.application
                             master_index += 1
                     except AttributeError as err3:
                         logger.debug("Err3: %s" % err3)
                         pass
 
             if run_unp is not None and unprepare is True:
-                logger.info('Unpreparing %s repository object #%s associated with ShareDir %s' % (item.values()[0],  stripProxy(item.keys()[0])._registry_id, sharedir))
+                logger.info('Unpreparing %s repository object #%s associated with ShareDir %s' % (list(item.values())[0],  stripProxy(list(item.keys())[0])._registry_id, sharedir))
 #                stripProxy(item.keys()[0]).unprepare()
                 run_unp.unprepare()
                 run_unp = None
@@ -315,24 +315,24 @@ class ShareRef(GangaObject):
         for item in objectlist:
             shortname = None
             try:
-                shortname = item.keys()[0].is_prepared.name
+                shortname = list(item.keys())[0].is_prepared.name
             except AttributeError as err:
                 logger.debug("Err: %s" % err)
                 try:
-                    shortname = item.keys()[0].application.is_prepared.name
+                    shortname = list(item.keys())[0].application.is_prepared.name
                 except AttributeError as err2:
                     logger.debug("Err2: %s" % err2)
                     try:
-                        shortname = item.keys()[0].analysis.application.is_prepared.name
+                        shortname = list(item.keys())[0].analysis.application.is_prepared.name
                     except AttributeError as err3:
                         logger.debug("Err3: %s" % err3)
                         pass
             try:
                 if shortname is not None and shortname is not True:
                     if os.path.basename(shortname) != shortname:
-                        self.to_relative(item.keys()[0].is_prepared)
+                        self.to_relative(list(item.keys())[0].is_prepared)
                     try:
-                        numsubjobs = len(item.keys()[0].subjobs.ids())
+                        numsubjobs = len(list(item.keys())[0].subjobs.ids())
                     except Exception as err:
                         logger.debug("Path Error: %s" % err)
                         Ganga.Utility.logging.log_unknown_exception()
@@ -352,7 +352,7 @@ class ShareRef(GangaObject):
         # check to see that all sharedirs have an entry in the shareref. Otherwise, set their ref counter to 0
         # so the user is made aware of them at shutdown
         for this_dir in os.listdir(getSharedPath()):
-            if this_dir not in self.__getName().keys() and rmdir is False:
+            if this_dir not in list(self.__getName().keys()) and rmdir is False:
                 logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository." % this_dir)
                 self.__getName()[this_dir] = 0
             elif this_dir not in self.__getName() and rmdir is True:
@@ -379,7 +379,7 @@ class ShareRef(GangaObject):
         while True:
             logger.info('%s no longer being referenced by any objects. Delete directory?' % shareddir)
             logger.info(question + prompt)
-            answer = raw_input().lower()
+            answer = input().lower()
             if answer == '':
                 return default
             elif answer in valid:
@@ -410,7 +410,7 @@ class ShareRef(GangaObject):
 
         try:
             ## FIXME. this triggers maximum recusion depth bug on shutdown in some situations! rcurrie
-            all_dirs = copy.deepcopy(self.__getName().keys())
+            all_dirs = copy.deepcopy(list(self.__getName().keys()))
         except:
             all_dirs = {}
         for shareddir in all_dirs:

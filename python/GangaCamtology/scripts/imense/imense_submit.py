@@ -1,4 +1,4 @@
-import commands
+import subprocess
 import os
 import time
 
@@ -35,7 +35,7 @@ def makeList( dirList = "" ):
           filepath = fullpath( os.path.join( dir, filename ) )
           todoDict[ dir ].append( filepath )
 
-  keyList = todoDict.keys()
+  keyList = list(todoDict.keys())
   keyList.sort()
   todoList = []
   for key in keyList:
@@ -53,7 +53,7 @@ def makeList( dirList = "" ):
 
 def resubmitFailed():
 
-  hostname = commands.getoutput( "hostname -f" )
+  hostname = subprocess.getoutput( "hostname -f" )
 
   for j1 in jobs:
     if j1.status in [ "failed", "new" ]:
@@ -83,7 +83,7 @@ def submitJobs( todoList = [], siteDict = {}, maxJob = -1, maxActive = -1, \
   if ( maxJob > 0 ):
     todoList = todoList[ 0 : maxJob ]
 
-  hostname = commands.getoutput( "hostname -f" )
+  hostname = subprocess.getoutput( "hostname -f" )
 
   app = Classify()
 
@@ -107,7 +107,7 @@ def submitJobs( todoList = [], siteDict = {}, maxJob = -1, maxActive = -1, \
     "gsiftp://t2se01.physics.ox.ac.uk/dpm/physics.ox.ac.uk/home/camont"
 #   "gsiftp://serv02.hep.phy.cam.ac.uk/dpm/hep.phy.cam.ac.uk/home/camont"
 
-  siteList = siteDict.keys()
+  siteList = list(siteDict.keys())
   siteList.sort()
 
   while todoList:
@@ -138,14 +138,14 @@ def submitJobs( todoList = [], siteDict = {}, maxJob = -1, maxActive = -1, \
     if jobFailed > maxFailure:
       todoList = []
 
-    print "Total jobs: %d" % jobTotal
-    print "Jobs in 'submitted' state: %d" % jobSubmitted
-    print "Jobs in 'running' state: %d" % jobRunning
-    print "Jobs in 'completed' state: %d" % jobCompleted
-    print "Jobs in 'failed' state: %d (max allowed: %d)" \
-      % ( jobFailed, maxFailure)
-    print ""
-    print "Now processing list '%s'" % lastList
+    print("Total jobs: %d" % jobTotal)
+    print("Jobs in 'submitted' state: %d" % jobSubmitted)
+    print("Jobs in 'running' state: %d" % jobRunning)
+    print("Jobs in 'completed' state: %d" % jobCompleted)
+    print("Jobs in 'failed' state: %d (max allowed: %d)" \
+      % ( jobFailed, maxFailure))
+    print("")
+    print("Now processing list '%s'" % lastList)
 
     jobActive = jobTotal - jobCompleted - jobFailed
 
@@ -173,7 +173,7 @@ def submitJobs( todoList = [], siteDict = {}, maxJob = -1, maxActive = -1, \
 
       for i in range( nsubmit ):  
         app.imageList = todoList.pop( 0 )
-        print "%s - %s" % ( site, app.imageList )
+        print("%s - %s" % ( site, app.imageList ))
         j = Job( name = site, application = app, backend = backend, \
           outputdata = outdata )
         submitStartTime = "%.6f" % time.time()

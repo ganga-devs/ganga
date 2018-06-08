@@ -157,7 +157,7 @@ class EventPicking(DQ2Dataset):
             job.inputdata.guids = []
 
             # check duplication
-            for runNr,evtNr in runEvtGuidMap.keys():
+            for runNr,evtNr in list(runEvtGuidMap.keys()):
                 tmpLFNs = []
                 tmpAllDSs = {}
                 for tmpguid in runEvtGuidMap[(runNr,evtNr)]:
@@ -175,7 +175,7 @@ class EventPicking(DQ2Dataset):
                 if tmpLFNs == []:
                     paramStr = 'Run:%s Evt:%s Stream:%s' % (runNr,evtNr,self.pick_stream_name)                        
                     errStr = "Dataset pattern '%s' didn't pick up a file for %s\n" % (self.pick_dataset_pattern,paramStr)
-                    for tmpguid,tmpAllDS in tmpAllDSs.iteritems():
+                    for tmpguid,tmpAllDS in tmpAllDSs.items():
                         errStr += "    GUID:%s dataset:%s\n" % (tmpguid,str(tmpAllDS))
                     raise ApplicationConfigurationError(errStr)
                 # duplicated    

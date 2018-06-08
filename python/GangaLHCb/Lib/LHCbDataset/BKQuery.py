@@ -174,7 +174,7 @@ RecoToDST-07/90000000/DST" ,
             files = value['LFNs']
         if not type(files) is list:  # i.e. a dict of LFN:Metadata
             # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
-            files = files.keys()
+            files = list(files.keys())
 
         logger.debug("Creating DiracFile objects")
 
@@ -285,7 +285,7 @@ class BKQueryDict(GangaObject):
             files = value['LFNs']
         if not type(files) is list:
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
-                files = files['LFNs'].keys()
+                files = list(files['LFNs'].keys())
 
         from GangaDirac.Lib.Files.DiracFile import DiracFile
         this_list = [DiracFile(lfn=f) for f in files]

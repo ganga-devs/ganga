@@ -57,8 +57,8 @@ import sys
 import time
 import types
 import getopt
-import commands
-import urllib
+import subprocess
+import urllib.request, urllib.parse, urllib.error
 import pickle
 import xml.dom.minidom
 import threading
@@ -143,7 +143,7 @@ for o, a in opts:
     if o == "-r":
         runDir=a
     if o == "-j":
-        jobO=urllib.unquote(a)
+        jobO=urllib.parse.unquote(a)
     if o == "-i":
         exec("inputFiles="+a)
     if o == "-o":
@@ -249,53 +249,53 @@ if envvarFile != '':
 
 # dump parameter
 try:
-    print "=== parameters ==="
-    print "libraries",libraries
-    print "runDir",runDir
-    print "jobO",jobO
-    print "inputFiles",inputFiles
-    print "outputFiles",outputFiles
-    print "byteStream",byteStream
-    print "eventColl",eventColl
-    print "backNavi",backNavi
-    print "debugFlag",debugFlag
-    print "poolRefs",poolRefs
-    print "urlLRC",urlLRC
-    print "fragmentJobO",fragmentJobO
-    print "minbiasFiles",minbiasFiles
-    print "cavernFiles",cavernFiles
-    print "beamHaloFiles",beamHaloFiles
-    print "beamGasFiles",beamGasFiles
-    print "oldPrefix",oldPrefix
-    print "newPrefix",newPrefix
-    print "directIn",directIn
-    print "lfcHost",lfcHost
-    print "inputGUIDs",inputGUIDs
-    print "minbiasGUIDs",minbiasGUIDs
-    print "cavernGUIDs",cavernGUIDs
-    print "addPoolFC",addPoolFC
-    print "corCheck",corCheck
-    print "sourceURL",sourceURL
-    print "mcData",mcData
-    print "notSkipMissing",notSkipMissing
-    print "givenPFN",givenPFN
-    print "runTrf",runTrf
-    print "envvarFile",envvarFile
-    print "runAra",runAra
-    print "dbrFile",dbrFile
-    print "generalInput",generalInput
-    print "liveLog",liveLog
-    print "dbrRun",dbrRun
-    print "useLocalIO",useLocalIO
-    print "codeTrace",codeTrace
-    print "useFileStager",useFileStager
-    print "usePFCTurl",usePFCTurl
-    print "copyTool",copyTool
-    print "eventPickTxt",eventPickTxt
-    print "eventPickSt",eventPickSt
-    print "eventPickNum",eventPickNum
-    print "skipInputByRetry",skipInputByRetry
-    print "==================="    
+    print("=== parameters ===")
+    print("libraries",libraries)
+    print("runDir",runDir)
+    print("jobO",jobO)
+    print("inputFiles",inputFiles)
+    print("outputFiles",outputFiles)
+    print("byteStream",byteStream)
+    print("eventColl",eventColl)
+    print("backNavi",backNavi)
+    print("debugFlag",debugFlag)
+    print("poolRefs",poolRefs)
+    print("urlLRC",urlLRC)
+    print("fragmentJobO",fragmentJobO)
+    print("minbiasFiles",minbiasFiles)
+    print("cavernFiles",cavernFiles)
+    print("beamHaloFiles",beamHaloFiles)
+    print("beamGasFiles",beamGasFiles)
+    print("oldPrefix",oldPrefix)
+    print("newPrefix",newPrefix)
+    print("directIn",directIn)
+    print("lfcHost",lfcHost)
+    print("inputGUIDs",inputGUIDs)
+    print("minbiasGUIDs",minbiasGUIDs)
+    print("cavernGUIDs",cavernGUIDs)
+    print("addPoolFC",addPoolFC)
+    print("corCheck",corCheck)
+    print("sourceURL",sourceURL)
+    print("mcData",mcData)
+    print("notSkipMissing",notSkipMissing)
+    print("givenPFN",givenPFN)
+    print("runTrf",runTrf)
+    print("envvarFile",envvarFile)
+    print("runAra",runAra)
+    print("dbrFile",dbrFile)
+    print("generalInput",generalInput)
+    print("liveLog",liveLog)
+    print("dbrRun",dbrRun)
+    print("useLocalIO",useLocalIO)
+    print("codeTrace",codeTrace)
+    print("useFileStager",useFileStager)
+    print("usePFCTurl",usePFCTurl)
+    print("copyTool",copyTool)
+    print("eventPickTxt",eventPickTxt)
+    print("eventPickSt",eventPickSt)
+    print("eventPickNum",eventPickNum)
+    print("skipInputByRetry",skipInputByRetry)
+    print("===================")    
 except:
     sys.exit(EC_MissingArg)
 
@@ -304,11 +304,11 @@ if directIn:
     if useLocalIO:
         # use local IO
         directIn = False
-        print "disabled directIn due to useLocalIO"        
+        print("disabled directIn due to useLocalIO")        
     elif byteStream and newPrefix.startswith('root://'):
         # BS on xrootd
         directIn = False
-        print "disabled directIn for xrootd/RAW"
+        print("disabled directIn for xrootd/RAW")
 
 # remove skipped files
 if skipInputByRetry != []: 
@@ -317,7 +317,7 @@ if skipInputByRetry != []:
         if not tmpLFN in skipInputByRetry:
             tmpInputList.append(tmpLFN)
     inputFiles = tmpInputList
-    print "removed skipped files -> %s" % str(inputFiles)
+    print("removed skipped files -> %s" % str(inputFiles))
         
 # log watcher
 class LogWatcher (threading.Thread):
@@ -338,7 +338,7 @@ class LogWatcher (threading.Thread):
         try:
             import zlib
             import socket
-            import httplib
+            import http.client
             import mimetools
             # read log
             logFH = open(self.fileName)
@@ -365,21 +365,21 @@ class LogWatcher (threading.Thread):
                 # set timeout
                 socket.setdefaulttimeout(60)
                 # HTTPS connection
-                conn = httplib.HTTPSConnection(host)
+                conn = http.client.HTTPSConnection(host)
                 conn.request('POST',path,body,headers)
                 resp = conn.getresponse()
                 data = resp.read()
                 conn.close()
-                print "updated LogWatcher at %s" % time.strftime('%Y-%m-%d %H:%M:%S',time.gmtime())
+                print("updated LogWatcher at %s" % time.strftime('%Y-%m-%d %H:%M:%S',time.gmtime()))
                 # increment offset
                 self.offset += len(logStr)                
         except:
             type, value, traceBack = sys.exc_info()
-            print 'failed to update LogWatcher %s - %s' % (type,value)
+            print('failed to update LogWatcher %s - %s' % (type,value))
         
     # main
     def run(self):
-        print "start LogWatcher"
+        print("start LogWatcher")
         while True:
             # update
             self.update()
@@ -392,13 +392,13 @@ class LogWatcher (threading.Thread):
                 time.sleep(10)
                 self.update()
                 # terminate
-                print "terminate LogWatcher"
+                print("terminate LogWatcher")
                 return
             
 
 # get PFNs from LRC
 def _getPFNsFromLRC (urlLRC ,items,isGUID=True,old_prefix='',new_prefix=''):
-    import urllib2
+    import urllib.request, urllib.error, urllib.parse
     # old prefix for regex
     old_prefix_re = old_prefix.replace('?','\?')
     pfnMap = {}
@@ -420,9 +420,9 @@ def _getPFNsFromLRC (urlLRC ,items,isGUID=True,old_prefix='',new_prefix=''):
                 # avoid too long argument
                 strITEMs = ''
                 # GET
-                url = '%s/lrc/PoolFileCatalog?%s' % (urlLRC,urllib.urlencode(data))
-                req = urllib2.Request(url)
-                fd = urllib2.urlopen(req)
+                url = '%s/lrc/PoolFileCatalog?%s' % (urlLRC,urllib.parse.urlencode(data))
+                req = urllib.request.Request(url)
+                fd = urllib.request.urlopen(req)
                 out = fd.read()
                 if out.startswith('Error'):
                     continue
@@ -573,8 +573,8 @@ def _getPFNsFromLFC (lfc_host,items,old_prefix='',new_prefix='',getMeta=False):
     directMetaMap = {}
     directTmp     = {}
 
-    lfcPy = '%s/%s.py' % (os.getcwd(),commands.getoutput('uuidgen 2>/dev/null'))
-    lfcOutPi = '%s/lfc.%s' % (os.getcwd(),commands.getoutput('uuidgen 2>/dev/null'))
+    lfcPy = '%s/%s.py' % (os.getcwd(),subprocess.getoutput('uuidgen 2>/dev/null'))
+    lfcOutPi = '%s/lfc.%s' % (os.getcwd(),subprocess.getoutput('uuidgen 2>/dev/null'))
     lfcPyFile = open(lfcPy,'w')
     lfcPyFile.write(lfcCommand)
 
@@ -595,26 +595,26 @@ sys.exit(st)
     lfcPyFile.close()
 
     # run LFC access in grid runtime
-    lfcSh = '%s.sh' % commands.getoutput('uuidgen 2>/dev/null')
+    lfcSh = '%s.sh' % subprocess.getoutput('uuidgen 2>/dev/null')
 
     if envvarFile != '':
-        commands.getoutput('cat %s > %s' % (envvarFile,lfcSh))
+        subprocess.getoutput('cat %s > %s' % (envvarFile,lfcSh))
 
     # check LFC module
-    print "->check LFC.py"
-    lfcS,lfcO = commands.getstatusoutput('python -c "import lfc"')
-    print lfcS
-    print lfcO
+    print("->check LFC.py")
+    lfcS,lfcO = subprocess.getstatusoutput('python -c "import lfc"')
+    print(lfcS)
+    print(lfcO)
     if lfcS == 0:
-        commands.getoutput('echo "python %s" >> %s' % (lfcPy,lfcSh))
+        subprocess.getoutput('echo "python %s" >> %s' % (lfcPy,lfcSh))
     else:
         # use system python
-        print "->use /usr/bin/python"
-        commands.getoutput('echo "/usr/bin/python %s" >> %s' % (lfcPy,lfcSh))
-    commands.getoutput('chmod +x %s' % lfcSh)
-    tmpSt,tmpOut = commands.getstatusoutput('./%s' % lfcSh)
-    print tmpSt
-    print tmpOut
+        print("->use /usr/bin/python")
+        subprocess.getoutput('echo "/usr/bin/python %s" >> %s' % (lfcPy,lfcSh))
+    subprocess.getoutput('chmod +x %s' % lfcSh)
+    tmpSt,tmpOut = subprocess.getstatusoutput('./%s' % lfcSh)
+    print(tmpSt)
+    print(tmpOut)
     # error check
     if re.search('ERROR : LFC access failure',tmpOut) != None:
         sys.exit(EC_LFC)
@@ -797,7 +797,7 @@ def wrapEnvironVars( envvarFile='' ):
             tmpEnvFile.close()
     except:
         type, value, traceBack = sys.exc_info()
-        print 'WARNING: changing envvar %s - %s' % (type,value)
+        print('WARNING: changing envvar %s - %s' % (type,value))
 
 wrapEnvironVars( envvarFile=envvarFile)
 
@@ -813,9 +813,9 @@ def getFilesFromPFC():
     guidMapFromPFC = {}
     directTmpTurl = {}
     try:
-        print "===== PFC from pilot ====="
+        print("===== PFC from pilot =====")
         tmpPcFile = open("PoolFileCatalog.xml")
-        print tmpPcFile.read()
+        print(tmpPcFile.read())
         tmpPcFile.close()
         # parse XML
         root  = xml.dom.minidom.parse("PoolFileCatalog.xml")
@@ -834,13 +834,13 @@ def getFilesFromPFC():
             directTmpTurl[id] = pfn
     except:
         type, value, traceBack = sys.exc_info()
-        print 'ERROR : Failed to collect GUIDs : %s - %s' % (type,value)
+        print('ERROR : Failed to collect GUIDs : %s - %s' % (type,value))
 
     return guidMapFromPFC, directTmpTurl
 
 guidMapFromPFC, directTmpTurl = getFilesFromPFC()
-print "===== GUIDs in PFC ====="
-print guidMapFromPFC
+print("===== GUIDs in PFC =====")
+print(guidMapFromPFC)
 
 ### H.C.LEE - resolve inputfile information
 def resolveInputFiles(directTmpTurl=directTmpTurl):
@@ -863,8 +863,8 @@ def resolveInputFiles(directTmpTurl=directTmpTurl):
     if directIn:
         if usePFCTurl:
             # Use the TURLs from PoolFileCatalog.xml created by pilot
-            print "===== GUIDs and TURLs in PFC ====="
-            print directTmpTurl
+            print("===== GUIDs and TURLs in PFC =====")
+            print(directTmpTurl)
             directTmp = directTmpTurl
         else:
             if lfcHost != '':
@@ -883,7 +883,7 @@ def resolveInputFiles(directTmpTurl=directTmpTurl):
         # collect LFNs
         curFiles   = []
         directPFNs = {}
-        for id in directTmp.keys():
+        for id in list(directTmp.keys()):
             lfn = directTmp[id].split('/')[-1]
             curFiles.append(lfn)
             directPFNs[lfn] = directTmp[id]
@@ -917,17 +917,17 @@ def updateInputFiles( inputFiles, curFiles, directPFNs ):
                 break
         # remove if not exist
         if not findF:
-            print "%s not exist" % tmpF
+            print("%s not exist" % tmpF)
             inputFiles.remove(tmpF)
         # use URL
         if directIn and findF:
             inputFiles.remove(tmpF)
             inputFiles.append(directPFNs[findName])
     if len(inputFiles) == 0:
-        print "No input file is available"
+        print("No input file is available")
         sys.exit(EC_NoInput)
     if notSkipMissing and len(inputFiles) != len(tmpFiles):
-        print "Some input files are missing"
+        print("Some input files are missing")
         sys.exit(EC_MissingInput)
 
 
@@ -955,20 +955,20 @@ if len(beamGasFiles) > 0:
     flagBeamGas = True
     updateInputFiles( inputFiles=beamGasFiles, curFiles=curFiles, directPFNs=directPFNs )
 
-print "=== New inputFiles ==="
-print inputFiles
+print("=== New inputFiles ===")
+print(inputFiles)
 if flagMinBias:
-    print "=== New minbiasFiles ==="
-    print minbiasFiles
+    print("=== New minbiasFiles ===")
+    print(minbiasFiles)
 if flagCavern:    
-    print "=== New cavernFiles ==="
-    print cavernFiles
+    print("=== New cavernFiles ===")
+    print(cavernFiles)
 if flagBeamHalo:
-    print "=== New beamHaloFiles ==="
-    print beamHaloFiles
+    print("=== New beamHaloFiles ===")
+    print(beamHaloFiles)
 if flagBeamGas:
-    print "=== New beamGasFiles ==="
-    print beamGasFiles
+    print("=== New beamGasFiles ===")
+    print(beamGasFiles)
 
 #### H.C.LEE - preparing the workspace for running athena user code
 def prepareWorkspace():
@@ -983,7 +983,7 @@ def prepareWorkspace():
     """
 
     workDir = currentDir+"/workDir"
-    commands.getoutput('rm -rf %s' % workDir)
+    subprocess.getoutput('rm -rf %s' % workDir)
     os.makedirs(workDir)
     os.chdir(workDir)
 
@@ -991,14 +991,14 @@ def prepareWorkspace():
     if libraries == '':
         pass
     elif libraries.startswith('/'):
-        print commands.getoutput('tar xvfzm %s' % libraries)
+        print(subprocess.getoutput('tar xvfzm %s' % libraries))
     else:
-        print commands.getoutput('tar xvfzm %s/%s' % (currentDir,libraries))
+        print(subprocess.getoutput('tar xvfzm %s/%s' % (currentDir,libraries)))
 
     # expand jobOs if needed
     if archiveJobO != "":
-        print "--- wget for jobO ---"
-        output = commands.getoutput('wget -h')
+        print("--- wget for jobO ---")
+        output = subprocess.getoutput('wget -h')
         wgetCommand = 'wget'
         for line in output.split('\n'):
             if re.search('--no-check-certificate',line) != None:
@@ -1007,25 +1007,25 @@ def prepareWorkspace():
         com = '%s %s/cache/%s' % (wgetCommand,sourceURL,archiveJobO)
         nTry = 3
         for iTry in range(nTry):
-            print 'Try : %s' % iTry
-            status,output = commands.getstatusoutput(com)
-            print output
+            print('Try : %s' % iTry)
+            status,output = subprocess.getstatusoutput(com)
+            print(output)
             if status == 0:
                 break
             if iTry+1 == nTry:
-                print "ERROR : cound not get jobO files from panda server"
+                print("ERROR : cound not get jobO files from panda server")
                 sys.exit(EC_WGET)
             time.sleep(30)
-        print commands.getoutput('tar xvfzm %s' % archiveJobO)
+        print(subprocess.getoutput('tar xvfzm %s' % archiveJobO))
 
     # make rundir just in case
-    commands.getoutput('mkdir %s' % runDir)
+    subprocess.getoutput('mkdir %s' % runDir)
     # go to run dir
     os.chdir(runDir)
 
     # make cmt dir
-    cmtDir = '%s/%s/cmt' % (workDir,commands.getoutput('uuidgen 2>/dev/null'))
-    commands.getoutput('mkdir -p %s' % cmtDir)
+    cmtDir = '%s/%s/cmt' % (workDir,subprocess.getoutput('uuidgen 2>/dev/null'))
+    subprocess.getoutput('mkdir -p %s' % cmtDir)
 
     # get athena version
     com  = 'cd %s;' % cmtDir
@@ -1034,7 +1034,7 @@ def prepareWorkspace():
     com += 'source ./setup.sh;'
     com += 'cd -;'
     com += 'cmt show projects'
-    out = commands.getoutput(com)
+    out = subprocess.getoutput(com)
     athenaVer = None
     try:
         for line in out.split('\n'):
@@ -1044,10 +1044,10 @@ def prepareWorkspace():
                     athenaVer = items[1]
                     break
     except:
-        print out
-        print "ERROR : cannot get Athena Version"
+        print(out)
+        print("ERROR : cannot get Athena Version")
 
-    print "Athena Ver:%s" % athenaVer
+    print("Athena Ver:%s" % athenaVer)
 
     return workDir,cmtDir,athenaVer
 
@@ -1074,7 +1074,7 @@ def _createPoolFC(pfnMap):
         <logical/>
       </File>
     """
-    for guid,pfn in pfnMap.iteritems():
+    for guid,pfn in pfnMap.items():
         outFile.write(item % (guid.upper(),pfn))
     # write trailer
     trailer = \
@@ -1087,8 +1087,8 @@ def _createPoolFC(pfnMap):
 
 # build pool catalog
 
-print "build pool catalog"
-commands.getoutput('rm -f PoolFileCatalog.xml')
+print("build pool catalog")
+subprocess.getoutput('rm -f PoolFileCatalog.xml')
 # for input files
 if eventColl and mcData == '':
     # ROOT ver collection or AANT
@@ -1100,12 +1100,12 @@ if eventColl and mcData == '':
                 # split
                 com = 'CollSplitByGUID.exe -splitref %s -src PFN:%s RootCollection' % \
                       (collRefName,fileName)
-                print com
-                status,out = commands.getstatusoutput(com)
+                print(com)
+                status,out = subprocess.getstatusoutput(com)
                 if status != 0:
-                    print out
-                    print status
-                    print "Failed to run %s" % com
+                    print(out)
+                    print(status)
+                    print("Failed to run %s" % com)
                     sys.exit(EC_Coll)
                 # get sub_collection_*
                 subCollectionMap = {}
@@ -1115,19 +1115,19 @@ if eventColl and mcData == '':
                     if  match != None:
                         subCollectionMap[int(match.group(1))] = tmpName
                 # sort
-                subCollection = subCollectionMap.keys()
+                subCollection = list(subCollectionMap.keys())
                 subCollection.sort()
                 for idxSubColl in subCollection:
                     tmpName = subCollectionMap[idxSubColl]
                     # check if corresponding GUID is there
                     com = 'CollListFileGUID.exe -queryopt %s -src PFN:%s RootCollection' % \
                           (collRefName,tmpName)
-                    print com
-                    status,out = commands.getstatusoutput(com)
-                    print out
+                    print(com)
+                    status,out = subprocess.getstatusoutput(com)
+                    print(out)
                     if status != 0:
-                        print status
-                        print "Failed to run %s" % com
+                        print(status)
+                        print("Failed to run %s" % com)
                         sys.exit(EC_Coll)
                     # look for GUID
                     foundGUID = False
@@ -1146,7 +1146,7 @@ if eventColl and mcData == '':
                         os.remove(tmpName)
             # use new list
             if newInputFiles == []:
-                print "Empty input list after CollXYZFileGUID.exe"
+                print("Empty input list after CollXYZFileGUID.exe")
                 sys.exit(EC_Coll)
             inputFiles = newInputFiles
             # add references
@@ -1163,7 +1163,7 @@ if eventColl and mcData == '':
             com += 'source ./setup.sh;'
             com += 'cd -;'
             com += 'get_files -jo %s' % macroPoolRefs
-            print commands.getoutput(com)
+            print(subprocess.getoutput(com))
             for fileName in inputFiles:
                 # build ROOT command
                 com = 'echo '
@@ -1197,9 +1197,9 @@ if eventColl and mcData == '':
                     # use old macro
                     com += '%s ' % newFileName
                     com += ' --- | root.exe -b %s' % macroPoolRefs
-                    print com
-                    status,output = commands.getstatusoutput(com)
-                    print output
+                    print(com)
+                    status,output = subprocess.getstatusoutput(com)
+                    print(output)
                     # get POOL refs
                     for line in output.split('\n'):
                         if line.startswith('PoolRef:') or line.startswith('ESD Ref:') or \
@@ -1212,9 +1212,9 @@ if eventColl and mcData == '':
                 else:
                     # use CollListFileGUID for 14.4.0 onward
                     com = 'CollListFileGUID.exe -counts -src PFN:%s RootCollection' % newFileName
-                    print com
-                    status,output = commands.getstatusoutput(com)
-                    print output
+                    print(com)
+                    status,output = subprocess.getstatusoutput(com)
+                    print(output)
                     # get POOL refs
                     for line in output.split('\n'):
                         tmpItems = line.split()
@@ -1226,8 +1226,8 @@ if eventColl and mcData == '':
 
 
     # new poolRefs
-    print "=== New poolRefs ==="
-    print poolRefs
+    print("=== New poolRefs ===")
+    print(poolRefs)
     if len(poolRefs)>0:
         if lfcHost != '':
             # get PFNs from LFC
@@ -1243,10 +1243,10 @@ if eventColl and mcData == '':
                                       old_prefix=oldPrefix,
                                       new_prefix=newPrefix)
 
-        print "=== Create PoolFC ==="
+        print("=== Create PoolFC ===")
         for ref in poolRefs:
             if ref not in pfnMap:
-                print " %s not found" % ref
+                print(" %s not found" % ref)
                 
         # create PoolFC
         _createPoolFC(pfnMap)
@@ -1272,8 +1272,8 @@ elif len(inputFiles+minbiasFiles+cavernFiles+beamHaloFiles+beamGasFiles) > 0:
             # corruption check by scanning all TTrees
             if corCheck:
                 # construct command
-                print "=== check corruption for %s ===" % fileName
-                optPy = '%s.py' % commands.getoutput('uuidgen 2>/dev/null')
+                print("=== check corruption for %s ===" % fileName)
+                optPy = '%s.py' % subprocess.getoutput('uuidgen 2>/dev/null')
                 outFile = open(optPy,'w')
                 outFile.write("""
 import sys
@@ -1321,15 +1321,15 @@ sys.exit(0)
 """)
                 outFile.close()
                 # run checker
-                status,out = commands.getstatusoutput('python %s' % optPy)
-                print status
-                print out
-                commands.getoutput('rm -f %s' % optPy)
+                status,out = subprocess.getstatusoutput('python %s' % optPy)
+                print(status)
+                print(out)
+                subprocess.getoutput('rm -f %s' % optPy)
                 if status != 0 \
                        or out.find("read too few bytes") != -1 \
                        or out.find("read too many bytes") != -1 \
                        or out.find("segmentation violation") != -1:
-                    print "->skip %s" % fileName
+                    print("->skip %s" % fileName)
                     continue
             # insert it to pool catalog
             tmpLFNforPFC = fileName.split('/')[-1]
@@ -1337,12 +1337,12 @@ sys.exit(0)
             if tmpLFNforPFC in guidMapFromPFC:
                 filesToPfcMap[guidMapFromPFC[tmpLFNforPFC]] = fileName
             elif not givenPFN:
-                print "ERROR : %s not found in the pilot PFC" % fileName
+                print("ERROR : %s not found in the pilot PFC" % fileName)
         # create PFC for directIn + trf
         if directIn and (runTrf and not runAra):
             _createPoolFC(directPfnMap)
             # form symlink to input file mainly for DBRelease
-            for tmpID in directPfnMap.keys():
+            for tmpID in list(directPfnMap.keys()):
                 lfn = directPfnMap[tmpID].split('/')[-1] 
                 try:
                     targetName = '%s/%s' % (currentDir,lfn)
@@ -1357,7 +1357,7 @@ sys.exit(0)
         # insert using pool_insertFTC since GUIDs are unavailabe from the pilot 
         for fileName in inputFiles+minbiasFiles+cavernFiles+beamHaloFiles+beamGasFiles:
             com = 'pool_insertFileToCatalog %s' % fileName
-            print com
+            print(com)
             os.system(com)
         
     # read PoolFileCatalog.xml
@@ -1369,35 +1369,35 @@ sys.exit(0)
         pFile.close()
     except:
         if mcData == '' and not (runTrf and not runAra):
-            print "ERROR : cannot open PoolFileCatalog.xml"
+            print("ERROR : cannot open PoolFileCatalog.xml")
     # remove corrupted files
-    print "=== corruption check ==="
+    print("=== corruption check ===")
     # doesn't check BS/nonRoot files since they don't invoke insert_PFC
     if (not byteStream) and mcData == '' and (not generalInput) and not (runTrf and not runAra):
         tmpFiles = tuple(inputFiles)
         for tmpF in tmpFiles:
             if re.search(tmpF,pLines) == None:
                 inputFiles.remove(tmpF)
-                print "%s is corrupted or non-ROOT file" % tmpF
+                print("%s is corrupted or non-ROOT file" % tmpF)
         if notSkipMissing and len(inputFiles) != len(tmpFiles):
-            print "Some input files are missing"
+            print("Some input files are missing")
             sys.exit(EC_MissingInput)
     if len(inputFiles)==0:        
-        print "No input file is available after corruption check"
+        print("No input file is available after corruption check")
         sys.exit(EC_NoInput)        
     # extract POOL refs
     if backNavi:
         # construct command
         evtPy = 'EventCount.py'
-        optPy = '%s.py' % commands.getoutput('uuidgen 2>/dev/null')
-        print "=== run %s to extract POOL refs ===" % evtPy
+        optPy = '%s.py' % subprocess.getoutput('uuidgen 2>/dev/null')
+        print("=== run %s to extract POOL refs ===" % evtPy)
         com  = 'get_files -jo %s;' % evtPy
         com += 'echo "theApp.EvtMax=-1" > %s;' % optPy
         com += 'athena.py -c "In=%s" %s %s;' % (inputFiles,evtPy,optPy)
         com += 'rm -f %s' % optPy
         # run athena
-        status,out = commands.getstatusoutput(com)
-        print out
+        status,out = subprocess.getstatusoutput(com)
+        print(out)
         # extract
         flagStream = False
         for line in out.split('\n'):
@@ -1417,8 +1417,8 @@ sys.exit(0)
 
 
         # new poolRefs
-        print "=== New poolRefs ==="
-        print poolRefs
+        print("=== New poolRefs ===")
+        print(poolRefs)
         if len(poolRefs)>0:
             if lfcHost != '':
                 # get PFNs from LFC
@@ -1434,10 +1434,10 @@ sys.exit(0)
                                           old_prefix=oldPrefix,
                                           new_prefix=newPrefix)
 
-            print "=== add POOL refs to PoolFC ==="
+            print("=== add POOL refs to PoolFC ===")
             for ref in poolRefs:
                 if ref not in pfnMap:
-                    print " %s not found" % ref
+                    print(" %s not found" % ref)
 
             # extract FIDs from PoolFC
             try:
@@ -1463,61 +1463,61 @@ sys.exit(0)
 for fileName in addPoolFC:
     # insert it to pool catalog    
     com = 'pool_insertFileToCatalog %s' % fileName
-    print com
-    status,output = commands.getstatusoutput(com)
-    print output
+    print(com)
+    status,output = subprocess.getstatusoutput(com)
+    print(output)
 
 # print PoolFC
-print "=== PoolFileCatalog.xml ==="
-print commands.getoutput('cat PoolFileCatalog.xml')
-print
+print("=== PoolFileCatalog.xml ===")
+print(subprocess.getoutput('cat PoolFileCatalog.xml'))
+print()
 
 # create symlink for MC
 if mcData != '' and len(inputFiles) != 0:
-    print "=== make symlink for %s ===" % mcData
+    print("=== make symlink for %s ===" % mcData)
     # expand mcdata.tgz
-    commands.getoutput('rm -f %s' % mcData)
-    status,output = commands.getstatusoutput('tar xvfzm %s' % inputFiles[0])
-    print output
+    subprocess.getoutput('rm -f %s' % mcData)
+    status,output = subprocess.getstatusoutput('tar xvfzm %s' % inputFiles[0])
+    print(output)
     if status != 0:
-        print "ERROR : MC data corrupted"
+        print("ERROR : MC data corrupted")
         sys.exit(EC_NoInput)
     # look for .dat
     foundMcData = False
     for line in output.split('\n'):
         if line.endswith('.dat'):
-            status,output = commands.getstatusoutput('ln -fs %s %s' % \
+            status,output = subprocess.getstatusoutput('ln -fs %s %s' % \
                                                      (line.split()[-1],mcData))
             if status != 0:
-                print output                
-                print "ERROR : failed to create symlink for MC data"
+                print(output)                
+                print("ERROR : failed to create symlink for MC data")
                 sys.exit(EC_NoInput)
             foundMcData = True
             break
     if not foundMcData:
-        print "ERROR : cannot find *.dat in %s" % inputFiles[0]
+        print("ERROR : cannot find *.dat in %s" % inputFiles[0])
         sys.exit(EC_NoInput)
 
 # setup DB/CDRelease
 if dbrFile != '':
     if dbrRun == -1:
-        print "=== setup DB/CDRelease (old style) ==="
+        print("=== setup DB/CDRelease (old style) ===")
         # expand 
-        status,out = commands.getstatusoutput('tar xvfzm %s/%s' % (currentDir,dbrFile))
-        print out
+        status,out = subprocess.getstatusoutput('tar xvfzm %s/%s' % (currentDir,dbrFile))
+        print(out)
         # remove
-        print commands.getstatusoutput('rm %s/%s' % (currentDir,dbrFile))
+        print(subprocess.getstatusoutput('rm %s/%s' % (currentDir,dbrFile)))
     else:
-        print "=== setup DB/CDRelease (new style) ==="
+        print("=== setup DB/CDRelease (new style) ===")
         # make symlink
-        print commands.getstatusoutput('ln -fs %s/%s %s' % (currentDir,dbrFile,dbrFile))
+        print(subprocess.getstatusoutput('ln -fs %s/%s %s' % (currentDir,dbrFile,dbrFile)))
         # run Reco_trf and set env vars
         dbCom = 'Reco_trf.py RunNumber=%s DBRelease=%s' % (dbrRun,dbrFile)
-        print dbCom
-        status,out = commands.getstatusoutput(dbCom)
-        print out
+        print(dbCom)
+        status,out = subprocess.getstatusoutput(dbCom)
+        print(out)
         # remove
-        print commands.getstatusoutput('rm %s/%s' % (currentDir,dbrFile))
+        print(subprocess.getstatusoutput('rm %s/%s' % (currentDir,dbrFile)))
     # look for setup.py
     tmpSetupDir = None
     for line in out.split('\n'):
@@ -1526,7 +1526,7 @@ if dbrFile != '':
             break
     # check
     if tmpSetupDir == None:
-        print "ERROR : cound not find setup.py in %s" % dbrFile
+        print("ERROR : cound not find setup.py in %s" % dbrFile)
         sys.exit(EC_DBRelease)
     # run setup.py
     dbrSetupStr  = "import os\nos.chdir('%s')\nexecfile('setup.py',{})\nos.chdir('%s')\n" % \
@@ -1535,7 +1535,7 @@ if dbrFile != '':
         
                
 # create post-jobO file which overwrites some parameters
-postOpt = 'post_' + commands.getoutput('uuidgen 2>/dev/null') + '.py'
+postOpt = 'post_' + subprocess.getoutput('uuidgen 2>/dev/null') + '.py'
 oFile = open(postOpt,'w')
 oFile.write("""
 try:
@@ -1830,7 +1830,7 @@ except:
     pass
 """ % stFileName)
     
-uniqueTag = commands.getoutput('uuidgen 2>/dev/null')
+uniqueTag = subprocess.getoutput('uuidgen 2>/dev/null')
 if 'BS' in outputFiles:
     oFile.write('ByteStreamEventStorageOutputSvc = _Service("ByteStreamEventStorageOutputSvc")\n')
     oFile.write('ByteStreamEventStorageOutputSvc.FileTag = "%s"\n' % uniqueTag)
@@ -1864,7 +1864,7 @@ if eventPickTxt != '':
         if epSkipFlag:
             continue
         # append        
-        epRunEvtList.append((long(items[0]),long(items[1])))
+        epRunEvtList.append((int(items[0]),int(items[1])))
     oFile.write("""
 from AthenaCommon.AlgSequence import AthSequencer
 seq = AthSequencer('AthFilterSeq')
@@ -1884,21 +1884,21 @@ for tmpStream in theApp._streams.getAllChildren():
 # FileStager
 if useFileStager and directIn:
     try:
-        print "=== preparation for FileStager ==="
+        print("=== preparation for FileStager ===")
         # remove log just in case
-        commands.getoutput('rm -f %s.log' % pCopyToolName)
+        subprocess.getoutput('rm -f %s.log' % pCopyToolName)
         # get FileStager jobO    
         fileStagerDir = 'FileStager'
         if newPrefix.startswith('srm:'):
             fileStagerJobO = 'input_FileStager.py'
         else:    
             fileStagerJobO = 'input_FileStagerRFCP.py'
-        print commands.getoutput('rm -f %s;get_files %s/%s' % (fileStagerJobO,fileStagerDir,fileStagerJobO))
+        print(subprocess.getoutput('rm -f %s;get_files %s/%s' % (fileStagerJobO,fileStagerDir,fileStagerJobO)))
         # create dummy jobOs to disable FileStager which is already included in user's jobO
-        commands.getoutput('mkdir -p %s' % fileStagerDir)
+        subprocess.getoutput('mkdir -p %s' % fileStagerDir)
         for tmpFsJobO in ['input_FileStager.py','input_FileStagerRFCP.py']:
-            commands.getoutput('rm -f %s/%s' % (fileStagerDir,tmpFsJobO))
-            commands.getoutput('touch %s/%s' % (fileStagerDir,tmpFsJobO))
+            subprocess.getoutput('rm -f %s/%s' % (fileStagerDir,tmpFsJobO))
+            subprocess.getoutput('touch %s/%s' % (fileStagerDir,tmpFsJobO))
         # tweak jobO for dcap/xrootd
         fsStrs = ''
         fsFH = open(fileStagerJobO)
@@ -1959,16 +1959,16 @@ except:
         copyToolFH = open(pCopyToolName,'w')
         copyToolFH.write(pCopyToolStr)
         copyToolFH.close()
-        commands.getoutput('chmod +x %s' % pCopyToolName)
+        subprocess.getoutput('chmod +x %s' % pCopyToolName)
         # create sample file
-        sampleFileName = 'sample_%s.def' % commands.getoutput('uuidgen 2>/dev/null')
+        sampleFileName = 'sample_%s.def' % subprocess.getoutput('uuidgen 2>/dev/null')
         sampleFH = open(sampleFileName,'w')
         sampleFH.write('TITLE: title\nFLAGS: GridCopy=1\n')
         metaDataForFH = {}
         for tmpInputName in inputFiles:
             tmpCheckSum = None
             # look for GUID
-            for tmpGUIDforMeta,tmpPFNforMeta in directPfnMap.iteritems():
+            for tmpGUIDforMeta,tmpPFNforMeta in directPfnMap.items():
                 if tmpPFNforMeta == tmpInputName:
                     # get checksum
                     if tmpGUIDforMeta in directMetaMap and 'checksum' in directMetaMap[tmpGUIDforMeta]:
@@ -1990,15 +1990,15 @@ except:
         copytoolConfFH.write('com = "%s"\n' % copyToolCpCommand)
         copytoolConfFH.write('metaMap = %s\n' % str(metaDataForFH))
         copytoolConfFH.close()
-        print "----> jobO"
-        print commands.getoutput('cat %s' % fileStagerJobO)
-        print "----> sample"        
-        print commands.getoutput('cat %s' % sampleFileName)
-        print "----> config"
-        print commands.getoutput('cat %sConf.py' % pCopyToolName)
+        print("----> jobO")
+        print(subprocess.getoutput('cat %s' % fileStagerJobO))
+        print("----> sample")        
+        print(subprocess.getoutput('cat %s' % sampleFileName))
+        print("----> config")
+        print(subprocess.getoutput('cat %sConf.py' % pCopyToolName))
     except:
         type,value,traceBack = sys.exc_info()
-        print 'ERROR : failed to setup FileStager %s - %s' % (type,value)
+        print('ERROR : failed to setup FileStager %s - %s' % (type,value))
     # modify PoolFC.xml
     pfcName = 'PoolFileCatalog.xml'
     try:
@@ -2031,7 +2031,7 @@ include ('%s')
 oFile.close()
 
 # overwrite EventSelectorAthenaPool.InputCollections and AthenaCommon.AthenaCommonFlags.FilesInput for jobO level metadata extraction
-preOpt = 'pre_' + commands.getoutput('uuidgen 2>/dev/null') + '.py'
+preOpt = 'pre_' + subprocess.getoutput('uuidgen 2>/dev/null') + '.py'
 oFile = open(preOpt,'w')
 if len(inputFiles) != 0 and mcData == '':
     if not byteStream:
@@ -2110,26 +2110,26 @@ oFile.close()
 
 # dump
 
-print "=== pre jobO ==="
+print("=== pre jobO ===")
 oFile = open(preOpt)
 lines = ''
 for line in oFile:
     lines += line
-print lines
+print(lines)
 oFile.close()
-print
+print()
 
-print "=== post jobO ==="
+print("=== post jobO ===")
 oFile = open(postOpt)
 lines = ''
 for line in oFile:
     lines += line
-print lines
+print(lines)
 oFile.close()
 
 # replace theApp.initialize when using theApp.nextEvent
 if useNextEvent:
-    initOpt = 'init_' + commands.getoutput('uuidgen 2>/dev/null') + '.py'
+    initOpt = 'init_' + subprocess.getoutput('uuidgen 2>/dev/null') + '.py'
     initFile = open(initOpt,'w')
     initFile.write("""
 origTheAppinitialize = theApp.initialize                   
@@ -2140,16 +2140,16 @@ theApp.initialize = fakeTheAppinitialize
 """ % postOpt)
     initFile.close()
     
-    print "=== init jobO ==="
+    print("=== init jobO ===")
     iFile = open(initOpt)
     lines = ''
     for line in iFile:
         lines += line
-    print lines
+    print(lines)
     iFile.close()
 
     # modify jobO
-    print "=== change jobO ==="
+    print("=== change jobO ===")
     newJobO = ''
     startPy = False
     for item in jobO.split():
@@ -2157,8 +2157,8 @@ theApp.initialize = fakeTheAppinitialize
             newJobO += (" " + initOpt)
             startPy = True
         newJobO += (" " + item)    
-    print "  Old : " + jobO
-    print "  New : " + newJobO
+    print("  Old : " + jobO)
+    print("  New : " + newJobO)
     jobO = newJobO
     
 # modify macro for ARA
@@ -2213,33 +2213,33 @@ if runAra and len(inputFiles) != 0:
        tmpMacro.close()
        newMacro.close()
        # dump
-       print "=== old %s ===" % tmpMacroName
+       print("=== old %s ===" % tmpMacroName)
        tmpFile = open(tmpMacroName)
        lines = ''
        for line in tmpFile:
            lines += line
-       print lines
+       print(lines)
        tmpFile.close()
-       print "=== new %s ===" % newMacroName
+       print("=== new %s ===" % newMacroName)
        tmpFile = open(newMacroName)
        lines = ''
        for line in tmpFile:
            lines += line
-       print lines
+       print(lines)
        tmpFile.close()
        # rename
-       commands.getoutput('mv %s %s' % (newMacroName,tmpMacroName))
+       subprocess.getoutput('mv %s %s' % (newMacroName,tmpMacroName))
    except:
        type, value, traceBack = sys.exc_info()
-       print 'ERROR: failed to modify %s : %s - %s' % (tmpMacroName,type,value)
+       print('ERROR: failed to modify %s : %s - %s' % (tmpMacroName,type,value))
        sys.exit(EC_ARA)
 
 # get PDGTABLE.MeV
-commands.getoutput('get_files PDGTABLE.MeV')
+subprocess.getoutput('get_files PDGTABLE.MeV')
 
 # temporary output to avoid MemeoryError
-tmpOutput = 'tmp.stdout.%s' % commands.getoutput('uuidgen 2>/dev/null')
-tmpStderr = 'tmp.stderr.%s' % commands.getoutput('uuidgen 2>/dev/null')
+tmpOutput = 'tmp.stdout.%s' % subprocess.getoutput('uuidgen 2>/dev/null')
+tmpStderr = 'tmp.stderr.%s' % subprocess.getoutput('uuidgen 2>/dev/null')
 
 # append workdir to CMTPATH
 env = 'CMTPATH=%s:$CMTPATH' % workDir
@@ -2270,7 +2270,7 @@ if (not runTrf) and dbrFile == '':
     com += '%s %s %s' % (preOpt,jobO,postOpt)
 elif dbrFile != '':
     # run setup.py and athena.py in a python
-    tmpTrfName = 'trf.%s.py' % commands.getoutput('uuidgen 2>/dev/null')
+    tmpTrfName = 'trf.%s.py' % subprocess.getoutput('uuidgen 2>/dev/null')
     tmpTrfFile = open(tmpTrfName,'w')
     tmpTrfFile.write(dbrSetupStr)
     tmpTrfFile.write('import sys\nstatus=os.system("""athena.py ')
@@ -2284,26 +2284,26 @@ else:
     # run transformation
     com += '%s' % jobO
 
-print    
-print "=== execute ==="
-print com
+print()    
+print("=== execute ===")
+print(com)
 # run athena
 if not debugFlag:
     if liveLog != '':
         # create empty log
-        commands.getstatusoutput('cat /dev/null > %s' % tmpOutput)
+        subprocess.getstatusoutput('cat /dev/null > %s' % tmpOutput)
         # start watcher
         logWatcher = LogWatcher(tmpOutput,liveLog)
         logWatcher.start()
     # write stdout to tmp file
     com += ' > %s 2> %s' % (tmpOutput,tmpStderr)
-    status,out = commands.getstatusoutput(com)
-    print out
+    status,out = subprocess.getstatusoutput(com)
+    print(out)
     statusChanged = False
     try:
         tmpOutFile = open(tmpOutput)
         for line in tmpOutFile:
-            print line[:-1]
+            print(line[:-1])
             # set status=0 for AcerMC
             if re.search('ACERMC TERMINATES NORMALY: NO MORE EVENTS IN FILE',line) != None:
                 status = 0
@@ -2312,18 +2312,18 @@ if not debugFlag:
     except:
         pass
     if statusChanged:
-        print "\n\nStatusCode was overwritten for AcerMC\n"
+        print("\n\nStatusCode was overwritten for AcerMC\n")
     try:
         tmpErrFile = open(tmpStderr)
         for line in tmpErrFile:
-            print line[:-1]
+            print(line[:-1])
         tmpErrFile.close()
     except:
         pass
     # print 'sh: line 1:  8278 Aborted'
     try:
         if status != 0:
-            print out.split('\n')[-1]
+            print(out.split('\n')[-1])
     except:
         pass
     if liveLog != '':        
@@ -2334,24 +2334,24 @@ else:
     status = os.system(com)
 
 if useFileStager and directIn:
-    print
-    print "=== FileStager log ==="
-    print commands.getoutput('cat %s.log' % pCopyToolName)
-    print commands.getoutput('cat %s/tcf_*stage.err 2>/dev/null' % currentDir)
+    print()
+    print("=== FileStager log ===")
+    print(subprocess.getoutput('cat %s.log' % pCopyToolName))
+    print(subprocess.getoutput('cat %s/tcf_*stage.err 2>/dev/null' % currentDir))
 
-print
-print "=== list in run dir ==="    
-print commands.getoutput('ls -l')
+print()
+print("=== list in run dir ===")    
+print(subprocess.getoutput('ls -l'))
 
 # rename or archive iROOT files
 if 'IROOT' in outputFiles:
     for iROOT in outputFiles['IROOT']:
         if iROOT[0].find('*') != -1:
             # archive *
-            commands.getoutput('tar cvfz %s %s' % (iROOT[-1],iROOT[0]))
+            subprocess.getoutput('tar cvfz %s %s' % (iROOT[-1],iROOT[0]))
         else:
             # rename 
-            commands.getoutput('mv %s %s' % iROOT)
+            subprocess.getoutput('mv %s %s' % iROOT)
         # modify PoolFC.xml
         pfcName = 'PoolFileCatalog.xml'
         try:
@@ -2373,52 +2373,52 @@ if 'IROOT' in outputFiles:
 if 'TAG' in outputFiles:
     woAttrNr = re.sub('\.\d+$','',outputFiles['TAG'])
     if woAttrNr != outputFiles['TAG']:
-        print commands.getoutput('mv %s %s' % (woAttrNr,outputFiles['TAG']))
+        print(subprocess.getoutput('mv %s %s' % (woAttrNr,outputFiles['TAG'])))
     # since 13.0.30 StreamTAG doesn't append .root automatically
     woRootAttrNr = re.sub('\.root\.*\d*$','',outputFiles['TAG'])
     if woRootAttrNr != outputFiles['TAG']:
-        print commands.getoutput('mv %s %s' % (woRootAttrNr,outputFiles['TAG']))
+        print(subprocess.getoutput('mv %s %s' % (woRootAttrNr,outputFiles['TAG'])))
 
 # rename BS file
 if 'BS' in outputFiles:
-    bsS,bsO = commands.getstatusoutput('mv daq.%s* %s' % (uniqueTag,outputFiles['BS']))
-    print bsS,bsO
+    bsS,bsO = subprocess.getstatusoutput('mv daq.%s* %s' % (uniqueTag,outputFiles['BS']))
+    print(bsS,bsO)
     if bsS != 0:
-        print commands.getstatusoutput('mv data_test.*%s* %s' % (uniqueTag,outputFiles['BS']))    
+        print(subprocess.getstatusoutput('mv data_test.*%s* %s' % (uniqueTag,outputFiles['BS'])))    
     
 # copy results
-for file in outputFiles.values():
-    if not isinstance(file,types.StringType):
+for file in list(outputFiles.values()):
+    if not isinstance(file,bytes):
         # for AANT
         for aaT in file:
-            commands.getoutput('mv %s %s' % (aaT[-1],currentDir))
+            subprocess.getoutput('mv %s %s' % (aaT[-1],currentDir))
     else:
-        commands.getoutput('mv %s %s' % (file,currentDir))
+        subprocess.getoutput('mv %s %s' % (file,currentDir))
 
 # copy PoolFC.xml
-commands.getoutput('mv -f PoolFileCatalog.xml %s' % currentDir)
+subprocess.getoutput('mv -f PoolFileCatalog.xml %s' % currentDir)
 
 # copy AthSummary.txt
-commands.getoutput('mv -f AthSummary.txt %s' % currentDir)
+subprocess.getoutput('mv -f AthSummary.txt %s' % currentDir)
 
 # go back to current dir
 os.chdir(currentDir)
 
-print
-print "=== list in top dir ==="    
-print commands.getoutput('pwd')
-print commands.getoutput('ls -l')
+print()
+print("=== list in top dir ===")    
+print(subprocess.getoutput('pwd'))
+print(subprocess.getoutput('ls -l'))
 
 # remove work dir
 if not debugFlag:
-    commands.getoutput('rm -rf %s' % workDir)
+    subprocess.getoutput('rm -rf %s' % workDir)
 
 # return
-print
-print "=== result ==="    
+print()
+print("=== result ===")    
 if status:
-    print "execute script: Running athena failed : %d" % status
+    print("execute script: Running athena failed : %d" % status)
     sys.exit(EC_AthenaFail)
 else:
-    print "execute script: Running athena was successful"
+    print("execute script: Running athena was successful")
     sys.exit(0)

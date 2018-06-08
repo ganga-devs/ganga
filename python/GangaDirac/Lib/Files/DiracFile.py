@@ -457,9 +457,9 @@ class DiracFile(IGangaFile):
 
             logger.info("I have a local DiracFile, however you're requesting it's location on the grid")
             logger.info("Shall I upload it to the grid before I continue?")
-            decision = raw_input('[y] / n:')
+            decision = input('[y] / n:')
             while not (decision.lower() in ['y', 'n'] or decision.lower() == ''):
-                decision = raw_input('[y] / n:')
+                decision = input('[y] / n:')
 
             if decision.lower() in ['y', '']:
                 # upload namePattern to grid
@@ -545,8 +545,8 @@ class DiracFile(IGangaFile):
         else:
             if self.lfn not in reps:
                 return
-            if self.locations != reps[self.lfn].keys():
-                self.locations = reps[self.lfn].keys()
+            if self.locations != list(reps[self.lfn].keys()):
+                self.locations = list(reps[self.lfn].keys())
             #logger.debug( "locations: %s" % str( self.locations ) )
             # deep copy just before wer change it incase we're pointing to the
             # data stored in original from a copy
@@ -665,9 +665,9 @@ class DiracFile(IGangaFile):
 
         if self.lfn != "" and force == False and lfn == '':
             logger.warning("Warning you're about to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (self.namePattern, self.lfn))
-            decision = raw_input('y / [n]:')
+            decision = input('y / [n]:')
             while not (decision.lower() in ['y', 'n'] or decision.lower() == ''):
-                decision = raw_input('y / [n]:')
+                decision = input('y / [n]:')
 
             if decision.lower() == 'y':
                 pass
@@ -678,9 +678,9 @@ class DiracFile(IGangaFile):
             logger.warning("Warning you're attempting to put this DiracFile: %s" % self.namePattern)
             logger.warning("It currently has an LFN associated with it: %s" % self.lfn)
             logger.warning("Do you want to continue and attempt to upload to: %s" % lfn)
-            decision = raw_input('y / [n]:')
+            decision = input('y / [n]:')
             while not (decision.lower() in ['y', 'n', '']):
-                decision = raw_input('y / [n]:')
+                decision = input('y / [n]:')
 
             if decision.lower() == 'y':
                 pass
@@ -851,7 +851,7 @@ subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=Tru
                         '###DIRAC_ENV###' : self._getDiracEnvStr(),
                         '###LFN###' : self.lfn}
 
-        for k, v in replace_dict.iteritems():
+        for k, v in replace_dict.items():
             script = script.replace(str(k), str(v))
 
         return script
@@ -871,7 +871,7 @@ for f in glob.glob('###NAME_PATTERN###'):
                          '###LFN_BASE###' : lfnBase,
                          '###COMPRESSED###' : compressed }
 
-        for k, v in replace_dict.iteritems():
+        for k, v in replace_dict.items():
             wildcard_str = wildcard_str.replace(str(k), str(v))
 
         return wildcard_str
@@ -925,7 +925,7 @@ for f in glob.glob('###NAME_PATTERN###'):
                         '###LOCATIONSFILE###' : postProcessLocationsFP,
                         '###DIRAC_ENV###' : script_env}
 
-        for k, v in replace_dict.iteritems():
+        for k, v in replace_dict.items():
             script = script.replace(str(k), str(v))
 
         return script

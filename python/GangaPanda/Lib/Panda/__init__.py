@@ -1,2 +1,2 @@
-from Panda import *
-from PandaRequirements import *
+from .Panda import *
+from .PandaRequirements import *

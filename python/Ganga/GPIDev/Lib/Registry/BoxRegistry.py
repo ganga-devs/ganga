@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
@@ -246,7 +246,7 @@ class BoxRegistrySliceProxy(RegistrySliceProxy):
         Remove all objects from the box registry.
         """
 
-        items = stripProxy(self).objects.items()
+        items = list(stripProxy(self).objects.items())
         for id, obj in items:
             reg = obj._getRegistry()
             if not reg is None:

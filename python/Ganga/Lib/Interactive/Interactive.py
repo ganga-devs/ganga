@@ -187,7 +187,7 @@ class Interactive(IBackend):
         self.workdir = workdir
         exeString = jobconfig.getExeString()
         argList = jobconfig.getArgStrings()
-        argString = " ".join(map(lambda x: " %s " % x, argList))
+        argString = " ".join([" %s " % x for x in argList])
 
         outputSandboxPatterns = jobconfig.outputbox
         patternsToZip = []
@@ -268,7 +268,7 @@ class Interactive(IBackend):
         from Ganga.GPIDev.Lib.File import FileUtils
         commandString = FileUtils.loadScript(script_location, '')
 
-        for k, v in replace_dict.iteritems():
+        for k, v in replace_dict.items():
             commandString = commandString.replace(str(k), str(v))
 
         return job.getInputWorkspace().writefile(FileBuffer("__jobscript__", commandString), executable=1)

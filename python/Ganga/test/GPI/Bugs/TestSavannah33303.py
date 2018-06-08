@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
@@ -10,6 +10,6 @@ class TestSavannah33303(GangaUnitTest):
         j = Job()
         id = j.id
 
-        for i in xrange(1, 20):
+        for i in range(1, 20):
             j = j.copy()
             self.assertEqual(j.id, id + i)

@@ -1,6 +1,6 @@
 import unittest
 import traceback
-import StringIO
+import io
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
@@ -137,7 +137,7 @@ class GPIPPreparationTestCase(unittest.TestCase):
         try:
             checkTest = getattr(self.pytest_instance, self.method_name)()
         except Exception as preparationError:
-            sio = StringIO.StringIO()
+            sio = io.StringIO()
             traceback.print_exc(file=sio)
             self.preparationError = sio.getvalue()
             sio.close()
@@ -185,7 +185,7 @@ class GPIPCheckTestCase(unittest.TestCase):
 
             assert(self.checkTest != None), 'No instance of checktest, this should happen while the preparation of test is failed.'
         except Exception as error:
-            sio = StringIO.StringIO()
+            sio = io.StringIO()
             traceback.print_exc(file=sio)
             self.errorTraceback = sio.getvalue()
             sio.close()
@@ -195,7 +195,7 @@ class GPIPCheckTestCase(unittest.TestCase):
             self.checkTest.checkTest()
         except Exception as runCheckError:
             self.runCheckError = runCheckError
-            sio = StringIO.StringIO()
+            sio = io.StringIO()
             traceback.print_exc(file=sio)
             self.errorTraceback = sio.getvalue()
             sio.close()
@@ -278,7 +278,7 @@ class SimpleRunnerControl(object):
                  ready = True
          except Exception as e:
              #Change to catch generic exception.
-             sio = StringIO.StringIO()
+             sio = io.StringIO()
              traceback.print_exc(file=sio)
              self.error = sio.getvalue()
              sio.close()

@@ -13,7 +13,7 @@ __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__    = "10 May 2009"
 __version__ = "1.2"
 
-from Vanseg import Vanseg
-from Classify import Classify
-from CamontDataset import CamontDataset
-from PDF import PDF
+from .Vanseg import Vanseg
+from .Classify import Classify
+from .CamontDataset import CamontDataset
+from .PDF import PDF

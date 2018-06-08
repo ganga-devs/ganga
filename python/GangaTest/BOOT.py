@@ -6,7 +6,7 @@ def test_logger():
     import Ganga.Utility.logging
     logger = Ganga.Utility.logging.getLogger()
     # this is to test manually (visually) the logging level mechanism
-    print "logger test RAW ",logger,logger.name
+    print("logger test RAW ",logger,logger.name)
     logger.debug('logger test DEBUG')
     logger.info('logger test INFO')
     logger.warning('logger test WARNING')

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import copy
 import os
@@ -60,17 +60,17 @@ def cache(method):
             time_after = self.cache['mtime']
 
             if time_before != time_after:
-                for k in self.cache.keys():    
+                for k in list(self.cache.keys()):    
                     del self.cache[k]
 
             self.cache['mtime'] = time_after
 
             # If entry is missing from cache, repopulate it
             # This will run if the cache was just cleared
-            if method.func_name not in self.cache:
-                self.cache[method.func_name] = method(self, *args, **kwargs)
+            if method.__name__ not in self.cache:
+                self.cache[method.__name__] = method(self, *args, **kwargs)
 
-            return self.cache[method.func_name]
+            return self.cache[method.__name__]
     return cache_function
 
 def retry_command(method):
@@ -91,7 +91,7 @@ def retry_command(method):
         return None
     return retry_function
 
-class ICredentialInfo(object):
+class ICredentialInfo(object, metaclass=ABCMeta):
     """
     The interface for all credential types.
     Each object covers one credential file exactly.
@@ -99,7 +99,6 @@ class ICredentialInfo(object):
 
     These are only created by the store and should not be persisted.
     """
-    __metaclass__ = ABCMeta
 
     __slots__ = ('cache', 'cache_lock', 'initial_requirements')
 

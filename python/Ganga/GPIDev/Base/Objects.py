@@ -10,7 +10,7 @@ from functools import partial
 import inspect
 import abc
 import threading
-import thread
+import _thread
 from contextlib import contextmanager
 import functools
 
@@ -62,7 +62,7 @@ def synchronised(f):
     return sync_decorated
 
 
-class Node(object):
+class Node(object, metaclass=abc.ABCMeta):
     """
     The Node class is the code of the Ganga heirachy. It allows objects to keep
     track of their parent, whether they're dirty and take part in the visitor
@@ -71,7 +71,6 @@ class Node(object):
     It also provides access to tree-aware read/write locks to provide
     thread-safe usage.
     """
-    __metaclass__ = abc.ABCMeta
     __slots__ = ('_parent', '_lock', '_dirty')
 
     def __init__(self, parent=None):
@@ -84,7 +83,7 @@ class Node(object):
         cls = self.__class__
         obj = cls()
         this_dict = copy(self.__dict__)
-        for elem, val in this_dict.iteritems():
+        for elem, val in this_dict.items():
             if elem not in do_not_copy:
                 this_dict[elem] = deepcopy(val, memo)
 
@@ -403,7 +402,7 @@ class Descriptor(object):
             return int(v)
         elif isinstance(v, dict):
             new_dict = {}
-            for key, item in v.iteritems():
+            for key, item in v.items():
                 new_dict[key] = Descriptor.cloneObject(item, obj, name)
             return new_dict
         else:
@@ -639,7 +638,7 @@ class ObjectMetaclass(abc.ABCMeta):
         # Add all class members of type `Schema.Item` to the _schema object
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
         # We can't just yet because at this point the base class' Item has been overwritten with a Descriptor
-        for member_name, member in this_dict.items():
+        for member_name, member in list(this_dict.items()):
             if isinstance(member, Item):
                 this_schema.datadict[member_name] = member
 
@@ -687,8 +686,7 @@ class ObjectMetaclass(abc.ABCMeta):
             this_schema.createDefaultConfig()
 
 
-class GangaObject(Node):
-    __metaclass__ = ObjectMetaclass # Change standard Python metaclass object
+class GangaObject(Node, metaclass=ObjectMetaclass):
     _schema = None  # obligatory, specified in the derived classes
     _category = None  # obligatory, specified in the derived classes
     _exportmethods = []  # optional, specified in the derived classes
@@ -837,7 +835,7 @@ class GangaObject(Node):
 
         ## Fix some objects losing parent knowledge
         src_dict = srcobj.__dict__
-        for key, val in src_dict.iteritems():
+        for key, val in src_dict.items():
             this_attr = getattr(srcobj, key)
             if isinstance(this_attr, Node) and key not in do_not_copy:
                 #logger.debug("k: %s  Parent: %s" % (key, (srcobj)))
@@ -924,7 +922,7 @@ class GangaObject(Node):
             new_data (dict): This is the external dictionary which is to be assigned to the internal dictionary
         """
         # type: (Dict[str, Any]) -> None
-        for v in new_data.values():
+        for v in list(new_data.values()):
             if isinstance(v, Node) and v._getParent() is not self:
                 v._setParent(self)
         self._data_dict = new_data
@@ -1000,7 +998,7 @@ class GangaObject(Node):
         obj = self.getNew()
         # FIXME: this is different than for deepcopy... is this really correct?
         this_dict = copy(self.__dict__)
-        for elem in this_dict.keys():
+        for elem in list(this_dict.keys()):
             if elem not in do_not_copy:
                 this_dict[elem] = copy(this_dict[elem])
             else:
@@ -1038,7 +1036,7 @@ class GangaObject(Node):
                 if item.isA(SharedItem):
                     self.__incrementShareRef(self_copy, name)
 
-        for k, v in self.__dict__.iteritems():
+        for k, v in self.__dict__.items():
             if k not in do_not_copy:
                 try:
                     self_copy.__dict__[k] = deepcopy(v)
@@ -1064,7 +1062,7 @@ class GangaObject(Node):
         from Ganga.Utility.Config.Config import getConfig, ConfigError
         try:
             _timeOut = getConfig('Configuration')['DiskIOTimeout']
-        except ConfigError, err:
+        except ConfigError as err:
             _timeOut = 5. # 5sec hardcoded default
         return _timeOut
 
@@ -1137,7 +1135,7 @@ class GangaObject(Node):
         """
         try:
             return self._registry.find(self)
-        except AttributeError, err:
+        except AttributeError as err:
             logger.debug("_getRegistryID Exception: %s" % err)
             return None
 

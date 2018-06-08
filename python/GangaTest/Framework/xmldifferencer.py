@@ -31,7 +31,7 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
         testcase_new = newtests[test]
         try: testcase_old = oldtests[test]
         except KeyError: 
-            w.start('testcase', {'name':testcase_new.attributes.items()[0][1]} )
+            w.start('testcase', {'name':list(testcase_new.attributes.items())[0][1]} )
             result = testcase_new.getElementsByTagName("result")[0].childNodes[0].data
             w.element('result', result )
             w.start(result)
@@ -42,8 +42,8 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
         #work out what to do
         result_new = testcase_new.getElementsByTagName("result")[0].childNodes[0].data
         result_old = testcase_old.getElementsByTagName("result")[0].childNodes[0].data
-        test_name = testcase_new.attributes.items()[0][1]
-        test_time = testcase_new.attributes.items()[1][1]+" / "+testcase_old.attributes.items()[1][1]
+        test_name = list(testcase_new.attributes.items())[0][1]
+        test_time = list(testcase_new.attributes.items())[1][1]+" / "+list(testcase_old.attributes.items())[1][1]
         if ( result_new == 'failure' and result_old == 'failure' ):
             test_result = 'success'
             #write XML element
@@ -114,7 +114,7 @@ def comparetestfiles(newfiledict, oldfiledict):
         testcases = newdoc.getElementsByTagName("testcase")
         for testcase in testcases:
            if testcase.nodeType == testcase.ELEMENT_NODE:
-                for (name, value) in testcase.attributes.items():
+                for (name, value) in list(testcase.attributes.items()):
                     if name == 'name':
                         #testcase_name=value.split()[0].split("/")
                         ind = value.find("[")
@@ -126,7 +126,7 @@ def comparetestfiles(newfiledict, oldfiledict):
         testcases = olddoc.getElementsByTagName("testcase")
         for testcase in testcases:
            if testcase.nodeType == testcase.ELEMENT_NODE:
-                for (name, value) in testcase.attributes.items():
+                for (name, value) in list(testcase.attributes.items()):
                     if name == 'name':
                         #testcase_name=value.split()[0].split("/")
                         ind = value.find("[")
@@ -212,8 +212,8 @@ def start(cmd_args=None):
 
         import os
         os.chdir(search_dir)
-        dirs = filter(os.path.isdir, os.listdir(search_dir))
-        dirs = filter(isPre, os.listdir(search_dir))
+        dirs = list(filter(os.path.isdir, os.listdir(search_dir)))
+        dirs = list(filter(isPre, os.listdir(search_dir)))
         dirs = [os.path.join(search_dir, d) for d in dirs] # add path to each dir
         dirs.sort(lambda x,y: cmp(os.path.getmtime(x),os.path.getmtime(y)))
 

@@ -1,1 +1,1 @@
-from WestGrid import *
+from .WestGrid import *

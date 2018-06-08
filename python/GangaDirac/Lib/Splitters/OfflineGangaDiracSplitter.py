@@ -172,7 +172,7 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_si
     logger.info("Calculating site<->SE Mapping")
 
     # First find the SE for each site
-    for lfn, repz in file_replicas.iteritems():
+    for lfn, repz in file_replicas.items():
         sitez = set([])
         if uniqueSE:
             for replica in repz:
@@ -189,7 +189,7 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_si
     while len(site_to_SE_mapping) != maps_size:
         time.sleep(0.1)
 
-    for iSE in site_to_SE_mapping.keys():
+    for iSE in list(site_to_SE_mapping.keys()):
         for site in site_to_SE_mapping[iSE]:
             if any(site == item for item in bannedSites):
                 site_to_SE_mapping[iSE].remove(site)
@@ -198,7 +198,7 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_si
 
     if uniqueSE:
         # Now calculate the 'inverse' dictionary of site for each SE
-        for _SE, _sites in site_to_SE_mapping.iteritems():
+        for _SE, _sites in site_to_SE_mapping.items():
             for site_i in _sites:
                 if site_i not in SE_to_site_mapping:
                     SE_to_site_mapping[site_i] = set([])
@@ -211,10 +211,10 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_si
     # Now lets generate a dictionary of some chosen site vs LFN to use in
     # constructing subsets
     site_dict = {}
-    for _lfn, sites in SE_dict.iteritems():
+    for _lfn, sites in SE_dict.items():
         site_dict[_lfn] = set([])
         for _site in sites:
-            if _site in site_to_SE_mapping.keys():
+            if _site in list(site_to_SE_mapping.keys()):
                 for _SE in site_to_SE_mapping[_site]:
                     site_dict[_lfn].add(_SE)
         if site_dict[_lfn] == set([]) and not ignoremissing:
@@ -307,7 +307,7 @@ def badLFNCheck(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
 
         #logger.debug("Updating LFN Physical Locations: [%s:%s] of %s" % (str(i * LFN_parallel_limit), str(upper_limit), str(len(allLFNs))))
 
-        for this_lfn in values.keys():
+        for this_lfn in list(values.keys()):
             #logger.debug("LFN: %s" % str(this_lfn))
             this_dict = {}
             this_dict[this_lfn] = values.get(this_lfn)
@@ -320,7 +320,7 @@ def badLFNCheck(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
                 logger.error("Error updating remoteURLs for: %s" % str(this_lfn))
 
             # If we find NO replicas then also mark this as bad!
-            if this_dict[this_lfn].keys() == []:
+            if list(this_dict[this_lfn].keys()) == []:
                 bad_lfns.append(this_lfn)
 
         for this_lfn in bad_lfns:
@@ -399,7 +399,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
     allChosenSets = {}
     # Now select a set of site to use as a seed for constructing a subset of
     # LFN
-    for lfn in site_dict.keys():
+    for lfn in list(site_dict.keys()):
         allChosenSets[lfn] = generate_site_selection(site_dict[lfn], wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping)
 
     logger.debug("Found all SE in use")
@@ -461,11 +461,11 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
 
     iterations = 0
     # Loop over all LFNs
-    while len(site_dict.keys()) > 0:
+    while len(list(site_dict.keys())) > 0:
 
         # LFN left to be used
         # NB: Can't modify this list and iterate over it directly in python
-        LFN_instances = site_dict.keys()
+        LFN_instances = list(site_dict.keys())
         # Already used LFN
         chosen_lfns = set()
 

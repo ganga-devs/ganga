@@ -72,6 +72,6 @@ class WestGrid(Batch):
     def __init__(self):
         super(WestGrid,self).__init__()
         if self.voproxy:
-            print "USING MY OWN VO PROXY:",self.voproxy
+            print("USING MY OWN VO PROXY:",self.voproxy)
         elif self.config['voproxy']:
             self.voproxy = os.path.expanduser(self.config['voproxy'])

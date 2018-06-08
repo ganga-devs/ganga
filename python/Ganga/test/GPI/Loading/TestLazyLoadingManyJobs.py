@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
@@ -33,7 +33,7 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
 
         self.assertEqual(len(jobs), numJobs)
 
-        print("len: %s" % len(jobs))
+        print(("len: %s" % len(jobs)))
 
         for j in jobs:
 
@@ -49,7 +49,7 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
             if j.id != 9:
                 raw_j = stripProxy(j)
 
-                print("job: %s status = %s" % (j.id, j.status))
+                print(("job: %s status = %s" % (j.id, j.status)))
 
                 app = lazyLoadJobApplication(raw_j) 
                 back = lazyLoadJobBackend(raw_j)

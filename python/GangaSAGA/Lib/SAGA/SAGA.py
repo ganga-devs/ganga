@@ -402,7 +402,7 @@ class SAGA(IBackend):
 
         # environment
         envList = [] 
-        for k, v in job.application.env.items():
+        for k, v in list(job.application.env.items()):
             envList.append( k+"="+v ) #"\\'%s\\'" % arg ) 
         if len(envList) != 0:
             jd.environment = envList

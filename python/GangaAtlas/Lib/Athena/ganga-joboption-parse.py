@@ -6,7 +6,7 @@
 ################################################################
 # Parse Athena jobOptions files
 
-import os, sys, commands, time, re, math, random
+import os, sys, subprocess, time, re, math, random
 
 # error codes
 # WRAPLCG_UNSPEC
@@ -38,7 +38,7 @@ except:
 try:
     dq2_outputfile_namelength = os.environ['DQ2_OUTPUTFILE_NAMELENGTH']
 except:
-    print LookupError("ERROR: DQ2_OUTPUTFILE_NAMELENGTH not defined - using 150 characters")
+    print(LookupError("ERROR: DQ2_OUTPUTFILE_NAMELENGTH not defined - using 150 characters"))
     dq2_outputfile_namelength = 150
 
     
@@ -46,11 +46,11 @@ except:
 try:
     open('output_files','r')
 except IOError:
-    print 'No output_files requested.'
+    print('No output_files requested.')
     sys.exit(EC_UNSPEC)
 output_files = [ line.strip() for line in file('output_files') ]
 if not len(output_files):
-    print 'No output_files requested.'
+    print('No output_files requested.')
     sys.exit(EC_UNSPEC)
     
 #Create output_files.new with new outputfilenames
@@ -71,10 +71,10 @@ for output_file in output_files:
 
 
     if len(new_output_file)>dq2_outputfile_namelength:
-        print '!!!!!!!!! ERROR - JOB ABORTING !!!!!!!!!!!!!!!!!!!!!!!!!! '
-        print '!!!!!!!!! Output filename length is larger than %s characters!!!!!!!!!!!!!!!!!' %dq2_outputfile_namelength
-        print '!!!!!!!!! %s is too long !!!!!!!!!!!!!!!!!!!!' % new_output_file
-        print '!!!!!!!!! Please use a shorter output dataset name !!!!!!!!!!!!!!!!!!'
+        print('!!!!!!!!! ERROR - JOB ABORTING !!!!!!!!!!!!!!!!!!!!!!!!!! ')
+        print('!!!!!!!!! Output filename length is larger than %s characters!!!!!!!!!!!!!!!!!' %dq2_outputfile_namelength)
+        print('!!!!!!!!! %s is too long !!!!!!!!!!!!!!!!!!!!' % new_output_file)
+        print('!!!!!!!!! Please use a shorter output dataset name !!!!!!!!!!!!!!!!!!')
         sys.exit(EC_STAGEOUT)
     
     new_short_output_file = re.sub(".root", short_pattern+".root" , output_file )
@@ -102,10 +102,10 @@ if 'ATHENA_OPTIONS' in os.environ:
             continue
         for output_file in output_files:
             cmd = "sed 's/"+output_file+"/"+new_output_files[output_file]+"/' "+jfile+" > " + jfile+".new"
-            rc, output = commands.getstatusoutput(cmd)
+            rc, output = subprocess.getstatusoutput(cmd)
             if rc:
-                print "ERROR: parsing output file in jobOptions"
-                print cmd
-                print rc, output
+                print("ERROR: parsing output file in jobOptions")
+                print(cmd)
+                print(rc, output)
             os.chmod(jfile+".new", 0o777)
             os.rename(jfile+".new", jfile)   

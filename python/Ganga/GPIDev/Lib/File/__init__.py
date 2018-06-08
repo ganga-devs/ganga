@@ -23,7 +23,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 
 def getFileConfigKeys():
-    keys = getConfig('Output').options.keys()
+    keys = list(getConfig('Output').options.keys())
     keys.remove('PostProcessLocationsFileName')
     keys.remove('ForbidLegacyInput')
     keys.remove('ForbidLegacyOutput')
@@ -61,7 +61,7 @@ def findOutputFileTypeByFileName(filename):
 
     outputfilesConfig = decodeExtensionKeys()
 
-    for key in outputfilesConfig.keys():
+    for key in list(outputfilesConfig.keys()):
         for filePattern in outputfilesConfig[key]:
             if fnmatch.fnmatch(filename, filePattern):
                 matchKeys.append(key)

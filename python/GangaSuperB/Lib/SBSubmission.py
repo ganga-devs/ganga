@@ -26,7 +26,7 @@ class SBSubmission(ISplitter):
             # in dir or none mode, user has to define the desired number of subjobs
             if job.inputdata.number_of_subjobs <= 0:
                 raise ApplicationConfigurationError('You must define the number of subjobs.')
-            for i in xrange(job.inputdata.number_of_subjobs):
+            for i in range(job.inputdata.number_of_subjobs):
                 j = self.createSubjob(job)
                 subjobs.append(j)
         elif job.inputdata.input_mode == 'list':

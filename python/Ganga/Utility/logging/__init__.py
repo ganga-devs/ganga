@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import
+
 
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
@@ -20,7 +20,7 @@ from __future__ import print_function, absolute_import
 #  - special functions:
 #       - log_user_exception() allows to format nicely exception messages
 
-import cStringIO
+import io
 import logging
 import logging.handlers
 import os.path
@@ -219,7 +219,7 @@ def post_config_handler(opt, value):
     """ This is called after a config has been set upon startup in the Schema, make the changes here immediate, change 1 option (opt) to 1 value """
 
     if config is not None and '_customFormat' in config and config['_customFormat'] != "":
-        for k in _formats.keys():
+        for k in list(_formats.keys()):
             _formats[k] = config['_customFormat']
 
     if config is not None:
@@ -236,7 +236,7 @@ def post_config_handler(opt, value):
             _format = _formats[value]
         else:
             if private_logger is not None:
-                private_logger.error('illegal name of format string (%s), possible values: %s' % (str(value), _formats.keys()))
+                private_logger.error('illegal name of format string (%s), possible values: %s' % (str(value), list(_formats.keys())))
             return
 
     if opt == '_colour':
@@ -505,7 +505,7 @@ def bootstrap(internal=False, handler=None):
     if file_handler:
         main_logger.addHandler(file_handler)
 
-    opts = filter(lambda o: o.find('Ganga') == 0, config)
+    opts = [o for o in config if o.find('Ganga') == 0]
     for opt in opts:
 
         # should reconfigure Ganga and private logger according to the config
@@ -586,7 +586,7 @@ def force_global_level(level):
 
 def log_user_exception(logger=None, debug=False):
     """ Log a user exception based upon a given position in the code. This is used internally despite the name and is not exposed to usersi """
-    buf = cStringIO.StringIO()
+    buf = io.StringIO()
     traceback.print_exc(file=buf)
     banner = 10 * '-' + ' error in user/extension code ' + 10 * '-'
     if not logger:

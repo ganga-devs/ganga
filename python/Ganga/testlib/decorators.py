@@ -32,12 +32,12 @@ def add_config(config_values):
 
             # Since function decorators are called before class
             # decorators, existing config items take precedence
-            for new_item, new_value in config_map.items():
+            for new_item, new_value in list(config_map.items()):
                 if new_item not in obj._config_values:
                     obj._config_values[new_item] = new_value
 
         else:  # We're on a class object
-            for item in obj.__dict__.values():
+            for item in list(obj.__dict__.values()):
                 if inspect.isfunction(item):  # Only add config to functions
                     add_config_wrapper(item)
         return obj

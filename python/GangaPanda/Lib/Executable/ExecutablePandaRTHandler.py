@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions, time
+import os, sys, pwd, subprocess, re, shutil, urllib.request, urllib.parse, urllib.error, time, string, exceptions, time
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.exceptions import BackendError
@@ -41,7 +41,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             setChirpVariables()
 
 #       Pack inputsandbox
-        inputsandbox = 'sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null') 
+        inputsandbox = 'sources.%s.tar' % subprocess.getoutput('uuidgen 2> /dev/null') 
         inpw = job.getInputWorkspace()
         # add user script to inputsandbox
         if hasattr(job.application.exe, "name"):
@@ -52,13 +52,13 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             fname.rstrip(os.sep)
             path = fname[:fname.rfind(os.sep)]
             f = fname[fname.rfind(os.sep)+1:]
-            rc, output = commands.getstatusoutput('tar rf %s -C %s %s' % (inpw.getPath(inputsandbox), path, f))
+            rc, output = subprocess.getstatusoutput('tar rf %s -C %s %s' % (inpw.getPath(inputsandbox), path, f))
             if rc:
                 logger.error('Packing inputsandbox failed with status %d',rc)
                 logger.error(output)
                 raise ApplicationConfigurationError('Packing inputsandbox failed.')
         if len(job.inputsandbox) > 0:
-            rc, output = commands.getstatusoutput('gzip %s' % (inpw.getPath(inputsandbox)))
+            rc, output = subprocess.getstatusoutput('gzip %s' % (inpw.getPath(inputsandbox)))
             if rc:
                 logger.error('Packing inputsandbox failed with status %d',rc)
                 logger.error(output)
@@ -142,7 +142,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         if job.backend.bexec != '':
             jspec = JobSpec()
             jspec.jobDefinitionID   = job.id
-            jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
+            jspec.jobName           = subprocess.getoutput('uuidgen 2> /dev/null')
             jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
             if Client.isDQ2free(job.backend.site):
                 jspec.destinationDBlock = '%s/%s' % (job.outputdata.datasetname,self.libDataset)
@@ -164,7 +164,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             if matchURL:
                 jspec.jobParameters += ' --sourceURL %s ' % matchURL.group(1)
             if job.backend.bexec != '':
-                jspec.jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
+                jspec.jobParameters += ' --bexec "%s" ' % urllib.parse.quote(job.backend.bexec)
                 jspec.jobParameters += ' -r %s ' % '.'
                 
 
@@ -202,7 +202,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
                 
                 contents = job.inputdata.get_contents(overlap=False, size=True)
 
-                for ds in contents.keys():
+                for ds in list(contents.keys()):
 
                     for f in contents[ds]:
                         job.inputdata.guids.append( f[0] )
@@ -231,7 +231,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
         jspec = JobSpec()
         jspec.jobDefinitionID   = job._getRoot().id
-        jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
+        jspec.jobName           = subprocess.getoutput('uuidgen 2> /dev/null')
         jspec.transformation    = '%s/runGen-00-00-02' % Client.baseURLSUB
         if job.inputdata:
             jspec.prodDBlock    = job.inputdata.dataset[0]
@@ -326,7 +326,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
             # set jobO parameter
             if job.application.args:
-                param += ' -j "" -p "%s %s" '%(exe_name,urllib.quote(" ".join(job.application.args)))
+                param += ' -j "" -p "%s %s" '%(exe_name,urllib.parse.quote(" ".join(job.application.args)))
             else:
                 param += ' -j "" -p "%s" '%exe_name
             if self.inputsandbox:
@@ -334,7 +334,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
         else:
             param += '-l %s ' % self.library
-            param += '-j "" -p "%s %s" ' % ( exe_name,urllib.quote(" ".join(job.application.args)))
+            param += '-j "" -p "%s %s" ' % ( exe_name,urllib.parse.quote(" ".join(job.application.args)))
 
         if job.inputdata:
             param += '-i "%s" ' % job.inputdata.names

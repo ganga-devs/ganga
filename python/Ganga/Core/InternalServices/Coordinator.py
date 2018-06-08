@@ -69,7 +69,7 @@ def _diskSpaceChecker():
                 code = "def check():"
                 for line in config['DiskSpaceChecker'].splitlines():
                     code += "\t%s\n" % line
-                exec code in ns
+                exec(code, ns)
                 _checker = new.function(
                     ns["check"].__code__, _prog.local_ns, 'check')
             except Exception as e:

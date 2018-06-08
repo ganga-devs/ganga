@@ -18,11 +18,11 @@ from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core.exceptions import ApplicationConfigurationError
 
-import os, shutil, commands, re, random
+import os, shutil, subprocess, re, random
 from Ganga.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
-import ND280Configs
+from . import ND280Configs
 
 class runND280Kin(IApplication):
     """
@@ -75,7 +75,7 @@ class runND280Kin(IApplication):
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         infiles = job.inputdata.get_dataset_filenames()
-        if len(infiles) <> 1:
+        if len(infiles) != 1:
            raise ApplicationConfigurationError('Wrong Dataset values')
         jn = "%08d" % int(infiles[0])
         outConf = ''

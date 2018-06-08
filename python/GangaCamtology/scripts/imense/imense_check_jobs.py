@@ -30,7 +30,7 @@ for j in jobs.select( status = "completed" ):
      jobOK = False
 
    if not jobOK:
-     print j.id, j.name
+     print(j.id, j.name)
      j.peek()    
      stdoutgz = os.path.join( j.outputdir, "stdout.gz" )
      if os.path.exists( stdoutgz ):

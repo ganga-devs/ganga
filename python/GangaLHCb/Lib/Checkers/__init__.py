@@ -1,1 +1,1 @@
-from LHCbMetadataChecker import LHCbMetaDataChecker
+from .LHCbMetadataChecker import LHCbMetaDataChecker

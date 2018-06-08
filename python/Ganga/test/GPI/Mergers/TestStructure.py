@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+
 
 import os
 import tempfile
@@ -66,10 +66,10 @@ class TestStructure(GangaUnitTest):
         self.runJobSlice()
 
         for j in self.jobslice:
-            print("Examining: %s" % j.id)
-            print("status: %s" % j.status)
-            print("Looking in: %s" % j.outputdir)
-            print("ls: %s" % str(os.listdir(j.outputdir)))
+            print(("Examining: %s" % j.id))
+            print(("status: %s" % j.status))
+            print(("Looking in: %s" % j.outputdir))
+            print(("ls: %s" % str(os.listdir(j.outputdir))))
             assert os.path.exists(os.path.join(j.outputdir, 'out.txt')), 'File must exist'
 
             assert os.path.exists(os.path.join(j.outputdir, 'subdir', 'out.txt')), 'File in directory must exist'

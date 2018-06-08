@@ -8,7 +8,7 @@
 # ATLAS/ARDA
 
 import os, re, fnmatch
-import commands
+import subprocess
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
@@ -30,7 +30,7 @@ def filecheck(filename):
     if filename.find("root://") != -1:
         # special check for EOS files
         cmd =  "%s %s// file info %s" % (config['PathToEOSBinary'], "/".join(filename.split("/")[:3]), '/'.join(filename.split("/")[3:]))
-        rc, out = commands.getstatusoutput(cmd)
+        rc, out = subprocess.getstatusoutput(cmd)
 
         if rc != 0:
             logger.debug("Problem checking EOS file '%s'. Ouptut: %s" % (filename, out))
@@ -57,7 +57,7 @@ def filecheck(filename):
             return fsize
 
 
-from commands import getstatusoutput    
+from subprocess import getstatusoutput    
 import threading
 from Ganga.Core import GangaThread
 

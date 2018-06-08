@@ -4,7 +4,7 @@ import pickle
 import traceback
 from socket import *
 import time
-from commands import getstatusoutput
+from subprocess import getstatusoutput
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)

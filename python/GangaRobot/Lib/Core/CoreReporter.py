@@ -125,7 +125,7 @@ class CoreReporter(BaseReporter):
             total += 1
         
         # add rows ('my-status', subtotal)    
-        for (status, subtotal) in statussubtotals.items():
+        for (status, subtotal) in list(statussubtotals.items()):
             t.addrow(status, subtotal)
         
         # add row ('Total', total)
@@ -153,7 +153,7 @@ class CoreReporter(BaseReporter):
             stats[1] += 1 #increment total
 
         # add rows ('my-ce', completed, total)
-        for (ce, stats) in cestats.items():
+        for (ce, stats) in list(cestats.items()):
             t.addrow(ce, stats[0], stats[1])
         
         return t

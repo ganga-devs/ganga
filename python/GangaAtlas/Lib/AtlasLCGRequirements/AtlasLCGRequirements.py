@@ -44,7 +44,7 @@ CESEInfoLocal = '/tmp/ganga.cese_info.dat.gz_%d' % os.getuid()
 def _loadCESEInfo():
 
     import gzip
-    import cPickle as pickle
+    import pickle as pickle
 
     result = {}
     try:
@@ -79,9 +79,9 @@ def _loadCESEInfo():
 
 def _downloadCESEInfo():
 
-    import urllib, socket, gzip
-    from cStringIO import *
-    import cPickle as pickle
+    import urllib.request, urllib.parse, urllib.error, socket, gzip
+    from io import *
+    import pickle as pickle
     from stat import *
 
 #   timeouts are not supported in python 2.2
@@ -98,7 +98,7 @@ def _downloadCESEInfo():
     while not data and retry < 3:
         retry += 1
         try:
-            data = urllib.urlopen(CESEInfoURL).read()
+            data = urllib.request.urlopen(CESEInfoURL).read()
         except Exception as e:
             logger.warning(e)
             pass
@@ -221,7 +221,7 @@ def getSEsForSites(ids):
                 continue
             se_dict[match.group(1)] = True
 
-    return se_dict.keys()
+    return list(se_dict.keys())
 
 def getCEsForSites(ids, excluded_ids = [], CREAM = False, cputime=0 ):
     '''Retrieve the CEs for a site'''
@@ -296,7 +296,7 @@ def getCEsForSites(ids, excluded_ids = [], CREAM = False, cputime=0 ):
             for ce in ces: 
                 ce_dict[ce] = True
                 
-    return ce_dict.keys()
+    return list(ce_dict.keys())
 
 def _resolveSites(sites):
 
@@ -483,7 +483,7 @@ class AtlasLCGRequirements(LCGRequirements):
       
         merged = AtlasLCGRequirements()
 
-        for name in self._schema.datadict.keys():
+        for name in list(self._schema.datadict.keys()):
             try:
                 attr = getattr(other,name)
             except AttributeError:
@@ -556,7 +556,7 @@ class AtlasLCGRequirements(LCGRequirements):
     def list_clouds(self):
 
         #return getCloudInfo()
-        return self._cloudNameList.keys()
+        return list(self._cloudNameList.keys())
 
     def list_sites_cloud(self, cloudName='', blacklist=True, req_str = ''):
 
@@ -607,7 +607,7 @@ class AtlasLCGRequirements(LCGRequirements):
             
         if sites:
             return sites
-        raise BackendError('LCG','Could not find any sites for selected cloud %s. Allowed clouds: %s'%(cloud,self._cloudNameList.keys()))
+        raise BackendError('LCG','Could not find any sites for selected cloud %s. Allowed clouds: %s'%(cloud,list(self._cloudNameList.keys())))
 
     def cloud_from_sites( self, sites = [] ):
         
@@ -693,7 +693,7 @@ class AtlasCREAMRequirements(AtlasLCGRequirements):
       
         merged = AtlasCREAMRequirements()
 
-        for name in self._schema.datadict.keys():
+        for name in list(self._schema.datadict.keys()):
             try:
                 attr = getattr(other,name)
             except AttributeError:

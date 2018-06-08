@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+
 
 import sys, os
 import logging
 import logging.handlers
 import traceback
 import time
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 import socket
 import tempfile
-import commands
+import subprocess
 
 # ------------------------------------------------
 def writeHeartbeat( file, start_time ):
@@ -329,7 +329,7 @@ while True:
 
         # check proxy
         cmd = "source %s && voms-proxy-info -file %s --timeleft" % (proxy_script, proxy_file)
-        (status, output) = commands.getstatusoutput( cmd )
+        (status, output) = subprocess.getstatusoutput( cmd )
         if status:
             gLogger.warning("Problem checking proxy file for user %s: %s" % (user, formatTraceback()))
             gLogger.warning("Command used: " + cmd)
@@ -440,7 +440,7 @@ if not active:
         cmd = "cp notifyUser.py "+scripts_dir+"; export X509_USER_PROXY=" + proxy_file + " ; " + gConfig.get('General', 'gangaExec') + " -o'[Configuration]gangadir=%s' -o'[defaults_GridProxy]minValidity=00:15' -o'[Configuration]repositorytype=LocalXML' %s" % (gangadir_dir, script_path)
         gLogger.warning("Running Ganga with command:  %s" % cmd )
         
-        (status, output) = commands.getstatusoutput( cmd )
+        (status, output) = subprocess.getstatusoutput( cmd )
         
         if output.find("command not found") != -1 or output.find("Error") != -1 or output.find("Traceback") != -1:
             gLogger.warning("Problem running ganga: %s" % output)

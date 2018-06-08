@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 import os
 import shutil
 import tempfile
@@ -249,7 +249,7 @@ class TestMassStorageWN(GangaUnitTest):
             assert len(j.subjobs[i].outputfiles) == 2
             file_prep = os.path.join(self.outputFilePath, str(j.id) + '_' + str(i) + '_')
             # Check that the files were placed in the correct place on storage
-            print("Found: %s" % str(os.listdir(self.outputFilePath)))
+            print(("Found: %s" % str(os.listdir(self.outputFilePath))))
             for f in j.subjobs[i].outputfiles:
                 assert f.outputfilenameformat == self.customOutputFormat
             for file_ in j.inputfiles:

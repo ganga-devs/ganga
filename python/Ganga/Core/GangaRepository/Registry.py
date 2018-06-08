@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 import functools
 from Ganga.Utility.logging import getLogger
@@ -327,7 +327,7 @@ class Registry(object):
             return self._objects[this_id]
         except KeyError as err:
             logger.debug("Repo KeyError: %s" % err)
-            logger.debug("Keys: %s id: %s" % (self._objects.keys(), this_id))
+            logger.debug("Keys: %s id: %s" % (list(self._objects.keys()), this_id))
             raise RegistryKeyError("Could not find object #%s" % this_id)
 
     @synchronised_read_lock
@@ -368,7 +368,7 @@ class Registry(object):
     def iteritems(self):
         """ Return the items (ID,obj) in this registry."""
         logger.debug("iteritems")
-        returnable = self.items()
+        returnable = list(self.items())
         return returnable
 
     @synchronised_read_lock
@@ -383,13 +383,13 @@ class Registry(object):
         """ Return the objects in this registry, in order of ID.
         Besides items() this is also recommended for iteration."""
         logger.debug("values")
-        returnable = [it[1] for it in self.items()]
+        returnable = [it[1] for it in list(self.items())]
         return returnable
 
     def __iter__(self):
         """ Return an iterator for the self.values list """
         logger.debug("__iter__")
-        returnable = iter(self.values())
+        returnable = iter(list(self.values()))
         return returnable
 
     def find(self, obj):
@@ -399,7 +399,7 @@ class Registry(object):
             _obj (GangaObject): This is the object we want to match in the objects repo
         """
         try:
-            return next(id_ for id_, o in self._objects.items() if o is obj)
+            return next(id_ for id_, o in list(self._objects.items()) if o is obj)
         except StopIteration:
             raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
 
@@ -421,7 +421,7 @@ class Registry(object):
                 logger.error("The following other sessions are active and have blocked the clearing of the repository: \n * %s" % ("\n * ".join(other_sessions)))
                 return False
         self.repository.reap_locks()
-        self.repository.delete(self._objects.keys())
+        self.repository.delete(list(self._objects.keys()))
         self.repository.clean()
 
     # Methods that can be called by derived classes or Ganga-internal classes like Job
@@ -525,7 +525,7 @@ class Registry(object):
         It does this via ``_flush`` so the same conditions apply.
         """
         if self.hasStarted():
-            for _obj in self.values():
+            for _obj in list(self.values()):
                 self._flush(_obj)
 
         if self.metadata and self.metadata.hasStarted():
@@ -662,7 +662,7 @@ class Registry(object):
                 raise
 
             # Now we can release locks on the objects we have
-            for obj in self._objects.values():
+            for obj in list(self._objects.values()):
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
             self.repository.shutdown()

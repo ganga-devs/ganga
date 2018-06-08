@@ -1,2 +1,2 @@
-from TestApplication import *
-from TestDataset import *
+from .TestApplication import *
+from .TestDataset import *

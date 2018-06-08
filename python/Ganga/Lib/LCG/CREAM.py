@@ -7,7 +7,7 @@ import mimetypes
 import shutil
 from collections import defaultdict
 
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Core.exceptions import GangaException
@@ -334,7 +334,7 @@ class CREAM(IBackend):
                     return True
 
         mt_data = []
-        for id, jdl in node_jdls.items():
+        for id, jdl in list(node_jdls.items()):
             mt_data.append((id, jdl))
 
         myAlg = MyAlgorithm(cred_req=self.credential_requirements,
@@ -353,7 +353,7 @@ class CREAM(IBackend):
             # submitted jobs on WMS immediately
             logger.error(
                 'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            Grid.cancel_multiple(runner.getResults().values())
+            Grid.cancel_multiple(list(runner.getResults().values()))
             return None
         else:
             return runner.getResults()
@@ -990,7 +990,7 @@ sys.exit(0)
 
         if node_jids:
             for sj in rjobs:
-                if sj.id in node_jids.keys():
+                if sj.id in list(node_jids.keys()):
                     sj.backend.id = node_jids[sj.id]
                     sj.backend.CE = self.CE
                     sj.backend.actualCE = sj.backend.CE
@@ -1027,7 +1027,7 @@ sys.exit(0)
 
         if node_jids:
             for sj in rjobs:
-                if sj.id in node_jids.keys():
+                if sj.id in list(node_jids.keys()):
                     self.__refresh_jobinfo__(sj)
                     sj.backend.id = node_jids[sj.id]
                     sj.backend.CE = self.CE
@@ -1204,7 +1204,7 @@ sys.exit(0)
 
         # Batch the status requests by credential requirement
         jobInfoDict = {}
-        for cred_req, job_ids in cred_to_backend_id_list.items():
+        for cred_req, job_ids in list(cred_to_backend_id_list.items()):
             # If the credential is not valid or doesn't exist then skip it
             cred = credential_store.get(cred_req)
             if not cred or not cred.is_valid():
@@ -1217,7 +1217,7 @@ sys.exit(0)
         jidListForPurge = []
 
         # update job information for those available in jobInfoDict
-        for id, info in jobInfoDict.items():
+        for id, info in list(jobInfoDict.items()):
 
             if info:
 
@@ -1287,7 +1287,7 @@ sys.exit(0)
 
         # purging the jobs the output has been fetched locally
         if jidListForPurge:
-            for cred_req, job_ids in cred_to_backend_id_list.items():
+            for cred_req, job_ids in list(cred_to_backend_id_list.items()):
                 Grid.cream_purge_multiple(set(job_ids) & set(jidListForPurge), cred_req)
 
     def updateGangaJobStatus(self):

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
@@ -99,7 +99,7 @@ class TestXMLCorruption(GangaUnitTest):
         
         from Ganga.GPIDev.Base.Proxy import stripProxy
 
-        print("%s" % stripProxy(jobs(0)).__dict__)
+        print(("%s" % stripProxy(jobs(0)).__dict__))
         assert stripProxy(jobs(0))._dirty is True
 
         stripProxy(jobs(0))._setDirty()

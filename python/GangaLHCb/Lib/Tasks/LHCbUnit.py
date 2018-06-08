@@ -12,9 +12,9 @@ from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
 class LHCbUnit(IUnit):
-    _schema = Schema(Version(1, 0), dict(IUnit._schema.datadict.items() + {
+    _schema = Schema(Version(1, 0), dict(list(IUnit._schema.datadict.items()) + list({
         'input_datset_index': SimpleItem(defvalue=-1, protected=1, hidden=1, doc='Index of input dataset from parent Transform', typelist=["int"]),
-    }.items()))
+    }.items())))
 
     _category = 'units'
     _name = 'LHCbUnit'

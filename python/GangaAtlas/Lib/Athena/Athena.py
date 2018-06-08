@@ -8,7 +8,7 @@
 # ARDA/ATLAS
 # 
 
-import os, re, commands, string, sys, shutil
+import os, re, subprocess, string, sys, shutil
 import math
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
@@ -260,15 +260,15 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
     # use 'jobO' for libDS/noBuild
     # and 'sources' for build job
     if not compile_flag:
-        archiveName     = 'jobO.%s.tar' % commands.getoutput('uuidgen 2> /dev/null')
+        archiveName     = 'jobO.%s.tar' % subprocess.getoutput('uuidgen 2> /dev/null')
         archiveFullName = "%s/%s" % (archiveDir,archiveName)
     else:
-        archiveName     = 'sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null')
+        archiveName     = 'sources.%s.tar' % subprocess.getoutput('uuidgen 2> /dev/null')
         archiveFullName = "%s/%s" % (archiveDir,archiveName)
 
     # collect files
     chunkLength = 100
-    chunks = lambda l, n: [l[x: x+n] for x in xrange(0, len(l), n)]
+    chunks = lambda l, n: [l[x: x+n] for x in range(0, len(l), n)]
     chunksworkDirFiles = chunks(workDirFiles, chunkLength)
     logger.info('Adding files to source tarball %s' % archiveFullName )
     for tmpChunkFiles in chunksworkDirFiles:
@@ -278,7 +278,7 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
         cmd = "tar --exclude '.[a-zA-Z]*' -rhf '%s' " % archiveFullName
         for tmpFile in tmpChunkFiles:
             cmd = cmd + " '%s' " % tmpFile
-        status,out = commands.getstatusoutput(cmd)
+        status,out = subprocess.getstatusoutput(cmd)
         if verbose:
             logger.info(cmd)
         if status != 0 or out != '':
@@ -303,7 +303,7 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
     # check symlinks
     if useAthenaPackages:
         logger.info("checking symbolic links")
-        status,out = commands.getstatusoutput('tar tvf %s' % archiveName)
+        status,out = subprocess.getstatusoutput('tar tvf %s' % archiveName)
         if status != 0:
             raise ApplicationConfigurationError("Failed to expand archive")
 
@@ -416,7 +416,7 @@ class Athena(IPrepareApp):
     def read_cmt(self):
         """Get some relevant CMT settings"""
  
-        rc, output = commands.getstatusoutput('cmt -quiet show macros')
+        rc, output = subprocess.getstatusoutput('cmt -quiet show macros')
         if rc: logger.warning('Return code %d from cmt command.',rc) 
 
         cmt = dict(re.findall('(.*)=\'(.*)\'\n',output))
@@ -428,7 +428,7 @@ class Athena(IPrepareApp):
             raise ApplicationConfigurationError('CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
 
         # Determine ATLAS Release Version
-        rc, output = commands.getstatusoutput('cmt -quiet show projects')
+        rc, output = subprocess.getstatusoutput('cmt -quiet show projects')
         if rc: logger.warning('Return code %d from cmt command.',rc) 
 
         cmt = dict(re.findall('([\w]+) ([\w]+\.[\w]+\.[\w]+)',output))
@@ -504,7 +504,7 @@ class Athena(IPrepareApp):
     def setup(self):
         """Run CMT setup script"""
 
-        rc, output = commands.getstatusoutput('source setup.sh; printenv')
+        rc, output = subprocess.getstatusoutput('source setup.sh; printenv')
         if rc: logger.warning('Unexpected return code %d from setup command',rc)
 
         for key, val in re.findall('(\S+)=(\S+)\n',output):
@@ -877,7 +877,7 @@ class Athena(IPrepareApp):
         user_excludes = ['']
 
         os.chdir(self.userarea)
-        out = commands.getoutput('find . -name cmt' )
+        out = subprocess.getoutput('find . -name cmt' )
         os.chdir(savedir)
 
         re_package1 = None
@@ -1143,7 +1143,7 @@ class Athena(IPrepareApp):
             # If exist, then delete tmp RootCore dir
             if os.path.exists(rootCoreDestWorkDir):
                 logger.warning('Removing already previously existing temporary RootCore submission directory %s ...', rootCoreDestWorkDir)
-                out = commands.getoutput('rm -rf ' + rootCoreDestWorkDir)
+                out = subprocess.getoutput('rm -rf ' + rootCoreDestWorkDir)
 
             # add all files to extFile
             #AthenaUtils.extFile.append(pandaRootCoreWorkDirName + '/.*')
@@ -1199,11 +1199,11 @@ class Athena(IPrepareApp):
         extraFiles = self.files_lcg_ng()
         for ifile in extraFiles:
             filename = os.path.split(ifile)[1]
-            out = commands.getoutput('pushd . && cd %s && tar -f %s -rh %s && popd' % (archiveDir, archiveFullName, filename))
+            out = subprocess.getoutput('pushd . && cd %s && tar -f %s -rh %s && popd' % (archiveDir, archiveFullName, filename))
             os.unlink(ifile)
 
         # compress
-        rc, out = commands.getstatusoutput('gzip %s' % archiveFullName)
+        rc, out = subprocess.getstatusoutput('gzip %s' % archiveFullName)
         archiveName += '.gz'
         archiveFullName += '.gz'
         if rc != 0:
@@ -1217,7 +1217,7 @@ class Athena(IPrepareApp):
         # Remove tmp RootCore dir
         if self.useRootCore or self.useRootCoreNoBuild:
             logger.info('Removing temporary RootCore submission directory %s ...', rootCoreDestWorkDir)
-            out = commands.getoutput('rm -rf ' + rootCoreDestWorkDir)
+            out = subprocess.getoutput('rm -rf ' + rootCoreDestWorkDir)
 
        
         self.is_prepared = ShareDir()
@@ -1267,7 +1267,7 @@ class Athena(IPrepareApp):
         req = file('requirements','w')
         req.write('# generated by GANGA4\nuse AtlasPolicy AtlasPolicy-*\n')
 
-        out = commands.getoutput('find . -name cmt')
+        out = subprocess.getoutput('find . -name cmt')
         re_package1 = None
         re_package2 = None
         if self.atlas_release.find('11.')>=0 or self.atlas_release.find('10.')>=0:
@@ -1377,7 +1377,7 @@ class Athena(IPrepareApp):
                     cn = os.path.basename( os.path.expanduser( "~" ) )
                     tmp = os.path.realpath('/tmp/' + cn )
             
-                tmpDir = '%s/%s' % (tmp,commands.getoutput('uuidgen 2> /dev/null'))    
+                tmpDir = '%s/%s' % (tmp,subprocess.getoutput('uuidgen 2> /dev/null'))    
                 os.makedirs(tmpDir)
                 os.chdir(tmpDir)       
 
@@ -1402,7 +1402,7 @@ class Athena(IPrepareApp):
 
     def getLatestDBRelease(self):
         import tempfile,time
-        import cPickle as pickle
+        import pickle as pickle
         from pandatools import Client
         from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
@@ -1582,7 +1582,7 @@ class AthenaSplitterJob(ISplitter):
 
                     # check all input data is available in the mapping dictionary
                     all_input = []
-                    for file_list in self.output_loc_to_input.values():
+                    for file_list in list(self.output_loc_to_input.values()):
                         all_input += file_list
 
                     if frozenset(all_input) != frozenset(job.inputdata.names):
@@ -1634,11 +1634,11 @@ class AthenaSplitterJob(ISplitter):
                                                                   "This shouldn't happen - please contact the devs!")
 
                 else:
-                    for i in xrange(self.numsubjobs):
+                    for i in range(self.numsubjobs):
                         inputnames.append([])
                         outputnames.append([])
 
-                    for j in xrange(numfiles):
+                    for j in range(numfiles):
                         inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset_filenames()[j])
             else:
                 # for splitting on events, all data is passed to every subjob and skip events/max events
@@ -1653,7 +1653,7 @@ class AthenaSplitterJob(ISplitter):
                                "processed will be numsubjobs * events_per_subjob (%d * %d = %d in this case)" %
                                (self.numsubjobs, self.events_per_subjob, self.numsubjobs * self.events_per_subjob))
 
-                for j in xrange(self.numsubjobs):
+                for j in range(self.numsubjobs):
                     inputnames.append(job.inputdata.get_dataset_filenames())
 
         # Do the splitting
@@ -1684,7 +1684,7 @@ class AthenaSplitterJob(ISplitter):
 
 
 from Ganga.GPIDev.Adapters.IMerger import IMerger
-from commands import getstatusoutput    
+from subprocess import getstatusoutput    
 import threading
 from GangaAtlas.Lib.ATLASDataset import Download
 from GangaAtlas.Lib.ATLASDataset import filecheck
@@ -1922,7 +1922,7 @@ class _RootMergeToolAANT(IMerger):
             raise MergerError('Can not run ROOT correctly. Check your .gangarc file.')
 
         #we always force as the overwrite is handled by our parent
-        rc,out = commands.getstatusoutput('which addAANT')
+        rc,out = subprocess.getstatusoutput('which addAANT')
         if rc:
             merge_cmd = rootprefix + "hadd -f " 
         else:
@@ -1936,7 +1936,7 @@ class _RootMergeToolAANT(IMerger):
         merge_cmd += string.join(arg_list,' ')
 
         logger.info(merge_cmd)
-        rc, out = commands.getstatusoutput(merge_cmd)
+        rc, out = subprocess.getstatusoutput(merge_cmd)
         
         if rc:
             logger.error(out)

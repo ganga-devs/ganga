@@ -5,10 +5,10 @@ import logging
 import logging.handlers
 import traceback
 import time
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 import socket
 import tempfile
-import commands
+import subprocess
 import shutil
 import stat
 

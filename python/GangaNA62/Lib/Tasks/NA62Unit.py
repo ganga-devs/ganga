@@ -4,7 +4,7 @@ from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
-from commands import getstatusoutput
+from subprocess import getstatusoutput
 from datetime import datetime, date, time
 
 import os
@@ -13,8 +13,8 @@ from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 class NA62Unit(IUnit):
-   _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
-    }.items()))
+   _schema = Schema(Version(1,0), dict(list(IUnit._schema.datadict.items()) + list({
+    }.items())))
 
    _category = 'units'
    _name = 'AtlasUnit'

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 import os
 
 from Ganga.Runtime.GPIexport import exportToGPI
@@ -48,7 +48,7 @@ for app in AppsBaseUtils.available_apps():
 
 logger.debug("Adding apps")
 modules= compile(all_apps, '<string>', 'exec')
-exec modules
+exec(modules)
 
 logger.debug("Fin")
 

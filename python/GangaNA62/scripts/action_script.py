@@ -3,11 +3,11 @@
 
 ## NO MONITORING AT PRESENT!
 
-from __future__ import print_function
+
 
 import os
 import time
-from commands import getstatusoutput
+from subprocess import getstatusoutput
 nec_file = ".gpytho"
 work_dir = "/clusterhome/home/protopop"
 wait_time = 60

@@ -9,12 +9,12 @@ from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
 from GangaNA62.Lib.Tasks.NA62Unit import NA62Unit
 
 import os
-from commands import getstatusoutput
+from subprocess import getstatusoutput
 
 class NA62Transform(ITransform):
-   _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
+   _schema = Schema(Version(1,0), dict(list(ITransform._schema.datadict.items()) + list({
       'num_jobs' : SimpleItem(defvalue=-1,typelist=['int'],doc="Number of jobs with this application to process"),
-    }.items()))
+    }.items())))
 
    _category = 'transforms'
    _name = 'NA62Transform'

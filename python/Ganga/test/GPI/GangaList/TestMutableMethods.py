@@ -33,7 +33,7 @@ class TestMutableMethods(GangaUnitTest):
 
         self.test_job = Job(application=GListApp(gListComp=[self._makeRandomTFile() for _ in range(10)],
                                          gList=[self._makeRandomString() for _ in range(10)],
-                                         seq=range(10)),backend=TestSubmitter())
+                                         seq=list(range(10))),backend=TestSubmitter())
     def _makeRandomString(self):
         global g_random
         str_len = g_random.randint(3, 10)
@@ -225,9 +225,9 @@ class TestMutableMethods(GangaUnitTest):
     def testBoundMethodPrintsSequence(self):
 
         # sequences
-        print(str(self.test_job.application.bound_print_comp))
+        print((str(self.test_job.application.bound_print_comp)))
         assert str(self.test_job.application.bound_print_comp) == '_print_summary_bound_comp'
-        print(str(self.test_job.application.bound_print_simple))
+        print((str(self.test_job.application.bound_print_simple)))
         assert str(self.test_job.application.bound_print_simple) == '_print_summary_bound_simple'
 
     def testBoundMethodPrintsNonSequence(self):
@@ -293,7 +293,7 @@ class TestMutableMethods(GangaUnitTest):
         else:
             def testList(_list):
                 for l in _list:
-                    print("Testing: '%s' type: '%s'" % (l, type(l)))
+                    print(("Testing: '%s' type: '%s'" % (l, type(l))))
                     assert isType(l, IGangaFile), "All entries must be of type IGangaFile"
 
             list_one = [LocalFile(self._makeRandomString()) for _ in range(10)]
@@ -323,12 +323,12 @@ class TestMutableMethods(GangaUnitTest):
 
         g = GangaList()
         l = []
-        print('"'+str(g)+'"')
-        print('"'+str(l)+'"')
-        print(l == g)
+        print(('"'+str(g)+'"'))
+        print(('"'+str(l)+'"'))
+        print((l == g))
         assert str(l) == str(g), 'Empty lists should print the same'
 
-        for i in xrange(100):
+        for i in range(100):
             g.append(i)
             l.append(i)
         assert str(l) == str(g), 'Normal Python objects should print the same'
@@ -352,8 +352,8 @@ class TestMutableMethods(GangaUnitTest):
             g.append(self._makeRandomTFile())
         g_string = str(g)
 
-        import StringIO
-        sio = StringIO.StringIO()
+        import io
+        sio = io.StringIO()
         full_print(g, sio)
         assert g_string == str(sio.getvalue()).rstrip(), 'Orphaned lists should full_print'
 

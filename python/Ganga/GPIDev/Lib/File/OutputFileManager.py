@@ -264,7 +264,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
             if outputFile.compressed:
                 patternsToZip.append(outputFile.namePattern)
 
-            if outputfileClassName not in outputFilesProcessedOnWN.keys():
+            if outputfileClassName not in list(outputFilesProcessedOnWN.keys()):
                 outputFilesProcessedOnWN[outputfileClassName] = []
 
             if outputFilePostProcessingOnWN(job, outputfileClassName):
@@ -294,7 +294,7 @@ postprocesslocations = open(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFI
     insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
     insertScript = insertScript.replace('###POSTPROCESSLOCATIONSFILENAME###', getConfig('Output')['PostProcessLocationsFileName'])
 
-    for outputFileName in outputFilesProcessedOnWN.keys():
+    for outputFileName in list(outputFilesProcessedOnWN.keys()):
 
         if len(outputFilesProcessedOnWN[outputFileName]) > 0:
 

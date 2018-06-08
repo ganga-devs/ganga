@@ -82,8 +82,8 @@ class ConfigProxy(object):
             display_config['config_value_colour'])  # fx.normal
 
         levels = ['**', '* ', '  ']
-        levels = map(lambda x: markup(x, fg.red), levels)
-        from cStringIO import StringIO
+        levels = [markup(x, fg.red) for x in levels]
+        from io import StringIO
         sio = StringIO()
         sio.write('%s' % markup(stripProxy(self).name, name_colour) +
                   ' : ' + markup(stripProxy(self).docstring, docstring_colour) + '\n')
@@ -175,7 +175,7 @@ class MainConfigProxy(object):
 
         fg = Foreground()
 
-        from cStringIO import StringIO
+        from io import StringIO
         sio = StringIO()
         sio.write("Ganga Configuration" + '\n')
         sections = sorted(stripProxy(self).keys())
@@ -195,7 +195,7 @@ config = MainConfigProxy()
 
 
 def print_config_file():
-    from cStringIO import StringIO
+    from io import StringIO
     sio = StringIO()
 
     sections = sorted(stripProxy(config).keys())
@@ -267,7 +267,7 @@ def config_file_as_text(interactive):
                         except AttributeError as err:
                             pass
                     if interactive:
-                        yes = raw_input('The config option %s %s with value %s in your old .gangarc is not the default. Do you want to copy it to the new .gangarc file ([y]/n) ?\n' % (sect.name, o, value))
+                        yes = input('The config option %s %s with value %s in your old .gangarc is not the default. Do you want to copy it to the new .gangarc file ([y]/n) ?\n' % (sect.name, o, value))
                     else:
                         yes = 'y'
                     text += '#%s = %s\n' % (o, def_value)

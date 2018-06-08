@@ -4,7 +4,7 @@ from GangaRobot.Framework.Action import IAction
 from GangaRobot.Framework import Utility
 from GangaRobot.Framework.exceptions import *
 from Ganga.Utility.logging import getLogger
-import os, urllib, datetime, subprocess, time, fnmatch, shutil
+import os, urllib.request, urllib.parse, urllib.error, datetime, subprocess, time, fnmatch, shutil
 #from Ganga.Utility.Config import getConfig
 import Ganga.Utility.Config
 #from GangaTest.Lib.TestRobot.Utils import Emailer
@@ -115,7 +115,7 @@ class Checker(IAction):
     
            #obtain file
         try:
-            f, inf = urllib.urlretrieve(self.DownloadURL+"/VERSIONS.txt")
+            f, inf = urllib.request.urlretrieve(self.DownloadURL+"/VERSIONS.txt")
         except:
             msg = "Failed to retrieve VERSIONS.txt from %s" % (self.DownloadURL)
             logger.error(msg)

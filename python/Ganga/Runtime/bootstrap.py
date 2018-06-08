@@ -53,9 +53,9 @@ DEBUGFILES = False
 MONITOR_FILES = False
 
 if DEBUGFILES or MONITOR_FILES:
-    import __builtin__
+    import builtins
     openfiles = {}
-    oldfile = __builtin__.file
+    oldfile = builtins.file
 
     class newfile(oldfile):
 
@@ -78,7 +78,7 @@ if DEBUGFILES or MONITOR_FILES:
             #openfiles[ self.x ] = None
             del openfiles[self.x]
 
-    oldopen = __builtin__.open
+    oldopen = builtins.open
 
     def newopen(*args):
         if DEBUGFILES:
@@ -86,19 +86,19 @@ if DEBUGFILES or MONITOR_FILES:
             logger = getLogger()
             logger.debug("NewOpen")
         return newfile(*args)
-    __builtin__.file = newfile
-    __builtin__.open = newopen
+    builtins.file = newfile
+    builtins.open = newopen
 
     def printOpenFiles():
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("### %d OPEN FILES: [%s]" % (len(openfiles), ", ".join(
-            str(f) for f in openfiles.keys() if openfiles[f] is not None)))
+            str(f) for f in list(openfiles.keys()) if openfiles[f] is not None)))
 
     safeFiles = ['.ganga.log', '.gangarc', 'ipythonrc', 'history', 'persist']
 
     def safeCloseOpenFiles():
-        for f in openfiles.keys():
+        for f in list(openfiles.keys()):
             if f not in safeFiles:
                 openfiles[f].close()
 
@@ -418,7 +418,7 @@ under certain conditions; type license() for details.
                 if not os.path.exists(bn):
                     try:
                         os.rename(config_file, bn)
-                    except Exception, err:
+                    except Exception as err:
                         logger.error('Failed to create config backup file %s' % bn)
                         logger.error('Old file will not be overwritten, please manually remove it and start ganga with the -g option to re-generate it')
                         logger.error('Reason: %s' % err)
@@ -462,7 +462,7 @@ under certain conditions; type license() for details.
         import itertools
         logger = getLogger('ReleaseNotes')
         if getConfig('Configuration')['ReleaseNotes'] == True:
-            packages = itertools.imap(lambda x: 'ganga/python/' + x, itertools.ifilter(lambda x: x != '', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
+            packages = map(lambda x: 'ganga/python/' + x, filter(lambda x: x != '', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
             pathname = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'release', 'ReleaseNotes-%s' % _gangaVersion)
 
             if not os.path.exists(pathname):
@@ -474,7 +474,7 @@ under certain conditions; type license() for details.
             with open(pathname, 'r') as f:
                 try:
                     notes = [l.strip() for l in f.read().replace(bounding_line, '').split(dividing_line)]
-                except Exception, err:
+                except Exception as err:
                     logger.error('Error while attempting to read release notes')
                     logger.debug('Reason: %s' % err)
                     raise
@@ -542,13 +542,13 @@ under certain conditions; type license() for details.
             # the user actually sees this message last
             time.sleep(3.)
             if interactive:
-                yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
+                yes = input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
             else:
                 yes = 'y'
             if yes.lower() in ['', 'y']:
                 self.generate_config_file(default_config, interactive)
                 if interactive:
-                    raw_input('Press <Enter> to continue.\n')
+                    input('Press <Enter> to continue.\n')
         elif bugVer:
             self.print_release_notes()
             self.rollHistoryForward()
@@ -866,7 +866,7 @@ under certain conditions; type license() for details.
         except Exception as x:
             logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', x)
             logger.exception(x)
-            raise GangaException(x), None, sys.exc_info()[2]
+            raise GangaException(x).with_traceback(sys.exc_info()[2])
 
         initSetupRuntimePackages()
 
@@ -922,7 +922,7 @@ under certain conditions; type license() for details.
         from Ganga.Utility.Runtime import allRuntimes
         ###########
         # run post bootstrap hooks
-        for r in allRuntimes.values():
+        for r in list(allRuntimes.values()):
             try:
                 r.postBootstrapHook()
             except Exception as err:
@@ -997,14 +997,14 @@ under certain conditions; type license() for details.
 
         # load templates for user-defined runtime modules
         from Ganga.Utility.Runtime import allRuntimes
-        for r in allRuntimes.values():
+        for r in list(allRuntimes.values()):
             r.loadTemplates(local_ns)
 
         # exec ~/.ganga.py file
         fileName = fullpath('~/.ganga.py')
         if os.path.exists(fileName):
             try:
-                execfile(fileName, local_ns)
+                exec(compile(open(fileName).read(), fileName, 'exec'), local_ns)
             except Exception as x:
                 logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, x)
         # exec StartupGPI code
@@ -1016,7 +1016,7 @@ under certain conditions; type license() for details.
             # using explicitly '\n' and '\t' chars
             code = config['StartupGPI'].replace(
                 '\\t', '\t').replace('\\n', '\n')
-            exec code in local_ns
+            exec(code, local_ns)
 
         logger.debug("loaded .ganga.py")
 
@@ -1070,7 +1070,7 @@ under certain conditions; type license() for details.
             #exec compiled_script
 
             if script:
-                execfile(script, local_ns)
+                exec(compile(open(script).read(), script, 'exec'), local_ns)
             else:
                 logger.error("'%s' not found" % self.args[0])
                 logger.info("Searched in path %s" % path)
@@ -1116,7 +1116,7 @@ under certain conditions; type license() for details.
                 self.check_IPythonDir()
                 self.launch_IPython(local_ns, args, GangaProgram._ganga_error_handler, self.ganga_prompt)
             else:
-                print("Unknown IPython version: %s" % ipver)
+                print(("Unknown IPython version: %s" % ipver))
                 return
 
         else:
@@ -1167,7 +1167,7 @@ under certain conditions; type license() for details.
             os.makedirs(os.environ['IPYTHONDIR'])
 
         rc_file = os.path.join(os.environ['IPYTHONDIR'], 'ipythonrc')
-	logger.debug("Checking: %s" % rc_file)
+        logger.debug("Checking: %s" % rc_file)
         if not os.path.isfile(rc_file):
             lock = open(rc_file, "w")
             lock.close()

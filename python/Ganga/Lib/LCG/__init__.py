@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 from .LCG import LCG, LCGJobConfig
 from .CREAM import CREAM
 from .ARC import ARC

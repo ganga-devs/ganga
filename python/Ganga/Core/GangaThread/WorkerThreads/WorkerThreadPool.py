@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import Queue
+import queue
 import traceback
 import collections
 from Ganga.Core.exceptions import GangaException, GangaTypeError
@@ -28,7 +28,7 @@ class WorkerThreadPool(object):
     def __init__(self, num_worker_threads=None, worker_thread_prefix='Worker_'):
         if num_worker_threads is None:
             num_worker_threads=getConfig('Queues')['NumWorkerThreads']
-        self.__queue = Queue.PriorityQueue()
+        self.__queue = queue.PriorityQueue()
         self.__worker_threads = []
 
         self._saved_num_worker = num_worker_threads
@@ -51,7 +51,7 @@ class WorkerThreadPool(object):
             t = GangaThread(name=worker_thread_prefix + str(i),
                             auto_register=False,
                             target=self.__worker_thread)
-            t._Thread__args = (t,)
+            t._args = (t,)
             t._name = worker_thread_prefix + str(i)
             t._command = 'idle'
             t._timeout = 'N/A'
@@ -68,7 +68,7 @@ class WorkerThreadPool(object):
         # and line "except Queue.Empty: continue" will throw
         # <type 'exceptions.AttributeError'>: 'NoneType' object has no attribute 'Empty'
         # im hoping that importing within the thread will avoid this.
-        import Queue
+        import queue
 
         oldname = thread.gangaName
 
@@ -77,7 +77,7 @@ class WorkerThreadPool(object):
         while not thread.should_stop():
             try:
                 item = self.__queue.get(True, 0.05)
-            except Queue.Empty:
+            except queue.Empty:
                 # wait 0.05 sec then loop again to give shutdown a chance
                 continue
 

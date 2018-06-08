@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 import os
 import shutil
@@ -40,7 +40,7 @@ def gpi(request, wipe_gangadir):
     ``Ganga.GPI`` inside the function as usual.
     """
     config_values = getattr(request._pyfuncitem._obj, '_config_values', {})
-    config_values = [(k[0], k[1], v) for k, v in config_values.items()]  # Convert from dict to a list of tuples
+    config_values = [(k[0], k[1], v) for k, v in list(config_values.items())]  # Convert from dict to a list of tuples
 
     start_ganga(gangadir(request), extra_opts=config_values)
 

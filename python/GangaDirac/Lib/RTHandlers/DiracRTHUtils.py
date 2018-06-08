@@ -94,10 +94,10 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
             ganga_defined_output_path = 'GangaJob_%s/OutputFiles' % job.getFQID('/')
 
     # Loop over all SE
-    for outputSE, remote_dirs in file_SE_dict.iteritems():
+    for outputSE, remote_dirs in file_SE_dict.items():
 
         # Loop over all paths for the LFN
-        for remote_dir, namePatterns in remote_dirs.iteritems():
+        for remote_dir, namePatterns in remote_dirs.items():
 
             myLine = str(per_SE_JDL)
             myLine = myLine.replace('###OUTPUTDATA###', str(namePatterns))
@@ -243,7 +243,7 @@ def diracAPI_script_settings(app):
     diracAPI_line = ''
     if type(job.backend.settings) is not dict:
         raise ApplicationConfigurationError('backend.settings should be a dict')
-    for setting, setting_val in job.backend.settings.iteritems():
+    for setting, setting_val in job.backend.settings.items():
         if str(setting).startswith('set'):
             _setting = str(setting)[3:]
         else:

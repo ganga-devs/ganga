@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 import sys
 import socket
@@ -14,7 +14,7 @@ def runClient():
     while 1:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect(socket_addr)
-        cmd = raw_input(getColour('fg.blue') + 'diracAPI_env > ' + getColour('fg.normal'))
+        cmd = input(getColour('fg.blue') + 'diracAPI_env > ' + getColour('fg.normal'))
         client_socket.sendall(cmd + end_trans)
         if (cmd == 'q' or cmd == 'Q' or cmd == 'exit' or cmd == 'exit()'):
             client_socket.close()

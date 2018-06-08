@@ -8,7 +8,7 @@ from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
 from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile
 from Ganga.Utility.Config import getConfig
-from ND280Unit import ND280Unit
+from .ND280Unit import ND280Unit
 from GangaND280.ND280Dataset.ND280Dataset import ND280LocalDataset, ND280DCacheDataset
 from GangaND280.ND280Splitter.ND280Splitter import splitNbInputFile
 import Ganga.GPI as GPI
@@ -16,10 +16,10 @@ import Ganga.GPI as GPI
 import os
 
 class ND280Transform(ITransform):
-   _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
+   _schema = Schema(Version(1,0), dict(list(ITransform._schema.datadict.items()) + list({
         'nbinputfiles' : SimpleItem(defvalue=1,doc='The max number of files assigned to each unit. Use 0 to put all the available files in each given inputdata in one unit (i.e. N inputdata => N units).'),
         'inputdatasubsets' : SimpleItem(defvalue=[], hidden=1,doc='List of subsets of files. The number of files in each subset is equal to nbinputfiles'),
-    }.items()))
+    }.items())))
 
    _category = 'transforms'
    _name = 'ND280Transform'

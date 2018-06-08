@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 # Note: Following stuff must be considered in a GangaRepository:
 #
 # * lazy loading
@@ -11,7 +11,7 @@ import os.path
 import sqlite3
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except:
     import pickle
 

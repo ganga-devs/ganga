@@ -25,7 +25,7 @@ def postprocess(self, logger):
     # pointer
     metadataItems = {}
     if os.path.exists(parsedXML):
-        execfile(parsedXML, {}, metadataItems)
+        exec(compile(open(parsedXML).read(), parsedXML, 'exec'), {}, metadataItems)
 
     # Combining subjobs XMLSummaries.
     if j.subjobs:
@@ -59,18 +59,18 @@ def postprocess(self, logger):
 
         try:
             XMLSummarydata = summary.Merge(summaries, schemapath)
-        except Exception, err:
+        except Exception as err:
             logger.error('Problem while merging the subjobs XML summaries')
             raise
 
-        for name, method in activeSummaryItems().iteritems():
+        for name, method in activeSummaryItems().items():
             try:
                 metadataItems[name] = method(XMLSummarydata)
             except:
                 metadataItems[name] = None
                 logger.debug('Problem running "%s" method on merged xml output.' % name)
 
-    for key, value in metadataItems.iteritems():
+    for key, value in metadataItems.items():
         if value is None:  # Has to be explicit else empty list counts
             j.metadata[key] = 'Not Available.'
         else:
@@ -84,14 +84,14 @@ def GaudiExecPostProcess(self, logger):
     if os.path.exists(os.path.join(j.outputdir, 'summary.xml')):
        sjSummary =  GaudiXMLSummary(j, 'summary.xml').summary()
        sjMetadataItems = {}
-       for name, method in activeSummaryItems().iteritems():
+       for name, method in activeSummaryItems().items():
            try:
                sjMetadataItems[name] = method(sjSummary)
            except:
                sjMetadataItems[name] = None
                logger.debug('Problem running "%s" method on merged xml output.' % name)
 
-       for key, value in sjMetadataItems.iteritems():
+       for key, value in sjMetadataItems.items():
            if value is None:  # Has to be explicit else empty list counts
                j.metadata[key] = 'Not Available.'
            else:
@@ -129,18 +129,18 @@ def GaudiExecPostProcess(self, logger):
 
         try:
             XMLSummarydata = summary.Merge(summaries, schemapath)
-        except Exception, err:
+        except Exception as err:
             logger.error('Problem while merging the subjobs XML summaries')
             raise
 
-        for name, method in activeSummaryItems().iteritems():
+        for name, method in activeSummaryItems().items():
             try:
                 metadataItems[name] = method(XMLSummarydata)
             except:
                 metadataItems[name] = None
                 logger.debug('Problem running "%s" method on merged xml output.' % name)
 
-    for key, value in metadataItems.iteritems():
+    for key, value in metadataItems.items():
         if value is None:  # Has to be explicit else empty list counts
             j.metadata[key] = 'Not Available.'
         else:

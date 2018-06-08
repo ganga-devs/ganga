@@ -16,14 +16,14 @@ from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
 class LHCbTransform(ITransform):
-    _schema = Schema(Version(1, 0), dict(ITransform._schema.datadict.items() + {
+    _schema = Schema(Version(1, 0), dict(list(ITransform._schema.datadict.items()) + list({
         'files_per_unit': SimpleItem(defvalue=-1, doc='Maximum number of files to assign to each unit from a given input dataset. If < 1, use all files.', typelist=["int"]),
         'splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter to be used for units'),
         'queries': ComponentItem('query', defvalue=[], sequence=1, protected=1, optional=1, load_default=False, doc='Queries managed by this Transform'),
         'delete_chain_input': SimpleItem(defvalue=False, doc='Delete the Dirac input files/data after completion of each unit', typelist=["bool"]),
         'mc_num_units': SimpleItem(defvalue=0, doc="No. of units to create for MC generation"),
 
-    }.items()))
+    }.items())))
 
     _category = 'transforms'
     _name = 'LHCbTransform'

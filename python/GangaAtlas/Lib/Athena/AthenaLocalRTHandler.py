@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, socket, pwd, commands, re, string
+import os, socket, pwd, subprocess, re, string
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -288,7 +288,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             environment['ATHENA_MAX_EVENTS'] = str(app.max_events)
 
         # Flag if we're in ByteStream Data
-        if app.atlas_run_config.has_key('input') and app.atlas_run_config['input'].has_key('inBS'):
+        if 'input' in app.atlas_run_config and 'inBS' in app.atlas_run_config['input']:
             environment['USE_BYTESTREAM'] = 'True'
 
         # flag for single output dir
@@ -349,7 +349,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 
         # Write trf parameters
         trf_params = ' '
-        for key, value in job.application.trf_parameter.iteritems():
+        for key, value in job.application.trf_parameter.items():
             if key == 'dbrelease':
                 environment['DBDATASETNAME'] = value.split(':')[0]
                 environment['DBFILENAME'] = value.split(':')[1]

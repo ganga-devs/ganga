@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions, random
+import os, sys, pwd, subprocess, re, shutil, urllib.request, urllib.parse, urllib.error, time, string, exceptions, random
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -71,7 +71,7 @@ def getDBDatasets(jobO,trf,dbrelease):
                     except:
                         raise ApplicationConfigurationError("ERROR : error while looking up dataset %s. Perhaps this dataset does not exist?"%tmpDbrDS)
                     # append
-                    for tmpLFN,tmpVal in tmpList.iteritems():
+                    for tmpLFN,tmpVal in tmpList.items():
                         dbrFiles[tmpLFN] = tmpVal
                     dbrDsList.append(tmpDbrDS)
                 # check
@@ -134,7 +134,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if self.dbrelease != '' and self.dbrelease.find(':') == -1:
             raise ApplicationConfigurationError("ERROR : invalid argument for DB Release. Must be 'DatasetName:FileName'")
         self.runConfig = AthenaUtils.ConfigAttr(app.atlas_run_config)
-        for k in self.runConfig.keys():
+        for k in list(self.runConfig.keys()):
             self.runConfig[k]=AthenaUtils.ConfigAttr(self.runConfig[k])
         if not app.atlas_run_dir:
             raise ApplicationConfigurationError("application.atlas_run_dir is not set. Did you run application.prepare()")
@@ -298,7 +298,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.subjobs:
             for sj in job.subjobs:
                 sitesdict[sj.backend.site] = 1
-            bjsites = sitesdict.keys()
+            bjsites = list(sitesdict.keys())
         else:
             bjsites = [job.backend.site]
 
@@ -314,7 +314,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             res = getDatasets(job.outputdata.datasetname)
         except exceptions.SystemExit:
             raise BackendError('Panda','Exception in Client.getDatasets %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
-        if not job.outputdata.datasetname in res.keys():
+        if not job.outputdata.datasetname in list(res.keys()):
             # create the container
             createContainer(job.outputdata.datasetname)
 
@@ -396,18 +396,18 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
             if tmp_user_area_name:
                 inpw = os.path.dirname(tmp_user_area_name)
-                self.inputsandbox = os.path.join(inpw, 'sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null'))
+                self.inputsandbox = os.path.join(inpw, 'sources.%s.tar' % subprocess.getoutput('uuidgen 2> /dev/null'))
             else:
                 inpw = job.getInputWorkspace()
-                self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null'))
+                self.inputsandbox = inpw.getPath('sources.%s.tar' % subprocess.getoutput('uuidgen 2> /dev/null'))
 
             if tmp_user_area_name:
-                rc, output = commands.getstatusoutput('cp %s %s.gz' % (tmp_user_area_name, self.inputsandbox))
+                rc, output = subprocess.getstatusoutput('cp %s %s.gz' % (tmp_user_area_name, self.inputsandbox))
                 if rc:
                     logger.error('Copying user_area failed with status %d',rc)
                     logger.error(output)
                     raise ApplicationConfigurationError('Packing inputsandbox failed.')
-                rc, output = commands.getstatusoutput('gunzip %s.gz' % (self.inputsandbox))
+                rc, output = subprocess.getstatusoutput('gunzip %s.gz' % (self.inputsandbox))
                 if rc:
                     logger.error('Unzipping user_area failed with status %d',rc)
                     logger.error(output)
@@ -429,10 +429,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     # as we don't have to be in the run dir now, create a copy of the run_dir directory structure and use that
                     input_dir = os.path.dirname(self.inputsandbox)
                     run_path = "%s/sbx_tree/%s" % (input_dir, app.atlas_run_dir)
-                    rc, output = commands.getstatusoutput("mkdir -p %s" % run_path)
+                    rc, output = subprocess.getstatusoutput("mkdir -p %s" % run_path)
                     if not rc:
                         # copy this sandbox file
-                        rc, output = commands.getstatusoutput("cp %s %s" % (fname, run_path))
+                        rc, output = subprocess.getstatusoutput("cp %s %s" % (fname, run_path))
                         if not rc:
                             path = os.path.join(input_dir, 'sbx_tree')
                             fn = os.path.join(app.atlas_run_dir, fn)
@@ -450,7 +450,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                         fn = fname[len(ua)+1:]
                         path = ua
 
-                rc, output = commands.getstatusoutput('tar -h -r -f %s -C %s %s' % (self.inputsandbox, path, fn))
+                rc, output = subprocess.getstatusoutput('tar -h -r -f %s -C %s %s' % (self.inputsandbox, path, fn))
                 if rc:
                     logger.error('Packing inputsandbox failed with status %d',rc)
                     logger.error(output)
@@ -458,11 +458,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
             # remove sandbox tree if created
             if "sbx_tree" in os.listdir(os.path.dirname(self.inputsandbox)):                
-                rc, output = commands.getstatusoutput("rm -r %s/sbx_tree" % os.path.dirname(self.inputsandbox))
+                rc, output = subprocess.getstatusoutput("rm -r %s/sbx_tree" % os.path.dirname(self.inputsandbox))
                 if rc:
                     raise ApplicationConfigurationError( "Couldn't remove directory structure used for input sandbox")
                 
-            rc, output = commands.getstatusoutput('gzip %s' % (self.inputsandbox))
+            rc, output = subprocess.getstatusoutput('gzip %s' % (self.inputsandbox))
             if rc:
                 logger.error('Packing inputsandbox failed with status %d',rc)
                 logger.error(output)
@@ -493,7 +493,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if 'provenanceID' in job.backend.jobSpec:
                     jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
                 
-                jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
+                jspec.jobName           = subprocess.getoutput('uuidgen 2> /dev/null')
                 
                 # release and setup depends on mana or not
                 if app.useMana:
@@ -536,7 +536,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if matchURL:
                     jspec.jobParameters += ' --sourceURL %s' % matchURL.group(1)
                 if job.backend.bexec != '':
-                    jspec.jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
+                    jspec.jobParameters += ' --bexec "%s" ' % urllib.parse.quote(job.backend.bexec)
                     jspec.jobParameters += ' -r %s ' % '.'
 
                 if job.backend.requirements.rootver != '':
@@ -604,7 +604,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if not job.inputdata.names:
                 contents = job.inputdata.get_contents(overlap=False, size=True)
                 
-                for ds in contents.keys():
+                for ds in list(contents.keys()):
 
                     for f in contents[ds]:
                         job.inputdata.guids.append( f[0] )
@@ -637,7 +637,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if 'provenanceID' in job.backend.jobSpec:
             jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
         
-        jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
+        jspec.jobName           = subprocess.getoutput('uuidgen 2> /dev/null')
 
         if app.useMana:
             jspec.cmtConfig         = AthenaUtils.getCmtConfig('', cmtConfig=app.atlas_cmtconfig)
@@ -779,7 +779,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             #param += '-j "%s" ' % urllib.quote(app.options)
             pass
         else:
-            param += '-j "%s" ' % urllib.quote(self.job_options)
+            param += '-j "%s" ' % urllib.parse.quote(self.job_options)
         if app.atlas_exetype == 'ARES' or (app.atlas_exetype in ['PYARA','ROOT','EXE'] and app.useAthenaPackages):
             param += '--useAthenaPackages '
             
@@ -831,12 +831,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 # if using cvmfs, add full path
                 if job.inputdata.use_cvmfs_tag:
                     tmpTagList = []
-                    for tag in job.inputdata.tag_info.keys():
+                    for tag in list(job.inputdata.tag_info.keys()):
                         tmpTagList.append("/cvmfs/atlas-condb.cern.ch/repo/tag/%s/%s" % (job.inputdata.tag_info[tag]['dataset'], tag))
                     param += '--tagFileList %s ' % ','.join(tmpTagList)                    
                 else:
-                    input_files += job.inputdata.tag_info.keys()
-                    param += '--tagFileList %s ' % ','.join(job.inputdata.tag_info.keys())
+                    input_files += list(job.inputdata.tag_info.keys())
+                    param += '--tagFileList %s ' % ','.join(list(job.inputdata.tag_info.keys()))
 
                 param += '-i "%s" ' % input_files
                 param += '--guidBoundary "%s" ' % job.inputdata.guids
@@ -921,7 +921,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     # replace parameters
                     tmpJobO = tmpJobO.replace(match.group(0),tmpDbrLFN)
 
-            param += ' -j "%s" ' % urllib.quote(tmpJobO) 
+            param += ' -j "%s" ' % urllib.parse.quote(tmpJobO) 
 
             param += ' -i "%s" ' % input_files
 
@@ -957,7 +957,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         #    param += '--beamGas "%s" ' % bgasList
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             outMapNew={}
-            for x in outMap.values():
+            for x in list(outMap.values()):
                 outMapNew.update(dict(x))
             param += '-o "%s" ' % outMapNew
         else:

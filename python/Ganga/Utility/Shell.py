@@ -56,7 +56,7 @@ def expand_vars(env):
         env (dict): dictionary describing the environment which is to be sanitized
     """
     tmp_dict = {}
-    for k, v in env.iteritems():
+    for k, v in env.items():
         if not str(v).startswith('() {'):
             if not str(k).endswith('()'):
                 tmp_dict[k] = os.path.expandvars(v)
@@ -286,7 +286,7 @@ class Shell(object):
         fullpath = os.path.join(self.dirname, cmd)
         with open(fullpath, 'w') as f:
             f.write("#!/bin/bash\n")
-            for k, v in self.env.iteritems():
+            for k, v in self.env.items():
                 f.write("export %s='%s'\n" % (k, v))
             if preexecute:
                 f.write("%s\n" % preexecute)

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
@@ -36,7 +36,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         assert len(jobs) == 1
 
-        print("len: %s" % len(jobs))
+        print(("len: %s" % len(jobs)))
 
         j=jobs(0)
 
@@ -239,8 +239,8 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             index_cat = raw_j._category
             this_index_cache = (index_cat, index_cls, index_cache)
 
-            print("just-built index: %s" % str(this_index_cache))
-            print("from disk: %s" % str(obj))
+            print(("just-built index: %s" % str(this_index_cache)))
+            print(("from disk: %s" % str(obj)))
 
             assert this_index_cache == obj
 
@@ -270,8 +270,8 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
                 new_dict[sj.id] = temp_index
                 assert raw_sj._category == raw_j._category
 
-            for k, v in new_dict.iteritems():
-                for k1, v1 in v.iteritems():
+            for k, v in new_dict.items():
+                for k1, v1 in v.items():
                     if k1 != 'modified':
                         assert obj[k][k1] == new_dict[k][k1]
 

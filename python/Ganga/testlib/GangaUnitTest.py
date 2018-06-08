@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import sys
 import shutil
 import os.path
@@ -51,7 +51,7 @@ def clear_config():
     Reset all the configs back to their default values
     """
     from Ganga.Utility.Config import allConfigs
-    for package in allConfigs.values():
+    for package in list(allConfigs.values()):
         package._user_handlers = []
         package._session_handlers = []
         package.revertToDefaultOptions()

@@ -65,7 +65,7 @@ class GPIRunner:
                 """
                 import os.path
                 testFile = os.path.split(testPath)[1]           
-                execfile( testFile , Ganga.Runtime._prog.local_ns )
+                exec(compile(open( testFile ).read(), testFile, 'exec'), Ganga.Runtime._prog.local_ns)
                 
         def tearDown(self):
                 """

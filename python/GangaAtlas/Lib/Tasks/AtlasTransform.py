@@ -26,7 +26,7 @@ from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
 class AtlasTransform(ITransform):
-   _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
+   _schema = Schema(Version(1,0), dict(list(ITransform._schema.datadict.items()) + list({
       'local_location'     : SimpleItem(defvalue='', doc='Local location to copy output to', typelist=["str"]),
       'include_file_mask'       : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc = 'List of Regular expressions of which files to include in copy'),
       'exclude_file_mask'       : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc = 'List of Regular expressions of which files to exclude from copy'),
@@ -36,7 +36,7 @@ class AtlasTransform(ITransform):
       'rebroker_fraction'    : SimpleItem(defvalue=0.6, doc='Fraction of failed subjobs to complete subjobs above which the job will be rebrokered', modelist=["float"]),
       'num_dq2_threads'     : SimpleItem(defvalue=1, copyable=1, doc='Number of DQ2 download threads to run simultaneously (use setNumDQ2Threads to modify after submission)', typelist=["int"]),
       'files_per_unit' : SimpleItem(defvalue=-1, copyable=1, doc='Maximum number of files to assign to each unit from the given local files (i.e. AtlasLocalDataset). If < 1, use all files. At present, does not apply to DQ2Datasets', typelist=["int"]),
-    }.items()))
+    }.items())))
 
    _category = 'transforms'
    _name = 'AtlasTransform'
@@ -322,7 +322,7 @@ class AtlasTransform(ITransform):
          return
 
       for unit in self.units:
-         print "Checking %s..." % ','.join( unit.inputdata.dataset )
+         print("Checking %s..." % ','.join( unit.inputdata.dataset ))
          loc = unit.inputdata.get_locations()
          non_tape = []
          ok_sites = []
@@ -337,15 +337,15 @@ class AtlasTransform(ITransform):
 
          # non tape sites
          if len(non_tape) == 0:
-            print "ERROR: No non-tape site available for DS '%s'" % unit.inputdata.dataset
+            print("ERROR: No non-tape site available for DS '%s'" % unit.inputdata.dataset)
          elif len(non_tape) == 1:
-            print "WARNING: Only one non-tape site available for DS '%s'" % unit.inputdata.dataset
+            print("WARNING: Only one non-tape site available for DS '%s'" % unit.inputdata.dataset)
 
          # excluded sites
          if len(ok_sites) == 0:
-            print "ERROR: No non-excluded sites available for DS '%s'" % unit.inputdata.dataset
+            print("ERROR: No non-excluded sites available for DS '%s'" % unit.inputdata.dataset)
          elif len(ok_sites) == 1:
-            print "WARNING: Only one non-excluded site available for DS '%s'" % unit.inputdata.dataset
+            print("WARNING: Only one non-excluded site available for DS '%s'" % unit.inputdata.dataset)
 
          # finally check panda brokerage
          from GangaPanda.Lib.Panda import selectPandaSite
@@ -356,7 +356,7 @@ class AtlasTransform(ITransform):
             pass
 
          if site == "NONE":
-            print "ERROR: No non-blcklisted, non-Tape, non-excluded sites available for DS '%s'" % unit.inputdata.dataset
+            print("ERROR: No non-blcklisted, non-Tape, non-excluded sites available for DS '%s'" % unit.inputdata.dataset)
               
    def changeDownloadLocation(self, new_location, move_files = True):
       """Change the local download area"""

@@ -41,7 +41,7 @@ config.addOption( 'siteType', 'analysis' , 'Expert only.' )
 
 
 def standardSetup():
-    import PACKAGE
+    from . import PACKAGE
     PACKAGE.standardSetup()
 
     
@@ -51,19 +51,19 @@ def loadPlugins(c):
     from Ganga.Utility.logging import getLogger
 
     try:
-        import Lib.Panda
-        import Lib.Jedi
+        from . import Lib.Panda
+        from . import Lib.Jedi
     except SystemExit:
         from Ganga.Core.exceptions import ApplicationConfigurationError
-        import commands
-        (s,o) = commands.getstatusoutput('curl --version')
+        import subprocess
+        (s,o) = subprocess.getstatusoutput('curl --version')
         if (s):
             raise ApplicationConfigurationError("Couldn't load Panda Client: ensure 'curl' is available")
         else:
             raise ApplicationConfigurationError("Couldn't load Panda Client")
-    import Lib.Athena
-    import Lib.Executable
-    import Lib.ProdTrans
+    from . import Lib.Athena
+    from . import Lib.Executable
+    from . import Lib.ProdTrans
 
     return None
 

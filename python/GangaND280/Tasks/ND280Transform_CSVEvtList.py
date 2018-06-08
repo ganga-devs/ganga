@@ -7,7 +7,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
 from Ganga.Utility.logging import getLogger
-from ND280Unit_CSVEvtList import ND280Unit_CSVEvtList
+from .ND280Unit_CSVEvtList import ND280Unit_CSVEvtList
 from GangaND280.ND280Dataset.ND280Dataset import ND280LocalDataset
 from GangaND280.ND280Splitter.ND280Splitter import splitCSVFile
 import Ganga.GPI as GPI
@@ -17,9 +17,9 @@ import os
 logger = getLogger()
 
 class ND280Transform_CSVEvtList(ITransform):
-   _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
+   _schema = Schema(Version(1,0), dict(list(ITransform._schema.datadict.items()) + list({
         'nbevents' : SimpleItem(defvalue=-1,doc='The number of events for each unit'),
-    }.items()))
+    }.items())))
 
    _category = 'transforms'
    _name = 'ND280Transform_CSVEvtList'

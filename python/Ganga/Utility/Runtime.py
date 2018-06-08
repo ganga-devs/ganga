@@ -211,7 +211,7 @@ class RuntimePackage(object):
         try:
             import os.path
             if os.path.isfile(os.path.join(self.modpath, 'TEMPLATES.py')):
-                execfile(os.path.join(self.modpath, 'TEMPLATES.py'), globals)
+                exec(compile(open(os.path.join(self.modpath, 'TEMPLATES.py')).read(), os.path.join(self.modpath, 'TEMPLATES.py'), 'exec'), globals)
             else:
                 logger.debug("Problems adding templates for runtime package %s",
                              self.name)
@@ -244,7 +244,7 @@ def initSetupRuntimePackages():
 
     # perform any setup of runtime packages
     logger.debug('Setting up Runtime Packages')
-    for r in allRuntimes.values():
+    for r in list(allRuntimes.values()):
         r.standardSetup()
 
 
@@ -269,7 +269,7 @@ def initRuntimePackages():
     def transform(x):
         return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
 
-    paths = map(transform, filter(None, map(lambda x: os.path.expandvars(os.path.expanduser(x)), config['RUNTIME_PATH'].split(':'))))
+    paths = list(map(transform, [_f for _f in [os.path.expandvars(os.path.expanduser(x)) for x in config['RUNTIME_PATH'].split(':')] if _f]))
 
     for path in paths:
         r = RuntimePackage(path)
@@ -283,8 +283,8 @@ def loadPlugins(environment):
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     env_dict = environment.__dict__
-    logger.debug("Loading: %s PLUGINS" % str(allRuntimes.keys()))
-    for n, r in allRuntimes.iteritems():
+    logger.debug("Loading: %s PLUGINS" % str(list(allRuntimes.keys())))
+    for n, r in allRuntimes.items():
         logger.debug("Bootstrapping: %s" % n)
         try:
             r.bootstrap(env_dict)
@@ -299,7 +299,7 @@ def loadPlugins(environment):
             logger.error('problems with loading Named Templates for %s', n)
             logger.error('Reason: %s' % str(err))
 
-    for n, r in allRuntimes.iteritems():
+    for n, r in allRuntimes.items():
         logger.debug("Loading: %s" % n)
         try:
             r.loadPlugins()
@@ -340,7 +340,7 @@ def setPluginDefaults(my_interface=None):
     for opt in default_plugins_cfg:
         try:
             category, tag = opt.split('_')
-        except ValueError, err:
+        except ValueError as err:
             logger.warning("do not understand option %s in [Plugins]", opt)
             logger.debug('Reason: want %s' % str(err))
         else:

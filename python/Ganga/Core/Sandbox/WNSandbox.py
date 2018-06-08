@@ -46,11 +46,11 @@ def createOutputSandbox(output_patterns, filter, dest_dir):
 
         print("Failed to import files")
         print("sys:")
-        print(sys.path)
+        print((sys.path))
         print("env:")
-        print(os.environ)
+        print((os.environ))
         print("ls:")
-        print(os.listdir("."))
+        print((os.listdir(".")))
         print("pattern:")
         print(output_patterns)
         print("destdir:")
@@ -78,7 +78,7 @@ def createOutputSandbox(output_patterns, filter, dest_dir):
                 os.makedirs(dest_dir)
             recursive_copy(f, dest_dir)
         except Exception as x:
-            print("ERROR: (job ###JOBID### createOutput )", x)
+            print(("ERROR: (job ###JOBID### createOutput )", x))
 
 
 def createPackedOutputSandbox(output_patterns, _filter, dest_dir):
@@ -100,11 +100,11 @@ def createPackedOutputSandbox(output_patterns, _filter, dest_dir):
 
         print("Failed to import files")
         print("sys:")
-        print(sys.path)
+        print((sys.path))
         print("env:")
-        print(os.environ)
+        print((os.environ))
         print("ls:")
-        print(os.listdir("."))
+        print((os.listdir(".")))
         print("pattern:")
         print(output_patterns)
         print("destdir:")

@@ -36,7 +36,7 @@ from Ganga.Utility.Plugin import allPlugins
 from Ganga.GPIDev.Credentials_old.GridProxy import GridProxy
 
 _credentialPlugins = {}
-for item in locals().keys():
+for item in list(locals().keys()):
     if ((hasattr(locals()[item], "_category"))
             and (hasattr(locals()[item], "_name"))):
         _category = getattr(locals()[item], "_category")
@@ -72,9 +72,9 @@ def getCredential(name="", create=True):
 #     if not name in _allCredentials.keys():
 #        _allCredentials[ name ] = \
 #           allPlugins.find( "credentials", name )._proxyClass()
-    if name in _credentialPlugins.keys():
-        if ( not name in _allCredentials.keys() ) and \
-           ( not name in _voidCredentials.keys() ) and \
+    if name in list(_credentialPlugins.keys()):
+        if ( not name in list(_allCredentials.keys()) ) and \
+           ( not name in list(_voidCredentials.keys()) ) and \
            (create is True):
             credential = _credentialPlugins[name]()
             if credential.isAvailable():
@@ -85,7 +85,7 @@ def getCredential(name="", create=True):
         logger.warning("Credential type '%s' not known" % str(name))
         logger.warning("Returning False")
 
-    if name in _allCredentials.keys():
+    if name in list(_allCredentials.keys()):
         credential = _allCredentials[name]
     else:
         credential = False

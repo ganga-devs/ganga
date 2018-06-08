@@ -25,7 +25,7 @@ class ICredentialRequirement(GangaObject):
 
     def __init__(self, **kwargs):
         super(ICredentialRequirement, self).__init__()
-        for key, value in kwargs.items():
+        for key, value in list(kwargs.items()):
             if key not in self._schema.allItemNames():
                 raise GangaAttributeError('{class_name} does not have attribute called "{attr}"'.format(class_name=self.__class__.__name__, attr=key))
             setattr(self, key, value)

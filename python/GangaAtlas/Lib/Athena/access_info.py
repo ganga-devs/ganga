@@ -14,7 +14,7 @@ if __name__ == '__main__':
     try:
         opts, args = getopt(sys.argv[1:],':tp', ['type','protocol'])
     except GetoptError:
-        print 'access_info.py -t or -p'
+        print('access_info.py -t or -p')
         sys.exit(410100)
 
     for opt, val in opts:
@@ -45,6 +45,6 @@ if __name__ == '__main__':
             pass
 
     if type:
-        print accessType
+        print(accessType)
     elif protocol:
-        print accessProtocol
+        print(accessProtocol)

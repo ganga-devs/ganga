@@ -159,7 +159,7 @@ class BenderModule(GaudiExec):
     _schema.version.major += 0
     _schema.version.minor += 0
     ## make entries 
-    for key,val in _schema.datadict.iteritems() :
+    for key,val in _schema.datadict.items() :
         if key == 'useGaudiRun'  : val._update( { 'defvalue' : False } )
         if key == 'getMetadata'  : val._update( { 'defvalue' : True } )  
         if not key in ( 'platform' , 'directory', 'getMetadata') : 
@@ -250,7 +250,7 @@ class BenderRun(GaudiExec):
     _schema.version.major += 0
     _schema.version.minor += 0
     ## make entries 
-    for key,val in _schema.datadict.iteritems() :
+    for key,val in _schema.datadict.items() :
         if key == 'useGaudiRun'  : val._update( { 'defvalue' : False } )  
         if key == 'getMetadata'  : val._update( { 'defvalue' : True } ) 
         if not key in ( 'platform' , 'directory', 'getMetadata') : 
@@ -345,7 +345,7 @@ class OstapRun(GaudiExec):
     _schema.version.major += 0
     _schema.version.minor += 0
     ## make entries 
-    for key,val in _schema.datadict.iteritems() :
+    for key,val in _schema.datadict.items() :
         if key == 'useGaudiRun'  : val._update( { 'defvalue' : False } )  
         if key == 'getMetadata'  : val._update( { 'defvalue' : True } ) 
         if not key in ( 'platform' , 'directory', 'getMetadata') : 

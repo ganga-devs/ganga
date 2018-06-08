@@ -20,8 +20,8 @@ logger = getLogger()
 
 class AtlasTask(ITask):
     """Atlas add-ons for the Task framework"""
-    _schema = Schema(Version(1,0), dict(ITask._schema.datadict.items() + {
-        }.items()))
+    _schema = Schema(Version(1,0), dict(list(ITask._schema.datadict.items()) + list({
+        }.items())))
     
     _category = 'tasks'
     _name = 'AtlasTask'
@@ -80,7 +80,7 @@ class AtlasTask(ITask):
             logger.error("Cannot add more data to a new task yet. Give me time :)")
             return
         
-        for trf_name, physics_container in ds_dict.iteritems():
+        for trf_name, physics_container in ds_dict.items():
             trf = AtlasTransform()
             trf.name = trf_name
             self.appendTransform(trf)

@@ -1,5 +1,5 @@
 # File: GangaCamtology/__init__.py
 
 def loadPlugins( config = {} ):
-   import Lib
+   from . import Lib
    return None

@@ -3,7 +3,7 @@
 # determine SE type
 #
 
-import os, urllib, sys, imp, commands, re, socket
+import os, urllib.request, urllib.parse, urllib.error, sys, imp, subprocess, re, socket
 
 # error codes
 # WRAPLCG_UNSPEC
@@ -27,14 +27,14 @@ def getTiersOfATLASCache():
     url = 'http://atlas.web.cern.ch/Atlas/GROUPS/DATABASE/project/ddm/releases/TiersOfATLASCache.py'
     local = os.path.join(os.environ['PWD'],'TiersOfATLASCache.py')
     try:
-        urllib.urlretrieve(url, local)
+        urllib.request.urlretrieve(url, local)
     except IOError:
-        print 'Failed to download TiersOfATLASCache.py'
+        print('Failed to download TiersOfATLASCache.py')
         
     try:
         tiersofatlas = imp.load_source('',local)
     except SyntaxError:
-        print 'Error loading TiersOfATLASCache.py'
+        print('Error loading TiersOfATLASCache.py')
         sys.exit(EC_UNSPEC)
 
     return tiersofatlas
@@ -112,7 +112,7 @@ def localsitename():
     localsiteseq = []
 
     # See if local domainname is in TiersOfAtlasCache.py
-    for site, desc in tiersofatlas.sites.iteritems():
+    for site, desc in tiersofatlas.sites.items():
         sitename = desc['domain'].strip('.*')
         if sitename=='':
             continue
@@ -179,12 +179,12 @@ if __name__ == '__main__':
     elif sys.argv[1:]:
         sitese=sys.argv[1]
     else:
-        print 'ERROR no SE specified !'
+        print('ERROR no SE specified !')
         sys.exit(4)
 
     # Find TiersOfAtlasCache entry
     if sitese:
-        for site, desc in tiersofatlas.sites.iteritems():
+        for site, desc in tiersofatlas.sites.items():
             try:
                 sitesrm = desc['srm'].strip()
             except KeyError:
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     # If not in TiersOfAtlasCache
     if setype == 'NULL':
         cmd = 'lcg-info --list-se --query SE=%s --attr Accesspoint --sed 2>/dev/null' %sitese
-        rc, out = commands.getstatusoutput(cmd)
+        rc, out = subprocess.getstatusoutput(cmd)
         out2 = out.split('%')
         if len(out2)>1:
             setype = findsetype(out2[1])
@@ -214,5 +214,5 @@ if __name__ == '__main__':
         setype = 'DPM'
     
         
-    print setype
+    print(setype)
     

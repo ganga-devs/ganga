@@ -42,7 +42,7 @@ class MetadataDict(GangaObject):
     def update(self, dict):
 
         # this way pick up the checking for free
-        for key, value in dict.iteritems():
+        for key, value in dict.items():
             self.__setitem__(key, value)
 #        self.data.update(dict)
 
@@ -60,6 +60,6 @@ class MetadataDict(GangaObject):
             out.write('{}\n')
             return
         out.write('{\n')
-        for key, value in self.data.iteritems():
+        for key, value in self.data.items():
             out.write(whitespace_marker + '     ' + str(key) + ' = ' + str(value) + '\n')
         out.write(whitespace_marker + '    }\n')

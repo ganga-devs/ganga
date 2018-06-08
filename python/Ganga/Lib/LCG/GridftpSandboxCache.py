@@ -1,7 +1,7 @@
 import os
 import os.path
 import re
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
@@ -167,7 +167,7 @@ class GridftpSandboxCache(GridSandboxCache):
         runner.start()
         runner.join(-1)
 
-        return runner.getResults().values()
+        return list(runner.getResults().values())
 
     def impl_download(self, cred_req, files=[], dest_dir=None, opts=''):
         """
@@ -214,7 +214,7 @@ class GridftpSandboxCache(GridSandboxCache):
         runner.start()
         runner.join(-1)
 
-        return runner.getResults().values()
+        return list(runner.getResults().values())
 
     def impl_delete(self, cred_req, files=[], opts=''):
         """
@@ -257,7 +257,7 @@ class GridftpSandboxCache(GridSandboxCache):
         runner.join(-1)
 
         # update the local index file
-        del_files = runner.getResults().values()
+        del_files = list(runner.getResults().values())
         all_files = self.get_cached_files()
 
         left_files = []

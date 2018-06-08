@@ -4,8 +4,8 @@ def loadPlugins( config = {} ):
 
     # import any modules that need to be visible to the user
 
-    import Lib.Applications
-    import Lib.Backends
+    from . import Lib.Applications
+    from . import Lib.Backends
 
     return None
 

@@ -84,13 +84,13 @@ def addNewLHCbapp(appname, use=''):
 
 def available_versions(self, appname):
     """Provide a list of the available Gaudi application versions"""
-    import EnvironFunctions
+    from . import EnvironFunctions
     return EnvironFunctions.available_versions(self, appname)
 
 
 def guess_version(self, appname):
     """Guess the default Gaudi application version"""
-    import EnvironFunctions
+    from . import EnvironFunctions
     return EnvironFunctions.guess_version(self, appname)
 
 
@@ -99,10 +99,10 @@ def lumi(xmlsummary):
     '''given an XMLSummary object, will return the integrated luminosity'''
     #  print(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[0],'+/-',xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[2])
 
-    lumiDict = dict(zip(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].attrib('format'),
+    lumiDict = dict(list(zip(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].attrib('format'),
                         xmlsummary.counter_dict()['lumiCounters'][
         'IntegrateBeamCrossing/Luminosity'].value()
-    )
+    ))
     )
     return '"%s +- %s"' % (lumiDict['Flag'], lumiDict['Flag2'])
 
@@ -111,10 +111,10 @@ def events(xmlsummary):
     '''given an XMLSummary object, will return the number of events input/output'''
     ad = xmlsummary.file_dict()
     evts = {}
-    for type in ad.keys():
+    for type in list(ad.keys()):
         if type not in evts:
             evts[type] = 0
-        for file in ad[type].keys():
+        for file in list(ad[type].keys()):
             if type == 'input' and ad[type][file].attrib('status') == 'mult':
                 logger.warning(
                     'Warning, processed file ' + ad[type][file].attrib('name') + 'multiple times')
@@ -128,7 +128,7 @@ def events(xmlsummary):
 def xmldatafiles(xmlsummary):
     '''return a dictionary of the files the xmlsummary saw as input'''
     returndict = {}
-    for file in xmlsummary.file_dict()['input'].values():
+    for file in list(xmlsummary.file_dict()['input'].values()):
         if file.attrib('status') in returndict:
             returndict[file.attrib('status')].update([file.attrib('name')])
         else:
@@ -139,7 +139,7 @@ def xmldatafiles(xmlsummary):
 def xmldatanumbers(xmlsummary):
     '''return a dictionary of the number of files the xmlsummary saw as input'''
     returndict = {}
-    for file in xmlsummary.file_dict()['input'].values():
+    for file in list(xmlsummary.file_dict()['input'].values()):
         if file.attrib('status') in returndict:
             returndict[file.attrib('status')] = returndict[
                 file.attrib('status')] + 1

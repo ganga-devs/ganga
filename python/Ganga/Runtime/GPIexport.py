@@ -6,7 +6,7 @@
 
 """ Utility for exporting symbols to GPI.
 """
-from __future__ import absolute_import
+
 
 
 # all public GPI names will be exported here

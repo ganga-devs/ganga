@@ -28,7 +28,7 @@ class SJXLIterator(object):
         self._myCount = 0
 
     ## NB becomes __next__ in Python 3.x don't know if Python 2.7 has a wrapper here
-    def next(self):
+    def __next__(self):
         if self._myCount < len(self._mySubJobs):
             returnable = self._mySubJobs[self._myCount]
             self._myCount += 1
@@ -195,9 +195,9 @@ class SubJobXMLList(GangaObject):
 
         all_caches = {}
         if ignore_disk:
-            range_limit = self._cachedJobs.keys()
+            range_limit = list(self._cachedJobs.keys())
         else:
-            range_limit = range(len(self))
+            range_limit = list(range(len(self)))
 
         for sj_id in range_limit:
             if sj_id in self._cachedJobs:
@@ -507,9 +507,9 @@ class SubJobXMLList(GangaObject):
         from Ganga.Core.GangaRepository.VStreamer import to_file
 
         if ignore_disk:
-            range_limit = self._cachedJobs.keys()
+            range_limit = list(self._cachedJobs.keys())
         else:
-            range_limit = range(len(self))
+            range_limit = list(range(len(self)))
 
         for index in range_limit:
             if index in self._cachedJobs:
@@ -543,7 +543,7 @@ class SubJobXMLList(GangaObject):
             markup (str): This is the markup function used to format the text in the table from registry slice
         """
         ds=""
-        for obj_i in self.keys():
+        for obj_i in list(self.keys()):
 
             cached_data = self.getCachedData(obj_i)
             colour = reg_slice._getColour(cached_data)

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 from .Config import getConfig, makeConfig, ConfigError, setSessionValuesFromFiles, allConfigs, setConfigOption, expandConfigPath, config_scope, setSessionValue, setUserValue
 import os.path
 
@@ -15,7 +15,7 @@ def expandvars(c, v):
 def expandgangasystemvars(c, v):
     """Expands vars with the syntax '@{VAR}' from the System config item."""
     system = getConfig('System')
-    for key in system.options.iterkeys():
+    for key in system.options.keys():
         option = '@{%s}' % key
         if option in v:
             v = v.replace(option, system[key])
@@ -41,7 +41,7 @@ def clear_config():
     Reset all the configs back to their default values
     """
     from Ganga.Utility.Config import allConfigs
-    for package in allConfigs.values():
+    for package in list(allConfigs.values()):
         package._user_handlers = []
         package._session_handlers = []
         package.revertToDefaultOptions()

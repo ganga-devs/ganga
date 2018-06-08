@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 import os
 import sys
 import mimetypes
@@ -79,7 +79,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                 contents = f.getContents()   # is it FileBuffer?
                 # print "Getting FileBuffer Contents"
 
-                from StringIO import StringIO
+                from io import StringIO
                 fileobj = StringIO(contents)
 
                 tinfo = tarfile.TarInfo()

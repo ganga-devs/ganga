@@ -9,8 +9,8 @@ from Ganga.Utility.util import unique
 import Ganga.Utility.logging
 import Ganga.Utility.Config
 from Ganga.Core.exceptions import GangaException
-import CMTUtils
-import cmakeUtils
+from . import CMTUtils
+from . import cmakeUtils
 import subprocess
 import time
 import collections
@@ -201,7 +201,7 @@ def fillPackedSandbox(sandbox_files, destination):
                 f.name, os.path.join(f.subdir, os.path.basename(f.name)))
 
         else:                          # FileBuffer
-            from StringIO import StringIO
+            from io import StringIO
             fileobj = StringIO(contents)
 
             tinfo = tarfile.TarInfo()

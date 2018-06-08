@@ -1,1 +1,1 @@
-import TestSubmitter, TestSplitter, TestConfig, TestConfig2
+from . import TestSubmitter, TestSplitter, TestConfig, TestConfig2

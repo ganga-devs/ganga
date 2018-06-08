@@ -100,7 +100,7 @@ def test__setup_bulk_subjobs(tmpdir, db):
         assert d._setup_bulk_subjobs(dirac_ids, name), 'didnt run'
 
     assert len(j.subjobs) == len(dirac_ids), 'didnt work'
-    for id_, backend_id, subjob in zip(range(len(dirac_ids)), dirac_ids, j.subjobs):
+    for id_, backend_id, subjob in zip(list(range(len(dirac_ids))), dirac_ids, j.subjobs):
         assert id_ == subjob.id, 'ids dont match'
         assert backend_id == subjob.backend.id, 'backend.ids dont match'
         assert isinstance(subjob.application, j.application.__class__), 'apps dont match'

@@ -4,7 +4,7 @@
 # to run locking tests (run several instances in the same directory, from
 # different machines)
 
-from __future__ import print_function
+
 
 import functools
 import threading
@@ -20,7 +20,7 @@ import getpass
 from pipes import quote
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle
 
@@ -39,7 +39,7 @@ session_lock_last = 0
 session_expiration_timeout = 0
 try:
     session_expiration_timeout = getConfig('Configuration')['DiskIOTimeout']
-except ConfigError, err:
+except ConfigError as err:
     session_expiratrion_timeout = 30
 
 session_lock_refresher = None
@@ -416,7 +416,7 @@ class SessionLockManager(object):
                     os.close(fd)
         try:
             self.count = max(self.count, self.cnt_read())
-        except ValueError, err:
+        except ValueError as err:
             logger.debug("Startup ValueError Exception: %s" % err)
             logger.error("Corrupt count file '%s'! Trying to recover..." % (self.cntfn))
         except OSError as err:
@@ -616,7 +616,7 @@ class SessionLockManager(object):
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
                 # 100 bytes should be enough for any ID. Can raise ValueErrorr
-                _output = int(os.read(fd, 100).split("\n")[0])
+                _output = int(os.read(fd, 100).decode('utf-8').split("\n")[0])
             finally:
                 if fd is not None:
                     if not self.afs:  # additional locking for NFS
@@ -652,7 +652,7 @@ class SessionLockManager(object):
                 fd = os.open(self.cntfn, os.O_RDWR)
                 if not self.afs:
                     fcntl.lockf(fd, fcntl.LOCK_EX)
-                os.write(fd, str(self.count) + "\n")
+                os.write(fd, (str(self.count) + "\n").encode())
                 if not self.afs:
                     fcntl.lockf(fd, fcntl.LOCK_UN)
             finally:
@@ -691,7 +691,7 @@ class SessionLockManager(object):
         # someone used force_ids (for example old repository imports)
         if self.locked and max(self.locked) >= newcount:
             newcount = max(self.locked) + 1
-        ids = range(newcount, newcount + n)
+        ids = list(range(newcount, newcount + n))
         self.locked.update(ids)
         self.count = newcount + n
         self.cnt_write()
@@ -859,6 +859,6 @@ class SessionLockManager(object):
         si = session.split(".")
         try:
             return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], ".".join(si[-5:-3]))
-        except Exception, err:
+        except Exception as err:
             logger.debug( "Session Info Exception: %s" % err)
             return session

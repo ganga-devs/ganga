@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from Ganga.GPIDev.Base.Proxy import stripProxy, implRef
 from Ganga.Utility.logging import getLogger
@@ -38,7 +38,7 @@ class RegistrySliceProxy(object):
 
             def __iter__(self): return self
 
-            def next(self):
+            def __next__(self):
                 return _wrap(next(self.it))
         return Iterator(self)
 
@@ -94,7 +94,7 @@ def _wrap(obj):
     if isType(obj, RegistrySlice):
         return obj._proxyClass(obj)
     if isType(obj, list):
-        return map(addProxy, obj)
+        return list(map(addProxy, obj))
     return obj
 
 # strip Proxy and get into the ganga object implementation

@@ -13,7 +13,7 @@ from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
-from commands import getstatusoutput
+from subprocess import getstatusoutput
 
 import os, shutil
 from Ganga.Utility.files import expandfilename

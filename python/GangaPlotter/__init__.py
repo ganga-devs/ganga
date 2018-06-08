@@ -1,2 +1,2 @@
-from BOOT import *
+from .BOOT import *
 

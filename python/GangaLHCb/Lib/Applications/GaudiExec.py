@@ -10,7 +10,7 @@ import threading
 import stat
 import uuid
 from functools import wraps
-from StringIO import StringIO
+from io import StringIO
 
 from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile

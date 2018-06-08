@@ -1,5 +1,5 @@
 def getEnvironment(c):
-    import PACKAGE
+    from . import PACKAGE
     PACKAGE.standardSetup()
     return {}
     
@@ -11,7 +11,7 @@ def loadPlugins(c):
     logger.info('You are now using Python %s',sys.version.split()[0])
 
     import GangaPlotter.Plotter
-    from Plotter.GangaPlotter import GangaPlotter
+    from .Plotter.GangaPlotter import GangaPlotter
     #GangaPlotter.Plotter.plotter = GangaPlotter()
     plotter = GangaPlotter()
 

@@ -68,7 +68,7 @@ def get_parametric_datasets(dirac_script_lines):
         return API_line.find(method_str) >= 0
         # return API_line.find('.setParametricInputData(') >= 0
 
-    parametric_line = filter(parametric_input_filter, dirac_script_lines)
+    parametric_line = list(filter(parametric_input_filter, dirac_script_lines))
     if len(parametric_line) is 0:
         raise BackendError(
             'Dirac', 'No "setParametricInputData()" lines in dirac API')
@@ -92,7 +92,7 @@ def outputfiles_iterator(job, file_type, selection_pred=None,
 
     for f in itertools.chain(job.outputfiles, job.non_copyable_outputfiles):
         if include_subfiles and hasattr(f, 'subfiles') and f.subfiles:
-            for sf in itertools.ifilter(combined_pred, f.subfiles):
+            for sf in filter(combined_pred, f.subfiles):
                 yield sf
         else:
             if combined_pred(f):
@@ -114,7 +114,7 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
 
 
 def ifilter_chain(selection_pred, *iterables):
-    for item in itertools.ifilter(selection_pred,
+    for item in filter(selection_pred,
                                   itertools.chain(*iterables)):
         yield item
 
@@ -154,7 +154,7 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
     # Get the SEs
     SEs = []
     for lf in reps['Successful']:
-        for thisSE in reps['Successful'][lf].keys():
+        for thisSE in list(reps['Successful'][lf].keys()):
             if thisSE not in SEs:
                 SEs.append(thisSE)
     myURLs = []
@@ -171,7 +171,7 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
     for SE in SEs:
         lfns = remainingLFNs
         thisSEFiles = execute('getAccessURL(%s, "%s", %s)' % (lfns, SE, protocol), cred_req=credential_requirements)['Successful']
-        for lfn in thisSEFiles.keys():
+        for lfn in list(thisSEFiles.keys()):
             myURLs.append(thisSEFiles[lfn])
             remainingLFNs.remove(lfn)
         # If we gotten to the end of the list then break

@@ -13,9 +13,9 @@
 import os
 import optparse
 import subprocess
-import urlparse
-import urllib2
-import httplib
+import urllib.parse
+import urllib.request, urllib.error, urllib.parse
+import http.client
 import fnmatch
 import tarfile
 import shutil
@@ -42,18 +42,18 @@ def download_snapshot(fork, version, filename, username=None, password=None, ret
     grabbed if rerunning at a later date.
     """
     url = "https://github.com/%s/rat/archive/%s.tar.gz" % (fork, version)
-    url_request = urllib2.Request(url)
+    url_request = urllib.request.Request(url)
     # Only ever downloading once, so prompt for the username here
     if not username:
-        username = raw_input("Username: ") #This might not be the same as the fork...
+        username = input("Username: ") #This might not be the same as the fork...
     if not password:
         password = getpass.getpass("Password: ")
     b64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
     url_request.add_header("Authorization", "Basic %s" % b64string)
     try:
-        remote_file = urllib2.urlopen(url_request)
-    except urllib2.URLError as e:
-        print "Cannot connect to GitHub: ", e
+        remote_file = urllib.request.urlopen(url_request)
+    except urllib.error.URLError as e:
+        print("Cannot connect to GitHub: ", e)
         raise
     try:
         download_size = int(remote_file.info().getheaders("Content-Length")[0])
@@ -170,8 +170,8 @@ def get_ce_set():
     for line in out:
         bits = line.split()
         if len(bits)==6:
-            ce_name = urlparse.urlparse("ce://%s" % bits[5]) # fake a scheme (ce://) for urlparse
-            ce_set.add(unicode(ce_name.hostname)) # unicode for simpler comparison with database
+            ce_name = urllib.parse.urlparse("ce://%s" % bits[5]) # fake a scheme (ce://) for urlparse
+            ce_set.add(str(ce_name.hostname)) # unicode for simpler comparison with database
     return ce_set
 
 
@@ -185,10 +185,10 @@ def encode_url(db_host, relative_path, query_options = None):
 
     db_host should be a urlparse.ParseResult object.
     '''
-    db_url = urlparse.urlunparse(db_host)
-    url = urlparse.urljoin(db_url, relative_path)
+    db_url = urllib.parse.urlunparse(db_host)
+    url = urllib.parse.urljoin(db_url, relative_path)
     if query_options is not None and len(query_options):
-        query_string = urllib.urlencode(query_options, True)
+        query_string = urllib.parse.urlencode(query_options, True)
         url = "%s?%s" % (url, query_string)
     return url
 
@@ -196,13 +196,13 @@ def encode_url(db_host, relative_path, query_options = None):
 def get_response(host, port, url, request_type = "GET", headers = None, body = None):
     import json # Don't import at the top, python 2.5+ required
     if port is not None:
-        connection = httplib.HTTPConnection(host, port=port)
+        connection = http.client.HTTPConnection(host, port=port)
     else:
-        connection = httplib.HTTPConnection(host)
+        connection = http.client.HTTPConnection(host)
     try:
         connection.request(request_type, url, body=body, headers=headers)
         response = connection.getresponse()
-    except httplib.HTTPException as e:
+    except http.client.HTTPException as e:
         sys.stderr.write('Error accessing the requested db query: %s' % str(e))
         sys.exit(20)
     return json.loads(response.read())
@@ -262,13 +262,13 @@ class GridConfig:
         '''Create the access credentials.
         '''
         cred_file = file(self._config_path, 'w')
-        server = raw_input("Set processing database URL: ")
-        name = raw_input("Set processing database name: ")
-        username = raw_input("Set database username: ")
+        server = input("Set processing database URL: ")
+        name = input("Set processing database name: ")
+        username = input("Set database username: ")
         password = getpass.getpass("Set database password: ")
-        if not urlparse.urlparse(server).hostname:
+        if not urllib.parse.urlparse(server).hostname:
             server = 'http://' + server # so that urlparse works
-        url = urlparse.urlparse(server) # save as a ParseResult class 
+        url = urllib.parse.urlparse(server) # save as a ParseResult class 
         info = {"url": url, "name": name, "credentials": base64.encodestring('%s:%s' % (username, password))[:-1],
                 "version": self._config_version}
         pickle.dump(info, cred_file)
@@ -309,7 +309,7 @@ class GridConfig:
         self._worker_node_info = {}
         for ce in ce_set:
             if ce not in database_ce_info:
-                print "Warning: missing information for %s, exclude" % ce
+                print("Warning: missing information for %s, exclude" % ce)
                 self._worker_node_info[ce] = False
             else:
                 self._worker_node_info[ce] = database_ce_info[ce]

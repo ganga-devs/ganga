@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -6,7 +6,7 @@ from __future__ import print_function, absolute_import
 ##########################################################################
 from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod, stripProxy
 from Ganga.GPIDev.Base.Objects import GangaObject
-from cStringIO import StringIO
+from io import StringIO
 
 from inspect import isclass
 

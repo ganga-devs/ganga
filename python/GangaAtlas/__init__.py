@@ -91,7 +91,7 @@ config.addOption('recon_files_per_job',10,'OBSOLETE', type=int)
 
 def standardSetup():
 
-    import PACKAGE
+    from . import PACKAGE
     PACKAGE.standardSetup()
 
     # set up X509_CERT_DIR for DQ2
@@ -111,10 +111,10 @@ def loadPlugins( config = {} ):
    warnings.filterwarnings('ignore','Python C API version mismatch for module pycurl')
    warnings.filterwarnings('ignore','Python C API version mismatch for module _lfc')
 
-   import Lib.Athena
-   import Lib.ATLASDataset
-   import Lib.AtlasLCGRequirements
-   import Lib.Tasks
+   from . import Lib.Athena
+   from . import Lib.ATLASDataset
+   from . import Lib.AtlasLCGRequirements
+   from . import Lib.Tasks
    
    return None
 

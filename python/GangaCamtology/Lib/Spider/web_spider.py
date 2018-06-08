@@ -3,7 +3,7 @@
 # A thread class for killing threads
 # nicked from http://www.velocityreviews.com/forums/t330554-kill-a-thread-in-python.html
 import sys, trace, threading
-import urllib2, robotparser, urlparse, os, time
+import urllib.request, urllib.error, urllib.parse, urllib.robotparser, urllib.parse, os, time
 
 class GetHTMLThread(threading.Thread):
     """A subclass of threading.Thread, with a kill() method."""
@@ -30,16 +30,16 @@ class GetHTMLThread(threading.Thread):
 
     def run(self):
 
-        import urllib2, urlparse, os
+        import urllib.request, urllib.error, urllib.parse, urllib.parse, os
 
         # retrieve the html
         try:
-            urllib_file = urllib2.urlopen(self._link)
+            urllib_file = urllib.request.urlopen(self._link)
             self._html = urllib_file.read()
             urllib_file.close()
             
         except:
-            print "Error opening link " + repr(self._link)
+            print("Error opening link " + repr(self._link))
             self._html = ""
 
         self._complete = True
@@ -97,7 +97,7 @@ class ImageParser:
     def __init__( self, links, ext ):
 
         import os
-        import urlparse
+        import urllib.parse
         
         self._domain = ''
         self._viewed = []
@@ -151,14 +151,14 @@ class ImageParser:
         
     def Crawl( self ):
         "crawl the websites given the current condition"
-        import urlparse, time, socket
+        import urllib.parse, time, socket
 
         if os.environ['SPIDER_PAYLOAD'] != '':
             try:
                 payload = __import__(os.path.basename(os.environ['SPIDER_PAYLOAD'].strip('.py')))
                 payload.init()
             except:
-                print "Failed to load payload " + os.environ['SPIDER_PAYLOAD']
+                print("Failed to load payload " + os.environ['SPIDER_PAYLOAD'])
                 
         socket.setdefaulttimeout(10)
 
@@ -169,12 +169,12 @@ class ImageParser:
 
             if (self._currlink != "SLEEP"):
                 # parse the current link
-                print "--------------------------------------------------"
-                url = urlparse.urlparse( self._currlink )
-                print "Attempting to parse " + self._currlink
+                print("--------------------------------------------------")
+                url = urllib.parse.urlparse( self._currlink )
+                print("Attempting to parse " + self._currlink)
                 
                 self._domain = url[1]
-                print "Found domain " + url[1]
+                print("Found domain " + url[1])
                 
                 html = self.GetHTML()
                 self._viewed.append( self._currlink )
@@ -190,7 +190,7 @@ class ImageParser:
 
                         pl_total_time += pl_stop - pl_start
                     except:
-                        print "Unable to deploy payload - new_html()"
+                        print("Unable to deploy payload - new_html()")
                         
                 # check for previous images
                 if len( self._imgext ) > 0:
@@ -227,44 +227,44 @@ class ImageParser:
             self._currlink = self._queued.pop(0)
             
         stop_time = time.time()
-        print "------------------------------------------------"
-        print "Tims statistics:"
-        print "Total Crawl time = %d" % ((stop_time - start_time) / 60)
-        print "Total Payload time = %d" % (pl_total_time / 60)
+        print("------------------------------------------------")
+        print("Tims statistics:")
+        print("Total Crawl time = %d" % ((stop_time - start_time) / 60))
+        print("Total Payload time = %d" % (pl_total_time / 60))
         
         if os.environ['SPIDER_PAYLOAD'] != '':
 
             try:        
                 payload.end( )
             except:
-                print "Unable to deploy payload - end()"
+                print("Unable to deploy payload - end()")
                         
         self.SaveState()
         
     def GetImageSize( self, image ):
         "Get the size of the linked image (in KB)"
 
-        import urllib2, os
+        import urllib.request, urllib.error, urllib.parse, os
         
         size = -1
         
-        print "Getting image size of " + image
+        print("Getting image size of " + image)
         
         data = pullURLData(image)
         size = len(data) / 1024.
-        print "Image size %.2fkB" % size
+        print("Image size %.2fkB" % size)
         return size
 
     def GetHTML( self ):
         "Get the HTML from the current link"
 
-        import urllib2, robotparser, urlparse, os, time
+        import urllib.request, urllib.error, urllib.parse, urllib.robotparser, urllib.parse, os, time
         
-        print "Getting HTML from " + self._currlink
+        print("Getting HTML from " + self._currlink)
         
         # check robots.txt
-        rp = robotparser.RobotFileParser()
-        url = urlparse.urlparse( self._currlink )
+        rp = urllib.robotparser.RobotFileParser()
+        url = urllib.parse.urlparse( self._currlink )
         
         newurl = []
         
@@ -279,16 +279,16 @@ class ImageParser:
             newurl.append("")
             i = i + 1
 
-        robots_url = urlparse.urlunparse(newurl)
-        print "Checking robots file " + robots_url
+        robots_url = urllib.parse.urlunparse(newurl)
+        print("Checking robots file " + robots_url)
         
         try:
             rp.parse( pullURLData(robots_url) )
             if not rp.can_fetch("urllib2", self._currlink):
-                print self._currlink + " disallowed by robots.txt"
+                print(self._currlink + " disallowed by robots.txt")
                 return ""
         except:
-            print "Error reading " + robots_url
+            print("Error reading " + robots_url)
 
         # do a quick dos2unix
         data = pullURLData(self._currlink)
@@ -312,7 +312,7 @@ class ImageParser:
 
         import re
         import os
-        import urlparse
+        import urllib.parse
         
         images = []
         addfiles = []
@@ -320,7 +320,7 @@ class ImageParser:
         links = []
 
         # import and use beautful soup
-        from BeautifulSoup import BeautifulSoup
+        from .BeautifulSoup import BeautifulSoup
         try:
             soup = BeautifulSoup(page)
         except:
@@ -339,7 +339,7 @@ class ImageParser:
             ref = ln['href'].strip('\"')
             if ref.find("mailto") == -1 and ref.find("javascript") == -1:
                 
-                url = urlparse.urlparse( ref )        
+                url = urllib.parse.urlparse( ref )        
                 link = self.MakeFullPath( ref )
                 ext = os.path.basename(link)
                         
@@ -353,10 +353,10 @@ class ImageParser:
                 # pull other extensions
                 if ext != "" and ext in self._fileext:
                     try:
-                        print "Found Document " + link
+                        print("Found Document " + link)
                         addfiles.append( link )
                     except:
-                        print "More unicode trouble"
+                        print("More unicode trouble")
 
                 try:
                     
@@ -375,13 +375,13 @@ class ImageParser:
                             if os.path.basename(link).find(".") == -1:
                                 link = link.rstrip("/") + "/"
 
-                            print "Found link " + link
+                            print("Found link " + link)
                             links.append( link )
                         elif not url[1] in self._newdomains and safe_domain:
-                            print "Found domain " + url[1]
+                            print("Found domain " + url[1])
                             self._newdomains.append(url[1])
                 except:
-                    print "Error extracting link"
+                    print("Error extracting link")
 
         if len(slinks) == 0:
             # check for redirect
@@ -397,10 +397,10 @@ class ImageParser:
                         link =  self.MakeFullPath( ln['content'][ start : ] )
                         
                         # check if this redirects to another domain
-                        url = urlparse.urlparse( link )
+                        url = urllib.parse.urlparse( link )
                         if (url[1] == self._domain or url[1] == ""):
                             links.append( link )
-                            print "Found link " + link
+                            print("Found link " + link)
                         else:
                             safe_domain = False
                             if len(self._safedomains) == 1 and self._safedomains[0] == '*':
@@ -411,7 +411,7 @@ class ImageParser:
                                     safe_domain = True
 
                             if not url[1] in self._newdomains and safe_domain:
-                                print "Found domain " + url[1]
+                                print("Found domain " + url[1])
                             self._newdomains.append(url[1])
 
                 except:
@@ -445,21 +445,21 @@ class ImageParser:
 
             if image != "":
                 try:
-                    print "Found image " + image
+                    print("Found image " + image)
                     images.append( image )
                     alts.append( alt )
                 except:
-                    print "Odd Image name. Ignoring"
+                    print("Odd Image name. Ignoring")
                                             
         return images, addfiles, alts, links
 
     def MakeFullPath( self, link):
 
-        import urlparse
+        import urllib.parse
         import os
         
-        url = urlparse.urlparse( link )
-        currlinkurl = urlparse.urlparse( self._currlink )
+        url = urllib.parse.urlparse( link )
+        currlinkurl = urllib.parse.urlparse( self._currlink )
         
         newurl = []
         
@@ -486,7 +486,7 @@ class ImageParser:
             newurl[1] = currlinkurl[1]
             newurl[0] = currlinkurl[0]
         
-        return urlparse.urlunparse( newurl )
+        return urllib.parse.urlunparse( newurl )
     
     def GetExtraText( self, html, image ):
         "parse for the image url and return any alternate text, etc."
@@ -507,7 +507,7 @@ class ImageParser:
             text = html[start:stop]
         except:
             # there's some problem scanning the html
-            print "Error getting extra text from " + self._currlink
+            print("Error getting extra text from " + self._currlink)
             text = ""
             
         return text.replace("\n", "")
@@ -596,12 +596,12 @@ import sys
 #    print "e.g. ./WebCrawler.py domList.txt"
 #    sys.exit(2)
 
-print "+------------------------------------------------------------+"
-print "|                                                            |"
-print "|             HTML Image Parser                              |"
-print "|                                                            |"
-print "|                                      by Mark Slater        |"
-print "+------------------------------------------------------------+"
+print("+------------------------------------------------------------+")
+print("|                                                            |")
+print("|             HTML Image Parser                              |")
+print("|                                                            |")
+print("|                                      by Mark Slater        |")
+print("+------------------------------------------------------------+")
 #print "\n   Check img_list.txt for the images and spider_output.txt" 
 #print "           for the spider's output. Enjoy!\n"
 

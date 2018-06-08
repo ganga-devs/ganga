@@ -1,5 +1,5 @@
 """ Test the ability to change the LHCbDIRAC version from the configuration"""
-from __future__ import absolute_import
+
 
 try:
     import unittest2 as unittest
@@ -25,7 +25,7 @@ class TestLHCbDiracVersion(GangaUnitTest):
         """Check that missing CMTCONFIG is caught correctly"""
 	from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
         keep = None
-        if os.environ.has_key('CMTCONFIG'):
+        if 'CMTCONFIG' in os.environ:
             keep = os.environ.pop('CMTCONFIG')
         self.assertRaises(PluginError, store_dirac_environment)
         if keep:
@@ -53,7 +53,7 @@ class TestLHCbDiracVersion(GangaUnitTest):
 
         keep = os.environ.pop('GANGADIRACENVIRONMENT')
         store_dirac_environment()
-        assert os.environ.has_key('GANGADIRACENVIRONMENT')
+        assert 'GANGADIRACENVIRONMENT' in os.environ
         os.environ['GANGADIRACENVIRONMENT'] = keep
 
     def test_write_cache(self):
@@ -62,7 +62,7 @@ class TestLHCbDiracVersion(GangaUnitTest):
 	from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
 
         fnamekeep = None
-        if os.environ.has_key('GANGADIRACENVIRONMENT'):
+        if 'GANGADIRACENVIRONMENT' in os.environ:
             fnamekeep = os.environ['GANGADIRACENVIRONMENT']
             os.rename(fnamekeep, fnamekeep+'.keep')
         store_dirac_environment()

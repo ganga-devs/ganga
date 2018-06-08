@@ -138,7 +138,7 @@ def script_generator(script_template,
                      **kwords):
     # Remove those keywords that have None value if necessary
     removeNone_generator = (
-        (k, v) for (k, v) in kwords.iteritems() if v is not None or not remove_None)
+        (k, v) for (k, v) in kwords.items() if v is not None or not remove_None)
 
     # Do replacement for non-None keys
     script = script_template

@@ -1,4 +1,4 @@
-import commands, exceptions, random, re, sys, time
+import subprocess, exceptions, random, re, sys, time
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -14,7 +14,7 @@ configPanda = getConfig('Panda')
 
 def getLatestDBReleaseCaching():
     import tempfile
-    import cPickle as pickle
+    import pickle as pickle
     from pandatools import Client
     from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
@@ -102,7 +102,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         jspec = JobSpec()
         jspec.currentPriority = app.priority
         jspec.jobDefinitionID = masterjob.id
-        jspec.jobName = commands.getoutput('uuidgen 2> /dev/null')
+        jspec.jobName = subprocess.getoutput('uuidgen 2> /dev/null')
         jspec.coreCount = app.core_count
         jspec.AtlasRelease = 'Atlas-%s' % app.atlas_release
         jspec.homepackage = app.home_package
@@ -185,7 +185,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         for lfn, lfntype in zip(app.output_files,app.output_type):
             ofspec = FileSpec()
             if app.randomize_lfns:
-                randomized_lfn = lfn + ('.%s.%d.%s' % (job.backend.site, int(time.time()), commands.getoutput('uuidgen 2> /dev/null')[:4] ) )
+                randomized_lfn = lfn + ('.%s.%d.%s' % (job.backend.site, int(time.time()), subprocess.getoutput('uuidgen 2> /dev/null')[:4] ) )
             else:
                 randomized_lfn = lfn
 

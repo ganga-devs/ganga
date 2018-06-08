@@ -55,8 +55,8 @@ def fixBKQueryInBox(newCategory='query'):
             f2 = file(path + '~', 'r')
             lines1 = f1.readlines()
             lines2 = f2.readlines()
-            line1 = filter(_filt, lines1)
-            line2 = filter(_filt, lines2)
+            line1 = list(filter(_filt, lines1))
+            line2 = list(filter(_filt, lines2))
             f1.close()
             f2.close()
 

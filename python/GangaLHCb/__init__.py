@@ -72,7 +72,7 @@ if not _after_bootstrap:
 
 def standardSetup():
 
-    import PACKAGE
+    from . import PACKAGE
     PACKAGE.standardSetup()
 
 

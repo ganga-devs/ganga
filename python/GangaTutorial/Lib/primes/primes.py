@@ -1,6 +1,6 @@
 #!/usr/bin/env ganga
 
-from __future__ import print_function
+
 
 # Ganga tutorial application developed by Kuba Moscicki, CERN, 2006
 
@@ -35,7 +35,7 @@ def check_prime_job(j):
     check = 1
     for f in factors:
             check *= int(math.pow(f[0],f[1]))
-    print
+    print()
     
     if check == NUMBER:
         print('All prime factors found:',factors)

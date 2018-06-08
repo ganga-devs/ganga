@@ -11,15 +11,15 @@ from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Ver
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
 
-import commands
+import subprocess
 import copy
 import os
 import string
 import shutil
 
 # Simon's post_status - communicates to processing DB
-import post_status
-import urllib2
+from . import post_status
+import urllib.request, urllib.error, urllib.parse
 
 logger = getLogger()
 
@@ -51,7 +51,7 @@ class FileCheckeR(IFileChecker):
             raise PostProcessException('None of the files to check exist, FileCheckeR will do nothing!') 
         for filepath in filepaths:
             for searchString in self.searchStrings:
-                grepoutput = commands.getoutput('grep "%s" %s' % (searchString,filepath))
+                grepoutput = subprocess.getoutput('grep "%s" %s' % (searchString,filepath))
                 if len(grepoutput) and self.failIfFound is True:            
                     logger.info('The string %s has been found in file %s, FileCheckeR will fail job(%s)',searchString,filepath,job.fqid)
                     return self.failure
@@ -107,7 +107,7 @@ class ND280Kin_Checker(IFileChecker):
         if not ok:
             task = {'*.kin':'errors','*.root':'errors','*.txt':'errors','*.conf':'errors','stdout':'errors'}
             
-        for p in task.keys():
+        for p in list(task.keys()):
             odir = os.path.join(dest,task[p])
 
             self.files = [p]
@@ -188,7 +188,7 @@ class ND280RDP_Checker(IFileChecker):
             #print mondir, job, attributes
             logger.info("%s %s %s",str(mondir), str(job), str(attributes))
             post_status.record(mondir, job, attributes)
-        except urllib2.HTTPError, e:
+        except urllib.error.HTTPError as e:
             #print "Error: The HTTP request failed. (%s)" % (str(e), )
             logger.error("Error: The HTTP request failed. (%s)" % (str(e), ))
             return 4
@@ -450,7 +450,7 @@ class ND280RDP_Checker(IFileChecker):
                 elif self.find('Job Completed Successfully'):
                     #print self.line
                     logger.info(self.line)
-                    nextline = inlogf.next()
+                    nextline = next(inlogf)
                     if nextline.find('Run time')>=0:
                         chunks = nextline.split()
                         Time = chunks[6]
@@ -495,7 +495,7 @@ class ND280RDP_Checker(IFileChecker):
                 '*.log':'logf','*catalogue.dat':'cata','stdout':'jobOutput'}
         if self.ReturnCode != 1 or not ok:
             task = {'*.log':'errors','*.root':'errors','*catalogue.dat':'errors','stdout':'errors'}
-        for p in task.keys():
+        for p in list(task.keys()):
             odir = os.path.join(dest,task[p])
 
             self.files = [p]

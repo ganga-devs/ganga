@@ -75,7 +75,7 @@ def stripped_export(item=None, filename="", mode="w"):
 
     if mode not in modeDict:
         logger.info("'mode' must be one of:")
-        for key in modeDict.keys():
+        for key in list(modeDict.keys()):
             logger.info("   '%s' - %s" % (key, modeDict[key]))
         logger.info("No object saved")
         return returnValue

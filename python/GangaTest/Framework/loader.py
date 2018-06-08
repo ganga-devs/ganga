@@ -23,7 +23,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ################################################################################
 
-from __future__ import generators
+
 import sys
 import os
 import os.path
@@ -87,7 +87,7 @@ class GangaTestLoader:
             self.verbose = True
         else:
             self.verbose = False
-        print self.releaseTesting
+        print(self.releaseTesting)
 
     def loadTests(self,patterns):
         """
@@ -114,7 +114,7 @@ class GangaTestLoader:
             pattern = _patterns[0]
             _log(self.logger,'info',"Searching release tests matching [%s] in %s " % (pattern,self.testsTopDir))
             atoms = pattern.split(".")
-            print str( patterns ) + " : " + str(atoms)
+            print(str( patterns ) + " : " + str(atoms))
             if len(atoms) > 2:
                 top_level_package = atoms[0]
                 tests_type = atoms[1]
@@ -148,7 +148,7 @@ class GangaTestLoader:
         import fnmatch
         pattern = pattern.replace('.','/')
         filtered_tests = []        
-        for key in testcases.keys():
+        for key in list(testcases.keys()):
             tests=testcases[key]            
             for t in tests:
                 if key.startswith(pattern) or fnmatch.fnmatch(t.getDescription().split()[0],pattern):
@@ -164,7 +164,7 @@ class GangaTestLoader:
         #print "Project RELEASE TOP_DIR: %s"%self.releaseTopDir
         #print "Project TESTS TOP_DIR: %s"%self.testsTopDir
         #print "Package: %s\nPattern: %s "%(top_level_package, pattern)
-        print "Test configuration(s):",self.config 
+        print("Test configuration(s):",self.config) 
 
         suites = {}
         tests_no=0
@@ -176,8 +176,8 @@ class GangaTestLoader:
             report_name = "%s__%s"%(pattern.replace("*","ALL"),self.configAlias)
             if self.schema_test is not '':
                 report_name = "%s_%s_%s__%s"%(pattern.replace("*","ALL"),self.schema_test,self.testID,self.configAlias)
-            print "Using configuration: %s" % config_path 
-            print "Report ID: %s" % report_name
+            print("Using configuration: %s" % config_path) 
+            print("Report ID: %s" % report_name)
 
             self.current_report_name = report_name
 
@@ -186,7 +186,7 @@ class GangaTestLoader:
             tests_no+=len(tests)
             if tests:
                 suites[report_name]=unittest.TestSuite(tests)
-        print "%s tests found" % tests_no
+        print("%s tests found" % tests_no)
         return suites
                 
     def __convertSearchPattern(self,patterns):
@@ -346,7 +346,7 @@ class GangaTestLoader:
                     test = self.__generateTestCaseFromGMPTest(file,ganga_config_path,test_relpath=os.path.dirname(file))
                 if test is not None: list.append(test)
             elif ext.lower() == ".gpip" and get_name(file).startswith('Test'):
-                print 'Load local GPIP test'
+                print('Load local GPIP test')
                 gpips = []
                 gpips = self.__generateTestCasesFromGPIPTest(file,ganga_config_path,test=None,test_relpath=os.path.dirname(file))
                 if type(gpips)==type([]) and len(gpips)>0:
@@ -694,7 +694,7 @@ def %(method_name)s(self):
         try:
             module = exec_module_code(test_path)
         except Exception as e:
-            print "[WARNING] Cannot parse Multipass test (invalid format) %s [skipped]-> %s"%(test_path,e)
+            print("[WARNING] Cannot parse Multipass test (invalid format) %s [skipped]-> %s"%(test_path,e))
             return 
             
         testCmds = []
@@ -704,9 +704,9 @@ def %(method_name)s(self):
             clazz = getattr(module, name)
             clazz_dict = dir(clazz)
             sclazz=str(clazz)
-            if isinstance(clazz, (type, types.ClassType)) and issubclass(clazz, MultipassTest) and sclazz.find(test_filename)>=0:
+            if isinstance(clazz, type) and issubclass(clazz, MultipassTest) and sclazz.find(test_filename)>=0:
                 if "run" not in clazz_dict:
-                    print "Cannot find <run> method in the MultipassTest class"
+                    print("Cannot find <run> method in the MultipassTest class")
                     break
                 #for each multipass tests: build n test-cases
                 for attrname in clazz_dict:                   
@@ -784,7 +784,7 @@ def %(method_name)s(self):
             if hasattr(module,'setUp'):
                 getattr(module,'setUp')()
         except Exception as e:
-            print "[WARNING] Cannot parse PYUnit test  %s [skipped]:"%test_path
+            print("[WARNING] Cannot parse PYUnit test  %s [skipped]:"%test_path)
             import traceback
             traceback.print_exc()
             return []
@@ -798,7 +798,7 @@ def %(method_name)s(self):
                 sclazz = str(clazz)
             #print("name: %s" % str(name))
             #print("sclazz: %s" % str(sclazz))
-                if isinstance(clazz, (type, types.ClassType)) and  sclazz.split('.')[-1].find(test_filename)>=0:
+                if isinstance(clazz, type) and  sclazz.split('.')[-1].find(test_filename)>=0:
                     clazz_dict = dir(clazz)
                     for attrname in clazz_dict:
                         try:
@@ -896,7 +896,7 @@ def %(method_name)s(self):
             if hasattr(module,'setUp'):
                 getattr(module,'setUp')()
         except Exception as e:
-            print "[WARNING] Cannot parse GPIP test  %s [skipped]:"%test_path
+            print("[WARNING] Cannot parse GPIP test  %s [skipped]:"%test_path)
             import traceback
             traceback.print_exc()
             return []
@@ -908,10 +908,10 @@ def %(method_name)s(self):
             sclazz = str(clazz)
             #print sclazz
             #print '-->%s, -->%s' % (sclazz.split('.')[-1].split("'")[0], test_filename)
-            if isinstance(clazz, (type, types.ClassType)) and  sclazz.split('.')[-1].split("'")[0] == test_filename:
+            if isinstance(clazz, type) and  sclazz.split('.')[-1].split("'")[0] == test_filename:
                 #print '[%s]' % test
                 if test is not None and attrname==test:
-                    print 'This line should be printed out.'
+                    print('This line should be printed out.')
                 else:
                     try:
                         descr = os.path.join(test_dir[test_dir.index(self.testsTopDir)+len(self.testsTopDir)+1:],test_filename,'ALL')+" [GPIP]"
@@ -950,8 +950,8 @@ def loadArg(args,ind,default=None):
 def readTestTimeout(config):
     """get the timeout value from the list of test configuration files (colon separated list)"""
    
-    import ConfigParser
-    parser = ConfigParser.ConfigParser()
+    import configparser
+    parser = configparser.ConfigParser()
     timeout=DEFAULT_TEST_TIMEOUT
     for file in config.split(':'):
         try:
@@ -993,7 +993,7 @@ def walk(top, topdown=True, onerror=None):
     try:
         names = listdir(top)
     except Exception as err:
-        print err
+        print(err)
         if onerror is not None:
             onerror(err)
         return
@@ -1028,7 +1028,7 @@ def _log(logger,level,msg):
     if logger and hasattr(logger,level):
         getattr(logger,level)(msg)
     else:
-        print "[%s] %s" % (level.upper(),msg)
+        print("[%s] %s" % (level.upper(),msg))
 
 #$Log: not supported by cvs2svn $
 #Revision 1.1  2008/07/17 16:41:36  moscicki

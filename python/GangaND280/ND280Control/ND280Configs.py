@@ -294,27 +294,27 @@ inputfile =
     def CheckOptions(self):
         allOK=1
         ## Quick check to see if there are any blank options, only allowed for comment.
-        for k,v in self.options.iteritems():
+        for k,v in self.options.items():
             if not v:
                 if k in self.options_ignore:
                     continue
                 else:
-                    print 'Please ensure a value for ' + k + ' using the object.options[\'' + k + '\']'
+                    print('Please ensure a value for ' + k + ' using the object.options[\'' + k + '\']')
                     allOK=0
             
         return allOK
 
     def ListOptions(self):
-        for k,v in self.options.iteritems():
-            print k + ' = ' + v
+        for k,v in self.options.items():
+            print(k + ' = ' + v)
         return
 
     def SetOptions(self,options_in):
-        for k,v in options_in.iteritems():
+        for k,v in options_in.items():
             if k in self.options:
                 self.options[k]=v
             else:
-                print 'Option ' + k + ' not in list, ignoring.'
+                print('Option ' + k + ' not in list, ignoring.')
 
     def CreateConfig(self):
         map = {
@@ -340,7 +340,7 @@ inputfile =
     def CreateRawCF(self):
 
         if not self.CheckOptions():
-            print 'ERROR please make sure all options stated above are entered'
+            print('ERROR please make sure all options stated above are entered')
             return ''
         
         configfile = ''
@@ -357,7 +357,7 @@ inputfile =
              self.options['comment'] =  self.options['nd280ver']
         configfile += "[filenaming]\n"
         if self.options['inputfile']:
-            print "version_number = " + self.options['version_number'] + "\n"
+            print("version_number = " + self.options['version_number'] + "\n")
             configfile += "version_number = " + self.options['version_number'] + "\n"
         configfile += "comment = " + self.options['comment'] + "\n\n"
 
@@ -426,11 +426,11 @@ inputfile =
     def CreateCosmicMCCF(self):
 
         if not self.CheckOptions():
-            print 'ERROR please make sure all options stated above are entered'
+            print('ERROR please make sure all options stated above are entered')
             return ''
 
         if not self.options['stage'] in ['base','fgd','tript','all']:
-            print 'ERROR "stage" options should be one of',['base','fgd','tript','all']
+            print('ERROR "stage" options should be one of',['base','fgd','tript','all'])
             return ''
         
         configfile = ''
@@ -500,11 +500,11 @@ inputfile =
     def CreateSandMCCF(self):
 
         if not self.CheckOptions():
-            print 'ERROR please make sure all options stated above are entered'
+            print('ERROR please make sure all options stated above are entered')
             return ''
 
         if not self.options['stage'] in ['neutMC','g4anal','neutSetup']:
-            print 'ERROR "stage" options should be one of',['neutMC','g4anal','neutSetup']
+            print('ERROR "stage" options should be one of',['neutMC','g4anal','neutSetup'])
             return ''
         
         configfile = ''
@@ -540,7 +540,7 @@ inputfile =
         if self.options['beam'] == "beamc":
             thisrun += 300000
         else:
-            print "ERROR self.beam = " + self.beam + " is not supported!!!"
+            print("ERROR self.beam = " + self.beam + " is not supported!!!")
             return ''
 
         if self.options['p0d_water_fill']: # water

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
@@ -43,7 +43,7 @@ class TestNestedXMLWorking(GangaUnitTest):
 
         assert len(jobs) == 1
 
-        print("len: %s" % len(jobs))
+        print(("len: %s" % len(jobs)))
 
         j = jobs(0)
 

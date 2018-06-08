@@ -92,7 +92,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
             project_areas_dict[area] = 666
     from operator import itemgetter
     sorted_project_areas = []
-    for item in sorted(project_areas_dict.items(), key=itemgetter(1)):
+    for item in sorted(list(project_areas_dict.items()), key=itemgetter(1)):
         sorted_project_areas.append(item[0])
 
     lib_names = []

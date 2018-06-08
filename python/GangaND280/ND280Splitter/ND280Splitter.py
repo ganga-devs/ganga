@@ -26,7 +26,7 @@ def splitCSVFile(csvfile, nbevents):
         line = line.rstrip('\r\n')
         row = line.split(",")
         if not len(row) == 3:
-            print "Ignoring badly-formatted line:", ",".join(row)
+            print("Ignoring badly-formatted line:", ",".join(row))
             continue
         allLines.append(line)
     csvfilebuf.close()

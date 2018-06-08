@@ -7,14 +7,14 @@ for j in jobs['DIANE_4']:
 dataTable = JobInfoParser.getJobInfoTable(jlist,['backend','backend.actualCE','application','status','backend.status'])
 
 
-from GangaPlotter import *
+from .GangaPlotter import *
 plotter = GangaPlotter()
 
 plotter.piechart(dataTable,pltColId=4,pltTitle='Pie Chart of backend status')
 
 
 ### Users' Interface
-from GangaPlotter import *
+from .GangaPlotter import *
 plotter = GangaPlotter()
 
 # no dataproc

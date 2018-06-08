@@ -13,9 +13,9 @@ __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__    = "22 February 2007"
 __version__ = "1.0"
 
-from Vanseg import Vanseg
-from VansegLCG import VansegLCG
-from VansegLocal import VansegLocal
+from .Vanseg import Vanseg
+from .VansegLCG import VansegLCG
+from .VansegLocal import VansegLocal
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add( "Vanseg", "Interactive", VansegLocal )

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, re, time, commands, socket
+import os, re, time, subprocess, socket
 from dq2.tracer.client.TracerClient import TracerClient
 from dq2.common import generate_uuid
 
@@ -62,10 +62,10 @@ def fill_report(uuid = None, eventVersion = None, remoteSite=None,
 if __name__ == '__main__':
 
     starttime = time.time()
-    print '--------------'
-    print 'DQ2 tracer preparation ...'
+    print('--------------')
+    print('DQ2 tracer preparation ...')
 
-    usrDN = commands.getstatusoutput('voms-proxy-info -identity')[1]
+    usrDN = subprocess.getstatusoutput('voms-proxy-info -identity')[1]
     # Event uuid
     uuid = generate_uuid()
     # Read LFC and transfer time produced in ganga-stage-in-out-dq2.py
@@ -114,7 +114,7 @@ if __name__ == '__main__':
             match = re.search(sitepat, line)       
             if match:
                 siteid = match.group(1)
-                print siteid
+                print(siteid)
                 
             match = re.search(datasetnamepat, line)       
             if match:
@@ -151,8 +151,8 @@ if __name__ == '__main__':
         except:
             pass
 
-    print '%s out of %s file of dataset %s have been processed.' %(numfiles3, len(input_files_sel), datasetname)
-    print 'Number could be wrong for certain input modes!'
+    print('%s out of %s file of dataset %s have been processed.' %(numfiles3, len(input_files_sel), datasetname))
+    print('Number could be wrong for certain input modes!')
     
     if 'GANGA_VERSION' in os.environ:
         ganga_version = os.environ['GANGA_VERSION']
@@ -169,7 +169,7 @@ if __name__ == '__main__':
         input_files_txt = []
                 
     ddmFileMap = {}
-    for i in xrange(0,len(lfns)):
+    for i in range(0,len(lfns)):
         ddmFileMap[lfns[i]] = guids[i]
 
     #from dq2.clientapi.DQ2 import DQ2
@@ -234,10 +234,10 @@ if __name__ == '__main__':
             #TracerClient().addReport(report)
             nreport+=1
         except:
-            print 'An Error during TracerClient().addReport(report) occured'
-            print report
+            print('An Error during TracerClient().addReport(report) occured')
+            print(report)
             pass
 
-    print '%s DQ2 tracer file reports have been sent.' %nreport
-    print '--------------'
+    print('%s DQ2 tracer file reports have been sent.' %nreport)
+    print('--------------')
 

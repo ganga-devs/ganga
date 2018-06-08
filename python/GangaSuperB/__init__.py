@@ -18,16 +18,16 @@ if not _after_bootstrap:
 
 
 def standardSetup():
-    import PACKAGE
+    from . import PACKAGE
     PACKAGE.standardSetup()
 
 
 def loadPlugins(c):
-    import Lib.SBApp
-    import Lib.SBSubmission
-    import Lib.SBDatasetManager
-    import Lib.SBInputDataset
-    import Lib.SBOutputDataset
+    from . import Lib.SBApp
+    from . import Lib.SBSubmission
+    from . import Lib.SBDatasetManager
+    from . import Lib.SBInputDataset
+    from . import Lib.SBOutputDataset
     #import Lib.SBRequirements
     
     #exportToGPI('SBRequirements', Lib.SBRequirements.SBRequirements, "Functions")

@@ -100,11 +100,11 @@ class _ComponentFilterManager(object):
         except ConfigError:
             # if we have only one filter registered for this category we use it
             if len(filters) == 1:
-                return filters.values()[0]
+                return list(filters.values())[0]
             else:  # ambiguity
                 raise ValueError('FilterManager: Multiple filters detected for %s category: %s, '
                                  'but no one has be set as default in [GPIComponentFilters] section of the configuration file'
-                                 % (category, str(filters.keys())))
+                                 % (category, str(list(filters.keys()))))
         except KeyError:
             # wrong filter name in configuration for this category
             raise ValueError('FilterManager: %s filter is not registered for %s category.'

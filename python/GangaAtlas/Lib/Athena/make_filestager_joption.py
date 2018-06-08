@@ -11,7 +11,7 @@ import os.path
 import sys
 import re
 import pickle
-import dm_util
+from . import dm_util
 import time
 
 io_type = os.environ['DATASETTYPE']
@@ -39,12 +39,12 @@ if (io_type in ['FILE_STAGER']):
     # determin site domain
     domain_replacements = {'grika.de': 'fzk.de'}
     site_domain = dm_util.get_site_domain(domain_replacements)
-    print >> sys.stdout, 'detected site domain: %s' % site_domain
+    print('detected site domain: %s' % site_domain, file=sys.stdout)
 
     # determin close se and its supported transfer protocols
     se_replacements = {'srm.cern.ch': 'srm-atlas.cern.ch'}
     close_se = dm_util.get_se_hostname(se_replacements)
-    print >> sys.stdout, 'detected closed SE: %s' % close_se
+    print('detected closed SE: %s' % close_se, file=sys.stdout)
 
     # resolve the dq2_local_site_id taking into account
     #  - file locations
@@ -72,11 +72,11 @@ if (io_type in ['FILE_STAGER']):
     if not dq2_site_id and 'DQ2_LOCAL_SITE_ID' in os.environ:
         dq2_site_id = os.environ['DQ2_LOCAL_SITE_ID']
 
-    print >> sys.stdout, 'detected DQ2_LOCAL_SITE_ID: %s' % dq2_site_id
+    print('detected DQ2_LOCAL_SITE_ID: %s' % dq2_site_id, file=sys.stdout)
 
     # get LFC_HOST associated with the dq2_site_id
     lfc_host = dm_util.get_lfc_host(dq2_site_id)
-    print >> sys.stdout, 'LFC_HOST: %s' % lfc_host
+    print('LFC_HOST: %s' % lfc_host, file=sys.stdout)
 
     dq2tracertime.append(time.time())
     # resolve PFNs given the LFC_HOST and a list of GUIDs
@@ -88,7 +88,7 @@ if (io_type in ['FILE_STAGER']):
 
     # count only the PFNs on local site by match srm_endpoint of the dq2 site
     srm_endpt_info  = dm_util.get_srm_endpoint(dq2_site_id)
-    print >> sys.stdout, str(srm_endpt_info)
+    print(str(srm_endpt_info), file=sys.stdout)
 
     # define the default gridcopy protocol
     my_protocol = 'lcgcp'
@@ -105,7 +105,7 @@ if (io_type in ['FILE_STAGER']):
     elif io_mode in [ 'local' ]:
         # determin the supported transfer protocols of the given SE
         protocols = dm_util.get_transfer_protocols(srm_endpt_info['se_host'])
-        print >> sys.stdout, 'detected transfer protocols: %s' % repr(protocols)
+        print('detected transfer protocols: %s' % repr(protocols), file=sys.stdout)
 
         # chose a suitable protocol
         # 1. firstly remove gsiftp protocol (do we support it as an alternative of lcgcp?)
@@ -129,26 +129,26 @@ if (io_type in ['FILE_STAGER']):
     #if my_protocol in ['dcap', 'gsidcap']:
     #    my_protocol = 'lcgcp'
 
-    print >> sys.stdout, 'picked transfer protocol: %s' % my_protocol
+    print('picked transfer protocol: %s' % my_protocol, file=sys.stdout)
 
     re_endpt = re.compile('^.*%s.*%s.*\s*$' % (srm_endpt_info['se_host'], srm_endpt_info['se_path']) )
     pfn_list = []
     pfn_csum = {}
-    for guid in pfns.keys():
-        print >> sys.stdout, 'guid:%s pfns:%s' % ( guid, repr(pfns[guid]) )
+    for guid in list(pfns.keys()):
+        print('guid:%s pfns:%s' % ( guid, repr(pfns[guid]) ), file=sys.stdout)
         for pfn in pfns[guid]:
             if re_endpt.match(pfn):
                 pfn_list.append(pfn)
                 pfn_csum[pfn] = csum[guid]
 
     # print out the PFNs and the checksum info. in LFC
-    for pfn in pfn_csum.keys():
-        print >> sys.stdout, '%s %s:%s' % (pfn, pfn_csum[pfn]['csumtype'], pfn_csum[pfn]['csumvalue'])
+    for pfn in list(pfn_csum.keys()):
+        print('%s %s:%s' % (pfn, pfn_csum[pfn]['csumtype'], pfn_csum[pfn]['csumvalue']), file=sys.stdout)
     # create a checksum list in pickle format
     fcsum = open('lfc_checksum.pickle','w')
     pickle.dump(pfn_csum, fcsum)
     fcsum.close()
-    print >> sys.stdout, 'LFC checksum pickle: %s' % os.path.join(os.getcwd(), 'lfc_checksum.pickle')
+    print('LFC checksum pickle: %s' % os.path.join(os.getcwd(), 'lfc_checksum.pickle'), file=sys.stdout)
 
     try:
         if 'ATHENA_MAX_EVENTS' in os.environ:
@@ -188,4 +188,4 @@ if (io_type in ['FILE_STAGER']):
 
 
 else:
-    print >> sys.stderr, "make_filestager_joption.py supports only FILE_STAGER datasettype"
+    print("make_filestager_joption.py supports only FILE_STAGER datasettype", file=sys.stderr)

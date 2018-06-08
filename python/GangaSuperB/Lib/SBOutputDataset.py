@@ -10,10 +10,10 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.Utility.Config import *
 import Ganga.Utility.logging
 
-import db
-import SBDatasetManager
-import SBInputDataset
-import utils
+from . import db
+from . import SBDatasetManager
+from . import SBInputDataset
+from . import utils
 
 
 class SBOutputDataset(Dataset):
@@ -34,7 +34,7 @@ class SBOutputDataset(Dataset):
         if len(self.pairs) == 0:
             raise ApplicationConfigurationError(None, 'output dataset pairs cannot be empty')
         
-        for key, value in self.pairs.items():
+        for key, value in list(self.pairs.items()):
             kwargs = dict()
             kwargs['dataset_id'] = value
             kwargs['owner'] = utils.getOwner()
@@ -98,7 +98,7 @@ class SBOutputDataset(Dataset):
         '''Through this method it is possible to define the partern of output files (like *.root) and the corresponding output dataset. 
         To choose the desired dataset, a list of all datasets of the chosen session is printed.'''
         
-        key = raw_input('Enter a pattern (eg. *.root): ')
+        key = input('Enter a pattern (eg. *.root): ')
         
         j = self.getJobObject()
         

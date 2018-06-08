@@ -21,20 +21,20 @@ class _ApplicationRuntimeHandlers(object):
 
     def getAllBackends(self, application=None):
         if application is None:
-            return self.handlers.keys()
+            return list(self.handlers.keys())
         else:
-            return [b for b in self.handlers.keys() if application in self.handlers[b]]
+            return [b for b in list(self.handlers.keys()) if application in self.handlers[b]]
 
     def getAllApplications(self, backend=None):
         if backend is None:
             apps = {}
 
-            for a in self.handlers.values():
+            for a in list(self.handlers.values()):
                 apps.update(a)
 
-            return apps.keys()
+            return list(apps.keys())
         else:
-            return self.handlers[backend].keys()
+            return list(self.handlers[backend].keys())
 
 allHandlers = _ApplicationRuntimeHandlers()
 

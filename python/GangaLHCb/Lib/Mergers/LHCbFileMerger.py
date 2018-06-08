@@ -1,6 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """Merges DST files."""
-import commands
+import subprocess
 import inspect
 import os
 import string

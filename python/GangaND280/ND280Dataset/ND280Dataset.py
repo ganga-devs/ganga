@@ -14,7 +14,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 
 import os, re, fnmatch
-import commands
+import subprocess
 
 logger = getLogger()
 
@@ -220,14 +220,14 @@ class ND280DCacheDataset(ND280Dataset):
       """Get the list of files in the directory on the dCache server.
       You can provide a wildcard filter such as 'oa_*.root'"""
 
-      if not self.server in self._commandstr.keys():
+      if not self.server in list(self._commandstr.keys()):
           logger.error('DCache server %s is unknown.', self.server)
           return
 
       logger.info('Reading %s ...',directory)
 
       command = self._commandstr[self.server] % directory
-      rawoutput = commands.getoutput(command);
+      rawoutput = subprocess.getoutput(command);
       allfiles = rawoutput.split("\n")
 
       # TODO: return directory error when curl isn't happy

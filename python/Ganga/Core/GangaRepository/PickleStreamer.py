@@ -1,5 +1,5 @@
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except:
     import pickle
 
@@ -13,7 +13,10 @@ def from_file(fobj):
 
 def to_file(obj, fileobj, ignore_subs=''):
     try:
-        pickle.dump(obj, fileobj, 1)
+        from io import StringIO
+        logger.error("ALEX: %s %s" % (type(fileobj), isinstance(fileobj, StringIO)))
+        output = pickle.dumps(obj, 1)
+        fileobj.write(output.decode())
     except Exception as err:
         logger.error("Failed to Write: %s" % obj)
         logger.error("Err: %s" % err)

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 class TestSJIDName(GangaUnitTest):

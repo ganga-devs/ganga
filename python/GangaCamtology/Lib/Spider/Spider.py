@@ -11,7 +11,7 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 from Ganga.Lib.Mergers.Merger import *
 
-import urlparse
+import urllib.parse
 
 # ------------------------------------------------------
 # Main Spider application class
@@ -96,18 +96,18 @@ class Spider(IApplication):
         viewed_arr = {}
         for ln in viewed_list:
             
-            url = urlparse.urlparse( ln )
-            if not url[1] in viewed_arr.keys():
+            url = urllib.parse.urlparse( ln )
+            if not url[1] in list(viewed_arr.keys()):
                 viewed_arr[url[1]] = []
             viewed_arr[url[1]].append( ln )
 
         # now add these to the lists in the directories
         for list_key in viewed_arr:
 
-            dom = os.path.join( self.repository_loc, urlparse.urlparse( viewed_arr[list_key][0].strip() )[1] )
+            dom = os.path.join( self.repository_loc, urllib.parse.urlparse( viewed_arr[list_key][0].strip() )[1] )
         
             if not os.path.exists( dom ):
-                print "Error in ExtractViewedResults: Could not find domain " + dom
+                print("Error in ExtractViewedResults: Could not find domain " + dom)
                 continue
         
             viewed_file = open( os.path.join(dom, 'viewed_list.txt'), 'a')
@@ -129,8 +129,8 @@ class Spider(IApplication):
     
         for ln in queued_list:
         
-            url = urlparse.urlparse( ln )
-            if not url[1] in temp_list.keys():
+            url = urllib.parse.urlparse( ln )
+            if not url[1] in list(temp_list.keys()):
                 temp_list[url[1]] = [ ]
             temp_list[url[1]].append( ln.strip('\n') )
 
@@ -141,9 +141,9 @@ class Spider(IApplication):
         # now add these to the lists in the directories
         for list_key in temp_list:
 
-            dom = os.path.join( self.repository_loc, urlparse.urlparse( temp_list[list_key][0].strip() )[1])
+            dom = os.path.join( self.repository_loc, urllib.parse.urlparse( temp_list[list_key][0].strip() )[1])
             if not os.path.exists( dom ):
-                print "Error in ExtractQueuedResults: Could not find domain " + dom + " (" + temp_list[list_key][0].strip() + ")"
+                print("Error in ExtractQueuedResults: Could not find domain " + dom + " (" + temp_list[list_key][0].strip() + ")")
                 continue
 
             queued_file = open( os.path.join(dom, self._queuelistfilename), 'r')
@@ -190,7 +190,7 @@ class Spider(IApplication):
     
         for ln in image_list_file.readlines():
         
-            url = urlparse.urlparse( ln )
+            url = urllib.parse.urlparse( ln )
             dir = os.path.join( self.repository_loc, url[1] )
             if os.path.exists( dir ):
                 try: 

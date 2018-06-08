@@ -67,8 +67,8 @@ class GangaCronExtractor(BaseExtractor):
         """Add gangaCron node with mask node of OK / BANNED LCG sites."""
         gcnode = runnode.addnode('gangaCron')
         try:
-            import urllib
-            mask = urllib.urlopen('http://lhcb-project-dirac.web.cern.ch/lhcb-project-dirac/t1AnalysisMask.txt').read()
+            import urllib.request, urllib.parse, urllib.error
+            mask = urllib.request.urlopen('http://lhcb-project-dirac.web.cern.ch/lhcb-project-dirac/t1AnalysisMask.txt').read()
         except IOError:
             mask = 'failed to load url'
         gcnode.addnode('mask', mask)

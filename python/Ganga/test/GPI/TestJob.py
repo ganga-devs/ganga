@@ -1,4 +1,4 @@
-from __future__ import absolute_import, print_function
+
 
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType
 

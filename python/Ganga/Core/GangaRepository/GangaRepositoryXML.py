@@ -320,7 +320,7 @@ class GangaRepositoryLocal(GangaRepository):
                     raise IOError('Failed to Parse information in Index file: %s. Err: %s' % (fn, err))
             this_cache = obj._index_cache
             this_data = this_cache if this_cache else {}
-            for k, v in cache.iteritems():
+            for k, v in cache.items():
                 this_data[k] = v
             #obj.setNodeData(this_data)
             obj._index_cache = cache
@@ -428,13 +428,13 @@ class GangaRepositoryLocal(GangaRepository):
         """
         clear the master cache(s) which have been stored in memory
         """
-        for k, v in self._cache_load_timestamp.iteritems():
+        for k, v in self._cache_load_timestamp.items():
             self._cache_load_timestamp.pop(k)
-        for k, v in self._cached_cat.iteritems():
+        for k, v in self._cached_cat.items():
             self._cached_cat.pop(k)
-        for k, v in self._cached_cls.iteritems():
+        for k, v in self._cached_cls.items():
             self._cached_cls.pop(k)
-        for k, v in self._cached_obj.iteritems():
+        for k, v in self._cached_obj.items():
             self._cached_obj.pop(k)
 
     def _write_master_cache(self, shutdown=False):
@@ -450,7 +450,7 @@ class GangaRepositoryLocal(GangaRepository):
                 if abs(self._master_index_timestamp - os.stat(_master_idx).st_ctime) < 300:
                     return
 
-            items_to_save = self.objects.iteritems()
+            items_to_save = iter(self.objects.items())
             for k, v in items_to_save:
                 if k in self.incomplete_objects:
                     continue
@@ -474,7 +474,7 @@ class GangaRepositoryLocal(GangaRepository):
                     logger.debug("Failed to update index: %s on startup/shutdown" % k)
                     logger.debug("Reason: %s" % err)
 
-            iterables = self._cache_load_timestamp.iteritems()
+            iterables = iter(self._cache_load_timestamp.items())
             for k, v in iterables:
                 if k in self.incomplete_objects:
                     continue
@@ -545,7 +545,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         locked_ids = self.sessionlock.locked
 
-        for this_id in objs.keys():
+        for this_id in list(objs.keys()):
             deleted_ids.discard(this_id)
             # Make sure we do not overwrite older jobs if someone deleted the
             # count file
@@ -625,7 +625,7 @@ class GangaRepositoryLocal(GangaRepository):
                     logger.error("Adding: %s to Incomplete Objects to avoid loading it again in future" % this_id)
                     self.incomplete_objects.append(this_id)
 
-            for exc, ids in cnt.items():
+            for exc, ids in list(cnt.items()):
                 logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
 
             if self.printed_explanation is False:
@@ -822,10 +822,10 @@ class GangaRepositoryLocal(GangaRepository):
                         self.objects[this_id]._setDirty()
                 # self.unlock([this_id])
 
-                old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.iteritems())
+                old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.items())
                 if not old_idx_subset:
                     # Old index cache isn't subset of new index cache
-                    new_idx_subset = all((k in obj._index_cache and obj._index_cache[k] == v) for k, v in new_idx_cache.iteritems())
+                    new_idx_subset = all((k in obj._index_cache and obj._index_cache[k] == v) for k, v in new_idx_cache.items())
                 else:
                     # Old index cache is subset of new index cache so no need to check
                     new_idx_subset = True
@@ -867,7 +867,7 @@ class GangaRepositoryLocal(GangaRepository):
         # TODO investigate changing this to copyFrom
         # The temp object is from disk so all contents have correctly passed through sanitising via setattr at least once by now so this is safe
         if need_to_copy:
-            for key, val in tmpobj._data.items():
+            for key, val in list(tmpobj._data.items()):
                 obj.setSchemaAttribute(key, val)
             for attr_name, attr_val in obj._schema.allItems():
                 if attr_name not in tmpobj._data:
@@ -887,7 +887,7 @@ class GangaRepositoryLocal(GangaRepository):
                 obj.setSchemaAttribute(self.sub_split, def_val)
 
         from Ganga.GPIDev.Base.Objects import do_not_copy
-        for node_key, node_val in obj._data.items():
+        for node_key, node_val in list(obj._data.items()):
             if isType(node_val, Node):
                 if node_key not in do_not_copy:
                     node_val._setParent(obj)
@@ -1188,7 +1188,7 @@ class GangaRepositoryLocal(GangaRepository):
             obj (GangaObject): The object we want to know if it was loaded into memory
         """
         try:
-            _id = next(id_ for id_, o in self._fully_loaded.items() if o is obj)
+            _id = next(id_ for id_, o in list(self._fully_loaded.items()) if o is obj)
             return True
         except StopIteration:
             return False

@@ -15,7 +15,7 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
-from GaudiBase import GaudiBase
+from .GaudiBase import GaudiBase
 from Ganga.Utility.files import fullpath
 from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
 logger = Ganga.Utility.logging.getLogger()
@@ -112,7 +112,7 @@ class Gaudi(GaudiBase):
 
         try:
             super(Gaudi, self).prepare(force)
-        except Exception, err:
+        except Exception as err:
             logger.debug("Super Prepare Error:\n%s" % str(err))
             raise err
 
@@ -137,7 +137,7 @@ class Gaudi(GaudiBase):
         # prepared state altered from the readInputData pseudo-static member
         try:
             self._check_inputs()
-        except Exception, err:
+        except Exception as err:
             logger.debug("_check_inputs Error:\n%s" % str(err))
             self.unprepare()
             raise err

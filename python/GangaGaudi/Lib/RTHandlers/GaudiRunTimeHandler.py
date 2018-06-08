@@ -10,7 +10,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer, File
 from Ganga.Core.exceptions import TypeMismatchError
 from Ganga.Utility.util import unique
 import shutil
-from RunTimeHandlerUtils import sharedir_handler
+from .RunTimeHandlerUtils import sharedir_handler
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare
 logger = Ganga.Utility.logging.getLogger()

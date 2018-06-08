@@ -4,28 +4,28 @@ import os, sys, popen2, signal, re
 
 from getopt import getopt,GetoptError
 from threading import Thread
-from commands import getstatusoutput
+from subprocess import getstatusoutput
 
 from lfc import *
 
 def f(signum, frame):
-    print "lcg-gt timeout!"
+    print("lcg-gt timeout!")
 
 def usage():
 
-    print 'Name:'
-    print '    ganga-stagein.py'
-    print
-    print 'Arguments:'
-    print '    logical names'
-    print 
-    print 'Options:'
-    print '    -h, --help            this prinout'
-    print '    -i, --input file      list of logical names'
-    print '    -d, --directory path  to stage the input files (default $PWD)'
-    print '    -t, --timeout seconds for the staging in (default 900)'
-    print '    -r, --retry number    for the staging command (default 3)'
-    print '    -v, --verbose         verbosity'
+    print('Name:')
+    print('    ganga-stagein.py')
+    print()
+    print('Arguments:')
+    print('    logical names')
+    print() 
+    print('Options:')
+    print('    -h, --help            this prinout')
+    print('    -i, --input file      list of logical names')
+    print('    -d, --directory path  to stage the input files (default $PWD)')
+    print('    -t, --timeout seconds for the staging in (default 900)')
+    print('    -r, --retry number    for the staging command (default 3)')
+    print('    -v, --verbose         verbosity')
 
 def get_guid(lfn):
     '''Get guid for a lfn
@@ -58,7 +58,7 @@ def get_replicas(lfn):
 # make job option file
 def _makeJobO(files,tag):
     # sort
-    lfns = files.keys()
+    lfns = list(files.keys())
     lfns.sort()
     # open jobO
     joName = 'input.py'
@@ -118,23 +118,23 @@ class PoolFileCatalog:
     def __init__(self,name='PoolFileCatalog.xml'):
 
         self.pfc = open(name,'w')
-        print >>self.pfc,'<?xml version="1.0" ?>'
-        print >>self.pfc,'<POOLFILECATALOG>'
+        print('<?xml version="1.0" ?>', file=self.pfc)
+        print('<POOLFILECATALOG>', file=self.pfc)
 
     def addFile(self,guid,lfn,pfn):
 
-        print >>self.pfc,'    <File ID="%s">' % guid
-        print >>self.pfc,'        <logical>'
-        print >>self.pfc,'            <lfn name="%s"/>' % lfn
-        print >>self.pfc,'        </logical>'
-        print >>self.pfc,'        <physical>'
-        print >>self.pfc,'            <pfn filetype="ROOT_All" name="%s"/>' % pfn
-        print >>self.pfc,'        </physical>'
-        print >>self.pfc,'    </File>'
+        print('    <File ID="%s">' % guid, file=self.pfc)
+        print('        <logical>', file=self.pfc)
+        print('            <lfn name="%s"/>' % lfn, file=self.pfc)
+        print('        </logical>', file=self.pfc)
+        print('        <physical>', file=self.pfc)
+        print('            <pfn filetype="ROOT_All" name="%s"/>' % pfn, file=self.pfc)
+        print('        </physical>', file=self.pfc)
+        print('    </File>', file=self.pfc)
 
     def close(self):
 
-        print >>self.pfc,'</POOLFILECATALOG>'
+        print('</POOLFILECATALOG>', file=self.pfc)
 
 class StageIn(Thread):
 
@@ -148,16 +148,16 @@ class StageIn(Thread):
     def run(self):
 
         for rep in self.replicas:
-            for r in xrange(0,retry):
-                if  verbose: print 'INFO LFN: %s Replica: %s Retry: %d' % (lfn,rep,r)
+            for r in range(0,retry):
+                if  verbose: print('INFO LFN: %s Replica: %s Retry: %d' % (lfn,rep,r))
                 #cmd = 'lcg-cp --vo atlas -t %d %s file:%s' % (timeout,rep,self.file)
                 cmd = 'lcg-gt -t %d %s dcap' % (timeout,rep)
-                print cmd
+                print(cmd)
                 rc, out = getstatusoutput(cmd)
                 if not rc: return
 
-                print 'Return code %d from %s' % (rc,cmd)
-                print out
+                print('Return code %d from %s' % (rc,cmd))
+                print(out)
 
 
 
@@ -202,7 +202,7 @@ if __name__ == '__main__':
         lfns = args
 
     if not len(lfns):
-        print 'No files requested.'
+        print('No files requested.')
         sys.exit()
 
     try:
@@ -218,11 +218,11 @@ if __name__ == '__main__':
 
     rc, output = getstatusoutput('edg-brokerinfo getCloseSEs')
     if rc:
-        print 'ERROR: Could not determine close SEs'
+        print('ERROR: Could not determine close SEs')
         closeSEs = []
     else:
         closeSEs = output.split()
-        print 'INFO: Close SEs are ' + ', '.join(closeSEs)
+        print('INFO: Close SEs are ' + ', '.join(closeSEs))
 
     pfc = PoolFileCatalog()
     workers=[]
@@ -232,12 +232,12 @@ if __name__ == '__main__':
 
     for lfn in lfns:
 
-        if verbose: print 'LFN: %s' % lfn
+        if verbose: print('LFN: %s' % lfn)
         guid = get_guid(lfn)
         if not guid:
-            print 'ERROR: LFN %s not found.' % lfn 
+            print('ERROR: LFN %s not found.' % lfn) 
             continue
-        if verbose: print 'GUID: %s' % guid
+        if verbose: print('GUID: %s' % guid)
 
         name = os.path.basename(lfn)
         pfn = os.path.join(directory,name)
@@ -246,14 +246,14 @@ if __name__ == '__main__':
 
         replicas = get_replicas(lfn)
         if not replicas:
-            print 'ERROR: No replica found for LFN %s' % lfn
+            print('ERROR: No replica found for LFN %s' % lfn)
             continue
 
         if verbose:
-            print 'Replicas :\n   %s' % '\n   '.join(replicas)   
+            print('Replicas :\n   %s' % '\n   '.join(replicas))   
 
         for rep in replicas:
-            if  verbose: print 'INFO LFN: %s Replica: %s' % (lfn,rep)
+            if  verbose: print('INFO LFN: %s Replica: %s' % (lfn,rep))
             cmd = 'lcg-gt -t %d %s dcap' % (timeout,rep)
             try:
                 signal.signal(signal.SIGALRM, f)

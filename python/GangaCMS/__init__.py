@@ -30,7 +30,7 @@ configCMSSW.addOption('CRAB_VERSION','CRAB_2_7_5',dscrpt)
 def standardSetup():
 
     import os.path
-    import PACKAGE
+    from . import PACKAGE
 
     PACKAGE.standardSetup()
 
@@ -62,9 +62,9 @@ def standardSetup():
     logger.info('GangaCMS> [INFO] getEnvironment : done')
 
 def loadPlugins( config = {} ):
-    import Lib.CRABTools
-    import Lib.Utils
-    import Lib.ConfParams
+    from . import Lib.CRABTools
+    from . import Lib.Utils
+    from . import Lib.ConfParams
 
     crab_cfg_configs = {}
 
@@ -73,7 +73,7 @@ def loadPlugins( config = {} ):
       section = params.__class__.__name__
       crab_cfg_configs[section] = Ganga.Utility.Config.makeConfig('%s_CFG'%(section),'Parameters for %s at crab.cfg.'%(section))
 
-      for k in params.schemadic.keys():
+      for k in list(params.schemadic.keys()):
        crab_cfg_configs[section].addOption(k,None,'%s at crab.cfg'%(k))
 
 

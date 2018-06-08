@@ -36,7 +36,7 @@ class MonitoringClient(object):
         return _s
 
     def allStop(self):
-        for service in self.__MC.keys():
+        for service in list(self.__MC.keys()):
             self.__MC[service].stop()
 
     def stop(self, serviceName='Main'):

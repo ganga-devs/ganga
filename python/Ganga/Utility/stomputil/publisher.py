@@ -1,7 +1,7 @@
 """Wrapper around the publish features of stomp.py."""
 
 import time
-from Queue import Queue
+from queue import Queue
 import logging
 logging_DEBUG = logging.DEBUG
 
@@ -20,7 +20,7 @@ except (Exception, ImportError) as err:
 
     if not isinstance(err, ImportError):
         print("Error Importing Stomp utility!")
-        print("err: %s" % err)
+        print(("err: %s" % err))
 
     class stomp(object):
         def __init__(self):
@@ -39,7 +39,7 @@ except (Exception, ImportError) as err:
 class LoggerListener(stomp_listener):
     """Connection listener which logs STOMP events."""
 
-    __slots__ = ('_logger', '_log_frame')
+    __slots__ = ('_logger')
 
     def __init__(self, logger):
         self._logger = logger 
@@ -166,8 +166,9 @@ def createPublisher(T, server, port, user='', password='', logger=None,
             self._message_queue.put(m)
             self._log(logging_DEBUG, 'Message queued. %s queued message(s).', self._message_queue.qsize())
 
-        def _send(self, (message, headers, keyword_headers)):
+        def _send(self, xxx_todo_changeme):
             """Send given message to MSG server."""
+            (message, headers, keyword_headers) = xxx_todo_changeme
             if self._cx is None:
                 self._log(logging_DEBUG, 'NOT Sending message:\n%s' % message)
                 return

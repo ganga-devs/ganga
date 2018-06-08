@@ -70,7 +70,7 @@ from Ganga.Utility.ColourText import Foreground, Effects
 import Ganga.Utility.logging
 from Ganga.Utility.Config import getConfig
 
-import commands
+import subprocess
 import inspect
 import os
 import shutil
@@ -160,7 +160,7 @@ class Condor(IBackend):
         commandList.append(cdfpath)
         commandString = " ".join(commandList)
 
-        status, output = commands.getstatusoutput(commandString)
+        status, output = subprocess.getstatusoutput(commandString)
 
         self.id = ""
         if 0 != status:
@@ -176,7 +176,7 @@ class Condor(IBackend):
                     localId = item.strip(":").split()[2]
                     queryCommand = " ".join\
                         (["condor_q -format \"%s\" GlobalJobId", localId])
-                    qstatus, qoutput = commands.getstatusoutput(queryCommand)
+                    qstatus, qoutput = subprocess.getstatusoutput(queryCommand)
                     if 0 != status:
                         logger.warning\
                             ("Problem determining global id for Condor job '%s'" %
@@ -246,7 +246,7 @@ class Condor(IBackend):
         else:
             killCommand = "condor_rm %s" % (idElementList[0])
 
-        status, output = commands.getstatusoutput(killCommand)
+        status, output = subprocess.getstatusoutput(killCommand)
 
         if (status != 0):
             logger.warning\
@@ -383,7 +383,7 @@ class Condor(IBackend):
 
         envList = []
         if self.env:
-            for key in self.env.keys():
+            for key in list(self.env.keys()):
                 value = self.env[key]
                 if (isinstance(value, str)):
                     value = os.path.expandvars(value)
@@ -392,7 +392,7 @@ class Condor(IBackend):
                 envList.append("=".join([key, value]))
         envString = ";".join(envList)
         if jobconfig.env:
-            for key in jobconfig.env.keys():
+            for key in list(jobconfig.env.keys()):
                 value = jobconfig.env[key]
                 if (isinstance(value, str)):
                     value = os.path.expandvars(value)
@@ -419,7 +419,7 @@ class Condor(IBackend):
             "# Condor Description File created by Ganga",
             "# %s" % (time.strftime("%c")),
             ""]
-        for key, value in cdfDict.iteritems():
+        for key, value in cdfDict.items():
             cdfList.append("%s = %s" % (key, value))
         cdfList.append(self.requirements.convert())
         cdfList.append("queue")
@@ -435,7 +435,7 @@ class Condor(IBackend):
             if job.backend.id:
                 jobDict[job.backend.id] = job
 
-        idList = jobDict.keys()
+        idList = list(jobDict.keys())
 
         if not idList:
             return
@@ -449,7 +449,7 @@ class Condor(IBackend):
                 "-format \"%d \" JobStatus",
                 "-format \"%f\\n\" RemoteUserCpu"
             ])
-        status, output = commands.getstatusoutput(queryCommand)
+        status, output = subprocess.getstatusoutput(queryCommand)
         if 0 != status:
             logger.error("Problem retrieving status for Condor jobs")
             return
@@ -496,11 +496,11 @@ class Condor(IBackend):
                         "-format \"%s\" GlobalJobId",
                         id
                     ])
-                status, output = commands.getstatusoutput(queryCommand)
+                status, output = subprocess.getstatusoutput(queryCommand)
                 if 0 == status:
                     globalId = output
 
-            if globalId in allDict.keys():
+            if globalId in list(allDict.keys()):
                 status = allDict[globalId]["status"]
                 host = allDict[globalId]["host"]
                 cputime = allDict[globalId]["cputime"]

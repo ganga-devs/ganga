@@ -8,7 +8,7 @@
 Remove hardcoded limits on the help text.
 This module makes changes to the content of the pydoc module.
 """
-from __future__ import absolute_import
+
 
 import pydoc
 
@@ -55,7 +55,7 @@ def makedocindex():
 
     from Ganga.Utility.strings import ItemizedTextParagraph
 
-    for sec, names in zip(_GPIhelp_sections.keys(), _GPIhelp_sections.values()):
+    for sec, names in zip(list(_GPIhelp_sections.keys()), list(_GPIhelp_sections.values())):
         itbuf = ItemizedTextParagraph(sec + ':')
         for name, obj, docstring in names:
             # if docstring not provided when exporting the object to GPI then
@@ -164,7 +164,7 @@ def mygetmodule(object):
         return None
     if file in modulesbyfile:
         return sys.modules.get(modulesbyfile[file])
-    for module in sys.modules.values():
+    for module in list(sys.modules.values()):
         # check if value is indeed a module
         if inspect.ismodule(module) and hasattr(module, '__file__'):
             modulesbyfile[

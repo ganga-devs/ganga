@@ -78,7 +78,7 @@ def getXMLSummaryScript(indent=''):
     from GangaLHCb.Lib.Applications.AppsBaseUtils import activeSummaryItems
     script = "###INDENT#### Parsed XMLSummary data extraction methods\n"
 
-    for summaryItem in activeSummaryItems().values():
+    for summaryItem in list(activeSummaryItems().values()):
         script += ''.join(['###INDENT###' + line for line in inspect.getsourcelines(summaryItem)[0]])
     script += ''.join(['###INDENT###' + line for line in inspect.getsourcelines(activeSummaryItems)[0]])
 

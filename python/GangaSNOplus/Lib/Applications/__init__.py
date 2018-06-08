@@ -1,2 +1,2 @@
-from RATProd import *
-from RATUser import *
+from .RATProd import *
+from .RATUser import *

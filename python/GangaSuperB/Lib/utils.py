@@ -22,7 +22,7 @@ def format_dict_table(rows, column_names=None, max_column_width=None, border_sty
             column_list = column_names
         else:
             try:
-                column_list = rows[0].keys()
+                column_list = list(rows[0].keys())
             except:
                 column_list = None
         if column_list:
@@ -52,7 +52,7 @@ def format_dict_table(rows, column_names=None, max_column_width=None, border_sty
                 trunc_rows = []
                 for row in rows:
                     new_row = {}
-                    for k in row.keys():
+                    for k in list(row.keys()):
                         new_row[k[:max_column_width]] = str(row[k])[:max_column_width]
                     trunc_rows.append(new_row)
                 rows = trunc_rows
@@ -69,7 +69,7 @@ def format_dict_table(rows, column_names=None, max_column_width=None, border_sty
             display = []
             if border_style > 0:
                 display.append(full_line)
-            display.append(left_table_edge_rule + (row_template % dict(zip(column_list, column_list))) + right_table_edge_rule)
+            display.append(left_table_edge_rule + (row_template % dict(list(zip(column_list, column_list)))) + right_table_edge_rule)
             if border_style > 0:
                 display.append(full_line)
             for row in rows:
@@ -87,7 +87,7 @@ def getIndex(minInclusive=0, minExclusive=None, maxInclusive=None, maxExclusive=
     
     while True:
         try:
-            s = raw_input("enter an integer or (q)uit: ")
+            s = input("enter an integer or (q)uit: ")
             if s == 'q':
                 raise QuitException()
             i = int(s)

@@ -1,2 +1,2 @@
-from Jedi import *
-from JediRequirements import *
+from .Jedi import *
+from .JediRequirements import *

@@ -13,7 +13,7 @@ __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__    = "10 May 2009"
 __version__ = "1.4"
 
-import commands
+import subprocess
 import os
 import shutil
 import time
@@ -83,22 +83,22 @@ class CamontDataset( Dataset ):
             os.path.join( job.outputdata.getGridStorage(), "%s.tar.gz" \
             % self.tarfile )
          cp = "globus-url-copy %s file:%s" % ( gridUrl, tarFile )
-         status = shell.cmd1( cmd = cp, allowed_exit = range( 1000 ) )[ 0 ]
+         status = shell.cmd1( cmd = cp, allowed_exit = list(range( 1000)) )[ 0 ]
          if ( 0 != status ):
             logger.warning( "Problems retrieving output for job %s" % job.id )
             logger.warning( "Setting job status to failed" )
             job.updateStatus( "failed" )
             return False
          rm = "edg-gridftp-rm %s" % gridUrl
-         shell.cmd1( cmd = rm, allowed_exit = range( 1000 ) )
+         shell.cmd1( cmd = rm, allowed_exit = list(range( 1000)) )
          rmdir = "edg-gridftp-rmdir %s" % os.path.dirname( gridUrl )
-         shell.cmd1( cmd = rmdir, allowed_exit = range( 1000 ) )
+         shell.cmd1( cmd = rmdir, allowed_exit = list(range( 1000)) )
 
       return True
 
    def fill( self ):
 
-      hostname = commands.getoutput( "hostname -f" )
+      hostname = subprocess.getoutput( "hostname -f" )
       job = self._getParent()
 
       tarFile = fullpath( os.path.join( job.outputdir, "%s.tar.gz" \

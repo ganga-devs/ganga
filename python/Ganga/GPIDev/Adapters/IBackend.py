@@ -247,8 +247,8 @@ class IBackend(GangaObject):
         if masterjobconfig:
             if hasattr(job.application, 'is_prepared') and isType(job.application.is_prepared, ShareDir):
                 sharedir_pred = lambda f: f.name.find(job.application.is_prepared.name) > -1
-                sharedir_files = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
-                nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
+                sharedir_files = filter(sharedir_pred, masterjobconfig.getSandboxFiles())
+                nonsharedir_files = itertools.filterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
             # ATLAS use bool to bypass the prepare mechanism and some ATLAS
             # apps have no is_prepared
             else:
@@ -256,7 +256,7 @@ class IBackend(GangaObject):
                 nonsharedir_files = masterjobconfig.getSandboxFiles()
             inputsandbox = create_sandbox(nonsharedir_files, master=True)
             inputsandbox.extend(
-                itertools.imap(lambda f: f.name, sharedir_files))
+                map(lambda f: f.name, sharedir_files))
             return inputsandbox
 
         tmpDir = None
@@ -264,7 +264,7 @@ class IBackend(GangaObject):
         if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and\
                 isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
             (fileNames, tmpDir) = getInputFilesPatterns(job)
-            files = itertools.imap(lambda f: File(f), fileNames)
+            files = map(lambda f: File(f), fileNames)
         else:
             # RTHandler is not required to produce masterjobconfig, in that
             # case just use the inputsandbox
@@ -510,7 +510,7 @@ class IBackend(GangaObject):
                 simple_jobs[backend_name].append(j)
 
         if len(simple_jobs) > 0:
-            for this_backend in simple_jobs.keys():
+            for this_backend in list(simple_jobs.keys()):
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
                 if multiThreadMon:
                     if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:

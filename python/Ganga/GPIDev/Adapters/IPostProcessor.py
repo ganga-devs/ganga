@@ -145,7 +145,7 @@ def postprocessor_filter(value, item):
 
     from Ganga.GPIDev.Base.Proxy import getProxyInterface
 
-    valid_jobtypes = [stripProxy(i)._schema.datadict['postprocessors'] for i in getProxyInterface().__dict__.values()
+    valid_jobtypes = [stripProxy(i)._schema.datadict['postprocessors'] for i in list(getProxyInterface().__dict__.values())
                       if isinstance(stripProxy(i), ObjectMetaclass)
                       and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), ITransform))
                       and 'postprocessors' in stripProxy(i)._schema.datadict]

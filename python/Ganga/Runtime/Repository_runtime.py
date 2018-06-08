@@ -100,12 +100,12 @@ def bootstrap_getreg():
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
     # or even named templated registries as the _auto__init from job will require the prep registry to
     # already be ready. This showed up when adding the named templates.
-    def prep_filter(x, y):
+    def prep_filter(x):
         if x.name == 'prep':
-            return -1
+            return 0
         return 1
 
-    return [registry for registry in sorted(getRegistries(), prep_filter)]
+    return [registry for registry in sorted(getRegistries(), key=prep_filter)]
 
 def bootstrap_reg_names():
     # Get the list of registry names

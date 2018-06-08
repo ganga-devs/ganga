@@ -5,8 +5,8 @@
 ################################################################################
                                                                                                               
 
-import os, sys, time, commands, re, tempfile, exceptions, urllib, datetime
-import cPickle as pickle
+import os, sys, time, subprocess, re, tempfile, exceptions, urllib.request, urllib.parse, urllib.error, datetime
+import pickle as pickle
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IBackend import IBackend
@@ -71,7 +71,7 @@ def retrieveMergeJobs(job, pandaJobDefId):
 
                     if ec2 == 0:
 
-                        for jid,jinfo in mjs.items():
+                        for jid,jinfo in list(mjs.items()):
                             mjobj = PandaMergeJob()
                             mjobj.id     = jid
                             #mjobj.status = jinfo[0]
@@ -133,8 +133,8 @@ def retrievePandaJobs(job, jIDs):
             pjobj         = JediPandaJob()
             pjobj.id      = status.PandaID
             pjobj.url     = 'http://panda.cern.ch/?job=%d' % status.PandaID
-            pjobj.jopSpec = dict(zip(status._attributes,status.values()))
-            for k in pjobj.jobSpec.keys():
+            pjobj.jopSpec = dict(list(zip(status._attributes,list(status.values()))))
+            for k in list(pjobj.jobSpec.keys()):
                 if type(pjobj.jobSpec[k]) not in [type(''),type(1)]:
                     pjobj.jobSpec[k]=str(pjobj.jobSpec[k])
 
@@ -155,9 +155,9 @@ def checkForRebrokerage(string):
     import re
     matchObj = re.match('reassigned to another site by rebrokerage. new PandaID=(\d+) JobsetID=(\d+) JobID=(\d+)', string)
     if matchObj:
-        newPandaID = long(matchObj.group(1))
-        newJobsetID = long(matchObj.group(2))
-        newJobID = long(matchObj.group(3))
+        newPandaID = int(matchObj.group(1))
+        newJobsetID = int(matchObj.group(2))
+        newJobID = int(matchObj.group(3))
         return newPandaID
     raise BackendError('Jedi','Error getting new PandaID for rebrokered job. Report to DA Help')
 
@@ -233,7 +233,7 @@ class JediPandaJob(GangaObject):
             'NET_ETH_RX_AFTERATHENA':'""'
             }
         stats = {}
-        for k in fields.keys():
+        for k in list(fields.keys()):
             try:
                 stats[k] = eval(fields[k])
             except:
@@ -374,7 +374,7 @@ class Jedi(IBackend):
         logger.debug("jobdict = %s" %jobdict)
         
         # Monitor active Jedi tasks
-        allJobIDs = jobdict.keys()
+        allJobIDs = list(jobdict.keys())
         pandaJobIDs = {}
         for jID in allJobIDs:
             status, jediTaskDict = Client.getJediTaskDetails({'jediTaskID': jID},False,True,verbose=False)
@@ -451,9 +451,9 @@ class Jedi(IBackend):
                             if pjob.status == status.jobStatus:
                                 continue 
                             # Else update job record
-                            pjob.jobSpec = dict(zip(status._attributes,status.values()))
+                            pjob.jobSpec = dict(list(zip(status._attributes,list(status.values()))))
 
-                            for k in pjob.jobSpec.keys():
+                            for k in list(pjob.jobSpec.keys()):
                                 if type(pjob.jobSpec[k]) not in [type(''),type(1)]:
                                     pjob.jobSpec[k]=str(pjob.jobSpec[k])
 
@@ -462,7 +462,7 @@ class Jedi(IBackend):
                             pjob.exitcode = str(status.transExitCode)
                             pjob.piloterrorcode = str(status.pilotErrorCode)
                             pjob.reason = ''
-                            for k in pjob.jobSpec.keys():
+                            for k in list(pjob.jobSpec.keys()):
                                 if k.endswith('ErrorDiag') and pjob.jobSpec[k]!='NULL':
                                     pjob.reason += '%s: %s, '%(k,str(pjob.jobSpec[k]))
                             #if job.backend.jobSpec['transExitCode'] != 'NULL':
@@ -479,7 +479,7 @@ class Jedi(IBackend):
                                 # check for server side retry
                                 if 'taskBufferErrorDiag' in pjob.jobSpec and pjob.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                     # grab the new panda ID
-                                    newPandaID = long(pjob.jobSpec['taskBufferErrorDiag'].split("=")[1])
+                                    newPandaID = int(pjob.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                     pjob.id = newPandaID
                                     pjob.status = None
                                     pjob.url = 'http://panda.cern.ch/?job=%d'%newPandaID
@@ -501,7 +501,7 @@ class Jedi(IBackend):
         for job in jobs: 
             jobIDs[job.backend.id] = job
 
-        allJobIDs = jobIDs.keys()
+        allJobIDs = list(jobIDs.keys())
         pandaJobIDs = {}
         for jID in allJobIDs:
             status, jediTaskDict = Client.getJediTaskDetails({'jediTaskID': jID},False,True,verbose=False)
@@ -600,7 +600,7 @@ class Jedi(IBackend):
             'NET_ETH_RX_AFTERATHENA':'""'
             }
         stats = {}
-        for k in fields.keys():
+        for k in list(fields.keys()):
             try:
                 stats[k] = eval(fields[k])
             except:

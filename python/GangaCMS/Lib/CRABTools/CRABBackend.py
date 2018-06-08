@@ -1,4 +1,4 @@
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 from Ganga.Core.exceptions import BackendError
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version

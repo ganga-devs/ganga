@@ -14,7 +14,7 @@ from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
-import commands
+import subprocess
 import os
 import string
 import copy
@@ -35,15 +35,15 @@ def getMergerObject(file_ext):
             file_types = config['associate']
             associate_merger = file_types[file_ext]
             result = allPlugins.find('postprocessor', associate_merger)()
-    except ConfigError, err:
+    except ConfigError as err:
         logger.debug("ConfError %s" % str(err))
-    except KeyError, err:
+    except KeyError as err:
         logger.debug("KeyError %s" % str(err))
-    except PluginManagerError, err:
+    except PluginManagerError as err:
         logger.debug("PluginError %s" % str(err))
-    except SyntaxError, err:
+    except SyntaxError as err:
         logger.debug("SyntaxError %s" % str(err))
-    except TypeError, err:  # TypeError as we may not be able to call ()
+    except TypeError as err:  # TypeError as we may not be able to call ()
         logger.debug("TypeError %s" % str(err))
     return result
 
@@ -224,7 +224,7 @@ class RootMerger(IMerger):
         arg_list.extend(file_list)
         merge_cmd += string.join(arg_list, ' ')
 
-        rc, out = commands.getstatusoutput(merge_cmd)
+        rc, out = subprocess.getstatusoutput(merge_cmd)
 
         log_file = '%s.hadd_output' % output_file
         with open(log_file, 'w') as log:
@@ -283,7 +283,7 @@ class CustomMerger(IMerger):
         try:
             ns = {'file_list': copy.copy(file_list),
                   'output_file': copy.copy(output_file)}
-            execfile(module_name, ns)
+            exec(compile(open(module_name).read(), module_name, 'exec'), ns)
             exec('_result = mergefiles(file_list, output_file)', ns)
             result = ns.get('_result', result)
         except Exception as e:
@@ -309,7 +309,7 @@ def findFilesToMerge(jobs):
                 if isType(file_name, LocalFile):
                     file_map[file_name.namePattern] = file_map.setdefault(file_name.namePattern, 0) + 1
 
-    for file_name, count in file_map.iteritems():
+    for file_name, count in file_map.items():
         if count == jobs_len:
             result.append(file_name)
         else:
@@ -400,7 +400,7 @@ class SmartMerger(IMerger):
             type_map.setdefault(file_ext, []).append(f)
 
         merge_results = []
-        for ext in type_map.keys():
+        for ext in list(type_map.keys()):
             merge_object = getMergerObject(ext)  # returns an instance
             if merge_object is None:
                 logger.error('Extension %s not recognized and so the merge will fail. '

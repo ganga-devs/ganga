@@ -13,4 +13,4 @@ __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__    = "22 February 2007"
 __version__ = "1.0"
 
-from CamontDataset import CamontDataset
+from .CamontDataset import CamontDataset

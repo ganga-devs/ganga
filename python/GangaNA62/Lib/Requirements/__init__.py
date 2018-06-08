@@ -1,1 +1,1 @@
-from NA62LCGRequirements import *
+from .NA62LCGRequirements import *

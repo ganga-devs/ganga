@@ -30,7 +30,7 @@ import optparse
 import glob
 import socket
 import json
-import job_tools
+from . import job_tools
 
 
 #################################
@@ -133,7 +133,7 @@ def run_rat(options):
                                                     options.dburl, options.dbname)]
     rat_options += [options.rat_macro]
     job_tools.execute_ratenv('rat', rat_options)    
-    print os.listdir(os.getcwd())
+    print(os.listdir(os.getcwd()))
 
     
 def check_outputs(options):
@@ -141,10 +141,10 @@ def check_outputs(options):
     '''
     # Can only check the outputs for files with output file specified in the command options
     if options.output_file is None:
-        print "check_outputs::no output file specified"
+        print("check_outputs::no output file specified")
         return None
     if options.grid_mode is None:
-        print "check_outputs::no grid mode specified"
+        print("check_outputs::no grid mode specified")
         return None
     # For output files, check if there is an output root and output ntuple processor in the macro
     ntuple = job_tools.check_processor(options.rat_macro, 'outntuple')
@@ -160,8 +160,8 @@ def check_outputs(options):
     all_exist = True
     any_exist = False
     if len(suffixes)==0:
-        print "check_output::no files to check!"
-        print suffixes
+        print("check_output::no files to check!")
+        print(suffixes)
         all_exist = False
     for i, s in enumerate(suffixes):
         root_file = "%s%s" % (options.output_file, s)
@@ -172,15 +172,15 @@ def check_outputs(options):
             # lfc exists, get the replica
             exists[i] = True
             any_exist = True
-            print "check_outputs::LFN already in use %s" % lfc_path
+            print("check_outputs::LFN already in use %s" % lfc_path)
         except job_tools.JobToolsException as e:
-            print "check_outputs::LFN unused %s, %s" % (lfc_path, e)
+            print("check_outputs::LFN unused %s, %s" % (lfc_path, e))
             all_exist = False
     # Now, if all exist, we need to append the return card and show that the job has in fact completed
     # If only some (i.e. any) exist, but not all, then we need to raise this problem by failing the job!
     dump_out = {}
     if all_exist:
-        print "check_outputs::All expected outputs already exist on LFN"
+        print("check_outputs::All expected outputs already exist on LFN")
         for s in suffixes:
             try:
                 root_file = "%s%s" % (options.output_file, s)
@@ -203,7 +203,7 @@ def check_outputs(options):
                 dump_out[root_file]['name'] = se_name
                 dump_out[root_file]['lfc'] = lfc_path
             except job_tools.JobToolsException as e:
-                print "check_outputs::Problem checking output for %s: %s" % (lfc_path, e)
+                print("check_outputs::Problem checking output for %s: %s" % (lfc_path, e))
                 raise
         return dump_out
     else:
@@ -215,12 +215,12 @@ def check_output_file(options):
     '''
     # Can only check the outputs for files with output file specified in the command options
     if options.output_file is None:
-        print "check_output_file::no output file specified"
+        print("check_output_file::no output file specified")
         return None
 
     # Can only check the outputs for files with number of events specified in the command options
     if options.n_events is None:
-        print "check_output_file::no number of events specified"
+        print("check_output_file::no number of events specified")
         return None
 
     # Create command to run python script to check TTree entries
@@ -233,13 +233,13 @@ def check_output_file(options):
                                                         '-n', options.n_events, '-v', options.base_version])
         if rtc==0:
             # this must be true (exception raised otherwise)
-            print "Outputs file checks successful"
+            print("Outputs file checks successful")
     if ntuple:
         rtc, out, err = job_tools.execute_ratenv('python', ['check_root_output.py', '-f', '%s.ntuple.root' % options.output_file,
                                                         '-n', options.n_events, '-v', options.base_version])
         if rtc==0:
             # this must be true (exception raised otherwise)
-            print "Outputs file checks successful"
+            print("Outputs file checks successful")
 
 
 def copy_data(output_dir, grid_mode):
@@ -254,7 +254,7 @@ def copy_data(output_dir, grid_mode):
 
 
 if __name__ == '__main__':
-    print 'ratRunner...??'
+    print('ratRunner...??')
     parser = optparse.OptionParser( usage = "ganga %prog [flags]")
     parser.add_option("-t", dest="token", help="Token to use, if in token mode")
     parser.add_option("-b", dest="base_version", help="RAT base version")
@@ -278,34 +278,34 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
     if not options.base_version:
-        print ' need base version'
+        print(' need base version')
     if not options.run_version:
-        print 'RUNNING WITH A FIXED RELEASE'
+        print('RUNNING WITH A FIXED RELEASE')
     if not options.rat_macro:
-        print ' need macro'
+        print(' need macro')
     if not options.output_dir:
-        print ' need output directory'
+        print(' need output directory')
     if not options.env_file:
-        print ' need environment file'
+        print(' need environment file')
     if options.grid_mode=='srm':
         if not options.voproxy:
-            print 'Grid %s mode, must define voproxy' % options.grid_mode
+            print('Grid %s mode, must define voproxy' % options.grid_mode)
             parser.print_help()
             raise Exception
         elif not os.path.exists(options.voproxy):
-            print 'Grid %s mode, must define valid voproxy' % options.grid_mode
+            print('Grid %s mode, must define valid voproxy' % options.grid_mode)
             parser.print_help()
             raise Exception
     if not options.base_version or not options.rat_macro or not options.output_dir or not options.env_file:
-        print 'options not all present, cannot run'
+        print('options not all present, cannot run')
         parser.print_help()
         raise Exception
     elif options.run_version and not options.token and not options.zip_filename:
-        print 'must choose one of token/filename to run with a specific hash version'
+        print('must choose one of token/filename to run with a specific hash version')
         parser.print_help()
         raise Exception
     elif options.token and options.zip_filename:
-        print 'must choose only one of token/filename'
+        print('must choose only one of token/filename')
         parser.print_help()
         raise Exception
 

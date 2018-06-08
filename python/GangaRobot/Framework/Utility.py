@@ -62,7 +62,7 @@ def expand(text, **replacements):
 
     """
     if text:
-        for key, value in replacements.items():
+        for key, value in list(replacements.items()):
             text = text.replace('${%s}' % key, value)
     return text
 

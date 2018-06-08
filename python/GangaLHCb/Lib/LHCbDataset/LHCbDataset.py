@@ -9,7 +9,7 @@ from Ganga.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
-from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
+from .LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
@@ -462,7 +462,7 @@ def string_datafile_shortcut_lhcb(name, item):
     mainFileOutput = None
     try:
         mainFileOutput = Ganga.GPIDev.Lib.File.string_file_shortcut(name, item)
-    except Exception, x:
+    except Exception as x:
         logger.debug("Failed to Construct a default file type: %s" % str(name))
         pass
 
@@ -485,7 +485,7 @@ def string_datafile_shortcut_lhcb(name, item):
                 else:
                     raise GangaException("Failed to find filetype for: %s" % str(name))
             return this_file
-        except Exception, x:
+        except Exception as x:
             # if the Core can make a file object from a string then use that,
             # else raise an error
             if not mainFileOutput is None:
@@ -506,7 +506,7 @@ def string_dataset_shortcut(files, item):
     # essentially allows for dynamic extensions to JobTemplate
     # such as LHCbJobTemplate etc.
     from Ganga.GPIDev.Base.Proxy import getProxyInterface
-    inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in getProxyInterface().__dict__.values()
+    inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in list(getProxyInterface().__dict__.values())
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))
                      and 'inputdata' in stripProxy(i)._schema.datadict]

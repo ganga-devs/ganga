@@ -60,11 +60,11 @@ def plugins(category=None):
     """
     from Ganga.Utility.Plugin import allPlugins
     if category:
-        return allPlugins.allClasses(category).keys()
+        return list(allPlugins.allClasses(category).keys())
     else:
         d = {}
         for c in allPlugins.allCategories():
-            d[c] = allPlugins.allCategories()[c].keys()
+            d[c] = list(allPlugins.allCategories()[c].keys())
         return d
 
 # FIXME: DEPRECATED

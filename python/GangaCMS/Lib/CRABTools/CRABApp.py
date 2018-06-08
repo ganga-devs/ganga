@@ -56,7 +56,7 @@ class CRABApp(IApplication):
       config = Ganga.Utility.Config.getConfig('%s_CFG'%(section))
       file.write('['+section+']\n\n')
 
-      for k in params.schemadic.keys():
+      for k in list(params.schemadic.keys()):
 
         # We get the parametef from the config. If it is not NULL,
         # we use that, otherwise, we try to take it from inputdata.

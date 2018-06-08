@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
@@ -18,8 +18,8 @@ class TestSavannah14799(GangaUnitTest):
         jt2.cleanlinks()
 
         self.assertFalse(str(j.id) in jobtree.listjobs())
-        print jt2.listjobs()
-        print jt2
+        print(jt2.listjobs())
+        print(jt2)
         self.assertFalse(str(j.id) in jt2.listjobs())
         jt3 = jobtree.copy()
         l1 = jobtree.listjobs()

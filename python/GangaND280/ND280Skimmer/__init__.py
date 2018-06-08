@@ -1,1 +1,1 @@
-from ND280Skimmer import *
+from .ND280Skimmer import *

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName
@@ -27,9 +27,9 @@ _initconfigFeed()
 def report(job=None):
     """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
     import mimetypes
-    import urllib
-    import urllib2
-    import httplib
+    import urllib.request, urllib.parse, urllib.error
+    import urllib.request, urllib.error, urllib.parse
+    import http.client
     import string
     import random
     import sys
@@ -63,12 +63,12 @@ def report(job=None):
 
         fields = {'title': 'Ganga Error Report'}
 
-        for (key, value) in fields.iteritems():
+        for (key, value) in fields.items():
             lines.append('--' + boundary)
             lines.append('Content-Disposition: form-data; name="%s"' % key)
             lines.append('')
             lines.append(value)
-        for field_name, file in files.iteritems():
+        for field_name, file in files.items():
             lines.append('--' + boundary)
             lines.append(
                 'Content-Disposition: form-data; name="file"; filename="%s"' % (file))
@@ -104,14 +104,14 @@ def report(job=None):
 
         encoded_data = encode_multipart_formdata(files)
 
-        data = urllib.urlencode(encoded_data[1])
-        req = urllib2.Request(url, data=data)
+        data = urllib.parse.urlencode(encoded_data[1])
+        req = urllib.request.Request(url, data=data)
         if req.has_data():
             logger.debug("urllib2: Success!")
         else:
             logger.debug("urllib2: Fail!!!")
 
-        connection = httplib.HTTPConnection(req.get_host())
+        connection = http.client.HTTPConnection(req.get_host())
         # connection.set_debuglevel(1)
         logger.debug("Requesting: 'POST', %s, %s " % (url, encoded_data[1]))
 #                connection.request( method='POST', url=req.get_selector(), body=encoded_data[0], headers=encoded_data[1] )
@@ -193,7 +193,7 @@ def report(job=None):
         #uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
         def printDictionary(dictionary, file=sys.stdout):
-            for k, v in dictionary.iteritems():
+            for k, v in dictionary.items():
                 print('%s: %s' % (k, v), file=file)
 
                 if k == 'PYTHONPATH':

@@ -152,7 +152,7 @@ def get_sandbox(app, appsubconfig, appmasterconfig, jobmasterconfig):
     outputset = set(outputsandbox)
     outputsandbox = list(outputset)
     
-    print "Sandbox: ", inputsandbox, outputsandbox
+    print("Sandbox: ", inputsandbox, outputsandbox)
 
     return inputsandbox, outputsandbox
 
@@ -309,7 +309,7 @@ output(result)
             INPUT_SANDBOX        = API_nullifier(inputsandbox)
         )
 
-        print dirac_script
+        print(dirac_script)
 
         return StandardJobConfig(dirac_script,
                                  inputbox =  app._getParent().inputsandbox,

@@ -11,7 +11,7 @@ def igroup(iterable, num, leftovers=False):
     Generator producing sequential groups of size num from input iterable
     '''
     size = len(iterable)
-    for i in xrange(0, size, num):
+    for i in range(0, size, num):
         if i + num > size and not leftovers:
             return
         yield iterable[i: i + num]
@@ -56,7 +56,7 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     logger.debug("found all replicas")
 
     super_dict = dict()
-    for lfn, repz in file_replicas.iteritems():
+    for lfn, repz in file_replicas.items():
         sitez = set([])
         for i in repz:
             # print i
@@ -69,7 +69,7 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     logger.info("Determining overlap")
 
     import random
-    for i in super_dict.keys():
+    for i in list(super_dict.keys()):
 
         # Randomly Select 2 SE as the starting point for spliting jobs
         if len(super_dict[i]) > 2:
@@ -89,7 +89,7 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     Tier1Sites = set([])
 
-    for i in super_dict.keys():
+    for i in list(super_dict.keys()):
 
         req_sitez = allChosenSets[i]
         _this_subset = []
@@ -97,7 +97,7 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
         # Starting with i, populate subset with LFNs which have an
         # overlap of at least 2 SE
 
-        for k in super_dict.keys():
+        for k in list(super_dict.keys()):
             if req_sitez.issubset(super_dict[k]):
                 if len(_this_subset) >= filesPerJob:
                     break

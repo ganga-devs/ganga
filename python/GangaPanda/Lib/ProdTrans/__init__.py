@@ -1,2 +1,2 @@
-from ProdTransPandaRTHandler import *
-from ProdTrans import *
+from .ProdTransPandaRTHandler import *
+from .ProdTrans import *

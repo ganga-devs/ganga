@@ -51,7 +51,7 @@ class TutorialTests(GangaUnitTest):
 j = Job()
 j.submit()
 """)
-        execfile('submit.py')
+        exec(compile(open('submit.py').read(), 'submit.py', 'exec'))
         # -- INSTALLANDBASICUSAGE EXECFILE STOP
 
 
@@ -75,7 +75,7 @@ j.submit()
 
         # -- CONFIGURATION STARTUPSCRIPT START
         slice = jobs.select(status='running')
-        print slice
+        print(slice)
         # -- CONFIGURATION STARTUPSCRIPT STOP
 
 
@@ -439,7 +439,7 @@ j.submit()
 
         # -- QUEUES FUNCTION START
         def f(x):
-            print x
+            print(x)
 
         queues.add(f, args=(123,))
         # -- QUEUES FUNCTION STOP

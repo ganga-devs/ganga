@@ -2,7 +2,7 @@ import os
 import base64
 import subprocess
 import threading
-import cPickle as pickle
+import pickle as pickle
 import signal
 from copy import deepcopy
 from Ganga.Core.exceptions import GangaException
@@ -123,10 +123,10 @@ def get_env():
     pipe = subprocess.Popen('python -c "from __future__ import print_function;import os;print(os.environ)"',
                             env=None, cwd=None, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     output = pipe.communicate()
-    env = eval(output[0])
+    env = eval(output[0], {'environ': lambda x: x})
 
     if env:
-        for k, v in env.iteritems():
+        for k, v in env.items():
             if not str(v).startswith('() {'):
                 env[k] = os.path.expandvars(v)
             # Be careful with exported bash functions!
@@ -220,7 +220,7 @@ def execute(command,
 
     # Construct the object which will contain the environment we want to run the command in
     p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
 
     # This is where we store the output
     thread_output = {}

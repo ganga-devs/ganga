@@ -5,7 +5,7 @@
 ###############################################################################
 # Athena DQ2JobSplitter
 
-import math, socket, operator, copy, os, StringIO
+import math, socket, operator, copy, os, io
 from functools import reduce
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
@@ -64,7 +64,7 @@ def dq2_siteinfo(dataset, allowed_sites, locations, udays, faxSites, skipReplica
         result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites= allowed_sites, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
         
     siteinfo = {}
-    for guid, sites in result.iteritems():
+    for guid, sites in result.items():
         newsites = [ site for site in sites if site in allowed_sites ]
         # Remove inconsistencies
         if faxSites:
@@ -91,7 +91,7 @@ def dq2_siteinfo(dataset, allowed_sites, locations, udays, faxSites, skipReplica
 def lfc_siteinfo(result,allowed_sites):
    
     siteinfo = {}
-    for guid, sites in result.iteritems():
+    for guid, sites in result.items():
         newsites = [ site for site in sites if site in allowed_sites ]
         if not newsites: continue
         newsites.sort()
@@ -229,7 +229,7 @@ class DQ2JobSplitter(ISplitter):
             self.numfiles = 1
 
         # use a key of the whole inDS structure for cache
-        indata_buf = StringIO.StringIO()
+        indata_buf = io.StringIO()
         job.inputdata.printTree(indata_buf)
         locations = job.inputdata.get_locations(overlap=False)
 
@@ -285,7 +285,7 @@ class DQ2JobSplitter(ISplitter):
                     from dq2.info import TiersOfATLAS
                     dq2=DQ2(force_backend='rucio')
                     try:
-                        db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1]
+                        db_locations = list(dq2.listDatasetReplicas(db_dataset).values())[0][1]
                     except:
                         raise ApplicationConfigurationError('Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
 
@@ -331,9 +331,9 @@ class DQ2JobSplitter(ISplitter):
                             
                     for add_dataset in additional_datasets_all:
                         if len(add_locations_all) == 0:
-                            add_locations_all = dq2.listDatasetReplicas(add_dataset).values()[0][1]
+                            add_locations_all = list(dq2.listDatasetReplicas(add_dataset).values())[0][1]
                         else:
-                            add_locations = dq2.listDatasetReplicas(add_dataset).values()[0][1]
+                            add_locations = list(dq2.listDatasetReplicas(add_dataset).values())[0][1]
                             
                             for add_location in add_locations_all:
                                 if not add_location in add_locations:
@@ -398,17 +398,17 @@ class DQ2JobSplitter(ISplitter):
         allsizes = 0
         allevents = 0
         allnames = []
-        for dataset, content in contents_temp.iteritems():
+        for dataset, content in contents_temp.items():
             if not content:
                 continue
             contents[dataset] = content
             datasetLength[dataset] = len(contents[dataset])
             allfiles += datasetLength[dataset]
-            datasetFilesize[dataset] = reduce(operator.add, map(lambda x: x[1][1],content))
+            datasetFilesize[dataset] = reduce(operator.add, [x[1][1] for x in content])
             allsizes += datasetFilesize[dataset]
-            allnames += map(lambda x: x[1][0],content)
+            allnames += [x[1][0] for x in content]
             if self.numevtsperjob > 0:
-                nevents[dataset] = reduce(operator.add, map(lambda x: x[1][2],content))
+                nevents[dataset] = reduce(operator.add, [x[1][2] for x in content])
                 allevents += nevents[dataset]
                 logger.info('Dataset %s contains %d events in %d files '%(dataset, nevents[dataset], datasetLength[dataset]))
             else:
@@ -492,7 +492,7 @@ class DQ2JobSplitter(ISplitter):
             eventPickFileList = '%s/epFileList_%s.dat' % (test_area, commands.getoutput('uuidgen'))
             evFileList = open(eventPickFileList,'w') 
 
-        for dataset, content in contents.iteritems():
+        for dataset, content in contents.items():
             
             content = dict(content)
             if self.use_lfc:
@@ -523,7 +523,7 @@ class DQ2JobSplitter(ISplitter):
         
         #print "%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %("nrjob", "guid", "nevents", "skip_events", "max_events", "unused_evts", "id_lower", "id_upper", "counter")
 
-        for dataset, siteinfo in siteinfos.iteritems():
+        for dataset, siteinfo in siteinfos.items():
             logger.debug('dataset [%s] siteinfo [%s]' % (dataset, siteinfo))
 
             self.numfiles = orig_numfiles
@@ -531,7 +531,7 @@ class DQ2JobSplitter(ISplitter):
             if self.numfiles <= 0: 
                 self.numfiles = 1
 
-            for sites, guids in siteinfo.iteritems():
+            for sites, guids in siteinfo.items():
                 # preferentially select sites given the cloud priority
                 cloud_pref = config['AnyCloudPreferenceList']
                 if len(cloud_pref) > 0:
@@ -547,7 +547,7 @@ class DQ2JobSplitter(ISplitter):
                             
                     # Now try to match this with the cloud preferences
                     for cl in cloud_pref:
-                        if cl in clouds.values():
+                        if cl in list(clouds.values()):
                             # cloud preference found - remove all but these sites
                             new_sites = []
                             for site in clouds:
@@ -573,7 +573,7 @@ class DQ2JobSplitter(ISplitter):
                 # drop unused guids
                 removal = []
                 for g in guids:
-                    if not g in allcontent.keys():
+                    if not g in list(allcontent.keys()):
                         logger.debug("Removing guid %s" % g)
                         removal += [g]
 
@@ -697,9 +697,9 @@ class DQ2JobSplitter(ISplitter):
 
                 # sort the guids by name order
                 names = [allcontent[g][0] for g in guids]
-                namesAndGuids = zip(names,guids)
+                namesAndGuids = list(zip(names,guids))
                 namesAndGuids.sort()
-                names,guids = zip(*namesAndGuids)
+                names,guids = list(zip(*namesAndGuids))
 
                 # now assign the files to subjobs
                 max_subjob_numfiles = nrfiles
@@ -864,8 +864,8 @@ class DQ2JobSplitter(ISplitter):
                                     
                                     if job.inputdata._name == 'EventPicking':
                                         for runevent in guid_run_evt_map[next_guid]:
-                                            revt = "(%s,%s)" %(long(runevent[0]),long(runevent[1]))     
-                                            j.application.run_event.append([long(runevent[0]),long(runevent[1])])
+                                            revt = "(%s,%s)" %(int(runevent[0]),int(runevent[1]))     
+                                            j.application.run_event.append([int(runevent[0]),int(runevent[1])])
                                         
                                         if job.backend._name == 'Panda':
                                             app = job.application

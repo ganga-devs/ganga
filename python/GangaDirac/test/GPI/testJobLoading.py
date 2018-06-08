@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import copy
 import pytest
@@ -111,5 +111,5 @@ class TestJobMigration(object):
 
         this_jobStr = str(jobs[-1])
 
-        print("Job String:\n%s" % this_jobStr)
+        print(("Job String:\n%s" % this_jobStr))
 

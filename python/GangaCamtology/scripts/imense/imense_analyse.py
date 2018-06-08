@@ -1,5 +1,5 @@
 import os
-import cPickle
+import pickle
 middlewareList = [ "EDG", "GLITE" ]
 siteList = \
   [ "bham", "brunel", "cam", "dur", "gla", "lancs", "ox", "rhul", "rl" ]
@@ -18,7 +18,7 @@ def getData( job = None, dataType = "" ):
     try:
       datafile = open( datafilePath )
     except IOError:
-      print "File '%s' missing for job '%s'" % ( filename, str( job.id ) )
+      print("File '%s' missing for job '%s'" % ( filename, str( job.id ) ))
       pass
 
   lineList = ""
@@ -59,7 +59,7 @@ def writeInfo( filename = "imense.pkl", \
         break
 
     if infoDict:
-      cPickle.dump( infoDict, dataFile )
+      pickle.dump( infoDict, dataFile )
     else:
       problemList.append( j.id )
 
@@ -73,7 +73,7 @@ def rewriteInfo( input = "imense.pkl", output = "imense.txt" ):
 
   while inFile:
     try:
-      infoDict = cPickle.load( inFile )
+      infoDict = pickle.load( inFile )
     except EOFError:
       infoDict = {}
       break
@@ -87,7 +87,7 @@ def rewriteInfo( input = "imense.pkl", output = "imense.txt" ):
     submit_time = subDict[ "Submit_end" ] - subDict[ "Submit_start" ]
     wait_time  = exeDict[ "Job_start" ] - subDict[ "Submit_end" ]
     site_name = exeDict[ "Hostname" ].split( "." )[ -3 ]
-    print exeDict[ "Hostname" ], site_name
+    print(exeDict[ "Hostname" ], site_name)
     if site_name == "scotgrid":
       site_name = exeDict[ "Hostname" ].split( "." )[ -4 ]
     site = siteList.index( site_name )

@@ -70,9 +70,9 @@ for j in jobs:
     bad = False
     for dom in j.application.domains:
         if dom in curr_doms:
-            print "************************************"
-            print "ERROR: Muliple Domains specified!!!!"
-            print "************************************"
+            print("************************************")
+            print("ERROR: Muliple Domains specified!!!!")
+            print("************************************")
             bad = True
         else:
             curr_doms.append(dom)

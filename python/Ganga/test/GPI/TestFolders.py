@@ -1,5 +1,5 @@
 
-from __future__ import absolute_import
+
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
@@ -36,7 +36,7 @@ class TestFolders(GangaUnitTest):
         jobtree.cd()
         jobtree.mkdir('testdir')
         jobtree.add(Job())
-        print("%s" % jobtree)
+        print(("%s" % jobtree))
         jobtree.add(Job(), 'testdir')
 
         jobtree.rm('/*')

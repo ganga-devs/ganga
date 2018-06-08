@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import
+
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy, isType, getName
@@ -18,7 +18,7 @@ from .GangaRepository import SchemaVersionError
 
 import xml.sax.saxutils
 import copy
-from cStringIO import StringIO
+from io import StringIO
 
 logger = getLogger()
 

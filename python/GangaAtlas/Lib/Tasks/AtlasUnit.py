@@ -26,9 +26,9 @@ import os
 import threading
 
 class AtlasUnit(IUnit):
-   _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
+   _schema = Schema(Version(1,0), dict(list(IUnit._schema.datadict.items()) + list({
       'output_file_list'     : SimpleItem(hidden=1, transient=1, defvalue={}, doc='list of output files copied'),
-    }.items()))
+    }.items())))
 
    _category = 'units'
    _name = 'AtlasUnit'
@@ -388,7 +388,7 @@ class AtlasUnit(IUnit):
 
                for cont in cont_list:
                   dq2_list = dq2.listFilesInDataset(cont)
-                  for guid in dq2_list[0].keys():                  
+                  for guid in list(dq2_list[0].keys()):                  
                      if dq2_list[0][guid]['lfn'].find("merge") == -1:
                         logger.warning("Merged files not transferred to out DS by Panda yet. Waiting...")
                         return False
@@ -437,8 +437,8 @@ class AtlasUnit(IUnit):
                      # find locations and check if frozen
                      loc_dict = dq2.listDatasetReplicas(ds)
                      locations = []
-                     for loc in loc_dict[ loc_dict.keys()[0] ]:
-                        locations += loc_dict[ loc_dict.keys()[0] ][loc]
+                     for loc in loc_dict[ list(loc_dict.keys())[0] ]:
+                        locations += loc_dict[ list(loc_dict.keys())[0] ][loc]
 
                      ds_ok = False
                      for loc in locations:
@@ -502,12 +502,12 @@ class AtlasUnit(IUnit):
             if job.backend.__class__.__name__ == "Panda" and job.backend.requirements.enableMerge and not ds.endswith("merge") and len(dq2_list) == 0:
                continue
 
-            for guid in dq2_list[0].keys():
+            for guid in list(dq2_list[0].keys()):
                self.output_file_list[ dq2_list[0][guid]['lfn'] ] = ds
          
       # check which ones still need downloading
       to_download = {}
-      for f in self.output_file_list.keys():
+      for f in list(self.output_file_list.keys()):
          
          # check for REs
          if self.copy_output.isValid(f) and not self.copy_output.isDownloaded(f):            
@@ -518,12 +518,12 @@ class AtlasUnit(IUnit):
       self._releaseDownloadLock()
 
       # is everything downloaded?
-      if len(to_download.keys()) == 0:
+      if len(list(to_download.keys())) == 0:
          return True
 
       # nope, so pick the requested number and off we go
       thread_array = []
-      for fname in to_download.keys()[:self._getParent().num_dq2_threads]:
+      for fname in list(to_download.keys())[:self._getParent().num_dq2_threads]:
          dsname = to_download[fname]
          exe = 'dq2-get -L ROAMING -a -d -H %s -f %s %s' % (download_loc, fname, dsname)
          logger.info("Downloading '%s' to %s..." % (fname, download_loc))
@@ -538,7 +538,7 @@ class AtlasUnit(IUnit):
       self._acquireDownloadLock()
       
       # check for valid download - SHOULD REALLY BE A HASH CHECK
-      for fname in to_download.keys()[:self._getParent().num_dq2_threads]:
+      for fname in list(to_download.keys())[:self._getParent().num_dq2_threads]:
          full_path = os.path.join(self.copy_output.local_location, fname)
          if not os.path.exists(full_path):
             logger.error("Error downloading '%s'. File doesn't exist after download." % full_path)

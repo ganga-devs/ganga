@@ -2,7 +2,7 @@
 
 import re
 import inspect
-import GangaPlotHelper
+from . import GangaPlotHelper
 
 ## require matplotlib to produce statistic plots
 from pylab import *
@@ -299,7 +299,7 @@ class GangaPlotter:
             else:
                 cval = pltTitle
 
-            if cval not in xdata.keys():
+            if cval not in list(xdata.keys()):
                xdata[cval] = []
                ydata[cval] = []
 
@@ -315,7 +315,7 @@ class GangaPlotter:
         ##-----
         ## Generating marker and color array
         ##-----
-        legend_labels = xdata.keys()
+        legend_labels = list(xdata.keys())
         mycmap = self.__setColormap__( pltColorMap, len(legend_labels) )
 
         ##-----
@@ -404,14 +404,14 @@ class GangaPlotter:
         ##----- 
 
         # the xLabels 
-        bar_xlabels = pltData.keys()
+        bar_xlabels = list(pltData.keys())
         bar_xlabels.sort()
 
         # collecting values for the bars
         bars = {}
         valueLists = []
         for l in bar_xlabels:
-            valueLists.append(pltData[l].keys())
+            valueLists.append(list(pltData[l].keys()))
 
         valueLists = self.__unionLists__(valueLists)
 
@@ -425,7 +425,7 @@ class GangaPlotter:
             bars[v] = barValues
 
         # the pltColorMap
-        bar_cmap = self.__setColormap__( pltColorMap, len(bars.keys()) )
+        bar_cmap = self.__setColormap__( pltColorMap, len(list(bars.keys())) )
 
         ##-----
         ## Generating the bar chart 
@@ -445,20 +445,20 @@ class GangaPlotter:
 
         bar_width = 0.35
         bar_gap   = 0.3
-        bar_org   = map(lambda x:x*(num_dbars*bar_width+bar_gap), arange(num_xtics))
-        tic_pos   = map(lambda x:x+num_dbars*bar_width/2.0, bar_org)
+        bar_org   = [x*(num_dbars*bar_width+bar_gap) for x in arange(num_xtics)]
+        tic_pos   = [x+num_dbars*bar_width/2.0 for x in bar_org]
 
         legend_labels = []
-        legend_texts  = bars.keys()
+        legend_texts  = list(bars.keys())
 
-        bar_off = map(lambda x:0,bars[legend_texts[0]])
+        bar_off = [0 for x in bars[legend_texts[0]]]
         for i in range(num_bars):
             chart = None
             if stackedBar and i>0:
-                bar_off = map(lambda x,y:x+y,bar_off,bars[legend_texts[i-1]])
+                bar_off = list(map(lambda x,y:x+y,bar_off,bars[legend_texts[i-1]]))
                 chart   = bar(bar_org, bars[legend_texts[i]], width=bar_width, bottom=bar_off, color=bar_cmap[i])
             else:
-                bar_pos = map(lambda x:x+bar_width*i,bar_org)
+                bar_pos = [x+bar_width*i for x in bar_org]
                 chart   = bar(bar_pos, bars[legend_texts[i]], width=bar_width, bottom=bar_off, color=bar_cmap[i])
 
             legend_labels.append(chart[0])
@@ -588,10 +588,10 @@ class GangaPlotter:
         ## Mapping the extracted data to the columns for pie chart plot 
         ##----- 
         # the pltColorMap
-        pie_cmap = self.__setColormap__( pltColorMap, len(pltData.keys()) )
+        pie_cmap = self.__setColormap__( pltColorMap, len(list(pltData.keys())) )
  
         # the labels 
-        pie_labels = pltData.keys()
+        pie_labels = list(pltData.keys())
         pie_labels.sort()
  
         # the values
@@ -1019,7 +1019,7 @@ class GangaPlotter:
         # make the plot title
         title = __makePlotTitle__(len(dataTable[1:]),deep,subtitle)
 
-        pltColIdList = range(len(dataTable[0]))
+        pltColIdList = list(range(len(dataTable[0])))
 
         if not canLoopOver(dataproc):
             dataproc = len( dataTable[0] ) * [dataproc]

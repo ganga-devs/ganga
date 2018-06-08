@@ -29,7 +29,7 @@ import shutil
 import base64
 import socket
 import json
-import job_tools
+from . import job_tools
 
 
 def setup_grid_env(options):
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     parser.add_option("--voproxy", dest="voproxy", default=None, help="VO proxy location, MUST be used with grid srm mode")
     (options, args) = parser.parse_args()
     if not options.rat_macro or not options.output_dir or not options.env_file and not options.output_files:
-        print 'options not all present'
+        print('options not all present')
     else:
         if options.input_files:
             if not options.input_dir:

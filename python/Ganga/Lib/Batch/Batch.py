@@ -143,7 +143,7 @@ class Batch(IBackend):
 
         try:
             jobnameopt = "-" + self.config['jobnameopt']
-        except Exception, err:
+        except Exception as err:
             logger.debug("Unknown error: %s" % str(err))
             jobnameopt = False
 
@@ -445,7 +445,7 @@ class Batch(IBackend):
         '###GANGADIR###' : repr(getConfig('System')['GANGA_PYTHONPATH'])
         }
 
-        for k, v in replace_dict.iteritems():
+        for k, v in replace_dict.items():
             text = text.replace(str(k), str(v))
 
         logger.debug('subjob input sandbox %s ', subjob_input_sandbox)

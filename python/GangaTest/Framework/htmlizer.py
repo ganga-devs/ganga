@@ -51,7 +51,7 @@ myLogger = getLogger()
 
 ##Summary reports
 def appendLinesToSummaryReport(out,columns,data,render_links=True, append_total=True, append_coverage_report=False):
-    lines=data.keys()
+    lines=list(data.keys())
     lines.sort()
     totals={}
     for line in lines:
@@ -64,29 +64,29 @@ def appendLinesToSummaryReport(out,columns,data,render_links=True, append_total=
         else:
             text = line    
         cell = getHTMLTable(cells=((('width=60%',text),('width=40% align=right',coverage_link)),))
-        print >>out,"""<tr>\n<td>%s</td>\n"""%cell
+        print("""<tr>\n<td>%s</td>\n"""%cell, file=out)
         
         for column in columns:
             if column in data[line]:
                 total = totals.get(column,[0,0])
-                print >>out, """<td align=center><font color="green">%s</font></td>\n""" % data[line][column][0]
-                print >>out, """<td align=center><font color="red">%s</font></td>\n""" % data[line][column][1]
+                print("""<td align=center><font color="green">%s</font></td>\n""" % data[line][column][0], file=out)
+                print("""<td align=center><font color="red">%s</font></td>\n""" % data[line][column][1], file=out)
                 total[0]+=data[line][column][0];
                 total[1]+=data[line][column][1];
                 totals[column]=total
             else:
-                print >>out,'<td align=center>-</td><td align=center>-</td>\n'
-        print >>out,'</tr>'
+                print('<td align=center>-</td><td align=center>-</td>\n', file=out)
+        print('</tr>', file=out)
         
     if append_total:
-        print >>out,"""<tr>\n<td>ALL</td>\n"""
+        print("""<tr>\n<td>ALL</td>\n""", file=out)
         for column in columns:
             if column in totals:
-                print >>out, """<td align=center><font color="green">%s</font></td>\n""" % totals[column][0]
-                print >>out, """<td align=center><font color="red">%s</font></td>\n""" % totals[column][1]
+                print("""<td align=center><font color="green">%s</font></td>\n""" % totals[column][0], file=out)
+                print("""<td align=center><font color="red">%s</font></td>\n""" % totals[column][1], file=out)
             else:
-                print >>out,'<td align=center>-</td><td align=center>-</td>\n'
-        print >>out,'</tr>'
+                print('<td align=center>-</td><td align=center>-</td>\n', file=out)
+        print('</tr>', file=out)
 
 def getCSSStyles():
     return """
@@ -97,7 +97,7 @@ def getHTMLTable(cells):
     '''
     cells - nrow length tuple of ncol tuples
     '''
-    from cStringIO import StringIO
+    from io import StringIO
     table = StringIO()
     
     table.write("<table width=100% height=100% cellpadding=0 cellspacing=0>")
@@ -112,37 +112,37 @@ def getHTMLTable(cells):
     
 
 def appendSummaryHeader(out,title,header,columns,navigation=False):
-    print >>out,getCSSStyles()
+    print(getCSSStyles(), file=out)
     if navigation:
         title = "%s &nbsp; <a href='index.html'>[BACK]</a>" % title
-    print >>out,'<h3>%s</h3>'%title
-    print >>out,'<table border=1 cellpadding=2>\n<tr>\n<th width="300pt">&nbsp;</th>'
+    print('<h3>%s</h3>'%title, file=out)
+    print('<table border=1 cellpadding=2>\n<tr>\n<th width="300pt">&nbsp;</th>', file=out)
     for column in columns:
         if column == "DEFAULT_COL": column = "&nbsp;"
-        print >>out, '<th colspan=2><i>',column,'</i></th>'
-    print >>out,'</tr>\n<tr>\n<th width="300pt">%s</th>'%header
+        print('<th colspan=2><i>',column,'</i></th>', file=out)
+    print('</tr>\n<tr>\n<th width="300pt">%s</th>'%header, file=out)
     for column in columns:
-        print >>out,'<th><font color="green">PASSED</font></th>\n<th><font color="red">FAILED</font></th>'
-    print >>out,'\n</tr>'
+        print('<th><font color="green">PASSED</font></th>\n<th><font color="red">FAILED</font></th>', file=out)
+    print('\n</tr>', file=out)
 
 def appendSummaryFooter(out):
-    print >>out,'\n</table>\n'
+    print('\n</table>\n', file=out)
 
 ## Detailed reports
 def appendDetailedHeader(out,title):
-    print >>out,getCSSStyles()
-    print >>out,'<h3>%s</h3>'%title
-    print >>out,'<table border="1" cellpadding="3">\n<tr>\n<th>Name</th>\n<th width="65">Time</th>\n<th width="65">Result</th>\n<th width="65">Info</th>\n</tr>'
+    print(getCSSStyles(), file=out)
+    print('<h3>%s</h3>'%title, file=out)
+    print('<table border="1" cellpadding="3">\n<tr>\n<th>Name</th>\n<th width="65">Time</th>\n<th width="65">Result</th>\n<th width="65">Info</th>\n</tr>', file=out)
 
 def appendDetailedFooter(out):
-    print >>out,'\n</table>\n'
+    print('\n</table>\n', file=out)
 
 def appendLinesToDetailedReport(out, group, tests):
 
     global code_repository_prefix, code_repository_suffix, stdouts_dir
 
     for column in tests:
-        print >>out,'<tr>\n<th colspan= 4 bgcolor="FFFFCC">[ %s ]</th>\n'%column
+        print('<tr>\n<th colspan= 4 bgcolor="FFFFCC">[ %s ]</th>\n'%column, file=out)
         testcases = tests[column]
 
         #sort test-cases
@@ -205,7 +205,7 @@ def printTestCase(out, testcase, config=None):
     ext=''
     gpip_type = False
 
-    for (aname, avalue) in testcase.attributes.items():
+    for (aname, avalue) in list(testcase.attributes.items()):
         if aname=='name':
             testcase_name=avalue.split()[0]
             testcase_type=avalue.split()[1]
@@ -279,7 +279,7 @@ def printTestCase(out, testcase, config=None):
             jira_page = 'https://its.cern.ch/jira/browse/GANGA-%s' % JiraMatcher.group(1)
             name = '%s <a class="small" href="%s">[Jira Report]</a>' % (name, jira_page)
 
-    print >>out, '<tr>\n<td><nowrap>%s</nowrap></td> <td>%s</td> <td>%s</td> <td>%s</td>\n</tr>\n'%(name, time, result, info)               
+    print('<tr>\n<td><nowrap>%s</nowrap></td> <td>%s</td> <td>%s</td> <td>%s</td>\n</tr>\n'%(name, time, result, info), file=out)               
 
 # main methods
 def generate1stLevelReports(reports, categories=[]):
@@ -300,7 +300,7 @@ def generate1stLevelReports(reports, categories=[]):
                 if testcase.nodeType == testcase.ELEMENT_NODE:
                     package = None
                     category= None
-                    for (name, value) in testcase.attributes.items():
+                    for (name, value) in list(testcase.attributes.items()):
                         if name=='name':
                             testcase_name=value.split()[0].split("/")
                             package=testcase_name[0]
@@ -315,7 +315,7 @@ def generate1stLevelReports(reports, categories=[]):
                     if resultNode:
                         result = getText(resultNode.childNodes)
                         package_line=lines_packages.get(package,{})
-                        print result
+                        print(result)
                         package_line[column]=package_line.get(column,[0,0])
                         if category in categories:
                             category_line=lines_categories.get(category,{})
@@ -362,13 +362,13 @@ def generate1stLevelReports(reports, categories=[]):
 
     out.close()
     #return the top-level packages list
-    return lines_packages.keys()
+    return list(lines_packages.keys())
 
 
 def generateSlowestTestsReport(out, group_testcases):
-    print >>out,'<br/>' 
-    print >>out,getCSSStyles()
-    print >>out,'<h3>List with top 25 testcases that took longest time to execute <a href="summary_top25.html">here</a></h3>'
+    print('<br/>', file=out) 
+    print(getCSSStyles(), file=out)
+    print('<h3>List with top 25 testcases that took longest time to execute <a href="summary_top25.html">here</a></h3>', file=out)
 
     import time 
     now=time.strftime("%d/%m/%Y",time.gmtime(time.time()))   
@@ -417,8 +417,8 @@ def generateSchemaTestsReport(schema_reports):
     import os.path
     out=open(os.path.join(html_dir,"index.html"),'a')
 
-    print >>out,getCSSStyles()
-    print >>out,'<h3>Schema Compatibility Tests <a href="schema_tests.html">here</a></h3>'
+    print(getCSSStyles(), file=out)
+    print('<h3>Schema Compatibility Tests <a href="schema_tests.html">here</a></h3>', file=out)
 
     import time 
     now=time.strftime("%d/%m/%Y",time.gmtime(time.time()))   
@@ -442,14 +442,14 @@ def generateSchemaTestsReport(schema_reports):
                         package = None
                         all_testcases.append(testcase)
 
-                    for (name, value) in testcase.attributes.items():
+                    for (name, value) in list(testcase.attributes.items()):
                         if name=='name':
                             testcase_name=value.split()[0].split("/")
                             package=testcase_name[0]
                             if len(testcase_name)>2:
                                 category=testcase_name[2]
                             break
-    all_testcases.sort(key=lambda s: map(int, s.getAttribute('ganga_schema_version').split('-')[0].split('.')))
+    all_testcases.sort(key=lambda s: list(map(int, s.getAttribute('ganga_schema_version').split('-')[0].split('.'))))
     all_testcases.reverse()
     for testcase in all_testcases:
          #print testcase.getAttribute('ganga_schema_version').split('-')[0].split('.')
@@ -473,7 +473,7 @@ def generate2ndLevelReports(reports,categories=[]):
             for testcase in testcases:
                 if testcase.nodeType == testcase.ELEMENT_NODE:
                     package = None
-                    for (name, value) in testcase.attributes.items():
+                    for (name, value) in list(testcase.attributes.items()):
                         if name=='name':
                             testcase_name=value.split()[0].split("/")
                             package=testcase_name[0]
@@ -512,8 +512,8 @@ def generate2ndLevelReports(reports,categories=[]):
     import time
     now=time.strftime("%d/%m/%Y",time.gmtime(time.time()))   
     category_lines={} 
-    for package in packages.keys():
-        for group in packages[package].keys():
+    for package in list(packages.keys()):
+        for group in list(packages[package].keys()):
             category = group.split('/')[2]
             if category in categories:
                 t=category_lines.get(category,{})
@@ -526,7 +526,7 @@ def generate2ndLevelReports(reports,categories=[]):
         appendSummaryFooter(file)
         file.close()
 
-    for category in category_lines.keys():
+    for category in list(category_lines.keys()):
         file = open(os.path.join(html_dir,"summary_%s.html"%category),'w')
         appendSummaryHeader(file,title='%s : summarized results of tests performed on %s'%(category,now),header='Package',columns=columns)
         appendLinesToSummaryReport(file,columns,category_lines[category])
@@ -555,7 +555,7 @@ def generateCoverageReports(packages, detailed=False):
         if not os.path.isdir(summary_dir):
             os.makedirs(summary_dir)
     except:
-        print 'Cannot create %s dir' % summary_dir
+        print('Cannot create %s dir' % summary_dir)
         return
     
     def applyStyle(src,dest, summary=''):
@@ -611,12 +611,12 @@ def generateCoverageReports(packages, detailed=False):
                 applyStyle('%s/index.html' % _dir,'%s/index.htm' % _dir,_name)
     
 def usage():
-    print """summarize_reports [options] [files]
+    print("""summarize_reports [options] [files]
     files: XML reports as generated by PYTF framework, dafault: <ganga_dir>/reports/latest
     Options:
         -d, --dest-dir : destination directory for summary HTML pages
         -p, --code-repository-prefix: basedir for ganga source files to be used when linking test to source-files
-"""
+""")
 
 ## utils 
 def listdir(dirname, pattern=None):
@@ -639,7 +639,7 @@ def files(dirname, pattern=None):
     files('*.xml').
     """
     for p in listdir(dirname,pattern)    :
-        print os.path.isfile(p)
+        print(os.path.isfile(p))
     return [p for p in listdir(dirname,pattern) if os.path.isfile(p)]
 
 def expandfilename(filename):

@@ -12,9 +12,9 @@ from Ganga.GPIDev.Schema import *
 from Ganga.Utility.Config import *
 import Ganga.Utility.logging
 
-import db
-import objectid
-import utils
+from . import db
+from . import objectid
+from . import utils
 
 
 class SBDatasetManager(GangaObject):
@@ -43,7 +43,7 @@ class SBDatasetManager(GangaObject):
             '''Interactive method requesting user the value of each parameter 
             per session (FastSim, FullSim, Analysis)'''
             if parameter['customValue'] and len(parameter['values']) == 0:
-                value = raw_input('\nEnter %s: ' % parameter['label'])
+                value = input('\nEnter %s: ' % parameter['label'])
             elif not parameter['customValue'] and len(parameter['values']) == 0:
                 raise GangaException('Invalid rule (customValue:False and values=0).')
             else:
@@ -57,13 +57,13 @@ class SBDatasetManager(GangaObject):
                 if parameter['customValue']:
                     table.append({'id': i, 'value': 'Enter a custom value'})
                 
-                print('\nChoose %s:' % parameter['label'])
+                print(('\nChoose %s:' % parameter['label']))
                 column_names = ('id', 'value')
-                print(utils.format_dict_table(table, column_names))
+                print((utils.format_dict_table(table, column_names)))
                 index = utils.getIndex(maxExclusive=len(table))
                 
                 if parameter['customValue'] and index == len(table)-1:
-                    value = raw_input('Custom value: ')
+                    value = input('Custom value: ')
                 else:
                     value = table[index]['value']
             
@@ -81,7 +81,7 @@ class SBDatasetManager(GangaObject):
             ]
         
         column_names = ('id', 'dataset_type')
-        print(utils.format_dict_table(type, column_names))
+        print((utils.format_dict_table(type, column_names)))
         index = utils.getIndex(maxExclusive=len(type))
         
         new_dataset = dict()
@@ -156,14 +156,14 @@ class SBDatasetManager(GangaObject):
         
         
         while True:
-            free_string = raw_input('\nEnter free string: ')
+            free_string = input('\nEnter free string: ')
             max_length = 128
             
             if len(free_string) <= max_length:
                 new_dataset['parameters']['free_string'] = free_string
                 break
             else:
-                print('Free string must be <= %d char long.' % max_length)
+                print(('Free string must be <= %d char long.' % max_length))
         
         # dataset-site relation set
         new_dataset['site'] = getConfig('SuperB')['submission_site']
@@ -176,7 +176,7 @@ class SBDatasetManager(GangaObject):
         
         value = ''
         while True:
-            value = raw_input('Type \'yes\' to confirm the dataset creation or (q)uit: ')
+            value = input('Type \'yes\' to confirm the dataset creation or (q)uit: ')
             if value == 'yes':
                 break
             elif value == 'q':
@@ -231,7 +231,7 @@ class SBDatasetManager(GangaObject):
         free_disk = utils.sizeof_fmt_binary(s.f_bsize * s.f_bavail)
         
         #print('\nFree disk space: %s' % free_disk)
-        print('\nTotal download size: %s\n' % occupancy_human)
+        print(('\nTotal download size: %s\n' % occupancy_human))
         
         sql = 'SELECT lfn FROM analysis_output WHERE dataset_id = %s'
         lfns = db.read(sql, (r'\x' + dataset_id, ))
@@ -239,7 +239,7 @@ class SBDatasetManager(GangaObject):
         localdir = os.path.join(home, dataset_id)
         os.mkdir(localdir)
         
-        print('Downloading to %s ...' % localdir)
+        print(('Downloading to %s ...' % localdir))
         i = 1
         
         for lfn in lfns:
@@ -280,7 +280,7 @@ class SBDatasetManager(GangaObject):
         finally:
             f.close()
         
-        print('\nList %s created' % fileList)
+        print(('\nList %s created' % fileList))
     
     def badDataset(self, **kwargs):
         '''to set dataset status to bad'''
@@ -344,12 +344,12 @@ class SBDatasetManager(GangaObject):
         del d['parameters']
         
         # dataset keys sorting and dictionary list creation
-        items = d.items()
+        items = list(d.items())
         items.sort()
         d = [{'key': key, 'value': value} for key, value in items]
         
         columns = ['key', 'value']
-        print(utils.format_dict_table(d, columns))
+        print((utils.format_dict_table(d, columns)))
     
     def printDatasets(self, datasets):
         ''' Given the heterogeneous dataset list, the method splits it in 
@@ -403,9 +403,9 @@ class SBDatasetManager(GangaObject):
         
         for dataset in datasets:
             # put sub dictionary elements to level zero dictionary 
-            for key, value in dataset.items():
-                if type(dataset[key]) is types.DictType:
-                    for key1, value1 in dataset[key].iteritems():
+            for key, value in list(dataset.items()):
+                if type(dataset[key]) is dict:
+                    for key1, value1 in dataset[key].items():
                         dataset[key1] = value1
                     #del dataset[key]
             
@@ -430,7 +430,7 @@ class SBDatasetManager(GangaObject):
         # field sort, adding id and print
         for group in grouped_datasets:
             if len(group['dataset']) > 0:
-                print('\n%s' % group['title'])
+                print(('\n%s' % group['title']))
                 
                 # dictionary sorting
                 group['dataset'] = sorted(group['dataset'], key=lambda elem: ('%s ' * len(group['order_by'])) % tuple([elem[d] for d in group['order_by']]))
@@ -440,7 +440,7 @@ class SBDatasetManager(GangaObject):
                     dataset['id'] = i
                     i += 1
                 
-                print(utils.format_dict_table(group['dataset'], group['columns']))
+                print((utils.format_dict_table(group['dataset'], group['columns'])))
         
         
         # ask for input and print dataset details 
@@ -471,7 +471,7 @@ class SBDatasetManager(GangaObject):
         
         # add filter to query
         if len(kwargs) > 0:
-            for key, value in kwargs.iteritems():
+            for key, value in kwargs.items():
                 if key in db_view_column:
                     sql += " AND %s ILIKE '%s%%'" % (key, value)
                 elif key == 'files':
@@ -516,6 +516,6 @@ class SBDatasetManager(GangaObject):
     
     def whoami(self):
         '''Print the User id string'''
-        print(utils.getOwner())
+        print((utils.getOwner()))
     
 logger = Ganga.Utility.logging.getLogger()

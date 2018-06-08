@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+
 
 # Ganga tutorial application developed by Kuba Moscicki, CERN, 2006
 
@@ -29,7 +29,7 @@ from __future__ import print_function
 
 import sys,os
 
-NUMBER = long(sys.argv[1])
+NUMBER = int(sys.argv[1])
 
 pfns = sys.argv[2:]
 
@@ -73,9 +73,9 @@ print('Prime factors:',factors)
 import math
 check = 1
 for f in factors:
-    check *= long(math.pow(f[0],f[1]))
+    check *= int(math.pow(f[0],f[1]))
 
-if long(check) == NUMBER:
+if int(check) == NUMBER:
     print('All prime factors found!')
 else:
     print('Some prime factors are still to be found. Known factors multiply to',check)

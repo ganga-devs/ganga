@@ -132,7 +132,7 @@ def getLogger():
         _logger = Ganga.Utility.logging.getLogger()
         return _logger
     except AttributeError as err:
-        print("AttributeError: %s" % err)
+        print(("AttributeError: %s" % err))
         # in such a case we return a mock proxy object which ignore all calls
         # such as logger.info()...
 
@@ -748,17 +748,17 @@ class PackageConfig(object):
         self._gangarc_handlers.append((pre, post))
 
     def deleteUndefinedOptions(self):
-        for o in self.options.keys():
+        for o in list(self.options.keys()):
             if not self.options[o].check_defined():
                 del self.options[o]
 
 try:
-    import ConfigParser
-    GangaConfigParser = ConfigParser.SafeConfigParser
+    import configparser
+    GangaConfigParser = configparser.SafeConfigParser
 except ImportError:
     # For Python 3
     import configparser as ConfigParser
-    GangaConfigParser = ConfigParser.ConfigParser
+    GangaConfigParser = configparser.ConfigParser
 
 
 def make_config_parser(system_vars):
@@ -855,7 +855,7 @@ def read_ini_files(filenames, system_vars):
             for name in cc.options(sec):
                 try:
                     value = cc.get(sec, name)
-                except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
+                except (configparser.InterpolationMissingOptionError, configparser.InterpolationSyntaxError) as err:
                     logger.debug("Parse Error!:\n  %s" % err)
                     value = cc.get(sec, name, raw=True)
                     #raise err
@@ -878,9 +878,9 @@ def read_ini_files(filenames, system_vars):
 
                 try:
                     current_value = main.get(sec, name)
-                except ConfigParser.NoOptionError:
+                except configparser.NoOptionError:
                     current_value = None
-                except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
+                except (configparser.InterpolationMissingOptionError, configparser.InterpolationSyntaxError) as err:
                     logger.debug("Parse Error!:\n  %s" % err)
                     logger.debug("Failed to expand, Importing value %s:%s as raw" % (sec, name))
                     current_value = main.get(sec, name, raw=True)
@@ -1017,7 +1017,7 @@ def setSessionValuesFromFiles(filenames, system_vars):
                 continue
             try:
                 v = grcCfg.get(name, o)
-            except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
+            except (configparser.InterpolationMissingOptionError, configparser.InterpolationSyntaxError) as err:
                 logger = getLogger()
                 logger.debug("Parse Error!:\n  %s" % err)
                 logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (name, o))
@@ -1037,7 +1037,7 @@ def setSessionValuesFromFiles(filenames, system_vars):
                 continue
             try:
                 v = cfg.get(name, o)
-            except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
+            except (configparser.InterpolationMissingOptionError, configparser.InterpolationSyntaxError) as err:
                 logger = getLogger()
                 logger.debug("Parse Error!:\n  %s" % err)
                 logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (name, o))
@@ -1069,7 +1069,7 @@ def load_user_config(filename, system_vars):
                 continue
             try:
                 v = new_cfg.get(name, o)
-            except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
+            except (configparser.InterpolationMissingOptionError, configparser.InterpolationSyntaxError) as err:
                 logger.debug("Parse Error!:\n  %s" % err)
                 logger.debug("Failed to expand %s:%s, loading it as raw" % (name, o))
                 v = new_cfg.get(name, o, raw=True)
@@ -1119,7 +1119,7 @@ def expandConfigPath(path, top):
 
 def sanityCheck():
     logger = getLogger()
-    for c in allConfigs.values():
+    for c in list(allConfigs.values()):
         if not c._config_made:
             logger.error("sanity check failed: %s: no makeConfig() found in the code", c.name)
 
@@ -1133,9 +1133,9 @@ def sanityCheck():
 
         if not cfg.is_open:
             if opts:
-                logger.error("unknown options [%s]%s", name, ','.join(opts.keys()))
+                logger.error("unknown options [%s]%s", name, ','.join(list(opts.keys())))
         else:
             # add all options for open sections
-            for o, v in zip(opts.keys(), opts.values()):
+            for o, v in zip(list(opts.keys()), list(opts.values())):
                 cfg._addOpenOption(o, v)
                 cfg.setSessionValue(o, v)

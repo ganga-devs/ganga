@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -261,7 +261,7 @@ def stripProxy(obj):
     if isinstance(obj, (list, tuple)):
         return type(obj)(stripProxy(_) for _ in obj)
     elif isinstance(obj, dict):
-        return dict((k, stripProxy(v)) for k, v in obj.items())
+        return dict((k, stripProxy(v)) for k, v in list(obj.items()))
     elif hasattr(obj, implRef):
         return getattr(obj, implRef)
     else:
@@ -284,7 +284,7 @@ def addProxy(obj):
     elif isinstance(obj, (list, tuple)):
         return type(obj)(addProxy(_) for _ in obj)
     elif isinstance(obj, dict):
-        return dict((k, addProxy(v)) for k, v in obj.items())
+        return dict((k, addProxy(v)) for k, v in list(obj.items()))
     return obj
 
 
@@ -569,10 +569,10 @@ class ProxyDataDescriptor(object):
     def __recursive_strip(_val):
         ## Strip the proxies recursively for things like nested lists
         raw_val = stripProxy(_val)
-        if isinstance(_val, collections.Sequence) and not isinstance(_val, basestring):
+        if isinstance(_val, collections.Sequence) and not isinstance(_val, str):
             val = raw_val.__class__()
             if isinstance(val, dict):
-                for _key, elem in _val.iteritems():
+                for _key, elem in _val.items():
                     if isType(_key, GangaObject):
                         key = stripProxy(_key)
                     else:
@@ -704,7 +704,7 @@ def proxy_wrap(f):
     @functools.wraps(f)
     def proxy_wrapped(*args, **kwargs):
         s_args = [stripProxy(a) for a in args]
-        s_kwargs = dict((name, stripProxy(a)) for name, a in kwargs.items())
+        s_kwargs = dict((name, stripProxy(a)) for name, a in list(kwargs.items()))
         r = f(*s_args, **s_kwargs)
         return addProxy(r)
 
@@ -929,8 +929,8 @@ def GPIProxyClassFactory(name, pluginclass):
     """)
 
     def _str(self, interactive=False):
-        import cStringIO
-        sio = cStringIO.StringIO()
+        import io
+        sio = io.StringIO()
         stripProxy(self).printSummaryTree(0, 0, '', out=sio, interactive=interactive)
         returnable = str(sio.getvalue()).rstrip()
         return returnable

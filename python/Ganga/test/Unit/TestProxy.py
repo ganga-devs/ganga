@@ -84,7 +84,7 @@ class TestProxy(unittest.TestCase):
         self.assertFalse(hasattr(proxied, '_impl'))
 
         # A proxy instance should only have _impl in its dict
-        self.assertEqual(self.p.__dict__.keys(), ['_impl'])
+        self.assertEqual(list(self.p.__dict__.keys()), ['_impl'])
 
     def test_default(self):
         """

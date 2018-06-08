@@ -55,6 +55,6 @@ class JediRequirements(GangaObject):
         if not self.cloud:
             import random
             from pandatools import Client
-            clouds = Client.PandaClouds.keys()
+            clouds = list(Client.PandaClouds.keys())
             clouds.remove('OSG')
             self.cloud = random.choice(clouds)

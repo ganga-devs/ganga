@@ -1,6 +1,6 @@
 #[gtutor20@egee-ui ~]$ cat ganga_pi.py
 
-from __future__ import print_function
+
 
 print("Hello, this is ganga_pi... loading...")
 

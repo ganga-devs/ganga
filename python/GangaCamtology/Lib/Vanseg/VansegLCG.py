@@ -14,7 +14,7 @@ __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__    = "30 November 2007"
 __version__ = "1.1"
 
-from VansegLocal import VansegLocal
+from .VansegLocal import VansegLocal
 from Ganga.GPIDev.Lib.File import  File
 from Ganga.Lib.LCG import LCGJobConfig
 from Ganga.Lib.LCG import LCGRequirements

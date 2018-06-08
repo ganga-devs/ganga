@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
@@ -35,11 +35,11 @@ class TestSavannah19123(GangaUnitTest):
             # problem with the test - print out stdout/stderr and assert
             for fn in ['stdout','stderr']:
                 fn = os.path.join(j.outputdir,fn)
-                print " ----  Contents of " + fn
+                print(" ----  Contents of " + fn)
                 if os.path.exists(fn):
-                    print open(fn).read()
+                    print(open(fn).read())
                 else:
-                    print "NO FILE AVAILABLE"
+                    print("NO FILE AVAILABLE")
 
             self.assertEqual(j.status, 'running')
 

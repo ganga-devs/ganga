@@ -61,7 +61,7 @@ class PackageSetup(object):
             if isStringLike(ppath):
                 ppath = [ppath]
 
-            return ':'.join(map(lambda p: os.path.join(path, p), ppath))
+            return ':'.join([os.path.join(path, p) for p in ppath])
 
 # for p in ppath:
 ##                 result += os.path.join(path,p)

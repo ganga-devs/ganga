@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from fnmatch import fnmatch
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -105,16 +105,16 @@ class GoogleFile(IGangaFile):
                     try:
                         import webbrowser
                         webbrowser.get('firefox').open(authorize_url, 0, True)
-                    except Exception, err:
+                    except Exception as err:
                         logger.error("Error: %s" % str(err))
                         pass
             logger.info(
                 'Go to the following link in your browser: ' + authorize_url)
-            code = raw_input('Enter verification code: ').strip()
+            code = input('Enter verification code: ').strip()
             try:
                 credentials = flow.step2_exchange(code)
             except:
-                deny = raw_input(
+                deny = input(
                     'An incorrect code was entered. Have you denied Ganga access to your GoogleDrive (y/[n])?')
                 if deny.lower() in ['', 'n']:
                     pass

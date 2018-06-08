@@ -9,8 +9,8 @@ from GangaNA62.Lib.Applications.NA62MC import NA62MC
 
 class NA62Task(ITask):
     """NA62 add-ons for the Task framework"""
-    _schema = Schema(Version(1,0), dict(ITask._schema.datadict.items() + {
-        }.items()))
+    _schema = Schema(Version(1,0), dict(list(ITask._schema.datadict.items()) + list({
+        }.items())))
     
     _category = 'tasks'
     _name = 'NA62Task'

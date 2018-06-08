@@ -1,7 +1,7 @@
 import collections
 import fnmatch
 import re
-import repr
+import reprlib
 import sys
 from inspect import isclass
 import Ganga.Utility.logging
@@ -57,7 +57,7 @@ class RegistrySlice(object):
         if not isinstance(keep_going, bool):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (self.name, keep_going, method))
         result = []
-        for _id in self.objects.keys():
+        for _id in list(self.objects.keys()):
             obj = self.objects[_id]
             try:
                 if isinstance(method, str):
@@ -84,7 +84,7 @@ class RegistrySlice(object):
             maxid = sys.maxsize
         if minid is None:
             minid = 0
-        return [k for k in self.objects.keys() if minid <= k <= maxid]
+        return [k for k in list(self.objects.keys()) if minid <= k <= maxid]
 
     def clean(self, confirm=False, force=False):
         """Cleans the repository only if this slice represents the repository
@@ -121,7 +121,7 @@ class RegistrySlice(object):
 
         logger = getLogger()
 
-        this_repr = repr.Repr()
+        this_repr = reprlib.Repr()
         from Ganga.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
         ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
@@ -165,7 +165,7 @@ class RegistrySlice(object):
 
         ## Loop through attrs to parse possible inputs into instances of a class where appropriate
         ## Unlike the select method we need to populate this dictionary with instance objects, not str or class
-        for k, v in attrs.iteritems():
+        for k, v in attrs.items():
             if isclass(v):
                 attrs[k] = v()
             elif type(attrs[k]) is str:
@@ -198,7 +198,7 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        for this_id in self.objects.keys():
+        for this_id in list(self.objects.keys()):
             obj = self.objects[this_id]
             logger.debug("id, obj: %s, %s" % (this_id, obj))
             if select(int(this_id)):
@@ -287,7 +287,7 @@ class RegistrySlice(object):
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
-        for _id in self.objects.keys():
+        for _id in list(self.objects.keys()):
             obj = self.objects[_id]
             #obj = _unwrap(obj)
             copy = obj.clone()
@@ -305,7 +305,7 @@ class RegistrySlice(object):
         return this_slice
 
     def __contains__(self, j):
-        return j.id in self.objects.keys()
+        return j.id in list(self.objects.keys())
 
     def __call__(self, this_id):
         """ Retrieve an object by id.
@@ -319,7 +319,7 @@ class RegistrySlice(object):
                     logger.error('Multiple Matches: Wildcards are allowed for ease of matching, however')
                     logger.error('                  to keep a uniform response only one item may be matched.')
                     logger.error('                  If you wanted a slice, please use the select method')
-                    raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str(map(lambda x: x._getRegistry()._getName(x), matches))))
+                    raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str([x._getRegistry()._getName(x) for x in matches])))
                 if len(matches) < 1:
                     return
                 return addProxy(matches[0])
@@ -335,11 +335,11 @@ class RegistrySlice(object):
         class Iterator(object):
 
             def __init__(self, reg):
-                self.it = reg.objects.values().__iter__()
+                self.it = list(reg.objects.values()).__iter__()
 
             def __iter__(self): return self
 
-            def next(self):
+            def __next__(self):
                 return next(self.it)
         return Iterator(self)
 

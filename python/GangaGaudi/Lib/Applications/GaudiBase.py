@@ -10,7 +10,7 @@ from Ganga.GPIDev.Schema import SimpleItem, Schema, Version
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import Ganga.Utility.logging
 from Ganga.Utility.files import expandfilename, fullpath
-from GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
+from .GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
 from Ganga.GPIDev.Lib.File import File
 from Ganga.Core.exceptions import ApplicationConfigurationError
 import Ganga.Utility.Config
@@ -206,7 +206,7 @@ class GaudiBase(IPrepareApp):
         try:
             # Try to prepare the application fully
             self._really_prepare(force)
-        except Exception, err:
+        except Exception as err:
             # Cleanup after self on fail as self.is_prepared is used as test to
             # see if I'm prepared
             logger.error("Prepare Error:\n%s" % str(err))
@@ -246,7 +246,7 @@ class GaudiBase(IPrepareApp):
             logger.debug("UserDLLs PYS: %s" % expandfilename(f))
             InstallArea.append(File(name=expandfilename(f), subdir=subdir))
 
-        for dir, files in subpys.iteritems():
+        for dir, files in subpys.items():
             for f in files:
                 tmp = f.split('InstallArea')[-1]
                 subdir = 'InstallArea' + tmp[:tmp.rfind('/') + 1]
@@ -266,7 +266,7 @@ class GaudiBase(IPrepareApp):
 
         try:
             logger.info('Job %s: Preparing %s application.' % (stripProxy(self).getJobObject().getFQID('.'), getName(self)))
-        except AssertionError, err:
+        except AssertionError as err:
             ## No Job associated with Object!!
             logger.info("Preparing %s application." % getName(self))
         self.is_prepared = ShareDir()

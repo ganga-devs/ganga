@@ -38,6 +38,6 @@ Changes in version 2.0:
     accepting only dict and converting to string using repr().
 """
 
-from publisher import createPublisher
+from .publisher import createPublisher
 
 __version__ = '2.3'

@@ -132,7 +132,7 @@ def execute(command, args, env=None, cwd=None, exit_if_fail=False):
     if cwd is None:
         cwd = os.getcwd()
     for i,arg in enumerate(args):
-        if type(arg) is unicode:
+        if type(arg) is str:
             args[i] = ucToStr(arg) # urgh
     process = subprocess.Popen(args=shell_command, env=use_env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     output, error = process.communicate()
@@ -268,15 +268,15 @@ def adler32(filename):
 def download_file(url, token=None, filename=None , cache_path=None):
     '''Download a file from a URL.  No user/password auth is allowed (security).  Tokens only.
     '''
-    import urllib2
+    import urllib.request, urllib.error, urllib.parse
     if filename is None:
         filename = url.split('/')[-1]
     temp_file = os.path.join(cache_path, "download-temp")
-    url_request = urllib2.Request(url)
+    url_request = urllib.request.Request(url)
     if token != None:
         # Add OAuth authentication
         url_request.add_header("Authorization", "token %s" % token)
-    remote_file = urllib2.urlopen(url_request) # Will raise exception if fails
+    remote_file = urllib.request.urlopen(url_request) # Will raise exception if fails
     local_file = open(temp_file, 'wb')
     try:
         download_size = int(remote_file.info().getheaders("Content-Length")[0])

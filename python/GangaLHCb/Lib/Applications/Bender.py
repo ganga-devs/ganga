@@ -18,7 +18,7 @@ from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
 from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import Shell
-from AppsBaseUtils import guess_version
+from .AppsBaseUtils import guess_version
 from Ganga.GPIDev.Base.Proxy import isType
 #
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -102,7 +102,7 @@ class Bender(GaudiBase):
 
     def _getshell(self):
 
-        import EnvironFunctions
+        from . import EnvironFunctions
         return EnvironFunctions._getshell(self)
 
     def prepare(self, force=False):

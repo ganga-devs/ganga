@@ -1,1 +1,1 @@
-from AtlasLCGRequirements import *
+from .AtlasLCGRequirements import *

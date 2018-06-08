@@ -1,1 +1,1 @@
-from PrimeFactorizer import *
+from .PrimeFactorizer import *

@@ -154,7 +154,7 @@ class ObjectId(object):
         """
         if isinstance(oid, ObjectId):
             self.__id = oid.__id
-        elif isinstance(oid, basestring):
+        elif isinstance(oid, str):
             if len(oid) == 12:
                 self.__id = oid
             elif len(oid) == 24:
@@ -212,7 +212,7 @@ class ObjectId(object):
 
 
 if __name__ == '__main__':
-    for i in xrange(100):
+    for i in range(100):
         o = ObjectId()
-        print(str(o))
-        print(len(o.binary))
+        print((str(o)))
+        print((len(o.binary)))

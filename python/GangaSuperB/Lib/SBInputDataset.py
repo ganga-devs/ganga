@@ -11,9 +11,9 @@ from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Lib.File import File
 import Ganga.Utility.logging
 
-import db
-import SBDatasetManager
-import utils
+from . import db
+from . import SBDatasetManager
+from . import utils
 
 
 logger = Ganga.Utility.logging.getLogger()
@@ -146,7 +146,7 @@ class SBInputProductionAnalysis(Dataset):
         jobInputDir = self.getJobObject().inputdir
         lfns_index = 0
         
-        for subjob_id in xrange(self.number_of_subjobs):
+        for subjob_id in range(self.number_of_subjobs):
             subjob = dict()
             size = 0
             events = 0
@@ -226,22 +226,22 @@ class SBInputProductionAnalysis(Dataset):
         for lfn in lfns:
             tot_size += int(lfn['size'])
         
-        print('\nTotal job input size: ' + str(utils.sizeof_fmt_binary(tot_size)))
-        print('Total selected number of events: ' + str(utils.sizeof_fmt_decimal(tot_events)))
-        print('Total number of involved lfns: ' + str(tot_files))
+        print(('\nTotal job input size: ' + str(utils.sizeof_fmt_binary(tot_size))))
+        print(('Total selected number of events: ' + str(utils.sizeof_fmt_decimal(tot_events))))
+        print(('Total number of involved lfns: ' + str(tot_files)))
         
         print('\nInsert the maximum number of events for each subjob. Remember:')
         print('- maximum output size is 2GiB.')
         print('- suggested maximum job duration 18h.')
         print('- maximum input size job is 10GiB.')
-        print('- at least %s (that is the number of events of one file).' % dataset['parameters']['evt_file'])
+        print(('- at least %s (that is the number of events of one file).' % dataset['parameters']['evt_file']))
         
         self.events_per_subjobs = utils.getIndex(minInclusive=int(dataset['parameters']['evt_file']), maxInclusive=tot_events)
         job = self.__createInputPath(lfns, dataset['parameters']['evt_file'])
         
         print('\nSubjobs details:')
         column_names = ['id', 'list_path', 'size', 'events', 'lfns']
-        print(utils.format_dict_table(job, column_names))
+        print((utils.format_dict_table(job, column_names)))
 
 
 
@@ -361,7 +361,7 @@ class SBInputPureAnalysis(Dataset):
         jobInputDir = self.getJobObject().inputdir
         lfns_index = 0
         
-        for subjob_id in xrange(self.number_of_subjobs):
+        for subjob_id in range(self.number_of_subjobs):
             subjob = dict()
             size = 0
             events = 0
@@ -438,8 +438,8 @@ class SBInputPureAnalysis(Dataset):
         for lfn in lfns:
             tot_size += int(lfn['size'])
         
-        print('\nTotal job input size: ' + str(utils.sizeof_fmt_binary(tot_size)))
-        print('Total number of involved lfns: ' + str(tot_files))
+        print(('\nTotal job input size: ' + str(utils.sizeof_fmt_binary(tot_size))))
+        print(('Total number of involved lfns: ' + str(tot_files)))
         
         print('\nInsert the maximum number of files for each subjob. Remember:')
         print('- maximum output size is 2GiB.')
@@ -451,7 +451,7 @@ class SBInputPureAnalysis(Dataset):
         
         print('\nSubjobs details:')
         column_names = ['id', 'list_path', 'size', 'lfns']
-        print(utils.format_dict_table(job, column_names))
+        print((utils.format_dict_table(job, column_names)))
 
 
 
@@ -568,7 +568,7 @@ class SBInputPersonalProduction(Dataset):
         
         print('Choose simulation type:')
         column_names = ('id', 'session_name', 'soft_version')
-        print(utils.format_dict_table(results, column_names))
+        print((utils.format_dict_table(results, column_names)))
         
         index = utils.getIndex(maxExclusive=len(results))
         

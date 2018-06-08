@@ -21,7 +21,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from os.path import isfile
 
-import os, shutil, commands, re, time
+import os, shutil, subprocess, re, time
 from Ganga.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
@@ -103,7 +103,7 @@ class ND280RecoSkimmer(IPrepareApp, IApplication):
               continue
             row = line.split(",")
             if len(row) < 3:
-              print "Ignoring badly-formatted line:", ",".join(row)
+              print("Ignoring badly-formatted line:", ",".join(row))
               continue
 
             r_sr = "%(run)08d-%(subrun)04d" % { "run" : int(row[0]), "subrun" : int(row[1]) }

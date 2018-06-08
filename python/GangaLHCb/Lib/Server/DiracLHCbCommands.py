@@ -34,7 +34,7 @@ def getLHCbInputDataCatalog(lfns, depth, site, xml_file):
 
 
 def bookkeepingGUI(file):
-    print(os.system('dirac-bookkeeping-gui %s' % file))
+    print((os.system('dirac-bookkeeping-gui %s' % file)))
 
 
 @diracCommand

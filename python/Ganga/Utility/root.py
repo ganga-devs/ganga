@@ -5,7 +5,7 @@
 ###############################################################################
 
 from Ganga.Utility.Config import getConfig, ConfigError
-from commands import getstatusoutput
+from subprocess import getstatusoutput
 import Ganga.Utility.logging
 import os
 from Ganga.Utility.logging import getLogger
@@ -166,9 +166,9 @@ def getpythonhome(arch=None, pythonversion=None):
         # allow other Root variables to be used in the definition
         pythonhome = configroot['pythonhome']
         # supports ${foo} type variable expansion
-        for k in configroot.keys():
+        for k in list(configroot.keys()):
             pythonhome = pythonhome.replace('${%s}' % k, configroot[k])
-    except ConfigError, err:
+    except ConfigError as err:
         logger.debug("Config Error!\n%s"%str(err))
         pass
     import os

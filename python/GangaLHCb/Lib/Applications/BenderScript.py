@@ -104,7 +104,7 @@ from   GangaGaudi.Lib.Applications.GaudiBase   import GaudiBase
 from   GangaGaudi.Lib.Applications.GaudiUtils  import fillPackedSandbox, gzipFile
 from   Ganga.Utility.files                     import expandfilename, fullpath
 from   Ganga.Utility.Config                    import getConfig
-from   AppsBaseUtils                           import guess_version
+from   .AppsBaseUtils                           import guess_version
 from   Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 # Added for XML PostProcessing
@@ -271,7 +271,7 @@ class BenderScript(GaudiBase):
 
     def _getshell(self):
 
-        import EnvironFunctions
+        from . import EnvironFunctions
         return EnvironFunctions._getshell(self)
 
     def prepare(self, force=False):
@@ -319,7 +319,7 @@ class BenderScript(GaudiBase):
             command   = self.commands    
             )
 
-        print 'SCRIPT:\n', the_script
+        print('SCRIPT:\n', the_script)
         
         # add summary.xml
         outputsandbox_temp  = XMLPostProcessor._XMLJobFiles()
@@ -364,12 +364,12 @@ allHandlers.add('BenderScript', 'Dirac', LHCbGaudiDiracRunTimeHandler)
 # =============================================================================
 if '__main__' == __name__ :
 
-    print 80*'*'  
-    print __doc__ 
-    print ' Author  : %s ' %  __author__   
-    print ' Version : %s ' %  __version__  
-    print ' Date    : %s ' %  __date__     
-    print 80*'*'  
+    print(80*'*')  
+    print(__doc__) 
+    print(' Author  : %s ' %  __author__)   
+    print(' Version : %s ' %  __version__)  
+    print(' Date    : %s ' %  __date__)     
+    print(80*'*')  
 
 # =============================================================================
 # The END 
