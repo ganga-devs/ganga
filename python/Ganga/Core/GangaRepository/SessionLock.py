@@ -407,7 +407,7 @@ class SessionLockManager(object):
             fd = None
             try:
                 fd = os.open(self.cntfn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
-                os.write(fd, "0")
+                os.write(fd, b"0")
             except OSError as x:
                 if x.errno != errno.EEXIST:
                     raise RepositoryError(self.repo, "OSError on count file create: %s" % x)
