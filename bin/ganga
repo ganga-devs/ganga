@@ -55,6 +55,9 @@ import GangaCore.Runtime
 GangaCore.Runtime._prog = None
 import sys
 
+import prctl
+prctl.set_name('ganga')
+
 def log(level, err):
     # FIXME: for some reason self.logger.critical does not print any
     # messages here
