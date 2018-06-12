@@ -1,7 +1,7 @@
 FROM hepsw/cvmfs-lhcb:latest
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 
-RUN yum install -y wget git python-virtualenv glibc-devel gcc
+RUN yum install -y wget git python-virtualenv glibc-devel gcc libcap-dev
 
 WORKDIR /root
 
