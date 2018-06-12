@@ -8,3 +8,4 @@ unittest2
 coverage
 pygments
 mock
+python-prctl
