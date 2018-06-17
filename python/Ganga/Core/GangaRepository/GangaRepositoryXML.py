@@ -305,7 +305,7 @@ class GangaRepositoryLocal(GangaRepository):
         if cache_time != fn_ctime:
             logger.debug("%s != %s" % (cache_time, fn_ctime))
             try:
-                with open(fn, 'r') as fobj:
+                with open(fn, 'rb') as fobj:
                     cat, cls, cache = pickle_from_file(fobj)[0]
             except Exception as x:
                 logger.warning("index_load Exception: %s" % x)
