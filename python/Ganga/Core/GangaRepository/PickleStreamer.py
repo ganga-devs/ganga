@@ -15,7 +15,7 @@ def to_file(obj, fileobj, ignore_subs=''):
     try:
         from io import StringIO
         output = pickle.dumps(obj, 1)
-        fileobj.write(output.decode())
+        fileobj.write(str(output)[2:-1])
     except Exception as err:
         logger.error("Failed to Write: %s" % obj)
         logger.error("Err: %s" % err)
