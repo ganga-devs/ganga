@@ -82,12 +82,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
             if isinstance(this_file, LocalFile):
                 for name in this_file.getFilenameList():
                     inputsandbox.append(File(abspath(expanduser(name))))
-            elif isinstance(this_file, DiracFile):
-                name = this_file.lfn
-                if isinstance(input_data, list):
-                    input_data.append(name)
-                else:
-                    input_data = [name]
 
         dirac_outputfiles = dirac_outputfile_jdl(outputfiles, config['RequireDefaultSE'])
 
