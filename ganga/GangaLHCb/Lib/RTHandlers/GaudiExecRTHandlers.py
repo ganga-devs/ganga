@@ -509,7 +509,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         for opts_file in all_opts_files:
             if isinstance(opts_file, DiracFile):
                 inputsandbox += ['LFN:'+opts_file.lfn]
-
         # Sort out inputfiles we support
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
@@ -535,6 +534,11 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         inputsandbox += ['LFN:'+app.uploadedInput.lfn]
         inputsandbox += ['LFN:'+app.jobScriptArchive.lfn]
+
+        #Now add in the missing DiracFiles from the master job
+        for file_ in master_job.inputfiles:
+            if isinstance(file_, DiracFile):
+                inputsandbox += ['LFN:'+file_.lfn]
 
         logger.debug("Input Sand: %s" % inputsandbox)
 
