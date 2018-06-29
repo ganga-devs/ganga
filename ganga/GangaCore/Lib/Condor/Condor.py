@@ -596,7 +596,7 @@ class Condor(IBackend):
         """Obtains the timestamps for the 'running', 'completed', and 'failed' states.
 
            The condorLog file in the job's output directory is read to obtain the start and stop times of the job.
-           These are converted into datetime objects and returned to the user. The condorLog doesn't tell you the year so we guess the current one.
+           These are converted into datetime objects and returned to the user. The condorLog doesn't tell you the year so we guess the closest one to now.
         """
         j = self.getJobObject()
         end_list = ['completed', 'failed']
@@ -629,7 +629,10 @@ class Condor(IBackend):
         for l in f:
             splitLine = l.split()
             if checkstr in splitLine[0]:
-                timestr = str(datetime.datetime.now().year)+'/'+splitLine[2]+' '+splitLine[3]
+                year = datetime.datetime.now().year
+                if datetime.strptime(str(datetime.datetime.now().year)+'/'+splitLine[2]+' '+splitLine[3], "%Y/%m/%d %H:%M:%S") > datetime.now():
+                    year = year - 1
+                timestr = str(year)+'/'+splitLine[2]+' '+splitLine[3]
                 try:
                     t = datetime.datetime(
                         *(time.strptime(timestr, "%Y/%m/%d %H:%M:%S")[0:6]))
@@ -649,7 +652,7 @@ class Condor(IBackend):
         """Return all available timestamps from this backend.
         """
         j = self.getJobObject()
-        # check for file. if it's not there don't bother calling getSateTime
+        # check for file. if it's not there don't bother calling getStateTime
         # (twice!)
         p = os.path.join(j.outputdir, 'condorLog')
         if not os.path.isfile(p):
