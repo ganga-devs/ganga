@@ -141,7 +141,7 @@ class GaudiExec(IPrepareApp):
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
-        'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
+        'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc62-opt', typelist=[str], doc='Platform the application was built for'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
         'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
@@ -237,7 +237,8 @@ class GaudiExec(IPrepareApp):
                     # NB safe to put it here as should have expressly setup a path for this job by now.
                     # We cannot _not_ place this here based upon the backend.
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
-                    opts_file.get(localPath=self.getSharedPath())
+                    opts_file.localDir=self.getSharedPath()
+                    opts_file.get()
                 else:
                     raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
@@ -419,7 +420,8 @@ class GaudiExec(IPrepareApp):
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
         if not path.isfile(path.join(self.directory, 'build.%s' %self.platform, 'run')):
-            rc, stdout, stderr = _exec_cmd('make', self.directory)
+            initialCommand = 'export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
+            rc, stdout, stderr = _exec_cmd(initialCommand, self.directory)
             if rc != 0:
                 logger.error("Failed to perform initial make on a Cmake based project")
                 logger.error("This is required so that the './run' target exists and is callable within the project")
@@ -433,7 +435,7 @@ class GaudiExec(IPrepareApp):
         if rc != 0:
             logger.error("Failed to execute command: %s" % cmd_file.name)
             logger.error("Tried to execute command in: %s" % self.directory)
-            logger.error("StdErr: %s" % str(stderr))
+            logger.error("StdErr: %s" % str(stdout))
             raise GangaException("Failed to Execute command")
 
         unlink(cmd_file.name)

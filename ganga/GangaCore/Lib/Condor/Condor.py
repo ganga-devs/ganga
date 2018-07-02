@@ -75,6 +75,7 @@ import inspect
 import os
 import shutil
 import time
+import datetime
 
 logger = GangaCore.Utility.logging.getLogger()
 
@@ -287,7 +288,7 @@ class Condor(IBackend):
 
         fileList = []
         for filePath in infileList:
-            fileList.append(os.path.basename(filePath))
+            fileList.append(filePath)
 
         if job.name:
             name = job.name
@@ -590,6 +591,79 @@ class Condor(IBackend):
                             time.strftime('%c'))
 
         return None
+
+    def getStateTime(self, status):
+        """Obtains the timestamps for the 'running', 'completed', and 'failed' states.
+
+           The condorLog file in the job's output directory is read to obtain the start and stop times of the job.
+           These are converted into datetime objects and returned to the user. The condorLog doesn't tell you the year so we guess the closest one to now.
+        """
+        j = self.getJobObject()
+        end_list = ['completed', 'failed']
+        d = {}
+        checkstr = ''
+
+        if status == 'submitted':
+            checkstr = '000'
+        elif status == 'running':
+            checkstr = '001'
+        elif status == 'completed':
+            checkstr = '005'
+        elif status == 'failed':
+            checkstr = '005'
+        else:
+            checkstr = ''
+
+        if checkstr == '':
+            logger.debug("In getStateTime(): checkstr == ''")
+            return None
+
+        try:
+            p = os.path.join(j.outputdir, 'condorLog')
+            logger.debug("Opening output file at: %s", p)
+            f = open(p)
+        except IOError:
+            logger.debug('unable to open file %s', p)
+            return None
+
+        for l in f:
+            splitLine = l.split()
+            if checkstr in splitLine[0]:
+                year = datetime.datetime.now().year
+                if datetime.datetime.strptime(str(datetime.datetime.now().year)+'/'+splitLine[2]+' '+splitLine[3], "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
+                    year = year - 1
+                timestr = str(year)+'/'+splitLine[2]+' '+splitLine[3]
+                try:
+                    t = datetime.datetime(
+                        *(time.strptime(timestr, "%Y/%m/%d %H:%M:%S")[0:6]))
+                except ValueError:
+                    logger.debug(
+                        "Value Error in file: '%s': string does not match required format.", p)
+                    return None
+                return t
+
+        f.close()
+        logger.debug(
+            "Reached the end of getStateTime('%s'). Returning None.", status)
+        return None
+
+
+    def timedetails(self):
+        """Return all available timestamps from this backend.
+        """
+        j = self.getJobObject()
+        # check for file. if it's not there don't bother calling getStateTime
+        # (twice!)
+        p = os.path.join(j.outputdir, 'condorLog')
+        if not os.path.isfile(p):
+            logger.error('unable to open file %s', p)
+            return None
+        s = self.getStateTime('submitted')
+        r = self.getStateTime('running')
+        c = self.getStateTime('completed')
+        d = {'SUBMIT': s,'START': r, 'STOP': c}
+
+        return d
 
     updateMonitoringInformation = \
         staticmethod(updateMonitoringInformation)

@@ -25,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '7.0.1'
+_gangaVersion = '7.0.4'
 _development = True
 
 # store a path to Ganga libraries
@@ -525,7 +525,7 @@ sge_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config va
 
 # the -V options means that all environment variables are transferred to
 # the batch job (ie the same as the default behaviour on LSF at CERN)
-sge_config.addOption('submit_str', 'cd %s; qsub -cwd -V %s %s %s %s',
+sge_config.addOption('submit_str', 'cd %s; qsub -cwd -S /usr/bin/python -V %s %s %s %s',
                  "String used to submit job to queue")
 sge_config.addOption('submit_res_pattern', 'Your job (?P<id>\d+) (.+)',
                  "String pattern for replay from the submit command")
@@ -908,7 +908,7 @@ Executable/* = GangaCore.Lib.MonitoringServices.DummyMS.DummyMS
 reg_config = makeConfig('Registry','This config controls the speed of flushing objects to disk')
 reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')
 reg_config.addOption('EnableAutoFlush', True, 'Enable Registry auto-flushing feature')
-reg_config.addOption('DisableLoadCheck', False, 'Disable the checking of recent bad jobs in bad state. Mainly used in testing.')
+reg_config.addOption('DisableLoadCheck', True, 'Disable the checking of recent bad jobs in bad state. Mainly used in testing.')
 
 cred_config = makeConfig('Credentials', 'This configures the credentials singleton')
 cred_config.addOption('CleanDelay', 1, 'Seconds between auto-clean of credentials when proxy externally destroyed')
