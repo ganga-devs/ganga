@@ -3,4 +3,3 @@ recursive-include ganga *.py.template *.ipynb *.INI *.ini
 recursive-include ganga/GangaRelease ReleaseNotes*
 recursive-include doc *
 recursive-include ganga/GangaTemplates *.INI
-recursive-include ganga/GangaLHCb *.ini
