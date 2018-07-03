@@ -98,7 +98,7 @@ setup(name='ganga',
           'Programming Language :: Python :: 2.7',
       ],
       include_package_data=True,
-      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*'], 'GangaTemplates':['*.INI'], 'GangaLHCb': ['LHCb.ini']},
+      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*'], 'GangaTemplates':['*.INI']},
       cmdclass={
           'tests': RunTestsCommand,
       },
