@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 cvmfs_server transaction ganga.cern.ch
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cvmfs/sft.cern.ch/lcg/releases/LCG_88/Python/2.7.13/x86_64-slc6-gcc62-opt/lib
@@ -13,7 +12,7 @@ virtualenv -p /cvmfs/sft.cern.ch/lcg/releases/LCG_88/Python/2.7.13/x86_64-slc6-g
 
 pip install --upgrade pip
 
-pip install ganga
+pip install git+https://github.com/ganga-devs/ganga.git@$1 
 
 deactivate
 
