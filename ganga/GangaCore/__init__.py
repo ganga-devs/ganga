@@ -142,7 +142,7 @@ conf_config.addOption('ServerTimeout', 60, 'Timeout in minutes for auto-server s
 conf_config.addOption('ServerUserScript', "", "Full path to user script to call periodically. The script will be executed as if called within Ganga by 'execfile'.")
 conf_config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between executions of the user script")
 
-conf_config.addOption('confirm_exit', 1, 'Ask the user on exit if we should exit, (this is passed along to IPython)')
+conf_config.addOption('confirm_exit', True, 'Ask the user on exit if we should exit, (this is passed along to IPython)')
 conf_config.addOption('force_start', False, 'Ignore disk checking on startup')
 
 conf_config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
