@@ -22,7 +22,8 @@ rm -f /cvmfs/ganga.cern.ch/Ganga/install/LATEST
 
 ln -s /cvmfs/ganga.cern.ch/Ganga/install/$1 /cvmfs/ganga.cern.ch/Ganga/install/LATEST
 
+cd ~
+
 cvmfs_server publish ganga.cern.ch
 
-cd ~
 
