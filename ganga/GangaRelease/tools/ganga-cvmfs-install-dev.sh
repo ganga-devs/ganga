@@ -12,7 +12,7 @@ deactivate
 
 sed -i '1s/.*/#!\/usr\/bin\/env python/' bin/ganga
 
-cvmfs_server publish ganga.cern.ch
-
 cd ~
+
+cvmfs_server publish ganga.cern.ch
 
