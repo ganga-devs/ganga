@@ -17,8 +17,8 @@ try:
         if rel_ver not in  os.listdir('/cvmfs/ganga.cern.ch/Ganga/install/'):
             # we need to install it
             msg = commands.getstatusoutput("/home/cvganga/ganga-cvmfs-install.sh %s" % rel_ver)[1]
-            shutil.copy2('/cvmfs/ganga.cern.ch/Ganga/install/%s/lib/python2.7/site-packages/ganga/GangaRelease/tools/ganga-cvmfs-install.sh', '~/')
-            shutil.copy2('/cvmfs/ganga.cern.ch/Ganga/install/%s/lib/python2.7/site-packages/ganga/GangaRelease/tools/ganga-cvmfs-install-dev.sh', '~/')
+            shutil.copy2('/cvmfs/ganga.cern.ch/Ganga/install/%s/lib/python2.7/site-packages/ganga/GangaRelease/tools/ganga-cvmfs-install.sh' % rel_ver, '~/')
+            shutil.copy2('/cvmfs/ganga.cern.ch/Ganga/install/%s/lib/python2.7/site-packages/ganga/GangaRelease/tools/ganga-cvmfs-install-dev.sh' % rel_ver, '~/')
 
     else:
         msg = "Problem getting the list of releases"
