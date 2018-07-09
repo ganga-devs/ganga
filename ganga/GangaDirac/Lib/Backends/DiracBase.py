@@ -287,6 +287,7 @@ class DiracBase(IBackend):
         except GangaKeyError:
             credential_store.create(self.credential_requirements)
 
+        tmp_dir = tempfile.mkdtemp()
         # Loop over the processes and create the master script for each one.
         for i in range(0,int(nProcessToUse)):
             nSubjobs = 0
@@ -297,7 +298,7 @@ class DiracBase(IBackend):
                 sj.updateStatus('submitting')
                 fqid = sj.getFQID('.')
                 #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
-                sjScript = sj.backend._job_script(sc, master_input_sandbox)
+                sjScript = sj.backend._job_script(sc, master_input_sandbox, tmp_dir)
                 sjScript = sjScript.replace("output(result)", "if isinstance(result, dict) and 'Value' in result:\n\tresultdict.update({sjNo : result['Value']})\nelse:\n\tresultdict.update({sjNo : result['Message']})")
                 if nSubjobs == 0:
                     sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
@@ -319,21 +320,24 @@ class DiracBase(IBackend):
                 upperlimit = len(rjobs)
             logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
 
-            #Either do the submission in parallel with threads or sequentially
-            if parallel_submit:
-                getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename, nSubjobs, keep_going))
-            else:
-                self._block_submit(dirac_script_filename, nSubjobs, keep_going)
+            try:
+                #Either do the submission in parallel with threads or sequentially
+                if parallel_submit:
+                    getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename, nSubjobs, keep_going))
+                else:
+                    self._block_submit(dirac_script_filename, nSubjobs, keep_going)
 
-            while not self._subjob_status_check(rjobs, nPerProcess, i):
-                import time
-                time.sleep(1.)
-
+                while not self._subjob_status_check(rjobs, nPerProcess, i):
+                    time.sleep(1.)
+            finally:
+                shutil.rmtree(tmp_dir, ignore_errors = True)
+                    
             logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
 
         for i in rjobs:
             if i.status in ["new", "failed"]:
                 return 0
+    
         return 1
 
     def _subjob_status_check(self, rjobs, nPerProcess, i):
@@ -344,11 +348,12 @@ class DiracBase(IBackend):
                         break
                 return has_submitted
 
-    def _job_script(self, subjobconfig, master_input_sandbox):
+    def _job_script(self, subjobconfig, master_input_sandbox, tmp_dir):
         """Get the script to submit a single DIRAC job
         Args:
             subjobconfig (unknown):
             master_input_sandbox (list): file names which are in the master sandbox of the master sandbox (if any)
+            tmp_dir: (str) This is the temp directory where files will be placed when needed
         """
 
         j = self.getJobObject()
@@ -361,17 +366,10 @@ class DiracBase(IBackend):
         input_sandbox += self._addition_sandbox_content(subjobconfig)
 
         ## Add LFN to the inputfiles section of the file
-        input_sandbox_userFiles = []
-        for this_file in j.inputfiles:
-            if isType(this_file, DiracFile):
-                input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
         if j.master:
             for this_file in j.master.inputfiles:
                 if isType(this_file, DiracFile):
-                    input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
-
-        for this_file in input_sandbox_userFiles:
-            input_sandbox.append(this_file)
+                    input_sandbox.append('LFN:'+str(this_file.lfn))
 
         logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
         logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
@@ -379,7 +377,6 @@ class DiracBase(IBackend):
 
         # This is a workaroud for the fact DIRAC doesn't like whitespace in sandbox filenames
         ### START_WORKAROUND
-        tmp_dir = tempfile.mkdtemp()
 
         # Loop through all files and if the filename contains a ' ' copy it to a location which doesn't contain one.
         # This does have the limitation that all file basenames must not contain a ' ' character.
@@ -408,49 +405,8 @@ class DiracBase(IBackend):
 
         j = self.getJobObject()
 
-        sboxname = j.createPackedInputSandbox(subjobconfig.getSandboxFiles())
-
-        input_sandbox = master_input_sandbox[:]
-        input_sandbox += sboxname
-
-        input_sandbox += self._addition_sandbox_content(subjobconfig)
-
-        ## Add LFN to the inputfiles section of the file
-        input_sandbox_userFiles = []
-        for this_file in j.inputfiles:
-            if isType(this_file, DiracFile):
-                input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
-        if j.master:
-            for this_file in j.master.inputfiles:
-                if isType(this_file, DiracFile):
-                    input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
-
-        for this_file in input_sandbox_userFiles:
-            input_sandbox.append(this_file)
-
-        logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
-        logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
-
-
-        # This is a workaroud for the fact DIRAC doesn't like whitespace in sandbox filenames
-        ### START_WORKAROUND
         tmp_dir = tempfile.mkdtemp()
-
-        # Loop through all files and if the filename contains a ' ' copy it to a location which doesn't contain one.
-        # This does have the limitation that all file basenames must not contain a ' ' character.
-        # However we don't make any in Ganga as of 20/09/16
-        sandbox_str = '['
-        for file_ in input_sandbox:
-            if ' ' in str(file_):
-                new_name = os.path.join(tmp_dir, os.path.basename(file_))
-                shutil.copy(file_, new_name)
-                file_ = new_name
-            sandbox_str += '\'' + str(file_) + '\', '
-        sandbox_str += ']'
-        logger.debug("sandbox_str: %s" % sandbox_str)
-        ### FINISH_WORKAROUND
-
-        dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', sandbox_str)
+        dirac_script = self._job_script(subjobconfig, master_input_sandbox, tmp_dir)
 
         dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
         with open(dirac_script_filename, 'w') as f:

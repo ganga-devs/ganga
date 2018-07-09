@@ -9,7 +9,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaCore import _gangaPythonPath
 import GangaCore.Core
 from GangaCore.Core.GangaRepository import getRegistry
-from GangaCore.Core.InternalServices.ShutdownManager import _ganga_run_exitfuncs
+from GangaCore.Core.InternalServices.ShutdownManager import _protected_ganga_exitfuncs
 
 logger = getLogger(modulename=True)
 
@@ -22,7 +22,7 @@ def ganga_license():
 
 # ------------------------------------------------------------------------------------
 # Setup the shutdown manager
-atexit.register(_ganga_run_exitfuncs)
+atexit.register(_protected_ganga_exitfuncs)
 
 import ganga
 
