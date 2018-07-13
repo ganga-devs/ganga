@@ -158,10 +158,8 @@ conf_config.addOption('AutoStartReg', True, 'AutoStart the registries, needed to
 
 # ------------------------------------------------
 # IPython
-ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration
-See IPython manual for more details:
-http://ipython.scipy.org/doc/manual''')
-ipython_config.addOption('args', "['-colors','LightBG', '-autocall','0', '-pprint']", 'Options to be passed to ipython for initialization')
+ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration''')
+ipython_config.addOption('colourscheme','LightBG', 'Colour scheme to be used by iPython. Options are LightBG, Linux, Neutral, NoColor' )
 
 # ------------------------------------------------
 # Shell
