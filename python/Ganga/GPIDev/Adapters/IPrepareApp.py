@@ -179,7 +179,7 @@ class IPrepareApp(IApplication):
 
         sio = io.StringIO()
         runProxyMethod(self, 'printPrepTree', sio)
-        digest.update(str(sio.getvalue()))
+        digest.update(str(sio.getvalue()).encode())
         tmp = sio.getvalue()
         if verify == False:
             self.hash = digest.hexdigest()

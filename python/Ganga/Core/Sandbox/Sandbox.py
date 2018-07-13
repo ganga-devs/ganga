@@ -3,6 +3,7 @@ import os
 import sys
 import mimetypes
 import Ganga.Utility.logging
+import tarfile
 logger = Ganga.Utility.logging.getLogger(modulename=True)
 
 from .WNSandbox import OUTPUT_TARBALL_NAME, PYTHON_DIR
@@ -65,9 +66,9 @@ def createPackedInputSandbox(sandbox_files, inws, name):
     else:
         file_format = ''
 
-    with open(tgzfile, 'w:%s' % file_format) as this_tarfile:
-        tf = tarfile.open(name=tgzfile, fileobj=this_tarfile, mode="w:gz")
-        tf.dereference = True  # --not needed in Windows
+    with tarfile.open(tgzfile, 'w:%s' % file_format, dereference=True) as tf:
+#        tf = tarfile.open(name=tgzfile, fileobj=this_tarfile, mode="w:gz")
+#        tf.dereference = True  # --not needed in Windows
 
         from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
         from Ganga.GPIDev.Lib.File.File import File
