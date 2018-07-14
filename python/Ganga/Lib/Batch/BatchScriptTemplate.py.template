@@ -80,7 +80,7 @@ sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 import subprocess
 
 fullenvironment = os.environ.copy()
-for key,value in environment.iteritems():
+for key,value in environment.items():
     fullenvironment[key] = value
 
 sysout2 = os.dup(sys.stdout.fileno())
