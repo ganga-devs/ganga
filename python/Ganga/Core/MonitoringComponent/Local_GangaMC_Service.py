@@ -317,7 +317,7 @@ class UpdateDict(object):
         if backend in self.table:
             backendObj, jSet, lock = self.table[backend].updateActionTuple()
         else:  # New backend.
-            self.table[backend] = _DictEntry(backendObj, set(jobList), threading.RLock(), timeoutMax)
+            self.table[backend] = _DictEntry(backendObj, jobList, threading.RLock(), timeoutMax)
             # queue to get processed
             Qin.put(JobAction(backendCheckingFunction, self.table[backend].updateActionTuple()))
             log.debug("**Adding %s to new %s backend entry." % ([stripProxy(x).getFQID('.') for x in jobList], backend))
