@@ -290,6 +290,11 @@ class Job(GangaObject):
             if getConfig('Preparable')['unprepare_on_copy'] is True:
                 self.unprepare()
 
+    def __hash__(self):
+        return hash(self.getFQID('.'))
+    
+    def __eq__(self, other):
+        return self.getFQID('.') == other.getFQID('.')
 
     def _getMasterJob(self):
         parent = self._getParent()
