@@ -317,7 +317,7 @@ class DiracBase(IBackend):
             if (upperlimit-1) == 0:
                 logger.info("Submitting job")
             else:
-                logger.info("Submitting subjobs")
+                logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
 
             try:
                 #Either do the submission in parallel with threads or sequentially
@@ -334,7 +334,7 @@ class DiracBase(IBackend):
             if (upperlimit-1) == 0:
                 logger.info("Submitted job")
             else:
-                logger.info("Submitted subjobs")
+                logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
 
         for i in rjobs:
             if i.status in ["new", "failed"]:
