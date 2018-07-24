@@ -313,7 +313,11 @@ class DiracBase(IBackend):
             upperlimit = (i+1)*nPerProcess
             if upperlimit > len(rjobs) :
                 upperlimit = len(rjobs)
-            logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
+
+            if (upperlimit-1) == 0:
+                logger.info("Submitting job")
+            else:
+                logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
 
             try:
                 #Either do the submission in parallel with threads or sequentially
@@ -327,7 +331,10 @@ class DiracBase(IBackend):
             finally:
                 shutil.rmtree(tmp_dir, ignore_errors = True)
                     
-            logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
+            if (upperlimit-1) == 0:
+                logger.info("Submitted job")
+            else:
+                logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
 
         for i in rjobs:
             if i.status in ["new", "failed"]:
@@ -360,11 +367,22 @@ class DiracBase(IBackend):
 
         input_sandbox += self._addition_sandbox_content(subjobconfig)
 
+        lfns = []
+
         ## Add LFN to the inputfiles section of the file
         if j.master:
             for this_file in j.master.inputfiles:
                 if isType(this_file, DiracFile):
-                    input_sandbox.append('LFN:'+str(this_file.lfn))
+                    lfns.append('LFN:'+str(this_file.lfn))
+        for this_file in j.inputfiles:
+            if isType(this_file, DiracFile):
+                lfns.append('LFN:'+str(this_file.lfn))
+
+        # Make sure we only add unique LFN
+        input_sandbox += set(lfns)
+
+        # Remove duplicates incase the LFN have also been added by any prior step
+        input_sandbox = list(set(input_sandbox))
 
         logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
         logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
