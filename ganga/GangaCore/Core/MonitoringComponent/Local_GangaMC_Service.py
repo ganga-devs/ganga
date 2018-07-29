@@ -4,6 +4,7 @@ import time
 import copy
 from contextlib import contextmanager
 
+from GangaCore import GANGA_SWAN_INTEGRATION
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.Core.GangaRepository import RegistryKeyError, RegistryLockError
 from GangaCore.Core.exceptions import CredentialRenewalError
@@ -523,6 +524,9 @@ class JobRegistry_Monitor(GangaThread):
 
         self._runningNow = False
 
+        if GANGA_SWAN_INTEGRATION:
+            self.newly_discovered_jobs = []
+
     def isEnabled( self, useRunning = True ):
         if useRunning:
             return self.enabled or self.__isInProgress() and not self.steps
@@ -541,6 +545,16 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Starting run method")
 
         while self.alive:
+            if GANGA_SWAN_INTEGRATION:
+                # Monitor Jobs from other sessions
+                new_jobs = stripProxy(self.registry_slice).objects.repository.update_index(True, True)
+                self.newly_discovered_jobs = list(set(self.newly_discovered_jobs) | set(new_jobs))
+                for i in self.newly_discovered_jobs:
+                    j = stripProxy(self.registry_slice(i))
+                    job_status = lazyLoadJobStatus(j)
+                    if job_status in ['new']:
+                        stripProxy(self.registry_slice).objects.repository.load([i])
+
             checkHeartBeat(JobRegistry_Monitor.global_count)
             log.debug("Monitoring Loop is alive")
             # synchronize the main loop since we can get disable requests
@@ -636,6 +650,18 @@ class JobRegistry_Monitor(GangaThread):
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config['base_poll_rate']
 
+    
+    def reloadJob(self, i):
+        """
+        Reload a Job from disk.
+        Parameters:
+        i: Job ID
+        Return:
+            True, if Job is successfully reloaded from disk.
+        """
+        stripProxy(self.registry_slice).objects.repository.load([i])
+        return True
+
     def runMonitoring(self, jobs=None, steps=1, timeout=300):
         """
         Enable/Run the monitoring loop and wait for the monitoring steps completion.
@@ -651,6 +677,17 @@ class JobRegistry_Monitor(GangaThread):
         """
 
         log.debug("runMonitoring")
+
+        if GANGA_SWAN_INTEGRATION:
+            # Detect New Jobs from other sessions.
+            new_jobs = stripProxy(self.registry_slice).objects.repository.update_index(True, True)
+            self.newly_discovered_jobs = list(set(self.newly_discovered_jobs) | set(new_jobs))
+            # Only load jobs from disk which are in new state currently.
+            for i in self.newly_discovered_jobs:
+                j = stripProxy(self.registry_slice(i))
+                job_status = lazyLoadJobStatus(j)
+                if job_status in ['new']:
+                    stripProxy(self.registry_slice).objects.repository.load([i])
 
         if not isType(steps, int) and steps < 0:
             log.warning("The number of monitor steps should be a positive (non-zero) integer")
@@ -941,6 +978,12 @@ class JobRegistry_Monitor(GangaThread):
     def __defaultActiveBackendsFunc(self):
         log.debug("__defaultActiveBackendsFunc")
         active_backends = {}
+        
+        if GANGA_SWAN_INTEGRATION:
+            # Detect new Jobs from other sessions
+            new_jobs = stripProxy(self.registry_slice).objects.repository.update_index(True, True)
+            self.newly_discovered_jobs = list(set(self.newly_discovered_jobs) | set(new_jobs))
+
         # FIXME: this is not thread safe: if the new jobs are added then
         # iteration exception is raised
         fixed_ids = self.registry_slice.ids()
@@ -951,6 +994,12 @@ class JobRegistry_Monitor(GangaThread):
                 j = stripProxy(self.registry_slice(i))
 
                 job_status = lazyLoadJobStatus(j)
+                
+                if GANGA_SWAN_INTEGRATION:
+                    # Load those Jobs from disk which are in new state to check if they are submitted
+                    # in other sessions
+                    if job_status in ['new']:
+                        stripProxy(self.registry_slice).objects.repository.load([i])
 
                 if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
