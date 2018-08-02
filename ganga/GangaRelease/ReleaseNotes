@@ -8,7 +8,6 @@ ganga/ganga/GangaCore
 * Added setting of the IPython shell colourscheme. The config option 'colourscheme' in [TextShell_IPython] can be set to
 'LightBG', 'Linux', 'Neutral', or 'NoColor' .#1302
 
-
 --------------------------------------------------------------------------------------------------------------
 ganga/ganga/GangaDirac
 --------------------------------------------------------------------------------------------------------------
