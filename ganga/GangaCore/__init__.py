@@ -25,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '7.0.2'
+_gangaVersion = '7.1.0'
 _development = True
 
 # store a path to Ganga libraries
@@ -142,7 +142,7 @@ conf_config.addOption('ServerTimeout', 60, 'Timeout in minutes for auto-server s
 conf_config.addOption('ServerUserScript', "", "Full path to user script to call periodically. The script will be executed as if called within Ganga by 'execfile'.")
 conf_config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between executions of the user script")
 
-conf_config.addOption('confirm_exit', 1, 'Ask the user on exit if we should exit, (this is passed along to IPython)')
+conf_config.addOption('confirm_exit', True, 'Ask the user on exit if we should exit, (this is passed along to IPython)')
 conf_config.addOption('force_start', False, 'Ignore disk checking on startup')
 
 conf_config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
@@ -158,10 +158,8 @@ conf_config.addOption('AutoStartReg', True, 'AutoStart the registries, needed to
 
 # ------------------------------------------------
 # IPython
-ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration
-See IPython manual for more details:
-http://ipython.scipy.org/doc/manual''')
-ipython_config.addOption('args', "['-colors','LightBG', '-autocall','0', '-pprint']", 'Options to be passed to ipython for initialization')
+ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration''')
+ipython_config.addOption('colourscheme','LightBG', 'Colour scheme to be used by iPython. Options are LightBG, Linux, Neutral, NoColor' )
 
 # ------------------------------------------------
 # Shell
@@ -525,7 +523,7 @@ sge_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config va
 
 # the -V options means that all environment variables are transferred to
 # the batch job (ie the same as the default behaviour on LSF at CERN)
-sge_config.addOption('submit_str', 'cd %s; qsub -cwd -V %s %s %s %s',
+sge_config.addOption('submit_str', 'cd %s; qsub -cwd -S /usr/bin/python -V %s %s %s %s',
                  "String used to submit job to queue")
 sge_config.addOption('submit_res_pattern', 'Your job (?P<id>\d+) (.+)',
                  "String pattern for replay from the submit command")

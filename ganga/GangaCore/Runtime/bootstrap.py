@@ -32,6 +32,39 @@ from GangaCore.Utility.Config.Config import getConfig
 from GangaCore.Utility import stacktracer
 import GangaCore.Runtime
 
+from IPython.terminal.prompts import Prompts, Token
+class GangaPrompt(Prompts):
+    environment = None
+        # Here __flushCmd evaluates the object in the local_ns with this name to a str
+        # The magic function time here is the builtin time prompt This renders in the same way as:
+        #
+        # -------------------------------------
+        #
+        # [18:45:20]
+        # Ganga In [1]: if True:
+        #          ...:     print("Hello")
+        #          ...:
+        #               Hello
+        #
+        # [18:45:43]
+        # Ganga In [2]:
+        #
+        # -------------------------------------
+
+    def in_prompt_tokens(self, cli = None):
+        from datetime import datetime
+        from GangaCore.Utility.logging import flushAtIPythonPrompt
+        __flushCmd = flushAtIPythonPrompt()
+        return [(Token.Prompt,  str(__flushCmd)+'['+str(datetime.now().strftime("%H:%M:%S"))+']\nGanga In ['.format(GangaPrompt.environment)),
+                (Token.PromptNum, str(self.shell.execution_count)),
+                (Token.Prompt, ']: ')]
+
+    def continuation_prompt_tokens(self, cli = None, width = 4):
+        return [(Token.Prompt, '         ...: ')]
+
+    def out_prompt_tokens(self, cli = None):
+        return [(Token.OutPrompt, 'Ganga Out ['+str(self.shell.execution_count)+']: ')]
+
 def new_version_format_to_old(version):
     """
     Convert from 'x.y.z'-style format to 'Ganga-x-y-z'
@@ -462,7 +495,7 @@ under certain conditions; type license() for details.
         import itertools
         logger = getLogger('ReleaseNotes')
         if getConfig('Configuration')['ReleaseNotes'] == True:
-            packages = itertools.imap(lambda x: 'ganga/ganga/' + x, itertools.ifilter(lambda x: x != '', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
+            packages = itertools.imap(lambda x: 'ganga/ganga/' + x, itertools.ifilter(lambda x: x != '', ['GangaCore'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
             pathname = os.path.join(os.path.dirname(__file__), '..', '..', 'GangaRelease', 'ReleaseNotes-%s' % _gangaVersion)
 
             if not os.path.exists(pathname):
@@ -1101,28 +1134,14 @@ under certain conditions; type license() for details.
                 logger.error("Exiting Ganga now, goodbye!")
                 return
 
-            import GangaCore.Utility.Config
-            ipconfig = GangaCore.Utility.Config.getConfig('TextShell_IPython')
-            args = eval(ipconfig['args'])
-
             # buffering of log messages from all threads called "GANGA_Update_Thread"
             # the logs are displayed at the next IPython prompt
 
             from GangaCore.Utility.logging import enableCaching
             enableCaching()
 
-            ipver = IPython.__version__
-
-            ipver_major = int(ipver[0])
-            ipver_minor = int(ipver[2])
-
-            #if ipver in ["1.2.1", "3.1.0", "3.2.0", "3.2.1", '4.0.0']:
-            if ipver_major > 1 or (ipver_major == 1 and ipver_minor >= 2):
-                self.check_IPythonDir()
-                self.launch_IPython(local_ns, args, GangaProgram._ganga_error_handler, self.ganga_prompt)
-            else:
-                print("Unknown IPython version: %s" % ipver)
-                return
+            self.check_IPythonDir()
+            self.launch_IPython(local_ns, GangaProgram._ganga_error_handler, self.ganga_prompt)
 
         else:
             override_credits()
@@ -1204,66 +1223,32 @@ under certain conditions; type license() for details.
         return None
 
     @staticmethod
-    def launch_IPython(local_ns, args, error_handler, ganga_prompt):
+    def launch_IPython(local_ns, error_handler, ganga_prompt):
         """
         Launch an embedded IPython session within the GangaCore.GPI namespace
         """
 
         import IPython
-        ipver = IPython.__version__
-        ipver_major = int(ipver[0])
 
         # Based on examples/Embedding/embed_class_long.py from the IPython source tree
 
         # First we set up the prompt
-        if ipver_major > 3:
-            # New as of IPython 4
-            from traitlets.config.loader import Config
-        else:
-            # 'Old' Config system
-            from IPython.config.loader import Config
+        from traitlets.config.loader import Config
+        
+        from GangaCore.Utility.Config import getConfig
+        gangaconfig = getConfig('TextShell_IPython')
         cfg = Config()
-        cfg.TerminalInteractiveShell.colors = 'LightBG'
+        cfg.TerminalInteractiveShell.colors = gangaconfig['colourscheme']
         cfg.TerminalInteractiveShell.autocall = 0
         cfg.PlainTextFormatter.pprint = True
         banner = exit_msg = ''
-
-
-        prompt_config = cfg.PromptManager
-        # Here __flushCmd evaluates the object in the local_ns with this name to a str
-        # The magic function time here is the builtin time prompt This renders in the same way as:
-        #
-        # -------------------------------------
-        #
-        # [18:45:20]
-        # Ganga In [1]: if True:
-        #          ...:     print("Hello")
-        #          ...:
-        #               Hello
-        #
-        # [18:45:43]
-        # Ganga In [2]:
-        #
-        # -------------------------------------
-        prompt_config.in_template = '{__flushCmd}[{time}]\nGanga In [\\#]: '
-        prompt_config.in2_template = '         .\\D.: '
-        prompt_config.out_template = 'Ganga Out [\\#]: '
-
-        # Add the flush command into the local_ns
-        from GangaCore.Utility.logging import flushAtIPythonPrompt
-        __flushCmd = flushAtIPythonPrompt()
-        local_ns['__flushCmd'] = __flushCmd
+        cfg.TerminalInteractiveShell.prompts_class = GangaPrompt
 
         # Import the embed function
         from IPython.terminal.embed import InteractiveShellEmbed
 
-        ## Check which version of IPython we're running
-        if ipver_major >= 2:
-            ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
-            ipshell.events.register("post_execute", ganga_prompt)
-        else:
-            ipshell = InteractiveShellEmbed(config=cfg, banner1=banner, exit_msg=exit_msg)
-            ipshell.set_hook("pre_run_code_hook", ganga_prompt)
+        ipshell = InteractiveShellEmbed(config=cfg, banner1=banner, exit_msg=exit_msg)
+        ipshell.events.register("post_execute", ganga_prompt)
 
         # Add our custom error handler to ignore stack traces for GangaExceptions
         ipshell.set_custom_exc((Exception,), error_handler)
@@ -1274,8 +1259,8 @@ under certain conditions; type license() for details.
         enableCaching()
 
         # Magic ganga function for replacing 'execfile'
-        from GangaCore.Runtime.IPythonMagic import magic_ganga
-        ipshell.define_magic('ganga', magic_ganga)
+        from GangaCore.Runtime.IPythonMagic import GangaMagics
+        ipshell.register_magics(GangaMagics)
 
         # Setting up the confirmation of exit on Ctrl+D this prompt annoys some users(developers)
         from GangaCore.Utility.Config.Config import getConfig
@@ -1285,6 +1270,7 @@ under certain conditions; type license() for details.
         # Launch embedded shell
         from GangaCore import GPI
         ipshell(local_ns=local_ns, module=GangaCore.GPI)
+
 
     @staticmethod
     def ganga_prompt(_=None):
