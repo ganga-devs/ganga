@@ -326,7 +326,7 @@ class DiracBase(IBackend):
                     time.sleep(1.)
             finally:
                 shutil.rmtree(tmp_dir, ignore_errors = True)
-
+                    
             logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
 
         for i in rjobs:
