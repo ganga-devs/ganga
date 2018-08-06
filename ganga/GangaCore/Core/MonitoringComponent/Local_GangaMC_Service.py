@@ -470,7 +470,7 @@ def get_jobs_in_bunches(jobList_fromset, blocks_of_size=5, stripProxies=True):
 
 
 class JobRegistry_Monitor(GangaThread):
-
+    """Job monitoring service thread."""
     
     uPollRate = 1.
     minPollRate = 1.
