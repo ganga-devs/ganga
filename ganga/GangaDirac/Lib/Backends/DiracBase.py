@@ -326,7 +326,7 @@ class DiracBase(IBackend):
                     time.sleep(1.)
             finally:
                 shutil.rmtree(tmp_dir, ignore_errors = True)
-            logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))                    
+            logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
 
         for i in rjobs:
             if i.status in ["new", "failed"]:
@@ -363,7 +363,7 @@ class DiracBase(IBackend):
         if j.master:
             for this_file in j.master.inputfiles:
                 if isType(this_file, DiracFile):
-                    input_sandbox.append('LFN:'+str(this_file.lfn))        
+                    input_sandbox.append('LFN:'+str(this_file.lfn))
 
         logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
         logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
