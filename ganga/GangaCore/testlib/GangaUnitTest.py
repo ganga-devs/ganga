@@ -303,6 +303,8 @@ class GangaUnitTest(unittest.TestCase):
         TODO, would it be better to move the folder first, then remove it incase of broken locks etc,?
         """
         shutil.rmtree(cls.gangadir(), ignore_errors=True)
+        if hasattr(cls, 'setUpTest'):
+            cls.setUpTest()
 
     def setUp(self, extra_opts=[]):
         """
@@ -345,4 +347,7 @@ class GangaUnitTest(unittest.TestCase):
             shutil.rmtree(cls._test_dir, ignore_errors=True)
         cls._test_dir = ''
         cls._test_args = {}
+
+        if hasattr(cls, 'tearDownTest'):
+            cls.tearDownTest()
 
