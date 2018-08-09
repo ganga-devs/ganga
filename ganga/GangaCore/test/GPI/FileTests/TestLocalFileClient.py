@@ -44,10 +44,13 @@ class TestLocalFileClient(GangaUnitTest):
             j.remove()
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownTest(cls):
         """ Cleanup the current temp objects """
         for file_ in TestLocalFileClient._managed_files:
-            os.unlink(file_)
+            if os.path.isfile(file_):
+                os.unlink(file_)
+            else:
+                print("ERROR REMOVING FILE: '%s'" % str(file_))
         TestLocalFileClient._managed_files = []
 
     def test_a_testClientSideSubmit(self):

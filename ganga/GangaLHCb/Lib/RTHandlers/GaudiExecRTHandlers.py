@@ -7,7 +7,6 @@ import random
 import threading
 import uuid
 import shutil
-
 from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException, GangaFileError
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -510,12 +509,11 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         for opts_file in all_opts_files:
             if isinstance(opts_file, DiracFile):
                 inputsandbox += ['LFN:'+opts_file.lfn]
-
         # Sort out inputfiles we support
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
                 inputsandbox += ['LFN:'+file_.lfn]
-            if isinstance(file_, LocalFile):
+            elif isinstance(file_, LocalFile):
                 if job.master is not None and file_ not in job.master.inputfiles:
                     shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())
                     inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
@@ -536,6 +534,11 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         inputsandbox += ['LFN:'+app.uploadedInput.lfn]
         inputsandbox += ['LFN:'+app.jobScriptArchive.lfn]
+
+        #Now add in the missing DiracFiles from the master job
+        for file_ in master_job.inputfiles:
+            if isinstance(file_, DiracFile) and 'LFN:'+file_.lfn not in inputsandbox:
+                inputsandbox += ['LFN:'+file_.lfn]
 
         logger.debug("Input Sand: %s" % inputsandbox)
 

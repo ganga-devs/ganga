@@ -4,6 +4,7 @@ import time
 import copy
 from contextlib import contextmanager
 
+from GangaCore import GANGA_SWAN_INTEGRATION
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.Core.GangaRepository import RegistryKeyError, RegistryLockError
 from GangaCore.Core.exceptions import CredentialRenewalError
@@ -361,8 +362,9 @@ class UpdateDict(object):
         entry.jobSet = set()
         entry.timeoutCounter = entry.timeoutCounterMax
 
-    def timeoutCheck(self):
-        for backend, entry in self.table.items():
+    @staticmethod
+    def timeoutCheck(thisDict):
+        for backend, entry in thisDict.table.items():
             # timeoutCounter is reset to its max value ONLY by a successful update action.
             #
             # Initial value and subsequent resets by timeoutCheck() will set the timeoutCounter
@@ -469,8 +471,8 @@ def get_jobs_in_bunches(jobList_fromset, blocks_of_size=5, stripProxies=True):
 
 
 class JobRegistry_Monitor(GangaThread):
-
     """Job monitoring service thread."""
+    
     uPollRate = 1.
     minPollRate = 1.
     global_count = 0
@@ -504,11 +506,11 @@ class JobRegistry_Monitor(GangaThread):
         # Add credential checking to monitoring loop
         for afsToken in credential_store.get_all_matching_type(AfsToken()):
             log.debug("Setting callback hook for %s" % afsToken.location)
-            self.setCallbackHook(self.makeCredCheckJobInsertor(afsToken), {}, True, timeout=config['creds_poll_rate'])
+            self.setCallbackHook(JobRegistry_Monitor.makeCredCheckJobInsertor, {'thisMonitor': self, 'credObj': afsToken}, True, timeout=config['creds_poll_rate'])
 
         # Add low disk-space checking to monitoring loop
         log.debug("Setting callback hook for disk space checking")
-        self.setCallbackHook(self.diskSpaceCheckJobInsertor, {}, True, timeout=config['diskspace_poll_rate'])
+        self.setCallbackHook(JobRegistry_Monitor.diskSpaceCheckJobInsertor, {'thisMonitor': self}, True, timeout=config['diskspace_poll_rate'])
 
         # synch objects
         # main loop mutex
@@ -522,6 +524,9 @@ class JobRegistry_Monitor(GangaThread):
         self.stopIter.set()
 
         self._runningNow = False
+
+        if GANGA_SWAN_INTEGRATION:
+            self.newly_discovered_jobs = []
 
     def isEnabled( self, useRunning = True ):
         if useRunning:
@@ -541,10 +546,24 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Starting run method")
 
         while self.alive:
+            if GANGA_SWAN_INTEGRATION:
+                # Monitor Jobs from other sessions
+                new_jobs = stripProxy(self.registry_slice).objects.repository.update_index(True, True)
+                self.newly_discovered_jobs = list(set(self.newly_discovered_jobs) | set(new_jobs))
+                for i in self.newly_discovered_jobs:
+                    j = stripProxy(self.registry_slice(i))
+                    job_status = lazyLoadJobStatus(j)
+                    if job_status in ['new']:
+                        stripProxy(self.registry_slice).objects.repository.load([i])
+
             checkHeartBeat(JobRegistry_Monitor.global_count)
             log.debug("Monitoring Loop is alive")
             # synchronize the main loop since we can get disable requests
             with self.__mainLoopCond:
+
+                log.debug("steps: %s" % str(self.steps))
+                log.debug("%s" % str(self.registry_slice))
+
                 log.debug("Monitoring loop __mainLoopCond")
                 log.debug('Monitoring loop lock acquired. Running loop')
                 # we are blocked here while the loop is disabled
@@ -562,6 +581,8 @@ class JobRegistry_Monitor(GangaThread):
 
                 log.debug("Launching Monitoring Step")
                 self.__monStep()
+
+                log.debug("Finished Step")
 
                 # delay here the monitoring steps according to the
                 # configuration
@@ -624,17 +645,37 @@ class JobRegistry_Monitor(GangaThread):
                 log.debug("Running monitoring callback hook function %s(**%s)" %(cbHookFunc, cbHookEntry.argDict))
                 #self.callbackHookDict[cbHookFunc][0](**cbHookEntry.argDict)
                 try:
-                    self.callbackHookDict[cbHookFunc][0](**cbHookEntry.argDict)
+                    if 'self' in cbHookEntry.argDict:
+                        _argDict = copy.copy(cbHookEntry.argDict)
+                        __self = _argDict['self']
+                        del _argDict['self']
+                        (self.callbackHookDict[cbHookFunc][0])(self=__self, **(_argDict))
+                    else:
+                        (self.callbackHookDict[cbHookFunc][0])(**(cbHookEntry.argDict))
                 except Exception as err:
-                    log.debug("Caught Unknown Callback Exception")
-                    log.debug("Callback %s" % str(err))
+                    log.error("Caught Unknown Callback Exception")
+                    log.error("Callback:\n %s" % str(err))
                 cbHookEntry._lastRun = time.time()
 
         log.debug("\n\nRunning runClientCallbacks")
         self.runClientCallbacks()
 
+        log.debug("Finished runClientCallbacks")
+
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config['base_poll_rate']
+
+    
+    def reloadJob(self, i):
+        """
+        Reload a Job from disk.
+        Parameters:
+        i: Job ID
+        Return:
+            True, if Job is successfully reloaded from disk.
+        """
+        stripProxy(self.registry_slice).objects.repository.load([i])
+        return True
 
     def runMonitoring(self, jobs=None, steps=1, timeout=300):
         """
@@ -651,6 +692,17 @@ class JobRegistry_Monitor(GangaThread):
         """
 
         log.debug("runMonitoring")
+
+        if GANGA_SWAN_INTEGRATION:
+            # Detect New Jobs from other sessions.
+            new_jobs = stripProxy(self.registry_slice).objects.repository.update_index(True, True)
+            self.newly_discovered_jobs = list(set(self.newly_discovered_jobs) | set(new_jobs))
+            # Only load jobs from disk which are in new state currently.
+            for i in self.newly_discovered_jobs:
+                j = stripProxy(self.registry_slice(i))
+                job_status = lazyLoadJobStatus(j)
+                if job_status in ['new']:
+                    stripProxy(self.registry_slice).objects.repository.load([i])
 
         if not isType(steps, int) and steps < 0:
             log.warning("The number of monitor steps should be a positive (non-zero) integer")
@@ -696,9 +748,9 @@ class JobRegistry_Monitor(GangaThread):
                     log.warning('runMonitoring: jobs argument must be a registry slice such as a result of jobs.select() or jobs[i1:i2]')
                     return False
 
-                self.registry_slice = m_jobs
+                #self.registry_slice = m_jobs
                 #log.debug("m_jobs: %s" % str(m_jobs))
-                self.makeUpdateJobStatusFunction()
+                self.makeUpdateJobStatusFunction(jobSlice=m_jobs)
 
             log.debug("Enable Loop, Clear Iterators and setCallbackHook")
             # enable mon loop
@@ -708,7 +760,7 @@ class JobRegistry_Monitor(GangaThread):
             # enable job list iterators
             self.stopIter.clear()
             # Start backend update timeout checking.
-            self.setCallbackHook(self.updateDict_ts.timeoutCheck, {}, True)
+            self.setCallbackHook(UpdateDict.timeoutCheck, {'thisDict': self.updateDict_ts}, True)
 
             log.debug("Waking up Main Loop")
             # wake up the mon loop
@@ -746,7 +798,7 @@ class JobRegistry_Monitor(GangaThread):
             self.stopIter.clear()
             log.debug('Monitoring loop enabled')
             # Start backend update timeout checking.
-            self.setCallbackHook(self.updateDict_ts.timeoutCheck, {}, True)
+            self.setCallbackHook(UpdateDict.timeoutCheck, {'thisDict': self.updateDict_ts}, True)
             self.__mainLoopCond.notifyAll()
 
         return True
@@ -891,6 +943,8 @@ class JobRegistry_Monitor(GangaThread):
         func_name = getName(func)
         log.debug('Setting Callback hook function %s.' % func_name)
         log.debug('arg dict: %s' % str(argDict))
+        #if 'self' not in argDict:
+        #    argDict['self'] = self
         if func_name in self.callbackHookDict:
             log.debug('Replacing existing callback hook function %s with %s' % (str(self.callbackHookDict[func_name]), func_name))
         self.callbackHookDict[func_name] = [func, CallbackHookEntry(argDict=argDict, enabled=enabled, timeout=timeout)]
@@ -938,19 +992,35 @@ class JobRegistry_Monitor(GangaThread):
         else:
             log.error("%s not found in client callback dictionary." % getName(clientFunc))
 
-    def __defaultActiveBackendsFunc(self):
+    def __defaultActiveBackendsFunc(self, jobSlice=None):
         log.debug("__defaultActiveBackendsFunc")
         active_backends = {}
+        
+        if GANGA_SWAN_INTEGRATION:
+            # Detect new Jobs from other sessions
+            new_jobs = stripProxy(self.registry_slice).objects.repository.update_index(True, True)
+            self.newly_discovered_jobs = list(set(self.newly_discovered_jobs) | set(new_jobs))
+
         # FIXME: this is not thread safe: if the new jobs are added then
         # iteration exception is raised
-        fixed_ids = self.registry_slice.ids()
+        if jobSlice is not None:
+            fixed_ids = jobSlice.ids()
+        else:
+            fixed_ids = self.registry_slice.ids()
         #log.debug("Registry: %s" % str(self.registry_slice))
         log.debug("Running over fixed_ids: %s" % str(fixed_ids))
         for i in fixed_ids:
             try:
+                # This is safe as it's addressing a job which _better_ be in the job repo
                 j = stripProxy(self.registry_slice(i))
 
                 job_status = lazyLoadJobStatus(j)
+                
+                if GANGA_SWAN_INTEGRATION:
+                    # Load those Jobs from disk which are in new state to check if they are submitted
+                    # in other sessions
+                    if job_status in ['new']:
+                        stripProxy(self.registry_slice).objects.repository.load([i])
 
                 if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
@@ -1092,10 +1162,14 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Finishing _checkBackend")
         return
 
-    def _checkActiveBackends(self, activeBackendsFunc):
+    @staticmethod
+    def _checkActiveBackends(thisMonitor, activeBackendsFunc, jobSlice):
 
         log.debug("calling function _checkActiveBackends")
-        activeBackends = activeBackendsFunc()
+        if jobSlice is None:
+            activeBackends = activeBackendsFunc()
+        else:
+            activeBackends = activeBackendsFunc(jobSlice=jobSlice)
 
         summary = '{'
         for this_backend, these_jobs in activeBackends.iteritems():
@@ -1121,13 +1195,13 @@ class JobRegistry_Monitor(GangaThread):
             #       of the particular backend is satisfied.
             #       This requires backends to hold relevant information on its
             #       credential requirements.
-            #log.debug("addEntry: %s, %s, %s, %s" % (str(backendObj), str(self._checkBackend), str(jList), str(pRate)))
-            self.updateDict_ts.addEntry(backendObj, self._checkBackend, jList, pRate)
+            #log.debug("addEntry: %s, %s, %s, %s" % (str(backendObj), str(thisMonitor._checkBackend), str(jList), str(pRate)))
+            thisMonitor.updateDict_ts.addEntry(backendObj, thisMonitor._checkBackend, jList, pRate)
             summary = str([stripProxy(x).getFQID('.') for x in jList])
             log.debug("jList: %s" % str(summary))
 
 
-    def makeUpdateJobStatusFunction(self, makeActiveBackendsFunc=None):
+    def makeUpdateJobStatusFunction(self, makeActiveBackendsFunc=None, jobSlice=None):
         log.debug("makeUpdateJobStatusFunction")
         if makeActiveBackendsFunc is None:
             makeActiveBackendsFunc = self.__defaultActiveBackendsFunc
@@ -1135,29 +1209,30 @@ class JobRegistry_Monitor(GangaThread):
         if self.updateJobStatus is not None:
             self.removeCallbackHook(self.updateJobStatus)
         self.updateJobStatus = self._checkActiveBackends
-        self.setCallbackHook(self._checkActiveBackends, {'activeBackendsFunc': makeActiveBackendsFunc}, True)
+        self.setCallbackHook(self._checkActiveBackends, {'thisMonitor': self, 'activeBackendsFunc': makeActiveBackendsFunc, 'jobSlice': jobSlice}, True)
         log.debug("Returning")
         return self.updateJobStatus
 
-    def makeCredCheckJobInsertor(self, credObj):
+    @staticmethod
+    def makeCredCheckJobInsertor(thisMonitor, credObj):
         def credCheckJobInsertor():
             def cb_Success():
-                self.enableCallbackHook(credCheckJobInsertor)
+                thisMonitor.enableCallbackHook(credCheckJobInsertor)
 
             def cb_Failure():
-                self.enableCallbackHook(credCheckJobInsertor)
-                self._handleError('%s checking failed!' % getName(credObj), getName(credObj), False)
+                thisMonitor.enableCallbackHook(credCheckJobInsertor)
+                thisMonitor._handleError('%s checking failed!' % getName(credObj), getName(credObj), False)
 
             log.debug('Inserting %s checking function to Qin.' % getName(credObj))
-            _action = JobAction(function=self.makeCredChecker(credObj),
+            _action = JobAction(function=thisMonitor.makeCredChecker(credObj),
                                 callback_Success=cb_Success,
                                 callback_Failure=cb_Failure)
-            self.disableCallbackHook(credCheckJobInsertor)
+            thisMonitor.disableCallbackHook(credCheckJobInsertor)
             try:
                 Qin.put(_action)
             except Exception as err:
-                log.debug("makeCred Err: %s" % str(err))
-                cb_Failure("Put _action failure: %s" % str(_action), "unknown", True )
+               log.debug("makeCred Err: %s" % str(err))
+               cb_Failure("Put _action failure: %s" % str(_action), "unknown", True )
         return credCheckJobInsertor
 
     def makeCredChecker(self, credObj):
@@ -1175,22 +1250,23 @@ class JobRegistry_Monitor(GangaThread):
                 return True
         return credChecker
 
-    def diskSpaceCheckJobInsertor(self):
+    @staticmethod
+    def diskSpaceCheckJobInsertor(thisMonitor):
         """
         Inserts the disk space checking task in the monitoring task queue
         """
         def cb_Success():
-            self.enableCallbackHook(self.diskSpaceCheckJobInsertor)
+            thisMonitor.enableCallbackHook(thisMonitor.diskSpaceCheckJobInsertor)
 
         def cb_Failure():
-            self.disableCallbackHook(self.diskSpaceCheckJobInsertor)
-            self._handleError('Available disk space checking failed and it has been disabled!', 'DiskSpaceChecker', False)
+            thisMonitor.disableCallbackHook(thisMonitor.diskSpaceCheckJobInsertor)
+            thisMonitor._handleError('Available disk space checking failed and it has been disabled!', 'DiskSpaceChecker', False)
 
         log.debug('Inserting disk space checking function to Qin.')
         _action = JobAction(function=Coordinator._diskSpaceChecker,
                             callback_Success=cb_Success,
                             callback_Failure=cb_Failure)
-        self.disableCallbackHook(self.diskSpaceCheckJobInsertor)
+        thisMonitor.disableCallbackHook(thisMonitor.diskSpaceCheckJobInsertor)
         try:
             Qin.put(_action)
         except Exception as err:

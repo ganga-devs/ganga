@@ -7,7 +7,7 @@ import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
-_gangaVersion = '7.0.2'
+_gangaVersion = '7.1.0'
 
 def version():
     return _gangaVersion
@@ -86,19 +86,18 @@ setup(name='ganga',
       package_dir={'ganga':'ganga', 'GangaRelease':'ganga/GangaRelease', 'GangaTemplates':'ganga/GangaTemplates'},
       packages=pythonPackages,
       install_requires=[
-          'ipython==1.2.1',
+          'ipython>=5.0.0',
           'httplib2>=0.8',
-          'python-gflags>=2.0',
+          'absl-py>=0.1.2',
           'google-api-python-client>=1.1',
           'stomp.py>=3.1.7',
       ],
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-          'Programming Language :: Python :: 2.6',
           'Programming Language :: Python :: 2.7',
       ],
       include_package_data=True,
-      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*'], 'GangaTemplates':['*.INI']},
+      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh', 'tools/ganga-cvmfs-install-dev.sh'], 'GangaTemplates':['*.INI']},
       cmdclass={
           'tests': RunTestsCommand,
       },

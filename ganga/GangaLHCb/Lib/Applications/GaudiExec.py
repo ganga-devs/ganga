@@ -238,7 +238,8 @@ class GaudiExec(IPrepareApp):
                     # NB safe to put it here as should have expressly setup a path for this job by now.
                     # We cannot _not_ place this here based upon the backend.
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
-                    opts_file.get(localPath=self.getSharedPath())
+                    opts_file.localDir=self.getSharedPath()
+                    opts_file.get()
                 else:
                     raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
@@ -439,7 +440,7 @@ class GaudiExec(IPrepareApp):
         if rc != 0:
             logger.error("Failed to execute command: %s" % cmd_file.name)
             logger.error("Tried to execute command in: %s" % self.directory)
-            logger.error("StdErr: %s" % str(stderr))
+            logger.error("StdErr: %s" % str(stdout))
             raise GangaException("Failed to Execute command")
 
         unlink(cmd_file.name)
