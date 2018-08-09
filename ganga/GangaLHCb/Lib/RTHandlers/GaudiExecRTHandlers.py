@@ -62,6 +62,19 @@ def genDataFiles(job):
     return inputsandbox
 
 
+def getAutoDBTags(job):
+    knownApps = ['DaVinci', 'Brunel', 'Moore']
+    prefix = 'DaVinci'
+    for app in knownApps:
+        if app in job.application.directory:
+            prefix = app
+    inputsandbox = []
+    ddb, conddb = execute('getDDBtags("{0}")'.format(job.inputdata[0].lfn)) # take the tags only from the first file
+    tagOpts = 'from Configurables import ' + prefix +'\n' 
+    tagOpts += prefix + '().DDDBtag = ' + "'" + ddb + "'\n"
+    tagOpts += prefix + '().CondDBtag = ' + "'" + conddb + "'"
+    return tagOpts
+
 def generateWrapperScript(app):
     """
     This generates the wrapper script which is run for non GaudiExec type apps
@@ -150,7 +163,9 @@ def prepareCommand(app):
         if app.extraOpts:
             full_cmd += ' ' + app.getExtraOptsFileName()
         if app.getMetadata:
-            full_cmd += ' summary.py' 
+            full_cmd += ' summary.py'
+        if app.autoDBtags:
+            full_cmd += ' dbTags.py'
         if app.extraArgs:
             full_cmd += " " + " ".join(app.extraArgs)
 
@@ -183,6 +198,10 @@ class GaudiExecRTHandler(IRuntimeHandler):
         if app.getMetadata:
             logger.info("Adding options to make the summary.xml")
             inputsandbox.append(FileBuffer('summary.py', "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"))
+
+        if app.autoDBtags:
+            logger.info("Adding options for auto DB tags")
+            inputsandbox.append(FileBuffer('dbTags.py', getAutoDBTags(app.getJobObject())))
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
@@ -311,6 +330,12 @@ def generateJobScripts(app, appendJobScripts):
                 summaryFile = FileBuffer(summaryPath, summaryScript)
                 summaryFile.create()
                 tar_file.add(summaryPath, arcname = 'summary.py')
+            if app.autoDBtags:
+                dbScript = getAutoDBTags(job)
+                dbPath = os.path.join(job.getInputWorkspace().getPath(), 'dbTags.py')
+                dbFile = FileBuffer(dbPath, dbScript)
+                dbFile.create()
+                tar_file.add(dbPath, arcname = 'dbTags.py')
             for this_job in rjobs:
                 this_app = this_job.application
                 wnScript = generateWNScript(prepareCommand(this_app), this_app)
