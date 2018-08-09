@@ -405,25 +405,3 @@ def checkSEStatus(se, access = 'Write'):
     result = dirac.checkSEAccess(se, access)
     return result
 
-@diracCommand
-def getDDBtags( lfn ):
-    ''' returns the DDB and CONDDB tags of the last 
-	production step for a given LFN 
-    '''
-    from LHCbDIRAC.BookkeepingSystem.Client.BookkeepingClient import BookkeepingClient
-    import types
-    bk = BookkeepingClient()
-    prod = long(lfn.split('/')[5]) # not sure if this works in all cases 
-    res = bk.getProductionInformations( prod )
-    ddb = ''
-    conddb = ''
-    if res['OK']: # there should probably also be an 'else' for cases where no information could be retrieved 
-        val = res['Value']
-	steps = val['Steps']
-	last_step = steps[-1] # the tags are taken from the last step of production
-	ddb = last_step[4]
-	conddb = last_step[5]
-	return ddb, conddb
-    
-
-
