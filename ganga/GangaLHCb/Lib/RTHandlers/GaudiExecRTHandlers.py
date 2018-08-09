@@ -69,7 +69,7 @@ def getAutoDBTags(job):
         if app in job.application.directory:
             prefix = app
     inputsandbox = []
-    ddb, conddb = execute('getDDBtags("{0}")'.format(job.inputdata[0].lfn)) # take the tags only from the first file
+    ddb, conddb = execute('getDBtags("{0}")'.format(job.inputdata[0].lfn)) # take the tags only from the first file
     tagOpts = 'from Configurables import ' + prefix +'\n' 
     tagOpts += prefix + '().DDDBtag = ' + "'" + ddb + "'\n"
     tagOpts += prefix + '().CondDBtag = ' + "'" + conddb + "'"
