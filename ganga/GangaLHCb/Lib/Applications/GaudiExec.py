@@ -208,6 +208,7 @@ class GaudiExec(IPrepareApp):
         Args:
             force (bool): Forces a prepare to be run
         """
+
         if (self.is_prepared is not None) and not force:
             raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
 
