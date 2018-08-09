@@ -89,14 +89,14 @@ def getDBtags( lfn ):
     bk = BookkeepingClient()
     prod = long(lfn.split('/')[5]) # not sure if this works in all cases 
     res = bk.getProductionInformations( prod )
-    ddb = ''
+    dddb = ''
     conddb = ''
     if res['OK']: # there should probably also be an 'else' for cases where no information could be retrieved 
         val = res['Value']
 	steps = val['Steps']
 	last_step = steps[-1] # the tags are taken from the last step of production
-	ddb = last_step[4]
+	dddb = last_step[4]
 	conddb = last_step[5]
-	return ddb, conddb
+	return dddb, conddb
     
 
