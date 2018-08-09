@@ -26,7 +26,6 @@ from GangaCore.Utility.files import expandfilename, fullpath
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
-from GangaDirac.Lib.Utilities.DiracUtilities import execute 
 
 from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampContent, gaudiPythonWrapper
 
@@ -311,10 +310,6 @@ class GaudiExec(IPrepareApp):
             # Add the extra opts file to the job
             tinfo = tarfile.TarInfo(extra_opts_file)
             tinfo.mtime = time.time()
-#	    if self.autoDBtags:
-#		ddb, conddb = execute('getDDBtags("{0}")'.format(job.inputdata[0].lfn)) # take the tags only from the first file
-#		self.extraOpts += '"' + 'DaVinci().DDDBtag = '   + "'" + ddb    + "'" + ';"' 
-#		self.extraOpts += '"' + 'DaVinci().CondDBtag = ' + "'" + conddb + "'" + ';"' 
             fileobj = StringIO(self.extraOpts)
             tinfo.size = fileobj.len
             tar_file.addfile(tinfo, fileobj)
