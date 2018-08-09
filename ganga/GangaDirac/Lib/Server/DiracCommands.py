@@ -77,6 +77,7 @@ def getAccessURL(lfn, SE, protocol=False):
     ''' Return the access URL for the given LFN, storage element and protocol. The protocol should be in the form of a list '''
     return dirac.getAccessURL(lfn, SE, False, protocol)
 
+
 @diracCommand
 def getFile(lfns, destDir=''):
     ''' Put the physical file behind the LFN in the destDir path'''
@@ -404,4 +405,3 @@ def checkSEStatus(se, access = 'Write'):
     '''
     result = dirac.checkSEAccess(se, access)
     return result
-
