@@ -1215,23 +1215,25 @@ class JobRegistry_Monitor(GangaThread):
 
     @staticmethod
     def makeCredCheckJobInsertor(thisMonitor, credObj):
-        def cb_Success():
-            thisMonitor.enableCallbackHook(credCheckJobInsertor)
+        def credCheckJobInsertor():
+            def cb_Success():
+                thisMonitor.enableCallbackHook(credCheckJobInsertor)
 
-        def cb_Failure():
-            thisMonitor.enableCallbackHook(credCheckJobInsertor)
-            thisMonitor._handleError('%s checking failed!' % getName(credObj), getName(credObj), False)
+            def cb_Failure():
+                thisMonitor.enableCallbackHook(credCheckJobInsertor)
+                thisMonitor._handleError('%s checking failed!' % getName(credObj), getName(credObj), False)
 
-        log.debug('Inserting %s checking function to Qin.' % getName(credObj))
-        _action = JobAction(function=thisMonitor.makeCredChecker(credObj),
-                            callback_Success=cb_Success,
-                            callback_Failure=cb_Failure)
-        thisMonitor.disableCallbackHook(credCheckJobInsertor)
-        try:
-            Qin.put(_action)
-        except Exception as err:
-           log.debug("makeCred Err: %s" % str(err))
-           cb_Failure("Put _action failure: %s" % str(_action), "unknown", True )
+            log.debug('Inserting %s checking function to Qin.' % getName(credObj))
+            _action = JobAction(function=thisMonitor.makeCredChecker(credObj),
+                                callback_Success=cb_Success,
+                                callback_Failure=cb_Failure)
+            thisMonitor.disableCallbackHook(credCheckJobInsertor)
+            try:
+                Qin.put(_action)
+            except Exception as err:
+               log.debug("makeCred Err: %s" % str(err))
+               cb_Failure("Put _action failure: %s" % str(_action), "unknown", True )
+        return credCheckJobInsertor
 
     def makeCredChecker(self, credObj):
         def credChecker():
