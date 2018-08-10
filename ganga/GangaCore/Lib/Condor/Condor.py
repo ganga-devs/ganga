@@ -138,7 +138,6 @@ class Condor(IBackend):
         super(Condor, self).__init__()
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
-        print 'not doing a lot'
 
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
@@ -148,22 +147,18 @@ class Condor(IBackend):
 
         #If there are no subjobs then submit regularly
         if len(subjobconfigs)==1:
-            print 'no subjobs!'
             return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
 
         #Otherwise submit lots of jobs more sensibly
-        print 'loadsa jobs!'
         master_input_sandbox = self.master_prepare(masterjobconfig)
         cdfString = self.cdfPreamble(masterjobconfig, master_input_sandbox)
         for sc, sj in zip(subjobconfigs, rjobs):
             sj.updateStatus('submitting')
             cdfString +=  self.prepareSubjob(sj, sc, master_input_sandbox)
             cdfString += '\n\n'
-        print 'cdfString: ', cdfString
         self.getJobObject().getInputWorkspace().writefile(FileBuffer("__cdf__", cdfString))
 
         status = self.submit_multicdf(os.path.join(self.getJobObject().getInputWorkspace().getPath(),"__cdf__"))
-        print status
         for sj in rjobs:
             sj.backend.id = status[str(sj.id)]
             sj.updateStatus('submitted')
@@ -196,7 +191,6 @@ class Condor(IBackend):
         commandString = " ".join(commandList)
 
         status, output = commands.getstatusoutput(commandString)
-        print 'output: ', output
 
         self.id = ""
         returnIDs = {}
@@ -218,7 +212,6 @@ class Condor(IBackend):
                     localID = item.strip(":").split()[2]
                     jobsDict[str(localID)] = {}
                     idString += str(localID) + ' '
-                    print 'localID: ', localID
                     continue
                 #If we have found the local ID add the subsequent lines to the dict for that localID
                 if localID != 0 and ' = ' in item:
@@ -230,11 +223,8 @@ class Condor(IBackend):
             qstatus, qoutput = commands.getstatusoutput(queryCommand)
             queries = idString.rstrip().split(' ')
             returns = qoutput.rstrip().split(' ')
-            print 'qoutput: ', qoutput
             localToGlobal = zip(queries, returns)
-            print 'localToGlobal: ', localToGlobal
             for q in localToGlobal:
-                print 'q: ', q
                 sjIndex = jobsDict[q[0]]['Iwd'].split('/').index(str(self.getJobObject().id)) + 1
                 sjNo = jobsDict[q[0]]['Iwd'].split('/')[sjIndex]
                 returnIDs[sjNo] = q[1]
@@ -257,7 +247,6 @@ class Condor(IBackend):
         commandString = " ".join(commandList)
 
         status, output = commands.getstatusoutput(commandString)
-        print 'output: ', output
 
         self.id = ""
         if 0 != status:
@@ -274,8 +263,6 @@ class Condor(IBackend):
                     queryCommand = " ".join\
                         (["condor_q -format \"%s\" GlobalJobId", localId])
                     qstatus, qoutput = commands.getstatusoutput(queryCommand)
-                    print 'qstatus: ', qstatus
-                    print 'qoutput: ', qoutput
                     if 0 != status:
                         logger.warning\
                             ("Problem determining global id for Condor job '%s'" %
