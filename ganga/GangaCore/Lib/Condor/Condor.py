@@ -137,6 +137,40 @@ class Condor(IBackend):
 
         super(Condor, self).__init__()
 
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
+        print 'not doing a lot'
+
+        logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
+        logger.debug("rjobs: %s" % len(rjobs))
+        #Quick check
+        if rjobs and len(subjobconfigs) != len(rjobs):
+            raise BackendError("The number of subjob configurations does not match the number of subjobs!")
+
+        #If there are no subjobs then submit regularly
+        if len(subjobconfigs)==1:
+            print 'no subjobs!'
+            return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
+
+        #Otherwise submit lots of jobs more sensibly
+        print 'loadsa jobs!'
+        master_input_sandbox = self.master_prepare(masterjobconfig)
+        cdfString = self.cdfPreamble(masterjobconfig, master_input_sandbox)
+        for sc, sj in zip(subjobconfigs, rjobs):
+            sj.updateStatus('submitting')
+            cdfString +=  self.prepareSubjob(sj, sc, master_input_sandbox)
+            cdfString += '\n\n'
+        print 'cdfString: ', cdfString
+        self.getJobObject().getInputWorkspace().writefile(FileBuffer("__cdf__", cdfString))
+
+        status = self.submit_multicdf(os.path.join(self.getJobObject().getInputWorkspace().getPath(),"__cdf__"))
+        print status
+        for sj in rjobs:
+            sj.backend.id = status[str(sj.id)]
+            sj.updateStatus('submitted')
+            sj.time.timenow('submitted')
+            stripProxy(sj.info).increment()
+        return 1
+
     def submit(self, jobconfig, master_input_sandbox):
         """Submit job to backend.
 
@@ -146,6 +180,67 @@ class Condor(IBackend):
         cdfpath = self.preparejob(jobconfig, master_input_sandbox)
         status = self.submit_cdf(cdfpath)
         return status
+
+    def submit_multicdf(self, cdfpath=""):
+        """Submit Condor Description File with multiple jobs
+
+            Argument other than self:
+               cdfpath - path to Condor Description File to be submitted
+
+            Return value: True if job is submitted successfully,
+                          or False otherwise"""
+
+        commandList = ["condor_submit -v"]
+        commandList.extend(self.submit_options)
+        commandList.append(cdfpath)
+        commandString = " ".join(commandList)
+
+        status, output = commands.getstatusoutput(commandString)
+        print 'output: ', output
+
+        self.id = ""
+        returnIDs = {}
+        if 0 != status:
+            logger.error\
+                ("Tried submitting job with command: '%s'" % commandString)
+            logger.error("Return code: %s" % str(status))
+            logger.error("Condor output:")
+            logger.error(output)
+        else:
+            #Construct a dict of the submission output for each job
+            tmpList = output.split("\n")
+            jobsDict = {}
+            localID = 0
+            idString = ''
+            for item in tmpList:
+                #Go through the lines until we find the local ID and add it to the dict
+                if 1 + item.find("** Proc"):
+                    localID = item.strip(":").split()[2]
+                    jobsDict[str(localID)] = {}
+                    idString += str(localID) + ' '
+                    print 'localID: ', localID
+                    continue
+                #If we have found the local ID add the subsequent lines to the dict for that localID
+                if localID != 0 and ' = ' in item:
+                    jobsDict[str(localID)][item.split(' = ')[0]] = item.split(' = ')[1]
+
+            #Get the global ids. This should come back as a big long string, ids separated by spaces
+            queryCommand = " ".join\
+                        (["condor_q -format \"%s \" GlobalJobId", idString])
+            qstatus, qoutput = commands.getstatusoutput(queryCommand)
+            queries = idString.rstrip().split(' ')
+            returns = qoutput.rstrip().split(' ')
+            print 'qoutput: ', qoutput
+            localToGlobal = zip(queries, returns)
+            print 'localToGlobal: ', localToGlobal
+            for q in localToGlobal:
+                print 'q: ', q
+                sjIndex = jobsDict[q[0]]['Iwd'].split('/').index(str(self.getJobObject().id)) + 1
+                sjNo = jobsDict[q[0]]['Iwd'].split('/')[sjIndex]
+                returnIDs[sjNo] = q[1]
+
+        return returnIDs
+
 
     def submit_cdf(self, cdfpath=""):
         """Submit Condor Description File.
@@ -162,6 +257,7 @@ class Condor(IBackend):
         commandString = " ".join(commandList)
 
         status, output = commands.getstatusoutput(commandString)
+        print 'output: ', output
 
         self.id = ""
         if 0 != status:
@@ -178,6 +274,8 @@ class Condor(IBackend):
                     queryCommand = " ".join\
                         (["condor_q -format \"%s\" GlobalJobId", localId])
                     qstatus, qoutput = commands.getstatusoutput(queryCommand)
+                    print 'qstatus: ', qstatus
+                    print 'qoutput: ', qoutput
                     if 0 != status:
                         logger.warning\
                             ("Problem determining global id for Condor job '%s'" %
@@ -261,6 +359,201 @@ class Condor(IBackend):
         killStatus = True
 
         return killStatus
+
+    def cdfPreamble(self, jobconfig, master_input_sandbox):
+        """Prepare the cdf arguments that are common to all jobs so go at the start"""
+
+        wrapperScriptStr = '#!/bin/sh\n./$1'
+        self.getJobObject().getInputWorkspace().writefile(FileBuffer("condorWrapper", wrapperScriptStr))
+
+        cdfDict = \
+            {
+                'universe': self.universe,
+                'on_exit_remove': 'True',
+                'should_transfer_files': 'YES',
+                'when_to_transfer_output': 'ON_EXIT_OR_EVICT',
+                'transfer_executable': 'True',
+                'notification': 'Never',
+                'rank': self.rank,
+                'error': 'stderr',
+                'output': 'stdout',
+                'log': 'condorLog',
+                'stream_output': 'false',
+                'stream_error': 'false',
+                'getenv': self.getenv,
+                'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(),'condorWrapper')
+            }
+
+        # extend with additional cdf options
+        cdfDict.update(self.cdf_options)
+
+        # accounting group
+        if self.accounting_group:
+            cdfDict['accounting_group'] = self.accounting_group
+
+        if self.globusscheduler:
+            cdfDict['globusscheduler'] = self.globusscheduler
+
+        if self.globus_rsl:
+            cdfDict['globus_rsl'] = self.globus_rsl
+
+        cdfList = [
+            "# Condor Description File created by Ganga",
+            "# %s" % (time.strftime("%c")),
+            ""]
+        for key, value in cdfDict.iteritems():
+            cdfList.append("%s = %s" % (key, value))
+        cdfList.append(self.requirements.convert())
+        cdfString = "\n".join(cdfList)
+
+        cdfString += "\n#End preamble"
+
+        return cdfString
+
+
+    def prepareSubjob(self, job, jobconfig, master_input_sandbox):
+        """Prepare a Condor description string for a subjob"""
+
+#        job = self.getJobObject()
+        inbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles())
+        inpDir = job.getInputWorkspace().getPath()
+        outDir = job.getOutputWorkspace().getPath()
+
+        infileList = []
+
+        exeString = jobconfig.getExeString().strip()
+        quotedArgList = []
+        for arg in jobconfig.getArgStrings():
+            quotedArgList.append("\\'%s\\'" % arg)
+        exeCmdString = " ".join([exeString] + quotedArgList)
+
+        for filePath in inbox:
+            if not filePath in infileList:
+                infileList.append(filePath)
+
+        for filePath in master_input_sandbox:
+            if not filePath in infileList:
+                infileList.append(filePath)
+
+        fileList = []
+        for filePath in infileList:
+            fileList.append(filePath)
+
+        if job.name:
+            name = job.name
+        else:
+            name = job.application._name
+        name = "_".join(name.split())
+        wrapperName = "_".join(["Ganga", str(job.id), name])
+
+        commandList = [
+            "#!/usr/bin/env python",
+            "from __future__ import print_function",
+            "# Condor job wrapper created by Ganga",
+            "# %s" % (time.strftime("%c")),
+            "",
+            inspect.getsource(Sandbox.WNSandbox),
+            "",
+            "import os",
+            "import time",
+            "import mimetypes",
+            "import shutil",
+            "",
+            "startTime = time.strftime"
+            + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
+            "",
+            "for inFile in %s:" % str(fileList),
+            "   if mimetypes.guess_type(inFile)[1] in ['gzip', 'bzip2']:",
+            "       getPackedInputSandbox( inFile )",
+            "   else:",
+            "       shutil.copy(inFile, os.path.join(os.getcwd(), os.path.basename(inFile)))",
+            "",
+            "exePath = '%s'" % exeString,
+            "if os.path.isfile( '%s' ):" % os.path.basename(exeString),
+            "   os.chmod( '%s', 0755 )" % os.path.basename(exeString),
+            "wrapperName = '%s_bash_wrapper.sh'" % wrapperName,
+            "wrapperFile = open( wrapperName, 'w' )",
+            "wrapperFile.write( '#!/bin/bash\\n' )",
+            "wrapperFile.write( 'echo \"\"\\n' )",
+            "wrapperFile.write( 'echo \"Hostname: $(hostname -f)\"\\n' )",
+            "wrapperFile.write( 'echo \"\\${BASH_ENV}: ${BASH_ENV}\"\\n' )",
+            "wrapperFile.write( 'if ! [ -z \"${BASH_ENV}\" ]; then\\n' )",
+            "wrapperFile.write( '  if ! [ -f \"${BASH_ENV}\" ]; then\\n' )",
+            "wrapperFile.write( '    echo \"*** Warning: "
+            + "\\${BASH_ENV} file not found ***\"\\n' )",
+            "wrapperFile.write( '  fi\\n' )",
+            "wrapperFile.write( 'fi\\n' )",
+            "wrapperFile.write( 'echo \"\"\\n' )",
+            "wrapperFile.write( '%s\\n' )" % exeCmdString,
+            "wrapperFile.write( 'exit ${?}\\n' )",
+            "wrapperFile.close()",
+            "os.chmod( wrapperName, 0755 )",
+            "result = os.system( './%s' % wrapperName )",
+            "os.remove( wrapperName )",
+            "",
+            "endTime = time.strftime"
+              + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
+            "print('\\nJob start: ' + startTime)",
+            "print('Job end: ' + endTime)",
+            "print('Exit code: %s' % str( result ))"
+        ]
+
+        commandString = "\n".join(commandList)
+        wrapper = job.getInputWorkspace().writefile\
+            (FileBuffer(wrapperName, commandString), executable=1)
+
+        infileString = ",".join(infileList)
+        outfileString = ",".join(jobconfig.outputbox)
+
+        cdfDict = \
+            {
+                'transfer_input_files': wrapper,
+                'initialdir': outDir,
+                'arguments': wrapperName
+            }
+
+        # extend with additional cdf options
+        cdfDict.update(self.cdf_options)
+
+        envList = []
+        if self.env:
+            for key in self.env.keys():
+                value = self.env[key]
+                if (isinstance(value, str)):
+                    value = os.path.expandvars(value)
+                else:
+                    value = str(value)
+                envList.append("=".join([key, value]))
+        envString = ";".join(envList)
+        if jobconfig.env:
+            for key in jobconfig.env.keys():
+                value = jobconfig.env[key]
+                if (isinstance(value, str)):
+                    value = os.path.expandvars(value)
+                else:
+                    value = str(value)
+                envList.append("=".join([key, value]))
+        envString = ";".join(envList)
+        if envString:
+            cdfDict['environment'] = envString
+
+        if infileString:
+            cdfDict['transfer_input_files'] = infileString
+
+        if outfileString:
+            cdfDict['transfer_output_files'] = outfileString
+
+        cdfList = [
+            "\n#jobNo: %s " % job.getFQID('.'),
+            ""]
+
+        for key, value in cdfDict.iteritems():
+            cdfList.append("%s = %s" % (key, value))
+        cdfList.append(self.requirements.convert())
+        cdfList.append("queue")
+        cdfString = "\n".join(cdfList)
+
+        return cdfString
 
     def preparejob(self, jobconfig, master_input_sandbox):
         """Prepare Condor description file"""
