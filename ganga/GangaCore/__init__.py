@@ -6,6 +6,9 @@ import getpass
 import commands
 from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours
 
+# Global Variable to enable Job Sharing mechanism required in GANGA SWAN INTEGRATION.
+# If environment variable GANGA_SWAN_INTEGRATION is present enable this mechanism.
+GANGA_SWAN_INTEGRATION = "GANGA_SWAN_INTEGRATION" in os.environ
 
 # Global Functions
 def getLCGRootPath():
