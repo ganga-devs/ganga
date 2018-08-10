@@ -138,7 +138,7 @@ class Condor(IBackend):
         super(Condor, self).__init__()
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
-
+        """Submit condor jobs"""
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
         #Quick check
@@ -158,12 +158,23 @@ class Condor(IBackend):
             cdfString += '\n\n'
         self.getJobObject().getInputWorkspace().writefile(FileBuffer("__cdf__", cdfString))
 
-        status = self.submit_multicdf(os.path.join(self.getJobObject().getInputWorkspace().getPath(),"__cdf__"))
+        stati = self.submit_multicdf(os.path.join(self.getJobObject().getInputWorkspace().getPath(),"__cdf__"))
+        submitFailures = []
         for sj in rjobs:
-            sj.backend.id = status[str(sj.id)]
-            sj.updateStatus('submitted')
-            sj.time.timenow('submitted')
-            stripProxy(sj.info).increment()
+            if str(sj.id) in stati.keys():
+                sj.backend.id = stati[str(sj.id)]
+                sj.updateStatus('submitted')
+                sj.time.timenow('submitted')
+                stripProxy(sj.info).increment()
+            else:
+                sj.updateStatus('failed')
+                submitFailures.append(sj.id)
+
+        if len(submitFailures) > 0:
+            for sjNo in submitFailures:
+                logger.error('Job submission failued for job %s : %s' % (self.getJobObject().id, sjNo))
+            raise BackendError('Some subjobs failed to submit! Check their status!')
+            return 0
         return 1
 
     def submit(self, jobconfig, master_input_sandbox):
