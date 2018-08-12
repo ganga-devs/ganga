@@ -76,7 +76,7 @@ import os
 import shutil
 import time
 import datetime
-
+import re
 logger = GangaCore.Utility.logging.getLogger()
 
 
@@ -231,14 +231,19 @@ class Condor(IBackend):
         return returnIDs
 
     def resubmit(self):
-        """Resubmit job that has already been configured.
+        """Resubmit job that has already been configured. We have to do something a little different if this is a subjob.
 
             Return value: True if job is resubmitted successfully,
                           or False otherwise"""
 
         job = self.getJobObject()
+        #Is this a subjob?
+        if job.master:
+            inpDir = job.master.getInputWorkspace().getPath()
 
-        inpDir = job.getInputWorkspace().getPath()
+        else:
+            inpDir = job.getInputWorkspace().getPath()
+
         outDir = job.getOutputWorkspace().getPath()
 
         # Delete any existing output files, and recreate output directory
@@ -250,6 +255,32 @@ class Condor(IBackend):
 
         # Determine path to job's Condor Description File
         cdfpath = os.path.join(inpDir, "__cdf__")
+        if not os.path.exists(cdfpath):
+                raise BackendError('Condor', 'No "__cdf__" found in j.inputdir')
+
+        #If this is a subjob we need to write a new cdf file from the original
+        if job.master:
+            # Read old script
+            with open(cdfpath, 'r') as f:
+                script = f.read()
+            # Is the subjob we want in there?
+            if not ("#jobNo: %s" % job.fqid) in script:
+                raise BackendError('Condor', 'Subjob not found in original __cdf__ script.')
+
+            #First pick up the preamble
+            start = "# Condor Description File created by Ganga"
+            stop = "# End preamble"
+            newScript = re.compile(r'%s.*?%s' % (start, stop),re.S).search(script).group(0)
+            newScript += '\n'
+            #Now pick up the subjob
+            sjStart = "#jobNo: %s" % job.fqid
+            sjEnd = "queue"
+            newScript += re.compile(r'%s.*?%s' % (sjStart, sjEnd),re.S).search(script).group(0)
+            # Save new script
+            new_script_filename = os.path.join(job.getInputWorkspace().getPath(), '__cdf__')
+            with open(new_script_filename, 'w') as f:
+                f.write(newScript)
+            cdfpath = new_script_filename
 
         # Resubmit job
         if os.path.exists(cdfpath):
@@ -349,7 +380,7 @@ class Condor(IBackend):
         cdfList.append(self.requirements.convert())
         cdfString = "\n".join(cdfList)
 
-        cdfString += "\n#End preamble"
+        cdfString += "\n# End preamble"
 
         return cdfString
 
