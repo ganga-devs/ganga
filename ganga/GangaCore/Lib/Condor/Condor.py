@@ -114,7 +114,7 @@ class Condor(IBackend):
         "globusscheduler": SimpleItem(defvalue="", doc="Globus scheduler to be used (required for Condor-G submission)"),
         "globus_rsl": SimpleItem(defvalue="",
                                  doc="Globus RSL settings (for Condor-G submission)"),
-        "spool" : SimpleItem(defvalue=True, doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd."),
+        "spool" : SimpleItem(defvalue=True, doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd. Required for EOS, see: http://batchdocs.web.cern.ch/batchdocs/troubleshooting/eos_submission.html"),
         "accounting_group": SimpleItem(defvalue='', doc="Provide an accounting group for this job."),
         "cdf_options": SimpleItem(defvalue={}, doc="Additional options to set in the CDF file given by a dictionary")
     })
@@ -165,7 +165,7 @@ class Condor(IBackend):
 
         if len(submitFailures) > 0:
             for sjNo in submitFailures:
-                logger.error('Job submission failued for job %s : %s' % (self.getJobObject().id, sjNo))
+                logger.error('Job submission failed for job %s : %s' % (self.getJobObject().id, sjNo))
             raise BackendError('Condor', 'Some subjobs failed to submit! Check their status!')
             return 0
         return 1
