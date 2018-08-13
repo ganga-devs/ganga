@@ -90,7 +90,6 @@ setup(name='ganga',
           'httplib2>=0.8',
           'absl-py>=0.1.2',
           'google-api-python-client>=1.1',
-          'stomp.py>=3.1.7',
       ],
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
