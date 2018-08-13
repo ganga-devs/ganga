@@ -184,6 +184,8 @@ class Condor(IBackend):
             hasSubjobs = True
 
         commandList = ["condor_submit -v"]
+        if self.spool:
+            commandList.extend("-spool")
         commandList.extend(self.submit_options)
         commandList.append(cdfpath)
         commandString = " ".join(commandList)
@@ -364,7 +366,6 @@ class Condor(IBackend):
                 'stream_output': 'false',
                 'stream_error': 'false',
                 'getenv': self.getenv,
-                'spool': self.spool,
                 'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(),'condorWrapper')
             }
 
