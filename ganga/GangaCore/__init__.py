@@ -72,13 +72,6 @@ log_config.addOption('_interactive_cache', True,
                  'if True then the cache used for interactive sessions, False disables caching')
 log_config.addOption('_customFormat', "", "custom formatting string for Ganga logging\n e.g. '%(name)-35s: %(levelname)-8s %(message)s'")
 
-# test if stomp.py logging is already set
-if 'stomp.py' in log_config:
-    pass  # config['stomp.py']
-else:
-    # add stomp.py option to Logging configuration
-    log_config.addOption('stomp.py', 'CRITICAL', 'logger for stomp.py external package')
-
 # ------------------------------------------------
 # System
 # the system variables (such as VERSION) are put to DEFAULTS section of the config module
@@ -153,8 +146,6 @@ conf_config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga sessi
 # runtime warnings issued by the interpreter may be suppresed
 conf_config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued by the interpreter may be suppresed")
 
-conf_config.addOption('UsageMonitoringMSG', True,
-                 "enable usage monitoring through MSG server defined in MSGMS configuration")
 conf_config.addOption('Batch', 'LSF', 'default batch system')
 
 conf_config.addOption('AutoStartReg', True, 'AutoStart the registries, needed to access any jobs in registry therefore needs to be True for 99.999% of use cases')
@@ -173,17 +164,6 @@ makeConfig("Shell", "configuration parameters for internal Shell utility.")
 queues_config = makeConfig("Queues", "configuration section for the queues")
 queues_config.addOption('Timeout', None, 'default timeout for queue generated processes')
 queues_config.addOption('NumWorkerThreads', 5, 'default number of worker threads in the queues system')
-
-# ------------------------------------------------
-# MSGMS
-msgms_config = makeConfig('MSGMS', 'Settings for the MSGMS monitoring plugin. Cannot be changed ruding the interactive Ganga session.')
-msgms_config.addOption('server', 'dashb-mb.cern.ch', 'The server to connect to')
-msgms_config.addOption('port', 61113, 'The port to connect to')
-msgms_config.addOption('username', 'ganga', '')
-msgms_config.addOption('password', 'analysis', '')
-msgms_config.addOption('message_destination', '/queue/ganga.status', '')
-msgms_config.addOption('usage_message_destination', "/queue/ganga.usage", '')
-msgms_config.addOption('job_submission_message_destination', "/queue/ganga.jobsubmission", '')
 
 # ------------------------------------------------
 # Plugins

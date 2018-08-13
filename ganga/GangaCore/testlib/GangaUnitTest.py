@@ -115,7 +115,6 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
         ('Configuration', 'RUNTIME_PATH', 'GangaTest'),
         ('Configuration', 'gangadir', gangadir_for_test),
         ('Configuration', 'repositorytype', 'LocalXML'),
-        ('Configuration', 'UsageMonitoringMSG', False),  # Turn off spyware
         ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
         ('Registry', 'DisableLoadCheck', True),

@@ -780,11 +780,6 @@ under certain conditions; type license() for details.
 
         force_global_level(self.options.force_loglevel)
 
-        # prevent modification during the interactive ganga session
-        def deny_modification(name, x):
-            raise GangaCore.Utility.Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
-        getConfig("MSGMS").attachUserHandler(deny_modification, None)
-
         # Assemble the list of config files to read
         config_files = self.get_config_files(self.options.config_file)
 
@@ -1053,9 +1048,6 @@ under certain conditions; type license() for details.
 
         logger.debug("loaded .ganga.py")
 
-        # monitor the  ganga usage
-        from GangaCore.Runtime import spyware
-
         # this logic is a bit convoluted
         runs_script = len(self.args) > 0
         session_type = config['TextShell']
@@ -1064,11 +1056,6 @@ under certain conditions; type license() for details.
                 session_type = 'batch'
             else:
                 session_type += 'startup_script'
-
-        spyware.ganga_started(session_type=session_type, interactive=self.interactive,
-                              webgui=self.options.webgui,
-                              script_file=runs_script, text_shell=config['TextShell'],
-                              test_framework=self.options.TEST)
 
         if self.options.TEST:
             sys.argv = self.args
