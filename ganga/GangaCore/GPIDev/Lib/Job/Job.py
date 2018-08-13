@@ -24,7 +24,6 @@ from GangaCore.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from GangaCore.GPIDev.Lib.Job.MetadataDict import MetadataDict
 from GangaCore.GPIDev.Schema import ComponentItem, FileItem, GangaFileItem, Schema, SimpleItem, Version
-from GangaCore.Runtime.spyware import ganga_job_submitted
 from GangaCore.Utility.Config import ConfigError, getConfig
 from GangaCore.Utility.logging import getLogger, log_user_exception
 
@@ -1540,16 +1539,6 @@ class Job(GangaObject):
             # above
             self._getRegistry()._flush([self])
 
-            # send job submission message
-            if len(self.subjobs) == 0:
-                ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
-            else:
-                submitted_count = 0
-                for sj in self.subjobs:
-                    if sj.status == 'submitted':
-                        submitted_count += 1
-
-                ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", submitted_count)
             return 1
 
         except IncompleteJobSubmissionError as x:
@@ -1992,23 +1981,6 @@ class Job(GangaObject):
             # FIXME: if job is not split, then default implementation of
             # backend.master_submit already have set status to "submitted"
             self.updateStatus('submitted')
-
-            # send job submission message
-            # if resubmit on subjob
-            if self.getFQID('.').find('.') > 0:
-                ganga_job_submitted(getName(self.application), getName(self.backend), "0", "0", "1")
-            # if resubmit on plain job
-            elif len(self.subjobs) == 0:
-                ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
-            # else resubmit on master job -> increment the counter of the
-            # subjobs with the succesfull resubmited subjobs
-            else:
-                submitted_count = 0
-                for sj in self.subjobs:
-                    if sj.status == 'submitted':
-                        submitted_count += 1
-
-                ganga_job_submitted(getName(self.application), getName(self.backend), "0", "0", submitted_count)
 
         except GangaException, x:
             logger.error("failed to resubmit job, %s" % x)
