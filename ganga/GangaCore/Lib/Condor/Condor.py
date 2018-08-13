@@ -114,6 +114,7 @@ class Condor(IBackend):
         "globusscheduler": SimpleItem(defvalue="", doc="Globus scheduler to be used (required for Condor-G submission)"),
         "globus_rsl": SimpleItem(defvalue="",
                                  doc="Globus RSL settings (for Condor-G submission)"),
+        "spool" : SimpleItem(defvalue=True, doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd."),
         "accounting_group": SimpleItem(defvalue='', doc="Provide an accounting group for this job."),
         "cdf_options": SimpleItem(defvalue={}, doc="Additional options to set in the CDF file given by a dictionary")
     })
@@ -236,8 +237,12 @@ class Condor(IBackend):
             Return value: True if job is resubmitted successfully,
                           or False otherwise"""
 
+        # First a flag in case our job is a subjob submitted with old ganga.
+
+        old = False
         job = self.getJobObject()
-        #Is this a subjob?
+
+        # Is this a subjob?
         if job.master:
             inpDir = job.master.getInputWorkspace().getPath()
 
@@ -255,11 +260,15 @@ class Condor(IBackend):
 
         # Determine path to job's Condor Description File
         cdfpath = os.path.join(inpDir, "__cdf__")
+        # If there are subjobs but no __cdf__ in the input folder, check the subjob's in case of submission from old Ganga.
+        if not os.path.exists(cdfpath) and job.master:
+            cdfpath = os.path.join(job.getInputWorkspace().getPath(), "__cdf__")
+            old = True
         if not os.path.exists(cdfpath):
                 raise BackendError('Condor', 'No "__cdf__" found in j.inputdir')
 
-        #If this is a subjob we need to write a new cdf file from the original
-        if job.master:
+        #If this is a subjob submitted with new ganga we need to write a new cdf file from the original
+        if job.master and not old:
             # Read old script
             with open(cdfpath, 'r') as f:
                 script = f.read()
@@ -355,6 +364,7 @@ class Condor(IBackend):
                 'stream_output': 'false',
                 'stream_error': 'false',
                 'getenv': self.getenv,
+                'spool': self.spool,
                 'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(),'condorWrapper')
             }
 
