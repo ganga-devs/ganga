@@ -6,6 +6,9 @@ import getpass
 import commands
 from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours
 
+# Global Variable to enable Job Sharing mechanism required in GANGA SWAN INTEGRATION.
+# If environment variable GANGA_SWAN_INTEGRATION is present enable this mechanism.
+GANGA_SWAN_INTEGRATION = "GANGA_SWAN_INTEGRATION" in os.environ
 
 # Global Functions
 def getLCGRootPath():
@@ -25,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '7.1.0'
+_gangaVersion = '7.1.1'
 _development = True
 
 # store a path to Ganga libraries
@@ -158,10 +161,8 @@ conf_config.addOption('AutoStartReg', True, 'AutoStart the registries, needed to
 
 # ------------------------------------------------
 # IPython
-ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration
-See IPython manual for more details:
-http://ipython.scipy.org/doc/manual''')
-ipython_config.addOption('args', "['-colors','LightBG', '-autocall','0', '-pprint']", 'Options to be passed to ipython for initialization')
+ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration''')
+ipython_config.addOption('colourscheme','LightBG', 'Colour scheme to be used by iPython. Options are LightBG, Linux, Neutral, NoColor' )
 
 # ------------------------------------------------
 # Shell
