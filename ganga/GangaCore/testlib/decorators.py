@@ -50,14 +50,11 @@ def test_add_config(gpi):
     assert gpi.config['Configuration'].user == 'test'
 
 
-@add_config([('Configuration', 'user', 'test'), ('MSGMS', 'port', 43)])
+@add_config([('Configuration', 'user', 'test')])
 class TestLayeredConfig(object):
 
     def test_class_config(self, gpi):
         assert gpi.config['Configuration'].user == 'test'
-        assert gpi.config['MSGMS'].port == 43
 
-    @add_config([('MSGMS', 'port', 42)])
     def test_config_override(self, gpi):
         assert gpi.config['Configuration'].user == 'test', 'Function-decorated configs should not remove all class ones'
-        assert gpi.config['MSGMS'].port == 42, 'Function-decorated configs should take precedence over class ones'
