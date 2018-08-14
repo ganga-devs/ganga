@@ -24,6 +24,7 @@ try:
 except ImportError:
     import pickle
 
+from Ganga import GANGA_SWAN_INTEGRATION
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.Config.Config import getConfig, ConfigError
@@ -572,13 +573,17 @@ class SessionLockManager(object):
             # possible)
             fd = None
             try:
-                fd = os.open(self.fn, os.O_RDWR)
-                if not self.afs:
-                    fcntl.lockf(fd, fcntl.LOCK_EX)
-                os.write(fd, pickle.dumps(self.locked))
-                if not self.afs:
-                    fcntl.lockf(fd, fcntl.LOCK_UN)
-                os.fsync(fd)
+                if not GANGA_SWAN_INTEGRATION:
+                    fd = os.open(self.fn, os.O_RDWR)
+                    if not self.afs:
+                        fcntl.lockf(fd, fcntl.LOCK_EX)
+                    os.write(fd, pickle.dumps(self.locked))
+                    if not self.afs:
+                        fcntl.lockf(fd, fcntl.LOCK_UN)
+                    os.fsync(fd)
+                else:
+                    # Don't lock for sharing to other sessions.
+                    pass
             finally:
                 if fd is not None:
                     os.close(fd)
@@ -692,7 +697,9 @@ class SessionLockManager(object):
         if self.locked and max(self.locked) >= newcount:
             newcount = max(self.locked) + 1
         ids = list(range(newcount, newcount + n))
-        self.locked.update(ids)
+        if not GANGA_SWAN_INTEGRATION:
+            # If sharing sessions don't update id to locked.
+            self.locked.update(ids)
         self.count = newcount + n
         self.cnt_write()
         self.session_write()
@@ -734,7 +741,9 @@ class SessionLockManager(object):
             slocked.update(self.session_read(sf))
         #logger.debug( "locked: %s" % slocked)
         ids.difference_update(slocked)
-        self.locked.update(ids)
+        if not GANGA_SWAN_INTEGRATION:
+            # If sharing sessions don't update id to locked.
+            self.locked.update(ids)
         #logger.debug( "stored_lock: %s" % self.locked)
         self.session_write()
         #logger.debug( "list: %s" % list(ids))
