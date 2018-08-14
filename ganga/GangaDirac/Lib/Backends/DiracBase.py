@@ -700,11 +700,20 @@ class DiracBase(IBackend):
         # Note when the API can accept a list for removeFile I will change
         # this.
         j = self.getJobObject()
+        lfnsToRemove = []
         if j.subjobs:
             for sj in j.subjobs:
-                outputfiles_foreach(sj, DiracFile, lambda x: x.remove())
+                outputfiles_foreach(sj, DiracFile, lambda x: lfnsToRemove.append(x.lfn))
         else:
-            outputfiles_foreach(j, DiracFile, lambda x: x.remove())
+            outputfiles_foreach(j, DiracFile, lambda x: lfnsToRemove.append(x.remove()))
+        dirac_cmd = "removeFile(%s)" % lfnsToRemove
+        try:
+            result = execute(dirac_cmd, cred_req=self.credential_requirements)
+        except GangaDiracError as err:
+            msg = 'Problem removing files: %s' % str(err)
+            logger.warning(msg)
+            return False
+
 
     def getOutputData(self, outputDir=None, names=None, force=False):
         """Retrieve data stored on SE to dir (default=job output workspace).
