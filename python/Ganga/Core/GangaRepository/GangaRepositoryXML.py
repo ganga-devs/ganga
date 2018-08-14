@@ -12,6 +12,7 @@ import errno
 import copy
 import threading
 
+from Ganga import GANGA_SWAN_INTEGRATION
 from Ganga.Core.GangaRepository.SessionLock import SessionLockManager, dry_run_unix_locks
 from Ganga.Core.GangaRepository.FixedLock import FixedLockManager
 
@@ -831,7 +832,8 @@ class GangaRepositoryLocal(GangaRepository):
                     new_idx_subset = True
 
                 if not old_idx_subset and not new_idx_subset:
-                    logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, this_id))
+                    if not GANGA_SWAN_INTEGRATION:
+                        logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, this_id))
                     logger.debug("old cache: %s\t\tnew cache: %s" % (obj._index_cache, new_idx_cache))
                     self.unlock([this_id])
             else:
