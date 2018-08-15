@@ -252,13 +252,22 @@ def getName(_obj):
     returnable = _getName(obj)
     return returnable
 
+def is_namedtuple_instance(obj):
+    if len(type(obj).__bases__) != 1 or not isinstance(obj, tuple):
+        return False
+    fields = getattr(obj, '_fields', None)
+    if not isinstance(fields, tuple):
+        return False
+    return all(isinstance(n, str) for n in fields)
 
 def stripProxy(obj):
     """Removes the proxy if there is one
     Args:
         obj (object): This may be an instance or a class
     """
-    if isinstance(obj, (list, tuple)):
+    if is_namedtuple_instance(obj):
+        return type(obj)(*[stripProxy(_) for _ in obj])
+    elif isinstance(obj, (list, tuple)):
         return type(obj)(stripProxy(_) for _ in obj)
     elif isinstance(obj, dict):
         return dict((k, stripProxy(v)) for k, v in obj.items())
