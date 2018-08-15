@@ -300,7 +300,7 @@ def test_removeOutputData(db):
 
     class TestFile(object):
         def __init__(self):
-            pass
+            self.lfn = 27
 
         def remove(self):
             return 27
