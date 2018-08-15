@@ -319,15 +319,16 @@ def test_removeOutputData(db):
             assert func(TestFile()) == 27, 'Didn\'t call remove function'
 
     with patch('GangaDirac.Lib.Backends.DiracBase.outputfiles_foreach', fake_outputfiles_foreach):
-        subjob = False
-        assert db.removeOutputData() is None
+        with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True):
+            subjob = False
+            assert db.removeOutputData() is True
 
-        j.subjobs = [Job(), Job(), Job()]
-        for sj in j.subjobs:
-            sj._setParent(j)
+            j.subjobs = [Job(), Job(), Job()]
+            for sj in j.subjobs:
+                sj._setParent(j)
 
-        subjob = True
-        assert db.removeOutputData() is None
+            subjob = True
+            assert db.removeOutputData() is True
 
 
 def test_getOutputData(db, tmpdir):
