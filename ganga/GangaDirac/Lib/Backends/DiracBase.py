@@ -705,7 +705,7 @@ class DiracBase(IBackend):
             for sj in j.subjobs:
                 outputfiles_foreach(sj, DiracFile, lambda x: lfnsToRemove.append(x.lfn))
         else:
-            outputfiles_foreach(j, DiracFile, lambda x: lfnsToRemove.append(x.remove()))
+            outputfiles_foreach(j, DiracFile, lambda x: lfnsToRemove.append(x.lfn))
         dirac_cmd = "removeFile(%s)" % lfnsToRemove
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements)
