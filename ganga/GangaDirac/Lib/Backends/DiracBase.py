@@ -712,7 +712,6 @@ class DiracBase(IBackend):
         except GangaDiracError as err:
             msg = 'Problem removing files: %s' % str(err)
             logger.warning(msg)
-            return False
 
 
     def getOutputData(self, outputDir=None, names=None, force=False):
