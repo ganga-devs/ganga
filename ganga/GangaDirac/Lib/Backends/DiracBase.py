@@ -682,6 +682,7 @@ class DiracBase(IBackend):
         # Note when the API can accept a list for removeFile I will change
         # this.
         j = self.getJobObject()
+        logger.info("Removing all DiracFile output for job %s" % j.id)
         lfnsToRemove = []
         if j.subjobs:
             for sj in j.subjobs:
@@ -695,7 +696,15 @@ class DiracBase(IBackend):
             msg = 'Problem removing files: %s' % str(err)
             logger.warning(msg)
             return False
-
+        def clearFileInfo(f):
+            f.lfn = ""
+            f.locations = []
+            f.guid = ''
+        if j.subjobs:
+            for sj in j.subjobs:
+                outputfiles_foreach(sj, DiracFile, lambda x: clearFileInfo(x))
+        else:
+            outputfiles_foreach(j, DiracFile, lambda x: clearFileInfo(x))
 
     def getOutputData(self, outputDir=None, names=None, force=False):
         """Retrieve data stored on SE to dir (default=job output workspace).
