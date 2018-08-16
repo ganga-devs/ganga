@@ -290,6 +290,8 @@ def addProxy(obj):
                 return GPIProxyObjectFactory(obj)
     elif isclass(obj) and issubclass(obj, GangaObject):
         return getProxyClass(obj)
+    elif is_namedtuple_instance(obj):
+        return type(obj)(*[addProxy(_) for _ in obj])
     elif isinstance(obj, (list, tuple)):
         return type(obj)(addProxy(_) for _ in obj)
     elif isinstance(obj, dict):
