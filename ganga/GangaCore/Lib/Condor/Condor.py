@@ -66,7 +66,7 @@ from GangaCore.GPIDev.Base.Proxy import stripProxy
 from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 from GangaCore.Utility.ColourText import Foreground, Effects
-
+from GangaCore.Core.exceptions import BackendError
 import GangaCore.Utility.logging
 from GangaCore.Utility.Config import getConfig
 
@@ -75,7 +75,8 @@ import inspect
 import os
 import shutil
 import time
-
+import datetime
+import re
 logger = GangaCore.Utility.logging.getLogger()
 
 
@@ -113,6 +114,7 @@ class Condor(IBackend):
         "globusscheduler": SimpleItem(defvalue="", doc="Globus scheduler to be used (required for Condor-G submission)"),
         "globus_rsl": SimpleItem(defvalue="",
                                  doc="Globus RSL settings (for Condor-G submission)"),
+        "spool" : SimpleItem(defvalue=True, doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd. Required for EOS, see: http://batchdocs.web.cern.ch/batchdocs/troubleshooting/eos_submission.html"),
         "accounting_group": SimpleItem(defvalue='', doc="Provide an accounting group for this job."),
         "cdf_options": SimpleItem(defvalue={}, doc="Additional options to set in the CDF file given by a dictionary")
     })
@@ -136,18 +138,40 @@ class Condor(IBackend):
 
         super(Condor, self).__init__()
 
-    def submit(self, jobconfig, master_input_sandbox):
-        """Submit job to backend.
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
+        """Submit condor jobs"""
+        logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
+        logger.debug("rjobs: %s" % len(rjobs))
 
-            Return value: True if job is submitted successfully,
-                          or False otherwise"""
+        master_input_sandbox = self.master_prepare(masterjobconfig)
+        cdfString = self.cdfPreamble(masterjobconfig, master_input_sandbox)
+        for sc, sj in zip(subjobconfigs, rjobs):
+            sj.updateStatus('submitting')
+            cdfString +=  self.prepareSubjob(sj, sc, master_input_sandbox)
+            cdfString += '\n\n'
+        self.getJobObject().getInputWorkspace().writefile(FileBuffer("__cdf__", cdfString))
 
-        cdfpath = self.preparejob(jobconfig, master_input_sandbox)
-        status = self.submit_cdf(cdfpath)
-        return status
+        stati = self.submit_cdf(os.path.join(self.getJobObject().getInputWorkspace().getPath(),"__cdf__"))
+        submitFailures = []
+        for sj in rjobs:
+            if str(sj.id) in stati.keys():
+                sj.backend.id = stati[str(sj.id)]
+                sj.updateStatus('submitted')
+                sj.time.timenow('submitted')
+                stripProxy(sj.info).increment()
+            else:
+                sj.updateStatus('failed')
+                submitFailures.append(sj.id)
+
+        if len(submitFailures) > 0:
+            for sjNo in submitFailures:
+                logger.error('Job submission failed for job %s : %s' % (self.getJobObject().id, sjNo))
+            raise BackendError('Condor', 'Some subjobs failed to submit! Check their status!')
+            return 0
+        return 1
 
     def submit_cdf(self, cdfpath=""):
-        """Submit Condor Description File.
+        """Submit Condor Description File with multiple jobs
 
             Argument other than self:
                cdfpath - path to Condor Description File to be submitted
@@ -155,7 +179,13 @@ class Condor(IBackend):
             Return value: True if job is submitted successfully,
                           or False otherwise"""
 
+        hasSubjobs = False
+        if len(self.getJobObject().subjobs)>0:
+            hasSubjobs = True
+
         commandList = ["condor_submit -v"]
+        if self.spool:
+            commandList.extend("-spool")
         commandList.extend(self.submit_options)
         commandList.append(cdfpath)
         commandString = " ".join(commandList)
@@ -163,6 +193,7 @@ class Condor(IBackend):
         status, output = commands.getstatusoutput(commandString)
 
         self.id = ""
+        returnIDs = {}
         if 0 != status:
             logger.error\
                 ("Tried submitting job with command: '%s'" % commandString)
@@ -170,33 +201,56 @@ class Condor(IBackend):
             logger.error("Condor output:")
             logger.error(output)
         else:
+            #Construct a dict of the submission output for each job
             tmpList = output.split("\n")
+            jobsDict = {}
+            localID = 0
+            idString = ''
             for item in tmpList:
+                #Go through the lines until we find the local ID and add it to the dict
                 if 1 + item.find("** Proc"):
-                    localId = item.strip(":").split()[2]
-                    queryCommand = " ".join\
-                        (["condor_q -format \"%s\" GlobalJobId", localId])
-                    qstatus, qoutput = commands.getstatusoutput(queryCommand)
-                    if 0 != status:
-                        logger.warning\
-                            ("Problem determining global id for Condor job '%s'" %
-                             localId)
-                        self.id = localId
-                    else:
-                        self.id = qoutput
-                    break
+                    localID = item.strip(":").split()[2]
+                    jobsDict[str(localID)] = {}
+                    idString += str(localID) + ' '
+                    continue
+                #If we have found the local ID add the subsequent lines to the dict for that localID
+                if localID != 0 and ' = ' in item:
+                    jobsDict[str(localID)][item.split(' = ')[0]] = item.split(' = ')[1]
 
-        return not self.id is ""
+            #Get the global ids. This should come back as a big long string, ids separated by spaces
+            queryCommand = " ".join\
+                        (["condor_q -format \"%s \" GlobalJobId", idString])
+            qstatus, qoutput = commands.getstatusoutput(queryCommand)
+            queries = idString.rstrip().split(' ')
+            returns = qoutput.rstrip().split(' ')
+            localToGlobal = zip(queries, returns)
+            for q in localToGlobal:
+                sjIndex = jobsDict[q[0]]['Iwd'].split('/').index(str(self.getJobObject().id))
+                if hasSubjobs:
+                    sjIndex = sjIndex+1
+                sjNo = jobsDict[q[0]]['Iwd'].split('/')[sjIndex]
+                returnIDs[sjNo] = q[1]
+
+        return returnIDs
 
     def resubmit(self):
-        """Resubmit job that has already been configured.
+        """Resubmit job that has already been configured. We have to do something a little different if this is a subjob.
 
             Return value: True if job is resubmitted successfully,
                           or False otherwise"""
 
+        # First a flag in case our job is a subjob submitted with old ganga.
+
+        old = False
         job = self.getJobObject()
 
-        inpDir = job.getInputWorkspace().getPath()
+        # Is this a subjob?
+        if job.master:
+            inpDir = job.master.getInputWorkspace().getPath()
+
+        else:
+            inpDir = job.getInputWorkspace().getPath()
+
         outDir = job.getOutputWorkspace().getPath()
 
         # Delete any existing output files, and recreate output directory
@@ -208,6 +262,36 @@ class Condor(IBackend):
 
         # Determine path to job's Condor Description File
         cdfpath = os.path.join(inpDir, "__cdf__")
+        # If there are subjobs but no __cdf__ in the input folder, check the subjob's in case of submission from old Ganga.
+        if not os.path.exists(cdfpath) and job.master:
+            cdfpath = os.path.join(job.getInputWorkspace().getPath(), "__cdf__")
+            old = True
+        if not os.path.exists(cdfpath):
+                raise BackendError('Condor', 'No "__cdf__" found in j.inputdir')
+
+        #If this is a subjob submitted with new ganga we need to write a new cdf file from the original
+        if job.master and not old:
+            # Read old script
+            with open(cdfpath, 'r') as f:
+                script = f.read()
+            # Is the subjob we want in there?
+            if not ("#jobNo: %s" % job.fqid) in script:
+                raise BackendError('Condor', 'Subjob not found in original __cdf__ script.')
+
+            #First pick up the preamble
+            start = "# Condor Description File created by Ganga"
+            stop = "# End preamble"
+            newScript = re.compile(r'%s.*?%s' % (start, stop),re.S).search(script).group(0)
+            newScript += '\n'
+            #Now pick up the subjob
+            sjStart = "#jobNo: %s" % job.fqid
+            sjEnd = "queue"
+            newScript += re.compile(r'%s.*?%s' % (sjStart, sjEnd),re.S).search(script).group(0)
+            # Save new script
+            new_script_filename = os.path.join(job.getInputWorkspace().getPath(), '__cdf__')
+            with open(new_script_filename, 'w') as f:
+                f.write(newScript)
+            cdfpath = new_script_filename
 
         # Resubmit job
         if os.path.exists(cdfpath):
@@ -261,10 +345,60 @@ class Condor(IBackend):
 
         return killStatus
 
-    def preparejob(self, jobconfig, master_input_sandbox):
-        """Prepare Condor description file"""
+    def cdfPreamble(self, jobconfig, master_input_sandbox):
+        """Prepare the cdf arguments that are common to all jobs so go at the start"""
 
-        job = self.getJobObject()
+        wrapperScriptStr = '#!/bin/sh\n./$1'
+        self.getJobObject().getInputWorkspace().writefile(FileBuffer("condorWrapper", wrapperScriptStr))
+
+        cdfDict = \
+            {
+                'universe': self.universe,
+                'on_exit_remove': 'True',
+                'should_transfer_files': 'YES',
+                'when_to_transfer_output': 'ON_EXIT_OR_EVICT',
+                'transfer_executable': 'True',
+                'notification': 'Never',
+                'rank': self.rank,
+                'error': 'stderr',
+                'output': 'stdout',
+                'log': 'condorLog',
+                'stream_output': 'false',
+                'stream_error': 'false',
+                'getenv': self.getenv,
+                'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(),'condorWrapper')
+            }
+
+        # extend with additional cdf options
+        cdfDict.update(self.cdf_options)
+
+        # accounting group
+        if self.accounting_group:
+            cdfDict['accounting_group'] = self.accounting_group
+
+        if self.globusscheduler:
+            cdfDict['globusscheduler'] = self.globusscheduler
+
+        if self.globus_rsl:
+            cdfDict['globus_rsl'] = self.globus_rsl
+
+        cdfList = [
+            "# Condor Description File created by Ganga",
+            "# %s" % (time.strftime("%c")),
+            ""]
+        for key, value in cdfDict.iteritems():
+            cdfList.append("%s = %s" % (key, value))
+        cdfList.append(self.requirements.convert())
+        cdfString = "\n".join(cdfList)
+
+        cdfString += "\n# End preamble"
+
+        return cdfString
+
+
+    def prepareSubjob(self, job, jobconfig, master_input_sandbox):
+        """Prepare a Condor description string for a subjob"""
+
         inbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles())
         inpDir = job.getInputWorkspace().getPath()
         outDir = job.getOutputWorkspace().getPath()
@@ -357,29 +491,13 @@ class Condor(IBackend):
 
         cdfDict = \
             {
-                'universe': self.universe,
-                'on_exit_remove': 'True',
-                'should_transfer_files': 'YES',
-                'when_to_transfer_output': 'ON_EXIT_OR_EVICT',
-                'executable': wrapper,
-                'transfer_executable': 'True',
-                'notification': 'Never',
-                'rank': self.rank,
+                'transfer_input_files': wrapper,
                 'initialdir': outDir,
-                'error': 'stderr',
-                'output': 'stdout',
-                'log': 'condorLog',
-                'stream_output': 'false',
-                'stream_error': 'false',
-                'getenv': self.getenv
+                'arguments': wrapperName
             }
 
         # extend with additional cdf options
         cdfDict.update(self.cdf_options)
-
-        # accounting group
-        if self.accounting_group:
-            cdfDict['accounting_group'] = self.accounting_group
 
         envList = []
         if self.env:
@@ -406,27 +524,20 @@ class Condor(IBackend):
         if infileString:
             cdfDict['transfer_input_files'] = infileString
 
-        if self.globusscheduler:
-            cdfDict['globusscheduler'] = self.globusscheduler
-
-        if self.globus_rsl:
-            cdfDict['globus_rsl'] = self.globus_rsl
-
         if outfileString:
             cdfDict['transfer_output_files'] = outfileString
 
         cdfList = [
-            "# Condor Description File created by Ganga",
-            "# %s" % (time.strftime("%c")),
+            "\n#jobNo: %s " % job.getFQID('.'),
             ""]
+
         for key, value in cdfDict.iteritems():
             cdfList.append("%s = %s" % (key, value))
         cdfList.append(self.requirements.convert())
         cdfList.append("queue")
         cdfString = "\n".join(cdfList)
 
-        return job.getInputWorkspace().writefile\
-            (FileBuffer("__cdf__", cdfString))
+        return cdfString
 
     def updateMonitoringInformation(jobs):
 
@@ -590,6 +701,79 @@ class Condor(IBackend):
                             time.strftime('%c'))
 
         return None
+
+    def getStateTime(self, status):
+        """Obtains the timestamps for the 'running', 'completed', and 'failed' states.
+
+           The condorLog file in the job's output directory is read to obtain the start and stop times of the job.
+           These are converted into datetime objects and returned to the user. The condorLog doesn't tell you the year so we guess the closest one to now.
+        """
+        j = self.getJobObject()
+        end_list = ['completed', 'failed']
+        d = {}
+        checkstr = ''
+
+        if status == 'submitted':
+            checkstr = '000'
+        elif status == 'running':
+            checkstr = '001'
+        elif status == 'completed':
+            checkstr = '005'
+        elif status == 'failed':
+            checkstr = '005'
+        else:
+            checkstr = ''
+
+        if checkstr == '':
+            logger.debug("In getStateTime(): checkstr == ''")
+            return None
+
+        try:
+            p = os.path.join(j.outputdir, 'condorLog')
+            logger.debug("Opening output file at: %s", p)
+            f = open(p)
+        except IOError:
+            logger.debug('unable to open file %s', p)
+            return None
+
+        for l in f:
+            splitLine = l.split()
+            if checkstr in splitLine[0]:
+                year = datetime.datetime.now().year
+                if datetime.datetime.strptime(str(datetime.datetime.now().year)+'/'+splitLine[2]+' '+splitLine[3], "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
+                    year = year - 1
+                timestr = str(year)+'/'+splitLine[2]+' '+splitLine[3]
+                try:
+                    t = datetime.datetime(
+                        *(time.strptime(timestr, "%Y/%m/%d %H:%M:%S")[0:6]))
+                except ValueError:
+                    logger.debug(
+                        "Value Error in file: '%s': string does not match required format.", p)
+                    return None
+                return t
+
+        f.close()
+        logger.debug(
+            "Reached the end of getStateTime('%s'). Returning None.", status)
+        return None
+
+
+    def timedetails(self):
+        """Return all available timestamps from this backend.
+        """
+        j = self.getJobObject()
+        # check for file. if it's not there don't bother calling getStateTime
+        # (twice!)
+        p = os.path.join(j.outputdir, 'condorLog')
+        if not os.path.isfile(p):
+            logger.error('unable to open file %s', p)
+            return None
+        s = self.getStateTime('submitted')
+        r = self.getStateTime('running')
+        c = self.getStateTime('completed')
+        d = {'SUBMIT': s,'START': r, 'STOP': c}
+
+        return d
 
     updateMonitoringInformation = \
         staticmethod(updateMonitoringInformation)
