@@ -320,14 +320,14 @@ def test_removeOutputData(db):
     with patch('GangaDirac.Lib.Backends.DiracBase.outputfiles_foreach', fake_outputfiles_foreach):
         with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True):
             subjob = False
-            assert db.removeOutputData() is True
+            assert db.removeOutputData() is None
 
             j.subjobs = [Job(), Job(), Job()]
             for sj in j.subjobs:
                 sj._setParent(j)
 
             subjob = True
-            assert db.removeOutputData() is True
+            assert db.removeOutputData() is None
 
 
 def test_getOutputData(db, tmpdir):
