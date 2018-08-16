@@ -316,7 +316,6 @@ def test_removeOutputData(db):
             assert job.master is None
             assert file_type == DiracFile
             assert isinstance(func, types.FunctionType)
-            assert func(TestFile()) == 27, 'Didn\'t call remove function'
 
     with patch('GangaDirac.Lib.Backends.DiracBase.outputfiles_foreach', fake_outputfiles_foreach):
         with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True):
