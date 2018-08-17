@@ -300,7 +300,7 @@ def test_removeOutputData(db):
 
     class TestFile(object):
         def __init__(self):
-            pass
+            self.lfn = 27
 
         def remove(self):
             return 27
@@ -316,18 +316,18 @@ def test_removeOutputData(db):
             assert job.master is None
             assert file_type == DiracFile
             assert isinstance(func, types.FunctionType)
-            assert func(TestFile()) == 27, 'Didn\'t call remove function'
 
     with patch('GangaDirac.Lib.Backends.DiracBase.outputfiles_foreach', fake_outputfiles_foreach):
-        subjob = False
-        assert db.removeOutputData() is None
+        with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True):
+            subjob = False
+            assert db.removeOutputData() is None
 
-        j.subjobs = [Job(), Job(), Job()]
-        for sj in j.subjobs:
-            sj._setParent(j)
+            j.subjobs = [Job(), Job(), Job()]
+            for sj in j.subjobs:
+                sj._setParent(j)
 
-        subjob = True
-        assert db.removeOutputData() is None
+            subjob = True
+            assert db.removeOutputData() is None
 
 
 def test_getOutputData(db, tmpdir):
