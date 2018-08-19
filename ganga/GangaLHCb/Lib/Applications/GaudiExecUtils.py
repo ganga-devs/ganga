@@ -98,12 +98,20 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
             myUse (str): This is a git lb-use which will be run once the lb-dev has executed
             myFolder (str): This is a git lb-checkout after the lb-use. Assumes the master branch of the use project.
     """
+    #First guess a suitable platform for checking out the application
+    verStat, verOut, verErr = _exec_cmd('lb-sdb-query listPlatforms %s %s' % (myApp, myVer), myPath)
+    if verStat != 0 or len(verOut.split('\n'))==0:
+        logger.error("lb-sdb-query listPlatforms %s %s failed!" % (myApp, myVer))
+        raise ApplicationPrepareError(verErr)
+
+    platformToUse = verOut.split('\n')[-2]
+
     full_path = expandfilename(myPath, True)
     if not path.exists(full_path):
         makedirs(full_path)
     if not path.exists(full_path + '/' + myApp + 'Dev_' +myVer):
-        devStat, devOut, devErr = _exec_cmd('lb-dev %s/%s' % (myApp, myVer), full_path)
-        logger.info("Running lb-dev %s %s" % (myApp, myVer))
+        devStat, devOut, devErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && lb-dev %s/%s' % (platformToUse, platformToUse, myApp, myVer), full_path)
+        logger.info("Running lb-dev %s %s with platform %s" % (myApp, myVer, platformToUse))
         if devStat != 0:
             logger.error("lb-dev %s %s failed!" % (myApp, myVer))
             raise ApplicationPrepareError(devErr)
@@ -112,13 +120,13 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
     dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
     logger.info("Set up App Env at: %s" % dev_dir)
     if myUse:
-        lbUse, lbUseOut, lbUseErr = _exec_cmd('git lb-use %s' % myUse, dev_dir)
+        lbUse, lbUseOut, lbUseErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && git lb-use %s' % (platformToUse, platformToUse, myUse), dev_dir)
         logger.info("Running git lb-use %s" % myUse)
         if lbUse != 0:
             logger.error("git lb-use %s failed!" % myUse)
             raise ApplicationPrepareError(lbUseErr)
         if myFolder:
-            chk, chkOut, chkErr = _exec_cmd('git lb-checkout %s/master %s' % (myUse, myFolder), dev_dir)
+            chk, chkOut, chkErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && git lb-checkout %s/master %s' % (platformToUse, platformToUse, myUse, myFolder), dev_dir)
             logger.info("Running git lb-checkout %s/master %s" % (myUse, myFolder))
             if chk != 0:
                 logger.error("git lb-checkout %s/master %s failed!" % (myUse, myFolder))
