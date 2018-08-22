@@ -183,7 +183,7 @@ class GaudiExecRTHandler(IRuntimeHandler):
             app (GaudiExec): This application is only expected to handle GaudiExec Applications here
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
-        if app.autoDBtags and not app.getJobObject().inputdata[0].lfn.startswith('/MC/'):
+        if app.autoDBtags and not app.getJobObject().inputdata[0].lfn.startswith('/lhcb/MC/'):
             logger.warning("This doesn't look like MC! Not automatically adding db tags.")
             app.autoDBtags = False
 
@@ -457,7 +457,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
 
-        if app.autoDBtags and not app.getJobObject().inputdata[0].lfn.startswith('/MC/'):
+        if app.autoDBtags and not app.getJobObject().inputdata[0].lfn.startswith('/lhcb/MC/'):
             logger.warning("This doesn't look like MC! Not automatically adding db tags.")
             app.autoDBtags = False
 
