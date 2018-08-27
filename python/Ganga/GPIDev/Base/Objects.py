@@ -471,22 +471,27 @@ class Descriptor(object):
         this_attr = getattr(obj, attr_name)
         if hasattr(attr_item, '_getter_name') and attr_item._getter_name:
             return
+
         if not obj._schema[attr_name].getProperties()['visitable'] or obj._schema[attr_name].getProperties()['transient']:
             return
-        if isinstance(this_attr, Node):
-            if hasattr(this_attr, '__len__'):
-                from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-                for item in this_attr:
-                    if isinstance(item, Node):
-                        for _this_attr in item._schema.allItemNames():
-                            Descriptor.check_inheritance(item, _this_attr)
-                        if isinstance(this_attr, GangaList) and this_attr._getParent() is not None:
-                            assert item._getParent() is this_attr._getParent()
-                        else:
-                            assert item._getParent() is this_attr
+
+        if not isinstance(this_attr, Node):
+            return
+
+        if not hasattr(this_attr, '__len__'):
+            assert this_attr._getParent() is obj
+
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        for item in this_attr:
+            if isinstance(item, Node):
+                for _this_attr in item._schema.allItemNames():
+                    Descriptor.check_inheritance(item, _this_attr)
+                    if isinstance(this_attr, GangaList) and this_attr._getParent() is not None:
+                        assert item._getParent() is this_attr._getParent()
+                    else:
+                        assert item._getParent() is this_attr
                 assert this_attr._getParent() is obj
-            else:
-                assert this_attr._getParent() is obj
+
 
     @synchronised_set_descriptor
     def __set__(self, obj, val, root_obj=None):
@@ -542,6 +547,7 @@ class Descriptor(object):
             Descriptor.check_inheritance(obj, _set_name)
         except AssertionError:
             raise RuntimeError("Something went wrong in setting: '%s'::'%s' = '%s'" % (_getName(obj), _set_name, str(val)))
+
 
     @staticmethod
     def cleanValue(obj, val, name):
