@@ -155,16 +155,12 @@ cmt_setup () {
         source $ATLAS_RELEASE_DIR/setup.sh
     # New athena v16 AtlasSetup #################
     elif [ $ATHENA_MAJOR_RELEASE -gt 15 ] || [ -z $ATLAS_RELEASE ]; then
-	# special case for AthAnalysisBase - must use 'here' in asetup
-	if [[ $ATLAS_PROJECT == AthAnalysisBase ]]; then
-	    export EXTRAOPTS=here
-	    mkdir work
-	    cd work
-	elif [[ $ATLAS_PROJECT == AthAnalysis ]]; then
-	    export EXTRAOPTS=here
-	    mkdir work
-	    cd work
-	fi
+	# must use 'here' in asetup
+	export EXTRAOPTS=here
+	# the actual user area lives in the 'work' directory ... 
+	# but in case they have no area we will try to mkdir it anyway
+	mkdir work
+	cd work
 
 	# ##### CVMFS setup ###########################################
 	if [[ $ATLAS_RELEASE_DIR == /cvmfs/* ]]; then
@@ -194,9 +190,9 @@ cmt_setup () {
 	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh AtlasOffline,$ATLAS_RELEASE,$ATLAS_ARCH,setup,$EXTRAOPTS --cmtconfig=$ATLAS_CMTCONFIG
 	fi
 
-	if [[ $ATLAS_PROJECT == AthAnalysisBase ]]; then
-	    cd ../
-	fi
+	#go back out of the work dir
+	cd ../
+
     else 
         #if [ n$ATLAS_PROJECT = n'AtlasPoint1' ]; then
         if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
@@ -319,16 +315,12 @@ fix_gcc_issue () {
         cd comp
         cat - >gcc <<EOF
 #!/bin/sh
-
 /usr/bin/gcc32 -m32 \$*
-
 EOF
 
         cat - >g++ <<EOF
 #!/bin/sh
-
 /usr/bin/g++32 -m32 \$*
-
 EOF
 
         chmod +x gcc
