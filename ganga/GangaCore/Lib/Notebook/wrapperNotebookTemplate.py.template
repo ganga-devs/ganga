@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+"""Script to run on worker node for executing Notebook applications."""
+
+from __future__ import print_function
+
+# Main
+if __name__ == '__main__':
+
+    import sys, os, re
+    print (sys.version)
+
+    print('Unique identifier : ','###UUID###')
+    
+    from IPython import nbformat
+    from nbconvert.preprocessors import ExecutePreprocessor
+
+    files = os.listdir(os.getcwd())
+
+    matchlist = ###NBFILES###
+
+    nbfiles = []
+    for regexp in matchlist:
+    
+        nbfiles.extend([name for name in files if
+                        re.search('###REGEXP###',name)])
+
+    print('Will try to execute the notebooks : %s' % nbfiles)
+
+    for name in nbfiles:
+
+        print('Starting to execute %s' % name)
+
+        with open(name) as f:
+            version = ###VERSION###
+            if version:
+                nb = nbformat.read(f, as_version=version)
+            else:
+                nb = nbformat.read(f)
+
+        timeout = ###TIMEOUT###
+        if timeout:
+            ep = ExecutePreprocessor(timeout=timeout,kernel_name='###KERNEL###')
+        else:
+            ep = ExecutePreprocessor(kernel_name='###KERNEL###')
+
+        try:
+            ep.preprocess(nb, {'metadata': {'path': 'notebooks/'}})
+        except CellExecutionError:
+            msg = 'Error executing the notebook "%s".\n\n' % name
+            msg += 'See notebook for the traceback.'
+            print(msg)
+            raise
+        finally:
+            with open(name, 'wt') as f:
+                nbformat.write(nb, f)
+
+    sys.stdout.flush()
+    sys.stderr.flush()

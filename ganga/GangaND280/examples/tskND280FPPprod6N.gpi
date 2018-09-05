@@ -1,0 +1,89 @@
+import os
+
+#input_file = 'input/Run8/wbeam/20161211_1217.list'
+#input_file = 'input/Run8/wbeam/20161218_1225.list'
+#input_file = 'input/Run7/wbeam/20160131_0206.list'
+#input_file = 'input/Run7/wbeam/20160207_0213.list'
+#input_file = 'input/Run7/wbeam/20160214_0220.list'
+#input_file = 'input/Run7/wbeam/20160221_0227.list'
+#input_file = 'input/Run7/wbeam/20160228_0305.list'
+#input_file = 'input/Run7/wbeam/20160306_0312.list'
+#input_file = 'input/Run7/wbeam/20160207_0213_resub.list'
+#input_file = 'input/Run7/wbeam/20160313_0319.list'
+#input_file = 'input/Run7/wbeam/20160320_0326.list'
+#input_file = 'input/Run7/wbeam/20160327_0402.list'
+#input_file = 'input/Run7/wbeam/20160410_0416.list'
+#input_file = 'input/Run7/wbeam/20160417_0423.list'
+#input_file = 'input/Run7/wbeam/20160424_0430.list'
+#input_file = 'input/Run7/wbeam/20160501_0507.list'
+#input_file = 'input/Run7/wbeam/20160508_0514.list'
+#input_file = 'input/Run7/wbeam/20160515_0521.list'
+#input_file = 'input/Run7/wbeam/20160522_0528.list'
+
+#input_file = 'input/Run7/wbeam/20160313_0319_resub.list'
+
+input_file = 'input/test2.list'
+
+
+# headers
+ver='v11r31p27'
+trig='SPILL'
+#path='production006/N/fpp/ND280'
+path='production006/Z/fpp/ND280'
+site='wg-bugaboo'
+rollback='2017-04-28 00:00:00'
+
+
+# create a Task and a Transform
+t   = ND280Task()
+t.name = 'ND280RDP'
+t.comment = os.path.splitext(os.path.basename(input_file))[0]
+trf = ND280Transform()
+#trf.submit_with_threads = True
+
+# setup an application
+
+a = runND280RDP()
+a.cmtsetup = ['/home/t2k/t2k-software/Run_At_Start_T2k_%s.sh'%ver,'/home/t2k/t2k-software/work-%s/nd280Control/*/cmt/setup.sh'%ver]
+a.confopts = {'nd280ver':ver,
+              'comment':'%s-%s'%(ver,site),
+              'db_time':rollback,
+              'event_select':trig,
+              'midas_file':'placeholder',
+              'production':'True',
+              'save_geometry':'1'}
+trf.application = a
+
+
+# transform name ?
+trf.name='runND280'
+
+
+# Input files
+d=ND280LocalDataset()
+#d.get_dataset("/neut/datasrv2a/vavilov","nd280_00005012_0033.daq.mid.gz")
+#d.get_dataset('/global/scratch/t2k/raw/ND280/ND280/00003000_00003999','nd280_00003227*.mid.gz')
+#d.get_dataset_from_list('raw.list')
+#d.get_raw_from_list('/global/scratch/t2k/raw/ND280/ND280','runsub_temp.list')
+d.get_raw_from_list('/global/scratch/t2k/raw/ND280/ND280', input_file )
+
+trf.addInputData(d)
+
+# Output file(s)
+# trf.outputfiles=[SandboxFile("*.root"),SandboxFile("*.log"),SandboxFile("*catalogue.dat")]
+
+# Backend
+#trf.backend = PBS(queue='srvq', extraopts='-l walltime=1:12:00,mem=2000mb -j oe')
+#trf.backend=Local()
+trf.backend=PBS(extraopts='-l walltime=40:00:00,mem=2000mb -j oe')
+
+trf.postprocessors=ND280RDP_Checker(prfx='/global/scratch/t2k',path=path,trig=trig,site=site,post_status=False)
+
+# speed up job submission
+#trf.abort_loop_on_submit = False
+trf.submit_with_threads = True
+
+#  set the task going
+t.appendTransform(trf)
+t.float = 470
+t.run()

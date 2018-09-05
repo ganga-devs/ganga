@@ -7,11 +7,9 @@ import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
+_gangaVersion = '7.1.3'
 
 def version():
-    ganga_python_dir = os.path.join(file_path, 'python')
-    sys.path.insert(0, ganga_python_dir)
-    from Ganga import _gangaVersion
     return _gangaVersion
 
 
@@ -44,7 +42,7 @@ class RunTestsCommand(Command):
 
     @staticmethod
     def _get_test_env():
-        ganga_python_dir = os.path.join(file_path, 'python')
+        ganga_python_dir = os.path.join(file_path, 'ganga')
 
         test_env = os.environ.copy()
         path = ':'.join(s for s in [ganga_python_dir, test_env.get('PYTHONPATH', None)] if s)
@@ -57,12 +55,12 @@ class RunTestsCommand(Command):
         cmd = ['py.test']
 
         if self.type in ['unit', 'all']:
-            cmd.append('python/Ganga/test/Unit')
-            cmd.append('python/Ganga/Core')
-            cmd.append('python/Ganga/Runtime')
-            cmd.append('python/Ganga/Utility')
+            cmd.append('ganga/GangaCore/test/Unit')
+            cmd.append('ganga/GangaCore/Core')
+            cmd.append('ganga/GangaCore/Runtime')
+            cmd.append('ganga/GangaCore/Utility')
         if self.type in ['integration', 'all']:
-            cmd.append('python/Ganga/test/GPI')
+            cmd.append('ganga/GangaCore/test/GPI')
 
         if self.coverage:
             cmd.append('--cov-report xml --cov .')
@@ -71,6 +69,10 @@ class RunTestsCommand(Command):
 
         subprocess.check_call(' '.join(cmd), cwd=file_path, shell=True, env=self._get_test_env())
 
+
+pythonPackages = find_packages('./')
+pythonPackages.append('ganga/GangaRelease')
+pythonPackages.append('ganga/GangaTemplates')
 
 setup(name='ganga',
       description='Job management tool',
@@ -81,22 +83,20 @@ setup(name='ganga',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',
       scripts=['bin/ganga'],
-      package_dir={'': 'python'},
-      packages=find_packages('python'),
+      package_dir={'ganga':'ganga', 'GangaRelease':'ganga/GangaRelease', 'GangaTemplates':'ganga/GangaTemplates'},
+      packages=pythonPackages,
       install_requires=[
-          'ipython==1.2.1',
+          'ipython>=5.0.0',
           'httplib2>=0.8',
-          'python-gflags>=2.0',
+          'absl-py>=0.1.2',
           'google-api-python-client>=1.1',
-          'stomp.py>=3.1.7',
       ],
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-          'Programming Language :: Python :: 2.6',
           'Programming Language :: Python :: 2.7',
       ],
       include_package_data=True,
-      package_data={'Ganga': ['Runtime/HEAD_CONFIG.INI']},
+      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh', 'tools/ganga-cvmfs-install-dev.sh'], 'GangaTemplates':['*.INI']},
       cmdclass={
           'tests': RunTestsCommand,
       },

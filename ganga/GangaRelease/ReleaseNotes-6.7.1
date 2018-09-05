@@ -1,0 +1,53 @@
+**************************************************************************************************************
+6.7.1 (2017/09/18)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Updated pandatools to 0.5.91 and now check if it is already setup. #1125
+
+From 6.7.0:
+
+* Added support for BYTESTREAM jobs #1121
+* Enabled splitting of jobs by number of events #1116
+* Proxy disabled for ATLAS #1122
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Store the associated files of the ShareDir in the shared directory. #1117
+
+From 6.7.0:
+
+* Added associated_files to ShareDir, a list of IGangaFiles that are used by an application. #1106
+* Change to signature of decrementShareCounter and incrementShareCounter in IPrepareApp. Both take ShareDir objects now. #1106
+* Change to signature of decrease and increase methods in the PrepRegistry. Both take ShareDir objects now. #1106
+* Added counterVal method to get shareref counter of a ShareDir. #1106
+* maxFiles attribute added to GangaDatasetSplitter. Default is -1, use all files. #1105
+* Bugfix for proxy returning objects properly. #1103
+* Bugfix to transform unit creation and checking #1120
+* Argsplitter can use GaudiExec extraArgs attribute. args take precedence if in the application schema. #1119
+* Ganga optimised bigly. #917
+   -> Bugfix: CPU bottleneck in constructing objects inheriting from GangaObject
+   -> Bugfix: Race condition in credential managment
+   -> Feature: Improved parallel monitoring on backends which support standard interface
+   -> Cleanup: using __slots__ and _additional_slots for managing attributes
+   -> Cleanup: simplified thread locking
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+From 6.7.0:
+* Bugfix to script templates for uploading files from the WN. #1114
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+From 6.7.0:
+* Uploaded DiracFiles for GaudiExec added to ShareDir associated_files and removed with the job. #1106
+* Bugfix to GaudiExec - script files are deleted from temp after job submission. #1104
+* Bugfix to GaudiExec - make postprocessor for XML summary follow getMetadata flag. #1110
+* GaudiExec can be submitted with only extra opts. #994
+
+**************************************************************************************************************

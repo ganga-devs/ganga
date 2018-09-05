@@ -1,0 +1,32 @@
+**************************************************************************************************************
+6.6.4 (2017/08/03)
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Bugfix such that GangaDatasetSplitter returns dataset of same type as input #1058
+* Change to default config of MassStorageFile. Looks for EOS by default. #1070
+* Improvements to exception raising. #1071
+* Update default config for treatment of output files. Particularly for batch backends. #1088
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Turn on metadata by default for BenderBox applications #1050
+* Bugfix to GaudiExec RT handler #1086
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Make Dirac proxy configurable - LHCb calls lhcb-proxy-init by default now #1047
+* Fix for DiracFile remoteDir. Setting remoteDir set the path location for the output of Dirac jobs. See help(DiracFile) for examples. #1072
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Update GLITE_SETUP path #1084
+* Fix to allow LSF jobs to work after setting up with Athena #1084
+* Remove tagdataset #1065
+* Fix for Atlas nightlies #1064
+
+**************************************************************************************************************

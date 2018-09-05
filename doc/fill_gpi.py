@@ -17,15 +17,15 @@ doc_dir = os.path.dirname(os.path.realpath(__file__))
 python_dir = doc_dir + '/../python'
 sys.path.insert(0, os.path.abspath(os.path.join(doc_dir, '..', 'python')))
 
-from Ganga.GPIDev.Base.Proxy import GPIProxyObject, stripProxy, getName
+from GangaCore.GPIDev.Base.Proxy import GPIProxyObject, stripProxy, getName
 
 print('Generating GPI documentation')
 
 ## LOADING GANGA ##
-import Ganga.PACKAGE
-Ganga.PACKAGE.standardSetup()
+import GangaCore.PACKAGE
+GangaCore.PACKAGE.standardSetup()
 
-import Ganga.Runtime
+import GangaCore.Runtime
 gangadir = os.path.expandvars('$HOME/gangadir_sphinx_dummy')
 this_argv = [
     'ganga',  # `argv[0]` is usually the name of the program so fake that here
@@ -34,13 +34,13 @@ this_argv = [
 ]
 
 # Actually parse the options
-Ganga.Runtime._prog = Ganga.Runtime.GangaProgram(argv=this_argv)
-Ganga.Runtime._prog.parseOptions()
+GangaCore.Runtime._prog = GangaCore.Runtime.GangaProgram(argv=this_argv)
+GangaCore.Runtime._prog.parseOptions()
 
 # Perform the configuration and bootstrap steps in ganga
-Ganga.Runtime._prog.configure()
-Ganga.Runtime._prog.initEnvironment()
-Ganga.Runtime._prog.bootstrap(interactive=False)
+GangaCore.Runtime._prog.configure()
+GangaCore.Runtime._prog.initEnvironment()
+GangaCore.Runtime._prog.bootstrap(interactive=False)
 ## FINISHED LOADING GANGA ##
 
 
@@ -98,7 +98,7 @@ def signature(func, name=None):
 
 
 # First we get all objects that are in Ganga.GPI and filter out any non-GangaObjects
-gpi_classes = [stripProxy(o) for name, o in Ganga.GPI.__dict__.items() if isinstance(o, type) and issubclass(o, GPIProxyObject)]
+gpi_classes = [stripProxy(o) for name, o in GangaCore.GPI.__dict__.items() if isinstance(o, type) and issubclass(o, GPIProxyObject)]
 
 with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
 
@@ -155,7 +155,7 @@ with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
 # Looking through the plugin list helps categorise the GPI objects
 
 with open(doc_dir+'/GPI/plugins.rst', 'w') as pf:
-    from Ganga.Utility.Plugin.GangaPlugin import allPlugins
+    from GangaCore.Utility.Plugin.GangaPlugin import allPlugins
 
     print('Plugins', file=pf)
     print('=======', file=pf)
@@ -175,7 +175,7 @@ with open(doc_dir+'/GPI/plugins.rst', 'w') as pf:
 print('')
 
 # All objects that are not proxied GangaObjects
-gpi_objects = dict((name, stripProxy(o)) for name, o in Ganga.GPI.__dict__.items() if stripProxy(o) not in gpi_classes and not name.startswith('__'))
+gpi_objects = dict((name, stripProxy(o)) for name, o in GangaCore.GPI.__dict__.items() if stripProxy(o) not in gpi_classes and not name.startswith('__'))
 
 # Any objects which are not exposed as proxies (mostly exceptions)
 non_proxy_classes = dict((k, v) for k, v in gpi_objects.items() if inspect.isclass(v))
@@ -201,10 +201,10 @@ with open(doc_dir+'/GPI/functions.rst', 'w') as ff:
         print('', file=ff)
 
 ## EXITING GANGA ##
-from Ganga.Core.InternalServices import ShutdownManager
+from GangaCore.Core.InternalServices import ShutdownManager
 
 # make sure we don't have an interactive shutdown policy
-from Ganga.Core.GangaThread import GangaThreadPool
+from GangaCore.Core.GangaThread import GangaThreadPool
 GangaThreadPool.shutdown_policy = 'batch'
 
 # This should now be safe
