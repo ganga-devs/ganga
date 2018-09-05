@@ -41,9 +41,9 @@ class GaudiExecMerger(IMerger):
 
     # will produce the specified files
     j = Job() 
-    j.outputsandbox = ['hist.root','trees.root']
+    j.outputfiles = ['hist.root','trees.root']
     j.splitter = SomeSplitter()
-    j.merger = gm
+    j.postprocessors = gm
     j.submit()
 
     The merge object will be used to merge the output of
@@ -241,6 +241,19 @@ class GaudiExecMerger(IMerger):
         merge_cmd += string.join(arg_list, ' ')
 
         rc, out = commands.getstatusoutput(merge_cmd)
+
+        try:
+            #Clean up - first make a list of everything in the tarfile
+            tarlist = tar.getnames()
+            #Pop the run script and find the common prefix of the application folder
+            tarlist.pop(tarlist.index('run'))
+            folderToRemove = os.path.commonprefix(tarlist)
+            #Now remove the files
+            os.remove(os.path.join(tmp_dir, 'run'))
+            shutil.rmtree(os.path.join(tmp_dir, folderToRemove))
+        except OSError:
+            logger.error('Failed to remove temporary files from merging at %s' % tmp_dir)
+
 
         log_file = '%s.hadd_output' % output_file
         with open(log_file, 'w') as log:
