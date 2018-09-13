@@ -365,6 +365,8 @@ lcg_config.addOption('CreamInputSandboxBaseURI', '',
                  'sets the baseURI for getting the input sandboxes for the job')
 lcg_config.addOption('CreamOutputSandboxBaseURI', '',
                  'sets the baseURI for putting the output sandboxes for the job')
+lcg_config.addOption('CreamCopyCommand', 'gfal-copy-url',
+                 'sets the copy command for CREAM when dealing with sandboxes')
 #lcg_config.addOption('CreamPrologue','','sets the prologue script')
 #lcg_config.addOption('CreamEpilogue','','sets the epilogue script')
 
