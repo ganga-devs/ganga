@@ -113,7 +113,6 @@ class SubjobStatuses(GangaObject):
     _name = 'SubjobStatuses'
 
     def __init__(self, nSubjobs):
-        print 'init'
         super(SubjobStatuses, self).__init__()
         self.totalSubjobs = nSubjobs
         self.jobStatuses = {
@@ -126,6 +125,7 @@ class SubjobStatuses(GangaObject):
             'completing': 0,
             'completed': 0,
         }
+
 
     def setStatusNo(self, status, newNo):
         """Set the no. of subjobs of a given status"""
@@ -176,6 +176,7 @@ class JobInfo(GangaObject):
         'monitor': ComponentItem('monitor', defvalue=None, load_default=0, comparable=0, optional=1, doc="job monitor instance"),
         'uuid': SimpleItem(defvalue='', protected=1, comparable=0, doc='globally unique job identifier'),
         'monitoring_links': SimpleItem(defvalue=[], typelist=[tuple], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links"),
+        'subjob_statuses': SimpleItem(defvalue=SubjobStatuses(0))
     })
 
     _category = 'jobinfos'
@@ -666,6 +667,27 @@ class Job(GangaObject):
         if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
+        #If we are monitoring an old subjob we need to initialise the info        
+        if self.master and hasattr(self.master.info, 'subjob_statuses'):
+            self.master.info.subjob_statuses.incrementStatus(final_status)
+            self.master.info.subjob_statuses.decrementStatus(initial_status)
+
+        elif self.master:
+            if not hasattr(self.master.info, 'subjob_statuses'):
+                self.master.info.subjob_statuses = SubjobStatuses(len(self.master.subjobs))
+                for sj in self.master.subjobs:
+                    self.master.info.subjob_statuses.incrementStatus(sj.status)
+        else:
+           if not hasattr(self.info, 'subjob_statuses'):
+               if not self.subjobs:
+                   self.subjob_statuses = SubjobStatuses(0)
+                   self.incrementStatus(final_status)
+               else:
+                   self.subjob_statuses = SubjobStatuses(len(self.subjobs))
+                   for sj in self.subjobs:
+                       self.info.subjob_statuses.incrementStatus(sj.status)
+
+
     def transition_update(self, new_status):
         """Propagate status transitions"""
 
@@ -790,21 +812,10 @@ class Job(GangaObject):
 	return stats
 
     def returnSubjobStatuses(self):
-        nCompleted = 0
-        total = 0
-        if isinstance(self.subjobs, SubJobXMLList):
-            allstats = self.subjobs.getAllSJStatus()
-            for s in allstats:
-                total = total+1
-                if s=='completed':
-                    nCompleted = nCompleted+1
+        if hasattr(self.info, 'subjob_statuses'):
+            return "%s / %s" % (self.info.subjob_statuses.jobStatuses['completed'], self.info.subjob_statuses.totalSubjobs)
         else:
-            allstats = (sj.status for sj in self.subjobs)
-            for s in allstats:
-                total = total+1
-                if s=='completed':
-                    nCompleted = nCompleted+1
-	return "%s / %s" % (nCompleted , total)
+            return '---'
 
     def updateMasterJobStatus(self):
         """
@@ -1531,6 +1542,7 @@ class Job(GangaObject):
 
             logger.info("submitting job %s", self.getFQID('.'))
             # prevent other sessions from submitting this job concurrently.
+            self.info.subjob_statuses = SubjobStatuses(0)
             self.updateStatus('submitting')
 
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
@@ -1546,6 +1558,9 @@ class Job(GangaObject):
             logger.debug("Checking Job: %s for splitting" % self.getFQID('.'))
             # split into subjobs
             rjobs = self._doSplitting()
+
+            #Now we have done the splitting set the subjob number in the info
+            self.info.subjob_statuses.totalSubjobs = len(self.subjobs)
 
             # Some old jobs may still contain None assigned to the self.subjobs so be careful when checking length
             if self.splitter is not None and not self.subjobs:
