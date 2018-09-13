@@ -61,7 +61,7 @@ pyCommandList = [
    'idfile.close()' ]
 pyCommandString = ';'.join( pyCommandList )
 
-commandStr = '\'' + str('###EXE_STRING### ###ARG_STRING###') + '\''
+commandStr = '\'' + str(r'###EXE_STRING### ###ARG_STRING###') + '\''
 #commandStr = commandStr.replace('"', '\'')
 
 commandList = [
