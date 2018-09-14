@@ -112,11 +112,11 @@ class SubjobStatuses(GangaObject):
     _category = 'subjobstatuses'
     _name = 'SubjobStatuses'
 
-    def __init__(self, nSubjobs):
+    def __init__(self):
         super(SubjobStatuses, self).__init__()
-        self.totalSubjobs = nSubjobs
+        self.totalSubjobs = 0
         self.jobStatuses = {
-            'new': nSubjobs,
+            'new': 0,
             'submitting': 0,
             'submitted': 0,
             'running': 0,
@@ -176,7 +176,7 @@ class JobInfo(GangaObject):
         'monitor': ComponentItem('monitor', defvalue=None, load_default=0, comparable=0, optional=1, doc="job monitor instance"),
         'uuid': SimpleItem(defvalue='', protected=1, comparable=0, doc='globally unique job identifier'),
         'monitoring_links': SimpleItem(defvalue=[], typelist=[tuple], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links"),
-        'subjob_statuses': SimpleItem(defvalue=SubjobStatuses(0))
+        'subjob_statuses': SimpleItem(defvalue=SubjobStatuses())
     })
 
     _category = 'jobinfos'
@@ -674,16 +674,18 @@ class Job(GangaObject):
 
         elif self.master:
             if not hasattr(self.master.info, 'subjob_statuses'):
-                self.master.info.subjob_statuses = SubjobStatuses(len(self.master.subjobs))
+                self.master.info.subjob_statuses = SubjobStatuses()
+                self.master.info.subjob_statuses.totalSubjobs = len(self.subjobs)
                 for sj in self.master.subjobs:
                     self.master.info.subjob_statuses.incrementStatus(sj.status)
         else:
            if not hasattr(self.info, 'subjob_statuses'):
                if not self.subjobs:
-                   self.subjob_statuses = SubjobStatuses(0)
-                   self.incrementStatus(final_status)
+                   self.info.subjob_statuses = SubjobStatuses()
+                   self.info.subjob_statuses.incrementStatus(final_status)
                else:
-                   self.subjob_statuses = SubjobStatuses(len(self.subjobs))
+                   self.info.subjob_statuses = SubjobStatuses()
+                   self.info.subjob_statuses.totalSubjobs = len(self.subjobs)
                    for sj in self.subjobs:
                        self.info.subjob_statuses.incrementStatus(sj.status)
 

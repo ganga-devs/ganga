@@ -480,7 +480,8 @@ class RegistrySlice(object):
                         if item == "fqid":
                             vals.append(self._get_display_value(obj, item))
                         else:
-                            vals.append(self._get_display_value(obj, item)[0:width])
+                            vals.append('---')
+#                            vals.append(self._get_display_value(obj, item)[0:width]) Just return a string instead of loading a job.
                 ds += markup(this_format % tuple(vals), colour)
 
         return ds
