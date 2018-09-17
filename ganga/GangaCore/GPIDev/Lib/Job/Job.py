@@ -146,7 +146,7 @@ class SubjobStatuses(GangaObject):
     def incrementStatus(self, status):
         """Increment the number of a given status"""
         if not status in self.jobStatuses.keys():
-            logger.error('Status %s not known to Ganga' % status)
+            logger.debug('Status %s not known to Ganga' % status)
             return
         else:
             currentNo = self.jobStatuses[status]
@@ -155,7 +155,7 @@ class SubjobStatuses(GangaObject):
     def decrementStatus(self, status):
         """Decrement the number of a given status"""
         if not status in self.jobStatuses.keys():
-            logger.error('Status %s not known to Ganga' % status)
+            logger.debug('Status %s not known to Ganga' % status)
             return
         else:
             currentNo = self.jobStatuses[status]
