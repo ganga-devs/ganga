@@ -176,7 +176,7 @@ class JobInfo(GangaObject):
         'monitor': ComponentItem('monitor', defvalue=None, load_default=0, comparable=0, optional=1, doc="job monitor instance"),
         'uuid': SimpleItem(defvalue='', protected=1, comparable=0, doc='globally unique job identifier'),
         'monitoring_links': SimpleItem(defvalue=[], typelist=[tuple], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links"),
-        'subjob_statuses': SimpleItem(defvalue=SubjobStatuses())
+        'subjob_statuses': SimpleItem(defvalue=SubjobStatuses(), hidden=1)
     })
 
     _category = 'jobinfos'
@@ -672,12 +672,11 @@ class Job(GangaObject):
             self.master.info.subjob_statuses.incrementStatus(final_status)
             self.master.info.subjob_statuses.decrementStatus(initial_status)
 
-        elif self.master:
-            if not hasattr(self.master.info, 'subjob_statuses'):
-                self.master.info.subjob_statuses = SubjobStatuses()
-                self.master.info.subjob_statuses.totalSubjobs = len(self.subjobs)
-                for sj in self.master.subjobs:
-                    self.master.info.subjob_statuses.incrementStatus(sj.status)
+        elif self.master and not hasattr(self.master.info, 'subjob_statuses'):
+            self.master.info.subjob_statuses = SubjobStatuses()
+            self.master.info.subjob_statuses.totalSubjobs = len(self.subjobs)
+            for sj in self.master.subjobs:
+                self.master.info.subjob_statuses.incrementStatus(sj.status)
         else:
            if not hasattr(self.info, 'subjob_statuses'):
                if not self.subjobs:
@@ -1544,7 +1543,7 @@ class Job(GangaObject):
 
             logger.info("submitting job %s", self.getFQID('.'))
             # prevent other sessions from submitting this job concurrently.
-            self.info.subjob_statuses = SubjobStatuses(0)
+            self.info.subjob_statuses = SubjobStatuses()
             self.updateStatus('submitting')
 
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
