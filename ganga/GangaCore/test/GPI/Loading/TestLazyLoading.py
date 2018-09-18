@@ -78,3 +78,19 @@ class TestLazyLoading(object):
         raw_j.printSummaryTree()
 
         assert raw_j._getRegistry().has_loaded(raw_j)
+
+    def test_e_TestJobsSummary(self):
+        """ Test that the jobs summary hasn't broken lazy loading """
+
+        from GangaCore.GPI import jobs
+
+        jobs_str = str(jobs)
+
+        assert jobs_str != "Registry Slice: jobs (0 objects)"
+
+        assert jobs_str != ""
+
+        raw_j = stripProxy(jobs(0))
+
+        assert not raw_j._getRegistry().has_loaded(raw_j)
+
