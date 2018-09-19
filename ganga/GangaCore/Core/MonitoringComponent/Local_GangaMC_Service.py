@@ -410,6 +410,25 @@ class CallbackHookEntry(object):
         self._lastRun = 0
 
 
+def autoKill_if_required(jobList_fromset):
+    for j in jobList_fromset:
+        if j.master
+            # Check for max number of resubmissions
+            n_completed = len([sj for sj in j.master.subjobs if sj.status == 'completed'])
+            n_failed = len([sj for sj in j.master.subjobs if sj.status == 'failed'])
+
+            if n_completed == 0 and n_failed >= config['autoKillThreshold'] and not config['autoKillThreshold'] == -1:
+                log.warning('Killing job %d as too many subjobs have failed with no successful completions. Please check your options!')
+                j.auto_kill(
+        else:
+            # Check for max number of resubmissions
+            n_completed = len([sj for sj in j.subjobs if sj.status == 'completed'])
+            n_failed = len([sj for sj in j.subjobs if sj.status == 'failed'])
+
+            if n_completed == 0 and n_failed >= config['autoKillThreshold'] and not config['autoKillThreshold'] == -1:
+                log.warning('Killing job %d as too many subjobs have failed with no successful completions. Please check your options!')
+                j.auto_kill()
+
 def resubmit_if_required(jobList_fromset):
     for j in jobList_fromset:
         if not j.do_auto_resubmit:
@@ -1131,6 +1150,7 @@ class JobRegistry_Monitor(GangaThread):
                     ## We should be raising exceptions no matter what
                     raise all_exceptions[0]
 
+                autoKill_if_required(jobList_fromset)
                 resubmit_if_required(jobList_fromset)
 
             except BackendError as x:

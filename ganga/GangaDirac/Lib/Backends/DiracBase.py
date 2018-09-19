@@ -662,6 +662,26 @@ class DiracBase(IBackend):
         return True
 
     @require_credential
+    def master_kill(self):
+        """ A method for killing a job and all of its subjobs. Does it en masse
+        for maximum speed.
+        """
+        j = self.getJobObject()
+        if len(j.subjobs)==0:
+            return self.kill()
+        else:
+            kill_list = []
+            for sj in j.subjobs:
+                if sj.status not in ['completed', 'failed']:
+                    kill_list.append(sj.backend.id)
+            dirac_cmd = 'kill(%d)' % kill_list
+            try:
+                result = execute(dirac_cmd, cred_req=self.credential_requirements)
+            except GangaDiracError as err:
+                raise BackendError('Dirac', 'Dirac failed to auto-kill job .' % j.id)
+        return True
+
+    @require_credential
     def peek(self, filename=None, command=None):
         """Peek at the output of a job (Note: filename/command are ignored).
         Args:
