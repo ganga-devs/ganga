@@ -412,14 +412,14 @@ class CallbackHookEntry(object):
 
 def autoKill_if_required(jobList_fromset):
     for j in jobList_fromset:
-        if j.master
+        if j.master:
             # Check for max number of resubmissions
             n_completed = len([sj for sj in j.master.subjobs if sj.status == 'completed'])
             n_failed = len([sj for sj in j.master.subjobs if sj.status == 'failed'])
 
             if n_completed == 0 and n_failed >= config['autoKillThreshold'] and not config['autoKillThreshold'] == -1:
                 log.warning('Killing job %d as too many subjobs have failed with no successful completions. Please check your options!')
-                j.auto_kill(
+                j.auto_kill()
         else:
             # Check for max number of resubmissions
             n_completed = len([sj for sj in j.subjobs if sj.status == 'completed'])
