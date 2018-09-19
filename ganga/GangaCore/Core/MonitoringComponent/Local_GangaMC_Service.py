@@ -418,15 +418,15 @@ def autoKill_if_required(jobList_fromset):
             n_failed = len([sj for sj in j.master.subjobs if sj.status == 'failed'])
 
             if n_completed == 0 and n_failed >= config['autoKillThreshold'] and not config['autoKillThreshold'] == -1:
-                log.warning('Killing job %d as too many subjobs have failed with no successful completions. Please check your options!')
-                j.auto_kill()
+                log.warning('Killing job %d as too many subjobs have failed with no successful completions. Please check your options!' % j.master.id)
+                j.master.auto_kill()
         else:
             # Check for max number of resubmissions
             n_completed = len([sj for sj in j.subjobs if sj.status == 'completed'])
             n_failed = len([sj for sj in j.subjobs if sj.status == 'failed'])
 
             if n_completed == 0 and n_failed >= config['autoKillThreshold'] and not config['autoKillThreshold'] == -1:
-                log.warning('Killing job %d as too many subjobs have failed with no successful completions. Please check your options!')
+                log.warning('Killing job %d as too many subjobs have failed with no successful completions. Please check your options!' % j.id)
                 j.auto_kill()
 
 def resubmit_if_required(jobList_fromset):
