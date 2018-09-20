@@ -2080,6 +2080,9 @@ class Job(GangaObject):
             self.status = oldstatus
             raise
 
+    def auto_kill(self):
+        self.kill()
+
     def _repr(self):
         if self.id is None:
             id = "None"
