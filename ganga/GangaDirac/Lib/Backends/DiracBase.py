@@ -674,11 +674,11 @@ class DiracBase(IBackend):
             for sj in j.subjobs:
                 if sj.status not in ['completed', 'failed']:
                     kill_list.append(sj.backend.id)
-            dirac_cmd = 'kill(%d)' % kill_list
+            dirac_cmd = 'kill(%s)' % kill_list
             try:
                 result = execute(dirac_cmd, cred_req=self.credential_requirements)
             except GangaDiracError as err:
-                raise BackendError('Dirac', 'Dirac failed to auto-kill job .' % j.id)
+                raise BackendError('Dirac', 'Dirac failed to kill job %d.' % j.id)
         return True
 
     @require_credential
