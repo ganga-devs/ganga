@@ -103,6 +103,68 @@ class FakeError(GangaException):
     def __init__(self):
         super(FakeError, self).__init__()
 
+class SubjobStatuses(GangaObject):
+    """ This just stores the overall status of the subjobs. This rather relies on good bookkeeping instead of keeping tabs on the individual jobs."""
+    _schema = Schema(Version(0,1), {
+        'totalSubjobs' : SimpleItem(defvalue=0, typelist=[int], copyable=0),
+        'jobStatuses': SimpleItem(defvalue={}, typelist=[dict], copyable=0, doc="a dict that summarises the subjobs statuses")
+    })
+    _category = 'subjobstatuses'
+    _name = 'SubjobStatuses'
+
+    def __init__(self):
+        super(SubjobStatuses, self).__init__()
+        self.totalSubjobs = 0
+        self.jobStatuses = {
+            'new': 0,
+            'submitting': 0,
+            'submitted': 0,
+            'running': 0,
+            'killed': 0,
+            'failed': 0,
+            'completing': 0,
+            'completed': 0,
+        }
+
+
+    def setStatusNo(self, status, newNo):
+        """Set the no. of subjobs of a given status"""
+        if not status in self.jobStatuses.keys():
+            logger.error('Status %s not known to Ganga. No change' % status)
+            return
+        else:
+            self.jobStatuses[status] = newNo
+
+    def returnStatusNo(self, status):
+        """Return the no. of subjobs of a given status"""
+        if not status in self.jobStatuses.keys():
+            logger.error('Status %s not known to Ganga. Returning 0' % status)
+            return 0
+        else:
+            return self.jobStatuses[status]
+
+    def incrementStatus(self, status):
+        """Increment the number of a given status"""
+        if not status in self.jobStatuses.keys():
+            logger.debug('Status %s not known to Ganga' % status)
+            return
+        else:
+            currentNo = self.jobStatuses[status]
+            self.jobStatuses[status] = currentNo+1
+
+    def decrementStatus(self, status):
+        """Decrement the number of a given status"""
+        if not status in self.jobStatuses.keys():
+            logger.debug('Status %s not known to Ganga' % status)
+            return
+        else:
+            currentNo = self.jobStatuses[status]
+            if currentNo == 0:
+#                logger.warning('Already at 0 for status %s. Leaving unchanged!' % status)
+                return
+            else:
+                self.jobStatuses[status] = currentNo-1
+
 
 class JobInfo(GangaObject):
 
@@ -113,7 +175,8 @@ class JobInfo(GangaObject):
         'submit_counter': SimpleItem(defvalue=0, protected=1, doc="job submission/resubmission counter"),
         'monitor': ComponentItem('monitor', defvalue=None, load_default=0, comparable=0, optional=1, doc="job monitor instance"),
         'uuid': SimpleItem(defvalue='', protected=1, comparable=0, doc='globally unique job identifier'),
-        'monitoring_links': SimpleItem(defvalue=[], typelist=[tuple], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links")
+        'monitoring_links': SimpleItem(defvalue=[], typelist=[tuple], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links"),
+        'subjob_statuses': SimpleItem(defvalue=SubjobStatuses(), hidden=1)
     })
 
     _category = 'jobinfos'
@@ -127,7 +190,6 @@ class JobInfo(GangaObject):
 
     def increment(self):
         self.submit_counter += 1
-
 
 def _outputfieldCopyable():
     if 'ForbidLegacyOutput' in getConfig('Output'):
@@ -225,12 +287,12 @@ class Job(GangaObject):
                                      'fqid': SimpleItem(getter="getStringFQID", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, typelist=[str], doc='fully qualified job identifier', visitable=0),
                                      'been_queued': SimpleItem(transient=1, hidden=1, defvalue=False, optional=0, copyable=0, comparable=0, typelist=[bool], doc='flag to show job has been queued for postprocessing', visitable=0),
                                      'parallel_submit': SimpleItem(transient=1, defvalue=True, doc="Enable Submission of subjobs in parallel"),
-                                     })
+    })
 
     _category = 'jobs'
     _name = 'Job'
     _exportmethods = ['prepare', 'unprepare', 'submit', 'remove', 'kill',
-                      'resubmit', 'peek', 'force_status', 'runPostProcessors']
+                      'resubmit', 'peek', 'force_status', 'runPostProcessors', 'returnSubjobStatuses']
 
     default_registry = 'jobs'
 
@@ -258,7 +320,6 @@ class Job(GangaObject):
         super(Job, self).__init__()
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
-
         #logger.debug("__init__")
 
         for i in Job._additional_slots:
@@ -606,6 +667,28 @@ class Job(GangaObject):
         if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
+        #If we are monitoring an old subjob we need to initialise the info        
+        if self.master and hasattr(self.master.info, 'subjob_statuses'):
+            self.master.info.subjob_statuses.incrementStatus(final_status)
+            self.master.info.subjob_statuses.decrementStatus(initial_status)
+
+        elif self.master and not hasattr(self.master.info, 'subjob_statuses'):
+            self.master.info.subjob_statuses = SubjobStatuses()
+            self.master.info.subjob_statuses.totalSubjobs = len(self.subjobs)
+            for sj in self.master.subjobs:
+                self.master.info.subjob_statuses.incrementStatus(sj.status)
+        else:
+           if not hasattr(self.info, 'subjob_statuses'):
+               if not self.subjobs:
+                   self.info.subjob_statuses = SubjobStatuses()
+                   self.info.subjob_statuses.incrementStatus(final_status)
+               else:
+                   self.info.subjob_statuses = SubjobStatuses()
+                   self.info.subjob_statuses.totalSubjobs = len(self.subjobs)
+                   for sj in self.subjobs:
+                       self.info.subjob_statuses.incrementStatus(sj.status)
+
+
     def transition_update(self, new_status):
         """Propagate status transitions"""
 
@@ -729,13 +812,18 @@ class Job(GangaObject):
 
 	return stats
 
+    def returnSubjobStatuses(self):
+        if hasattr(self.info, 'subjob_statuses'):
+            return "%s / %s" % (self.info.subjob_statuses.jobStatuses['completed'], self.info.subjob_statuses.totalSubjobs)
+        else:
+            return '---'
+
     def updateMasterJobStatus(self):
         """
         Update master job status based on the status of subjobs.
         This is an auxiliary method for implementing bulk subjob monitoring.
         """
         stats = self.getSubJobStatuses()
-
         # ignore non-split jobs
         if not stats and self.master is not None:
             logger.warning('ignoring master job status updated for job %s (NOT MASTER)', self.getFQID('.'))
@@ -1455,6 +1543,7 @@ class Job(GangaObject):
 
             logger.info("submitting job %s", self.getFQID('.'))
             # prevent other sessions from submitting this job concurrently.
+            self.info.subjob_statuses = SubjobStatuses()
             self.updateStatus('submitting')
 
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
@@ -1470,6 +1559,9 @@ class Job(GangaObject):
             logger.debug("Checking Job: %s for splitting" % self.getFQID('.'))
             # split into subjobs
             rjobs = self._doSplitting()
+
+            #Now we have done the splitting set the subjob number in the info
+            self.info.subjob_statuses.totalSubjobs = len(self.subjobs)
 
             # Some old jobs may still contain None assigned to the self.subjobs so be careful when checking length
             if self.splitter is not None and not self.subjobs:

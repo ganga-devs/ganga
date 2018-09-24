@@ -788,17 +788,17 @@ disp_config.addOption(
     'config_value_colour', 'fx.bold', 'colour print of the configuration values')
 disp_config.addOption('jobs_columns',
                  ("fqid", "status", "name", "subjobs", "application",
-                  "backend", "backend.actualCE", "comment"),
+                  "backend", "backend.actualCE", "comment", "subjob status"),
                  'list of job attributes to be printed in separate columns')
 
 disp_config.addOption('jobs_columns_width',
                  {'fqid': 8, 'status': 10, 'name': 10, 'subjobs': 8, 'application':
-                     15, 'backend': 15, 'backend.actualCE': 45, 'comment': 30},
+                     15, 'backend': 15, 'backend.actualCE': 45, 'comment': 30, 'subjob status': 15},
                  'width of each column')
 
 disp_config.addOption('jobs_columns_functions',
                  {'subjobs': "lambda j: len(j.subjobs)", 'application': "lambda j: j.application.__class__.__name__",
-                  'backend': "lambda j:j.backend.__class__.__name__", 'comment': "lambda j: j.comment"},
+                  'backend': "lambda j:j.backend.__class__.__name__", 'comment': "lambda j: j.comment", 'subjob status': "lambda j: j.returnSubjobStatuses()"},
                  'optional converter functions')
 
 disp_config.addOption('jobs_columns_show_empty',
