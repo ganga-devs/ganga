@@ -358,7 +358,7 @@ lcg_config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml",
                  'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
 lcg_config.addOption('ArcConfigFile', "",
                  'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config file is specified and the default (~/arc/client.conf) is used')
-lcg_config.addOption('ArcCopyCommand', 'arget',
+lcg_config.addOption('ArcCopyCommand', 'arcget',
                   'sets the copy command for ARC when dealing with sandboxes')
 #lcg_config.addOption('ArcPrologue','','sets the prologue script')
 #lcg_config.addOption('ArcEpilogue','','sets the epilogue script')
