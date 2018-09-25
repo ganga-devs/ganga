@@ -52,7 +52,8 @@ class GridftpSandboxCache(GridSandboxCache):
     '''
 
     gridftp_sandbox_cache_schema_datadict.update({
-        'baseURI': SimpleItem(defvalue='', copyable=1, doc='the base URI for storing cached files')
+        'baseURI': SimpleItem(defvalue='', copyable=1, doc='the base URI for storing cached files'),
+        'copyCommand': SimpleItem(defvalue='globus-copy-url', typelist=[str], copyable=1, doc='the command to be exectued to copy files'),
     })
 
     _schema = Schema(Version(1, 0), gridftp_sandbox_cache_schema_datadict)
@@ -194,7 +195,7 @@ class GridftpSandboxCache(GridSandboxCache):
                 destURI = 'file:%s/%s' % (dest_dir, fname)
 
                 #cmd  = 'uberftp %s %s' % (srcURI, destURI)
-                cmd = 'globus-url-copy %s %s' % (srcURI, destURI)
+                cmd = '%s %s %s' % (self.copyCommand, srcURI, destURI)
 
                 rc, output, m = self.cacheObj.__cmd_retry_loop__(
                     shell, cmd, self.cacheObj.max_try)
