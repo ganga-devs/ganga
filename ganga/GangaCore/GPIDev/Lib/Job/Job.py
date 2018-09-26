@@ -230,7 +230,7 @@ class Job(GangaObject):
     _category = 'jobs'
     _name = 'Job'
     _exportmethods = ['prepare', 'unprepare', 'submit', 'remove', 'kill',
-                      'resubmit', 'peek', 'force_status', 'runPostProcessors']
+                      'resubmit', 'peek', 'force_status', 'runPostProcessors', 'returnSubjobStatuses']
 
     default_registry = 'jobs'
 
@@ -728,6 +728,15 @@ class Job(GangaObject):
             stats = set(sj.status for sj in self.subjobs)
 
 	return stats
+
+    def returnSubjobStatuses(self):
+        stats = []
+        if isinstance(self.subjobs, SubJobXMLList):
+            stats = self.subjobs.getAllSJStatus()
+        else:
+            stats = [sj.status for sj in self.subjobs]
+
+	return "%s / %s" % (stats.count('completed'), len(self.subjobs))
 
     def updateMasterJobStatus(self):
         """
