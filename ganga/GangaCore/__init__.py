@@ -6,6 +6,9 @@ import getpass
 import commands
 from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours
 
+# Global Variable to enable Job Sharing mechanism required in GANGA SWAN INTEGRATION.
+# If environment variable GANGA_SWAN_INTEGRATION is present enable this mechanism.
+GANGA_SWAN_INTEGRATION = "GANGA_SWAN_INTEGRATION" in os.environ
 
 # Global Functions
 def getLCGRootPath():
@@ -25,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '7.0.2'
+_gangaVersion = '7.1.4'
 _development = True
 
 # store a path to Ganga libraries
@@ -68,13 +71,6 @@ log_config.addOption('_logfile_size', 100000,
 log_config.addOption('_interactive_cache', True,
                  'if True then the cache used for interactive sessions, False disables caching')
 log_config.addOption('_customFormat', "", "custom formatting string for Ganga logging\n e.g. '%(name)-35s: %(levelname)-8s %(message)s'")
-
-# test if stomp.py logging is already set
-if 'stomp.py' in log_config:
-    pass  # config['stomp.py']
-else:
-    # add stomp.py option to Logging configuration
-    log_config.addOption('stomp.py', 'CRITICAL', 'logger for stomp.py external package')
 
 # ------------------------------------------------
 # System
@@ -142,7 +138,7 @@ conf_config.addOption('ServerTimeout', 60, 'Timeout in minutes for auto-server s
 conf_config.addOption('ServerUserScript', "", "Full path to user script to call periodically. The script will be executed as if called within Ganga by 'execfile'.")
 conf_config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between executions of the user script")
 
-conf_config.addOption('confirm_exit', 1, 'Ask the user on exit if we should exit, (this is passed along to IPython)')
+conf_config.addOption('confirm_exit', True, 'Ask the user on exit if we should exit, (this is passed along to IPython)')
 conf_config.addOption('force_start', False, 'Ignore disk checking on startup')
 
 conf_config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
@@ -150,18 +146,14 @@ conf_config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga sessi
 # runtime warnings issued by the interpreter may be suppresed
 conf_config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued by the interpreter may be suppresed")
 
-conf_config.addOption('UsageMonitoringMSG', True,
-                 "enable usage monitoring through MSG server defined in MSGMS configuration")
 conf_config.addOption('Batch', 'LSF', 'default batch system')
 
 conf_config.addOption('AutoStartReg', True, 'AutoStart the registries, needed to access any jobs in registry therefore needs to be True for 99.999% of use cases')
 
 # ------------------------------------------------
 # IPython
-ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration
-See IPython manual for more details:
-http://ipython.scipy.org/doc/manual''')
-ipython_config.addOption('args', "['-colors','LightBG', '-autocall','0', '-pprint']", 'Options to be passed to ipython for initialization')
+ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration''')
+ipython_config.addOption('colourscheme','LightBG', 'Colour scheme to be used by iPython. Options are LightBG, Linux, Neutral, NoColor' )
 
 # ------------------------------------------------
 # Shell
@@ -172,17 +164,6 @@ makeConfig("Shell", "configuration parameters for internal Shell utility.")
 queues_config = makeConfig("Queues", "configuration section for the queues")
 queues_config.addOption('Timeout', None, 'default timeout for queue generated processes')
 queues_config.addOption('NumWorkerThreads', 5, 'default number of worker threads in the queues system')
-
-# ------------------------------------------------
-# MSGMS
-msgms_config = makeConfig('MSGMS', 'Settings for the MSGMS monitoring plugin. Cannot be changed ruding the interactive Ganga session.')
-msgms_config.addOption('server', 'dashb-mb.cern.ch', 'The server to connect to')
-msgms_config.addOption('port', 61113, 'The port to connect to')
-msgms_config.addOption('username', 'ganga', '')
-msgms_config.addOption('password', 'analysis', '')
-msgms_config.addOption('message_destination', '/queue/ganga.status', '')
-msgms_config.addOption('usage_message_destination', "/queue/ganga.usage", '')
-msgms_config.addOption('job_submission_message_destination', "/queue/ganga.jobsubmission", '')
 
 # ------------------------------------------------
 # Plugins
@@ -212,6 +193,7 @@ poll_config.addOption('enable_multiThreadMon', True, 'enable multiple threads to
 poll_config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
 poll_config.addOption('MaxNumResubmits', 5, 'Maximum number of automatic job resubmits to do before giving')
 poll_config.addOption('MaxFracForResubmit', 0.25, 'Maximum fraction of failed jobs before stopping automatic resubmission')
+poll_config.addOption('autoKillThreshold', 20, 'Maximum number of failed subjobs before a job is automatically killed by the monitoring.')
 poll_config.addOption('update_thread_pool_size', 5, 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
 poll_config.addOption('default_backend_poll_rate', 30, 'Default rate for polling job status in the thread pool. This is the default value for all backends.')
 poll_config.addOption('Local', 10, 'Poll rate for Local backend.')
@@ -376,6 +358,8 @@ lcg_config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml",
                  'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
 lcg_config.addOption('ArcConfigFile', "",
                  'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config file is specified and the default (~/arc/client.conf) is used')
+lcg_config.addOption('ArcCopyCommand', 'arcget',
+                  'sets the copy command for ARC when dealing with sandboxes')
 #lcg_config.addOption('ArcPrologue','','sets the prologue script')
 #lcg_config.addOption('ArcEpilogue','','sets the epilogue script')
 
@@ -384,6 +368,8 @@ lcg_config.addOption('CreamInputSandboxBaseURI', '',
                  'sets the baseURI for getting the input sandboxes for the job')
 lcg_config.addOption('CreamOutputSandboxBaseURI', '',
                  'sets the baseURI for putting the output sandboxes for the job')
+lcg_config.addOption('CreamCopyCommand', 'gfal-copy-url',
+                 'sets the copy command for CREAM when dealing with sandboxes')
 #lcg_config.addOption('CreamPrologue','','sets the prologue script')
 #lcg_config.addOption('CreamEpilogue','','sets the epilogue script')
 
@@ -525,7 +511,7 @@ sge_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config va
 
 # the -V options means that all environment variables are transferred to
 # the batch job (ie the same as the default behaviour on LSF at CERN)
-sge_config.addOption('submit_str', 'cd %s; qsub -cwd -V %s %s %s %s',
+sge_config.addOption('submit_str', 'cd %s; qsub -cwd -S /usr/bin/python -V %s %s %s %s',
                  "String used to submit job to queue")
 sge_config.addOption('submit_res_pattern', 'Your job (?P<id>\d+) (.+)',
                  "String pattern for replay from the submit command")
@@ -806,17 +792,17 @@ disp_config.addOption(
     'config_value_colour', 'fx.bold', 'colour print of the configuration values')
 disp_config.addOption('jobs_columns',
                  ("fqid", "status", "name", "subjobs", "application",
-                  "backend", "backend.actualCE", "comment"),
+                  "backend", "backend.actualCE", "comment", "subjob status"),
                  'list of job attributes to be printed in separate columns')
 
 disp_config.addOption('jobs_columns_width',
                  {'fqid': 8, 'status': 10, 'name': 10, 'subjobs': 8, 'application':
-                     15, 'backend': 15, 'backend.actualCE': 45, 'comment': 30},
+                     15, 'backend': 15, 'backend.actualCE': 45, 'comment': 30, 'subjob status': 15},
                  'width of each column')
 
 disp_config.addOption('jobs_columns_functions',
                  {'subjobs': "lambda j: len(j.subjobs)", 'application': "lambda j: j.application.__class__.__name__",
-                  'backend': "lambda j:j.backend.__class__.__name__", 'comment': "lambda j: j.comment"},
+                  'backend': "lambda j:j.backend.__class__.__name__", 'comment': "lambda j: j.comment", 'subjob status': "lambda j: j.returnSubjobStatuses()"},
                  'optional converter functions')
 
 disp_config.addOption('jobs_columns_show_empty',

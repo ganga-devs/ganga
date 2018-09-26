@@ -1,5 +1,6 @@
 include README.rst
-recursive-include ganga *.py.template *.ipynb *.INI
+recursive-include ganga/GangaRelease/tools ganga-cvmfs-install.sh ganga-cvmfs-install-dev.sh check-new-ganga.py
+recursive-include ganga *.py.template *.ipynb *.INI *.ini
 recursive-include ganga/GangaRelease ReleaseNotes*
 recursive-include doc *
 recursive-include ganga/GangaTemplates *.INI

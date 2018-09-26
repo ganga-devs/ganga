@@ -7,7 +7,6 @@ import random
 import threading
 import uuid
 import shutil
-
 from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException, GangaFileError
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -62,6 +61,19 @@ def genDataFiles(job):
 
     return inputsandbox
 
+
+def getAutoDBTags(job):
+    knownApps = ['DaVinci', 'Brunel', 'Moore']
+    prefix = 'DaVinci'
+    for app in knownApps:
+        if app in job.application.directory:
+            prefix = app
+    inputsandbox = []
+    ddb, conddb = execute('getDBtags("{0}")'.format(job.inputdata[0].lfn)) # take the tags only from the first file
+    tagOpts = 'from Configurables import ' + prefix +'\n' 
+    tagOpts += prefix + '().DDDBtag = ' + "'" + ddb + "'\n"
+    tagOpts += prefix + '().CondDBtag = ' + "'" + conddb + "'"
+    return tagOpts
 
 def generateWrapperScript(app):
     """
@@ -151,7 +163,9 @@ def prepareCommand(app):
         if app.extraOpts:
             full_cmd += ' ' + app.getExtraOptsFileName()
         if app.getMetadata:
-            full_cmd += ' summary.py' 
+            full_cmd += ' summary.py'
+        if app.autoDBtags:
+            full_cmd += ' dbTags.py'
         if app.extraArgs:
             full_cmd += " " + " ".join(app.extraArgs)
 
@@ -169,6 +183,9 @@ class GaudiExecRTHandler(IRuntimeHandler):
             app (GaudiExec): This application is only expected to handle GaudiExec Applications here
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
+        if app.autoDBtags and not app.getJobObject().inputdata[0].lfn.startswith('/lhcb/MC/'):
+            logger.warning("This doesn't look like MC! Not automatically adding db tags.")
+            app.autoDBtags = False
 
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
@@ -184,6 +201,10 @@ class GaudiExecRTHandler(IRuntimeHandler):
         if app.getMetadata:
             logger.info("Adding options to make the summary.xml")
             inputsandbox.append(FileBuffer('summary.py', "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"))
+
+        if app.autoDBtags:
+            logger.info("Adding options for auto DB tags")
+            inputsandbox.append(FileBuffer('dbTags.py', getAutoDBTags(app.getJobObject())))
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
@@ -312,6 +333,12 @@ def generateJobScripts(app, appendJobScripts):
                 summaryFile = FileBuffer(summaryPath, summaryScript)
                 summaryFile.create()
                 tar_file.add(summaryPath, arcname = 'summary.py')
+            if app.autoDBtags:
+                dbScript = getAutoDBTags(job)
+                dbPath = os.path.join(job.getInputWorkspace().getPath(), 'dbTags.py')
+                dbFile = FileBuffer(dbPath, dbScript)
+                dbFile.create()
+                tar_file.add(dbPath, arcname = 'dbTags.py')
             for this_job in rjobs:
                 this_app = this_job.application
                 wnScript = generateWNScript(prepareCommand(this_app), this_app)
@@ -430,6 +457,10 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
 
+        if app.autoDBtags and not app.getJobObject().inputdata[0].lfn.startswith('/lhcb/MC/'):
+            logger.warning("This doesn't look like MC! Not automatically adding db tags.")
+            app.autoDBtags = False
+
         cred_req = app.getJobObject().backend.credential_requirements
         check_creds(cred_req)
 
@@ -510,12 +541,11 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         for opts_file in all_opts_files:
             if isinstance(opts_file, DiracFile):
                 inputsandbox += ['LFN:'+opts_file.lfn]
-
         # Sort out inputfiles we support
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
                 inputsandbox += ['LFN:'+file_.lfn]
-            if isinstance(file_, LocalFile):
+            elif isinstance(file_, LocalFile):
                 if job.master is not None and file_ not in job.master.inputfiles:
                     shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())
                     inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
@@ -536,6 +566,11 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         inputsandbox += ['LFN:'+app.uploadedInput.lfn]
         inputsandbox += ['LFN:'+app.jobScriptArchive.lfn]
+
+        #Now add in the missing DiracFiles from the master job
+        for file_ in master_job.inputfiles:
+            if isinstance(file_, DiracFile) and 'LFN:'+file_.lfn not in inputsandbox:
+                inputsandbox += ['LFN:'+file_.lfn]
 
         logger.debug("Input Sand: %s" % inputsandbox)
 

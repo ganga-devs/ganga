@@ -24,7 +24,6 @@ from GangaCore.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from GangaCore.GPIDev.Lib.Job.MetadataDict import MetadataDict
 from GangaCore.GPIDev.Schema import ComponentItem, FileItem, GangaFileItem, Schema, SimpleItem, Version
-from GangaCore.Runtime.spyware import ganga_job_submitted
 from GangaCore.Utility.Config import ConfigError, getConfig
 from GangaCore.Utility.logging import getLogger, log_user_exception
 
@@ -231,7 +230,7 @@ class Job(GangaObject):
     _category = 'jobs'
     _name = 'Job'
     _exportmethods = ['prepare', 'unprepare', 'submit', 'remove', 'kill',
-                      'resubmit', 'peek', 'force_status', 'runPostProcessors']
+                      'resubmit', 'peek', 'force_status', 'runPostProcessors', 'returnSubjobStatuses']
 
     default_registry = 'jobs'
 
@@ -729,6 +728,15 @@ class Job(GangaObject):
             stats = set(sj.status for sj in self.subjobs)
 
 	return stats
+
+    def returnSubjobStatuses(self):
+        stats = []
+        if isinstance(self.subjobs, SubJobXMLList):
+            stats = self.subjobs.getAllSJStatus()
+        else:
+            stats = [sj.status for sj in self.subjobs]
+
+	return "%s / %s" % (stats.count('completed'), len(self.subjobs))
 
     def updateMasterJobStatus(self):
         """
@@ -1540,16 +1548,6 @@ class Job(GangaObject):
             # above
             self._getRegistry()._flush([self])
 
-            # send job submission message
-            if len(self.subjobs) == 0:
-                ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
-            else:
-                submitted_count = 0
-                for sj in self.subjobs:
-                    if sj.status == 'submitted':
-                        submitted_count += 1
-
-                ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", submitted_count)
             return 1
 
         except IncompleteJobSubmissionError as x:
@@ -1993,28 +1991,14 @@ class Job(GangaObject):
             # backend.master_submit already have set status to "submitted"
             self.updateStatus('submitted')
 
-            # send job submission message
-            # if resubmit on subjob
-            if self.getFQID('.').find('.') > 0:
-                ganga_job_submitted(getName(self.application), getName(self.backend), "0", "0", "1")
-            # if resubmit on plain job
-            elif len(self.subjobs) == 0:
-                ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
-            # else resubmit on master job -> increment the counter of the
-            # subjobs with the succesfull resubmited subjobs
-            else:
-                submitted_count = 0
-                for sj in self.subjobs:
-                    if sj.status == 'submitted':
-                        submitted_count += 1
-
-                ganga_job_submitted(getName(self.application), getName(self.backend), "0", "0", submitted_count)
-
         except GangaException, x:
             logger.error("failed to resubmit job, %s" % x)
             logger.warning('reverting job %s to the %s status', fqid, oldstatus)
             self.status = oldstatus
             raise
+
+    def auto_kill(self):
+        self.kill()
 
     def _repr(self):
         if self.id is None:
