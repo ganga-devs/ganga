@@ -5,6 +5,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaCore.GPIDev.Credentials import require_credential
 from copy import deepcopy
 import random
 import time
@@ -99,7 +100,7 @@ logger = getLogger()
 global_random = random
 
 LFN_parallel_limit = 250.
-
+@require_credential
 def wrapped_execute(command, expected_type):
     """
     A wrapper around execute to protect us from commands which had errors
