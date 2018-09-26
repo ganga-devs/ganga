@@ -522,7 +522,7 @@ class Condor(IBackend):
             cdfDict['environment'] = envString
 
         if infileString:
-            cdfDict['transfer_input_files'] = infileString
+            cdfDict['transfer_input_files'] = cdfDict['transfer_input_files'] + "," + infileString
 
         if outfileString:
             cdfDict['transfer_output_files'] = outfileString

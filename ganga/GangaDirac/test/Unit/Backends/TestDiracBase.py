@@ -276,12 +276,12 @@ def test_getOutputSandbox(db, mocker):
     temp_dir = j.getOutputWorkspace().getPath()
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         assert db.getOutputSandbox(), 'didn\'t run'
-        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % temp_dir, cred_req=mocker.ANY)
+        execute.assert_called_once_with("getOutputSandbox(1234,'%s', True)" % temp_dir, cred_req=mocker.ANY)
 
     test_dir = 'test_dir'
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         assert db.getOutputSandbox(test_dir), 'didn\'t run with modified dir'
-        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % test_dir, cred_req=mocker.ANY)
+        execute.assert_called_once_with("getOutputSandbox(1234,'%s', True)" % test_dir, cred_req=mocker.ANY)
 
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')) as execute:
         assert not db.getOutputSandbox(test_dir), 'didn\'t fail gracefully'
