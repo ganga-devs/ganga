@@ -147,6 +147,10 @@ class CREAM(IBackend):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
 
         elif self.sandboxcache._name == 'GridftpSandboxCache':
+            #If the copy command is set in the config then use it.
+            if config['CreamCopyCommand']:
+                self.sandboxcache.copyCommand = config['CreamCopyCommand']
+
             if config['CreamInputSandboxBaseURI']:
                 self.sandboxcache.baseURI = config['CreamInputSandboxBaseURI']
             elif self.CE:
