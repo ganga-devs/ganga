@@ -140,15 +140,16 @@ def addFile(lfn, file, diracSE, guid):
 
 
 @diracCommand
-def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, noJobDir=True, pipe_out=True):
+def getOutputSandbox(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDir=True, pipe_out=True):
     '''
     Get the outputsandbox and return the output from Dirac to the calling function
     id: the DIRAC jobid of interest
     outputDir: output directory locall on disk to use
     oversized: is this output sandbox oversized this will be modified
     noJobDir: should we create a folder with the DIRAC job ID?
-    output: should I output the Dirac output or should I return a python object (False)'''
-    result = dirac.getOutputSandbox(id, outputDir, oversized, noJobDir)
+    output: should I output the Dirac output or should I return a python object (False)
+    unpack: should the sandbox be untarred when downloaded'''
+    result = dirac.getOutputSandbox(id, outputDir, oversized, noJobDir, unpack)
     if result is not None and result.get('OK', False):
 
         if not noJobDir:
@@ -236,11 +237,11 @@ def normCPUTime(id, pipe_out=True):
 
 
 @diracCommand
-def finished_job(id, outputDir=os.getcwd(), oversized=True, noJobDir=True):
+def finished_job(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDir=True):
     ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, takes arguments such as getOutputSandbox
     Returns the CPU time of the job as a dict, the output sandbox information in another dict and a dict of the LFN of any uploaded data'''
     out_cpuTime = normCPUTime(id, pipe_out=False)
-    out_sandbox = getOutputSandbox(id, outputDir, oversized, noJobDir, pipe_out=False)
+    out_sandbox = getOutputSandbox(id, outputDir, unpack, oversized, noJobDir, pipe_out=False)
     out_dataInfo = getOutputDataInfo(id, pipe_out=False)
     outStateTime = {'completed' : getStateTime(id, 'completed', pipe_out=False)}
     return (out_cpuTime, out_sandbox, out_dataInfo, outStateTime)

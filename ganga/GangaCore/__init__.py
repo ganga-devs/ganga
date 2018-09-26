@@ -28,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '7.1.3'
+_gangaVersion = '7.1.4'
 _development = True
 
 # store a path to Ganga libraries
@@ -193,6 +193,7 @@ poll_config.addOption('enable_multiThreadMon', True, 'enable multiple threads to
 poll_config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
 poll_config.addOption('MaxNumResubmits', 5, 'Maximum number of automatic job resubmits to do before giving')
 poll_config.addOption('MaxFracForResubmit', 0.25, 'Maximum fraction of failed jobs before stopping automatic resubmission')
+poll_config.addOption('autoKillThreshold', 20, 'Maximum number of failed subjobs before a job is automatically killed by the monitoring.')
 poll_config.addOption('update_thread_pool_size', 5, 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
 poll_config.addOption('default_backend_poll_rate', 30, 'Default rate for polling job status in the thread pool. This is the default value for all backends.')
 poll_config.addOption('Local', 10, 'Poll rate for Local backend.')
@@ -357,6 +358,8 @@ lcg_config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml",
                  'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
 lcg_config.addOption('ArcConfigFile', "",
                  'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config file is specified and the default (~/arc/client.conf) is used')
+lcg_config.addOption('ArcCopyCommand', 'arcget',
+                  'sets the copy command for ARC when dealing with sandboxes')
 #lcg_config.addOption('ArcPrologue','','sets the prologue script')
 #lcg_config.addOption('ArcEpilogue','','sets the epilogue script')
 
@@ -365,6 +368,8 @@ lcg_config.addOption('CreamInputSandboxBaseURI', '',
                  'sets the baseURI for getting the input sandboxes for the job')
 lcg_config.addOption('CreamOutputSandboxBaseURI', '',
                  'sets the baseURI for putting the output sandboxes for the job')
+lcg_config.addOption('CreamCopyCommand', 'gfal-copy-url',
+                 'sets the copy command for CREAM when dealing with sandboxes')
 #lcg_config.addOption('CreamPrologue','','sets the prologue script')
 #lcg_config.addOption('CreamEpilogue','','sets the epilogue script')
 
@@ -787,17 +792,17 @@ disp_config.addOption(
     'config_value_colour', 'fx.bold', 'colour print of the configuration values')
 disp_config.addOption('jobs_columns',
                  ("fqid", "status", "name", "subjobs", "application",
-                  "backend", "backend.actualCE", "comment"),
+                  "backend", "backend.actualCE", "comment", "subjob status"),
                  'list of job attributes to be printed in separate columns')
 
 disp_config.addOption('jobs_columns_width',
                  {'fqid': 8, 'status': 10, 'name': 10, 'subjobs': 8, 'application':
-                     15, 'backend': 15, 'backend.actualCE': 45, 'comment': 30},
+                     15, 'backend': 15, 'backend.actualCE': 45, 'comment': 30, 'subjob status': 15},
                  'width of each column')
 
 disp_config.addOption('jobs_columns_functions',
                  {'subjobs': "lambda j: len(j.subjobs)", 'application': "lambda j: j.application.__class__.__name__",
-                  'backend': "lambda j:j.backend.__class__.__name__", 'comment': "lambda j: j.comment"},
+                  'backend': "lambda j:j.backend.__class__.__name__", 'comment': "lambda j: j.comment", 'subjob status': "lambda j: j.returnSubjobStatuses()"},
                  'optional converter functions')
 
 disp_config.addOption('jobs_columns_show_empty',

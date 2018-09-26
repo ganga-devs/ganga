@@ -275,7 +275,7 @@ class Root(IPrepareApp):
 class RootRTHandler(IRuntimeHandler):
 
     def quoteCintArgString(self, cintArg):
-        return '\\"%s\\"' % cintArg
+        return '\"%s\"' % cintArg
 
     def _getRootEnvSys(self, version, usepython=False):
         """Returns an environment suitable for running Root and sometimes Python."""
@@ -359,7 +359,7 @@ class RootRTHandler(IRuntimeHandler):
                 arglist.append(self.quoteCintArgString(arg))
             else:
                 arglist.append(arg)
-        rootarg = '\(' + string.join([repr(s) for s in arglist], ',') + '\)'
+        rootarg = '(' + string.join([s for s in arglist], ',') + ')'
 
         script = app.script
         if script == File():
@@ -369,8 +369,8 @@ class RootRTHandler(IRuntimeHandler):
 
         # Start ROOT with the -b and -q options to run without a
         # terminal attached.
-        arguments = ['-b', '-q', os.path.relpath(join('.', script.subdir,
-                                      split(script.name)[1])) + rootarg]
+        arguments = ['-b', '-q', r'\'', os.path.relpath(join('.', script.subdir,
+                                      split(script.name)[1])) + rootarg, r'\'']
         inputsandbox = app._getParent().inputsandbox + [script]
 
         (rootenv, _) = self._getRootEnvSys(app.version)

@@ -97,11 +97,15 @@ class DiracBase(IBackend):
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
         'blockSubmit' : SimpleItem(defvalue=True, 
+
                                doc='Shall we use the block submission?'),
         'finaliseOnMaster' : SimpleItem(defvalue=True,
                                doc='Finalise the subjobs all in one go when they are all finished.'),
         'downloadSandbox' : SimpleItem(defvalue=True,
-                               doc='Do you want to download the output sandbox when the job finalises. Only for finaliseOnMaster.')
+                               doc='Do you want to download the output sandbox when the job finalises. Only for finaliseOnMaster.'),
+                                   doc='Shall we use the block submission?'),
+        'unpackOutputSandbox' : SimpleItem(defvalue=False,
+                                           doc='Should the output sandbox be unpacked when downloaded.'),
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
                       'getOutputDataLFNs', 'getOutputDataAccessURLs', 'peek', 'reset', 'debug', 'finaliseCompletingJobs']
@@ -667,6 +671,26 @@ class DiracBase(IBackend):
         return True
 
     @require_credential
+    def master_kill(self):
+        """ A method for killing a job and all of its subjobs. Does it en masse
+        for maximum speed.
+        """
+        j = self.getJobObject()
+        if len(j.subjobs)==0:
+            return self.kill()
+        else:
+            kill_list = []
+            for sj in j.subjobs:
+                if sj.status not in ['completed', 'failed']:
+                    kill_list.append(sj.backend.id)
+            dirac_cmd = 'kill(%s)' % kill_list
+            try:
+                result = execute(dirac_cmd, cred_req=self.credential_requirements)
+            except GangaDiracError as err:
+                raise BackendError('Dirac', 'Dirac failed to kill job %d.' % j.id)
+        return True
+
+    @require_credential
     def peek(self, filename=None, command=None):
         """Peek at the output of a job (Note: filename/command are ignored).
         Args:
@@ -680,7 +704,7 @@ class DiracBase(IBackend):
             logger.error("No peeking available for Dirac job '%i'.", self.id)
 
     @require_credential
-    def getOutputSandbox(self, outputDir=None):
+    def getOutputSandbox(self, outputDir=None, unpack=True):
         """Get the outputsandbox for the job object controlling this backend
         Args:
             outputDir (str): This string represents the output dir where the sandbox is to be placed
@@ -688,7 +712,7 @@ class DiracBase(IBackend):
         j = self.getJobObject()
         if outputDir is None:
             outputDir = j.getOutputWorkspace().getPath()
-        dirac_cmd = "getOutputSandbox(%d,'%s')"  % (self.id, outputDir)
+        dirac_cmd = "getOutputSandbox(%d,'%s', %s)"  % (self.id, outputDir, unpack)
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements)
         except GangaDiracError as err:
@@ -970,7 +994,7 @@ class DiracBase(IBackend):
 
             logger.info('Contacting DIRAC for job: %s' % job.fqid)
             # Contact dirac which knows about the job
-            job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = execute("finished_job(%d, '%s')" % (job.backend.id, output_path), cred_req=job.backend.credential_requirements)
+            job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = execute("finished_job(%d, '%s', %s)" % (job.backend.id, output_path, job.backend.unpackOutputSandbox), cred_req=job.backend.credential_requirements)
 
             now = time.time()
             logger.info('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
@@ -1072,7 +1096,7 @@ class DiracBase(IBackend):
 
             # if requested try downloading outputsandbox anyway
             if configDirac['failed_sandbox_download']:
-                execute("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()), cred_req=job.backend.credential_requirements)
+                execute("getOutputSandbox(%d,'%s', %s)" % (job.backend.id, job.getOutputWorkspace().getPath(), job.backend.unpackOutputSandbox), cred_req=job.backend.credential_requirements)
         else:
             logger.error("Job #%s Unexpected dirac status '%s' encountered" % (job.getFQID('.'), updated_dirac_status))
 
