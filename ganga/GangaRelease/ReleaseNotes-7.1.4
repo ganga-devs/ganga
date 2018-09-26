@@ -1,0 +1,24 @@
+**************************************************************************************************************
+7.1.4 (2018/09/26)
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaCore
+--------------------------------------------------------------------------------------------------------------
+* Fix for ROOT application with Local and Interactive backends. #1340
+* Bugfix for inputfiles with Condor backend. #1345
+* Added autoKill for job monitoring. If more than 20 subjobs fail with no successes Ganga will kill the entire job. #1347
+* Added configurable option for ARC and CREAM file copy commands in the sandbox. 'ArcCopyCommand' and 'CreamCopyCommand' in the LCG section. #1341
+* Added subjobs progress column. #1343
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Bugfix to autoDBtags #1332
+* New merger for GaudiExec applications. This uses the run script of the application for hadd. #1334
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Added master_kill method to Dirac for more efficient job killing. #1347
+
+**************************************************************************************************************
