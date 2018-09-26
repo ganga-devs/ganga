@@ -8,6 +8,7 @@ ganga/ganga/GangaCore
 * Bugfix for inputfiles with Condor backend. #1345
 * Added autoKill for job monitoring. If more than 20 subjobs fail with no successes Ganga will kill the entire job. #1347
 * Added configurable option for ARC and CREAM file copy commands in the sandbox. 'ArcCopyCommand' and 'CreamCopyCommand' in the LCG section. #1341
+* Added subjobs progress column. #1343
 
 --------------------------------------------------------------------------------------------------------------
 ganga/ganga/GangaLHCb
