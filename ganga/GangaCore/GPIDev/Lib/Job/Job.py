@@ -113,7 +113,7 @@ class JobInfo(GangaObject):
         'submit_counter': SimpleItem(defvalue=0, protected=1, doc="job submission/resubmission counter"),
         'monitor': ComponentItem('monitor', defvalue=None, load_default=0, comparable=0, optional=1, doc="job monitor instance"),
         'uuid': SimpleItem(defvalue='', protected=1, comparable=0, doc='globally unique job identifier'),
-        'monitoring_links': SimpleItem(defvalue=[], typelist=[tuple], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links"),
+        'monitoring_links': SimpleItem(defvalue=[], typelist=[tuple], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links")
     })
 
     _category = 'jobinfos'
@@ -127,6 +127,7 @@ class JobInfo(GangaObject):
 
     def increment(self):
         self.submit_counter += 1
+
 
 def _outputfieldCopyable():
     if 'ForbidLegacyOutput' in getConfig('Output'):
@@ -257,6 +258,7 @@ class Job(GangaObject):
         super(Job, self).__init__()
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
+
         #logger.debug("__init__")
 
         for i in Job._additional_slots:
@@ -742,6 +744,7 @@ class Job(GangaObject):
         This is an auxiliary method for implementing bulk subjob monitoring.
         """
         stats = self.getSubJobStatuses()
+
         # ignore non-split jobs
         if not stats and self.master is not None:
             logger.warning('ignoring master job status updated for job %s (NOT MASTER)', self.getFQID('.'))
