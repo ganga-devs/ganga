@@ -97,7 +97,7 @@ class DiracBase(IBackend):
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
         'blockSubmit' : SimpleItem(defvalue=True, 
                                    doc='Shall we use the block submission?'),
-        'unpackOutputSandbox' : SimpleItem(defvalue=True,
+        'unpackOutputSandbox' : SimpleItem(defvalue=False,
                                            doc='Should the output sandbox be unpacked when downloaded.')
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
