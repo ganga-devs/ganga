@@ -95,6 +95,8 @@ class DiracBase(IBackend):
         'settings': SimpleItem(defvalue={'CPUTime': 14 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
+        'parametricSubmit' : SimpleItem(defvalue=False,
+                                        doc='Shall we use parametric submission for maximum speed?'),
         'blockSubmit' : SimpleItem(defvalue=True, 
                                doc='Shall we use the block submission?'),
     })
@@ -182,6 +184,18 @@ class DiracBase(IBackend):
         return []
 
     @require_credential
+    def _parametric_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit):
+        '''
+        Submit the job parametrically
+        '''
+        datafiles = []
+        sandboxfiles = []
+        for sj in rjobs:
+            datafiles.append([_file.lfn for _file in sj.inputdata])
+            sandboxfiles.append([_file for _file in sj.inputfiles])
+
+
+    @require_credential
     def _block_submit(self, myscript, lenSubjobs, keep_going = False):
         '''Submit a block of jobs via the Dirac server in one go.
         Args:
@@ -256,7 +270,11 @@ class DiracBase(IBackend):
         we can submit several subjobs in the same process. Therefore for each subjob we collect the code for
        the dirac-script into one large file that we then execute.
         """
-        #If you want to go slowly use the regular master_submit:
+        #If you want to go quickly use the parametric submission:
+        if self.parametricSubmit:
+            return self._parametric_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
+
+        #If you want to go slowly submit the jobs one at a time
         if not self.blockSubmit:
             return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
 
@@ -406,6 +424,7 @@ class DiracBase(IBackend):
         ### FINISH_WORKAROUND
 
         dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', sandbox_str)
+        print 'sandbox_str: ', sandbox_str
 
         return dirac_script
         

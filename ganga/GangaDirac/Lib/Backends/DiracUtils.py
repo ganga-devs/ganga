@@ -59,6 +59,26 @@ def get_job_ident(dirac_script_lines):
 
     return target_line[0].split('=', 1)[0].strip()
 
+def split_for_parametric_submission(inputdata, filesPerJob, maxFiles, ignoremissing, bannedSites=[]):
+    '''
+    Split the inputdata for parametric submission.
+    This uses the OfflineGangaDiracSplitter to create the individual datasets that this
+    then corrals into a list of lists to attach to the master job.
+    '''
+    if filesPerJob > 100:
+        logger.warning('filesPerJob exceeded DIRAC maximum')
+        logger.warning('DIRAC has a maximum dataset limit of 100.')
+        logger.warning(
+            'BE AWARE!... will set it to this maximum value at submit time if backend is Dirac')
+        filePerJob = 100
+
+    from GangaDirac.Lib.Splitters.OfflineGangaDiracSplitter import OfflineGangaDiracSplitter
+    dataset_generator = OfflineGangaDiracSplitter(inputdata, filesPerJob, maxFiles, ignoremissing, bannedSites)
+    outfiles = []
+    #Loop over the datasets
+    for dataset in dataset_generator:
+        outfiles.append([_file.lfn for _file in dataset])
+    return outfiles
 
 def get_parametric_datasets(dirac_script_lines):
     '''parse the dirac script and retrieve the parametric inputdataset'''

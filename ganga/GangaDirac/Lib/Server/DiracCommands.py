@@ -405,3 +405,8 @@ def checkSEStatus(se, access = 'Write'):
     '''
     result = dirac.checkSEAccess(se, access)
     return result
+
+@diracCommand
+def getMaxParametricJobs():
+    '''Get the maximum number of parametric jobs that can be submitted in one go'''
+    return JobManagerClient().getMaxParametricJobs()
