@@ -105,6 +105,11 @@ class ARC(IBackend):
 
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
+        if self.sandboxcache._name == 'GridftpSandboxCache':
+            #If the copy command is set in the config then use it.
+            if config['ArcCopyCommand']:
+                self.sandboxcache.copyCommand = config['ArcCopyCommand']
+
         if self.sandboxcache._name == 'LCGSandboxCache':
             if not self.sandboxcache.lfc_host:
                 self.sandboxcache.lfc_host = Grid.__get_lfc_host__()
