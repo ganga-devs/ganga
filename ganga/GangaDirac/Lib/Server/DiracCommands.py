@@ -410,4 +410,5 @@ def checkSEStatus(se, access = 'Write'):
 @diracCommand
 def getMaxParametricJobs():
     '''Get the maximum number of parametric jobs that can be submitted in one go'''
+    from DIRAC.WorkloadManagementSystem.Client.JobManagerClient import JobManagerClient
     return JobManagerClient().getMaxParametricJobs()

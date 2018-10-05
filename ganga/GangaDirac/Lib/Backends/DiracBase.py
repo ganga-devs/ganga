@@ -190,65 +190,81 @@ class DiracBase(IBackend):
         '''
         Submit the job parametrically
         '''
+        #First find out how many we can submit in one go
+        maxPerThreadReturn = execute("getMaxParametricJobs()", cred_req=self.credential_requirements, return_raw_dict = True)
+        nPerProcess = maxPerThreadReturn['Value']
+
+        nProcessToUse = math.ceil((len(rjobs)*1.0)/nPerProcess)
+
         #Now collect up the inputfiles and inputdata for each job:
         tmp_dir = tempfile.mkdtemp()
         master_input_sandbox = self.master_prepare(masterjobconfig)
         sandboxfiles = []
-        for subjobconfig, sj in zip(subjobconfigs, rjobs):
-            sboxname = sj.createPackedInputSandbox(subjobconfig.getSandboxFiles())
-            input_sandbox = master_input_sandbox[:]
-            input_sandbox += sboxname
-            input_sandbox += self._addition_sandbox_content(subjobconfig)
-            lfns = []
-            ## Add LFN to the inputfiles section of the file
-            if sj.master:
-                for this_file in sj.master.inputfiles:
+        for i in range(0, int(nProcessToUse)):
+            for subjobconfig, sj in zip(subjobconfigs[i*nPerProcess:(i+1)*nPerProcess], rjobs[i*nPerProcess:(i+1)*nPerProcess]):
+                sboxname = sj.createPackedInputSandbox(subjobconfig.getSandboxFiles())
+                input_sandbox = master_input_sandbox[:]
+                input_sandbox += sboxname
+                input_sandbox += self._addition_sandbox_content(subjobconfig)
+                lfns = []
+                ## Add LFN to the inputfiles section of the file
+                if sj.master:
+                    for this_file in sj.master.inputfiles:
+                        if isType(this_file, DiracFile):
+                            lfns.append('LFN:'+str(this_file.lfn))
+                for this_file in sj.inputfiles:
                     if isType(this_file, DiracFile):
                         lfns.append('LFN:'+str(this_file.lfn))
-            for this_file in sj.inputfiles:
-                if isType(this_file, DiracFile):
-                    lfns.append('LFN:'+str(this_file.lfn))
-            # Make sure we only add unique LFN
-            input_sandbox += set(lfns)
-            # Remove duplicates incase the LFN have also been added by any prior step
-            input_sandbox = list(set(input_sandbox))
-            logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
-            logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
+                # Make sure we only add unique LFN
+                input_sandbox += set(lfns)
+                # Remove duplicates incase the LFN have also been added by any prior step
+                input_sandbox = list(set(input_sandbox))
+                logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
+                logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
 
-            sandboxfiles.append(input_sandbox)
+                sandboxfiles.append(input_sandbox)
 
-        datafiles = []
-        for sj in rjobs:
-            if sj.inputdata:
-                datafiles.append([_file.lfn for _file in sj.inputdata])
+            datafiles = []
+            for sj in rjobs:
+                if sj.inputdata:
+                    datafiles.append([_file.lfn for _file in sj.inputdata])
 
-        #Now get the dirac script for a job, doesn't matter which so take the first:
-        diracScript = subjobconfigs[0].getExeString()
-        #Now replace the sandbox and inputdata with parametric options
-        sandboxField = 'j.setParameterSequence("InputSandbox", %s, addToWorkflow=True)' % sandboxfiles
-        dataField = 'j.setParameterSequence("InputData", %s, addToWorkflow=True)' % datafiles
-        diracScript = re.sub("j.setInputSandbox.*",sandboxField, diracScript)
-        diracScript = re.sub("j.setInputData.*",dataField, diracScript)
+            #Now get the dirac script for a job, doesn't matter which so take the first:
+            diracScript = subjobconfigs[0].getExeString()
+            #Now replace the sandbox and inputdata with parametric options
+            sandboxField = 'j.setParameterSequence("InputSandbox", %s, addToWorkflow=True)' % sandboxfiles
+            dataField = 'j.setParameterSequence("InputData", %s, addToWorkflow=True)' % datafiles
+            diracScript = re.sub("j.setInputSandbox.*",sandboxField, diracScript)
+            diracScript = re.sub("j.setInputData.*",dataField, diracScript)
 
-        if not os.path.exists(self.getJobObject().getInputWorkspace().getPath()):
-            os.mkdirs(self.getJobObject().getInputWorkspace().getPath())
+            if not os.path.exists(self.getJobObject().getInputWorkspace().getPath()):
+                os.mkdirs(self.getJobObject().getInputWorkspace().getPath())
 
-        dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-0.py')
-        dirac_script_filename = '/afs/cern.ch/work/m/masmith/newwritetest.txt'
-        with open(dirac_script_filename, 'w') as f:
-            f.write(diracScript)
-        logger.info("Submitting job")
-        try:
-            #Either do the submission in parallel with threads or sequentially
-            if parallel_submit:
-                getQueues()._monitoring_threadpool.add_function(self._parametric_submit_func, (dirac_script_filename, keep_going))
+            dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-%s.py') % i
+            with open(dirac_script_filename, 'w') as f:
+                f.write(diracScript)
+            upperlimit = (i+1)*nPerProcess
+            if upperlimit > len(rjobs) :
+                upperlimit = len(rjobs)
+            if (upperlimit-1) == 0:
+                logger.info("Submitting job")
             else:
-                self._parametric_submit_func(dirac_script_filename, keep_going)
-            while not self._subjob_status_check(rjobs, len(rjobs), len(rjobs)):
-                time.sleep(1.)
+                logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
+            try:
+                #Either do the submission in parallel with threads or sequentially
+                if parallel_submit:
+                    getQueues()._monitoring_threadpool.add_function(self._parametric_submit_func, (dirac_script_filename, keep_going))
+                else:
+                    self._parametric_submit_func(dirac_script_filename, keep_going)
+                while not self._subjob_status_check(rjobs, len(rjobs), len(rjobs)):
+                    time.sleep(1.)
 
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors = True)
+            finally:
+                shutil.rmtree(tmp_dir, ignore_errors = True)
+                if (upperlimit-1) == 0:
+                    logger.info("Submitted job")
+                else:
+                    logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
 
         return 1
 
