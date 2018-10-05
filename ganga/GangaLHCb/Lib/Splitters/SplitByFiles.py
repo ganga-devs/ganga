@@ -230,6 +230,6 @@ class SplitByFiles(GaudiInputDataSplitter):
                 logger.debug("Returning []")
                 return []
         split_return = super(SplitByFiles, self).split(job)
-        logger.info("split_return: %s" % split_return)
+        logger.debug("split_return: %s" % split_return)
         return split_return
 
