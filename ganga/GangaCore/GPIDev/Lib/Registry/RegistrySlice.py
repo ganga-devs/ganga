@@ -479,6 +479,8 @@ class RegistrySlice(object):
                         #pass
                         if item == "fqid":
                             vals.append(self._get_display_value(obj, item))
+                        elif item == 'subjob status':
+                            vals.append('---') #As this is new we don't want to reload everything
                         else:
                             vals.append(self._get_display_value(obj, item)[0:width])
                 ds += markup(this_format % tuple(vals), colour)

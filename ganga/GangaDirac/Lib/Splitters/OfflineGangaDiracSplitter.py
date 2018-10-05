@@ -99,7 +99,6 @@ logger = getLogger()
 global_random = random
 
 LFN_parallel_limit = 250.
-
 def wrapped_execute(command, expected_type):
     """
     A wrapper around execute to protect us from commands which had errors
@@ -151,7 +150,6 @@ def addToMapping(SE, CE_to_SE_mapping):
     """
     result = wrapped_execute('getSitesForSE("%s")' % str(SE), list)
     CE_to_SE_mapping[SE] = result
-
 
 def getLFNReplicas(allLFNs, index, allLFNData):
     """
