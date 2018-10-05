@@ -63,9 +63,11 @@ def get_job_ident(dirac_script_lines):
 def get_parametric_datasets(dirac_script_lines):
     '''parse the dirac script and retrieve the parametric inputdataset'''
     method_str = '.setParametricInputData('
+
     def parametric_input_filter(API_line):
         return API_line.find(method_str) >= 0
         # return API_line.find('.setParametricInputData(') >= 0
+
     parametric_line = filter(parametric_input_filter, dirac_script_lines)
     if len(parametric_line) is 0:
         raise BackendError(
@@ -73,6 +75,7 @@ def get_parametric_datasets(dirac_script_lines):
     if len(parametric_line) > 1:
         raise BackendError(
             'Dirac', 'Multiple "setParametricInputData()" lines in dirac API')
+
     end_method_marker = parametric_line[0].find(method_str) + len(method_str)
     dataset_str = parametric_line[0][end_method_marker:-1]
     return eval(dataset_str)
