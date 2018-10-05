@@ -473,21 +473,20 @@ class DiracBase(IBackend):
     
         return 1
 
-    def _subjob_status_check(self, rjobs, nPerProcess, i):
+    def _subjob_status_check(self, rjobs, nPerProcess=-1, i=-1):
         has_submitted = True
-        for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
-            if sj.status not in ["submitted","failed","completed","running","completing"]:
-                has_submitted = False
-                break
+        if nPerProcess>0 and i > 0:
+            for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
+                if sj.status not in ["submitted","failed","completed","running","completing"]:
+                    has_submitted = False
+                    break
+        else:
+            for sj in rjobs:
+                if sj.status not in ["submitted","failed","completed","running","completing"]:
+                    has_submitted = False
+                    break
         return has_submitted
 
-    def _subjob_status_check(self, rjobs):
-        has_submitted = True
-        for sj in rjobs:
-            if sj.status not in ["submitted","failed","completed","running","completing"]:
-                has_submitted = False
-                break
-        return has_submitted
 
     def _job_script(self, subjobconfig, master_input_sandbox, tmp_dir):
         """Get the script to submit a single DIRAC job
