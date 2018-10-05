@@ -95,7 +95,7 @@ class DiracBase(IBackend):
         'settings': SimpleItem(defvalue={'CPUTime': 14 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
-        'parametricSubmit' : SimpleItem(defvalue=False,
+        'parametricSubmit' : SimpleItem(defvalue=True,
                                         doc='Shall we use parametric submission for maximum speed?'),
         'blockSubmit' : SimpleItem(defvalue=True, 
                                doc='Shall we use the block submission?'),
@@ -188,11 +188,124 @@ class DiracBase(IBackend):
         '''
         Submit the job parametrically
         '''
-        datafiles = []
+        #Now collect up the inputfiles and inputdata for each job:
+        tmp_dir = tempfile.mkdtemp()
+        master_input_sandbox = self.master_prepare(masterjobconfig)
         sandboxfiles = []
+        for subjobconfig, sj in zip(subjobconfigs, rjobs):
+            sboxname = sj.createPackedInputSandbox(subjobconfig.getSandboxFiles())
+            input_sandbox = master_input_sandbox[:]
+            input_sandbox += sboxname
+            input_sandbox += self._addition_sandbox_content(subjobconfig)
+            lfns = []
+            ## Add LFN to the inputfiles section of the file
+            if sj.master:
+                for this_file in sj.master.inputfiles:
+                    if isType(this_file, DiracFile):
+                        lfns.append('LFN:'+str(this_file.lfn))
+            for this_file in sj.inputfiles:
+                if isType(this_file, DiracFile):
+                    lfns.append('LFN:'+str(this_file.lfn))
+            # Make sure we only add unique LFN
+            input_sandbox += set(lfns)
+            # Remove duplicates incase the LFN have also been added by any prior step
+            input_sandbox = list(set(input_sandbox))
+            logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
+            logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
+
+            sandboxfiles.append(input_sandbox)
+
+        datafiles = []
         for sj in rjobs:
-            datafiles.append([_file.lfn for _file in sj.inputdata])
-            sandboxfiles.append([_file for _file in sj.inputfiles])
+            if sj.inputdata:
+                datafiles.append([_file.lfn for _file in sj.inputdata])
+
+        #Now get the dirac script for a job, doesn't matter which so take the first:
+        diracScript = subjobconfigs[0].getExeString()
+        #Now replace the sandbox and inputdata with parametric options
+        sandboxField = 'j.setParameterSequence("InputSandbox", %s, addToWorkflow=True)' % sandboxfiles
+        dataField = 'j.setParameterSequence("InputData", %s, addToWorkflow=True)' % datafiles
+        diracScript = re.sub("j.setInputSandbox.*",sandboxField, diracScript)
+        diracScript = re.sub("j.setInputData.*",dataField, diracScript)
+
+        if not os.path.exists(self.getJobObject().getInputWorkspace().getPath()):
+            os.mkdirs(self.getJobObject().getInputWorkspace().getPath())
+
+        dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-0.py')
+        dirac_script_filename = '/afs/cern.ch/work/m/masmith/newwritetest.txt'
+        with open(dirac_script_filename, 'w') as f:
+            f.write(diracScript)
+        logger.info("Submitting job")
+        try:
+            #Either do the submission in parallel with threads or sequentially
+            if parallel_submit:
+                getQueues()._monitoring_threadpool.add_function(self._parametric_submit_func, (dirac_script_filename, keep_going))
+            else:
+                self._parametric_submit_func(dirac_script_filename, keep_going)
+            while not self._subjob_status_check(rjobs):
+                time.sleep(1.)
+
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors = True)
+
+        return 1
+
+    @require_credential
+    def _parametric_submit_func(self, myscript, keep_going = False):
+        '''Submit a block of jobs via the Dirac server in one go.
+        Args:
+            dirac_script (str): filename of the JDL which is to be submitted to DIRAC
+        '''
+        j = self.getJobObject()
+        self.id = None
+        self.actualCE = None
+        self.status = None
+        self.extraInfo = None
+        self.statusInfo = ''
+        j.been_queued = False
+        dirac_cmd = """execfile(\'%s\')""" % myscript
+        submitFailures = {}
+        result = {}
+        try:
+            result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True)             
+
+        except GangaDiracError as err:
+            err_msg = 'Error submitting job to Dirac: %s' % str(err)
+            logger.error(err_msg)
+            logger.error("\n\n===\n%s\n===\n" % myscript)
+            logger.error("\n\n====\n")
+            with open(myscript, 'r') as file_in:
+                logger.error("%s" % file_in.read())
+            logger.error("\n====\n")
+            j.updateStatus('failed')
+            raise BackendError('Dirac', err_msg)
+            return 0
+
+        if not result['OK']:
+            raise GangaDiracError('Failed to submit job %s' % j.id)
+            return 0
+
+        #Now put the list of Dirac IDs into the subjobs and get them monitored:
+        if len(j.subjobs)>0:
+            for diracid, subjob in zip(result['Value'], j.subjobs):
+                #If we get an int we have a DIRAC ID so job submitted
+                if isinstance(diracid, int):
+                    subjob.updateStatus('submitting')
+                    subjob.backend.id = diracid
+                    subjob.updateStatus('submitted')
+                    j.time.timenow('submitted')
+                    stripProxy(subjob.info).increment()
+                #If we have neither int or str then something disastrous happened
+                else:
+                    subjob.updateStatus('failed')
+        else:
+            j.updateStatus('submitting')
+            j.backend.id = result['Value'][0]
+            j.updateStatus('submitted')
+            j.time.timenow('submitted')
+            stripProxy(j.info).increment()
+
+        return 1
 
 
     @require_credential
@@ -272,7 +385,7 @@ class DiracBase(IBackend):
         """
         #If you want to go quickly use the parametric submission:
         if self.parametricSubmit:
-            return self._parametric_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
+            return self._parametric_submit(rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
 
         #If you want to go slowly submit the jobs one at a time
         if not self.blockSubmit:
@@ -361,12 +474,20 @@ class DiracBase(IBackend):
         return 1
 
     def _subjob_status_check(self, rjobs, nPerProcess, i):
-                has_submitted = True
-                for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
-                    if sj.status not in ["submitted","failed","completed","running","completing"]:
-                        has_submitted = False
-                        break
-                return has_submitted
+        has_submitted = True
+        for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
+            if sj.status not in ["submitted","failed","completed","running","completing"]:
+                has_submitted = False
+                break
+        return has_submitted
+
+    def _subjob_status_check(self, rjobs):
+        has_submitted = True
+        for sj in rjobs:
+            if sj.status not in ["submitted","failed","completed","running","completing"]:
+                has_submitted = False
+                break
+        return has_submitted
 
     def _job_script(self, subjobconfig, master_input_sandbox, tmp_dir):
         """Get the script to submit a single DIRAC job
@@ -402,8 +523,8 @@ class DiracBase(IBackend):
         # Remove duplicates incase the LFN have also been added by any prior step
         input_sandbox = list(set(input_sandbox))
 
-        logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
-        logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
+        logger.info("dirac_script: %s" % str(subjobconfig.getExeString()))
+        logger.info("sandbox_cont:\n%s" % str(input_sandbox))
 
 
         # This is a workaroud for the fact DIRAC doesn't like whitespace in sandbox filenames
@@ -420,7 +541,7 @@ class DiracBase(IBackend):
                 file_ = new_name
             sandbox_str += '\'' + str(file_) + '\', '
         sandbox_str += ']'
-        logger.debug("sandbox_str: %s" % sandbox_str)
+        logger.info("sandbox_str: %s" % sandbox_str)
         ### FINISH_WORKAROUND
 
         dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', sandbox_str)
