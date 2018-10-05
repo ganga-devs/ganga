@@ -523,8 +523,8 @@ class DiracBase(IBackend):
         # Remove duplicates incase the LFN have also been added by any prior step
         input_sandbox = list(set(input_sandbox))
 
-        logger.info("dirac_script: %s" % str(subjobconfig.getExeString()))
-        logger.info("sandbox_cont:\n%s" % str(input_sandbox))
+        logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
+        logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
 
 
         # This is a workaroud for the fact DIRAC doesn't like whitespace in sandbox filenames
@@ -541,11 +541,10 @@ class DiracBase(IBackend):
                 file_ = new_name
             sandbox_str += '\'' + str(file_) + '\', '
         sandbox_str += ']'
-        logger.info("sandbox_str: %s" % sandbox_str)
+        logger.debug("sandbox_str: %s" % sandbox_str)
         ### FINISH_WORKAROUND
 
         dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', sandbox_str)
-        print 'sandbox_str: ', sandbox_str
 
         return dirac_script
         
