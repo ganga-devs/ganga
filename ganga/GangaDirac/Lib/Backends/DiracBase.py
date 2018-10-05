@@ -242,7 +242,7 @@ class DiracBase(IBackend):
                 getQueues()._monitoring_threadpool.add_function(self._parametric_submit_func, (dirac_script_filename, keep_going))
             else:
                 self._parametric_submit_func(dirac_script_filename, keep_going)
-            while not self._subjob_status_check(rjobs):
+            while not self._subjob_status_check(rjobs, len(rjobs), len(rjobs)):
                 time.sleep(1.)
 
         finally:
@@ -475,16 +475,10 @@ class DiracBase(IBackend):
 
     def _subjob_status_check(self, rjobs, nPerProcess=-1, i=-1):
         has_submitted = True
-        if nPerProcess>0 and i > 0:
-            for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
-                if sj.status not in ["submitted","failed","completed","running","completing"]:
-                    has_submitted = False
-                    break
-        else:
-            for sj in rjobs:
-                if sj.status not in ["submitted","failed","completed","running","completing"]:
-                    has_submitted = False
-                    break
+        for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
+            if sj.status not in ["submitted","failed","completed","running","completing"]:
+                has_submitted = False
+                break
         return has_submitted
 
 
