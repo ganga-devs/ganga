@@ -193,7 +193,6 @@ class DiracBase(IBackend):
         #First find out how many we can submit in one go
         maxPerThreadReturn = execute("getMaxParametricJobs()", cred_req=self.credential_requirements, return_raw_dict = True)
         nPerProcess = maxPerThreadReturn['Value']
-
         nProcessToUse = math.ceil((len(rjobs)*1.0)/nPerProcess)
 
         #Now collect up the inputfiles and inputdata for each job:

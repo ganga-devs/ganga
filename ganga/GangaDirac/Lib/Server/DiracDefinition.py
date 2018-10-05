@@ -10,7 +10,6 @@ from DIRAC.Core.Base.Script import parseCommandLine
 parseCommandLine()
 from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
-from DIRAC.WorkloadManagementSystem.Client.JobManagerClient import JobManagerClient
 dirac = Dirac()
 
 def diracCommand(f):
