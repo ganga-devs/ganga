@@ -738,7 +738,7 @@ class Condor(IBackend):
 
         for l in f:
             splitLine = l.split()
-            if checkstr in splitLine[0]:
+            if checkstr == splitLine[0]:
                 year = datetime.datetime.now().year
                 if datetime.datetime.strptime(str(datetime.datetime.now().year)+'/'+splitLine[2]+' '+splitLine[3], "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
                     year = year - 1
