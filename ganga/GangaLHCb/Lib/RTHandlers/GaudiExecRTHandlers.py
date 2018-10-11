@@ -616,7 +616,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         # inputsandbox here isn't used by the DIRAC backend as we explicitly define the INPUT_SANDBOX here!
 
         # Return the output needed for the backend to submit this job
-        return StandardJobConfig(dirac_script, inputbox=[], outputbox=[])
+        return StandardJobConfig(dirac_script, inputbox=[], outputbox=[], app_exe=os.path.join('jobScript',scriptToRun), app_log='Ganga_GaudiExec.log')
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

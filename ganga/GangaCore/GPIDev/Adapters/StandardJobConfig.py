@@ -24,9 +24,9 @@ class StandardJobConfig(object):
 
     """
 
-    __slots__ = ('exe', 'inputbox', 'sharedarea', 'args', 'outputbox', 'env', '__all_inputbox', '__args_strings', '__exe_string', '__sandbox_check')
+    __slots__ = ('exe', 'inputbox', 'sharedarea', 'args', 'outputbox', 'env', '__all_inputbox', '__args_strings', '__exe_string', '__sandbox_check', 'app_exe', 'app_args', 'app_log')
 
-    def __init__(self, exe=None, inputbox=None, args=None, outputbox=None, env=None, sharedarea=None):
+    def __init__(self, exe=None, inputbox=None, args=None, outputbox=None, env=None, sharedarea=None, app_exe=None, app_args=None, app_log=None):
         """
         exe - executable string to be run on the worker node or a File object to be shipped as executable script to the worker node
         args - list of strings which are passed as arguments to the executable string or File objects which are automatically added to the sandbox
@@ -48,6 +48,12 @@ class StandardJobConfig(object):
             args = []
         if outputbox is None:
             outputbox = []
+        if app_exe is None:
+            app_exe = ""
+        if app_args is None:
+            app_args = ""
+        if app_log is None:
+            app_log = ""
         self.exe = exe
         self.inputbox = inputbox[:]
         self.sharedarea = sharedarea[:]
@@ -58,6 +64,9 @@ class StandardJobConfig(object):
         self.__args_strings = []
         self.__exe_string = ""
         self.__sandbox_check = {}
+        self.app_exe = app_exe
+        self.app_args =app_args
+        self.app_log =app_log
 
         self.processValues()
 

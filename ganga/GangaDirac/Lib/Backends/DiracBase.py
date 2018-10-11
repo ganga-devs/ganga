@@ -199,8 +199,13 @@ class DiracBase(IBackend):
         tmp_dir = tempfile.mkdtemp()
         master_input_sandbox = self.master_prepare(masterjobconfig)
         sandboxfiles = []
+        app_exes = []
+        app_args = []
+        app_logs = []
         for i in range(0, int(nProcessToUse)):
             for subjobconfig, sj in zip(subjobconfigs[i*nPerProcess:(i+1)*nPerProcess], rjobs[i*nPerProcess:(i+1)*nPerProcess]):
+                print 'exe string: ', subjobconfig.getExeString()
+                print 'args: ', subjobconfig.getArgStrings()
                 sboxname = sj.createPackedInputSandbox(subjobconfig.getSandboxFiles())
                 input_sandbox = master_input_sandbox[:]
                 input_sandbox += sboxname
@@ -214,6 +219,12 @@ class DiracBase(IBackend):
                 for this_file in sj.inputfiles:
                     if isType(this_file, DiracFile):
                         lfns.append('LFN:'+str(this_file.lfn))
+                if not subjobconfig.app_exe=='':
+                    app_exes.append(subjobconfig.app_exe)
+                if not subjobconfig.app_args=='':
+                    app_args.append(subjobconfig.app_args)
+                if not subjobconfig.app_log=='':
+                    app_logs.append(subjobconfig.app_log)
                 # Make sure we only add unique LFN
                 input_sandbox += set(lfns)
                 # Remove duplicates incase the LFN have also been added by any prior step
@@ -235,6 +246,19 @@ class DiracBase(IBackend):
             dataField = 'j.setParameterSequence("InputData", %s, addToWorkflow=True)' % datafiles
             diracScript = re.sub("j.setInputSandbox.*",sandboxField, diracScript)
             diracScript = re.sub("j.setInputData.*",dataField, diracScript)
+
+            #Now set up the executable sequence
+            middlebit = ""
+            execString = 'j.setParameterSequence("exepar", %s)\n' % app_exes
+            if not app_args == [] and len(app_args)==len(app_exes):                
+                execString += 'j.setParameterSequence("argpar", %s)\n' % app_args
+                middlebit += r', arguments="%(argpar)s"'
+            if not app_logs == [] and len(app_logs)==len(app_exes):
+                execString += 'j.setParameterSequence("logpar", %s)\n' % app_logs
+                middlebit += r', logFile="%(logpar)s"'
+            execString += 'j.setExecutable("%(exepar)s"' + middlebit + ')'
+
+            diracScript = re.sub("j.setExecutable.*", execString, diracScript)
 
             if not os.path.exists(self.getJobObject().getInputWorkspace().getPath()):
                 os.mkdirs(self.getJobObject().getInputWorkspace().getPath())
