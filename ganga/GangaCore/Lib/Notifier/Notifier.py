@@ -49,16 +49,16 @@ class Notifier(IPostProcessor):
         sender = 'project-ganga-developers@cern.ch'
         receivers = self.address
 
-        subject = 'Ganga Notification: Job(%s) has %s.' % (job.fqid, newstatus)
+        subject = 'Ganga Notification: Job(%s): %s has %s.' % (job.fqid, job.name, newstatus)
         msg_string = """
 Dear User,\n
-Job(%s) has gone into %s state.\n
+Job(%s), name : %s ,  has gone into %s state.\n
 Regards,
 Ganga\n
 PS: This is an automated notification from Ganga, 
 if you would like these messages to stop please 
 remove the notifier object from future jobs.
-        """ % (job.fqid, newstatus)
+        """ % (job.fqid,job.name, newstatus)
         msg = email.message_from_string(msg_string)
         msg['Subject'] = subject
         msg['From'] = sender
