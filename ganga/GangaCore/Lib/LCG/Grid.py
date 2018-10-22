@@ -1070,6 +1070,7 @@ def arc_get_output(jid, directory, cred_req):
         gfiles.append(gf)
 
     cache = GridftpSandboxCache()
+    cache.copyCommand = 'arcget'
     cache.uploaded_files = gfiles
     return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
