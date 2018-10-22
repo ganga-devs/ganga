@@ -149,7 +149,11 @@ def getOutputSandbox(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJ
     noJobDir: should we create a folder with the DIRAC job ID?
     output: should I output the Dirac output or should I return a python object (False)
     unpack: should the sandbox be untarred when downloaded'''
-    result = dirac.getOutputSandbox(id, outputDir, oversized, noJobDir, unpack)
+    #We have to catch a type error in case an old DIRAC version is being used which didn't have the unpack option.
+    try:
+        result = dirac.getOutputSandbox(id, outputDir, oversized, noJobDir, unpack)
+    except TypeError:
+        result = dirac.getOutputSandbox(id, outputDir, oversized, noJobDir)
     if result is not None and result.get('OK', False):
 
         if not noJobDir:
