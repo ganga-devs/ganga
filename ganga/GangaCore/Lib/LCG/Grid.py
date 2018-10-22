@@ -1059,21 +1059,27 @@ def arc_get_output(jid, directory, cred_req):
             "Could not find directory associated with ARC job ID '%s'" % jid)
         return False
 
-    # URI is JID + filename
-    gfiles = []
-    for uri in output.split("\n"):
-        if len(uri) == 0:
-            continue
-        uri = jid + "/" + uri
-        gf = GridftpFileIndex()
-        gf.id = uri
-        gfiles.append(gf)
+    tmpdir = tempfile.gettempdir()
+    jobhash = jid.split('/')[-1]
 
-    cache = GridftpSandboxCache()
-    cache.copyCommand = 'arcget'
-    cache.uploaded_files = gfiles
-    return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
+    copy_cmd =  'arcget -j %s %s -D %s' % (config["ArcJobListFile"],  jid, tmpdir)
+    rc, output, m = getShell(cred_req).cmd1(copy_cmd,
+                                            allowed_exit=[0, 255],
+                                            timeout=config['SubmissionTimeout'])
+    #By now the job's output should be in the temp directory
+    if rc:
+        logger.error(
+            "Problem downloading output for job '%s'" % jid)
+        return False
 
+    files_location = os.path.join(tmpdir, jobhash)
+    files_to_copy = os.listdir(files_location)
+    for _f in files_to_copy:
+        _f_path = os.path.join(files_location, _f)
+        shutil.copy(_f_path, directory)
+    shutil.rmtree(files_location)
+
+    return True
 
 def arc_purge_multiple(jobids, cred_req):
     """ARC CE job purging"""
