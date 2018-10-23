@@ -977,6 +977,14 @@ def arc_status(jobids, ce_list, cred_req):
         logger.warning('jobs not found in XML file: arcsync will be executed to update the job information')
         __arc_sync__(ce_list, cred_req)
 
+    #If there is the error for a job not being in the job list, run arcsync and try again
+    if 'Job not found in job list' in output:
+        logger.debug('There was a job not in the job list. Running arcsync and try again.')
+        __arc_sync__(ce_list, cred_req)
+        rc, output, m = getShell(cred_req).cmd1(cmd,
+                                                allowed_exit=[0, 1, 255],
+                                                timeout=config['StatusPollingTimeout'])
+
     if rc == 0 and output:
         job_info_dict = __arc_parse_job_status__(output)
 
