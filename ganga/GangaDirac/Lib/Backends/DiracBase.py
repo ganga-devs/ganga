@@ -97,13 +97,11 @@ class DiracBase(IBackend):
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
         'blockSubmit' : SimpleItem(defvalue=True, 
-
                                doc='Shall we use the block submission?'),
         'finaliseOnMaster' : SimpleItem(defvalue=True,
                                doc='Finalise the subjobs all in one go when they are all finished.'),
         'downloadSandbox' : SimpleItem(defvalue=True,
                                doc='Do you want to download the output sandbox when the job finalises. Only for finaliseOnMaster.'),
-                                   doc='Shall we use the block submission?'),
         'unpackOutputSandbox' : SimpleItem(defvalue=False,
                                            doc='Should the output sandbox be unpacked when downloaded.'),
     })
