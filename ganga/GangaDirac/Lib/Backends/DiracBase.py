@@ -102,8 +102,9 @@ class DiracBase(IBackend):
                                doc='Finalise the subjobs all in one go when they are all finished.'),
         'downloadSandbox' : SimpleItem(defvalue=True,
                                doc='Do you want to download the output sandbox when the job finalises. Only for finaliseOnMaster.'),
-        'unpackOutputSandbox' : SimpleItem(defvalue=False,
+        'unpackOutputSandbox' : SimpleItem(defvalue=True,
                                            doc='Should the output sandbox be unpacked when downloaded.'),
+
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
                       'getOutputDataLFNs', 'getOutputDataAccessURLs', 'peek', 'reset', 'debug', 'finaliseCompletingJobs']
