@@ -105,7 +105,7 @@ class DiracBase(IBackend):
                                doc='Finalise the subjobs all in one go when they are all finished.'),
         'downloadSandbox' : SimpleItem(defvalue=default_downloadOutputSandbox,
                                doc='Do you want to download the output sandbox when the job finalises.'),
-        'unpackOutputSandbox' : SimpleItem(defvalue=default_unpackOutputSandbox,
+        'unpackOutputSandbox' : SimpleItem(defvalue=default_unpackOutputSandbox, hidden=True,
                                            doc='Should the output sandbox be unpacked when downloaded.'),
 
     })
@@ -971,6 +971,7 @@ class DiracBase(IBackend):
         if job.backend.finaliseOnMaster and job.master:
             job.updateStatus('completing')
             allComplete = True
+            jobsToFinalise = []
             for sj in job.master.subjobs:
                 if sj.status not in ['completing', 'failed', 'killed', 'removed', 'completed']:
                     allComplete = False
