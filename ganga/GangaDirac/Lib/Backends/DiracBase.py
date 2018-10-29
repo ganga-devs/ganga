@@ -1157,7 +1157,7 @@ class DiracBase(IBackend):
         #First grab all the info from Dirac
         inputDict = {}
         #I have to reduce the no. of subjobs per process to prevent timeouts
-        nPerProcess = floor(configDirac['maxSubjobsPerProcess']/2)
+        nPerProcess = int(math.floor(configDirac['maxSubjobsPerProcess']/2))
         nProcessToUse = math.ceil((len(theseJobs)*1.0)/nPerProcess)
 
         jobs = [stripProxy(j) for j in theseJobs]
