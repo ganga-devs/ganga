@@ -28,6 +28,9 @@ from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.Core import monitoring_component
 from GangaCore.Runtime.GPIexport import exportToGPI
 configDirac = getConfig('DIRAC')
+default_finaliseOnMaster = configDirac['default_finaliseOnMaster']
+default_downloadOutputSandbox = configDirac['default_downloadOutputSandbox']
+default_unpackOutputSandbox = configDirac['default_unpackOutputSandbox']
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
 
@@ -98,11 +101,11 @@ class DiracBase(IBackend):
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
         'blockSubmit' : SimpleItem(defvalue=True, 
                                doc='Shall we use the block submission?'),
-        'finaliseOnMaster' : SimpleItem(defvalue=True,
+        'finaliseOnMaster' : SimpleItem(defvalue=default_finaliseOnMaster,
                                doc='Finalise the subjobs all in one go when they are all finished.'),
-        'downloadSandbox' : SimpleItem(defvalue=True,
-                               doc='Do you want to download the output sandbox when the job finalises. Only for finaliseOnMaster.'),
-        'unpackOutputSandbox' : SimpleItem(defvalue=True,
+        'downloadSandbox' : SimpleItem(defvalue=default_downloadOutputSandbox,
+                               doc='Do you want to download the output sandbox when the job finalises.'),
+        'unpackOutputSandbox' : SimpleItem(defvalue=default_unpackOutputSandbox,
                                            doc='Should the output sandbox be unpacked when downloaded.'),
 
     })
@@ -993,7 +996,7 @@ class DiracBase(IBackend):
 
             logger.info('Contacting DIRAC for job: %s' % job.fqid)
             # Contact dirac which knows about the job
-            job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = execute("finished_job(%d, '%s', %s)" % (job.backend.id, output_path, job.backend.unpackOutputSandbox), cred_req=job.backend.credential_requirements)
+            job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = execute("finished_job(%d, '%s', %s, downloadSandbox=%s)" % (job.backend.id, output_path, job.backend.unpackOutputSandbox, job.backend.downloadSandbox), cred_req=job.backend.credential_requirements)
 
             now = time.time()
             logger.info('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
