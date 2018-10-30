@@ -120,11 +120,11 @@ def getrootsys(version=None, arch=None):
     rootsys = ""
     try:
         configroot = getConfig('ROOT')
-        if version == None:
+        if version is None:
             rootver = configroot['version']
         else:
             rootver = str(version)
-        if arch == None:
+        if arch is None:
             rootarch = configroot['arch']
         else:
             rootarch = str(arch)
@@ -202,7 +202,7 @@ def getrootprefix(rootsys=None):
     else ROOTSYS+LD_LIBRARY_PATH+prefix
     """
     rc = 0
-    if rootsys == None:
+    if rootsys is None:
         rootsys = GangaCore.Utility.root.getconfrootsys()
         if rootsys == "":
             rootsys = GangaCore.Utility.root.getenvrootsys()

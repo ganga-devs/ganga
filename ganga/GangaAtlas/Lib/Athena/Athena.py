@@ -1871,7 +1871,7 @@ class AthenaOutputMerger(IMerger):
 
         igfailed = False
         igfailedoption = options.get('ignorefailed')
-        if igfailedoption == None:
+        if igfailedoption is None:
             igfailedoption = self.ignorefailed
 
         if igfailedoption == True:

@@ -70,7 +70,7 @@ class ND280RecoSkimmer(IPrepareApp, IPrepareApp):
 
         job = self.getJobObject()
 
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
         if not isfile(self.cmtsetup):
           raise ApplicationConfigurationError('Cannot find cmt setup script '+self.cmtsetup)
@@ -89,7 +89,7 @@ class ND280RecoSkimmer(IPrepareApp, IPrepareApp):
         args.append('-O')
         args.append('file='+self.csvfile)
 
-        if self.outputfile == None:
+        if self.outputfile is None:
           raise ApplicationConfigurationError('No output file given. Fill the outputfile variable.')
 
         args.append('-o')
@@ -111,7 +111,7 @@ class ND280RecoSkimmer(IPrepareApp, IPrepareApp):
               run_subrun.append(r_sr)
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata variable is not defined.')
         rawFileList = job.inputdata.get_dataset_filenames()
         if len(rawFileList) < 1:

@@ -501,7 +501,7 @@ class Tag(PageElement):
         self.parserClass = parser.__class__
         self.isSelfClosing = parser.isSelfClosingTag(name)
         self.name = name
-        if attrs == None:
+        if attrs is None:
             attrs = []
         self.attrs = attrs
         self.contents = []
@@ -1258,7 +1258,7 @@ class BeautifulStoneSoup(Tag, SGMLParser):
                 break
             if (nestingResetTriggers != None
                 and p.name in nestingResetTriggers) \
-                or (nestingResetTriggers == None and isResetNesting
+                or (nestingResetTriggers is None and isResetNesting
                     and p.name in self.RESET_NESTING_TAGS):
 
                 #If we encounter one of the nesting reset triggers

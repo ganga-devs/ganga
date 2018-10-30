@@ -188,7 +188,7 @@ print("***_FINISHED_***")
                 if (t != None) and (t[0] == self.username) and (t[1] == self.host):
 
                     # check for too many retries on the same host
-                    if t[2] == None or t[3] == None:
+                    if t[2] is None or t[3] is None:
                         logger.warning("Too many retries for remote host " + self.username +
                                        "@" + self.host + ". Restart Ganga to have another go.")
                         return False
@@ -369,7 +369,7 @@ print("***_FINISHED_***")
 
         # First some sanity checks...
         fail = 0
-        if self.remote_backend == None:
+        if self.remote_backend is None:
             logger.error("No backend specified for remote host.")
             fail = 1
         if self.host == "":

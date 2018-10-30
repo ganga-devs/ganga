@@ -20,7 +20,7 @@ class TestNotebook(GangaUnitTest):
         from GangaCore.GPI import Job, Notebook
 
         a = Notebook()
-        assert a.is_prepared == None
+        assert a.is_prepared is None
 
         a.prepare()
         assert a.is_prepared != None
@@ -29,11 +29,11 @@ class TestNotebook(GangaUnitTest):
         assert b.is_prepared != None
 
         a.unprepare()
-        assert a.is_prepared == None
+        assert a.is_prepared is None
         assert b.is_prepared != None
 
         a.unprepare()
-        assert a.is_prepared == None
+        assert a.is_prepared is None
 
         a.prepare()
         try:

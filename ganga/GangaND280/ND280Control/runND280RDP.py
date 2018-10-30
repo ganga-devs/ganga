@@ -87,7 +87,7 @@ class runND280RDP(IPrepareApp):
             inputfilefnd = re.match(r"^inputfile\s*=", line)
             midas_filefnd = re.match(r"^midas_file\s*=", line)
             if inputfile_listfnd or inputfilefnd or midas_filefnd:
-              if job.inputdata == None:
+              if job.inputdata is None:
                 raise ApplicationConfigurationError('The given config file requires an input file but the inputdata of the job is not defined.')
               # TODO: Check if there is an inputdata
               infiles = job.inputdata.get_dataset_filenames()

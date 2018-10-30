@@ -21,7 +21,7 @@ class TestShared(GangaUnitTest):
         from GangaCore.GPI import Job, LocalFile
         j = Job()
 
-        assert(j.application.is_prepared == None)
+        assert(j.application.is_prepared is None)
         
         j.prepare()
 
@@ -70,7 +70,7 @@ class TestShared(GangaUnitTest):
 
             j.unprepare()
 
-            assert(j.application.is_prepared == None)
+            assert(j.application.is_prepared is None)
 
             assert(not path.isfile(TestShared.a_file_location))
             assert(not path.isfile(TestShared.b_file_location))

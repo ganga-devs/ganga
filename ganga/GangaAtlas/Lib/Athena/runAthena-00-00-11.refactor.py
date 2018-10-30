@@ -452,7 +452,7 @@ def _getPFNsFromLRC (urlLRC ,items,isGUID=True,old_prefix='',new_prefix=''):
                                 pfn = 'dcache:%s' % pfn
                         else:
                             # check matching
-                            if re.search(old_prefix_re,pfn) == None:
+                            if re.search(old_prefix_re,pfn) is None:
                                 continue
                             # replace prefix
                             pfn = re.sub(old_prefix_re,new_prefix,pfn)
@@ -528,7 +528,7 @@ def _getPFNsFromLFC (lfc_host,items,old_prefix='',new_prefix='',getMeta=False):
                             continue
                         print fr.sfn
                         # check host
-                        if old_prefix != '' and (not fr.sfn.startswith(old_prefix)) and re.search(old_prefix_re,fr.sfn) == None:
+                        if old_prefix != '' and (not fr.sfn.startswith(old_prefix)) and re.search(old_prefix_re,fr.sfn) is None:
                             continue
                         guid = fr.guid
                         # use first one
@@ -541,7 +541,7 @@ def _getPFNsFromLFC (lfc_host,items,old_prefix='',new_prefix='',getMeta=False):
                             if not onDiskFlag:
                                 continue
                             print "use disk replica"
-                        if (old_prefix != '' and re.search(old_prefix_re,fr.sfn) == None) or old_prefix == '':
+                        if (old_prefix != '' and re.search(old_prefix_re,fr.sfn) is None) or old_prefix == '':
                             # conver to compact format
                             pfn = fr.sfn
                             pfn = re.sub('(:\d+)*/srm/v\d+/server\?SFN=','',pfn)
@@ -1193,7 +1193,7 @@ if eventColl and mcData == '':
                     # direct reading from SE
                     newFileName = fileName
                     
-                if athenaVer == None or athenaVer < "14.4.0":
+                if athenaVer is None or athenaVer < "14.4.0":
                     # use old macro
                     com += '%s ' % newFileName
                     com += ' --- | root.exe -b %s' % macroPoolRefs
@@ -1376,7 +1376,7 @@ sys.exit(0)
     if (not byteStream) and mcData == '' and (not generalInput) and not (runTrf and not runAra):
         tmpFiles = tuple(inputFiles)
         for tmpF in tmpFiles:
-            if re.search(tmpF,pLines) == None:
+            if re.search(tmpF,pLines) is None:
                 inputFiles.remove(tmpF)
                 print "%s is corrupted or non-ROOT file" % tmpF
         if notSkipMissing and len(inputFiles) != len(tmpFiles):
@@ -1401,7 +1401,7 @@ sys.exit(0)
         # extract
         flagStream = False
         for line in out.split('\n'):
-            if re.search('^EventCount',line) == None:
+            if re.search('^EventCount',line) is None:
                 continue
             if re.search("Input contained references to the following File GUID",line) != None:
                 flagStream = True
@@ -1525,7 +1525,7 @@ if dbrFile != '':
             tmpSetupDir = re.sub('setup.py$','',line)
             break
     # check
-    if tmpSetupDir == None:
+    if tmpSetupDir is None:
         print "ERROR : cound not find setup.py in %s" % dbrFile
         sys.exit(EC_DBRelease)
     # run setup.py
@@ -1551,8 +1551,8 @@ def _Service(str):
         return Service(str)
 """)
 if len(inputFiles) != 0 and mcData == '' and not runAra:
-    if (re.search('theApp.EvtMax',fragmentJobO) == None) and \
-       (re.search('EvtMax',jobO) == None):
+    if (re.search('theApp.EvtMax',fragmentJobO) is None) and \
+       (re.search('EvtMax',jobO) is None):
         oFile.write('theApp.EvtMax = -1\n')
     if byteStream:
         # BS
@@ -1565,7 +1565,7 @@ if len(inputFiles) != 0 and mcData == '' and not runAra:
             newInputs = []
             for infile in inputFiles:
                 # remove suffix for event collection
-                if athenaVer == None or athenaVer < "13.0.30":
+                if athenaVer is None or athenaVer < "13.0.30":
                     newInputs.append(re.sub('\.root\.*\d*$','',infile))
                 elif (not directIn):
                     # symlinks don't have attemptNr
@@ -1805,7 +1805,7 @@ try:
     except:
         pass
     # use old style
-    if userDataSvc == None: 
+    if userDataSvc is None: 
         userDataSvc = _Service('UserDataSvc')
     # delete existing stream
     try:
