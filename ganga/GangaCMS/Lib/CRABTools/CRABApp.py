@@ -64,7 +64,7 @@ class CRABApp(IApplication):
         if attr is None:
           attr = getattr(job.inputdata,k)
 
-        if attr != None:  
+        if attr is not None:  
           file.write('%s=%s\n'%(k,attr))                  
       file.write('\n')
 

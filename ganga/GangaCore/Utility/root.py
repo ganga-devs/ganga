@@ -159,9 +159,9 @@ def getpythonhome(arch=None, pythonversion=None):
     try:
         # returns a copy
         configroot = getConfig('ROOT').getEffectiveOptions()
-        if arch != None:
+        if arch is not None:
             configroot['arch'] = arch
-        if pythonversion != None:
+        if pythonversion is not None:
             configroot['pythonversion'] = pythonversion
         # allow other Root variables to be used in the definition
         pythonhome = configroot['pythonhome']

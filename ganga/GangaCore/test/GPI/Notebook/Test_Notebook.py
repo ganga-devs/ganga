@@ -23,14 +23,14 @@ class TestNotebook(GangaUnitTest):
         assert a.is_prepared is None
 
         a.prepare()
-        assert a.is_prepared != None
+        assert a.is_prepared is not None
 
         b = a.copy()
-        assert b.is_prepared != None
+        assert b.is_prepared is not None
 
         a.unprepare()
         assert a.is_prepared is None
-        assert b.is_prepared != None
+        assert b.is_prepared is not None
 
         a.unprepare()
         assert a.is_prepared is None

@@ -501,11 +501,11 @@ def getLibFileSpecFromLibDS(libDS):
     fileBO.destinationDBlock = libDS
     if fileBO.GUID != 'NULL':
         fileBO.status = 'ready'
-    if tmpMD5Sum != None:
+    if tmpMD5Sum is not None:
         fileBO.md5sum = tmpMD5Sum
-    if tmpFSize != None:
+    if tmpFSize is not None:
         fileBO.fsize = tmpFSize
-    if tmpScope != None:
+    if tmpScope is not None:
         fileBO.scope = tmpScope
     return fileBO
 

@@ -135,7 +135,7 @@ class GangaPlotter:
 
     def __doPlot__(self):            
         ## savefile if requested
-        if self.output != None:
+        if self.output is not None:
             savefig(self.output)
             logger.info('the plot has been saved in %s' % self.output)
 
@@ -172,7 +172,7 @@ class GangaPlotter:
 
         """ set the data processor for attribute values """
 
-        if attrext != None and dataproc != None:
+        if attrext is not None and dataproc is not None:
             logger.info('user defined dataproc %s will be used.' % str(dataproc))
         elif attr in ['backend.CE','backend.actualCE']:
             # the build-in data processors 

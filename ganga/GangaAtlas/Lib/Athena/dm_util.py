@@ -498,7 +498,7 @@ try:
 
   for tmpAttr in dir (AthenaCommon.AthenaCommonFlags):
     import re
-    if re.search('^(Pool|BS).*Input$',tmpAttr) != None:
+    if re.search('^(Pool|BS).*Input$',tmpAttr) is not None:
       try:
         getattr(AthenaCommon.AthenaCommonFlags,tmpAttr).get_Value = _dummyGet_Value
       except:
@@ -732,7 +732,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
                         ## fill up global pfns dictionary and global csum dictionary
                         mylock.acquire()
                         for s in list1:
-                            if s != None:
+                            if s is not None:
                                 if s.sfn:
                                     if s.guid not in pfns:
                                         pfns[s.guid] = []

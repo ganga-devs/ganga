@@ -519,11 +519,11 @@ def _getPFNsFromLFC (lfc_host,items,old_prefix='',new_prefix='',getMeta=False):
                 print "ERROR : LFC access failure - %s" % err_string
             else:
                 for fr in resList:
-                    if fr != None and ((not hasattr(fr,'errcode')) or \
+                    if fr is not None and ((not hasattr(fr,'errcode')) or \
                                        (hasattr(fr,'errcode') and fr.errcode == 0)):
                         print "replica found for %s" % fr.guid
                         # skip empty or corrupted SFN
-                        if fr.sfn == '' or re.search('[^\w\./\-\+\?:&=]',fr.sfn) != None:
+                        if fr.sfn == '' or re.search('[^\w\./\-\+\?:&=]',fr.sfn) is not None:
                             print "WARNING : wrong SFN '%s'" % fr.sfn
                             continue
                         print fr.sfn
@@ -535,7 +535,7 @@ def _getPFNsFromLFC (lfc_host,items,old_prefix='',new_prefix='',getMeta=False):
                         if pfnMap.has_key(guid):
                             onDiskFlag = False
                             for diskPath in ['/MCDISK/','/BNLT0D1/','/atlasmcdisk/','/atlasdatadisk/']:
-                                if re.search(diskPath,fr.sfn) != None:
+                                if re.search(diskPath,fr.sfn) is not None:
                                     onDiskFlag = True
                                     break
                             if not onDiskFlag:
@@ -616,7 +616,7 @@ sys.exit(st)
     print tmpSt
     print tmpOut
     # error check
-    if re.search('ERROR : LFC access failure',tmpOut) != None:
+    if re.search('ERROR : LFC access failure',tmpOut) is not None:
         sys.exit(EC_LFC)
 
     if tmpSt == 0:
@@ -785,7 +785,7 @@ def wrapEnvironVars( envvarFile='' ):
                 # remove \n
                 line = line[:-1]
                 match = re.search('([^=]+)=(.*)',line)
-                if match != None:
+                if match is not None:
                     # add ""
                     newString += '%s="%s"\n' % (match.group(1),match.group(2))
                 else:
@@ -911,7 +911,7 @@ def updateInputFiles( inputFiles, curFiles, directPFNs ):
         findF = False
         findName = ''
         for curF in curFiles:
-            if re.search('^'+tmpF,curF) != None:
+            if re.search('^'+tmpF,curF) is not None:
                 findF = True
                 findName = curF
                 break
@@ -1001,7 +1001,7 @@ def prepareWorkspace():
         output = commands.getoutput('wget -h')
         wgetCommand = 'wget'
         for line in output.split('\n'):
-            if re.search('--no-check-certificate',line) != None:
+            if re.search('--no-check-certificate',line) is not None:
                 wgetCommand = 'wget --no-check-certificate'
                 break
         com = '%s %s/cache/%s' % (wgetCommand,sourceURL,archiveJobO)
@@ -1112,7 +1112,7 @@ if eventColl and mcData == '':
                 filesInCurDir = os.listdir('.') 
                 for tmpName in filesInCurDir:
                     match = re.search('sub_collection_(\d+)\.root',tmpName)
-                    if  match != None:
+                    if  match is not None:
                         subCollectionMap[int(match.group(1))] = tmpName
                 # sort
                 subCollection = subCollectionMap.keys()
@@ -1206,7 +1206,7 @@ if eventColl and mcData == '':
                                line.startswith('RDO Ref:') or line.startswith('St1 Ref:') or \
                                line.startswith('RAW Ref:'):
                             match = re.search('\[DB=([^\]]+)\]',line)
-                            if match != None:
+                            if match is not None:
                                 if not match.group(1) in poolRefs:
                                     poolRefs.append(match.group(1))
                 else:
@@ -1220,7 +1220,7 @@ if eventColl and mcData == '':
                         tmpItems = line.split()
                         if len(tmpItems) != 3:
                             continue
-                        if re.search('^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$',tmpItems[1]) != None:
+                        if re.search('^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$',tmpItems[1]) is not None:
                             if not tmpItems[1] in poolRefs:
                                 poolRefs.append(tmpItems[1])
 
@@ -1260,7 +1260,7 @@ elif len(inputFiles+minbiasFiles+cavernFiles+beamHaloFiles+beamGasFiles) > 0:
             # for rome data
             if re.search(fileName,'\.\d+$')==None and (not fileName in curFiles):
                 for cFile in curFiles:
-                    if re.search('^'+fileName,cFile) != None:
+                    if re.search('^'+fileName,cFile) is not None:
                         targetName = cFile
                         break
             # form symlink to input file
@@ -1403,16 +1403,16 @@ sys.exit(0)
         for line in out.split('\n'):
             if re.search('^EventCount',line) is None:
                 continue
-            if re.search("Input contained references to the following File GUID",line) != None:
+            if re.search("Input contained references to the following File GUID",line) is not None:
                 flagStream = True
                 continue
-            if re.search("Input contained the following CLIDs and Keys",line) != None:
+            if re.search("Input contained the following CLIDs and Keys",line) is not None:
                 flagStream = False
                 continue
             if flagStream:
                 match = re.search('([0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12})',
                                   line)
-                if match != None:
+                if match is not None:
                     poolRefs.append(match.group(1))
 
 
@@ -1759,7 +1759,7 @@ else:
         pass
 """)
     oFile.write("""
-if Stream2_FH != None:
+if Stream2_FH is not None:
     Stream2_FH.OutputFile = "%s"
 """ % outputFiles['Stream2'])
 
@@ -1905,7 +1905,7 @@ if useFileStager and directIn:
         copyToolCpCommand = ''
         for tmpLine in fsFH:
             tmpMatch = re.search('(.*)stagetool.CpCommand\s*=\s*".+"',tmpLine)
-            if tmpMatch != None:
+            if tmpMatch is not None:
                 # replace copy command
                 if copyTool == 'lsm':
                     # local site mover
@@ -1978,7 +1978,7 @@ except:
                 # remove prefix 
                 tmpInputName = re.sub('dcache:','',tmpInputName)
             # append checksum
-            if tmpCheckSum != None:
+            if tmpCheckSum is not None:
                 metaDataForFH[tmpInputName] = tmpCheckSum
             # add prefix
             tmpInputName = 'gridcopy://%s\n' % tmpInputName
@@ -2074,7 +2074,7 @@ try:
 
     for tmpAttr in dir (AthenaCommon.AthenaCommonFlags):
         import re
-        if re.search('^(Pool|BS).*Input$',tmpAttr) != None:
+        if re.search('^(Pool|BS).*Input$',tmpAttr) is not None:
             try:
                 getattr(AthenaCommon.AthenaCommonFlags,tmpAttr).get_Value = _dummyGet_Value
             except:
@@ -2176,7 +2176,7 @@ if runAra and len(inputFiles) != 0:
            tmpMacro = open(tmpMacroName)           
            for line in tmpMacro:
                match = re.search('TPython::Exec\s*\(.*execfile[^\'\"]+[\'\"]([^\'\"]+)',line)
-               if match != None:
+               if match is not None:
                    tmpMacroName = match.group(1)
                    break
            # close
@@ -2191,11 +2191,11 @@ if runAra and len(inputFiles) != 0:
        inputSector = False
        for line in tmpMacro:
            # remove comments
-           if re.search('^\s*#',line) != None:
+           if re.search('^\s*#',line) is not None:
                continue
            # look for TChainROOTAccess       
            match = re.search('(\s*).*ROOT.AthenaROOTAccess.TChainROOTAccess',line)
-           if match != None:
+           if match is not None:
                inputSector = True
                newMacro.write(line)
                # execfile to set Chain
@@ -2203,7 +2203,7 @@ if runAra and len(inputFiles) != 0:
                continue
            # look for makeTree    
            match = re.search('AthenaROOTAccess.transientTree.makeTree',line)
-           if match != None:
+           if match is not None:
                inputSector = False
                newMacro.write(line)
                continue
@@ -2305,7 +2305,7 @@ if not debugFlag:
         for line in tmpOutFile:
             print line[:-1]
             # set status=0 for AcerMC
-            if re.search('ACERMC TERMINATES NORMALY: NO MORE EVENTS IN FILE',line) != None:
+            if re.search('ACERMC TERMINATES NORMALY: NO MORE EVENTS IN FILE',line) is not None:
                 status = 0
                 statusChanged = True
         tmpOutFile.close()

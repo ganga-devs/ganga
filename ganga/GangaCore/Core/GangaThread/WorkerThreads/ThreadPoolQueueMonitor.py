@@ -35,14 +35,14 @@ class ThreadPoolQueueMonitor(object):
         self._user_threadpool = _user_threadpool
         self._monitoring_threadpool = _monitoring_threadpool
 
-        if user_threadpool != None:
+        if user_threadpool is not None:
             if self._user_threadpool is not None:
                 self._user_threadpool.clear_queue()
                 self._user_threadpool._stop_worker_threads()
                 del self._user_threadpool
                 del _user_threadpool
             self._user_threadpool = user_threadpool
-        if monitoring_threadpool != None:
+        if monitoring_threadpool is not None:
             if self._monitoring_threadpool is not None:
                 self._monitoring_threadpool.clear_queue()
                 self._monitoring_threadpool._stop_worker_threads()
@@ -57,7 +57,7 @@ class ThreadPoolQueueMonitor(object):
         self._shutdown = False
 
     def _display_element(self, item):
-        if hasattr(item, 'name') and item.name != None:
+        if hasattr(item, 'name') and item.name is not None:
             return item.name
         elif type(item.command_input[0]) != str:
             return getName(item.command_input[0])

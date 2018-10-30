@@ -188,7 +188,7 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
             # check exclude files
             excludeFileFlag = False
             for tmpPatt in excludeFile2:
-                if re.search(tmpPatt,tmpPath) != None:
+                if re.search(tmpPatt,tmpPath) is not None:
                     excludeFileFlag = True
                     break
             if excludeFileFlag:
@@ -201,12 +201,12 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
                     break
             # check root
             isRoot = False
-            if re.search('\.root(\.\d+)*$',tmpPath) != None:
+            if re.search('\.root(\.\d+)*$',tmpPath) is not None:
                 isRoot = True
             # extra files
             isExtra = False
             for tmpExt in extFile2:
-                if re.search(tmpExt+'$',tmpPath) != None:
+                if re.search(tmpExt+'$',tmpPath) is not None:
                     isExtra = True
                     break
             # regular files
@@ -469,7 +469,7 @@ class Athena(IPrepareApp):
         allitems = []
         for line in lines:
             res = re.search('\(in ([^\)]+)\)',line)
-            if res != None:
+            if res is not None:
                 items = line.split()
                 allitems.append(items[0])
                 if items[0] in ('dist', 'AtlasRelease', 'AtlasOffline'):
