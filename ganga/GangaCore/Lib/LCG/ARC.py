@@ -111,6 +111,9 @@ class ARC(IBackend):
                 self.sandboxcache.copyCommand = config['ArcCopyCommand']
 
         if self.sandboxcache._name == 'LCGSandboxCache':
+            if config['ArcCopyCommand']:
+                self.sandboxcache.copyCommand = config['ArcCopyCommand']
+
             if not self.sandboxcache.lfc_host:
                 self.sandboxcache.lfc_host = Grid.__get_lfc_host__()
 
