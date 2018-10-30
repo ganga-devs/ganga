@@ -94,6 +94,10 @@ if not _after_bootstrap:
 
     configDirac.addOption('maxSubjobsPerProcess', 100, 'Set the maximum number of subjobs to be submitted per process.')
 
+    configDirac.addOption('default_finaliseOnMaster', False, 'Finalise all the subjobs in one go')
+    configDirac.addOption('default_downloadOutputSandbox', True, 'Donwload output sandboxes by default')
+    configDirac.addOption('default_unpackOutputSandbox', True, 'Unpack output sandboxes by default')
+
 def standardSetup():
 
     import PACKAGE
