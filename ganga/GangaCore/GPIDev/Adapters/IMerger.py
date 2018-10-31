@@ -83,10 +83,10 @@ class IMerger(IPostProcessor):
 
     def merge(self, jobs, outputdir=None, ignorefailed=None, overwrite=None):
 
-        if ignorefailed == None:
+        if ignorefailed is None:
             ignorefailed = self.ignorefailed
 
-        if overwrite == None:
+        if overwrite is None:
             overwrite = self.overwrite
 
         from GangaCore.GPIDev.Lib.Job import Job

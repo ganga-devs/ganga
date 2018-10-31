@@ -91,16 +91,16 @@ class TestCore(GangaGPITestCase):
         #get report
         report = self.reporter.report
         #check report is created
-        assert report != None, 'no report created'
+        assert report is not None, 'no report created'
         #check report has a title
-        assert report.title != None, 'report does not have a title'
+        assert report.title is not None, 'report does not have a title'
         #check report has some lines
         assert len(report.lines) != 0, 'report does not have any lines'
         #check report converts to plain text
         text = str(report)
-        assert text != None, 'str(report) returns None'
+        assert text is not None, 'str(report) returns None'
         assert len(text) != 0, 'text version of report is empty'
         #check report converts to html
         html = report.tohtml()
-        assert html != None, 'report.tohtml() returns None'
+        assert html is not None, 'report.tohtml() returns None'
         assert len(text) != 0, 'html version of report is empty'

@@ -310,7 +310,7 @@ class LHCbDataset(GangaDataset):
             snew = '\n#new method\nfrom GaudiConf import IOExtension\nIOExtension(\"%s\").inputFiles([' % self.persistency
         elif self.persistency == 'POOL':
             snew = '\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    IOExtension(\"%s\").inputFiles([' % self.persistency
-        elif self.persistency == None:
+        elif self.persistency is None:
             snew = '\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    IOExtension().inputFiles(['
         else:
             logger.warning(

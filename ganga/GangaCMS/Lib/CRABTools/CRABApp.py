@@ -61,10 +61,10 @@ class CRABApp(IApplication):
         # We get the parametef from the config. If it is not NULL,
         # we use that, otherwise, we try to take it from inputdata.
         attr = config[k]
-        if attr == None:
+        if attr is None:
           attr = getattr(job.inputdata,k)
 
-        if attr != None:  
+        if attr is not None:  
           file.write('%s=%s\n'%(k,attr))                  
       file.write('\n')
 

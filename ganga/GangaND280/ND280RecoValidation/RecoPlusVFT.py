@@ -77,7 +77,7 @@ class RecoPlusVFT(IPrepareApp):
 
 
     def configure(self,masterappconfig):
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         # __________ Reco first ____________
@@ -92,7 +92,7 @@ class RecoPlusVFT(IPrepareApp):
             raise ApplicationConfigurationError('Option "-o" given in reco_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
@@ -101,7 +101,7 @@ class RecoPlusVFT(IPrepareApp):
         firstFile = fileList[0].split('/')[-1]
         # Define the output
         reco_args.append('-o')
-        if self.filenamesubstr == None:
+        if self.filenamesubstr is None:
           reco_outputfile = 'recoOutput.root'
         else:
           reco_outputfile = firstFile.replace(self.filenamesubstr, self.reconewstr)
@@ -124,7 +124,7 @@ class RecoPlusVFT(IPrepareApp):
 
         # Define the output
         vft_args.append('-o')
-        if self.filenamesubstr == None:
+        if self.filenamesubstr is None:
           vft_outputfile = 'vftOutput.root'
         else:
           vft_outputfile = firstFile.replace(self.filenamesubstr, self.vftnewstr)
