@@ -432,7 +432,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
         if job.backend.site != 'AUTO':
             taskParamMap['cloud'] = Client.PandaSites[job.backend.site]['cloud']
             taskParamMap['site'] = job.backend.site
-        elif job.backend.requirements.cloud != None and not job.backend.requirements.anyCloud:
+        elif job.backend.requirements.cloud is not None and not job.backend.requirements.anyCloud:
             taskParamMap['cloud'] = job.backend.requirements.cloud
         if job.backend.requirements.excluded_sites != []:
             taskParamMap['excludedSite'] = expandExcludedSiteList( job )
@@ -451,7 +451,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
             taskParamMap['disableAutoRetry'] = 1
         # source URL
         matchURL = re.search("(http.*://[^/]+)/",Client.baseURLCSRVSSL)
-        if matchURL != None:
+        if matchURL is not None:
             taskParamMap['sourceURL'] = matchURL.group(1)
 
         # dataset names

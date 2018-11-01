@@ -216,7 +216,7 @@ class IGangaFile(GangaObject):
         """
         Return if the name has got wildcard characters
         """
-        if regex.search(self.namePattern) != None:
+        if regex.search(self.namePattern) is not None:
             return True
 
         return False

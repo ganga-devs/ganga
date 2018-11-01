@@ -70,7 +70,7 @@ class ND280Executable(IPrepareApp, IPrepareApp):
 
         job = self.getJobObject()
 
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         # Need to handle the possibility of multiple output files !
@@ -79,7 +79,7 @@ class ND280Executable(IPrepareApp, IPrepareApp):
           if arg == '-o':
             raise ApplicationConfigurationError('Option "-o" given in args. You must use the outputfile variable instead, even if you have multiple output files.')
 
-        if self.outputfile == None:
+        if self.outputfile is None:
           raise ApplicationConfigurationError('No output file given. Fill the outputfile variable.')
         else:
           if type(self.outputfile) == type([]):
@@ -92,7 +92,7 @@ class ND280Executable(IPrepareApp, IPrepareApp):
 
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:

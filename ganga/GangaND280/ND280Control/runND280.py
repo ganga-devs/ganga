@@ -76,7 +76,7 @@ class runND280(IPrepareApp):
             raise ApplicationConfigurationError('Option "-c" given in args. You must use the configfile variable instead.')
 
         # setup the config file for this job
-        if self.configfile == None:
+        if self.configfile is None:
           raise ApplicationConfigurationError('No config file given. Use args list or configfile field.')
         # check if given config file exists
         if not os.path.exists(self.configfile):
@@ -95,7 +95,7 @@ class runND280(IPrepareApp):
             inputfilefnd = re.match(r"^inputfile\s*=", line)
             midas_filefnd = re.match(r"^midas_file\s*=", line)
             if inputfile_listfnd or inputfilefnd or midas_filefnd:
-              if job.inputdata == None:
+              if job.inputdata is None:
                 raise ApplicationConfigurationError('The given config file requires an input file but the inputdata of the job is not defined.')
               # TODO: Check if there is an inputdata
               infiles = job.inputdata.get_dataset_filenames()

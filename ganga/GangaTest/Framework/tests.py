@@ -183,7 +183,7 @@ class GPIPCheckTestCase(unittest.TestCase):
             if self.preError:
                 raise self.preError
 
-            assert(self.checkTest != None), 'No instance of checktest, this should happen while the preparation of test is failed.'
+            assert(self.checkTest is not None), 'No instance of checktest, this should happen while the preparation of test is failed.'
         except Exception as error:
             sio = StringIO.StringIO()
             traceback.print_exc(file=sio)
