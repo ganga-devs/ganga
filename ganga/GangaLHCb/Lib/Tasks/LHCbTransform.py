@@ -213,7 +213,7 @@ class LHCbTransform(ITransform):
             raise GangaException(
                 None, 'Cannot call updateQuery() on an LHCbTransform without any queries')
 
-        if self._getParent() != None:
+        if self._getParent() is not None:
             logger.info('Retrieving latest bookkeeping information for transform %i:%i, please wait...' % (
                 self._getParent().id, self.getID()))
         else:

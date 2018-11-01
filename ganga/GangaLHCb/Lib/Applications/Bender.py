@@ -174,7 +174,7 @@ FileCatalog().Catalogs=[]\n""" % modulename
         #logger.info("self.module: %s" % str(self.module))
         if isType(self.module, str):
             self.module = File(self.module)
-        if self.module.name == None:
+        if self.module.name is None:
             raise ApplicationConfigurationError("Application Module not requested")
         elif self.module.name == "":
             raise ApplicationConfigurationError("Application Module not requested")

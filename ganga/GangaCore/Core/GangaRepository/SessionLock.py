@@ -187,7 +187,7 @@ class SessionLockRefresher(GangaThread):
                     logger.warning("This could be due to a filesystem problem, or multiple versions of ganga trying to access the same file")
                     now = -999.
             else:
-                if self.repos[index] != None:
+                if self.repos[index] is not None:
                     raise RepositoryError(self.repos[index],
                     "[SessionFileUpdate] Run: Own session file not found! Possibly deleted by another ganga session.\n\
                     Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
@@ -628,7 +628,7 @@ class SessionLockManager(object):
                         fcntl.lockf(fd, fcntl.LOCK_UN)
                     os.close(fd)
 
-                if _output != None:
+                if _output is not None:
                     self.last_count_access = SessionLockManager.LastCountAccess(os.stat(self.cntfn).st_ctime, _output)
                     return _output
 

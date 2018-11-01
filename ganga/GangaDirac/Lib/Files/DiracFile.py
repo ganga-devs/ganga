@@ -706,7 +706,7 @@ class DiracFile(IGangaFile):
         if self.localDir is None:
             sourceDir = os.getcwd()
             # attached to a job, use the joboutputdir
-            if self._parent != None and os.path.isdir(self.getJobObject().outputdir):
+            if self._parent is not None and os.path.isdir(self.getJobObject().outputdir):
                 sourceDir = self.getJobObject().outputdir
 
         if not os.path.isdir(sourceDir):
@@ -798,7 +798,7 @@ class DiracFile(IGangaFile):
                 lfn_out = stdout_temp[lfn]
 
             # when doing the two step upload delete the temp file
-            if self.compressed or self._parent != None:
+            if self.compressed or self._parent is not None:
                 os.remove(name)
             # need another eval as datetime needs to be included.
             guid = lfn_out.get('GUID', '')

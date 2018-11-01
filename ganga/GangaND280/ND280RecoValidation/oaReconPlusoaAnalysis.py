@@ -75,7 +75,7 @@ class oaReconPlusoaAnalysis(IPrepareApp):
 
 
     def configure(self,masterappconfig):
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         # __________ Reco first ____________
@@ -90,7 +90,7 @@ class oaReconPlusoaAnalysis(IPrepareApp):
             raise ApplicationConfigurationError('Option "-o" given in reco_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
@@ -99,7 +99,7 @@ class oaReconPlusoaAnalysis(IPrepareApp):
         firstFile = fileList[0].split('/')[-1]
         # Define the output
         reco_args.append('-o')
-        if self.filenamesubstr == None:
+        if self.filenamesubstr is None:
           reco_outputfile = 'recoOutput.root'
         else:
           reco_outputfile = firstFile.replace(self.filenamesubstr, self.reconewstr)
@@ -122,7 +122,7 @@ class oaReconPlusoaAnalysis(IPrepareApp):
 
         # Define the output
         anal_args.append('-o')
-        if self.filenamesubstr == None:
+        if self.filenamesubstr is None:
           anal_outputfile = 'analOutput.root'
         else:
           anal_outputfile = firstFile.replace(self.filenamesubstr, self.analnewstr)
