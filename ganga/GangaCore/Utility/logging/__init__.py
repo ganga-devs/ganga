@@ -600,3 +600,17 @@ def log_unknown_exception():
 
     tb_logger.debug('Bare except clause triggered {0}:{1}'.format(caller.filename, caller.lineno))
     tb_logger.debug('Exception caught:', exc_info=True)
+
+def supress_logging(func):
+    """
+    This is a decorator to supress the logging inside a function. Use with care!
+    """
+    def inner(*args, **kwargs):
+        logger = getLogger()
+        previousloglevel = logger.getEffectiveLevel()
+        logging.disable(logging.INFO)
+        try:
+            return func(*args, **kwargs)
+        finally:
+            logger.setLevel(previousloglevel)
+    return inner

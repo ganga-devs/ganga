@@ -21,7 +21,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaCore.Utility.ColourText import getColour
 from GangaCore.Utility.Config import getConfig
-from GangaCore.Utility.logging import getLogger, log_user_exception
+from GangaCore.Utility.logging import getLogger, log_user_exception, supress_logging
 from GangaCore.GPIDev.Credentials import require_credential, credential_store, needed_credentials
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
@@ -968,7 +968,7 @@ class DiracBase(IBackend):
             job (Job): Thi is the job we want to finalise
             updated_dirac_status (str): String representing the Ganga finalisation state of the job failed/completed
         """
-        if job.backend.finaliseOnMaster and job.master:
+        if job.backend.finaliseOnMaster and job.master and updated_dirac_status == 'completed':
             job.updateStatus('completing')
             allComplete = True
             jobsToFinalise = []
@@ -1161,7 +1161,7 @@ class DiracBase(IBackend):
         #First grab all the info from Dirac
         inputDict = {}
         #I have to reduce the no. of subjobs per process to prevent DIRAC timeouts
-        nPerProcess = int(math.floor(configDirac['maxSubjobsPerProcess']/2))
+        nPerProcess = int(math.floor(configDirac['maxSubjobsFinalisationPerProcess']))
         nProcessToUse = math.ceil((len(theseJobs)*1.0)/nPerProcess)
 
         jobs = [stripProxy(j) for j in theseJobs]
@@ -1171,9 +1171,10 @@ class DiracBase(IBackend):
             getQueues()._monitoring_threadpool.add_function(DiracBase.finalise_jobs_thread_func, (jobSlice, downloadSandbox))
 
     @staticmethod
+    @supress_logging
     def finalise_jobs_thread_func(jobSlice, downloadSandbox = True):
         """
-        Finalise the jobs given. This downloads the output sandboxes, gets the final Dirac stati, completion times etc.
+        Finalise the jobs given. This downloads the output sandboxes, gets the final Dirac statuses, completion times etc.
         Everything is done in one DIRAC process for maximum speed. This is also done in parallel for maximum speed.
         """
         inputDict = {}
