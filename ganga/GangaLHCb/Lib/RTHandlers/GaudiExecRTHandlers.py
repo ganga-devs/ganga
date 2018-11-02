@@ -413,11 +413,6 @@ def replicateJobFile(fileToReplicate):
     if len(fileToReplicate.locations)==0:
         fileToReplicate.getReplicas()
 
-    logger.debug("Existing locations for DiracFile %s : %s" % (fileToReplicate.lfn, fileToReplicate.locations))
-    if len(fileToReplicate.locations) >= 2:
-        logger.debug("File already at two locations, not doing anything")
-        return
-
     trySEs = [SE for SE in getConfig('DIRAC')['allDiracSE'] if SE not in fileToReplicate.locations]
     random.shuffle(trySEs)
     success = None
@@ -510,9 +505,14 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         except AssertionError:
             raise ApplicationPrepareError("Failed to find a replica, aborting submit")
 
-        #Create a replica of the job and scripts files
-        replicateJobFile(app.jobScriptArchive)
-        replicateJobFile(app.uploadedInput)
+        #Check if the uploaded input already has replicas in case this is a copy of a job.
+        if len(app.uploadedInput.locations)==0:
+            app.uploadedInput.getReplicas()
+        if len(app.uploadedInput.locations) >= 2:
+            logger.debug("Uploaded input archive already at two locations, not replicating again")
+            return
+        else:
+            replicateJobFile(app.uploadedInput)
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
