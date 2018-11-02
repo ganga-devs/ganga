@@ -151,8 +151,8 @@ def addToMapping(SE, CE_to_SE_mapping):
     try:
         result = wrapped_execute('getSitesForSE("%s")' % str(SE), list)
     except SplitterError as err: # Have to catch these here as we're on a worker thread 
-        logger.error('Error getting Sites for SE: "%s"' % str(SE))
-        logger.error(err)
+        logger.warning('Error getting Sites for SE: "%s"' % str(SE))
+        logger.warning(err)
         result = list()
     CE_to_SE_mapping[SE] = result
 
