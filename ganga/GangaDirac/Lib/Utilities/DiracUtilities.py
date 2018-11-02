@@ -226,7 +226,8 @@ def execute(command,
 
     if cred_req is not None:
         env['X509_USER_PROXY'] = credential_store[cred_req].location
-        env['KRB5CCNAME'] = os.getenv('KRB5CCNAME')
+        if os.getenv('KRB5CCNAME'):
+            env['KRB5CCNAME'] = os.getenv('KRB5CCNAME')
 
     if cwd is None:
         # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
