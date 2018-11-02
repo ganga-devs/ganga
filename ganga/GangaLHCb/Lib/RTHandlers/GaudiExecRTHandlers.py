@@ -514,6 +514,8 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         else:
             replicateJobFile(app.uploadedInput)
 
+        replicateJobFile(app.jobScriptArchive)
+
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
 
