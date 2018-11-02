@@ -505,9 +505,16 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         except AssertionError:
             raise ApplicationPrepareError("Failed to find a replica, aborting submit")
 
-        #Create a replica of the job and scripts files
+        #Check if the uploaded input already has replicas in case this is a copy of a job.
+        if len(app.uploadedInput.locations)==0:
+            app.uploadedInput.getReplicas()
+        if len(app.uploadedInput.locations) >= 2:
+            logger.debug("Uploaded input archive already at two locations, not replicating again")
+            return
+        else:
+            replicateJobFile(app.uploadedInput)
+
         replicateJobFile(app.jobScriptArchive)
-        replicateJobFile(app.uploadedInput)
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
