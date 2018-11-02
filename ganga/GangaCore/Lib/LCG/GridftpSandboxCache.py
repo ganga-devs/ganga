@@ -184,9 +184,10 @@ class GridftpSandboxCache(GridSandboxCache):
         # the algorithm of downloading one file to a local directory
         class MyAlgorithm(Algorithm):
 
-            def __init__(self, cacheObj):
+            def __init__(self, cacheObj, copyCommand):
                 Algorithm.__init__(self)
                 self.cacheObj = cacheObj
+                self.copyCommand = copyCommand
 
             def process(self, file):
 
@@ -207,7 +208,7 @@ class GridftpSandboxCache(GridSandboxCache):
                     self.__appendResult__(file.id, file)
                     return True
 
-        myAlg = MyAlgorithm(cacheObj=self)
+        myAlg = MyAlgorithm(cacheObj=self, copyCommand=self.copyCommand)
         myData = Data(collection=files)
 
         runner = MTRunner(

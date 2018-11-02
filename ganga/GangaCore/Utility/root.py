@@ -120,11 +120,11 @@ def getrootsys(version=None, arch=None):
     rootsys = ""
     try:
         configroot = getConfig('ROOT')
-        if version == None:
+        if version is None:
             rootver = configroot['version']
         else:
             rootver = str(version)
-        if arch == None:
+        if arch is None:
             rootarch = configroot['arch']
         else:
             rootarch = str(arch)
@@ -159,9 +159,9 @@ def getpythonhome(arch=None, pythonversion=None):
     try:
         # returns a copy
         configroot = getConfig('ROOT').getEffectiveOptions()
-        if arch != None:
+        if arch is not None:
             configroot['arch'] = arch
-        if pythonversion != None:
+        if pythonversion is not None:
             configroot['pythonversion'] = pythonversion
         # allow other Root variables to be used in the definition
         pythonhome = configroot['pythonhome']
@@ -202,7 +202,7 @@ def getrootprefix(rootsys=None):
     else ROOTSYS+LD_LIBRARY_PATH+prefix
     """
     rc = 0
-    if rootsys == None:
+    if rootsys is None:
         rootsys = GangaCore.Utility.root.getconfrootsys()
         if rootsys == "":
             rootsys = GangaCore.Utility.root.getenvrootsys()

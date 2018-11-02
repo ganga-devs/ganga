@@ -29,7 +29,7 @@ class ND280Unit(IUnit):
       j = GPI.Job()
       j._impl.backend = self._getParent().backend.clone()
       j._impl.application = self._getParent().application.clone()
-      if not self.inputdata == None:
+      if not self.inputdata is None:
         j.inputdata = self.inputdata.clone()
 
       trf = self._getParent()

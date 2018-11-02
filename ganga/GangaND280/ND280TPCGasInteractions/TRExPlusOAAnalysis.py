@@ -64,7 +64,7 @@ class TRExPlusOAAnalysis(IPrepareApp):
 
 
     def configure(self,masterappconfig):
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         # __________ TREx first ____________
@@ -79,7 +79,7 @@ class TRExPlusOAAnalysis(IPrepareApp):
             raise ApplicationConfigurationError('Option "-o" given in trex_args. The module will define the output filename.')
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
@@ -89,7 +89,7 @@ class TRExPlusOAAnalysis(IPrepareApp):
         firstFile = fileList[0].split('/')[-1]
         # Define the output
         trex_args.append('-o')
-        if self.filenamesubstr == None:
+        if self.filenamesubstr is None:
           trex_outputfile = 'recoOutput.root'
         else:
           trex_outputfile = firstFile.replace(self.filenamesubstr, "trex")
@@ -108,7 +108,7 @@ class TRExPlusOAAnalysis(IPrepareApp):
             raise ApplicationConfigurationError('Option "-o" given in oaana_args. You must use the oaana_outputfile variable instead.')
 
         oaana_args.append('-o')
-        if self.filenamesubstr == None:
+        if self.filenamesubstr is None:
           oaana_outputfile = 'recoOutput.root'
         else:
           oaana_outputfile = firstFile.replace(self.filenamesubstr, "anal")

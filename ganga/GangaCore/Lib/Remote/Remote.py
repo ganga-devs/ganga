@@ -19,7 +19,7 @@ from GangaCore.Lib.Root import randomString
 
 def shutdown_transport(tr):
     """Shutdown the transport cleanly - otherwise python 2.5 throws a wobble"""
-    if (tr != None):
+    if (tr is not None):
         tr.close()
         tr = None
 
@@ -131,7 +131,7 @@ class Remote(IBackend):
         super(Remote, self).__init__()
 
     def __del__(self):
-        if (self._transport != None):
+        if (self._transport is not None):
             self._transport.close()
             self._transport = None
 
@@ -178,17 +178,17 @@ print("***_FINISHED_***")
         import getpass
         import atexit
 
-        if (self._transport != None):
+        if (self._transport is not None):
             # transport is open
             return
 
         # check for a useable transport for this username and host
-        if Remote._transportarray != None:
+        if Remote._transportarray is not None:
             for t in Remote._transportarray:
-                if (t != None) and (t[0] == self.username) and (t[1] == self.host):
+                if (t is not None) and (t[0] == self.username) and (t[1] == self.host):
 
                     # check for too many retries on the same host
-                    if t[2] == None or t[3] == None:
+                    if t[2] is None or t[3] is None:
                         logger.warning("Too many retries for remote host " + self.username +
                                        "@" + self.host + ". Restart Ganga to have another go.")
                         return False
@@ -369,7 +369,7 @@ print("***_FINISHED_***")
 
         # First some sanity checks...
         fail = 0
-        if self.remote_backend == None:
+        if self.remote_backend is None:
             logger.error("No backend specified for remote host.")
             fail = 1
         if self.host == "":
@@ -690,7 +690,7 @@ code = ###CODE###
 environment = ###ENVIRONMENT###
 user_env = ###USERENV###
 
-if user_env != None:
+if user_env is not None:
    for env_var in user_env:
       environment[env_var] = user_env[env_var]
 
