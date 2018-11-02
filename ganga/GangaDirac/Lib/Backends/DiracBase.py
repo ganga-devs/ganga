@@ -21,7 +21,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaCore.Utility.ColourText import getColour
 from GangaCore.Utility.Config import getConfig
-from GangaCore.Utility.logging import getLogger, log_user_exception, supress_logging
+from GangaCore.Utility.logging import getLogger, log_user_exception
 from GangaCore.GPIDev.Credentials import require_credential, credential_store, needed_credentials
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
@@ -1171,7 +1171,6 @@ class DiracBase(IBackend):
             getQueues()._monitoring_threadpool.add_function(DiracBase.finalise_jobs_thread_func, (jobSlice, downloadSandbox))
 
     @staticmethod
-    @supress_logging
     def finalise_jobs_thread_func(jobSlice, downloadSandbox = True):
         """
         Finalise the jobs given. This downloads the output sandboxes, gets the final Dirac statuses, completion times etc.
