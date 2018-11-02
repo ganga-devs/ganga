@@ -613,4 +613,5 @@ def supress_logging(func):
             return func(*args, **kwargs)
         finally:
             logger.setLevel(previousloglevel)
+            logging.disable(logging.NOTSET)
     return inner
