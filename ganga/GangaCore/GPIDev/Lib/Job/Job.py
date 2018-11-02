@@ -739,7 +739,7 @@ class Job(GangaObject):
         else:
             stats = [sj.status for sj in self.subjobs]
 
-	return "%s / %s / %s / %s" % (stats.count('running'), stats.count('failed') + stats.count('killed'), stats.count('completing'), stats.count('completed'))
+	return "%s/%s/%s/%s" % (stats.count('running'), stats.count('failed') + stats.count('killed'), stats.count('completing'), stats.count('completed'))
 
     def updateMasterJobStatus(self):
         """
