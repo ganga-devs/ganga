@@ -413,6 +413,11 @@ def replicateJobFile(fileToReplicate):
     if len(fileToReplicate.locations)==0:
         fileToReplicate.getReplicas()
 
+    logger.debug("Existing locations for DiracFile %s : %s" % (fileToReplicate.lfn, fileToReplicate.locations))
+    if len(fileToReplicate.locations) >= 2:
+        logger.debug("File already at two locations, not doing anything")
+        return
+
     trySEs = [SE for SE in getConfig('DIRAC')['allDiracSE'] if SE not in fileToReplicate.locations]
     random.shuffle(trySEs)
     success = None
