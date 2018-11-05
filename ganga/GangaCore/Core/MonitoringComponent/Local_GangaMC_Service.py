@@ -414,7 +414,7 @@ def autoKill_if_required(jobList_fromset):
     for j in jobList_fromset:
         if j.master:
             # Check for max number of resubmissions
-            n_completed = len([sj for sj in j.master.subjobs if sj.status == 'completed'])
+            n_completed = len([sj for sj in j.master.subjobs if (sj.status == 'completed' or sj.status == 'completing')])
             n_failed = len([sj for sj in j.master.subjobs if sj.status == 'failed'])
 
             if n_completed == 0 and n_failed >= config['autoKillThreshold'] and not config['autoKillThreshold'] == -1:
