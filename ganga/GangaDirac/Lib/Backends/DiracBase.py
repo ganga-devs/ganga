@@ -968,7 +968,7 @@ class DiracBase(IBackend):
             job (Job): Thi is the job we want to finalise
             updated_dirac_status (str): String representing the Ganga finalisation state of the job failed/completed
         """
-        if job.backend.finaliseOnMaster and job.master:
+        if job.backend.finaliseOnMaster and job.master and updated_dirac_status == 'completed':
             job.updateStatus('completing')
             allComplete = True
             jobsToFinalise = []
@@ -995,12 +995,12 @@ class DiracBase(IBackend):
 
             output_path = job.getOutputWorkspace().getPath()
 
-            logger.info('Contacting DIRAC for job: %s' % job.fqid)
+            logger.debug('Contacting DIRAC for job: %s' % job.fqid)
             # Contact dirac which knows about the job
             job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = execute("finished_job(%d, '%s', %s, downloadSandbox=%s)" % (job.backend.id, output_path, job.backend.unpackOutputSandbox, job.backend.downloadSandbox), cred_req=job.backend.credential_requirements)
 
             now = time.time()
-            logger.info('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
+            logger.debug('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
 
             #logger.info('Job ' + job.fqid + ' OutputDataInfo: ' + str(file_info_dict))
             #logger.info('Job ' + job.fqid + ' OutputSandbox: ' + str(getSandboxResult))
@@ -1144,7 +1144,7 @@ class DiracBase(IBackend):
     def finalise_jobs(allJobs, downloadSandbox = True):
         """
         Finalise the jobs given. This downloads the output sandboxes, gets the final Dirac stati, completion times etc.
-        Everything is done in one DIRAC process for maximum speed.
+        Everything is done in one DIRAC process for maximum speed. This is also done in parallel for maximum speed.
         """
         theseJobs = []
 
@@ -1160,91 +1160,99 @@ class DiracBase(IBackend):
 
         #First grab all the info from Dirac
         inputDict = {}
-        #I have to reduce the no. of subjobs per process to prevent timeouts
-        nPerProcess = int(math.floor(configDirac['maxSubjobsPerProcess']/2))
+        #I have to reduce the no. of subjobs per process to prevent DIRAC timeouts
+        nPerProcess = int(math.floor(configDirac['maxSubjobsFinalisationPerProcess']))
         nProcessToUse = math.ceil((len(theseJobs)*1.0)/nPerProcess)
 
         jobs = [stripProxy(j) for j in theseJobs]
-        statusmapping = configDirac['statusmapping']
 
         for i in range(0,int(nProcessToUse)):
-            jobSlice = jobs[i*nPerProcess:(i+1)*nPerProcess]
-            for sj in jobSlice:
-                inputDict[sj.backend.id] = sj.getOutputWorkspace().getPath()
-            returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, repr(statusmapping), downloadSandbox), cred_req=jobSlice[0].backend.credential_requirements)
+            jobSlice = jobs[i*nPerProcess:(i+1)*nPerProcess]      
+            getQueues()._monitoring_threadpool.add_function(DiracBase.finalise_jobs_thread_func, (jobSlice, downloadSandbox))
 
-            #Cycle over the jobs and store the info
-            for sj in jobSlice:
-                #Check we are able to get the job status - if not set to failed.
-                if sj.backend.id not in statusList['Value'].keys():
-                    logger.error("Job %s with DIRAC ID %s has been removed from DIRAC. Unable to finalise it." % (sj.getFQID(), sj.backend.id))
-                    sj.force_status('failed')
-                    continue
-                #If we wanted the sandbox make sure it downloaded OK.
-                if not returnDict[sj.backend.id]['outSandbox']['OK'] and downloadSandbox:
-                    logger.error("Output sandbox error for job %s: %s. Unable to finalise it." % (sj.getFQID(), returnDict[sj.backend.id]['outSandbox']['Message']))
-                    sj.force_status('failed')
-                    continue
-                #Set the CPU time
-                sj.backend.normCPUTime = returnDict[sj.backend.id]['cpuTime']
+    @staticmethod
+    def finalise_jobs_thread_func(jobSlice, downloadSandbox = True):
+        """
+        Finalise the jobs given. This downloads the output sandboxes, gets the final Dirac statuses, completion times etc.
+        Everything is done in one DIRAC process for maximum speed. This is also done in parallel for maximum speed.
+        """
+        inputDict = {}
 
-                # Set DiracFile metadata - this circuitous route is copied from the standard so as to be consistent with the rest of the job finalisation code.
-                if hasattr(sj.outputfiles, 'get'):
-                    wildcards = [f.namePattern for f in sj.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
-                else:
-                    wildcards = []
+        for sj in jobSlice:
+            inputDict[sj.backend.id] = sj.getOutputWorkspace().getPath()
+        statusmapping = configDirac['statusmapping']
+        returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, repr(statusmapping), downloadSandbox), cred_req=jobSlice[0].backend.credential_requirements)
 
-                lfn_store = os.path.join(sj.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName'])
+        #Cycle over the jobs and store the info
+        for sj in jobSlice:
+            #Check we are able to get the job status - if not set to failed.
+            if sj.backend.id not in statusList['Value'].keys():
+                logger.error("Job %s with DIRAC ID %s has been removed from DIRAC. Unable to finalise it." % (sj.getFQID(), sj.backend.id))
+                sj.force_status('failed')
+                continue
+            #If we wanted the sandbox make sure it downloaded OK.
+            if downloadSandbox and not returnDict[sj.backend.id]['outSandbox']['OK']:
+                logger.error("Output sandbox error for job %s: %s. Unable to finalise it." % (sj.getFQID(), returnDict[sj.backend.id]['outSandbox']['Message']))
+                sj.force_status('failed')
+                continue
+            #Set the CPU time
+            sj.backend.normCPUTime = returnDict[sj.backend.id]['cpuTime']
 
-                # Make the file on disk with a nullop...
-                if not os.path.isfile(lfn_store):
-                    with open(lfn_store, 'w'):
-                        pass
+            # Set DiracFile metadata - this circuitous route is copied from the standard so as to be consistent with the rest of the job finalisation code.
+            if hasattr(sj.outputfiles, 'get'):
+                wildcards = [f.namePattern for f in sj.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
+            else:
+                wildcards = []
 
-                if hasattr(sj.outputfiles, 'get') and sj.outputfiles.get(DiracFile):
+            lfn_store = os.path.join(sj.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName'])
 
-                    # Now we can iterate over the contents of the file without touching it
-                    with open(lfn_store, 'ab') as postprocesslocationsfile:
-                        if not hasattr(returnDict[sj.backend.id]['outDataInfo'], 'keys'):
-                            logger.error("Error understanding OutputDataInfo: %s" % str(returnDict[sj.backend.id]['outDataInfo']))
-                            raise GangaDiracError("Error understanding OutputDataInfo: %s" % str(returnDict[sj.backend.id]['outDataInfo']))
+            # Make the file on disk with a nullop...
+            if not os.path.isfile(lfn_store):
+                with open(lfn_store, 'w'):
+                    pass
 
-                        ## Caution is not clear atm whether this 'Value' is an LHCbism or bug
-                        list_of_files = returnDict[sj.backend.id]['outDataInfo'].get('Value', returnDict[sj.backend.id]['outDataInfo'].keys())
+            if hasattr(sj.outputfiles, 'get') and sj.outputfiles.get(DiracFile):
+                # Now we can iterate over the contents of the file without touching it
+                with open(lfn_store, 'ab') as postprocesslocationsfile:
+                    if not hasattr(returnDict[sj.backend.id]['outDataInfo'], 'keys'):
+                        logger.error("Error understanding OutputDataInfo: %s" % str(returnDict[sj.backend.id]['outDataInfo']))
+                        raise GangaDiracError("Error understanding OutputDataInfo: %s" % str(returnDict[sj.backend.id]['outDataInfo']))
 
-                        for file_name in list_of_files:
-                            file_name = os.path.basename(file_name)
-                            info = returnDict[sj.backend.id]['outDataInfo'].get(file_name)
-                            #logger.debug("file_name: %s,\tinfo: %s" % (str(file_name), str(info)))
+                    ## Caution is not clear atm whether this 'Value' is an LHCbism or bug
+                    list_of_files = returnDict[sj.backend.id]['outDataInfo'].get('Value', returnDict[sj.backend.id]['outDataInfo'].keys())
+                    for file_name in list_of_files:
+                        file_name = os.path.basename(file_name)
+                        info = returnDict[sj.backend.id]['outDataInfo'].get(file_name)
+                        #logger.debug("file_name: %s,\tinfo: %s" % (str(file_name), str(info)))
 
-                            if not hasattr(info, 'get'):
-                                logger.error("Error getting OutputDataInfo for: %s" % str(sj.getFQID('.')))
-                                logger.error("Please check the Dirac Job still exists or attempt a job.backend.reset() to try again!")
-                                logger.error("Err: %s" % str(info))
-                                logger.error("file_info_dict: %s" % str(returnDict[sj.backend.id]['outDataInfo']))
-                                raise GangaDiracError("Error getting OutputDataInfo")
+                        if not hasattr(info, 'get'):
+                            logger.error("Error getting OutputDataInfo for: %s" % str(sj.getFQID('.')))
+                            logger.error("Please check the Dirac Job still exists or attempt a job.backend.reset() to try again!")
+                            logger.error("Err: %s" % str(info))
+                            logger.error("file_info_dict: %s" % str(returnDict[sj.backend.id]['outDataInfo']))
+                            raise GangaDiracError("Error getting OutputDataInfo")
 
-                            valid_wildcards = [wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)]
-                            if not valid_wildcards:
-                                valid_wildcards.append('')
+                        valid_wildcards = [wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)]
+                        if not valid_wildcards:
+                            valid_wildcards.append('')
 
-                            for wc in valid_wildcards:
-                                #logger.debug("wildcard: %s" % str(wc))
+                        for wc in valid_wildcards:
+                            #logger.debug("wildcard: %s" % str(wc))
 
-                                DiracFileData = 'DiracFile:::%s&&%s->%s:::%s:::%s\n' % (wc,
-                                                                                        file_name,
-                                                                                        info.get('LFN', 'Error Getting LFN!'),
-                                                                                        str(info.get('LOCATIONS', ['NotAvailable'])),
-                                                                                        info.get('GUID', 'NotAvailable')
-                                                                                        )
-                                #logger.debug("DiracFileData: %s" % str(DiracFileData))
-                                postprocesslocationsfile.write(DiracFileData)
-                                postprocesslocationsfile.flush()
+                            DiracFileData = 'DiracFile:::%s&&%s->%s:::%s:::%s\n' % (wc,
+                                                                                    file_name,
+                                                                                    info.get('LFN', 'Error Getting LFN!'),
+                                                                                    str(info.get('LOCATIONS', ['NotAvailable'])),
+                                                                                    info.get('GUID', 'NotAvailable')
+                                                                                    )
+                            #logger.debug("DiracFileData: %s" % str(DiracFileData))
+                            postprocesslocationsfile.write(DiracFileData)
+                            postprocesslocationsfile.flush()
 
-                    logger.debug("Written: %s" % open(lfn_store, 'r').readlines())
+                logger.debug("Written: %s" % open(lfn_store, 'r').readlines())
 
-                #Set the status of the subjob
-                sj.updateStatus(statusmapping[statusList['Value'][sj.backend.id]['Status']])
+            #Set the status of the subjob
+            sj.updateStatus(statusmapping[statusList['Value'][sj.backend.id]['Status']])
 
     @staticmethod
     def requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses):
