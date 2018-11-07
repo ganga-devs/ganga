@@ -575,7 +575,8 @@ class Condor(IBackend):
             tmpList = infoString.split()
             id, host, status, cputime = ("", "", "", "")
             if 3 == len(tmpList):
-                id, status, cputime = tmpList
+                if not 'Failure' in tmpList[0]:
+                    id, status, cputime = tmpList
             if 4 == len(tmpList):
                 id, host, status, cputime = tmpList
             if id:
