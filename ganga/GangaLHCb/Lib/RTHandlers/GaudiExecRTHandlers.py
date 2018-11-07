@@ -272,7 +272,8 @@ def generateDiracInput(app):
     else:
         prep_dir = app.getSharedPath()
         addTimestampFile(prep_dir)
-        prep_file = _pseudo_session_id + '.tgz'
+        master_no = job.id
+        prep_file = '%s_%s.tgz' % (master_no, _pseudo_session_id)
         tmp_dir = tempfile.gettempdir()
         compressed_file = os.path.join(tmp_dir, 'diracInputFiles_'+os.path.basename(prep_file))
 
