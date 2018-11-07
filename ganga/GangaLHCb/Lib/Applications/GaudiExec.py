@@ -284,7 +284,8 @@ class GaudiExec(IPrepareApp):
         folder_dir = master_job.getInputWorkspace(create=True).getPath()
 
         if not df or df.namePattern == '':
-            unique_name = GaudiExec.sharedOptsFile_baseName % uuid.uuid4()
+            identifier = '%s_%s' % (master_job.id, uuid.uuid4())
+            unique_name = GaudiExec.sharedOptsFile_baseName % identifier
             master_job.application.jobScriptArchive = LocalFile(namePattern=unique_name, localDir=folder_dir)
             tar_filename = path.join(folder_dir, unique_name)
             if not path.isfile(tar_filename):
