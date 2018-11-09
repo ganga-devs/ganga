@@ -102,7 +102,7 @@ class EventPicking(DQ2Dataset):
             else:
                 guidListELSSI = elssiIF.doLookup(tmpRunEvtList,stream=self.pick_stream_name,tokens=streamRef,amitag=self.event_pick_amitag,extract=True)
 
-            if len(guidListELSSI) == 0 or guidListELSSI == None:
+            if len(guidListELSSI) == 0 or guidListELSSI is None:
                 errStr = ''
                 for tmpLine in elssiIF.output:
                     errStr += tmpLine + '\n'

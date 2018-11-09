@@ -238,7 +238,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
         lfcattempts = 0
         while lfcattempts<5:
             (res, rep_entries) = lfc.lfc_getreplicas(guids, '')
-            if res == 0 or rep_entries != None:
+            if res == 0 or rep_entries is not None:
                 break
             lfcattempts = lfcattempts + 1
             
@@ -248,7 +248,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             mapLFN[guid] = lfn
 
         for rep in rep_entries:
-            if rep != None and ((not hasattr(rep,'errcode')) or \
+            if rep is not None and ((not hasattr(rep,'errcode')) or \
                                 (hasattr(rep,'errcode') and rep.errcode == 0)):
                 #pat = re.compile(r'[^srm://][^/]+')
                 pat = re.compile(r'^[^:]+://([^:/]+)')
@@ -659,7 +659,7 @@ def _makePoolFileCatalog(files):
     for line in oldXML:
         # look for file item
         match = re.search('<File ID="([^"]+)"',line)
-        if match != None:
+        if match is not None:
             # avoid duplication
             guid = match.group(1)
             if not guid in newGUIDs:
@@ -671,7 +671,7 @@ def _makePoolFileCatalog(files):
         if fileFlag:
             outFile.write(line)
         # look for item end
-        if re.search('</File>',line) != None:
+        if re.search('</File>',line) is not None:
             fileFlag = False
     # write trailer
     outFile.write(trailer)
@@ -719,7 +719,7 @@ try:
 
     for tmpAttr in dir (AthenaCommon.AthenaCommonFlags):
         import re
-        if re.search('^(Pool|BS).*Input$',tmpAttr) != None:
+        if re.search('^(Pool|BS).*Input$',tmpAttr) is not None:
             try:
                 getattr(AthenaCommon.AthenaCommonFlags,tmpAttr).get_Value = _dummyGet_Value
             except:

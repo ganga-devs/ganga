@@ -39,7 +39,7 @@ class CoreTransform(ITransform):
             # already have units so return
             return
 
-        if self.unit_splitter == None and len(self.inputdata) == 0:
+        if self.unit_splitter is None and len(self.inputdata) == 0:
             raise ApplicationConfigurationError("No unit splitter or InputData provided for CoreTransform unit creation, Transform %d (%s)" %
                                                 (self.getID(), self.name))
 

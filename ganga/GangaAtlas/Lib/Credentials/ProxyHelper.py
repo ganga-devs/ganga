@@ -17,7 +17,7 @@ def getNickname(gridProxy=None,allowMissingNickname=True):
     for line in output.split('\n'):
         if line.startswith('attribute'):
             match = re.search('nickname =\s*([^\s]+)\s*\(atlas\)',line)
-            if match != None:
+            if match is not None:
                 nickName = match.group(1)
                 break
     # check        

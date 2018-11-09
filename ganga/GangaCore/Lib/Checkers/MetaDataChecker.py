@@ -40,7 +40,7 @@ class MetaDataChecker(IChecker):
         """
         Checks metadata of job is within a certain range.
         """
-        if self.expression == None:
+        if self.expression is None:
             raise PostProcessException('No expression is set. MetaDataChecker will do nothing!')
         try:
             self.result = self.calculateResult(job)

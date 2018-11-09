@@ -341,7 +341,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
             except:
                 isfound = datasetsiteinfo['found'] 
 
-            if isfound != None: 
+            if isfound is not None: 
                 try:
                     numberoffiles = datasetsiteinfo[0]['found']
                 except:

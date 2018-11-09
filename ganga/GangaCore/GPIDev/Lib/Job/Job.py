@@ -611,7 +611,10 @@ class Job(GangaObject):
 
         if new_status in ['completed', 'failed', 'killed']:
             if len(self.postprocessors) > 0:
-                logger.info("Running postprocessor for Job %s" % self.getFQID('.'))
+                if self.master:
+                    logger.debug("Running postprocessor for Job %s" % self.getFQID('.'))
+                else:
+                    logger.info("Running postprocessor for Job %s" % self.getFQID('.'))
                 passed = self.postprocessors.execute(self, new_status)
                 if passed is not True:
                     new_status = 'failed'
@@ -664,7 +667,7 @@ class Job(GangaObject):
                 if outputfileClass in backend_output_postprocess[backendClass]:
 
                     if not self.subjobs:
-                        logger.info("Job %s Setting Location of %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
+                        logger.debug("Job %s Setting Location of %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                         try:
                             outputfile.setLocation()
                         except Exception as err:
@@ -672,7 +675,7 @@ class Job(GangaObject):
 
                     if backend_output_postprocess[backendClass][outputfileClass] == 'client':
                         try:
-                            logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
+                            logger.debug("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                             outputfile.put()
                             logger.debug("Cleaning up after put")
                             outputfile.cleanUpClient()
@@ -736,7 +739,7 @@ class Job(GangaObject):
         else:
             stats = [sj.status for sj in self.subjobs]
 
-	return "%s / %s" % (stats.count('completed'), len(self.subjobs))
+	return "%s/%s/%s/%s" % (stats.count('running'), stats.count('failed') + stats.count('killed'), stats.count('completing'), stats.count('completed'))
 
     def updateMasterJobStatus(self):
         """
@@ -795,13 +798,19 @@ class Job(GangaObject):
         logger.debug("Job %s Finished" % self.getFQID('.'))
 
     def postprocess_hook(self):
-        logger.info("Job %s Running PostProcessor hook" % self.getFQID('.'))
+        if self.master:
+            logger.debug("Job %s Running PostProcessor hook" % self.getFQID('.'))
+        else:
+            logger.info("Job %s Running PostProcessor hook" % self.getFQID('.'))
         self.application.postprocess()
         self.getMonitoringService().complete()
         self.postprocessoutput(self.outputfiles, self.outputdir)
 
     def postprocess_hook_failed(self):
-        logger.info("Job %s PostProcessor Failed" % self.getFQID('.'))
+        if self.master:
+            logger.debug("Job %s PostProcessor Failed" % self.getFQID('.'))
+        else:
+            logger.info("Job %s PostProcessor Failed" % self.getFQID('.'))
         self.application.postprocess_failed()
         self.getMonitoringService().fail()
 

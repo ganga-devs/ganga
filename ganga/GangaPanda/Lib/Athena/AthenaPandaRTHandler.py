@@ -1001,7 +1001,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         #    param += '--mcData %s ' % self.config['mcData']
         # source URL
         matchURL = re.search("(http.*://[^/]+)/",Client.baseURLCSRVSSL)
-        if matchURL != None:
+        if matchURL is not None:
             param += " --sourceURL %s " % matchURL.group(1)
         # use ARA 
 #        if app.atlas_exetype in ['PYARA','ARES','ROOT']:

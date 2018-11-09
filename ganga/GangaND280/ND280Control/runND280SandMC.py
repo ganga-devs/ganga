@@ -83,7 +83,7 @@ class runND280SandMC(IPrepareApp):
 
 
         # use input file from a "dataset"
-        if job.inputdata == None:
+        if job.inputdata is None:
             raise ApplicationConfigurationError('The given config file requires an input file but the inputdata of the job is not defined.')
         infiles = job.inputdata.get_dataset_filenames()
         if len(infiles) < 1:

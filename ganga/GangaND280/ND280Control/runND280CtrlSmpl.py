@@ -73,7 +73,7 @@ class runND280CtrlSmpl(IPrepareApp):
 
         job = self.getJobObject()
 
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         for arg in args:
@@ -81,7 +81,7 @@ class runND280CtrlSmpl(IPrepareApp):
             raise ApplicationConfigurationError('Option "-c" given in args. You must use the configfile variable instead.')
 
         # setup the config file for this job
-        if self.configfile == None:
+        if self.configfile is None:
           raise ApplicationConfigurationError('No config file given. Use args list or configfile field.')
         # check if given config file exists
         if not os.path.exists(self.configfile):
@@ -89,7 +89,7 @@ class runND280CtrlSmpl(IPrepareApp):
         if not os.path.isfile(self.configfile):
           raise ApplicationConfigurationError('The given config file "'+self.configfile+'" is not a file.')
 
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata of the job is not defined.')
         infiles = job.inputdata.get_dataset_filenames()
         if len(infiles) < 1:

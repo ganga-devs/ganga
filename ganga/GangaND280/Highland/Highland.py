@@ -71,7 +71,7 @@ class Highland(IPrepareApp):
 
         job = self.getJobObject()
 
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         # setup the output file
@@ -79,7 +79,7 @@ class Highland(IPrepareApp):
           if arg == '-o':
             raise ApplicationConfigurationError('Option "-o" given in args. You must use the outputfile variable instead.')
 
-        if self.outputfile == None:
+        if self.outputfile is None:
           raise ApplicationConfigurationError('No output file given. Fill the outputfile variable.')
         else:
           self.args.append('-o')

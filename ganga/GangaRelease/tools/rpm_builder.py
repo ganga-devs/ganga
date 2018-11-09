@@ -48,12 +48,12 @@ for opt, arg in options:
         usage()
         sys.exit(2)
 
-if this_version == None:
+if this_version is None:
    print "Missing [-v/--version] parameter"
    usage()
    sys.exit(2)
 
-if builddir == None:
+if builddir is None:
    builddir = '/tmp/gangabuild'
 else:
    print "Missing builddir option"
