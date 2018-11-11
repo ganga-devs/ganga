@@ -69,7 +69,7 @@ class Node(object):
         """
         self.name = name
         self.value = None
-        if value != None:
+        if value is not None:
             self.value = str(value)
         self.nodes = []
 

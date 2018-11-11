@@ -122,7 +122,7 @@ def retrievePandaJobs(job, jIDs):
         if not status: continue
 
         jstatus = status.jobStatus
-        if status.jobStatus == None:
+        if status.jobStatus is None:
             logger.warning('No panda jobs expected')
             job.backend.pandajobs = []
 

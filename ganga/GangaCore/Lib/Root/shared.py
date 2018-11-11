@@ -58,7 +58,7 @@ def setEnvironment(key, value, update=False, environment=None):
     '''Sets an environment variable. If update=True, it prepends it to
     the current value with os.pathsep as the seperator.'''
     import os
-    if environment == None:
+    if environment is None:
         environment = copy.deepcopy(os.environ)
 
     if update and key in environment:

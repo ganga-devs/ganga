@@ -445,7 +445,7 @@ class AtlasUnit(IUnit):
                         if loc == "":
                            continue
                         datasetsiteinfo = dq2.listFileReplicas(loc, ds)
-                        if datasetsiteinfo[0]['found'] != None:
+                        if datasetsiteinfo[0]['found'] is not None:
                            ds_ok = True
                            break
 

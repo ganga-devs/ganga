@@ -273,7 +273,7 @@ def download_file(url, token=None, filename=None , cache_path=None):
         filename = url.split('/')[-1]
     temp_file = os.path.join(cache_path, "download-temp")
     url_request = urllib2.Request(url)
-    if token != None:
+    if token is not None:
         # Add OAuth authentication
         url_request.add_header("Authorization", "token %s" % token)
     remote_file = urllib2.urlopen(url_request) # Will raise exception if fails

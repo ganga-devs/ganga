@@ -99,7 +99,7 @@ class Report(object):
         
         """
         self.title = title
-        if lines == None:
+        if lines is None:
             lines = []
         self.lines = lines # a list (lines) of list (elements)
     
@@ -118,7 +118,7 @@ class Report(object):
         report.addline(['Follow this link:', Link('My Machine', 'http://localhost')])
         
         """
-        if line == None:
+        if line is None:
             line = []
         elif not isinstance(line, list):
             line = [line]
@@ -377,7 +377,7 @@ class Table(object):
         self.hformat = hformat
         self.header = header
         self.rformat = rformat
-        if rows == None:
+        if rows is None:
             rows = []
         self.rows = rows # a list (rows) of tuple (cells)
         
