@@ -8,6 +8,7 @@ ganga/ganga/GangaCore
 * Replace identity operator to conform with PEP8. #1367
 * Bugfix to Condor monitoring to negate failed handshakes. #1374
 * Set logging of subjob finalisation and status updates to DEBUG. Only master jobs log INFO. Reduces verbosity. #1369
+* Update subjobs status column: running/failed/completing/completed. #1369
 --------------------------------------------------------------------------------------------------------------
 ganga/ganga/GangaDirac
 --------------------------------------------------------------------------------------------------------------
