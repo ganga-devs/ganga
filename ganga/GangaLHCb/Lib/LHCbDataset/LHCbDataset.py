@@ -5,7 +5,7 @@ import tempfile
 import fnmatch
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Lib.Dataset import GangaDataset
-from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
+from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version, ComponentItem
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.Utility.Config import getConfig, ConfigError
 import GangaCore.Utility.logging
@@ -15,6 +15,7 @@ from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+import GangaCore.GPI as GPI
 logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -37,7 +38,7 @@ class LHCbDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
+    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile', 'tuple', 'list'], sequence=1, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0, doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'
@@ -46,6 +47,8 @@ class LHCbDataset(GangaDataset):
     schema['persistency'] = SimpleItem(
         defvalue=None, typelist=['str', 'type(None)'], doc=docstr)
     schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
+    schema['ref'] = SimpleItem(defvalue=None)
+    schema['lfnList'] = SimpleItem(defvalue=None, typelist=['type(None)', 'list'], hidden=True, doc='A list of lfns for fast indexing')
 
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
@@ -55,7 +58,7 @@ class LHCbDataset(GangaDataset):
                       'getLFNs', 'getFileNames', 'getFullFileNames',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata',
-                      'isEmpty', 'hasPFNs', 'getPFNs']  # ,'pop']
+                      'isEmpty', 'hasPFNs', 'getPFNs', 'setReference', 'createIndex']  # ,'pop']
 
     def __init__(self, files=None, persistency=None, depth=0, fromRef=False):
         super(LHCbDataset, self).__init__()
@@ -112,6 +115,13 @@ class LHCbDataset(GangaDataset):
         self.depth = depth
         logger.debug("Dataset Created")
 
+    def setReference(self, jobNo, indices):
+        self.ref = jobNo
+        self.files = indices
+
+    def createIndex(self):
+        self.lfnList = [df.lfn for df in self.files]
+
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
         #this_file = self.files[i]
@@ -119,10 +129,19 @@ class LHCbDataset(GangaDataset):
         # return this_file
         # return this_file
         # return this_file
+#        if self.refs:
+#            return self.refs.resolveReference()[i]
+        if self.ref:
+            return GPI.jobs(self.ref).inputdata[self.files][i]
+
         if type(i) == type(slice(0)):
             ds = LHCbDataset(files=self.files[i])
             ds.depth = self.depth
             #ds.XMLCatalogueSlice = self.XMLCatalogueSlice
+            return ds
+        elif type(i) == list or type(i) == GangaList:
+            ds = LHCbDataset(files = [self.files[j] for j in i])
+            ds.depth = self.depth
             return ds
         else:
             return self.files[i]

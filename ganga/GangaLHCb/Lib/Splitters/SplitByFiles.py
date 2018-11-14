@@ -77,6 +77,10 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("_create_subjob")
         datatmp = []
 
+        if not job.inputdata.lfnList:
+            logger.debug("creating the lfn index")
+            job.inputdata.lfnList = [_df.lfn for _df in job.inputdata]
+
         logger.debug("dataset size: %s" % str(len(dataset)))
         #logger.debug( "dataset: %s" % str(dataset) )
 
@@ -110,6 +114,9 @@ class SplitByFiles(GaudiInputDataSplitter):
             logger.error("Dataset found: " + str(dataset))
             raise GangaException("Unkown dataset type, cannot perform split here")
 
+        #Here goes with the experiment
+        subjob_data_indices = [job.inputdata.lfnList.index(df.lfn) for df in datatmp]
+
         logger.debug("Creating new Job in Splitter")
         j = Job()
         logger.debug("Copying From Job")
@@ -121,9 +128,11 @@ class SplitByFiles(GaudiInputDataSplitter):
         #j.inputsandbox = [] ## master added automatically
         #j.inputfiles = []
         logger.debug("Setting InputData")
-        j.inputdata = LHCbDataset(files=datatmp[:],
-                                  persistency=self.persistency,
-                                  depth=self.depth)
+        j.inputdata = LHCbDataset()
+        j.inputdata.setReference(job.id, subjob_data_indices)
+#        j.inputdata = LHCbDataset(files=datatmp[:],
+#                                  persistency=self.persistency,
+#                                  depth=self.depth)
         #j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
         logger.debug("Returning new subjob")
         return j
