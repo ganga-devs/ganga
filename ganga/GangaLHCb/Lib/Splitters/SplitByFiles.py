@@ -79,7 +79,7 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         if not job.inputdata.lfnList:
             logger.debug("creating the lfn index")
-            job.inputdata.lfnList = [_df.lfn for _df in job.inputdata]
+            job.inputdata.createIndex()
 
         logger.debug("dataset size: %s" % str(len(dataset)))
         #logger.debug( "dataset: %s" % str(dataset) )

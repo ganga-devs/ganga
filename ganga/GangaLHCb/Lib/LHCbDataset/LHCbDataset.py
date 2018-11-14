@@ -5,7 +5,7 @@ import tempfile
 import fnmatch
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Lib.Dataset import GangaDataset
-from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version, ComponentItem
+from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.Utility.Config import getConfig, ConfigError
 import GangaCore.Utility.logging
@@ -129,8 +129,6 @@ class LHCbDataset(GangaDataset):
         # return this_file
         # return this_file
         # return this_file
-#        if self.refs:
-#            return self.refs.resolveReference()[i]
         if self.ref:
             return GPI.jobs(self.ref).inputdata[self.files][i]
 
