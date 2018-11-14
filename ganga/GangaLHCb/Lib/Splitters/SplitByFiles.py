@@ -130,9 +130,8 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("Setting InputData")
         j.inputdata = LHCbDataset()
         j.inputdata.setReference(job.id, subjob_data_indices)
-#        j.inputdata = LHCbDataset(files=datatmp[:],
-#                                  persistency=self.persistency,
-#                                  depth=self.depth)
+        j.inputdata.persistency = self.persistency
+        j.inputdata.depth = self.depth
         #j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
         logger.debug("Returning new subjob")
         return j

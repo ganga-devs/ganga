@@ -38,7 +38,7 @@ class LHCbDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile', 'tuple', 'list'], sequence=1, doc=docstr)
+    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile', 'list'], sequence=1, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0, doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'
@@ -47,8 +47,7 @@ class LHCbDataset(GangaDataset):
     schema['persistency'] = SimpleItem(
         defvalue=None, typelist=['str', 'type(None)'], doc=docstr)
     schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
-    schema['ref'] = SimpleItem(defvalue=None)
-#    schema['lfnList'] = SimpleItem(defvalue=None, typelist=['type(None)', 'list'], hidden=True, doc='A list of lfns for fast indexing')
+    schema['ref'] = SimpleItem(defvalue=None, typelist=['type(None)', 'int'], doc="To reference the dataset of another job")
 
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
