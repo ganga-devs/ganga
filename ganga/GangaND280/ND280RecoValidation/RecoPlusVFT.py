@@ -8,7 +8,6 @@ This module is designed to run any ND280 executable accessible in the $PATH envi
 """
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -143,8 +142,12 @@ class RecoPlusVFT(IPrepareApp):
         script = '#!/bin/bash\n'
         script += 'source '+self.cmtsetup+'\n'
         if not self.vft_only:
-            script += self.reco_exe+' '+reco_argsStr+'\n'
-        script += self.vft_exe+' '+vft_argsStr+'\n'
+            script += 'echo "RECO EXE ..."\n'
+            script += self.reco_exe+' '+reco_argsStr+' 2>&1\n'
+            script += 'echo "... RECO EXE"\n'
+        script += 'echo "VFT EXE ..."\n'
+        script += self.vft_exe+' '+vft_argsStr+' 2>&1\n'
+        script += 'echo "... VFT EXE"\n'
 
         from GangaCore.GPIDev.Lib.File import FileBuffer
 
