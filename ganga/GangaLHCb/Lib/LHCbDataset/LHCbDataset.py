@@ -48,7 +48,7 @@ class LHCbDataset(GangaDataset):
         defvalue=None, typelist=['str', 'type(None)'], doc=docstr)
     schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
     schema['ref'] = SimpleItem(defvalue=None)
-    schema['lfnList'] = SimpleItem(defvalue=None, typelist=['type(None)', 'list'], hidden=True, doc='A list of lfns for fast indexing')
+#    schema['lfnList'] = SimpleItem(defvalue=None, typelist=['type(None)', 'list'], hidden=True, doc='A list of lfns for fast indexing')
 
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
@@ -113,6 +113,7 @@ class LHCbDataset(GangaDataset):
 
         self.persistency = persistency
         self.depth = depth
+        self.lfnList = []
         logger.debug("Dataset Created")
 
     def setReference(self, jobNo, indices):
