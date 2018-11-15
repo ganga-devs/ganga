@@ -76,7 +76,7 @@ class SplitByFiles(GaudiInputDataSplitter):
     def _create_subjob(self, job, dataset):
         logger.debug("_create_subjob")
         datatmp = []
-
+        #We create a list of the master job's LFNs in order to match the subjob's file with the master's dataset
         if not job.inputdata.lfnList:
             logger.debug("creating the lfn index")
             job.inputdata.createIndex()
@@ -114,7 +114,7 @@ class SplitByFiles(GaudiInputDataSplitter):
             logger.error("Dataset found: " + str(dataset))
             raise GangaException("Unkown dataset type, cannot perform split here")
 
-        #Here goes with the experiment
+        #Here we match the LFN with its position in the master job dataset. A bit clumsy but doesn't take too long.
         subjob_data_indices = [job.inputdata.lfnList.index(df.lfn) for df in datatmp]
 
         logger.debug("Creating new Job in Splitter")

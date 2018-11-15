@@ -116,10 +116,12 @@ class LHCbDataset(GangaDataset):
         logger.debug("Dataset Created")
 
     def setReference(self, jobNo, indices):
+        '''A function to set up the references of a subjob's dataset to the master job'''
         self.ref = jobNo
         self.files = indices
 
     def createIndex(self):
+        '''Populate a list of the dataset's LFNs for some quick sorting'''
         self.lfnList = [df.lfn for df in self.files]
 
     def removeIndex(self):
