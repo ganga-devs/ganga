@@ -237,7 +237,11 @@ class SplitByFiles(GaudiInputDataSplitter):
             if stripProxy(job.backend).__module__.find('Dirac') > 0:
                 logger.debug("Returning []")
                 return []
+        #First create the lfn list
+        job.inpudata.createIndex()
         split_return = super(SplitByFiles, self).split(job)
+        #Remove the index to save memory
+        job.inputdata.removeIndex()
         logger.debug("split_return: %s" % split_return)
         return split_return
 

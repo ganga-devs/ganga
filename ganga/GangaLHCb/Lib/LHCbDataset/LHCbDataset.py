@@ -57,7 +57,7 @@ class LHCbDataset(GangaDataset):
                       'getLFNs', 'getFileNames', 'getFullFileNames',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata',
-                      'isEmpty', 'hasPFNs', 'getPFNs', 'setReference', 'createIndex']  # ,'pop']
+                      'isEmpty', 'hasPFNs', 'getPFNs']  # ,'pop']
 
     def __init__(self, files=None, persistency=None, depth=0, fromRef=False):
         super(LHCbDataset, self).__init__()
@@ -121,6 +121,9 @@ class LHCbDataset(GangaDataset):
 
     def createIndex(self):
         self.lfnList = [df.lfn for df in self.files]
+
+    def removeIndex(self):
+        self.lfnList = []
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
