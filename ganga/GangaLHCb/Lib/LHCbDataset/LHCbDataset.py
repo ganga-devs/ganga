@@ -15,7 +15,7 @@ from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-import GangaCore.GPI as GPI
+from GangaCore.GPIDev.Lib.Tasks.common import getJobByID
 logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -133,7 +133,7 @@ class LHCbDataset(GangaDataset):
         # return this_file
         # return this_file
         if self.ref:
-            return GPI.jobs(self.ref).inputdata[self.files][i]
+            return getJobByID(self.ref).inputdata[self.files][i]
 
         if type(i) == type(slice(0)):
             ds = LHCbDataset(files=self.files[i])
