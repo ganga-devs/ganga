@@ -1,3 +1,4 @@
+__name__ = '__main__'
 import os
 import sys
 import time
