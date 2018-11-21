@@ -169,7 +169,7 @@ class LHCbDataset(GangaDataset):
 
     def resolveFile(self, index):
         '''A function to resolve the file'''
-        if isDiracFile(index):
+        if not isinstance(index, int):
             return index
         else:
             return getJobByID(self.ref).inputdata[index]
