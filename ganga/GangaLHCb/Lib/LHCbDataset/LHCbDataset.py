@@ -5,8 +5,9 @@ import tempfile
 import fnmatch
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Lib.Dataset import GangaDataset
-from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
+from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version, SharedItem
 from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Base.Objects import Node, do_not_copy
 from GangaCore.Utility.Config import getConfig, ConfigError
 import GangaCore.Utility.logging
 from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
@@ -115,10 +116,80 @@ class LHCbDataset(GangaDataset):
         self.lfnList = []
         logger.debug("Dataset Created")
 
+    #We have to overload the __copy__ and __deepcopy__ methods to persist the dataset if the referenced job gets deleted.
+    def __copy__(self):
+        print 'in regular copy'
+        obj = self.getNew()
+        # FIXME: this is different than for deepcopy... is this really correct?
+        this_dict = copy(self.__dict__)
+        for elem in this_dict.keys():
+            if elem not in do_not_copy:
+                this_dict[elem] = copy(this_dict[elem])
+            else:
+                this_dict[elem] = None
+        obj._setParent(self._getParent())
+        obj._index_cache = {}
+        obj._registry = self._registry
+        return obj
+
+    # on the deepcopy reset all non-copyable properties as defined in the
+    # schema
+    def __deepcopy__(self, memo=None):
+        """
+        Perform a deep copy of the GangaObject class
+        Args:
+            memo (unknown): Used to track infinite loops etc in the deep-copy of objects
+        """
+        true_parent = self._getParent()
+
+        self_copy = self.getNew()
+
+        global do_not_copy
+        if self._schema is not None:
+            for name, item in self._schema.allItems():
+                if not item['copyable'] or name in do_not_copy or not hasattr(self, name) or name=='ref' :
+                    setattr(self_copy, name, self._schema.getDefaultValue(name))
+                #Here we sort out the files
+                elif self._schema['ref'] and name=='files':
+                    newfiles = GangaList()
+                    for _f in self.files:
+                        newfiles.append(self.resolveFile(_f))
+                    setattr(self_copy, name, newfiles)
+                else:
+                    setattr(self_copy, name, deepcopy(getattr(self, name)))
+                this_attr = getattr(self_copy, name)
+                if isinstance(this_attr, Node) and this_attr._getParent() is not self_copy:
+                    this_attr._setParent(self_copy)
+
+                if item.isA(SharedItem):
+                    self.__incrementShareRef(self_copy, name)
+
+        for k, v in self.__dict__.iteritems():
+            if k not in do_not_copy:
+                try:
+                    self_copy.__dict__[k] = deepcopy(v)
+                except:
+                    self_copy.__dict__[k] = v
+
+        if true_parent is not None:
+            if self._getParent() is not true_parent:
+                self._setParent(true_parent)
+            if self_copy._getParent() is not true_parent:
+                self_copy._setParent(true_parent)
+        setattr(self_copy, '_registry', self._registry)
+        return self_copy
+
     def setReference(self, jobNo, indices):
         '''A function to set up the references of a subjob's dataset to the master job'''
         self.ref = jobNo
         self.files = indices
+
+    def resolveFile(self, index):
+        '''A function to resolve the file'''
+        if isDiracFile(index):
+            return index
+        else:
+            return getJobByID(self.ref).inputdata[index]
 
     def createIndex(self):
         '''Populate a list of the dataset's LFNs for some quick sorting'''
