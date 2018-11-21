@@ -116,24 +116,7 @@ class LHCbDataset(GangaDataset):
         self.lfnList = []
         logger.debug("Dataset Created")
 
-    #We have to overload the __copy__ and __deepcopy__ methods to persist the dataset if the referenced job gets deleted.
-    def __copy__(self):
-        print 'in regular copy'
-        obj = self.getNew()
-        # FIXME: this is different than for deepcopy... is this really correct?
-        this_dict = copy(self.__dict__)
-        for elem in this_dict.keys():
-            if elem not in do_not_copy:
-                this_dict[elem] = copy(this_dict[elem])
-            else:
-                this_dict[elem] = None
-        obj._setParent(self._getParent())
-        obj._index_cache = {}
-        obj._registry = self._registry
-        return obj
-
-    # on the deepcopy reset all non-copyable properties as defined in the
-    # schema
+    #We have to overload the __deepcopy__ method to persist the dataset if the referenced job gets deleted.
     def __deepcopy__(self, memo=None):
         """
         Perform a deep copy of the GangaObject class
