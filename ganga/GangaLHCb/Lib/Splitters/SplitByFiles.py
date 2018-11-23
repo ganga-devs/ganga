@@ -238,7 +238,7 @@ class SplitByFiles(GaudiInputDataSplitter):
                 logger.debug("Returning []")
                 return []
         #First create the lfn list
-        job.inpudata.createIndex()
+        job.inputdata.createIndex()
         split_return = super(SplitByFiles, self).split(job)
         #Remove the index to save memory
         job.inputdata.removeIndex()
