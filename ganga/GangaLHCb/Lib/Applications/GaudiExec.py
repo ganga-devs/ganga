@@ -133,6 +133,20 @@ class GaudiExec(IPrepareApp):
     This will add some options to running the job to create a summary.xml file which is downloaded in the output sandbox and parsed by ganga. Ganga will also
     merge the summary.xml files using the Gaudi XML merging script for each subjob to create the metadata for the whole job.
 
+    ========================
+    Use subjob id in options
+    ========================
+    If you want to include the subjob id in your options you need to use j.application.setJobID=True . This sets the variable 'ganga_jobid' to the id of the ganga job (for example 9.10) via
+
+    ./run -s ganga_jobid=9.10 gaudirun.py some_options.py
+
+    Therefore the ganga job id can be used in your options - for example to label the output tuple in case you want to run a merge job. An example in your options file is
+
+    import is
+    DaVinci().TupleFile = 'myTuple_%s.root' % os.environ['ganga_jobid']
+
+    If you do such a thing, make sure to use wildcards when specifying job output.
+
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
@@ -144,6 +158,7 @@ class GaudiExec(IPrepareApp):
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc62-opt', typelist=[str], doc='Platform the application was built for'),
         'autoDBtags' :  SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
+        'setJobID':     SimpleItem(defvalue=True, doc='Set the environment variable "ganga_jobid" when executing run for use in options files'),
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
         'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
 
