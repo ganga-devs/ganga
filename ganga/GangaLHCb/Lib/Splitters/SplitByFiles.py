@@ -76,10 +76,6 @@ class SplitByFiles(GaudiInputDataSplitter):
     def _create_subjob(self, job, dataset):
         logger.debug("_create_subjob")
         datatmp = []
-        #We create a list of the master job's LFNs in order to match the subjob's file with the master's dataset
-        if not job.inputdata.lfnList:
-            logger.debug("creating the lfn index")
-            job.inputdata.createIndex()
 
         logger.debug("dataset size: %s" % str(len(dataset)))
         #logger.debug( "dataset: %s" % str(dataset) )
@@ -114,9 +110,6 @@ class SplitByFiles(GaudiInputDataSplitter):
             logger.error("Dataset found: " + str(dataset))
             raise GangaException("Unkown dataset type, cannot perform split here")
 
-        #Here we match the LFN with its position in the master job dataset. A bit clumsy but doesn't take too long.
-        subjob_data_indices = [job.inputdata.lfnList.index(df.lfn) for df in datatmp]
-
         logger.debug("Creating new Job in Splitter")
         j = Job()
         logger.debug("Copying From Job")
@@ -128,10 +121,9 @@ class SplitByFiles(GaudiInputDataSplitter):
         #j.inputsandbox = [] ## master added automatically
         #j.inputfiles = []
         logger.debug("Setting InputData")
-        j.inputdata = LHCbDataset()
-        j.inputdata.setReference(job.id, subjob_data_indices)
-        j.inputdata.persistency = self.persistency
-        j.inputdata.depth = self.depth
+        j.inputdata = LHCbDataset(files=datatmp[:],
+                                  persistency=self.persistency,
+                                  depth=self.depth)
         #j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
         logger.debug("Returning new subjob")
         return j
@@ -237,11 +229,7 @@ class SplitByFiles(GaudiInputDataSplitter):
             if stripProxy(job.backend).__module__.find('Dirac') > 0:
                 logger.debug("Returning []")
                 return []
-        #First create the lfn list
-        job.inputdata.createIndex()
         split_return = super(SplitByFiles, self).split(job)
-        #Remove the index to save memory
-        job.inputdata.removeIndex()
         logger.debug("split_return: %s" % split_return)
         return split_return
 
