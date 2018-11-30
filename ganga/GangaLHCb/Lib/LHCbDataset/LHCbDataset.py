@@ -5,9 +5,8 @@ import tempfile
 import fnmatch
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Lib.Dataset import GangaDataset
-from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version, SharedItem
+from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from GangaCore.GPIDev.Base import GangaObject
-from GangaCore.GPIDev.Base.Objects import Node, do_not_copy
 from GangaCore.Utility.Config import getConfig, ConfigError
 import GangaCore.Utility.logging
 from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
@@ -16,7 +15,6 @@ from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-from GangaCore.GPIDev.Lib.Tasks.common import getJobByID
 logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -39,7 +37,7 @@ class LHCbDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile', 'list'], sequence=1, doc=docstr)
+    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0, doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'
@@ -48,7 +46,6 @@ class LHCbDataset(GangaDataset):
     schema['persistency'] = SimpleItem(
         defvalue=None, typelist=['str', 'type(None)'], doc=docstr)
     schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
-    schema['ref'] = SimpleItem(defvalue=None, typelist=['type(None)', 'int'], doc="To reference the dataset of another job")
 
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
@@ -113,73 +110,7 @@ class LHCbDataset(GangaDataset):
 
         self.persistency = persistency
         self.depth = depth
-        self.lfnList = []
         logger.debug("Dataset Created")
-
-    #We have to overload the __deepcopy__ method to persist the dataset if the referenced job gets deleted.
-    def __deepcopy__(self, memo=None):
-        """
-        Perform a deep copy of the GangaObject class
-        Args:
-            memo (unknown): Used to track infinite loops etc in the deep-copy of objects
-        """
-        true_parent = self._getParent()
-
-        self_copy = self.getNew()
-
-        global do_not_copy
-        if self._schema is not None:
-            for name, item in self._schema.allItems():
-                if not item['copyable'] or name in do_not_copy or not hasattr(self, name) or name=='ref' :
-                    setattr(self_copy, name, self._schema.getDefaultValue(name))
-                #Here we sort out the files
-                elif self._schema['ref'] and name=='files':
-                    newfiles = GangaList()
-                    for _f in self.files:
-                        newfiles.append(self.resolveFile(_f))
-                    setattr(self_copy, name, newfiles)
-                else:
-                    setattr(self_copy, name, deepcopy(getattr(self, name)))
-                this_attr = getattr(self_copy, name)
-                if isinstance(this_attr, Node) and this_attr._getParent() is not self_copy:
-                    this_attr._setParent(self_copy)
-
-                if item.isA(SharedItem):
-                    self.__incrementShareRef(self_copy, name)
-
-        for k, v in self.__dict__.iteritems():
-            if k not in do_not_copy:
-                try:
-                    self_copy.__dict__[k] = deepcopy(v)
-                except:
-                    self_copy.__dict__[k] = v
-
-        if true_parent is not None:
-            if self._getParent() is not true_parent:
-                self._setParent(true_parent)
-            if self_copy._getParent() is not true_parent:
-                self_copy._setParent(true_parent)
-        setattr(self_copy, '_registry', self._registry)
-        return self_copy
-
-    def setReference(self, jobNo, indices):
-        '''A function to set up the references of a subjob's dataset to the master job'''
-        self.ref = jobNo
-        self.files = indices
-
-    def resolveFile(self, index):
-        '''A function to resolve the file'''
-        if not isinstance(index, int):
-            return index
-        else:
-            return getJobByID(self.ref).inputdata[index]
-
-    def createIndex(self):
-        '''Populate a list of the dataset's LFNs for some quick sorting'''
-        self.lfnList = [df.lfn for df in self.files]
-
-    def removeIndex(self):
-        self.lfnList = []
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
@@ -188,17 +119,10 @@ class LHCbDataset(GangaDataset):
         # return this_file
         # return this_file
         # return this_file
-        if self.ref:
-            return getJobByID(self.ref).inputdata[self.files][i]
-
         if type(i) == type(slice(0)):
             ds = LHCbDataset(files=self.files[i])
             ds.depth = self.depth
             #ds.XMLCatalogueSlice = self.XMLCatalogueSlice
-            return ds
-        elif type(i) == list or type(i) == GangaList:
-            ds = LHCbDataset(files = [self.files[j] for j in i])
-            ds.depth = self.depth
             return ds
         else:
             return self.files[i]
