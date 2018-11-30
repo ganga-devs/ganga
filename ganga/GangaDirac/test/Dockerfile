@@ -16,7 +16,7 @@ RUN virtualenv venv && \
 
 RUN mkdir dirac_ui &&\
     cd dirac_ui &&\
-    wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/1ecf22f24509afd2dec9999114db104e1e776b9c/Core/scripts/dirac-install.py &&\
+    wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/rel-v6r19/Core/scripts/dirac-install.py &&\
     chmod u+x dirac-install &&\
     ./dirac-install -r v6r19p4 -i 27 -g v13r0
 
