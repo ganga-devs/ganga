@@ -156,9 +156,7 @@ def prepareCommand(app):
 
     sourceEnv = app.getEnvScript()
 
-    run_cmd = './run '
-    if app.setJobID:
-        run_cmd += '-s ganga_jobid=%s ' % app.getJobObject().fqid
+    run_cmd = ' export ganga_jobid=%s && ./run ' % app.getJobObject().fqid
 
     if not app.useGaudiRun:
         full_cmd = sourceEnv + run_cmd + 'python %s' % app.getWrapperScriptName()

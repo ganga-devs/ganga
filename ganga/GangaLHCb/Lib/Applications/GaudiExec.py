@@ -136,16 +136,13 @@ class GaudiExec(IPrepareApp):
     ========================
     Use subjob id in options
     ========================
-    If you want to include the subjob id in your options you need to use j.application.setJobID=True . This sets the variable 'ganga_jobid' to the id of the ganga job (for example 9.10) via
 
-    ./run -s ganga_jobid=9.10 gaudirun.py some_options.py
+    The GaudiExec application sets an environment variable 'ganga_jobid' when it runs. This is the id of the job. This can then be used in your job options:
 
-    Therefore the ganga job id can be used in your options - for example to label the output tuple in case you want to run a merge job. An example in your options file is
+    import os
+    jobid = os.getenv('ganga_jobid')
 
-    import is
-    DaVinci().TupleFile = 'myTuple_%s.root' % os.environ['ganga_jobid']
-
-    If you do such a thing, make sure to use wildcards when specifying job output.
+    For example the outputfile of each subjob can be labelled with the subjob number, useful in case you want to further process your outputfiles on the grid.
 
     """
     _schema = Schema(Version(1, 0), {
@@ -158,7 +155,6 @@ class GaudiExec(IPrepareApp):
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc62-opt', typelist=[str], doc='Platform the application was built for'),
         'autoDBtags' :  SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
-        'setJobID':     SimpleItem(defvalue=True, doc='Set the environment variable "ganga_jobid" when executing run for use in options files'),
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
         'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
 
