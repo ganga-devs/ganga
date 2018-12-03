@@ -68,7 +68,7 @@ def store_dirac_environment():
     fdir = join(expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = join(fdir, diracversion)
     if not exists(fname) or not getsize(fname):
-        cmd = 'lb-run -c x86_64-slc6-gcc49-opt LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
+        cmd = 'lb-run -c best LHCBDIRAC/{version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
         env = execute(cmd)
         if isinstance(env, str):
             try:
