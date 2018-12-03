@@ -1,6 +1,7 @@
 import os
 from os.path import realpath, basename, join, exists, expanduser, getsize
 from optparse import OptionValueError
+from distutils.version import LooseVersion
 
 from fnmatch import fnmatch
 
@@ -48,10 +49,22 @@ def store_dirac_environment():
     # While LHCbDirac is only available for gcc49 we shall unfortunately hard-code the platform.
     platform = 'x86_64-slc6-gcc49-opt'
 
-    wildcard = GangaCore.Utility.Config.getConfig('LHCb')['LHCbDiracVersion']
-    # by default the version is 'prod'
+    requestedVersion = GangaCore.Utility.Config.getConfig('LHCb')['LHCbDiracVersion']
+    # by default the version is 'prod', and in this case we need to resolve the actual version
+    # if a specific version is requested, then we can simply try to determine its environment
 
-    diracversion = select_dirac_version(wildcard)
+    # this returns a list, like ['prod'] or ['v', 9, 'r', 3, 'p', 19]
+    lbVersion = LooseVersion(requestedVersion).version
+    try:
+        # we check if a real version (e.g. v9r2, or v9r3p13 or v10r12-pre9) is requested
+        if isinstance(lbVersion[1], int) and isinstance(lbVersion[3], int):
+            logger.warn("Specific version is requested (%s), no further check will be done", requestedVersion)
+            diracversion = requestedVersion
+        else:
+            diracversion = select_dirac_version(requestedVersion)
+    except IndexError:  # here we assume 'prod', or '*' is requested -- i.e. not a specific version
+        diracversion = select_dirac_version(requestedVersion)
+
     fdir = join(expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = join(fdir, diracversion)
     if not exists(fname) or not getsize(fname):
