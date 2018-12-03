@@ -19,7 +19,7 @@ def select_dirac_version(wildcard):
     Find the LHCbDIRAC version that should be used based on the confuguration
     system. Wildcards can be used and soflinks are dereferenced.
     """
-    cmd = 'lb-run -c best -l LHCbDIRAC'
+    cmd = 'lb-run -c x86_64-slc6-gcc49-opt -l LHCbDIRAC'
     out = execute(cmd)
     if out == '':
         raise PluginError("Can't find any LHCbDirac versions from '%s'" % cmd)
@@ -68,7 +68,7 @@ def store_dirac_environment():
     fdir = join(expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = join(fdir, diracversion)
     if not exists(fname) or not getsize(fname):
-        cmd = 'lb-run -c best LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
+        cmd = 'lb-run -c x86_64-slc6-gcc49-opt LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
         env = execute(cmd)
         if isinstance(env, str):
             try:
