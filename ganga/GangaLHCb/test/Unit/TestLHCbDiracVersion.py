@@ -1,18 +1,11 @@
 """ Test the ability to change the LHCbDIRAC version from the configuration"""
 from __future__ import absolute_import
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
-import os, os.path
+import os
 
 from GangaCore.Utility.logging import getLogger
 from GangaCore.testlib.mark import external
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-
-from GangaCore.Core.exceptions import PluginError
 
 logger = getLogger(modulename=True)
 
@@ -43,7 +36,7 @@ class TestLHCbDiracVersion(GangaUnitTest):
 
         keep = os.environ.pop('GANGADIRACENVIRONMENT')
         store_dirac_environment()
-        assert os.environ.has_key('GANGADIRACENVIRONMENT')
+        assert 'GANGADIRACENVIRONMENT' in os.environ
         os.environ['GANGADIRACENVIRONMENT'] = keep
 
     def test_write_cache(self):
@@ -52,13 +45,13 @@ class TestLHCbDiracVersion(GangaUnitTest):
         from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
 
         fnamekeep = None
-        if os.environ.has_key('GANGADIRACENVIRONMENT'):
+        if 'GANGADIRACENVIRONMENT' in os.environ:
             fnamekeep = os.environ['GANGADIRACENVIRONMENT']
-            os.rename(fnamekeep, fnamekeep+'.keep')
+            os.rename(fnamekeep, fnamekeep + '.keep')
         store_dirac_environment()
         fname = os.environ['GANGADIRACENVIRONMENT']
         assert os.path.exists(fname)
         assert os.path.getsize(fname)
         os.unlink(fname)
         if fnamekeep:
-            os.rename(fnamekeep+'.keep', fnamekeep)
+            os.rename(fnamekeep + '.keep', fnamekeep)
