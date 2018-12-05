@@ -156,10 +156,12 @@ def prepareCommand(app):
 
     sourceEnv = app.getEnvScript()
 
+    run_cmd = ' export ganga_jobid=%s && ./run ' % app.getJobObject().fqid
+
     if not app.useGaudiRun:
-        full_cmd = sourceEnv + './run python %s' % app.getWrapperScriptName()
+        full_cmd = sourceEnv + run_cmd + 'python %s' % app.getWrapperScriptName()
     else:
-        full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
+        full_cmd = sourceEnv + run_cmd + "gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
         if app.extraOpts:
             full_cmd += ' ' + app.getExtraOptsFileName()
         if app.getMetadata:

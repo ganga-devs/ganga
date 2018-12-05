@@ -1233,7 +1233,7 @@ class DiracBase(IBackend):
                 logger.debug("Written: %s" % open(lfn_store, 'r').readlines())
 
             # check outputsandbox downloaded correctly
-            if not result_ok(getSandboxResult):
+            if job.backend.downloadSandbox and not result_ok(getSandboxResult):
                 logger.warning('Problem retrieving outputsandbox: %s' % str(getSandboxResult))
                 DiracBase._getStateTime(job, 'failed')
                 if job.status in ['removed', 'killed']:
