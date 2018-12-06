@@ -33,24 +33,25 @@ if not _after_bootstrap:
     from all other known handlers will go to output data (unless overridden by \
     the user in a specific job via the Job.outputsandbox field).'
     configLHCb.addOption('outputsandbox_types',
-                     ['CounterSummarySvc', 'NTupleSvc',
-                      'HistogramPersistencySvc', 'MicroDSTStream',
-                      'EvtTupleSvc'], dscrpt)
+                         ['CounterSummarySvc', 'NTupleSvc',
+                          'HistogramPersistencySvc', 'MicroDSTStream',
+                          'EvtTupleSvc'], dscrpt)
     dscrpt = 'The string that is added after the filename in the options to tell' \
              ' Gaudi how to read the data. This is the default value used if the '\
              'file name does not match any of the patterns in '\
              'datatype_string_patterns.'
     configLHCb.addOption('datatype_string_default',
-                     """TYP='POOL_ROOTTREE' OPT='READ'""", dscrpt)
+                         """TYP='POOL_ROOTTREE' OPT='READ'""", dscrpt)
     dscrpt = 'If a file matches one of these patterns, then the string here '\
-         'overrides the datatype_string_default value.'
+             'overrides the datatype_string_default value.'
     defval = {"SVC='LHCb::MDFSelector'": ['*.raw', '*.RAW', '*.mdf', '*.MDF']}
     configLHCb.addOption('datatype_string_patterns', defval, dscrpt)
     configLHCb.addOption('UserAddedApplications', "", "List of user added LHCb applications split by ':'")
 
     configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
-                     'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
-                      options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
+                         'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
+                          options are: GangaDiracSplitter, OfflineGangaDiracSplitter, \
+                          splitInputDataBySize and splitInputData')
     defaultLHCbDirac = 'prod'
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
 
@@ -64,6 +65,7 @@ def _store_root_version():
     else:
         msg = 'Tried to setup ROOTVERSION environment variable but no ROOTSYS variable found.'
         raise OptionValueError(msg)
+
 
 if not _after_bootstrap:
     store_dirac_environment()
@@ -108,7 +110,8 @@ def postBootstrapHook():
 
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
     configDirac.setSessionValue('userVO', 'lhcb')
-    configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
+    configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'RRCKI-USER'
+                                               'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
     configDirac.setSessionValue('noInputDataBannedSites', [])
     configDirac.setSessionValue('RequireDefaultSE', False)
     configDirac.setSessionValue('proxyInitCmd', 'lhcb-proxy-init')
@@ -197,4 +200,3 @@ class gridProxy(object):
             pass
 
 exportToGPI('gridProxy', gridProxy, 'Functions')
-
