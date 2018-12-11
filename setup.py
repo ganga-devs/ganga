@@ -72,7 +72,6 @@ class RunTestsCommand(Command):
 
 pythonPackages = find_packages('./')
 pythonPackages.append('ganga/GangaRelease')
-pythonPackages.append('ganga/GangaTemplates')
 
 setup(name='ganga',
       description='Job management tool',
@@ -83,7 +82,7 @@ setup(name='ganga',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',
       scripts=['bin/ganga'],
-      package_dir={'ganga':'ganga', 'GangaRelease':'ganga/GangaRelease', 'GangaTemplates':'ganga/GangaTemplates'},
+      package_dir={'ganga':'ganga', 'GangaRelease':'ganga/GangaRelease'},
       packages=pythonPackages,
       install_requires=[
           'ipython>=5.0.0',
@@ -96,7 +95,7 @@ setup(name='ganga',
           'Programming Language :: Python :: 2.7',
       ],
       include_package_data=True,
-      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh', 'tools/ganga-cvmfs-install-dev.sh'], 'GangaTemplates':['*.INI']},
+      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh', 'tools/ganga-cvmfs-install-dev.sh']},
       cmdclass={
           'tests': RunTestsCommand,
       },
