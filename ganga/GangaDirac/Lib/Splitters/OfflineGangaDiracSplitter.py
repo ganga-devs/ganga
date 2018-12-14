@@ -140,22 +140,6 @@ def find_random_site(original_SE_list, banned_SE):
     return chosen_element
 
 
-def addToMapping(SE, CE_to_SE_mapping):
-    """
-    This function is used for adding all of the known site for a given SE
-    The output is stored in the dictionary of CE_to_SE_mapping
-    Args:
-        SE (str): For this SE we want to determine which CE we can access it
-        CE_to_SE_mapping (dict): We will add CEs which can find this SE to this dict with the key (SE) and value (CE(list))
-    """
-    try:
-        result = wrapped_execute('getSitesForSE("%s")' % str(SE), list)
-    except SplitterError as err: # Have to catch these here as we're on a worker thread 
-        logger.warning('Error getting Sites for SE: "%s"' % str(SE))
-        logger.warning(err)
-        result = list()
-    CE_to_SE_mapping[SE] = result
-
 def getLFNReplicas(allLFNs, index, allLFNData):
     """
     This method gets the location of all replicas for 'allLFNs' and stores the infomation in 'allLFNData'
