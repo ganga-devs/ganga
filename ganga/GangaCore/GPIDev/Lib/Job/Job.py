@@ -2153,7 +2153,6 @@ class Job(GangaObject):
         some checks removed for maximum speed. This should therefore be used with great care!
         """
 
-
         if _ignore_atts is None:
             _ignore_atts = []
         _srcobj = other_job
@@ -2165,14 +2164,11 @@ class Job(GangaObject):
             copy_obj = copy.deepcopy(getattr(_srcobj, name))
             setattr(self, name, copy_obj)
 
-#        self._actually_copyFrom(_srcobj, _ignore_atts)
-
         ## Fix some objects losing parent knowledge
         src_dict = other_job.__dict__
         for key, val in src_dict.iteritems():
             this_attr = getattr(other_job, key)
             if isinstance(this_attr, Node) and key not in do_not_copy:
-                #logger.debug("k: %s  Parent: %s" % (key, (srcobj)))
                 if this_attr._getParent() is not other_job:
                     this_attr._setParent(other_job)
 
