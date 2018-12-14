@@ -18,8 +18,6 @@ from GangaCore.GPIDev.Base.Filters import allComponentFilters
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 from GangaCore.GPIDev.Credentials import require_credential
 
-import time
-
 logger = GangaCore.Utility.logging.getLogger()
 
 

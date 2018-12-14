@@ -140,6 +140,22 @@ def find_random_site(original_SE_list, banned_SE):
     return chosen_element
 
 
+def addToMapping(SE, CE_to_SE_mapping):
+    """
+    This function is used for adding all of the known site for a given SE
+    The output is stored in the dictionary of CE_to_SE_mapping
+    Args:
+        SE (str): For this SE we want to determine which CE we can access it
+        CE_to_SE_mapping (dict): We will add CEs which can find this SE to this dict with the key (SE) and value (CE(list))
+    """
+    try:
+        result = wrapped_execute('getSitesForSE("%s")' % str(SE), list)
+    except SplitterError as err: # Have to catch these here as we're on a worker thread 
+        logger.warning('Error getting Sites for SE: "%s"' % str(SE))
+        logger.warning(err)
+        result = list()
+    CE_to_SE_mapping[SE] = result
+
 def getLFNReplicas(allLFNs, index, allLFNData):
     """
     This method gets the location of all replicas for 'allLFNs' and stores the infomation in 'allLFNData'
@@ -246,21 +262,22 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
 
     logger.info("Calculating site<->SE Mapping")
 
-    print 'start finding SE'
-    start_findSE = time.time()
-
-    # First find the SE for each site - there is a handy DIRAC function that gives us everything quickly
-    CE_to_SE_mapping = wrapped_execute('getSESiteMapping()', dict)
-
+    # First find the SE for each site
     for lfn, repz in file_replicas.iteritems():
         sitez = set([])
         for replica in repz:
             sitez.add(replica)
+            if not replica in found:
+                getQueues()._monitoring_threadpool.add_function(addToMapping, (str(replica), CE_to_SE_mapping))
+                maps_size = maps_size + 1
+                found.append(replica)
+
         SE_dict[lfn] = sitez
 
-    end_findSE = time.time()
-    print 'time to find SEs: ', (end_findSE - start_findSE)
-    print 'CE_to_SE_mapping: ', CE_to_SE_mapping
+    # Doing this in parallel so wait for it to finish
+    while len(CE_to_SE_mapping) != maps_size:
+        time.sleep(0.1)
+
     # Remove the banned sites (CE) from the mappings
     for iSE in CE_to_SE_mapping.keys():
         for site in CE_to_SE_mapping[iSE]:
@@ -415,9 +432,6 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
         dataset (list): A list of LFNs for each subset(subjob)
     """
 
-    print 'starting'
-    start_total = time.time()
-
     if maxFiles is not None and maxFiles > 0:
         inputs = _inputs[:maxFiles]
     else:
@@ -432,23 +446,16 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
 
     if inputs is None:
         raise SplitterError("Cannot Split Job as the inputdata appears to be None!")
-    print 'checking lfns'
-    start_lfncheck = time.time()
+
     if len(inputs.getLFNs()) != len(inputs.files):
         raise SplitterError("Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
-    end_lfncheck = time.time()
-    print 'time for lfn check: ', (end_lfncheck - start_lfncheck)
 
     file_replicas = {}
 
     logger.info("Requesting LFN replica info")
 
-    print 'looking up replicas'
-    start_replicalookup = time.time()
     # Perform a lookup of where LFNs are all stored
     bad_lfns = lookUpLFNReplicas(inputs, ignoremissing)
-    end_replicalookup = time.time()
-    print 'time for replica lookup: ', (end_replicalookup - start_replicalookup) 
 
     logger.info("Got all good replicas")
 
@@ -467,21 +474,14 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
 
     # Now lets generate a dictionary of some chosen site vs LFN to use in
     # constructing subsets
-    print 'calculating site mapping'
-    start_sitemapping = time.time()
     site_dict = calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping, bannedSites, ignoremissing, bad_lfns)
-    end_sitemapping = time.time()
-    print 'time for site mapping: ', (end_sitemapping - start_sitemapping)
+
 
     allChosenSets = {}
     # Now select a set of site to use as a seed for constructing a subset of
     # LFN
-    print 'making site selection'
-    start_siteselection = time.time()
     for lfn in site_dict.keys():
         allChosenSets[lfn] = generate_site_selection(site_dict[lfn], wanted_common_site, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping)
-    end_siteselection = time.time()
-    print 'time for site selection: ', (end_siteselection - start_siteselection)
 
     logger.debug("Found all SE in use")
 
@@ -493,11 +493,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
 
     logger.info("Calculating best data subsets")
 
-    print 'performing splitting'
-    start_performsplitting = time.time()
     allSubSets = performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping)
-    end_performsplitting = time.time()
-    print 'time for splitting: ', (end_performsplitting - start_performsplitting)
 
     avg = 0.
     for this_set in allSubSets:
@@ -524,9 +520,6 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
     # RETURN THE RESULT
 
     logger.info("Created %s subsets" % len(allSubSets))
-
-    end_total = time.time()
-    print 'ending after ', (end_total - start_total)
 
     for dataset in allSubSets:
         yield dataset
