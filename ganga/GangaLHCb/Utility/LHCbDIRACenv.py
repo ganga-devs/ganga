@@ -67,22 +67,21 @@ def store_dirac_environment():
 
     fdir = join(expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = join(fdir, diracversion)
-    if not exists(fname) or not getsize(fname):
-        cmd = 'lb-run -c best LHCBDIRAC/{version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
-        env = execute(cmd)
-        if isinstance(env, str):
-            try:
-                env_temp = eval(env)
-                env = env_temp
-
-            except SyntaxError:
-                logger.error("LHCbDirac version %s does not exist", diracversion)
-                raise OptionValueError("LHCbDirac version {version} does not exist".format(version=diracversion))
+    cmd = 'lb-run -c best LHCBDIRAC/{version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
+    env = execute(cmd)
+    if isinstance(env, str):
         try:
-            write_env_cache(env, fname)
-            logger.info("Storing new LHCbDirac environment (%s:%s)", str(diracversion), str(platform))
-        except (OSError, IOError, TypeError):
-            logger.error("Unable to store LHCbDirac environment")
-            raise PluginError
+            env_temp = eval(env)
+            env = env_temp
+
+        except SyntaxError:
+            logger.error("LHCbDirac version %s does not exist", diracversion)
+            raise OptionValueError("LHCbDirac version {version} does not exist".format(version=diracversion))
+    try:
+        write_env_cache(env, fname)
+        logger.debug("Storing new LHCbDirac environment (%s:%s)", str(diracversion), str(platform))
+    except (OSError, IOError, TypeError):
+        logger.error("Unable to store LHCbDirac environment")
+        raise PluginError
     logger.info("Using LHCbDirac version %s", diracversion)
     os.environ['GANGADIRACENVIRONMENT'] = fname
