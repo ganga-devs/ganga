@@ -18,6 +18,8 @@ from GangaCore.GPIDev.Base.Filters import allComponentFilters
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 from GangaCore.GPIDev.Credentials import require_credential
 
+import time
+
 logger = GangaCore.Utility.logging.getLogger()
 
 
@@ -113,7 +115,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("Creating new Job in Splitter")
         j = Job()
         logger.debug("Copying From Job")
-        j.copyFrom(stripProxy(job), ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles'])
+        j.splitterCopy(stripProxy(job), ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles', 'fqid', 'outputdir', 'master', 'merger', 'metadata', 'been_queued', 'parallel_submit', 'inputdir', 'non_copyable_outputfiles', 'id','status'])
         logger.debug("Unsetting Splitter")
         j.splitter = None
         #logger.debug("Unsetting Merger")
