@@ -397,12 +397,7 @@ def getServicePorts():
     ''' Get the service ports from the DiracAdmin based upon the Dirac config'''
     return DiracAdmin().getServicePorts()
 
-@diracCommand
-def getSESiteMapping():
-    '''Get the Sites for all the SEs'''
-    from DIRAC.Core.Utilities.SiteSEMapping import getSESiteMapping
-    result = getSESiteMapping()
-    return result
+
 
 @diracCommand
 def getSitesForSE(se):

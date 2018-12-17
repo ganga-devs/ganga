@@ -253,6 +253,7 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
         sitez = set([])
         for replica in repz:
             sitez.add(replica)
+
         SE_dict[lfn] = sitez
 
     # Remove the banned sites (CE) from the mappings
@@ -423,6 +424,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
 
     if inputs is None:
         raise SplitterError("Cannot Split Job as the inputdata appears to be None!")
+
     if len(inputs.getLFNs()) != len(inputs.files):
         raise SplitterError("Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
 
