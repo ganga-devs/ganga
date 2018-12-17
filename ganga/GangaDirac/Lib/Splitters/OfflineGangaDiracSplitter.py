@@ -140,22 +140,6 @@ def find_random_site(original_SE_list, banned_SE):
     return chosen_element
 
 
-def addToMapping(SE, CE_to_SE_mapping):
-    """
-    This function is used for adding all of the known site for a given SE
-    The output is stored in the dictionary of CE_to_SE_mapping
-    Args:
-        SE (str): For this SE we want to determine which CE we can access it
-        CE_to_SE_mapping (dict): We will add CEs which can find this SE to this dict with the key (SE) and value (CE(list))
-    """
-    try:
-        result = wrapped_execute('getSitesForSE("%s")' % str(SE), list)
-    except SplitterError as err: # Have to catch these here as we're on a worker thread 
-        logger.warning('Error getting Sites for SE: "%s"' % str(SE))
-        logger.warning(err)
-        result = list()
-    CE_to_SE_mapping[SE] = result
-
 def getLFNReplicas(allLFNs, index, allLFNData):
     """
     This method gets the location of all replicas for 'allLFNs' and stores the infomation in 'allLFNData'
@@ -262,21 +246,15 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
 
     logger.info("Calculating site<->SE Mapping")
 
-    # First find the SE for each site
+    # First find the SE for each site - there is a handy DIRAC function that gives us everything quickly
+    CE_to_SE_mapping = wrapped_execute('getSESiteMapping()', dict)
+
     for lfn, repz in file_replicas.iteritems():
         sitez = set([])
         for replica in repz:
             sitez.add(replica)
-            if not replica in found:
-                getQueues()._monitoring_threadpool.add_function(addToMapping, (str(replica), CE_to_SE_mapping))
-                maps_size = maps_size + 1
-                found.append(replica)
 
         SE_dict[lfn] = sitez
-
-    # Doing this in parallel so wait for it to finish
-    while len(CE_to_SE_mapping) != maps_size:
-        time.sleep(0.1)
 
     # Remove the banned sites (CE) from the mappings
     for iSE in CE_to_SE_mapping.keys():
@@ -475,7 +453,6 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
     # Now lets generate a dictionary of some chosen site vs LFN to use in
     # constructing subsets
     site_dict = calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping, bannedSites, ignoremissing, bad_lfns)
-
 
     allChosenSets = {}
     # Now select a set of site to use as a seed for constructing a subset of
