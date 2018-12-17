@@ -8,7 +8,6 @@ import os
 import time
 import uuid
 import sys
-
 import GangaCore.Core.FileWorkspace
 from GangaCore.GPIDev.MonitoringServices import getMonitoringObject
 from GangaCore.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError, TypeMismatchError, SplitterError
@@ -19,6 +18,7 @@ from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from GangaCore.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Base.Objects import Node
 from GangaCore.GPIDev.Base.Proxy import addProxy, getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
 from GangaCore.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
@@ -2146,6 +2146,32 @@ class Job(GangaObject):
         else:
             new_value = stripProxy(runtimeEvalString(self, attr, value))
             super(Job, self).__setattr__(attr, new_value)
+
+    def splitterCopy(self, other_job, _ignore_atts=None):
+        """
+        A method for copying the job object. This is a copy of the generic GangaObject method with 
+        some checks removed for maximum speed. This should therefore be used with great care!
+        """
+
+        if _ignore_atts is None:
+            _ignore_atts = []
+        _srcobj = other_job
+
+        for name, item in self._schema.allItems():
+            if name in _ignore_atts:
+                continue
+
+            copy_obj = copy.deepcopy(getattr(_srcobj, name))
+            setattr(self, name, copy_obj)
+
+        ## Fix some objects losing parent knowledge
+        src_dict = other_job.__dict__
+        for key, val in src_dict.iteritems():
+            this_attr = getattr(other_job, key)
+            if isinstance(this_attr, Node) and key not in do_not_copy:
+                if this_attr._getParent() is not other_job:
+                    this_attr._setParent(other_job)
+
 
 
 class JobTemplate(Job):
