@@ -197,6 +197,7 @@ def execute(command,
             update_env=False,
             return_raw_dict=False,
             cred_req=None,
+            new_subprocess = False
             ):
     """
     Execute a command on the local DIRAC server.
@@ -214,47 +215,76 @@ def execute(command,
         update_env (bool): Should this modify the given env object with the env after the command has executed
         return_raw_dict(bool): Should we return the raw dict from the DIRAC interface or parse it here
         cred_req (ICredentialRequirement): What credentials does this call need
+        new_subprocess(bool): Do we want to do this in a fresh subprocess or just connect to the DIRAC server process?
     """
 
-    if env is None:
-        if cred_req is None:
-            env = getDiracEnv()
-        else:
-            env = getDiracEnv(cred_req.dirac_env)
-    if python_setup == '':
-        python_setup = getDiracCommandIncludes()
+    returnable = ''
+    if not new_subprocess:
+        # First check if a Dirac process is running
+        from GangaDirac.BOOT import running_dirac_process
+        if not running_dirac_process:
+            from GangaDirac.BOOT import startDiracProcess
+            startDiracProcess()
+        #Set up a socket to connect to the process
+        import socket
+        
+        HOST = '127.0.0.1'  # The server's hostname or IP address
+        PORT = 65452        # The port used by the server
 
-    if cred_req is not None:
-        env['X509_USER_PROXY'] = credential_store[cred_req].location
-        if os.getenv('KRB5CCNAME'):
-            env['KRB5CCNAME'] = os.getenv('KRB5CCNAME')
+        s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((HOST, PORT))
+#        print 'command to send: ', command
+        s.sendall(b'%s###END-TRANS###' % command)
+        out = ''
+        while '###END-TRANS###' not in out:
+            data = s.recv(1024)
+            out += data
+#        print('Received', out)
+        s.close()
+        ret_string = out.replace('\nNone\n###END-TRANS###', '')
+#        print 'ret_string: ', ret_string
+        returnable = eval(ret_string)
 
-    if cwd is None:
-        # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
-        # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed
-        cwd_ = tempfile.mkdtemp()
     else:
-        # We know were whe want to run, lets just run there
-        cwd_ = cwd
+        if env is None:
+            if cred_req is None:
+                env = getDiracEnv()
+            else:
+                env = getDiracEnv(cred_req.dirac_env)
+        if python_setup == '':
+            python_setup = getDiracCommandIncludes()
 
-    returnable = gexecute.execute(command,
-                                  timeout=timeout,
-                                  env=env,
-                                  cwd=cwd_,
-                                  shell=shell,
-                                  python_setup=python_setup,
-                                  eval_includes=eval_includes,
-                                  update_env=update_env)
+        if cred_req is not None:
+            env['X509_USER_PROXY'] = credential_store[cred_req].location
+            if os.getenv('KRB5CCNAME'):
+                env['KRB5CCNAME'] = os.getenv('KRB5CCNAME')
 
-    # If the time 
-    if returnable == 'Command timed out!':
-        raise GangaDiracError("DIRAC command timed out")
+        if cwd is None:
+            # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
+            # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed
+            cwd_ = tempfile.mkdtemp()
+        else:
+            # We know were whe want to run, lets just run there
+            cwd_ = cwd
 
-    # TODO we would like some way of working out if the code has been executed correctly
-    # Most commands will be OK now that we've added the check for the valid proxy before executing commands here
+        returnable = gexecute.execute(command,
+                                      timeout=timeout,
+                                      env=env,
+                                      cwd=cwd_,
+                                      shell=shell,
+                                      python_setup=python_setup,
+                                      eval_includes=eval_includes,
+                                      update_env=update_env)
 
-    if cwd is None:
-        shutil.rmtree(cwd_, ignore_errors=True)
+        # If the time 
+        if returnable == 'Command timed out!':
+            raise GangaDiracError("DIRAC command timed out")
+
+        # TODO we would like some way of working out if the code has been executed correctly
+        # Most commands will be OK now that we've added the check for the valid proxy before executing commands here
+
+        if cwd is None:
+            shutil.rmtree(cwd_, ignore_errors=True)
 
     if isinstance(returnable, dict) and not return_raw_dict:
         # If the output is a dictionary allow for automatic error detection

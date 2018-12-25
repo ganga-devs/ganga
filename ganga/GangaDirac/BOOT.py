@@ -32,6 +32,7 @@ def diracAPI(cmd, timeout=60, cred_req=None):
     diracAPI(\'print dirac.status([66])\')
 
     # or can achieve the same using command defined and included from
+    
     # getConfig('DIRAC')['DiracCommandFiles']
     diracAPI(\'status([66])\')
 
@@ -42,6 +43,57 @@ exportToGPI('diracAPI', diracAPI, 'Functions')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
+running_dirac_process = False
+dirac_process = None
+def startDiracProcess():
+    '''
+    Start a subprocess that runs the DIRAC commands
+    '''
+    import subprocess
+    from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes
+    global dirac_process
+    dirac_process = subprocess.Popen('/afs/cern.ch/user/m/masmith/cmtuser/GANGA/GANGA_HEAD/install/ganga/ganga/GangaDirac/Lib/Server/DiracProcess.py', env = getDiracEnv())
+    global running_dirac_server
+    running_dirac_server = True
+    print 'set running state: %s' % running_dirac_server
+    import socket
+    import time
+    time.sleep(10)
+
+    end_trans = '###END-TRANS###'
+    HOST = '127.0.0.1'  # The server's hostname or IP address
+    PORT = 65452        # The port used by the server
+
+    data = ''
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+    dirac_command = getDiracCommandIncludes()
+    dirac_command = dirac_command + end_trans
+#    print 'dirac_command: ', dirac_command
+    s.sendall(dirac_command)
+    data = s.recv(1024)
+
+    print('Received', repr(data))
+    s.close()
+
+
+exportToGPI('startDiracProcess', startDiracProcess, 'Functions')
+
+def stopDiracProcess():
+    '''
+    Stop the Dirac process if it is running
+    '''
+    global running_dirac_server
+    print 'dirac server state: %s ' % running_dirac_server
+    if not running_dirac_server:
+        print 'no dirac server, doing nothing'
+    else:
+        print 'killing the dirac server'
+        dirac_process.kill()
+        running_dirac_server = False
+        print 'killed the dirac server'
+
+exportToGPI('stopDiracProcess', stopDiracProcess, 'Functions')
 
 def diracAPI_interactive(connection_attempts=5):
     '''
