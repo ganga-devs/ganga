@@ -54,7 +54,6 @@ def startDiracProcess():
     dirac_process = subprocess.Popen('/afs/cern.ch/user/m/masmith/cmtuser/GANGA/GANGA_HEAD/install/ganga/ganga/GangaDirac/Lib/Server/DiracProcess.py', env = getDiracEnv())
     global running_dirac_server
     running_dirac_server = True
-    print 'set running state: %s' % running_dirac_server
     import socket
     import time
     time.sleep(10)
@@ -68,11 +67,9 @@ def startDiracProcess():
     s.connect((HOST, PORT))
     dirac_command = getDiracCommandIncludes()
     dirac_command = dirac_command + end_trans
-#    print 'dirac_command: ', dirac_command
     s.sendall(dirac_command)
     data = s.recv(1024)
 
-    print('Received', repr(data))
     s.close()
 
 
@@ -83,14 +80,11 @@ def stopDiracProcess():
     Stop the Dirac process if it is running
     '''
     global running_dirac_server
-    print 'dirac server state: %s ' % running_dirac_server
-    if not running_dirac_server:
-        print 'no dirac server, doing nothing'
-    else:
-        print 'killing the dirac server'
+    logger.debug('dirac process state: %s ' % running_dirac_process)
+    if running_dirac_server:
+        logger.info('killing the dirac process')
         dirac_process.kill()
         running_dirac_server = False
-        print 'killed the dirac server'
 
 exportToGPI('stopDiracProcess', stopDiracProcess, 'Functions')
 
