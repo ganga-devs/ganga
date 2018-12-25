@@ -416,6 +416,14 @@ def getSEsForSite(site):
 
 
 @diracCommand
+def getSESiteMapping():
+    '''Get the mapping of SEs and sites'''
+    from DIRAC.Core.Utilities.SiteSEMapping import getSESiteMapping
+    result = getSESiteMapping()
+    return result
+
+
+@diracCommand
 def checkSEStatus(se, access = 'Write'):
     ''' returns the value of a certain SE status flag (access or other)
       param se: Storage Element name
