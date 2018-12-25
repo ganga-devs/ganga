@@ -308,7 +308,7 @@ def status(job_ids, statusmapping, pipe_out=True):
 @diracCommand
 def getStateTime(id, status, pipe_out=True):
     ''' Return the state time from DIRAC corresponding to DIRACJob tranasitions'''
-    log = dirac.loggingInfo(id)
+    log = dirac.getJobLoggingInfo(id)
     if 'Value' not in log:
         return None
     L = log['Value']
@@ -368,8 +368,8 @@ def monitorJobs(job_ids, status_mapping, pipe_out=True):
 
 @diracCommand
 def timedetails(id):
-    ''' Function to return the loggingInfo for a DIRAC Job of id'''
-    log = dirac.loggingInfo(id)
+    ''' Function to return the getJobLoggingInfo for a DIRAC Job of id'''
+    log = dirac.getJobLoggingInfo(id)
     d = {}
     for i in range(0, len(log['Value'])):
         d[i] = log['Value'][i]
