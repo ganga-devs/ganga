@@ -1,18 +1,18 @@
 import os
+import errno
 import threading
 import tempfile
 import shutil
 import json
 import time
+import socket
 from copy import deepcopy
-
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Base.Proxy import isType
 from GangaCore.GPIDev.Credentials import credential_store
 import GangaCore.Utility.execute as gexecute
-
 logger = getLogger()
 
 # Cache
@@ -217,22 +217,25 @@ def execute(command,
         cred_req (ICredentialRequirement): What credentials does this call need
         new_subprocess(bool): Do we want to do this in a fresh subprocess or just connect to the DIRAC server process?
     """
-
+    from GangaDirac.BOOT import startDiracProcess
     returnable = ''
     if not new_subprocess:
         # First check if a Dirac process is running
         from GangaDirac.BOOT import running_dirac_process
         if not running_dirac_process:
-            from GangaDirac.BOOT import startDiracProcess
             startDiracProcess()
         #Set up a socket to connect to the process
-        import socket
         
         HOST = '127.0.0.1'  # The server's hostname or IP address
         PORT = 65452        # The port used by the server
 
         s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((HOST, PORT))
+        #Try and connect to the host. If the connection is refused then the process has likely crashed so we need to start a new one
+        try:
+            s.connect((HOST, PORT))
+        except socket.error as serr:
+            if serr.errno == errno.ECONNREFUSED:
+                startDiracProcess()
 #        print 'command to send: ', command
         s.sendall(b'%s###END-TRANS###' % command)
         out = ''
