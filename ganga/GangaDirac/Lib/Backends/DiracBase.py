@@ -667,7 +667,7 @@ class DiracBase(IBackend):
             return None
         dirac_cmd = 'kill(%d)' % self.id
         try:
-            result = execute(dirac_cmd, cred_req=self.credential_requirements)
+            result = execute(dirac_cmd, cred_req=self.credential_requirements, new_subprocess = True)
         except GangaDiracError as err:
             raise BackendError('Dirac', 'Could not kill job: %s' % err)
         return True
@@ -687,7 +687,7 @@ class DiracBase(IBackend):
                     kill_list.append(sj.backend.id)
             dirac_cmd = 'kill(%s)' % kill_list
             try:
-                result = execute(dirac_cmd, cred_req=self.credential_requirements)
+                result = execute(dirac_cmd, cred_req=self.credential_requirements, new_subprocess = True)
             except GangaDiracError as err:
                 raise BackendError('Dirac', 'Dirac failed to kill job %d.' % j.id)
         return True
@@ -1181,7 +1181,7 @@ class DiracBase(IBackend):
         for sj in jobSlice:
             inputDict[sj.backend.id] = sj.getOutputWorkspace().getPath()
         statusmapping = configDirac['statusmapping']
-        returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, repr(statusmapping), downloadSandbox), cred_req=jobSlice[0].backend.credential_requirements)
+        returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, repr(statusmapping), downloadSandbox), cred_req=jobSlice[0].backend.credential_requirements, new_subprocess = True)
 
         #Cycle over the jobs and store the info
         for sj in jobSlice:
