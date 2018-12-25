@@ -246,7 +246,7 @@ def execute(command,
 #        print('Received', out)
         s.close()
         ret_string = out.replace('\nNone\n###END-TRANS###', '')
-        print 'ret_string: ', ret_string
+#        print 'ret_string: ', ret_string
         returnable = eval(ret_string)
 
     else:

@@ -58,7 +58,7 @@ def removeFile(lfn):
 @diracCommand
 def getMetadata(lfn):
     ''' Return the metadata associated with a given :DN'''
-    return dirac.getMetadata(lfn)
+    return dirac.getLfnMetadata(lfn)
 
 
 @diracCommand
@@ -123,7 +123,7 @@ def uploadFile(lfn, file, diracSEs, guid=None):
         result = dirac.addFile(lfn, file, se, guid)
         if result.get('OK', False) and lfn in result.get('Value', {'Successful': {}})['Successful']:
             result['Value']['Successful'][lfn].update({'DiracSE': se})
-            md = dirac.getMetadata(lfn)
+            md = dirac.getLfnMetadata(lfn)
             if md.get('OK', False) and lfn in md.get('Value', {'Successful': {}})['Successful']:
                 guid = md['Value']['Successful'][lfn]['GUID']
                 result['Value']['Successful'][lfn].update({'GUID': guid})
@@ -171,7 +171,7 @@ def getOutputDataInfo(id, pipe_out=True):
             file_name = os.path.basename(lfn)
             ret[file_name] = {}
             ret[file_name]['LFN'] = lfn
-            md = dirac.getMetadata(lfn)
+            md = dirac.getLfnMetadata(lfn)
             if md.get('OK', False) and lfn in md.get('Value', {'Successful': {}})['Successful']:
                 ret[file_name]['GUID'] =  md['Value']['Successful'][lfn]['GUID']
             # this catches if fail upload, note lfn still exists in list as
