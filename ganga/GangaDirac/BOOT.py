@@ -32,7 +32,6 @@ def diracAPI(cmd, timeout=60, cred_req=None):
     diracAPI(\'print dirac.status([66])\')
 
     # or can achieve the same using command defined and included from
-    
     # getConfig('DIRAC')['DiracCommandFiles']
     diracAPI(\'status([66])\')
 
