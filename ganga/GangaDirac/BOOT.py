@@ -60,7 +60,7 @@ def startDiracProcess():
 
     end_trans = '###END-TRANS###'
     HOST = '127.0.0.1'  # The server's hostname or IP address
-    PORT = 65452        # The port used by the server
+    PORT = 42642        # The port used by the server
 
     data = ''
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -82,7 +82,7 @@ def stopDiracProcess():
     global running_dirac_process
     logger.debug('dirac process state: %s ' % running_dirac_process)
     if running_dirac_process:
-        logger.info('killing the dirac process')
+        logger.info('Stopping the DIRAC process')
         dirac_process.kill()
         running_dirac_process = False
 

@@ -5,7 +5,7 @@ import socket
 import traceback
 import StringIO
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
-PORT = 65452        # Port to listen on (non-privileged ports are > 1023)
+PORT = 42642        # Port to listen on (non-privileged ports are > 1023)
 import time
 #We have to define an output function for historical reasons
 def output(data):

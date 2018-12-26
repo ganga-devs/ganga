@@ -228,7 +228,7 @@ def execute(command,
         #Set up a socket to connect to the process
         
         HOST = '127.0.0.1'  # The server's hostname or IP address
-        PORT = 65452        # The port used by the server
+        PORT = 42642        # The port used by the server
 
         s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         #Try and connect to the host. If the connection is refused then the process has likely crashed so we need to start a new one

@@ -667,7 +667,7 @@ class DiracBase(IBackend):
             return None
         dirac_cmd = 'kill(%d)' % self.id
         try:
-            result = execute(dirac_cmd, cred_req=self.credential_requirements, new_subprocess = True)
+            result = execute(dirac_cmd, cred_req=self.credential_requirements)
         except GangaDiracError as err:
             raise BackendError('Dirac', 'Could not kill job: %s' % err)
         return True
@@ -687,7 +687,7 @@ class DiracBase(IBackend):
                     kill_list.append(sj.backend.id)
             dirac_cmd = 'kill(%s)' % kill_list
             try:
-                result = execute(dirac_cmd, cred_req=self.credential_requirements, new_subprocess = True)
+                result = execute(dirac_cmd, cred_req=self.credential_requirements)
             except GangaDiracError as err:
                 raise BackendError('Dirac', 'Dirac failed to kill job %d.' % j.id)
         return True
