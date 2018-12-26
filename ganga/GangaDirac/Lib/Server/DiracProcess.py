@@ -68,3 +68,4 @@ while True:
         break
 
 conn.close()
+s.close()
