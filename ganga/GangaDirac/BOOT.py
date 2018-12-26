@@ -1,3 +1,8 @@
+import os
+import sys
+import time
+import inspect
+import traceback
 from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaCore.Utility.Config import getConfig
@@ -8,7 +13,6 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 logger = getLogger()
 #user_threadpool       = WorkerThreadPool()
 #monitoring_threadpool = WorkerThreadPool()
-
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
@@ -51,7 +55,10 @@ def startDiracProcess():
     import subprocess
     from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes
     global dirac_process
-    dirac_process = subprocess.Popen('/afs/cern.ch/user/m/masmith/cmtuser/GANGA/GANGA_HEAD/install/ganga/ganga/GangaDirac/Lib/Server/DiracProcess.py', env = getDiracEnv())
+    #Some magic to locate the python script to run
+    from GangaDirac.Lib.Server.InspectionClient import runClient
+    serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'DiracProcess.py')
+    dirac_process = subprocess.Popen(serverpath, env = getDiracEnv())
     global running_dirac_process
     running_dirac_process = True
     import socket
@@ -92,11 +99,7 @@ def diracAPI_interactive(connection_attempts=5):
     '''
     Run an interactive server within the DIRAC environment.
     '''
-    import os
-    import sys
-    import time
-    import inspect
-    import traceback
+
     from GangaDirac.Lib.Server.InspectionClient import runClient
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'InspectionServer.py')
     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
@@ -134,7 +137,6 @@ exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
 
 
 def getDiracFiles():
-    import os
     from GangaDirac.Lib.Files.DiracFile import DiracFile
     from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
     filename = DiracFile.diracLFNBase().replace('/', '-') + '.lfns'
@@ -158,7 +160,6 @@ def dumpObject(object, filename):
     export the objects using the pickle persistency format rather than a Ganga streaming
     (human readable) format.
     '''
-    import os
     import pickle
     import traceback
     try:
@@ -176,7 +177,6 @@ def loadObject(filename):
     export the objects using the pickle persistency format rather than a Ganga streaming
     (human readable) format.
     '''
-    import os
     import pickle
     import traceback
     try:
