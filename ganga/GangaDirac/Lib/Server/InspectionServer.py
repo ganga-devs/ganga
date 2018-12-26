@@ -7,16 +7,12 @@ import traceback
 import collections
 SocketAddress = collections.namedtuple('SocketAddress', ['address', 'port'])
 
-print('setting up socket')
-
 end_trans = '###END-TRANS###'
 socket_addr = SocketAddress(address='localhost', port=5000)
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.bind(socket_addr)
-print('about to have a little listen')
 server_socket.listen(5)
-print('have had a listen')
 server_stdout = sys.stdout
 
 
