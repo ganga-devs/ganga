@@ -7,14 +7,17 @@ import StringIO
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 65452        # Port to listen on (non-privileged ports are > 1023)
 import time
+#We have to define an output function for historical reasons
 def output(data):
     print data
 
+#A function to shutdown ant existing processes
 def closeSocket():
     sc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sc.connect((HOST, PORT))
     sc.sendall(b'close server')
     sc.close()
+
 codeOut = StringIO.StringIO()
 codeErr = StringIO.StringIO()
 end_trans = '###END-TRANS###'
@@ -29,7 +32,6 @@ except socket.error as serr:
 
 s.listen(1024)
 conn, addr = s.accept()
-#print 'connected by ', addr
 while True:
     out = ''
     while end_trans not in out:
@@ -37,12 +39,10 @@ while True:
             if not data:
                 s.listen(1024)
                 conn, addr = s.accept()
-#                print 'connected by ', addr
                 data = conn.recv(1024)
             out += data
             if data == 'close server':
                 break                 
-#    print 'data: ', out
     if out == 'close server':
         break
     cmd = str(out)
@@ -60,18 +60,11 @@ while True:
             print(traceback.format_exc())
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
-#    print 'stdout: ', codeOut.getvalue()
     if codeOut.getvalue()=='':
         conn.sendall('some stuff')
     else:
         conn.sendall(codeOut.getvalue()+'###END-TRANS###')
-#    print 'more arse some processing, going to sleep for some reason'
-#            print 'res: ', res
     if not data:
         break
-#            if not res == '':
-#                conn.sendall(repr(res))
-
-print 'broken'
 
 conn.close()
