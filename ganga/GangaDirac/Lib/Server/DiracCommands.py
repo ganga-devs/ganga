@@ -58,7 +58,7 @@ def removeFile(lfn):
 @diracCommand
 def getMetadata(lfn):
     ''' Return the metadata associated with a given :DN'''
-    return dirac.getLfnMetadata(lfn)
+    return dirac.getMetadata(lfn)
 
 
 @diracCommand

@@ -237,16 +237,13 @@ def execute(command,
         except socket.error as serr:
             if serr.errno == errno.ECONNREFUSED:
                 startDiracProcess()
-#        print 'command to send: ', command
         s.sendall(b'%s###END-TRANS###' % command)
         out = ''
         while '###END-TRANS###' not in out:
             data = s.recv(1024)
             out += data
-#        print('Received', out)
         s.close()
         ret_string = out.replace('\nNone\n###END-TRANS###', '')
-#        print 'ret_string: ', ret_string
         returnable = eval(ret_string)
 
     else:
