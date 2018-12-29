@@ -218,6 +218,15 @@ def execute(command,
         cred_req (ICredentialRequirement): What credentials does this call need
         new_subprocess(bool): Do we want to do this in a fresh subprocess or just connect to the DIRAC server process?
     """
+
+    if cwd is None:
+        # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
+        # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed
+        cwd_ = tempfile.mkdtemp()
+    else:
+        # We know were whe want to run, lets just run there
+        cwd_ = cwd
+
     from GangaDirac.BOOT import startDiracProcess
     returnable = ''
     if not new_subprocess:
@@ -237,7 +246,10 @@ def execute(command,
         except socket.error as serr:
             if serr.errno == errno.ECONNREFUSED:
                 startDiracProcess()
-        s.sendall(b'%s###END-TRANS###' % command)
+        #First we need to send where we want to run this
+        command_to_send = 'os.chdir("%s")\n' % cwd_
+        command_to_send += command
+        s.sendall(b'%s###END-TRANS###' % command_to_send)
         out = ''
         while '###END-TRANS###' not in out:
             data = s.recv(1024)
@@ -260,14 +272,6 @@ def execute(command,
             if os.getenv('KRB5CCNAME'):
                 env['KRB5CCNAME'] = os.getenv('KRB5CCNAME')
 
-        if cwd is None:
-            # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
-            # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed
-            cwd_ = tempfile.mkdtemp()
-        else:
-            # We know were whe want to run, lets just run there
-            cwd_ = cwd
-
         returnable = gexecute.execute(command,
                                       timeout=timeout,
                                       env=env,
@@ -284,8 +288,8 @@ def execute(command,
         # TODO we would like some way of working out if the code has been executed correctly
         # Most commands will be OK now that we've added the check for the valid proxy before executing commands here
 
-        if cwd is None:
-            shutil.rmtree(cwd_, ignore_errors=True)
+    if cwd is None:
+        shutil.rmtree(cwd_, ignore_errors=True)
 
     if isinstance(returnable, dict) and not return_raw_dict:
         # If the output is a dictionary allow for automatic error detection
