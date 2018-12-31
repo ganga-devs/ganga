@@ -50,8 +50,6 @@ except socket.error as serr:
         closeSocket()
         s.bind((HOST, PORT))
 s.listen(1024)
-#Setup a time out in case of prolonged inactivity - 1 minute for testing purposes
-timeout = time.time() + 60
 while True:
     conn, addr = s.accept()
     sock = socketWrapper(conn)

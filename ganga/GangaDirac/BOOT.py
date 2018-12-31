@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import socket
 import inspect
 import traceback
 from GangaCore.Runtime.GPIexport import exportToGPI
@@ -53,17 +54,14 @@ def startDiracProcess():
     Start a subprocess that runs the DIRAC commands
     '''
     import subprocess
-    from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes
+    from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes, GangaDiracError
     global dirac_process
     #Some magic to locate the python script to run
     from GangaDirac.Lib.Server.InspectionClient import runClient
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'DiracProcess.py')
     dirac_process = subprocess.Popen(serverpath, env = getDiracEnv())
     global running_dirac_process
-    running_dirac_process = True
-    import socket
-    import time
-    time.sleep(10)
+    running_dirac_process = dirac_process.pid
 
     end_trans = '###END-TRANS###'
     HOST = '127.0.0.1'  # The server's hostname or IP address
@@ -71,7 +69,17 @@ def startDiracProcess():
 
     data = ''
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
+    #We have to wait a little bit for the subprocess to start the server so we try until the connection stops being refused. Set a limit of one minute.
+    connection_timeout = time.time() + 60
+    started = False
+    while time.time()<connection_timeout:
+        try:
+            s.connect((HOST, PORT))
+            started = True
+        except socket.error as serr:
+            time.sleep(1)
+    if not started:
+        raise GangaDiracError("Failed to start the Dirac server process!")
     dirac_command = getDiracCommandIncludes()
     dirac_command = dirac_command + end_trans
     s.sendall(dirac_command)
