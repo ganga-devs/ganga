@@ -212,7 +212,7 @@ class GaudiExec(IPrepareApp):
         self.uploadedInput = None
         self.jobScriptArchive = None
 
-
+    @gaudiExecBuildLock
     def prepare(self, force=False):
         """
         This method creates a set of prepared files for the application to pass to the RTHandler
@@ -456,7 +456,6 @@ class GaudiExec(IPrepareApp):
         return rc, stdout, stderr
 
 
-    @gaudiExecBuildLock
     def buildGangaTarget(self):
         """
         This builds the ganga target 'ganga-input-sandbox' for the project defined by self.directory
