@@ -256,8 +256,7 @@ def execute(command,
             data = s.recv(1024)
             out += data
         s.close()
-#        ret_string = out.replace('\nNone\n###END-TRANS###', '')
-        returnable = eval(ret_string)
+        returnable = eval(out)
 
     else:
         if env is None:
