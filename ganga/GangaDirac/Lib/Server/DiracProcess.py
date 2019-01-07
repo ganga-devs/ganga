@@ -45,28 +45,34 @@ except socket.error as serr:
         closeSocket()
         s.bind((HOST, PORT))
 s.listen(1024)
+#Set 30 minute timeout
+s.settimeout(1800)
 while True:
-    conn, addr = s.accept()
-    sock = socketWrapper(conn)
-    cmd = sock.read()
-    #Here we define the output method to just send the output of the diracCommand wrapper.
-    def output(data):
-        conn.sendall(repr(data))
-
-    if cmd=='close-server':
-        conn.shutdown(socket.SHUT_RDWR)
-        conn.close()
-        break
     try:
-        print(eval(cmd))
-    except:
-        try:
-            exec(cmd)
-        except:
-            print("Exception raised executing command (cmd) '%s'\n" % cmd)
-            print(traceback.format_exc())
+        conn, addr = s.accept()
+        sock = socketWrapper(conn)
+        cmd = sock.read()
+        #Here we define the output method to just send the output of the diracCommand wrapper.
+        def output(data):
+            conn.sendall(repr(data))
 
-    conn.sendall('###END-TRANS###')
+        if cmd=='close-server':
+            conn.shutdown(socket.SHUT_RDWR)
+            conn.close()
+            break
+        try:
+            print(eval(cmd))
+        except:
+            try:
+                exec(cmd)
+            except:
+                print("Exception raised executing command (cmd) '%s'\n" % cmd)
+                print(traceback.format_exc())
+
+        conn.sendall('###END-TRANS###')
+    #Catch the timeout and exit
+    except socket.timeout:
+        break
 
 s.shutdown(socket.SHUT_RDWR)
 s.close()
