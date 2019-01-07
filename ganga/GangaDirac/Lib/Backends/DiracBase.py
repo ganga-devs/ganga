@@ -267,6 +267,8 @@ class DiracBase(IBackend):
         we can submit several subjobs in the same process. Therefore for each subjob we collect the code for
        the dirac-script into one large file that we then execute.
         """
+        print 'dummy submit'
+        return 1
         #If you want to go slowly use the regular master_submit:
         if not self.blockSubmit:
             return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
