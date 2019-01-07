@@ -4,6 +4,7 @@ import time
 import socket
 import inspect
 import traceback
+import pickle
 from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaCore.Utility.Config import getConfig
@@ -168,8 +169,6 @@ def dumpObject(object, filename):
     export the objects using the pickle persistency format rather than a Ganga streaming
     (human readable) format.
     '''
-    import pickle
-    import traceback
     try:
         with open(os.path.expandvars(os.path.expanduser(filename)), 'wb') as f:
             pickle.dump(stripProxy(object), f)
@@ -185,8 +184,6 @@ def loadObject(filename):
     export the objects using the pickle persistency format rather than a Ganga streaming
     (human readable) format.
     '''
-    import pickle
-    import traceback
     try:
         with open(os.path.expandvars(os.path.expanduser(filename)), 'rb') as f:
             r = pickle.load(f)
