@@ -246,8 +246,6 @@ def execute(command,
         except socket.error as serr:
             if serr.errno == errno.ECONNREFUSED:
                 startDiracProcess()
-        #Prepend a return value variable for ease of returning output
-        command = 'retVal = ' + command
 
         #First we need to send where we want to run this
         command_to_send = 'os.chdir("%s")\n' % cwd_
@@ -258,7 +256,7 @@ def execute(command,
             data = s.recv(1024)
             out += data
         s.close()
-        ret_string = out.replace('\nNone\n###END-TRANS###', '')
+#        ret_string = out.replace('\nNone\n###END-TRANS###', '')
         returnable = eval(ret_string)
 
     else:
