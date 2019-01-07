@@ -7,7 +7,7 @@ import traceback
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 42642        # Port to listen on (non-privileged ports are > 1023)
 import time
-#We have to define an output function for historical reasons
+#We have to define an output function a placeholder here.
 def output(data):
     print data
 
@@ -23,11 +23,6 @@ class socketWrapper(object):
 
     def __init__(self, skt):
         self._socket = skt
-        sys.stdout = self
-        sys.stderr = self
-
-    def write(self, stuff):
-        self._socket.sendall(stuff)
 
     def read(self):
         cmd = ''
@@ -54,6 +49,10 @@ while True:
     conn, addr = s.accept()
     sock = socketWrapper(conn)
     cmd = sock.read()
+    #Here we define the output method to just send the output of the diracCommand wrapper.
+    def output(data):
+        conn.sendall(repr(data))
+
     if cmd=='close-server':
         conn.shutdown(socket.SHUT_RDWR)
         conn.close()
@@ -68,8 +67,6 @@ while True:
             print(traceback.format_exc())
 
     conn.sendall('###END-TRANS###')
-    conn.shutdown(socket.SHUT_RDWR)
-    conn.close()
 
 s.shutdown(socket.SHUT_RDWR)
 s.close()
