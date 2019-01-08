@@ -22,7 +22,7 @@ DIRAC_ENV = {}
 DIRAC_INCLUDE = ''
 Dirac_Env_Lock = threading.Lock()
 Dirac_Proxy_Lock = threading.Lock()
-
+Dirac_Exec_Lock = threading.Lock()
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 class GangaDiracError(GangaException):
@@ -230,29 +230,30 @@ def execute(command,
     from GangaDirac.BOOT import startDiracProcess
     returnable = ''
     if not new_subprocess:
-        # First check if a Dirac process is running
-        from GangaDirac.BOOT import running_dirac_process
-        if not running_dirac_process:
-            startDiracProcess()
-        #Set up a socket to connect to the process
-        from GangaDirac.BOOT import dirac_process_ids
-        HOST = '127.0.0.1'  # The server's hostname or IP address
-        PORT = dirac_process_ids[1]        # The port used by the server
+        with Dirac_Exec_Lock:
+            # First check if a Dirac process is running
+            from GangaDirac.BOOT import running_dirac_process
+            if not running_dirac_process:
+                startDiracProcess()
+            #Set up a socket to connect to the process
+            from GangaDirac.BOOT import dirac_process_ids
+            HOST = '127.0.0.1'  # The server's hostname or IP address
+            PORT = dirac_process_ids[1]        # The port used by the server
 
-        s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((HOST, PORT))
+            s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((HOST, PORT))
 
-        #Send a random string, then change the directory to carry out the command, then send the command
-        command_to_send  = str(dirac_process_ids[2])
-        command_to_send += 'os.chdir("%s")\n' % cwd_
-        command_to_send += command
-        s.sendall(b'%s###END-TRANS###' % command_to_send)
-        out = ''
-        while '###END-TRANS###' not in out:
-            data = s.recv(1024)
-            out += data
-        s.close()
-        returnable = eval(out)
+            #Send a random string, then change the directory to carry out the command, then send the command
+            command_to_send  = str(dirac_process_ids[2])
+            command_to_send += 'os.chdir("%s")\n' % cwd_
+            command_to_send += command
+            s.sendall(b'%s###END-TRANS###' % command_to_send)
+            out = ''
+            while '###END-TRANS###' not in out:
+                data = s.recv(1024)
+                out += data
+            s.close()
+            returnable = eval(out)
 
     else:
         if env is None:
