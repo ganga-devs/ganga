@@ -52,12 +52,12 @@ exportToGPI('diracAPI', diracAPI, 'Functions')
 running_dirac_process = False
 dirac_process = None
 dirac_process_ids = None
-dirac_hash = None
 def startDiracProcess():
     '''
     Start a subprocess that runs the DIRAC commands
     '''
     HOST = '127.0.0.1'  #Connect to localhost
+    end_trans = '###END-TRANS###'
     import subprocess
     from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes, GangaDiracError
     global dirac_process
@@ -68,18 +68,19 @@ def startDiracProcess():
     s.bind((HOST, 0))
     PORT = s.getsockname()[1]
     s.close()
-    #Pass the port no and random string as arguments to the popen
-    rand_hash = uuid.uuid1()
+
+    #Pass the port no as an argument to the popen
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'DiracProcess.py')
     popen_cmd = [serverpath, str(PORT)]
     dirac_process = subprocess.Popen(popen_cmd, env = getDiracEnv(), stdin=subprocess.PIPE)
     global running_dirac_process
     running_dirac_process = (dirac_process.pid, PORT)
+
+    #Now set a random string to make sure only commands from this sessions are executed
+    rand_hash = uuid.uuid1()
     global dirac_process_ids
     dirac_process_ids = (dirac_process.pid, PORT, rand_hash)
-
-    end_trans = '###END-TRANS###'
-
+    #Pipe the random string without waiting for the process to finish.
     dirac_process.stdin.write(bytes(str(rand_hash)))
     dirac_process.stdin.close()
 
@@ -96,12 +97,12 @@ def startDiracProcess():
             time.sleep(1)
     if not started:
         raise GangaDiracError("Failed to start the Dirac server process!")
+    #Now setup the Dirac environment in the subprocess
     dirac_command = str(rand_hash)
     dirac_command = dirac_command + getDiracCommandIncludes()
     dirac_command = dirac_command + end_trans
     s.sendall(dirac_command)
     data = s.recv(1024)
-
     s.close()
 
 
