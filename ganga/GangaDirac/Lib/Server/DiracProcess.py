@@ -6,7 +6,7 @@ import socket
 import traceback
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = int(sys.argv[1])        # Port to listen on
-rand_hash = os.environ['ganga_rand_hash']
+rand_hash = raw_input() 
 import time
 #We have to define an output function a placeholder here.
 def output(data):

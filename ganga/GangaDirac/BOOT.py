@@ -72,15 +72,16 @@ def startDiracProcess():
     rand_hash = uuid.uuid1()
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'DiracProcess.py')
     popen_cmd = [serverpath, str(PORT)]
-    env_to_send = getDiracEnv()
-    env_to_send['ganga_rand_hash'] = str(rand_hash)
-    dirac_process = subprocess.Popen(popen_cmd, env = env_to_send)
+    dirac_process = subprocess.Popen(popen_cmd, env = getDiracEnv(), stdin=subprocess.PIPE)
     global running_dirac_process
     running_dirac_process = (dirac_process.pid, PORT)
     global dirac_process_ids
     dirac_process_ids = (dirac_process.pid, PORT, rand_hash)
 
     end_trans = '###END-TRANS###'
+
+    dirac_process.stdin.write(bytes(str(rand_hash)))
+    dirac_process.stdin.close()
 
     data = ''
     #We have to wait a little bit for the subprocess to start the server so we try until the connection stops being refused. Set a limit of one minute.
