@@ -5,7 +5,8 @@ import errno
 import socket
 import traceback
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
-PORT = 42642        # Port to listen on (non-privileged ports are > 1023)
+PORT = int(sys.argv[1])        # Port to listen on
+rand_hash = os.environ['ganga_rand_hash']
 import time
 #We have to define an output function a placeholder here.
 def output(data):
@@ -32,18 +33,17 @@ class socketWrapper(object):
                 cmd = '###BROKEN###'
                 break
             cmd += data
+        #Check the random string is in the cmd so we know it came from a trusted source.
+        if not rand_hash in cmd:
+            return 'close-connection'
         if cmd == '###BROKEN###':
             return ''
-        return cmd.replace(end_trans, '')
+        return_string = cmd.replace(rand_hash, '')
+        return return_string.replace(end_trans, '')
 
+#Start the socket
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#Put in a try/except in case there is an orphaned process. We can shut it down first and start afresh
-try:
-    s.bind((HOST, PORT))
-except socket.error as serr:
-    if serr.errno == errno.EADDRINUSE:
-        closeSocket()
-        s.bind((HOST, PORT))
+s.bind((HOST, PORT))
 s.listen(1024)
 #Set 30 minute timeout
 s.settimeout(1800)
@@ -55,6 +55,11 @@ while True:
         #Here we define the output method to just send the output of the diracCommand wrapper.
         def output(data):
             conn.sendall(repr(data))
+
+        if cmd=='close-connection':
+            conn.shutdown(socket.SHUT_RDWR)
+            conn.close()
+            continue
 
         if cmd=='close-server':
             conn.shutdown(socket.SHUT_RDWR)

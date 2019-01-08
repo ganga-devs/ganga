@@ -5,6 +5,7 @@ import socket
 import inspect
 import traceback
 import pickle
+import uuid
 from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaCore.Utility.Config import getConfig
@@ -50,29 +51,42 @@ exportToGPI('diracAPI', diracAPI, 'Functions')
 
 running_dirac_process = False
 dirac_process = None
+dirac_process_ids = None
+dirac_hash = None
 def startDiracProcess():
     '''
     Start a subprocess that runs the DIRAC commands
     '''
+    HOST = '127.0.0.1'  #Connect to localhost
     import subprocess
     from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes, GangaDiracError
     global dirac_process
     #Some magic to locate the python script to run
     from GangaDirac.Lib.Server.InspectionClient import runClient
+    #Create a socket and bind it to 0 to find a free port
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((HOST, 0))
+    PORT = s.getsockname()[1]
+    s.close()
+    #Pass the port no and random string as arguments to the popen
+    rand_hash = uuid.uuid1()
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'DiracProcess.py')
-    dirac_process = subprocess.Popen(serverpath, env = getDiracEnv())
+    popen_cmd = [serverpath, str(PORT)]
+    env_to_send = getDiracEnv()
+    env_to_send['ganga_rand_hash'] = str(rand_hash)
+    dirac_process = subprocess.Popen(popen_cmd, env = env_to_send)
     global running_dirac_process
-    running_dirac_process = dirac_process.pid
+    running_dirac_process = (dirac_process.pid, PORT)
+    global dirac_process_ids
+    dirac_process_ids = (dirac_process.pid, PORT, rand_hash)
 
     end_trans = '###END-TRANS###'
-    HOST = '127.0.0.1'  # The server's hostname or IP address
-    PORT = 42642        # The port used by the server
 
     data = ''
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #We have to wait a little bit for the subprocess to start the server so we try until the connection stops being refused. Set a limit of one minute.
     connection_timeout = time.time() + 60
     started = False
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     while time.time()<connection_timeout:
         try:
             s.connect((HOST, PORT))
@@ -81,7 +95,8 @@ def startDiracProcess():
             time.sleep(1)
     if not started:
         raise GangaDiracError("Failed to start the Dirac server process!")
-    dirac_command = getDiracCommandIncludes()
+    dirac_command = str(rand_hash)
+    dirac_command = dirac_command + getDiracCommandIncludes()
     dirac_command = dirac_command + end_trans
     s.sendall(dirac_command)
     data = s.recv(1024)
@@ -96,7 +111,6 @@ def stopDiracProcess():
     Stop the Dirac process if it is running
     '''
     global running_dirac_process
-    logger.debug('dirac process state: %s ' % running_dirac_process)
     if running_dirac_process:
         logger.info('Stopping the DIRAC process')
         dirac_process.kill()
