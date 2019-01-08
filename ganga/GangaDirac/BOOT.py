@@ -105,7 +105,6 @@ def startDiracProcess():
     data = s.recv(1024)
     s.close()
 
-
 exportToGPI('startDiracProcess', startDiracProcess, 'Functions')
 
 def stopDiracProcess():
