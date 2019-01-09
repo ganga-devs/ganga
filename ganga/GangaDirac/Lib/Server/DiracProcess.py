@@ -4,7 +4,7 @@ import os
 import errno
 import socket
 import traceback
-HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
+HOST = 'localhost'  # Standard loopback interface address (localhost)
 PORT = int(sys.argv[1])        # Port to listen on
 rand_hash = raw_input() 
 import time
