@@ -10,7 +10,7 @@ rand_hash = raw_input()
 import time
 #We have to define an output function a placeholder here.
 def output(data):
-    print data
+    pass
 
 #A function to shutdown an existing processes
 def closeSocket():
