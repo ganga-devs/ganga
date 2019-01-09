@@ -8,7 +8,7 @@ HOST = 'localhost'  # Standard loopback interface address (localhost)
 PORT = int(sys.argv[1])        # Port to listen on
 rand_hash = raw_input() 
 import time
-#We have to define an output function a placeholder here.
+#We have to define an output function as a placeholder here.
 def output(data):
     pass
 
