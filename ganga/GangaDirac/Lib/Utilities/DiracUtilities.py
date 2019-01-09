@@ -237,7 +237,7 @@ def execute(command,
                 startDiracProcess()
             #Set up a socket to connect to the process
             from GangaDirac.BOOT import dirac_process_ids
-            HOST = '127.0.0.1'  # The server's hostname or IP address
+            HOST = 'localhost'  # The server's hostname or IP address
             PORT = dirac_process_ids[1]        # The port used by the server
 
             s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -56,7 +56,7 @@ def startDiracProcess():
     '''
     Start a subprocess that runs the DIRAC commands
     '''
-    HOST = '127.0.0.1'  #Connect to localhost
+    HOST = 'localhost'  #Connect to localhost
     end_trans = '###END-TRANS###'
     import subprocess
     from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes, GangaDiracError
@@ -77,7 +77,7 @@ def startDiracProcess():
     running_dirac_process = (dirac_process.pid, PORT)
 
     #Now set a random string to make sure only commands from this sessions are executed
-    rand_hash = uuid.uuid1()
+    rand_hash = uuid.uuid4()
     global dirac_process_ids
     dirac_process_ids = (dirac_process.pid, PORT, rand_hash)
     #Pipe the random string without waiting for the process to finish.
