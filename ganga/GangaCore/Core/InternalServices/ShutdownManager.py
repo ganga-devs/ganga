@@ -21,6 +21,7 @@ from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import getStackTra
 from GangaCore.GPIDev.Lib.Tasks import stopTasks
 from GangaCore.GPIDev.Credentials import CredentialStore
 from GangaCore.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
+from GangaDirac.BOOT import stopDiracProcess
 
 # Globals
 logger = getLogger()
@@ -66,6 +67,12 @@ def _unprotected_ganga_exitfuncs():
                 monitoring_component.join()
         except Exception as err:
             logger.exception("Exception raised while stopping the monitoring: %s" % err)
+
+    # Terminate the Dirac server thread if it is running
+    try:
+        stopDiracProcess()
+    except Exception as err:
+        logger.exception("Exception raised while stopping the Dirac process: %s" %err)
 
     # Stop the tasks system from running
     try:

@@ -208,7 +208,7 @@ class DiracBase(IBackend):
         dirac_cmd = """execfile(\'%s\')""" % myscript
         submitFailures = {}
         try:
-            result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True)
+            result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True, new_subprocess = True)
 
         except GangaDiracError as err:
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
@@ -1181,7 +1181,7 @@ class DiracBase(IBackend):
         for sj in jobSlice:
             inputDict[sj.backend.id] = sj.getOutputWorkspace().getPath()
         statusmapping = configDirac['statusmapping']
-        returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, repr(statusmapping), downloadSandbox), cred_req=jobSlice[0].backend.credential_requirements)
+        returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, repr(statusmapping), downloadSandbox), cred_req=jobSlice[0].backend.credential_requirements, new_subprocess = True)
 
         #Cycle over the jobs and store the info
         for sj in jobSlice:
@@ -1319,7 +1319,7 @@ class DiracBase(IBackend):
 
         statusmapping = configDirac['statusmapping']
 
-        result, bulk_state_result = execute('monitorJobs(%s, %s)' %( repr(dirac_job_ids), repr(statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements)
+        result, bulk_state_result = execute('monitorJobs(%s, %s)' %( repr(dirac_job_ids), repr(statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements, new_subprocess = True)
 
         #result = results[0]
         #bulk_state_result = results[1]
