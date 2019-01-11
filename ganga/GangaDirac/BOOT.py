@@ -68,7 +68,6 @@ def startDiracProcess():
     s.bind((HOST, 0))
     PORT = s.getsockname()[1]
     s.close()
-
     #Pass the port no as an argument to the popen
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'DiracProcess.py')
     popen_cmd = [serverpath, str(PORT)]
@@ -89,7 +88,7 @@ def startDiracProcess():
     connection_timeout = time.time() + 60
     started = False
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while time.time()<connection_timeout:
+    while time.time()<connection_timeout and not started:
         try:
             s.connect((HOST, PORT))
             started = True
