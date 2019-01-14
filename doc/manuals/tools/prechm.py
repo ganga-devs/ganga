@@ -12,7 +12,7 @@
     Renamed from make_chm.py to prechm.py, and checked into the Python
     project, 19-Apr-2002 by Tim Peters.  Assorted modifications by Tim
     and Fred Drake.  Obtained from Robin Dunn's .chm packaging of the
-    Python 2.2 docs, at <http://alldunn.com/python/>.
+    Python 2.2 docs, at <http://alldunn.com/ganga/>.
 """
 
 import sys
