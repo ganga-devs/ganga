@@ -12,7 +12,7 @@ pip install --upgrade git+https://github.com/ganga-devs/ganga.git@develop
 
 deactivate
 
-sed -i '1s/.*/#!\/usr\/bin\/env python/' bin/ganga
+sed -i '1s/.*/#!\/usr\/bin\/env python2\.7/' bin/ganga
 
 cd ~
 
