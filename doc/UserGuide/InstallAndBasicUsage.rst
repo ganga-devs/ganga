@@ -64,7 +64,7 @@ To update an install to the latest code form github develop (FOR DEVELOPERS ONLY
     wget http://ganga.web.cern.ch/ganga/download/ganga-install
     chmod +x ganga-install
     ./ganga-install 6.1.20
-    cd ~/GangaCore/install
+    cd ~/Ganga/install
     rm -fr 6.1.20
     git clone https://github.com/ganga-devs/ganga
     mv ganga 6.1.20
