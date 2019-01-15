@@ -240,8 +240,17 @@ def execute(command,
             HOST = 'localhost'  # The server's hostname or IP address
             PORT = dirac_process_ids[1]        # The port used by the server
 
-            s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((HOST, PORT))
+            #Put inside a try/except in case the existing process has timed out
+            try:
+                s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((HOST, PORT))
+            except socket.error as serr:
+                #Start a new process
+                startDiracProcess()
+                from GangaDirac.BOOT import dirac_process_ids
+                PORT = dirac_process_ids[1]
+                s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((HOST, PORT))
 
             #Send a random string, then change the directory to carry out the command, then send the command
             command_to_send  = str(dirac_process_ids[2])
