@@ -232,13 +232,13 @@ def execute(command,
     if not new_subprocess:
         with Dirac_Exec_Lock:
             # First check if a Dirac process is running
-            import GangaDirac.BOOT as boot
-            if not boot.running_dirac_process:
+            from GangaDirac.BOOT import running_dirac_process
+            if not running_dirac_process:
                 startDiracProcess()
             #Set up a socket to connect to the process
             from GangaDirac.BOOT import dirac_process_ids
             HOST = 'localhost'  # The server's hostname or IP address
-            PORT = boot.dirac_process_ids[1]        # The port used by the server
+            PORT = dirac_process_ids[1]        # The port used by the server
 
             #Put inside a try/except in case the existing process has timed out
             try:
@@ -248,7 +248,7 @@ def execute(command,
                 #Start a new process
                 startDiracProcess()
                 from GangaDirac.BOOT import dirac_process_ids
-                PORT = boot.dirac_process_ids[1]
+                PORT = dirac_process_ids[1]
                 s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((HOST, PORT))
 
