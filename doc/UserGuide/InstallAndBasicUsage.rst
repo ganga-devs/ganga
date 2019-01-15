@@ -146,7 +146,7 @@ top of the usual IPython functionality:
     under certain conditions; type license() for details.
 
 
-    Ganga.Utility.Config               : INFO     reading config file /home/mws/GangaCore/install/6.1.14-pre/ganga/GangaAtlas/Atlas.ini
+    Ganga.Utility.Config               : INFO     reading config file /home/mws/Ganga/install/6.1.14-pre/ganga/GangaAtlas/Atlas.ini
     Ganga.Utility.Config               : INFO     reading config file /home/mws/.gangarc
 
     For help visit the ATLAS Distributed Analysis Help eGroup:
