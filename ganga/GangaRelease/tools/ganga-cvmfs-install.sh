@@ -16,7 +16,7 @@ pip install git+https://github.com/ganga-devs/ganga.git@$1
 
 deactivate
 
-sed -i '1s/.*/#!\/usr\/bin\/env python/' $1/bin/ganga
+sed -i '1s/.*/#!\/usr\/bin\/env python2\.7/' $1/bin/ganga
 
 rm -f /cvmfs/ganga.cern.ch/Ganga/install/LATEST
 
