@@ -80,11 +80,10 @@ class Executable(IPrepareApp):
         A method to place the Executable application into a prepared state.
 
         The application wil have a Shared Directory object created for it. 
-        If the application's 'exe' attribute references a File() object or
-        is a string equivalent to the absolute path of a file, the file 
+        If the application's 'exe' attribute references a File() object the file 
         will be copied into the Shared Directory.
 
-        Otherwise, it is assumed that the 'exe' attribute is referencing a 
+        Otherwise if the 'exe' is a string, it is assumed that the 'exe' attribute is referencing a 
         file available in the user's path (as per the default "echo Hello World"
         example). In this case, a wrapper script which calls this same command 
         is created and placed into the Shared Directory.
