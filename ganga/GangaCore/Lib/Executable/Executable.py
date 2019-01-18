@@ -37,6 +37,8 @@ class Executable(IPrepareApp):
     with its full path on the worker node:
        app.exe = '/bin/date'
 
+    If the string can be resolved to an existing file, ganga will copy the file to the sandbox to be shipped to the WN.
+
     A command string may be either an absolute path ('/bin/date') or a command name ('echo').
     Relative paths ('a/b') or directory paths ('/a/b/') are not allowed because they have no meaning
     on the worker node where the job executes.
