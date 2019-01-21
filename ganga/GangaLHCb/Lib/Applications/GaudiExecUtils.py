@@ -98,17 +98,19 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
             myUse (str): This is a git lb-use which will be run once the lb-dev has executed
             myFolder (str): This is a git lb-checkout after the lb-use. Assumes the master branch of the use project.
     """
+
+    full_path = expandfilename(myPath, True)
+    if not path.exists(full_path):
+        makedirs(full_path)
+
     #First guess a suitable platform for checking out the application
-    verStat, verOut, verErr = _exec_cmd('lb-sdb-query listPlatforms %s %s' % (myApp, myVer), myPath)
+    verStat, verOut, verErr = _exec_cmd('lb-sdb-query listPlatforms %s %s' % (myApp, myVer), full_path)
     if verStat != 0 or len(verOut.split('\n'))==0:
         logger.error("lb-sdb-query listPlatforms %s %s failed!" % (myApp, myVer))
         raise ApplicationPrepareError(verErr)
 
     platformToUse = verOut.split('\n')[-2]
 
-    full_path = expandfilename(myPath, True)
-    if not path.exists(full_path):
-        makedirs(full_path)
     if not path.exists(full_path + '/' + myApp + 'Dev_' +myVer):
         devStat, devOut, devErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && lb-dev %s/%s' % (platformToUse, platformToUse, myApp, myVer), full_path)
         logger.info("Running lb-dev %s %s with platform %s" % (myApp, myVer, platformToUse))
