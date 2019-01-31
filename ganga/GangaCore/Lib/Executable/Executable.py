@@ -228,7 +228,7 @@ class RTHandler(IRuntimeHandler):
                 prepared_exe = File(os.path.join(
                     os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
 
-        c = StandardJobConfig(prepared_exe, stripProxy(app).getJobObject().inputsandbox, convertIntToStringArgs(app.args), stripProxy(app).getJobObject().outputsandbox)
+        c = StandardJobConfig(prepared_exe, stripProxy(app).getJobObject().inputsandbox, convertIntToStringArgs(app.args), stripProxy(app).getJobObject().outputsandbox, app.env)
         return c
 
 
