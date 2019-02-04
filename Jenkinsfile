@@ -1,5 +1,4 @@
 pipeline {
-  node{
   agent any
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
@@ -66,5 +65,4 @@ pipeline {
       sh "docker rmi --force gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID}"
     }
   }
-}
 }
