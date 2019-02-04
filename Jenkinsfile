@@ -1,3 +1,4 @@
+node{
 pipeline {
   agent any
   options {
@@ -65,4 +66,5 @@ pipeline {
       sh "docker rmi --force gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID}"
     }
   }
+}
 }
