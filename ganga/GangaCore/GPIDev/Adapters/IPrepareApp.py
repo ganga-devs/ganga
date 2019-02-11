@@ -119,16 +119,9 @@ class IPrepareApp(IApplication):
                 logger.debug('found a list')
                 for subitem in prepitem:
                     if isType(subitem, str):
-                        # we have a file. if it's an absolute path, copy it to
-                        # the shared dir
-                        if os.path.abspath(subitem) == subitem:
-                            logger.debug('Sending file %s to shared directory.' % (subitem))
-                            try:
-                                self.copyIntoPrepDir(subitem)
-                            except IOError as e:
-                                logger.error(e)
-                                return 0
+                        logger.debug('found a string')
                     elif isType(subitem, File) and subitem.name is not '':
+                        logger.debug('found a file')
                         logger.debug('Sending file object %s to shared directory' % subitem.name)
                         try:
                             self.copyIntoPrepDir(subitem.name)
@@ -137,15 +130,6 @@ class IPrepareApp(IApplication):
                             return 0
             elif isinstance(prepitem, str):
                 logger.debug('found a string')
-                # we have a file. if it's an absolute path, copy it to the
-                # shared dir
-                if prepitem and os.path.abspath(prepitem) == prepitem:
-                    logger.debug('Sending string file %s to shared directory.' % (prepitem))
-                    try:
-                        self.copyIntoPrepDir(prepitem)
-                    except IOError as e:
-                        logger.error(e)
-                        return 0
             elif isType(prepitem, File) and prepitem.name is not '':
                 logger.debug('found a file')
                 logger.debug('Sending "File" object %s to shared directory' % prepitem.name)
