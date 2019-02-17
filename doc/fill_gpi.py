@@ -14,8 +14,8 @@ from itertools import izip_longest
 import shutil
 
 doc_dir = os.path.dirname(os.path.realpath(__file__))
-python_dir = doc_dir + '/../python'
-sys.path.insert(0, os.path.abspath(os.path.join(doc_dir, '..', 'python')))
+python_dir = doc_dir + '/../ganga'
+sys.path.insert(0, os.path.abspath(os.path.join(doc_dir, '..', 'ganga')))
 
 from GangaCore.GPIDev.Base.Proxy import GPIProxyObject, stripProxy, getName
 
