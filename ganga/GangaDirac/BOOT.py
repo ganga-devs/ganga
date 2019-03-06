@@ -1,3 +1,11 @@
+import os
+import sys
+import time
+import socket
+import inspect
+import traceback
+import pickle
+import uuid
 from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaCore.Utility.Config import getConfig
@@ -8,7 +16,6 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 logger = getLogger()
 #user_threadpool       = WorkerThreadPool()
 #monitoring_threadpool = WorkerThreadPool()
-
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
@@ -42,16 +49,80 @@ exportToGPI('diracAPI', diracAPI, 'Functions')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
+running_dirac_process = False
+dirac_process = None
+dirac_process_ids = None
+def startDiracProcess():
+    '''
+    Start a subprocess that runs the DIRAC commands
+    '''
+    HOST = 'localhost'  #Connect to localhost
+    end_trans = '###END-TRANS###'
+    import subprocess
+    from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes, GangaDiracError
+    global dirac_process
+    #Some magic to locate the python script to run
+    from GangaDirac.Lib.Server.InspectionClient import runClient
+    #Create a socket and bind it to 0 to find a free port
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((HOST, 0))
+    PORT = s.getsockname()[1]
+    s.close()
+    #Pass the port no as an argument to the popen
+    serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'DiracProcess.py')
+    popen_cmd = ['python',serverpath, str(PORT)]
+    dirac_process = subprocess.Popen(popen_cmd, env = getDiracEnv(), stdin=subprocess.PIPE)
+    global running_dirac_process
+    running_dirac_process = (dirac_process.pid, PORT)
+
+    #Now set a random string to make sure only commands from this sessions are executed
+    rand_hash = uuid.uuid4()
+    global dirac_process_ids
+    dirac_process_ids = (dirac_process.pid, PORT, rand_hash)
+    #Pipe the random string without waiting for the process to finish.
+    dirac_process.stdin.write(bytes(str(rand_hash)))
+    dirac_process.stdin.close()
+
+    data = ''
+    #We have to wait a little bit for the subprocess to start the server so we try until the connection stops being refused. Set a limit of one minute.
+    connection_timeout = time.time() + 60
+    started = False
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    while time.time()<connection_timeout and not started:
+        try:
+            s.connect((HOST, PORT))
+            started = True
+        except socket.error as serr:
+            time.sleep(1)
+    if not started:
+        raise GangaDiracError("Failed to start the Dirac server process!")
+    #Now setup the Dirac environment in the subprocess
+    dirac_command = str(rand_hash)
+    dirac_command = dirac_command + getDiracCommandIncludes()
+    dirac_command = dirac_command + end_trans
+    s.sendall(dirac_command)
+    data = s.recv(1024)
+    s.close()
+
+exportToGPI('startDiracProcess', startDiracProcess, 'Functions')
+
+def stopDiracProcess():
+    '''
+    Stop the Dirac process if it is running
+    '''
+    global running_dirac_process
+    if running_dirac_process:
+        logger.info('Stopping the DIRAC process')
+        dirac_process.kill()
+        running_dirac_process = False
+
+exportToGPI('stopDiracProcess', stopDiracProcess, 'Functions')
 
 def diracAPI_interactive(connection_attempts=5):
     '''
     Run an interactive server within the DIRAC environment.
     '''
-    import os
-    import sys
-    import time
-    import inspect
-    import traceback
+
     from GangaDirac.Lib.Server.InspectionClient import runClient
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'InspectionServer.py')
     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
@@ -89,7 +160,6 @@ exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
 
 
 def getDiracFiles():
-    import os
     from GangaDirac.Lib.Files.DiracFile import DiracFile
     from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
     filename = DiracFile.diracLFNBase().replace('/', '-') + '.lfns'
@@ -113,9 +183,6 @@ def dumpObject(object, filename):
     export the objects using the pickle persistency format rather than a Ganga streaming
     (human readable) format.
     '''
-    import os
-    import pickle
-    import traceback
     try:
         with open(os.path.expandvars(os.path.expanduser(filename)), 'wb') as f:
             pickle.dump(stripProxy(object), f)
@@ -131,9 +198,6 @@ def loadObject(filename):
     export the objects using the pickle persistency format rather than a Ganga streaming
     (human readable) format.
     '''
-    import os
-    import pickle
-    import traceback
     try:
         with open(os.path.expandvars(os.path.expanduser(filename)), 'rb') as f:
             r = pickle.load(f)

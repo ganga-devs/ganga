@@ -133,6 +133,17 @@ class GaudiExec(IPrepareApp):
     This will add some options to running the job to create a summary.xml file which is downloaded in the output sandbox and parsed by ganga. Ganga will also
     merge the summary.xml files using the Gaudi XML merging script for each subjob to create the metadata for the whole job.
 
+    ========================
+    Use subjob id in options
+    ========================
+
+    The GaudiExec application sets an environment variable 'ganga_jobid' when it runs. This is the id of the job. This can then be used in your job options:
+
+    import os
+    jobid = os.getenv('ganga_jobid')
+
+    For example the outputfile of each subjob can be labelled with the subjob number, useful in case you want to further process your outputfiles on the grid.
+
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
@@ -201,7 +212,7 @@ class GaudiExec(IPrepareApp):
         self.uploadedInput = None
         self.jobScriptArchive = None
 
-
+    @gaudiExecBuildLock
     def prepare(self, force=False):
         """
         This method creates a set of prepared files for the application to pass to the RTHandler
@@ -445,7 +456,6 @@ class GaudiExec(IPrepareApp):
         return rc, stdout, stderr
 
 
-    @gaudiExecBuildLock
     def buildGangaTarget(self):
         """
         This builds the ganga target 'ganga-input-sandbox' for the project defined by self.directory

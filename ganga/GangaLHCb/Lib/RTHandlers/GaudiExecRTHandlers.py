@@ -69,7 +69,7 @@ def getAutoDBTags(job):
         if app in job.application.directory:
             prefix = app
     inputsandbox = []
-    ddb, conddb = execute('getDBtags("{0}")'.format(job.inputdata[0].lfn)) # take the tags only from the first file
+    ddb, conddb = execute('getDBtagsFromLFN("{0}")'.format(job.inputdata[0].lfn)) # take the tags only from the first file
     tagOpts = 'from Configurables import ' + prefix +'\n' 
     tagOpts += prefix + '().DDDBtag = ' + "'" + ddb + "'\n"
     tagOpts += prefix + '().CondDBtag = ' + "'" + conddb + "'"
@@ -156,10 +156,12 @@ def prepareCommand(app):
 
     sourceEnv = app.getEnvScript()
 
+    run_cmd = ' export ganga_jobid=%s && ./run ' % app.getJobObject().fqid
+
     if not app.useGaudiRun:
-        full_cmd = sourceEnv + './run python %s' % app.getWrapperScriptName()
+        full_cmd = sourceEnv + run_cmd + 'python %s' % app.getWrapperScriptName()
     else:
-        full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
+        full_cmd = sourceEnv + run_cmd + "gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
         if app.extraOpts:
             full_cmd += ' ' + app.getExtraOptsFileName()
         if app.getMetadata:
@@ -361,7 +363,6 @@ def generateDiracScripts(app):
     generateJobScripts(app, appendJobScripts=True)
 
     job = app.getJobObject()
-
     new_df = uploadLocalFile(job, app.jobScriptArchive.namePattern, app.jobScriptArchive.localDir)
 
     app.jobScriptArchive = new_df
@@ -392,9 +393,16 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
         if execute('checkSEStatus("%s", "%s")' % (SE, 'Write')):
             try:
                 returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
-                break
+                #We have to check the failureReason as DiracFile put doesn't necessarily raise an exception on failure
+                if not returnable.failureReason=='':
+                    logger.warning("Upload of input file as LFN %s to SE %s failed, trying another SE" % (new_lfn, SE))
+                    #Clear the failure reason and continue
+                    new_df.failureReason = ''
+                    continue
+                else:
+                    break
             except GangaDiracError as err:
-                logger.warning("Upload of input file as LFN %s to SE %s failed" % (new_lfn, SE)) 
+                logger.warning("Upload of input file as LFN %s to SE %s failed, trying another SE" % (new_lfn, SE)) 
     if not returnable:
         raise GangaException("Failed to upload input file to any SE")
     if should_del:

@@ -5,7 +5,6 @@
 ################################################################################
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -22,7 +21,7 @@ shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']
 
 class VFT_make_ana(IPrepareApp):
     """
-    VFT_make_ana application running reconUtils/macros/grtf_VFT/make_ana.py
+    VFT_make_ana application running macros/grtf_VFT/make_ana.py
 
     TODO documentation:
     - It is possible to run make_ana alone or make_ana+make_pdf
@@ -116,7 +115,7 @@ class VFT_make_ana(IPrepareApp):
         args.extend(fileList)
 
         if self.run_pdf:
-          args.append('&&')
+          args.append('2>&1 && echo "... GRTF ..." &&')
           args.append('${ND280ANALYSISTOOLSROOT:-${RECONUTILSROOT}}/macros/grtf/pdfgen/make_pdf.py')
 
           if not 'ana_output' in [self.pdf_rdp, self.pdf_mcp, self.pdf_oldrdp, self.pdf_oldmcp]:
@@ -144,7 +143,9 @@ class VFT_make_ana(IPrepareApp):
         # Create the bash script and put it in input dir.
         script = '#!/bin/bash\n'
         script += 'source '+self.cmtsetup+'\n'
-        script += ' '.join(args)+'\n'
+        script += 'echo "GRTF ..."\n'
+        script += ' '.join(args)+' 2>&1\n'
+        script += 'echo "... GRTF"\n'
 
         from GangaCore.GPIDev.Lib.File import FileBuffer
 

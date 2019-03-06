@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import pytest
 from GangaCore.testlib.mark import external
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
@@ -9,7 +8,7 @@ class TestDatasets(GangaUnitTest):
 
     def testDatasetsFunctions(self):
 
-        from GangaCore.GPI import DiracFile, PhysicalFile, LHCbDataset, Job, LocalFile
+        from GangaCore.GPI import DiracFile, LHCbDataset, Job, LocalFile
 
         # test constructors/setters
         ds = LHCbDataset(['lfn:a', 'pfn:b'])
@@ -36,7 +35,7 @@ class TestDatasets(GangaUnitTest):
 
         # check the LHCbDataset functions:
 
-        assert ds.getLFNs() == ['a','c']
+        assert ds.getLFNs() == ['a', 'c']
         assert ds.getPFNs() == ['b']
 
         ds2 = LHCbDataset(['lfn:a', 'lfn:d'])
@@ -44,19 +43,20 @@ class TestDatasets(GangaUnitTest):
         assert len(ds) == 4
 
         # check the useful difference functions etc
-        assert sorted(ds.difference(ds2).getFileNames()) == ['b','c']
-        assert sorted(ds.symmetricDifference(ds2).getFileNames()) == ['b','c']
+        assert sorted(ds.difference(ds2).getFileNames()) == ['b', 'c']
+        assert sorted(ds.symmetricDifference(ds2).getFileNames()) == ['b', 'c']
         assert sorted(ds.intersection(ds2).getFileNames()) == ['a', 'd']
         assert sorted(ds.union(ds2).getFileNames()) == ['a', 'b', 'c', 'd']
 
     @external
     def testDatasets(self):
 
-        from GangaCore.GPI import DiracFile, PhysicalFile, LHCbDataset, Job, LocalFile
+        from GangaCore.GPI import LHCbDataset
 
-        #test behaviour with files on the grid
+        # test behaviour with files on the grid
 
-        LFN_DATA = ['LFN:/lhcb/LHCb/Collision17/DIMUON.DST/00067804/0003/00067804_00030224_1.dimuon.dst', 'LFN:/lhcb/LHCb/Collision17/DIMUON.DST/00067804/0003/00067804_00030520_1.dimuon.dst']
+        LFN_DATA = ['LFN:/lhcb/LHCb/Collision17/DIMUON.DST/00067804/0003/00067804_00030224_1.dimuon.dst',
+                    'LFN:/lhcb/LHCb/Collision17/DIMUON.DST/00067804/0003/00067804_00030520_1.dimuon.dst']
 
         ds = LHCbDataset(LFN_DATA)
 
