@@ -99,7 +99,7 @@ release = {
   'prerelease': False
 }
 
-r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), auth=('%s', '%s')  % (os.environ.get('apiuser'), os.environ.get('apipassword'))})
+r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), auth=(os.environ.get('apiuser'), os.environ.get('apipassword'))})
 
 r.raise_for_status()
 END
