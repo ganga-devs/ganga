@@ -78,6 +78,7 @@ pipeline {
     always { 
       cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'cov-*.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
       sh "docker rmi --force gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID}"
+      sh "docker system prune -f"
     }
   }
 }
