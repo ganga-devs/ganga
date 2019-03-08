@@ -29,7 +29,8 @@ RUN echo -e "[DIRAC]\nDiracEnvSource = /dirac_ui/bashrc" > /root/.gangarc
 RUN echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> /root/.gangarc
 RUN echo -e "[defaults_DiracProxy]\ngroup=${VO}_user" >> /root/.gangarc
 #RUN . /ganga/venv/bin/activate && yes | ganga -g
+ENV GANGA_CONFIG_FILE /root/.gangarc
+ENV GANGA_CONFIG_PATH GangaDirac/Dirac.ini
 
-CMD export GANGA_CONFIG_FILE=/root/.gangarc &&\
-    . /ganga/ganga/GangaDirac/testlib/setup_env.sh &&\
-    /ganga/venv/bin/pytest ganga/GangaDirac/test --cov-report term --cov-report xml:cov-GangaDirac.xml --cov ganga/GangaDirac --junitxml tests-GangaDirac.xml
+
+CMD /ganga/venv/bin/pytest ganga/GangaDirac/test --cov-report term --cov-report xml:cov-GangaDirac.xml --cov ganga/GangaDirac --junitxml tests-GangaDirac.xml
