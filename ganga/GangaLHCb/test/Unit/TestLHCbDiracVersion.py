@@ -14,22 +14,6 @@ logger = getLogger(modulename=True)
 class TestLHCbDiracVersion(GangaUnitTest):
     """Test how the LHCbDIRAC version is set"""
 
-    def test_wildcard(self):
-        """See if version can be specified as a wildcard"""
-        from GangaLHCb.Utility.LHCbDIRACenv import select_dirac_version
-        version = select_dirac_version('v*')
-        assert version[0] == 'v'
-        assert len(version) > 1
-
-    def test_dereference(self):
-        """Test that soft-links are dereferenced"""
-
-        from GangaLHCb.Utility.LHCbDIRACenv import select_dirac_version
-
-        version = select_dirac_version('prod')
-        assert version[0] == 'v'
-        assert len(version) > 1
-
     def test_store(self):
         """Make sure that file with environment is stored GANGADIRACENVIRONMENT env variable"""
         from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
