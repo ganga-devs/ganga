@@ -22,7 +22,7 @@ RUN --mount=type=secret,id=usercert,dst=/root/.globus/usercert.pem,readonly  --m
 RUN . /dirac_ui/bashrc && dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
 RUN --mount=type=secret,id=usercert,dst=/root/.globus/usercert.pem,readonly  --mount=type=secret,id=userkey,dst=/root/.globus/userkey.pem,readonly . /dirac_ui/bashrc && dirac-proxy-init -g ${VO}_user -M
 RUN cp /tmp/x509up_u0 /tmp/x509up_u0:${VO}_user
-ENV X509_USER_PROXY /tmp/x509up_u0
+ENV X509_USER_PROXY /tmp/x509up_u0:${VO}_user
 
 # Update the gangarc file to point to DIRAC UI
 ##############################################
