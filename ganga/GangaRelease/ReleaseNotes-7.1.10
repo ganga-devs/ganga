@@ -1,0 +1,25 @@
+**************************************************************************************************************
+7.1.10 (2019/03/07)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Bugfix for setting environment when running Executable locally. #1411
+* Updates for the SLURM backend. #1409
+* Update CVMFS installation script to only use python 2.7. #1405
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Major improvement to how ganga interacts with DIRAC for small operations. A subprocess is started for the first interaction and left running so subsequent requests are much faster. #1394, #1397, #1398, #1407
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Bugfix to properly catch failures in GaudiExec file uploads and try another SE. #1415
+* Bugfix to prepare_cmake_app to expand full path. #1413
+* Correct typo in list of available DIRAC SEs. #1416
+* Bugfix for autoDBtags for files where the last production step is a merge. #1414
+
+**************************************************************************************************************

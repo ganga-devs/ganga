@@ -1731,8 +1731,6 @@ class Job(GangaObject):
                 if hasattr(self.application, 'is_prepared') and self.application.__getattribute__('is_prepared'):
                     if self.application.is_prepared is not True:
                         self.application.decrementShareCounter(self.application.is_prepared)
-                        for _ in self.subjobs:
-                            self.application.decrementShareCounter(self.application.is_prepared)
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
