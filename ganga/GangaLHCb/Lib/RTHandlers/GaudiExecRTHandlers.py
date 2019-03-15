@@ -702,6 +702,10 @@ if __name__ == '__main__':
     print("CWD: %s" % getcwd())
     print("Files found on WN: %s" % (listdir('.')))
 
+    if 'LHCb_release_area' not in environ:
+        environ['LHCb_release_area'] = '/cvmfs/lhcb.cern.ch/lib/lhcb/'
+
+
     # Extract any/_all_ (b/g)zip files on the WN
     extractAllTarFiles('.')
 

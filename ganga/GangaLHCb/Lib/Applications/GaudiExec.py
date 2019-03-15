@@ -400,7 +400,7 @@ class GaudiExec(IPrepareApp):
         """
         Return the script to setup the correct env on a WN
         """
-        return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbEnv -c %s && ' % (self.platform, self.platform)
+        return 'export CMTCONFIG=%s; source $LHCb_release_area/LBSCRIPTS/prod/InstallArea/scripts/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
     def execCmd(self, cmd):
         """
