@@ -12,6 +12,7 @@ ganga/ganga/GangaCore
 ganga/ganga/GangaDirac
 --------------------------------------------------------------------------------------------------------------
 * Update command delete to deleteJob. #1428
+* Fix for finding out job parameters with latest Dirac version. #1432
 
 --------------------------------------------------------------------------------------------------------------
 ganga/ganga/GangaLHCb
