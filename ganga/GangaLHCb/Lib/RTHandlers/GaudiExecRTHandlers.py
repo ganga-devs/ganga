@@ -154,7 +154,7 @@ def prepareCommand(app):
             raise ApplicationConfigurationError("The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                                 getName(opts_file))
 
-    sourceEnv = app.getEnvScript()
+    sourceEnv = app.getWNEnvScript()
 
     run_cmd = ' export ganga_jobid=%s && ./run ' % app.getJobObject().fqid
 
@@ -701,6 +701,10 @@ if __name__ == '__main__':
 
     print("CWD: %s" % getcwd())
     print("Files found on WN: %s" % (listdir('.')))
+
+    if 'LHCb_release_area' not in environ:
+        environ['LHCb_release_area'] = '/cvmfs/lhcb.cern.ch/lib/lhcb/'
+
 
     # Extract any/_all_ (b/g)zip files on the WN
     extractAllTarFiles('.')

@@ -396,6 +396,12 @@ class GaudiExec(IPrepareApp):
         return 'export CMTCONFIG=%s; source LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
 
+    def getWNEnvScript(self):
+        """
+        Return the script to setup the correct env on a WN
+        """
+        return 'export CMTCONFIG=%s; source $LHCb_release_area/LBSCRIPTS/prod/InstallArea/scripts/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+
     def execCmd(self, cmd):
         """
         This method executes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
