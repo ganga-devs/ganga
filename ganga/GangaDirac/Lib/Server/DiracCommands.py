@@ -10,7 +10,7 @@ def getJobGroupJobs(jg):
 @diracCommand
 def kill(id):
     ''' Kill a given DIRAC Job ID within DIRAC '''
-    return dirac.delete(id)
+    return dirac.deleteJob(id)
 
 
 @diracCommand
