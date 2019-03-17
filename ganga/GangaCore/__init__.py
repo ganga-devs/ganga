@@ -28,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '7.1.9'
+_gangaVersion = '7.1.10'
 _development = True
 
 # store a path to Ganga libraries
@@ -574,29 +574,36 @@ slurm_config.addOption('kill_res_pattern', '(^$)|(^scancel: error: .+)',
 #        Make sure that you remove all created files from there, otherwise
 #        SLURM will leave this directory (together with all files).
 #        Usually TMPDIR="${SCRATCHDIR}/tmp"
-#  Note: some SLURM systems automatically set the SCRATCH_LOCAL environment
-#        variable, which points to the job's temporary directory, which will
-#        automatically disappear when the job ends.
+#  Note: some SLURM systems can set the LOCALFS and / or the SCRATCH_LOCAL
+#        environment variables, which point to the job's temporary directory
+#        and which will automatically disappear when the job ends.
+#  Note: some SLURM systems can set the MEMFS environment variable, which
+#        points to the job's "RAM disk" resident temporary directory
+#        and which will automatically disappear when the job ends.
 #  Note: some (all?) computer clusters set the SCRATCH environment variable.
 #        Usually SCRATCHDIR="${SCRATCH}/slurm_jobdir/${SLURM_JOB_ID}"
 
 tempstr = '''
 env = os.environ
-scratchDir = env["SCRATCH"]
-jobnumid = env["SLURM_JOB_ID"]
-os.system("mkdir -p %s/tmp/%s/" % (scratchDir, jobnumid))
-os.chdir("%s/tmp/%s/" % (scratchDir, jobnumid))
-# os.environ["PATH"]+=":."
+jobnumid = env.get("SLURM_JOB_ID") or env.get("SLURM_JOBID") or "pid_"+str(os.getpid())
+scratchDir = env.get("MEMFS") or env.get("LOCALFS") or env.get("SCRATCH_LOCAL") or env.get("SCRATCHDIR") or env.get("SLURM_TMPDIR") or env.get("SCRATCH") or env.get("TMPDIR") or "/tmp"
+scratchDir = scratchDir+"/workdir"
+if not jobnumid in scratchDir: scratchDir = scratchDir+"_"+jobnumid
+os.system("mkdir -p "+scratchDir)
+os.chdir(scratchDir)
+# env["PATH"]+=":."
 '''
 slurm_config.addOption('preexecute', tempstr,
                        "String contains the first commands executing right after the job starts")
 
 tempstr = '''
 env = os.environ
-scratchDir = env["SCRATCH"]
-jobnumid = env["SLURM_JOB_ID"]
-os.chdir("%s/tmp/" % scratchDir)
-os.system("rm -rf %s/tmp/%s/" % (scratchDir, jobnumid))
+jobnumid = env.get("SLURM_JOB_ID") or env.get("SLURM_JOBID") or "pid_"+str(os.getpid())
+scratchDir = env.get("MEMFS") or env.get("LOCALFS") or env.get("SCRATCH_LOCAL") or env.get("SCRATCHDIR") or env.get("SLURM_TMPDIR") or env.get("SCRATCH") or env.get("TMPDIR") or "/tmp"
+scratchDir = scratchDir+"/workdir"
+if not jobnumid in scratchDir: scratchDir = scratchDir+"_"+jobnumid
+os.chdir("/tmp/")
+os.system("rm -rf "+scratchDir)
 '''
 slurm_config.addOption('postexecute', tempstr,
                        "String contains the last commands executing right before the job ends")
