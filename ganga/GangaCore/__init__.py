@@ -108,6 +108,7 @@ some packages such as GangaTest may be taken from the release area.""",
 conf_config.addOption('TextShell', 'IPython', """ The type of the interactive shell: IPython (cooler) or Console (limited)""")
 conf_config.addOption('StartupGPI', '', 'block of GPI commands executed at startup')
 conf_config.addOption('ReleaseNotes', True, 'Flag to print out the relevent subsection of release notes for each experiment at start up')
+conf_config.addOption('used_versions_path', '~/.cache/Ganga/', 'Path to the directory to store the file listing the used ganga versions')
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
                  'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=GangaCore.Utility.Config.expandvars)
 conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
@@ -149,7 +150,6 @@ conf_config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued b
 conf_config.addOption('Batch', 'LSF', 'default batch system')
 
 conf_config.addOption('AutoStartReg', True, 'AutoStart the registries, needed to access any jobs in registry therefore needs to be True for 99.999% of use cases')
-
 # ------------------------------------------------
 # IPython
 ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration''')
