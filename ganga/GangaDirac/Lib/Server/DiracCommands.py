@@ -198,7 +198,7 @@ def getOutputDataLFNs(id, pipe_out=True):
     message = 'The outputdata LFNs could not be found.'
 
     if parameters is not None and parameters.get('OK', False):
-        parameters = parameters['Value']
+        parameters = parameters['Value'][id]
         # remove the sandbox if it has been uploaded
         sandbox = None
         if 'OutputSandboxLFN' in parameters:
@@ -230,7 +230,7 @@ def normCPUTime(id, pipe_out=True):
     parameters = dirac.getJobParameters(id)
     ncput = None
     if parameters is not None and parameters.get('OK', False):
-        parameters = parameters['Value']
+        parameters = parameters['Value'][id]
         if 'NormCPUTime(s)' in parameters:
             ncput = parameters['NormCPUTime(s)']
     return ncput
