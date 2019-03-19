@@ -208,7 +208,7 @@ from GangaCore.Core.GangaThread import GangaThreadPool
 GangaThreadPool.shutdown_policy = 'batch'
 
 # This should now be safe
-ShutdownManager._ganga_run_exitfuncs()
+ShutdownManager._proteceted_ganga_exitfuncs()
 
 shutil.rmtree(gangadir, ignore_errors=True)
 ## FINISHED EXITING GANGA ##
