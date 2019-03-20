@@ -29,7 +29,7 @@ import GangaCore.Runtime
 gangadir = os.path.expandvars('$HOME/gangadir_sphinx_dummy')
 this_argv = [
     'ganga',  # `argv[0]` is usually the name of the program so fake that here
-    '-o[Configuration]RUNTIME_PATH=Ganga',
+    '-o[Configuration]RUNTIME_PATH=GangaCore',
     '-o[Configuration]gangadir={gangadir}'.format(gangadir=gangadir),
 ]
 
@@ -208,7 +208,7 @@ from GangaCore.Core.GangaThread import GangaThreadPool
 GangaThreadPool.shutdown_policy = 'batch'
 
 # This should now be safe
-ShutdownManager._ganga_run_exitfuncs()
+ShutdownManager._protected_ganga_exitfuncs()
 
 shutil.rmtree(gangadir, ignore_errors=True)
 ## FINISHED EXITING GANGA ##
