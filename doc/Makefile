@@ -218,4 +218,4 @@ pseudoxml:
 	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
 
 apidoc:
-	$(SPHINXAPIDOC) -f -o API ../ganga/Ganga -d10 -e
+	$(SPHINXAPIDOC) -f -o API ../ganga/GangaCore -d10 -e
