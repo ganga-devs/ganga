@@ -355,7 +355,8 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def new_version():
-        versions_filename = os.path.expanduser('~/.cache/Ganga/.used_versions')
+        from GangaCore.Utility.Config.Config import getConfig
+        versions_filename = os.path.join(os.path.expanduser(os.path.expandvars(getConfig('Configuration')['used_versions_path'])), '.used_versions')
         if not os.path.exists(os.path.dirname(versions_filename)):
             os.makedirs(os.path.dirname(versions_filename))
         if not os.path.exists(versions_filename):
@@ -380,7 +381,8 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def rollHistoryForward():
-        versions_filename = os.path.expanduser('~/.cache/Ganga/.used_versions')
+        from GangaCore.Utility.Config.Config import getConfig
+        versions_filename = os.path.join(os.path.expanduser(os.path.expandvars(getConfig('Configuration')['used_versions_path'])), '.used_versions')
         hasLoaded_newer = False
         with open(versions_filename, 'r') as versions_file:
             this_version = versions_file.read()
