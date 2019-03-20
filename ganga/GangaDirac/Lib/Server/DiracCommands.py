@@ -16,7 +16,7 @@ def kill(id):
 @diracCommand
 def peek(id):
     ''' Peek at the DIRAC Job id and return what we saw '''
-    return dirac.peek(id)
+    return dirac.peekJob(id)
 
 
 @diracCommand
