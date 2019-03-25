@@ -161,7 +161,11 @@ def prepareCommand(app):
     if not app.useGaudiRun:
         full_cmd = sourceEnv + run_cmd + 'python %s' % app.getWrapperScriptName()
     else:
-        full_cmd = sourceEnv + run_cmd + "gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
+        #If the job does not have inputdata don't include the data.py file in the run command. For Gauss jobs.
+        if app.getJobObject().inputdata:
+            full_cmd = sourceEnv + run_cmd + "gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
+        else:
+            full_cmd = sourceEnv + run_cmd + "gaudirun.py %s " % (' '.join(opts_names))
         if app.extraOpts:
             full_cmd += ' ' + app.getExtraOptsFileName()
         if app.getMetadata:
