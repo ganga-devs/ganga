@@ -164,10 +164,7 @@ def getOutputSandbox(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJ
             parameters = parameters['Value'][id]
             if 'OutputSandboxLFN' in parameters:
                 sandbox_lfn = parameters['OutputSandboxLFN']
-                download_result = getFile(sandbox_lfn, outputDir)
-                if download_result.get('OK'):
-                    result = download_result
-
+                result = dirac.getFile(sandbox_lfn, destDir=outputDir)
     return result
 
 
