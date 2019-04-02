@@ -27,7 +27,7 @@ from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.Core import monitoring_component
 from GangaCore.Runtime.GPIexport import exportToGPI
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError
 configDirac = getConfig('DIRAC')
 default_finaliseOnMaster = configDirac['default_finaliseOnMaster']
 default_downloadOutputSandbox = configDirac['default_downloadOutputSandbox']
