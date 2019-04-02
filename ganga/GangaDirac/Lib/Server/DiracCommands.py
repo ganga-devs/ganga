@@ -164,6 +164,7 @@ def getOutputSandbox(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJ
             parameters = parameters['Value'][id]
             if 'OutputSandboxLFN' in parameters:
                 result = dirac.getFile(parameters['OutputSandboxLFN'], destDir=outputDir)
+                dirac.removeFile(parameters['OutputSandboxLFN'])
     return result
 
 
