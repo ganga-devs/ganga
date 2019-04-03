@@ -80,12 +80,11 @@ class Executable(IPrepareApp):
         A method to place the Executable application into a prepared state.
 
         The application wil have a Shared Directory object created for it. 
-        If the application's 'exe' attribute references a File() object or
-        is a string equivalent to the absolute path of a file, the file 
+        If the application's 'exe' attribute references a File() object, it 
         will be copied into the Shared Directory.
 
-        Otherwise, it is assumed that the 'exe' attribute is referencing a 
-        file available in the user's path (as per the default "echo Hello World"
+        Otherwise, if the 'exe' is a string, it is assumed that it is referencing 
+        a file available in the user's path (as per the default "echo Hello World" 
         example). In this case, a wrapper script which calls this same command 
         is created and placed into the Shared Directory.
 
@@ -119,12 +118,14 @@ class Executable(IPrepareApp):
             # [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
             self.post_prepare()
 
-            if isinstance(self.exe, File):
-                source = self.exe.name
-            elif isinstance(self.exe, str):
+            if isinstance(self.exe, str):
                 source = self.exe
-            
-            if not os.path.exists(source):
+            elif isinstance(self.exe, File):
+                source = self.exe.name
+
+            if isinstance(self.exe, str):
+                logger.debug("exe is a string so no copying")
+            elif not os.path.exists(source):
                 logger.debug("Error copying exe: %s to input workspace" % str(source))
             else:
                 try:
@@ -221,15 +222,7 @@ class RTHandler(IRuntimeHandler):
         if app.is_prepared is not None:
             shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
             if isinstance(app.exe, str):
-                # we have a file. is it an absolute path?
-                if os.path.abspath(app.exe) == app.exe:
-                    logger.info("Submitting a prepared application; taking any input files from %s" % (app.is_prepared.name))
-                    prepared_exe = File(os.path.join(os.path.join(
-                        shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
-                # else assume it's a system binary, so we don't need to
-                # transport anything to the sharedir
-                else:
-                    prepared_exe = app.exe
+                prepared_exe = app.exe
             elif isinstance(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (app.is_prepared.name))
                 prepared_exe = File(os.path.join(
@@ -249,16 +242,7 @@ class LCGRTHandler(IRuntimeHandler):
             shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                        'shared', getConfig('Configuration')['user'])
             if isinstance(app.exe, str):
-                # we have a file. is it an absolute path?
-                if os.path.abspath(app.exe) == app.exe:
-                    logger.info("Submitting a prepared application; taking any input files from %s" % (
-                        app.is_prepared.name))
-                    prepared_exe = File(os.path.join(os.path.join(
-                        shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
-                # else assume it's a system binary, so we don't need to
-                # transport anything to the sharedir
-                else:
-                    prepared_exe = app.exe
+                prepared_exe = app.exe
             elif isinstance(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
@@ -278,16 +262,7 @@ class gLiteRTHandler(IRuntimeHandler):
             shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                        'shared', getConfig('Configuration')['user'])
             if isinstance(app.exe, str):
-                # we have a file. is it an absolute path?
-                if os.path.abspath(app.exe) == app.exe:
-                    logger.info("Submitting a prepared application; taking any input files from %s" % (
-                        app.is_prepared.name))
-                    prepared_exe = File(os.path.join(os.path.join(
-                        shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
-                # else assume it's a system binary, so we don't need to
-                # transport anything to the sharedir
-                else:
-                    prepared_exe = app.exe
+                prepared_exe = app.exe
             elif isinstance(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
