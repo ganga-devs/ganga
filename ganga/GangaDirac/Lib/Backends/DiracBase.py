@@ -27,6 +27,7 @@ from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.Core import monitoring_component
 from GangaCore.Runtime.GPIexport import exportToGPI
+from subprocess import check_output, CalledProcessError
 configDirac = getConfig('DIRAC')
 default_finaliseOnMaster = configDirac['default_finaliseOnMaster']
 default_downloadOutputSandbox = configDirac['default_downloadOutputSandbox']
@@ -1073,7 +1074,15 @@ class DiracBase(IBackend):
                 if job.master:
                     job.master.updateMasterJobStatus()
                 raise BackendError('Dirac', 'Problem retrieving outputsandbox: %s' % str(getSandboxResult))
-
+            #If the sandbox dict includes a Succesful key then the sandbox has been download from grid storage, likely due to being oversized. Untar it and issue a warning.
+            elif isinstance(getSandboxResult['Value'], dict) and getSandboxResult['Value'].get('Successful', False):
+                    try:
+                        sandbox_name = getSandboxResult['Value']['Successful'].values()[0]
+                        check_output(['tar', '-xvf', sandbox_name, '-C', output_path])
+                        check_output(['rm', sandbox_name])
+                        logger.warning('Output sandbox for job %s downloaded from grid storage due to being oversized.' % job.fqid)
+                    except CalledProcessError:
+                        logger.error('Failed to unpack output sandbox for job %s' % job.fqid)
             # finally update job to completed
             DiracBase._getStateTime(job, 'completed', completeTimeResult)
             if job.status in ['removed', 'killed']:
