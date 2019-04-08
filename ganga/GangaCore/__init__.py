@@ -641,7 +641,8 @@ output_config.addOption('AutoRemoveFilesWithJob', False,
                        'if True, each outputfile of type in list AutoRemoveFileTypes will be removed when the job is')
 output_config.addOption('AutoRemoveFileTypes', [
                        'DiracFile'], 'List of outputfile types that will be auto removed when job is removed if AutoRemoveFilesWithJob is True')
-
+output_config.addOption('AutoRemoveOutputDataWithJob', False,
+                        'if True and the job backend has the removeOutputData method then the output data will be removed when the job is removed.')
 output_config.addOption('PostProcessLocationsFileName', '__postprocesslocations__',
                        'name of the file that will contain the locations of the uploaded from the WN files')
 

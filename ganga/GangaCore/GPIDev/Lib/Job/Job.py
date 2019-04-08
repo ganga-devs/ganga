@@ -1736,6 +1736,15 @@ class Job(GangaObject):
                 logger.debug("In that case try and skip")
                 pass
 
+            try:
+                #If the job has a method to remove the output data then use it.
+                if hasattr(self.backend, 'removeOutputData') and getConfig('Output')['AutoRemoveOutputDataWithJob']:
+                    self.backend.removeOutputData()
+            except KeyError as err:
+                logger.debug("KeyError, likely job hasn't been loaded.")
+                logger.debug("In that case try and skip")
+                pass
+
         if self._registry:
             try:
                 self._registry._remove(self, auto_removed=1)
