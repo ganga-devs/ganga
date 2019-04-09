@@ -324,7 +324,6 @@ class Job(GangaObject):
 
         c.outputfiles = []
         for f in self.outputfiles:
-            print 'some nonsense'
             if hasattr(f, '_on_attribute__set__'):
                 c.outputfiles.append(f._on_attribute__set__(self, 'outputfiles'))
                 continue
@@ -413,8 +412,10 @@ class Job(GangaObject):
             return object.__getattribute__(self, name)
 
         if name == 'outputfiles':
+
             currentOutputFiles = object.__getattribute__(self, name)
             currentUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
+
             files = []
             files2 = []
 
@@ -2057,6 +2058,7 @@ class Job(GangaObject):
         return rslice._display(1)
 
     def __setattr__(self, attr, value):
+
         if attr == 'outputfiles':
 
             if value != []:
