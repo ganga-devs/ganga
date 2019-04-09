@@ -8,7 +8,6 @@ This module is designed to run TREx followed by oaAnalysis
 """
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 

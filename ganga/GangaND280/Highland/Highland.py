@@ -9,7 +9,6 @@ This module is designed to run any highland executable accessible in the $PATH e
 
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 

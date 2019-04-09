@@ -8,7 +8,6 @@ This module is designed to run any ND280 executable accessible in the $PATH envi
 """
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -23,7 +22,7 @@ import os, shutil, commands, re, time
 from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
-class ND280Executable(IPrepareApp, IPrepareApp):
+class ND280Executable(IPrepareApp):
     """
     ND280Executable application running any ND280 executables.
 
