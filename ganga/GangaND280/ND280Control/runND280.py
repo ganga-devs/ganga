@@ -43,6 +43,7 @@ class runND280(IPrepareApp):
         'cmtsetup' : SimpleItem(defvalue=[],doc='Setup script(s) in bash to set up cmt and the cmt package of the executable.', typelist=['str'],sequence=1,strict_sequence=0),
         'configfile' : SimpleItem(defvalue=None,doc='Filename of the nd280Control config file.', typelist=['str','type(None)']),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'runND280'
