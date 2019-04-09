@@ -324,6 +324,7 @@ class Job(GangaObject):
 
         c.outputfiles = []
         for f in self.outputfiles:
+            print 'some nonsense'
             if hasattr(f, '_on_attribute__set__'):
                 c.outputfiles.append(f._on_attribute__set__(self, 'outputfiles'))
                 continue
@@ -412,10 +413,8 @@ class Job(GangaObject):
             return object.__getattribute__(self, name)
 
         if name == 'outputfiles':
-
             currentOutputFiles = object.__getattribute__(self, name)
             currentUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
-
             files = []
             files2 = []
 
@@ -1639,9 +1638,22 @@ class Job(GangaObject):
                 if getName(this_file) in getConfig('Output')['AutoRemoveFileTypes'] and hasattr(this_file, '_auto_remove'):
                     this_file._auto_remove()
 
+            _filesToRemove = []
             for sj in self.subjobs:
-                map(removeFiles, sj.outputfiles)
-            map(removeFiles, self.outputfiles)
+                for _f in sj.outputfiles:
+                    if _f.containsWildcards() and hasattr(_f, 'subfiles') and _f.subfiles:
+                        for _sf in _f.subfiles:
+                            _filesToRemove.append(_sf)
+                    else:
+                        _filesToRemove.append(_f)
+            for _f in self.outputfiles:
+                if _f.containsWildcards() and hasattr(_f, 'subfiles') and _f.subfiles:
+                    for _sf in _f.subfiles:
+                        _filesToRemove.append(_sf)
+                else:
+                    _filesToRemove.append(_f)
+
+            map(removeFiles, _filesToRemove)
 
         if this_job_status in ['submitted', 'running']:
             try:
@@ -2045,7 +2057,6 @@ class Job(GangaObject):
         return rslice._display(1)
 
     def __setattr__(self, attr, value):
-
         if attr == 'outputfiles':
 
             if value != []:
