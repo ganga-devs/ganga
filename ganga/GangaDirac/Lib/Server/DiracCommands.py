@@ -45,13 +45,8 @@ def ping(system, service):
 
 @diracCommand
 def removeFile(lfn):
-    ''' Remove a given LFN from the DFC'''
-    ret = {}
-    if type(lfn) is list:
-        for l in lfn:
-            ret.update(dirac.removeFile(l))
-    else:
-        ret.update(dirac.removeFile(lfn))
+    ''' Remove a given LFN, or list of LFNs, from the DFC'''
+    ret = dirac.removeFile(lfn)
     return ret
 
 
@@ -161,7 +156,7 @@ def getOutputSandbox(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJ
     else:
         parameters = dirac.getJobParameters(id)
         if parameters is not None and parameters.get('OK', False):
-            parameters = parameters['Value'][id]
+            parameters = parameters['Value']
             if 'OutputSandboxLFN' in parameters:
                 result = dirac.getFile(parameters['OutputSandboxLFN'], destDir=outputDir)
                 dirac.removeFile(parameters['OutputSandboxLFN'])
@@ -205,7 +200,7 @@ def getOutputDataLFNs(id, pipe_out=True):
     message = 'The outputdata LFNs could not be found.'
 
     if parameters is not None and parameters.get('OK', False):
-        parameters = parameters['Value'][id]
+        parameters = parameters['Value']
         # remove the sandbox if it has been uploaded
         sandbox = None
         if 'OutputSandboxLFN' in parameters:
@@ -237,7 +232,7 @@ def normCPUTime(id, pipe_out=True):
     parameters = dirac.getJobParameters(id)
     ncput = None
     if parameters is not None and parameters.get('OK', False):
-        parameters = parameters['Value'][id]
+        parameters = parameters['Value']
         if 'NormCPUTime(s)' in parameters:
             ncput = parameters['NormCPUTime(s)']
     return ncput
