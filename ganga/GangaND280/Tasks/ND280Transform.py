@@ -6,7 +6,7 @@ from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegis
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
 from GangaCore.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
-from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
+from GangaCore.GPIDev.Lib.File.MassStorageFile import SharedFile
 from GangaCore.Utility.Config import getConfig
 from ND280Unit import ND280Unit
 from GangaND280.ND280Dataset.ND280Dataset import ND280LocalDataset, ND280DCacheDataset
@@ -127,8 +127,8 @@ class ND280Transform(ITransform):
                   except:
                      inputdir = job.outputdir
                   else:
-                     #### WARNING: The following will work only if the MassStorageFile puts the files in local directories !
-                     inputdir = '/'.join( [getConfig('Output')['MassStorageFile']['uploadOptions']['path'], f.outputfilenameformat.replace('{fname}','')])
+                     #### WARNING: The following will work only if the SharedFile puts the files in local directories !
+                     inputdir = '/'.join( [getConfig('Output')['SharedFile']['uploadOptions']['path'], f.outputfilenameformat.replace('{fname}','')])
                   unit.inputdata.get_dataset( inputdir, f.namePattern )
       else:
 

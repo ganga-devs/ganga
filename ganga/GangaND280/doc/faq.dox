@@ -28,19 +28,19 @@ For the job number 3, the standard location for the output files would be in tha
 ~/gangadir/workspace/YOURUSERNAME/LocalXML/3/output
 \endcode
 
-\section useMassStorage How can I move automatically the output file to a specific local directory ?
+\section useSharedStorage How can I move automatically the output file to a specific local directory ?
 
-The <i>outputfiles</i> class <i>MassStorageFile</i> was designed to copy automatically the output of jobs
+The <i>outputfiles</i> class <i>SharedFile</i> was designed to copy automatically the output of jobs
 onto storage facilities such as Castor at CERN. However it can be used to move output files
 of a job into a specific directory locally.
-You must first edit your <i>.gangarc</i> to define the <i>MassStorageFile</i> main output directory
+You must first edit your <i>.gangarc</i> to define the <i>SharedFile</i> main output directory
 and the shell commands it needs:
 \code
-MassStorageFile = {'fileExtensions': ['*.root'], 'uploadOptions': {'path': '/home/me/T2K/Data', 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'}, 'backendPostprocess': {'LSF': 'WN', 'LCG': 'client', 'Interactive': 'WN', 'Localhost': 'client', 'CREAM': 'client'}}
+SharedFile = {'fileExtensions': ['*.root'], 'uploadOptions': {'path': '/home/me/T2K/Data', 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'}, 'backendPostprocess': {'LSF': 'WN', 'LCG': 'client', 'Interactive': 'WN', 'Localhost': 'client', 'CREAM': 'client'}}
 \endcode
-Then your job <i>j</i> must have <i>MassStorageFiles</i> as <i>outputfiles</i>:
+Then your job <i>j</i> must have <i>SharedFile</i> as <i>outputfiles</i>:
 \code
-j.outputfiles=[MassStorageFile(namePattern='oa*_reco_*.root',outputfilenameformat='the/path/wanted/reco/{fname}'),MassStorageFile(namePattern='oa*_anal_*.root',outputfilenameformat='the/path/wanted/anal/{fname}')]
+j.outputfiles=[SharedFile(namePattern='oa*_reco_*.root',outputfilenameformat='the/path/wanted/reco/{fname}'),SharedFile(namePattern='oa*_anal_*.root',outputfilenameformat='the/path/wanted/anal/{fname}')]
 \endcode
 In that case, reco and anal files will be moved to different directories.
 For example for a reco file created by the subjob number 4, the final output directory would be:

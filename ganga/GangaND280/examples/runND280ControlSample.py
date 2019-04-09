@@ -26,13 +26,13 @@ for S in ['4','5','6','7','8','9']:
 	j.inputdata=D
 
 	# Output file(s)
-	# You must define in .gangarc the MassStorageFile configuration,
+	# You must define in .gangarc the SharedFile configuration,
 	# and in particular the 'path' in the 'UploadOptions'.
 	# This will define the base directory where the files are sent.
 	# also define the proper cp, ls, and mkdir commands in .gangarc
 	# You must unfortunately (for now, hopefully this will change in ganga)
 	# use the subjob id {sjid} when you have subjobs or MassStorageFile.py will complain.
-	j.outputfiles=[MassStorageFile(namePattern='oa*_reco_*.root',outputfilenameformat='the/path/wanted/{sjid}/reco/{fname}'),MassStorageFile(namePattern='oa*_anal_*.root',outputfilenameformat='the/path/wanted/{sjid}/anal/{fname}')]
+	j.outputfiles=[SharedFile(namePattern='oa*_reco_*.root',outputfilenameformat='the/path/wanted/{sjid}/reco/{fname}'),SharedFile(namePattern='oa*_anal_*.root',outputfilenameformat='the/path/wanted/{sjid}/anal/{fname}')]
 
 	# Split to have 25 input files per subjob
 	S = ND280SplitNbInputFiles()
