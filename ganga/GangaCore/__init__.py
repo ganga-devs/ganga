@@ -103,7 +103,8 @@ Normally you should not worry about it.
 If an element of the path is just a name (like in the example below)
 then the plugins will be loaded using current python path. This means that
 some packages such as GangaTest may be taken from the release area.""",
-        examples="RUNTIME_PATH = GangaGUIRUNTIME_PATH = /my/SpecialExtensions:GangaTest ")
+        examples="""RUNTIME_PATH = GangaGUI
+RUNTIME_PATH = /my/SpecialExtensions:GangaTest""")
 
 conf_config.addOption('TextShell', 'IPython', """ The type of the interactive shell: IPython (cooler) or Console (limited)""")
 conf_config.addOption('StartupGPI', '', 'block of GPI commands executed at startup')
