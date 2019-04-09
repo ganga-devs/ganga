@@ -155,7 +155,7 @@ class DiracFile(IGangaFile):
     _category = 'gangafiles'
     _name = "DiracFile"
     _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove', 'removeReplica',
-                      "replicate", 'put', 'locations', 'location', 'accessURL',
+                      "replicate", 'put', 'locations', 'location', 'accessURL', 'massRemove',
                       '_updateRemoteURLs', 'hasMatchedFiles']
 
     _additional_slots = ['_have_copied', '_remoteURLs', '_storedReplicas']
@@ -397,10 +397,53 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
         stdout = execute('removeFile("%s")' % self.lfn, cred_req=self.credential_requirements)
-
+        print 'file removal stdout: ', stdout
         self.lfn = ""
         self.locations = []
         self.guid = ''
+        return True
+
+    @require_credential
+    def massRemove(self, files):
+        """
+        A method to remove many files at once for maximum speed by making fewer calls to DIRAC.
+        Do this in blocks of 200 to prevent timeouts.
+        files can be a list of DiracFile or a list of lfn strings.
+        """
+        lfnsToRemove = []
+        for _f in files:
+            if isinstance(_f, DiracFile) and not _f.lfn=="":
+                lfnsToRemove.append(_f.lfn)
+            elif isinstance(_f, str):
+                lfnsToRemove.append(_f)
+        i = 0
+        _successes = []
+        _failures = []
+        while i < len(lfnsToRemove):
+            dirac_cmd = "removeFile(%s)" % lfnsToRemove[i:i+200]
+            try:
+                result = execute(dirac_cmd, cred_req=self.credential_requirements)
+            except GangaDiracError as err:
+                msg = 'Problem removing files: %s' % str(err)
+                logger.warning(msg)
+                return False
+            #Check that the number of removed files is the same as the number requested
+            if result.get('Successful', False):
+                _successes.extend(result['Successful'].keys())
+            if result.get('Failed', False):
+                _failures.extend(result['Failed'].keys())
+            i = i+200
+
+        def clearFileInfo(f):
+            f.lfn = ""
+            f.locations = []
+            f.guid = ''
+        for _f in files:
+            if isinstance(_f, DiracFile) and _f.lfn in _successes:
+                clearFileInfo(_f)
+        if not len(_successes) == len(lfnsToRemove):
+            logger.warning("Failed to remove files: %s" % _failures)
+
         return True
 
     @require_credential
