@@ -397,6 +397,7 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
         stdout = execute('removeFile("%s")' % self.lfn, cred_req=self.credential_requirements)
+
         self.lfn = ""
         self.locations = []
         self.guid = ''
