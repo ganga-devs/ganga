@@ -46,12 +46,7 @@ def ping(system, service):
 @diracCommand
 def removeFile(lfn):
     ''' Remove a given LFN from the DFC'''
-    ret = {}
-    if type(lfn) is list:
-        for l in lfn:
-            ret.update(dirac.removeFile(l))
-    else:
-        ret.update(dirac.removeFile(lfn))
+    ret = dirac.removeFile(lfn)
     return ret
 
 
