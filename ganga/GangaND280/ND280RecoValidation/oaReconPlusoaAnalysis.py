@@ -55,7 +55,7 @@ class oaReconPlusoaAnalysis(IPrepareApp):
     _category = 'applications'
     _name = 'oaReconPlusoaAnalysis'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'reco_args', 'widget' : 'String_List' },
                   { 'attribute' : 'anal_args', 'widget' : 'String_List' },
                   { 'attribute' : 'filenamesubstr', 'widget' : 'String' },

@@ -47,7 +47,7 @@ class runND280(IPrepareApp):
         } )
     _category = 'applications'
     _name = 'runND280'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'configfile', 'widget' : 'String' },

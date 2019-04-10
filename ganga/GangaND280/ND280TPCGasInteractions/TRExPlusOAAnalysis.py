@@ -48,7 +48,7 @@ class TRExPlusOAAnalysis(IPrepareApp):
     _category = 'applications'
     _name = 'TRExPlusOAAnalysis'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'trex_args', 'widget' : 'String_List' },
                   { 'attribute' : 'oaana_args', 'widget' : 'String_List' },
                   { 'attribute' : 'filenamesubstr', 'widget' : 'String' },

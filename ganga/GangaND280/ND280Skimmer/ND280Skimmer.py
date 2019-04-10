@@ -44,7 +44,7 @@ class ND280RecoSkimmer(IPrepareApp):
     _category = 'applications'
     _name = 'ND280RecoSkimmer'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'csvfile', 'widget' : 'String' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'outputfile', 'widget' : 'String' },

@@ -50,7 +50,7 @@ class Highland(IPrepareApp):
     _category = 'applications'
     _name = 'Highland'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'exe', 'widget' : 'File' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'outputfile', 'widget' : 'String' },

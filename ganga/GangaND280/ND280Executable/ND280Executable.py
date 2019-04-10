@@ -48,7 +48,7 @@ class ND280Executable(IPrepareApp):
     _category = 'applications'
     _name = 'ND280Executable'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'exe', 'widget' : 'File' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'outputfile', 'widget' : 'String' },

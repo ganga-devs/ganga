@@ -55,7 +55,7 @@ class VFT_make_ana(IPrepareApp):
     _category = 'applications'
     _name = 'VFT_make_ana'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'tree', 'widget' : 'String' },
                   { 'attribute' : 'ana_custom', 'widget' : 'String' },

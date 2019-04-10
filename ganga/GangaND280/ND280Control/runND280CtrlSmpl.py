@@ -51,7 +51,7 @@ class runND280CtrlSmpl(IPrepareApp):
         } )
     _category = 'applications'
     _name = 'runND280CtrlSmpl'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'configfile', 'widget' : 'String' },

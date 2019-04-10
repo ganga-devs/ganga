@@ -53,7 +53,7 @@ class RecoPlusVFT(IPrepareApp):
     _category = 'applications'
     _name = 'RecoPlusVFT'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'reco_exe', 'widget' : 'File' },
                   { 'attribute' : 'reco_args', 'widget' : 'String_List' },
                   { 'attribute' : 'vft_exe', 'widget' : 'File' },

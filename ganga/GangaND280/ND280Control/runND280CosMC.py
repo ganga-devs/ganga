@@ -51,7 +51,7 @@ class runND280CosMC(IPrepareApp):
         } )
     _category = 'applications'
     _name = 'runND280CosMC'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'confopts', 'widget' : 'String' },
