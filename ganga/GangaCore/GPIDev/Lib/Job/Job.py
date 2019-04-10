@@ -1635,24 +1635,24 @@ class Job(GangaObject):
             raise JobError(msg)
 
         if getConfig('Output')['AutoRemoveFilesWithJob']:
+            logger.info('Removing all output data of types %s' % getConfig('Output')['AutoRemoveFileTypes'])
             def removeFiles(this_file):
                 if getName(this_file) in getConfig('Output')['AutoRemoveFileTypes'] and hasattr(this_file, '_auto_remove'):
                     this_file._auto_remove()
 
+            def collectFiles(this_job):
+                collectedFiles = []
+                for _f in this_job.outputfiles:
+                    if _f.containsWildcards() and hasattr(_f, 'subfiles') and _f.subfiles:
+                        collectedFiles.extend(_f.subfiles)
+                    else:
+                        collectedFiles.append(_f)
+                return collectedFiles
+
             _filesToRemove = []
             for sj in self.subjobs:
-                for _f in sj.outputfiles:
-                    if _f.containsWildcards() and hasattr(_f, 'subfiles') and _f.subfiles:
-                        for _sf in _f.subfiles:
-                            _filesToRemove.append(_sf)
-                    else:
-                        _filesToRemove.append(_f)
-            for _f in self.outputfiles:
-                if _f.containsWildcards() and hasattr(_f, 'subfiles') and _f.subfiles:
-                    for _sf in _f.subfiles:
-                        _filesToRemove.append(_sf)
-                else:
-                    _filesToRemove.append(_f)
+                _filesToRemove.extend(collectFiles(sj))
+            _filesToRemove.extend(collectFiles(self))
 
             map(removeFiles, _filesToRemove)
 
