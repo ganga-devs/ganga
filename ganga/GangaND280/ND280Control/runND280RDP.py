@@ -49,7 +49,7 @@ class runND280RDP(IPrepareApp):
         } )
     _category = 'applications'
     _name = 'runND280RDP'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'confopts', 'widget' : 'String' },
@@ -176,6 +176,7 @@ allHandlers.add('runND280RDP','LSF', RTHandler)
 allHandlers.add('runND280RDP','Local', RTHandler)
 allHandlers.add('runND280RDP','PBS', RTHandler)
 allHandlers.add('runND280RDP','SGE', RTHandler)
+allHandlers.add('runND280RDP','Slurm', RTHandler)
 allHandlers.add('runND280RDP','Condor', RTHandler)
 allHandlers.add('runND280RDP','LCG', LCGRTHandler)
 allHandlers.add('runND280RDP','gLite', gLiteRTHandler)
@@ -186,4 +187,3 @@ allHandlers.add('runND280RDP','Cronus', RTHandler)
 allHandlers.add('runND280RDP','Remote', LCGRTHandler)
 allHandlers.add('runND280RDP','CREAM', LCGRTHandler)
 allHandlers.add('runND280RDP','Batch', RTHandler)
-allHandlers.add('runND280RDP','Slurm', RTHandler)

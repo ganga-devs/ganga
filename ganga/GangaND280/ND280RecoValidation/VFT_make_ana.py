@@ -50,11 +50,12 @@ class VFT_make_ana(IPrepareApp):
         'pdf_output' : SimpleItem(defvalue=None,doc='Output filename or filenames. Takes a string or a list of strings.', typelist=['str','type(None)']),
         'pdf_options' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,strict_sequence=0,doc="List of user options to pass to make_pdf.py."),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'VFT_make_ana'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'tree', 'widget' : 'String' },
                   { 'attribute' : 'ana_custom', 'widget' : 'String' },
@@ -201,6 +202,7 @@ allHandlers.add('VFT_make_ana','LSF', RTHandler)
 allHandlers.add('VFT_make_ana','Local', RTHandler)
 allHandlers.add('VFT_make_ana','PBS', RTHandler)
 allHandlers.add('VFT_make_ana','SGE', RTHandler)
+allHandlers.add('VFT_make_ana','Slurm', RTHandler)
 allHandlers.add('VFT_make_ana','Condor', RTHandler)
 allHandlers.add('VFT_make_ana','LCG', LCGRTHandler)
 allHandlers.add('VFT_make_ana','gLite', gLiteRTHandler)

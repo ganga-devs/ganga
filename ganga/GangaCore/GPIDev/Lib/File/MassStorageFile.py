@@ -281,7 +281,7 @@ class MassStorageFile(IGangaFile):
 
         cp_cmd = massStorageConfig['cp_cmd']
         ls_cmd = massStorageConfig['ls_cmd']
-        massStoragePath = massStorageConfig['path']
+        massStoragePath = os.path.expanduser(os.path.expandvars(massStorageConfig['path']))
 
         try:
             self._mkdir(massStoragePath, exitIfNotExist=True)
@@ -434,7 +434,7 @@ class MassStorageFile(IGangaFile):
 
             massStorageCommands.append(['massstorage', outputFile.namePattern, outputfilenameformat,
                                         massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'],
-                                        massStorageConfig['ls_cmd'], massStorageConfig['path']])
+                                        massStorageConfig['ls_cmd'], os.path.expanduser(os.path.expandvars(massStorageConfig['path']))])
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                         'scripts/MassStorageFileWNScript.py.template')

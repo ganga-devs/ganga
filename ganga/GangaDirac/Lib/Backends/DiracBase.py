@@ -1075,7 +1075,7 @@ class DiracBase(IBackend):
                     job.master.updateMasterJobStatus()
                 raise BackendError('Dirac', 'Problem retrieving outputsandbox: %s' % str(getSandboxResult))
             #If the sandbox dict includes a Succesful key then the sandbox has been download from grid storage, likely due to being oversized. Untar it and issue a warning.
-            elif isinstance(getSandboxResult['Value'], dict) and getSandboxResult['Value'].get('Successful', False):
+            elif job.backend.downloadSandbox and isinstance(getSandboxResult['Value'], dict) and getSandboxResult['Value'].get('Successful', False):
                     try:
                         sandbox_name = getSandboxResult['Value']['Successful'].values()[0]
                         check_output(['tar', '-xvf', sandbox_name, '-C', output_path])

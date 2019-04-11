@@ -28,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '7.1.12'
+_gangaVersion = '7.1.13'
 _development = True
 
 # store a path to Ganga libraries
@@ -103,7 +103,8 @@ Normally you should not worry about it.
 If an element of the path is just a name (like in the example below)
 then the plugins will be loaded using current python path. This means that
 some packages such as GangaTest may be taken from the release area.""",
-        examples="RUNTIME_PATH = GangaGUIRUNTIME_PATH = /my/SpecialExtensions:GangaTest ")
+        examples="""RUNTIME_PATH = GangaGUI
+RUNTIME_PATH = /my/SpecialExtensions:GangaTest""")
 
 conf_config.addOption('TextShell', 'IPython', """ The type of the interactive shell: IPython (cooler) or Console (limited)""")
 conf_config.addOption('StartupGPI', '', 'block of GPI commands executed at startup')
@@ -661,6 +662,7 @@ LocalPost = {'Local': 'client',
              'Interactive': 'client',
              'LSF': 'client',
              'SGE': 'client',
+             'Slurm': 'client',
              'PBS': 'client',
              'Condor': 'client',
              'CREAM': 'client',
@@ -681,6 +683,7 @@ output_config.addOption('LocalFile',
 LCGSEBakPost = {'LSF': 'client',
                 'PBS': 'client',
                 'SGE': 'client',
+                'Slurm': 'client',
                 'Condor': 'client',
                 'LCG': 'WN',
                 'CREAM': 'WN',
@@ -704,6 +707,7 @@ diracBackPost = {'Dirac': 'submit',
                  'LSF': 'WN',
                  'PBS': 'WN',
                  'SGE': 'WN',
+                 'Slurm': 'WN',
                  'Condor': 'WN',
                  'LCG': 'WN',
                  'CREAM': 'WN',
@@ -725,6 +729,7 @@ GoogleFileBackPost = {'Dirac': 'client',
                       'LSF': 'client',
                       'PBS': 'client',
                       'SGE': 'client',
+                      'Slurm': 'client',
                       'Condor': 'client',
                       'LCG': 'client',
                       'CREAM': 'client',
@@ -797,6 +802,7 @@ massStorageBackendPost = {'LSF': 'WN',
                           'PBS': 'WN',
                           'Condor': 'WN',
                           'SGE': 'WN',
+                          'Slurm': 'WN',
                           'LCG': 'client',
                           'CREAM': 'client',
                           'ARC': 'client',
@@ -817,6 +823,7 @@ sharedFileBackendPost = {'LSF': 'WN',
                          'Dirac': 'client',
                          'PBS': 'WN',
                          'SGE': 'WN',
+                         'Slurm': 'WN',
                          'Condor': 'WN',
                          'Interactive': 'client',
                          'Local': 'WN',

@@ -25,13 +25,13 @@ D = ND280LocalDataset()
 D.get_dataset('/path/where/the/input/reco/files/are','*_reco_*.root')
 trf1.addInputData(D)
 
-### Specify the where to put the outputfiles using the MassStorageFile as explained in "How can I move automatically the output file to a specific local directory ?" of the nd280Ganga FAQ
+### Specify the where to put the outputfiles using the SharedFile as explained in "How can I move automatically the output file to a specific local directory ?" of the nd280Ganga FAQ
 ### This way the reco and anal files can be stored in different locations.
-trf1.outputfiles = [MassStorageFile(namePattern='*_reco_*.root',outputfilenameformat='/output/location/for/the/reco/files/{fname}'), MassStorageFile(namePattern='*_anal_*.root',outputfilenameformat='/output/location/for/the/anal/files/{fname}'])]
+trf1.outputfiles = [SharedFile(namePattern='*_reco_*.root',outputfilenameformat='/output/location/for/the/reco/files/{fname}'), SharedFile(namePattern='*_anal_*.root',outputfilenameformat='/output/location/for/the/anal/files/{fname}'])]
 ### It is also possible to mix and match with LocalFile to keep some of the files in the job directory:
-# trf1.outputfiles = [LocalFile(namePattern='*_reco_*.root'), MassStorageFile(namePattern='*_anal_*.root',outputfilenameformat='/output/location/for/the/anal/files/{fname}'])]
+# trf1.outputfiles = [LocalFile(namePattern='*_reco_*.root'), SharedFile(namePattern='*_anal_*.root',outputfilenameformat='/output/location/for/the/anal/files/{fname}'])]
 ### The reco files can even be completely discarded if needed by not defining them:
-# trf1.outputfiles = [MassStorageFile(namePattern='*_anal_*.root',outputfilenameformat='/output/location/for/the/anal/files/{fname}'])]
+# trf1.outputfiles = [SharedFile(namePattern='*_anal_*.root',outputfilenameformat='/output/location/for/the/anal/files/{fname}'])]
 tsk.appendTransform(trf1)
 
 
@@ -56,7 +56,7 @@ indata.single_unit = True;           # IMPORTANT: This to run one job for N inpu
 indata.use_copy_output = False;      # IMPORTANT. Do not erase.
 trf2.addInputData(indata)
 
-trf2.outputfiles=[MassStorageFile(namePattern='*.root',outputfilenameformat='/highland/output/location/{fname}'])]
+trf2.outputfiles=[SharedFile(namePattern='*.root',outputfilenameformat='/highland/output/location/{fname}'])]
 tsk.appendTransform(trf2)
 
 

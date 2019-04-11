@@ -56,7 +56,7 @@ available in the ND280Splitter module:
   - %ND280Executable.py: Example for the %ND280Executable applications, PBS backend, %ND280LocalDataset, and ND280 splitters.
   - %runND280.py: Example to run run280 using an %ND280LocalDataset.
   - %runND280ControlSample.py: Example showing how to create the data spill control samples for all the runs.
-It also gives and example of ND280DCacheDataset, MassStorageFile, and the splitter for CSV input files.
+It also gives and example of ND280DCacheDataset, SharedFile, and the splitter for CSV input files.
   - %runND280RDP.py: Example to run nd280 with an automatically created Config file.
   - %tskGenKin.gpi: Example to use ND280Kin application to generate KIN files.
   - %tskCosMC.gpi: Example to use ND280CosMC application to generate and process Cosmic MC statistics.

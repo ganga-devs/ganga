@@ -386,16 +386,19 @@ class DiracFile(IGangaFile):
         Remove called when job is removed as long as config option allows
         """
         if self.lfn != '':
-            self.remove()
+            self.remove(printInfo=False)
 
     @require_credential
-    def remove(self):
+    def remove(self, printInfo=True):
         """
         Remove this lfn and all replicas from DIRAC LFC/SEs
         """
         if self.lfn == "":
             raise GangaFileError('Can\'t remove a  file from DIRAC SE without an LFN.')
-        logger.info('Removing file %s' % self.lfn)
+        if printInfo:
+            logger.info('Removing file %s' % self.lfn)
+        else:
+            logger.debug('Removing file %s' % self.lfn)
         stdout = execute('removeFile("%s")' % self.lfn, cred_req=self.credential_requirements)
 
         self.lfn = ""

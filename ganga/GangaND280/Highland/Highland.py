@@ -9,7 +9,6 @@ This module is designed to run any highland executable accessible in the $PATH e
 
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -46,11 +45,12 @@ class Highland(IPrepareApp):
         'cmtsetup' : SimpleItem(defvalue=None,doc='Setup script in bash to set up cmt and the cmt package of the executable.', typelist=['str','type(None)']),
         'outputfile' : SimpleItem(defvalue=None,doc='Output file name.', typelist=['str','type(None)']),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'Highland'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'exe', 'widget' : 'File' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'outputfile', 'widget' : 'String' },
@@ -155,6 +155,7 @@ allHandlers.add('Highland','LSF', RTHandler)
 allHandlers.add('Highland','Local', RTHandler)
 allHandlers.add('Highland','PBS', RTHandler)
 allHandlers.add('Highland','SGE', RTHandler)
+allHandlers.add('Highland','Slurm', RTHandler)
 allHandlers.add('Highland','Condor', RTHandler)
 allHandlers.add('Highland','LCG', LCGRTHandler)
 allHandlers.add('Highland','gLite', gLiteRTHandler)

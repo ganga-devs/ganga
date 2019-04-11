@@ -50,11 +50,12 @@ class oaReconPlusoaAnalysis(IPrepareApp):
         'reconewstr' : SimpleItem(defvalue='newreco',doc='This string will substitute filenamesubstr in the input filename to create the reco output filename.', typelist=['str']),
         'analnewstr' : SimpleItem(defvalue='validtree',doc='This string will substitute filenamesubstr in the input filename to create the oaAnalysis output filename.', typelist=['str']),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'oaReconPlusoaAnalysis'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'reco_args', 'widget' : 'String_List' },
                   { 'attribute' : 'anal_args', 'widget' : 'String_List' },
                   { 'attribute' : 'filenamesubstr', 'widget' : 'String' },
@@ -191,6 +192,7 @@ allHandlers.add('oaReconPlusoaAnalysis','LSF', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','Local', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','PBS', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','SGE', RTHandler)
+allHandlers.add('oaReconPlusoaAnalysis','Slurm', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','Condor', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','LCG', LCGRTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','gLite', gLiteRTHandler)

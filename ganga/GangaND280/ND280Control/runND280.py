@@ -43,10 +43,11 @@ class runND280(IPrepareApp):
         'cmtsetup' : SimpleItem(defvalue=[],doc='Setup script(s) in bash to set up cmt and the cmt package of the executable.', typelist=['str'],sequence=1,strict_sequence=0),
         'configfile' : SimpleItem(defvalue=None,doc='Filename of the nd280Control config file.', typelist=['str','type(None)']),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'runND280'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'configfile', 'widget' : 'String' },
@@ -176,6 +177,7 @@ allHandlers.add('runND280','LSF', RTHandler)
 allHandlers.add('runND280','Local', RTHandler)
 allHandlers.add('runND280','PBS', RTHandler)
 allHandlers.add('runND280','SGE', RTHandler)
+allHandlers.add('runND280','Slurm', RTHandler)
 allHandlers.add('runND280','Condor', RTHandler)
 allHandlers.add('runND280','LCG', LCGRTHandler)
 allHandlers.add('runND280','gLite', gLiteRTHandler)
