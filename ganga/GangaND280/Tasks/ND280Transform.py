@@ -128,7 +128,7 @@ class ND280Transform(ITransform):
                      inputdir = job.outputdir
                   else:
                      #### WARNING: The following will work only if the SharedFile puts the files in local directories !
-                     inputdir = '/'.join( [getConfig('Output')['SharedFile']['uploadOptions']['path'], f.outputfilenameformat.replace('{fname}','')])
+                     inputdir = '/'.join([os.path.expanduser(os.path.expandvars(getConfig('Output')['SharedFile']['uploadOptions']['path'])), f.outputfilenameformat.replace('{fname}','')])
                   unit.inputdata.get_dataset( inputdir, f.namePattern )
       else:
 
