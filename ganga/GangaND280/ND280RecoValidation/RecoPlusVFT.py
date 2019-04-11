@@ -48,11 +48,12 @@ class RecoPlusVFT(IPrepareApp):
         'reconewstr' : SimpleItem(defvalue='newreco',doc='This string will substitute filenamesubstr in the input filename to create the reco output filename.', typelist=['str']),
         'vftnewstr' : SimpleItem(defvalue='validtree',doc='This string will substitute filenamesubstr in the input filename to create the VFT output filename.', typelist=['str']),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'RecoPlusVFT'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'reco_exe', 'widget' : 'File' },
                   { 'attribute' : 'reco_args', 'widget' : 'String_List' },
                   { 'attribute' : 'vft_exe', 'widget' : 'File' },
@@ -204,6 +205,7 @@ allHandlers.add('RecoPlusVFT','LSF', RTHandler)
 allHandlers.add('RecoPlusVFT','Local', RTHandler)
 allHandlers.add('RecoPlusVFT','PBS', RTHandler)
 allHandlers.add('RecoPlusVFT','SGE', RTHandler)
+allHandlers.add('RecoPlusVFT','Slurm', RTHandler)
 allHandlers.add('RecoPlusVFT','Condor', RTHandler)
 allHandlers.add('RecoPlusVFT','LCG', LCGRTHandler)
 allHandlers.add('RecoPlusVFT','gLite', gLiteRTHandler)

@@ -8,7 +8,6 @@ Ganga module with classes to skim from reco files a set of events listed in a CS
 """
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -25,7 +24,7 @@ import os, shutil, commands, re, time
 from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
-class ND280RecoSkimmer(IPrepareApp, IPrepareApp):
+class ND280RecoSkimmer(IPrepareApp):
     """
     ND280RecoSkimmer application to skim reco files from a list of run, subrun and event numbers in a CSV file.
 
@@ -45,7 +44,7 @@ class ND280RecoSkimmer(IPrepareApp, IPrepareApp):
     _category = 'applications'
     _name = 'ND280RecoSkimmer'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'csvfile', 'widget' : 'String' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'outputfile', 'widget' : 'String' },
@@ -133,7 +132,7 @@ class ND280RecoSkimmer(IPrepareApp, IPrepareApp):
         script += 'source '+self.cmtsetup+'\n'
         script += '${RECONUTILSROOT}/${CMTCONFIG}/'+exe+' '+argsStr+'\n'
         # Little trick to be able to control the final destination
-        # of the subjob's CSV file with SandboxFile or MassStorageFile
+        # of the subjob's CSV file with SandboxFile or SharedFile
         if job.master is not None:
             script += 'cp %s .' % self.csvfile
 
@@ -193,6 +192,7 @@ allHandlers.add('ND280RecoSkimmer','LSF', RTHandler)
 allHandlers.add('ND280RecoSkimmer','Local', RTHandler)
 allHandlers.add('ND280RecoSkimmer','PBS', RTHandler)
 allHandlers.add('ND280RecoSkimmer','SGE', RTHandler)
+allHandlers.add('ND280RecoSkimmer','Slurm', RTHandler)
 allHandlers.add('ND280RecoSkimmer','Condor', RTHandler)
 allHandlers.add('ND280RecoSkimmer','LCG', LCGRTHandler)
 allHandlers.add('ND280RecoSkimmer','gLite', gLiteRTHandler)

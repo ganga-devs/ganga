@@ -47,10 +47,11 @@ class runND280CtrlSmpl(IPrepareApp):
         'runoaanalysis' : SimpleItem(defvalue=False,doc='Turn on/off the oaAnalysis processing of the reco control samples.', typelist=['bool']),
         'oaanalysisargs' : SimpleItem(defvalue=[],typelist=['str','int'],sequence=1,strict_sequence=0,doc="List of arguments for the oaAnalysis stage. Arguments may be strings, numerics."),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'runND280CtrlSmpl'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'configfile', 'widget' : 'String' },
@@ -174,6 +175,7 @@ allHandlers.add('runND280CtrlSmpl','LSF', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Local', RTHandler)
 allHandlers.add('runND280CtrlSmpl','PBS', RTHandler)
 allHandlers.add('runND280CtrlSmpl','SGE', RTHandler)
+allHandlers.add('runND280CtrlSmpl','Slurm', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Condor', RTHandler)
 allHandlers.add('runND280CtrlSmpl','LCG', LCGRTHandler)
 allHandlers.add('runND280CtrlSmpl','gLite', gLiteRTHandler)

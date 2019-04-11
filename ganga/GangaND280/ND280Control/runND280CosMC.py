@@ -47,10 +47,11 @@ class runND280CosMC(IPrepareApp):
         'cmtsetup' : SimpleItem(defvalue=[],doc='Setup script(s) in bash to set up cmt and the cmt package of the executable.', typelist=['str'],sequence=1,strict_sequence=0),
         'confopts' : SimpleItem(defvalue={},doc='Options for configuration file', typelist=['str']),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'runND280CosMC'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'confopts', 'widget' : 'String' },
@@ -176,6 +177,7 @@ allHandlers.add('runND280CosMC','LSF', RTHandler)
 allHandlers.add('runND280CosMC','Local', RTHandler)
 allHandlers.add('runND280CosMC','PBS', RTHandler)
 allHandlers.add('runND280CosMC','SGE', RTHandler)
+allHandlers.add('runND280CosMC','Slurm', RTHandler)
 allHandlers.add('runND280CosMC','Condor', RTHandler)
 allHandlers.add('runND280CosMC','LCG', LCGRTHandler)
 allHandlers.add('runND280CosMC','gLite', gLiteRTHandler)
