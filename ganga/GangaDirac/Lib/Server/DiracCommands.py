@@ -156,7 +156,7 @@ def getOutputSandbox(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJ
             tmpdir = os.path.join(outputDir, str(id))
             os.system('mv -f %s/* %s/. ; rm -rf %s' % (tmpdir, outputDir, tmpdir))
         
-        os.system('for file in $(ls %s/*_Ganga_*.log); do ln -s ${file} %s/stdout; break; done' % (outputDir, outputDir))
+        os.system('for file in $(ls %s/*Ganga_*.log); do ln -s ${file} %s/stdout; break; done' % (outputDir, outputDir))
     #So the download failed. Maybe the sandbox was oversized and stored on the grid. Check in the job parameters and download it
     else:
         parameters = dirac.getJobParameters(id)
