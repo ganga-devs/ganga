@@ -150,6 +150,9 @@ def hostname():
     """ Try to get the hostname in the most possible reliable way as described in the Python LibRef."""
 
     # cache the result to prevent lockups in gethostbyaddr calls with queues
+    if not hasattr(hostname, '_hostname_cache'):
+        hostname._hostname_cache = ''
+
     if hostname._hostname_cache == '':
         import socket
         try:
@@ -161,8 +164,6 @@ def hostname():
             hostname._hostname_cache = 'localhost'
 
     return hostname._hostname_cache
-
-hostname._hostname_cache = ''
 
 # ------------------------
 
