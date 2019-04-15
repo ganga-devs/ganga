@@ -53,9 +53,7 @@ class GangaPrompt(Prompts):
 
     def in_prompt_tokens(self, cli = None):
         from datetime import datetime
-        from GangaCore.Utility.logging import flushAtIPythonPrompt
-        __flushCmd = flushAtIPythonPrompt()
-        return [(Token.Prompt,  str(__flushCmd)+'['+str(datetime.now().strftime("%H:%M:%S"))+']\nGanga In ['.format(GangaPrompt.environment)),
+        return [(Token.Prompt, '['+str(datetime.now().strftime("%H:%M:%S"))+']\nGanga In ['.format(GangaPrompt.environment)),
                 (Token.PromptNum, str(self.shell.execution_count)),
                 (Token.Prompt, ']: ')]
 
@@ -1220,6 +1218,7 @@ under certain conditions; type license() for details.
         import IPython
 
         # Based on examples/Embedding/embed_class_long.py from the IPython source tree
+        from IPython.core.displayhook import DisplayHook
 
         # First we set up the prompt
         from traitlets.config.loader import Config
@@ -1263,6 +1262,9 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def ganga_prompt(_=None):
+        #Flush the logging
+        from GangaCore.Utility.logging import flushAtIPythonPrompt
+        flushAtIPythonPrompt()
 
         try:
             from GangaCore.GPIDev.Credentials import get_needed_credentials
