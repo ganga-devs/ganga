@@ -1218,8 +1218,6 @@ under certain conditions; type license() for details.
         import IPython
 
         # Based on examples/Embedding/embed_class_long.py from the IPython source tree
-        from IPython.core.displayhook import DisplayHook
-
         # First we set up the prompt
         from traitlets.config.loader import Config
         
@@ -1236,7 +1234,7 @@ under certain conditions; type license() for details.
         from IPython.terminal.embed import InteractiveShellEmbed
 
         ipshell = InteractiveShellEmbed(config=cfg, banner1=banner, exit_msg=exit_msg)
-        ipshell.events.register("post_execute", ganga_prompt)
+        ipshell.events.register("pre_execute", ganga_prompt)
 
         # Add our custom error handler to ignore stack traces for GangaExceptions
         ipshell.set_custom_exc((Exception,), error_handler)
