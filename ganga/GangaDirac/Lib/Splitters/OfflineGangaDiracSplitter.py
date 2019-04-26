@@ -164,7 +164,7 @@ def getLFNReplicas(allLFNs, index, allLFNData):
         this_max = int((index + 1) * LFN_parallel_limit)
 
     try:
-        output = wrapped_execute('getReplicasForJobs(%s)' % str(allLFNs[this_min:this_max]), dict, new_suprocess = True)
+        output = wrapped_execute('getReplicasForJobs(%s)' % str(allLFNs[this_min:this_max]), dict, new_subprocess = True)
     except SplitterError:
         logger.error("Failed to Get Replica Info: [%s:%s] of %s" % (str(this_min), str(this_max), len(allLFNs)))
         raise
