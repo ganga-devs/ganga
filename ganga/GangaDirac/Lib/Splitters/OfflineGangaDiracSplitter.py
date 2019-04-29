@@ -99,7 +99,7 @@ logger = getLogger()
 global_random = random
 
 LFN_parallel_limit = 250.
-def wrapped_execute(command, expected_type):
+def wrapped_execute(command, expected_type, new_subprocess = False):
     """
     A wrapper around execute to protect us from commands which had errors
     Args:
@@ -107,7 +107,7 @@ def wrapped_execute(command, expected_type):
         expected_type (type): This is the type of the object which is returned from DIRAC
     """
     try:
-        result = execute(command)
+        result = execute(command, new_subprocess)
         assert isinstance(result, expected_type)
     except AssertionError:
         raise SplitterError("Output from DIRAC expected to be of type: '%s', we got the following: '%s'" % (expected_type, result))
@@ -164,7 +164,7 @@ def getLFNReplicas(allLFNs, index, allLFNData):
         this_max = int((index + 1) * LFN_parallel_limit)
 
     try:
-        output = wrapped_execute('getReplicasForJobs(%s)' % str(allLFNs[this_min:this_max]), dict)
+        output = wrapped_execute('getReplicasForJobs(%s)' % str(allLFNs[this_min:this_max]), dict, new_subprocess = True)
     except SplitterError:
         logger.error("Failed to Get Replica Info: [%s:%s] of %s" % (str(this_min), str(this_max), len(allLFNs)))
         raise
