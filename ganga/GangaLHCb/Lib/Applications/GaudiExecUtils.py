@@ -129,7 +129,7 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
             logger.error("git lb-use %s failed!" % myUse)
             raise ApplicationPrepareError(lbUseErr)
         if myFolder:
-            chk, chkOut, chkErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && git lb-checkout %s/%s %s' % (platformToUse, platformToUse, myUse, myFolder),myBranch, dev_dir)
+            chk, chkOut, chkErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && git lb-checkout %s/%s %s' % (platformToUse, platformToUse, myUse, myBranch, myFolder), dev_dir)
             logger.info("Running git lb-checkout %s/%s %s" % (myUse,myBranch, myFolder))
             if chk != 0:
                 logger.error("git lb-checkout %s/%s %s failed!" % (myUse, myBranch, myFolder))
