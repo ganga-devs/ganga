@@ -8,7 +8,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cvmfs/sft.cern.ch/lcg/releases/LCG_88/P
 
 . bin/activate
 
-pip install --upgrade git+https://github.com/ganga-devs/ganga.git@develop[LHCb] 
+pip install --upgrade git+https://github.com/ganga-devs/ganga.git@develop#egg=ganga[LHCb] 
 
 deactivate
 
