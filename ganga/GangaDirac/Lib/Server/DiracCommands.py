@@ -449,7 +449,7 @@ def listFiles(baseDir, minAge = None):
         param baseDir: Top directory to begin search
         type baseDir: string
         param minAge: minimum age of files to be returned
-        type minAge: datetime.timedelta
+        type minAge: string format: "W:D:H"
     '''
 
     from DIRAC.Resources.Catalog.FileCatalog import FileCatalog
@@ -459,9 +459,13 @@ def listFiles(baseDir, minAge = None):
 
     withMetaData = False
     cutoffTime = datetime.utcnow()
-    if minAge:
-        withMetaData = True    
-        cutoffTime = datetime.utcnow() - minAge
+    import re
+    r = re.compile('\d:\d:\d')
+    if r.match(minAge):
+        withMetaData = True
+        timeList = minAge.split(':')
+        timeLimit = timedelta(weeks = int(timeList[0]), days = int(timeList[1]), hours = int(timeList[2]))
+        cutoffTime = datetime.utcnow() - timeLimit
 
     baseDir = baseDir.rstrip('/')
 
