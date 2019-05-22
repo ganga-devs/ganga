@@ -8,7 +8,6 @@ This module is designed to run TREx followed by oaAnalysis
 """
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -44,11 +43,12 @@ class TRExPlusOAAnalysis(IPrepareApp):
         'oaana_args' : SimpleItem(defvalue=[],typelist=['str','GangaCore.GPIDev.Lib.File.File.File','int'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
         'filenamesubstr' : SimpleItem(defvalue=None,doc='This string will be substituted by "trex" in the TREx output filename and "anal" in the oaAnalysis output filename.', typelist=['str','type(None)']),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'TRExPlusOAAnalysis'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'trex_args', 'widget' : 'String_List' },
                   { 'attribute' : 'oaana_args', 'widget' : 'String_List' },
                   { 'attribute' : 'filenamesubstr', 'widget' : 'String' },
@@ -64,7 +64,7 @@ class TRExPlusOAAnalysis(IPrepareApp):
 
 
     def configure(self,masterappconfig):
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         # __________ TREx first ____________
@@ -79,7 +79,7 @@ class TRExPlusOAAnalysis(IPrepareApp):
             raise ApplicationConfigurationError('Option "-o" given in trex_args. The module will define the output filename.')
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
@@ -89,7 +89,7 @@ class TRExPlusOAAnalysis(IPrepareApp):
         firstFile = fileList[0].split('/')[-1]
         # Define the output
         trex_args.append('-o')
-        if self.filenamesubstr == None:
+        if self.filenamesubstr is None:
           trex_outputfile = 'recoOutput.root'
         else:
           trex_outputfile = firstFile.replace(self.filenamesubstr, "trex")
@@ -108,7 +108,7 @@ class TRExPlusOAAnalysis(IPrepareApp):
             raise ApplicationConfigurationError('Option "-o" given in oaana_args. You must use the oaana_outputfile variable instead.')
 
         oaana_args.append('-o')
-        if self.filenamesubstr == None:
+        if self.filenamesubstr is None:
           oaana_outputfile = 'recoOutput.root'
         else:
           oaana_outputfile = firstFile.replace(self.filenamesubstr, "anal")
@@ -185,6 +185,7 @@ allHandlers.add('TRExPlusOAAnalysis','LSF', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','Local', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','PBS', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','SGE', RTHandler)
+allHandlers.add('TRExPlusOAAnalysis','Slurm', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','Condor', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','LCG', LCGRTHandler)
 allHandlers.add('TRExPlusOAAnalysis','gLite', gLiteRTHandler)

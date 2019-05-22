@@ -19,7 +19,7 @@ import subprocess
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-ganga_python_dir = os.path.abspath('../python')
+ganga_python_dir = os.path.abspath('../ganga')
 sys.path.insert(0, ganga_python_dir)
 
 # Generate GPI documentation

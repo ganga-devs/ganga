@@ -53,9 +53,7 @@ class GangaPrompt(Prompts):
 
     def in_prompt_tokens(self, cli = None):
         from datetime import datetime
-        from GangaCore.Utility.logging import flushAtIPythonPrompt
-        __flushCmd = flushAtIPythonPrompt()
-        return [(Token.Prompt,  str(__flushCmd)+'['+str(datetime.now().strftime("%H:%M:%S"))+']\nGanga In ['.format(GangaPrompt.environment)),
+        return [(Token.Prompt, '['+str(datetime.now().strftime("%H:%M:%S"))+']\nGanga In ['.format(GangaPrompt.environment)),
                 (Token.PromptNum, str(self.shell.execution_count)),
                 (Token.Prompt, ']: ')]
 
@@ -355,7 +353,8 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def new_version():
-        versions_filename = os.path.expanduser('~/.cache/Ganga/.used_versions')
+        from GangaCore.Utility.Config.Config import getConfig
+        versions_filename = os.path.join(os.path.expanduser(os.path.expandvars(getConfig('Configuration')['used_versions_path'])), '.used_versions')
         if not os.path.exists(os.path.dirname(versions_filename)):
             os.makedirs(os.path.dirname(versions_filename))
         if not os.path.exists(versions_filename):
@@ -380,7 +379,8 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def rollHistoryForward():
-        versions_filename = os.path.expanduser('~/.cache/Ganga/.used_versions')
+        from GangaCore.Utility.Config.Config import getConfig
+        versions_filename = os.path.join(os.path.expanduser(os.path.expandvars(getConfig('Configuration')['used_versions_path'])), '.used_versions')
         hasLoaded_newer = False
         with open(versions_filename, 'r') as versions_file:
             this_version = versions_file.read()
@@ -780,11 +780,6 @@ under certain conditions; type license() for details.
 
         force_global_level(self.options.force_loglevel)
 
-        # prevent modification during the interactive ganga session
-        def deny_modification(name, x):
-            raise GangaCore.Utility.Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
-        getConfig("MSGMS").attachUserHandler(deny_modification, None)
-
         # Assemble the list of config files to read
         config_files = self.get_config_files(self.options.config_file)
 
@@ -1053,9 +1048,6 @@ under certain conditions; type license() for details.
 
         logger.debug("loaded .ganga.py")
 
-        # monitor the  ganga usage
-        from GangaCore.Runtime import spyware
-
         # this logic is a bit convoluted
         runs_script = len(self.args) > 0
         session_type = config['TextShell']
@@ -1064,11 +1056,6 @@ under certain conditions; type license() for details.
                 session_type = 'batch'
             else:
                 session_type += 'startup_script'
-
-        spyware.ganga_started(session_type=session_type, interactive=self.interactive,
-                              webgui=self.options.webgui,
-                              script_file=runs_script, text_shell=config['TextShell'],
-                              test_framework=self.options.TEST)
 
         if self.options.TEST:
             sys.argv = self.args
@@ -1274,6 +1261,9 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def ganga_prompt(_=None):
+        #Flush the logging
+        from GangaCore.Utility.logging import flushAtIPythonPrompt
+        flushAtIPythonPrompt()
 
         try:
             from GangaCore.GPIDev.Credentials import get_needed_credentials

@@ -47,10 +47,11 @@ class runND280CtrlSmpl(IPrepareApp):
         'runoaanalysis' : SimpleItem(defvalue=False,doc='Turn on/off the oaAnalysis processing of the reco control samples.', typelist=['bool']),
         'oaanalysisargs' : SimpleItem(defvalue=[],typelist=['str','int'],sequence=1,strict_sequence=0,doc="List of arguments for the oaAnalysis stage. Arguments may be strings, numerics."),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'runND280CtrlSmpl'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'configfile', 'widget' : 'String' },
@@ -73,7 +74,7 @@ class runND280CtrlSmpl(IPrepareApp):
 
         job = self.getJobObject()
 
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         for arg in args:
@@ -81,7 +82,7 @@ class runND280CtrlSmpl(IPrepareApp):
             raise ApplicationConfigurationError('Option "-c" given in args. You must use the configfile variable instead.')
 
         # setup the config file for this job
-        if self.configfile == None:
+        if self.configfile is None:
           raise ApplicationConfigurationError('No config file given. Use args list or configfile field.')
         # check if given config file exists
         if not os.path.exists(self.configfile):
@@ -89,7 +90,7 @@ class runND280CtrlSmpl(IPrepareApp):
         if not os.path.isfile(self.configfile):
           raise ApplicationConfigurationError('The given config file "'+self.configfile+'" is not a file.')
 
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata of the job is not defined.')
         infiles = job.inputdata.get_dataset_filenames()
         if len(infiles) < 1:
@@ -174,6 +175,7 @@ allHandlers.add('runND280CtrlSmpl','LSF', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Local', RTHandler)
 allHandlers.add('runND280CtrlSmpl','PBS', RTHandler)
 allHandlers.add('runND280CtrlSmpl','SGE', RTHandler)
+allHandlers.add('runND280CtrlSmpl','Slurm', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Condor', RTHandler)
 allHandlers.add('runND280CtrlSmpl','LCG', LCGRTHandler)
 allHandlers.add('runND280CtrlSmpl','gLite', gLiteRTHandler)

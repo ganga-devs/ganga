@@ -10,17 +10,21 @@ from GangaCore.testlib.mark import external
 from GangaCore.testlib.monitoring import run_until_completed
 from GangaCore.GPIDev.Base.Proxy import stripProxy
 
+
 def latestLbDevVersion(app):
     import subprocess
     pipe = subprocess.Popen('lb-dev %s -l' % app, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = pipe.communicate()
     return stdout.split()[0]
 
+
 def latestDaVinci():
     return latestLbDevVersion('DaVinci')
 
+
 def LFNstr():
     return "/not/a/LFN"
+
 
 def inputOptsFile():
     return """
@@ -50,11 +54,14 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
 
-        assert j.application.directory == path.join(TestExternalGaudiExec.tmpdir_release, 'DaVinciDev_%s' % latestDaVinci())
+        assert j.application.directory == path.join(TestExternalGaudiExec.tmpdir_release,
+                                                    'DaVinciDev_%s' % latestDaVinci())
 
-        assert path.isfile(path.join(TestExternalGaudiExec.tmpdir_release, 'DaVinciDev_%s' % latestDaVinci(), 'run'))
+        assert path.isfile(path.join(TestExternalGaudiExec.tmpdir_release, 'DaVinciDev_%s' % latestDaVinci(),
+                           'run'))
 
-        assert path.isfile(path.join(TestExternalGaudiExec.tmpdir_release, 'DaVinciDev_%s' % latestDaVinci(), 'Makefile'))
+        assert path.isfile(path.join(TestExternalGaudiExec.tmpdir_release, 'DaVinciDev_%s' % latestDaVinci(),
+                           'Makefile'))
 
     def testParseInputFile(self):
         """
@@ -81,7 +88,7 @@ class TestExternalGaudiExec(GangaUnitTest):
         import os
         if os.path.exists(TestExternalGaudiExec.tmpdir_release):
             os.system("rm -rf %s/*" % TestExternalGaudiExec.tmpdir_release)
-            
+
         j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
 
         myHelloOpts = path.join(TestExternalGaudiExec.tmpdir_release, 'hello.py')
@@ -90,7 +97,7 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         assert path.isfile(myHelloOpts)
 
-        j.application.options=[LocalFile(myHelloOpts)]
+        j.application.options = [LocalFile(myHelloOpts)]
 
         j.prepare()
 
@@ -101,7 +108,7 @@ class TestExternalGaudiExec(GangaUnitTest):
     def testSubmitJob(self):
 
         from GangaCore.GPI import jobs
-        
+
         j = TestExternalGaudiExec._constructJob()
 
         j.submit()
@@ -158,7 +165,8 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         j = TestExternalGaudiExec._constructJob()
 
-        j.backend=Dirac(credential_requirements=DiracProxy(group='lhcb_user', encodeDefaultProxyFileName=False))
+        j.backend = Dirac(credential_requirements=DiracProxy(group='lhcb_user',
+                                                             encodeDefaultProxyFileName=False))
 
         j.submit()
 
@@ -206,7 +214,8 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         from GangaCore.GPI import LocalFile, Dirac, DiracProxy
 
-        j.backend=Dirac(credential_requirements=DiracProxy(group='lhcb_user', encodeDefaultProxyFileName=False))
+        j.backend = Dirac(credential_requirements=DiracProxy(group='lhcb_user',
+                                                             encodeDefaultProxyFileName=False))
 
         tempName = 'testGaudiExecFile.txt'
         tempContent = '12345'
@@ -226,4 +235,3 @@ class TestExternalGaudiExec(GangaUnitTest):
         Remove the 'release area'
         """
         shutil.rmtree(cls.tmpdir_release, ignore_errors=True)
-

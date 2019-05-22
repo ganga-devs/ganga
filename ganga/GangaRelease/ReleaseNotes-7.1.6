@@ -1,0 +1,27 @@
+**************************************************************************************************************
+7.1.6 (2018/11/13)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaCore
+--------------------------------------------------------------------------------------------------------------
+* Replace identity operator to conform with PEP8. #1367
+* Bugfix to Condor monitoring to negate failed handshakes. #1374
+* Set logging of subjob finalisation and status updates to DEBUG. Only master jobs log INFO. Reduces verbosity. #1369
+* Update subjobs status column: running/failed/completing/completed. #1369
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Bugfix for OfflineGangaDiracSplitter to prevent getting stuck when SE mapping fails. #1370
+* KRB5CCNAME now updated in Dirac env when commands are carried out. #1372
+* Added option whether to download Dirac outputsandbox when finalising jobs, 'downloadSandbox'. Defaults to True. The default can be configured, 'default_downloadOutputSandbox' under 'DIRAC'. #1145, #1369
+* Added option to finalise jobs only when all the subjobs are finished, 'finaliseOnMaster'. Defaults to False. The subsequent finalisation is done in parallel. If a subjob registers as failed it finalises immediately. Subjobs are in the 'completing' state until finalised The default can be configured, 'default_finaliseOnMaster' under 'DIRAC'. #1145, #1369
+* Added function to finalise subjobs in the 'completing' state, 'j.backend.finaliseCompletingJobs(getSandbox=True)'. #1145, #1369.
+* Added function to GPI to finalise a slice of jobs, 'finalise_jobs(jobSlice, getSandbox=True)'. #1145, #1369.
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* GaudiExec Dirac RT handler checks for exisiting tarball replicas to prevent needless replication. #1371
+* GaudiExec Dirac tarball filenames include job id to make thread safe. #1373
+**************************************************************************************************************
+**************************************************************************************************************

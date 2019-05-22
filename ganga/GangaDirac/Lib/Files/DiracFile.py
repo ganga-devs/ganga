@@ -386,16 +386,19 @@ class DiracFile(IGangaFile):
         Remove called when job is removed as long as config option allows
         """
         if self.lfn != '':
-            self.remove()
+            self.remove(printInfo=False)
 
     @require_credential
-    def remove(self):
+    def remove(self, printInfo=True):
         """
         Remove this lfn and all replicas from DIRAC LFC/SEs
         """
         if self.lfn == "":
             raise GangaFileError('Can\'t remove a  file from DIRAC SE without an LFN.')
-        logger.info('Removing file %s' % self.lfn)
+        if printInfo:
+            logger.info('Removing file %s' % self.lfn)
+        else:
+            logger.debug('Removing file %s' % self.lfn)
         stdout = execute('removeFile("%s")' % self.lfn, cred_req=self.credential_requirements)
 
         self.lfn = ""
@@ -706,7 +709,7 @@ class DiracFile(IGangaFile):
         if self.localDir is None:
             sourceDir = os.getcwd()
             # attached to a job, use the joboutputdir
-            if self._parent != None and os.path.isdir(self.getJobObject().outputdir):
+            if self._parent is not None and os.path.isdir(self.getJobObject().outputdir):
                 sourceDir = self.getJobObject().outputdir
 
         if not os.path.isdir(sourceDir):
@@ -798,7 +801,7 @@ class DiracFile(IGangaFile):
                 lfn_out = stdout_temp[lfn]
 
             # when doing the two step upload delete the temp file
-            if self.compressed or self._parent != None:
+            if self.compressed or self._parent is not None:
                 os.remove(name)
             # need another eval as datetime needs to be included.
             guid = lfn_out.get('GUID', '')

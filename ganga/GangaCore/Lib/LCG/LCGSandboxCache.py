@@ -120,7 +120,7 @@ class LCGSandboxCache(GridSandboxCache):
 
                 cmd = 'lcg-cr -t 180 --vo %s -n %d' % (
                     self.cacheObj.vo, nbstream)
-                if self.cacheObj.se != None:
+                if self.cacheObj.se is not None:
                     cmd = cmd + ' -d %s' % self.cacheObj.se
                 if self.cacheObj.se_type == 'srmv2' and self.cacheObj.srm_token:
                     cmd = cmd + ' -D srmv2 -s %s' % self.cacheObj.srm_token

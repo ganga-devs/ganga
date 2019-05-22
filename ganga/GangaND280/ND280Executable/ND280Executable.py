@@ -8,7 +8,6 @@ This module is designed to run any ND280 executable accessible in the $PATH envi
 """
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -23,7 +22,7 @@ import os, shutil, commands, re, time
 from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
-class ND280Executable(IPrepareApp, IPrepareApp):
+class ND280Executable(IPrepareApp):
     """
     ND280Executable application running any ND280 executables.
 
@@ -49,7 +48,7 @@ class ND280Executable(IPrepareApp, IPrepareApp):
     _category = 'applications'
     _name = 'ND280Executable'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'exe', 'widget' : 'File' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'outputfile', 'widget' : 'String' },
@@ -70,7 +69,7 @@ class ND280Executable(IPrepareApp, IPrepareApp):
 
         job = self.getJobObject()
 
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         # Need to handle the possibility of multiple output files !
@@ -79,7 +78,7 @@ class ND280Executable(IPrepareApp, IPrepareApp):
           if arg == '-o':
             raise ApplicationConfigurationError('Option "-o" given in args. You must use the outputfile variable instead, even if you have multiple output files.')
 
-        if self.outputfile == None:
+        if self.outputfile is None:
           raise ApplicationConfigurationError('No output file given. Fill the outputfile variable.')
         else:
           if type(self.outputfile) == type([]):
@@ -92,7 +91,7 @@ class ND280Executable(IPrepareApp, IPrepareApp):
 
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
@@ -162,6 +161,7 @@ allHandlers.add('ND280Executable','LSF', RTHandler)
 allHandlers.add('ND280Executable','Local', RTHandler)
 allHandlers.add('ND280Executable','PBS', RTHandler)
 allHandlers.add('ND280Executable','SGE', RTHandler)
+allHandlers.add('ND280Executable','Slurm', RTHandler)
 allHandlers.add('ND280Executable','Condor', RTHandler)
 allHandlers.add('ND280Executable','LCG', LCGRTHandler)
 allHandlers.add('ND280Executable','gLite', gLiteRTHandler)

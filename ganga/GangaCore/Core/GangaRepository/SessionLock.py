@@ -24,6 +24,7 @@ try:
 except ImportError:
     import pickle
 
+from GangaCore import GANGA_SWAN_INTEGRATION
 from GangaCore.Utility.logging import getLogger
 
 from GangaCore.Utility.Config.Config import getConfig, ConfigError
@@ -186,7 +187,7 @@ class SessionLockRefresher(GangaThread):
                     logger.warning("This could be due to a filesystem problem, or multiple versions of ganga trying to access the same file")
                     now = -999.
             else:
-                if self.repos[index] != None:
+                if self.repos[index] is not None:
                     raise RepositoryError(self.repos[index],
                     "[SessionFileUpdate] Run: Own session file not found! Possibly deleted by another ganga session.\n\
                     Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
@@ -572,13 +573,17 @@ class SessionLockManager(object):
             # possible)
             fd = None
             try:
-                fd = os.open(self.fn, os.O_RDWR)
-                if not self.afs:
-                    fcntl.lockf(fd, fcntl.LOCK_EX)
-                os.write(fd, pickle.dumps(self.locked))
-                if not self.afs:
-                    fcntl.lockf(fd, fcntl.LOCK_UN)
-                os.fsync(fd)
+                if not GANGA_SWAN_INTEGRATION:
+                    fd = os.open(self.fn, os.O_RDWR)
+                    if not self.afs:
+                        fcntl.lockf(fd, fcntl.LOCK_EX)
+                    os.write(fd, pickle.dumps(self.locked))
+                    if not self.afs:
+                        fcntl.lockf(fd, fcntl.LOCK_UN)
+                    os.fsync(fd)
+                else:
+                    # Don't lock for sharing to other sessions.
+                    pass
             finally:
                 if fd is not None:
                     os.close(fd)
@@ -623,7 +628,7 @@ class SessionLockManager(object):
                         fcntl.lockf(fd, fcntl.LOCK_UN)
                     os.close(fd)
 
-                if _output != None:
+                if _output is not None:
                     self.last_count_access = SessionLockManager.LastCountAccess(os.stat(self.cntfn).st_ctime, _output)
                     return _output
 
@@ -692,7 +697,9 @@ class SessionLockManager(object):
         if self.locked and max(self.locked) >= newcount:
             newcount = max(self.locked) + 1
         ids = range(newcount, newcount + n)
-        self.locked.update(ids)
+        if not GANGA_SWAN_INTEGRATION:
+            # If sharing sessions don't update id to locked.
+            self.locked.update(ids)
         self.count = newcount + n
         self.cnt_write()
         self.session_write()
@@ -734,7 +741,9 @@ class SessionLockManager(object):
             slocked.update(self.session_read(sf))
         #logger.debug( "locked: %s" % slocked)
         ids.difference_update(slocked)
-        self.locked.update(ids)
+        if not GANGA_SWAN_INTEGRATION:
+            # If sharing sessions don't update id to locked.
+            self.locked.update(ids)
         #logger.debug( "stored_lock: %s" % self.locked)
         self.session_write()
         #logger.debug( "list: %s" % list(ids))

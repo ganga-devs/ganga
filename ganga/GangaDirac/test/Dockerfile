@@ -1,35 +1,43 @@
-FROM centos:7
+# syntax = docker/dockerfile:1.0-experimental
+ARG BRANCH_NAME
+ARG BUILD_ID
+FROM gangacoretest:${BRANCH_NAME}-${BUILD_ID}
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
+ARG VO
 
-RUN yum install -y wget git python-virtualenv gcc
+# Make directory for the incoming secrets (robot cert/key)
+WORKDIR /
+RUN mkdir -p /root/.globus
 
-WORKDIR /root
+# Install DIRAC UI
+##################
+RUN mkdir /dirac_ui
+WORKDIR /dirac_ui
 
-COPY . ganga
+# workdir doesn't seem to be working properly
+RUN wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
+RUN chmod u+x dirac-install
+RUN ./dirac-install -r v6r20p26 -i 27 -g v14r1
+RUN --mount=type=secret,id=usercert,dst=/root/.globus/usercert.pem,readonly  --mount=type=secret,id=userkey,dst=/root/.globus/userkey.pem,readonly . /dirac_ui/bashrc && dirac-proxy-init -x
+RUN . /dirac_ui/bashrc && dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
+RUN --mount=type=secret,id=usercert,dst=/root/.globus/usercert.pem,readonly  --mount=type=secret,id=userkey,dst=/root/.globus/userkey.pem,readonly . /dirac_ui/bashrc && dirac-proxy-init -g ${VO}_user -M
+#RUN cp /tmp/x509up_u0 /tmp/x509up_u0:${VO}_user
+#ENV X509_USER_PROXY /tmp/x509up_u0:${VO}_user
+RUN mkdir -p /root/.globus
+RUN --mount=type=secret,id=usercert,dst=/tmp/usercert.pem,readonly cat /tmp/usercert.pem > /root/.globus/usercert.pem
+RUN --mount=type=secret,id=userkey,dst=/tmp/userkey.pem,readonly cat /tmp/userkey.pem > /root/.globus/userkey.pem
+RUN chmod 400 /root/.globus/userkey.pem
+RUN chmod 644 /root/.globus/usercert.pem
 
-RUN virtualenv venv && \
-    . venv/bin/activate && \
-    pip install --upgrade pip setuptools && \
-    pip install -e ganga && \
-    cd ganga && \
-    pip install --upgrade -r requirements.txt
-
-RUN mkdir dirac_ui &&\
-    cd dirac_ui &&\
-    wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py &&\
-    chmod u+x dirac-install &&\
-    ./dirac-install -r v6r19p4 -i 27 -g v13r0
+# Update the gangarc file to point to DIRAC UI
+##############################################
+WORKDIR /ganga
+RUN echo -e "[DIRAC]\nDiracEnvSource = /dirac_ui/bashrc" > /root/.gangarc
+RUN echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> /root/.gangarc
+RUN echo -e "[defaults_DiracProxy]\ngroup=${VO}_user" >> /root/.gangarc
+#RUN . /ganga/venv/bin/activate && yes | ganga -g
+ENV GANGA_CONFIG_FILE /root/.gangarc
+ENV GANGA_CONFIG_PATH GangaDirac/Dirac.ini
 
 
-RUN echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc &&\
-    echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ~/.gangarc
-
-
-ENTRYPOINT (. /root/dirac_ui/bashrc &&\
-	   dirac-proxy-init -x &&\
-	   dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I &&\
-	   dirac-proxy-init -g ${vo}_user -M) &&\
-	   echo -e "[defaults_DiracProxy]\ngroup=${vo}_user" >> ~/.gangarc &&\
-	   yes | /root/venv/bin/ganga -g &&\
-           . /root/ganga/ganga/GangaDirac/testlib/setup_env.sh &&\
-	   /root/venv/bin/pytest /root/ganga/ganga/GangaDirac/test --cov-report term --cov-report xml:cov-GangaDirac.xml --cov /root/ganga/ganga/GangaDirac --junitxml tests-GangaDirac.xml
+CMD /ganga/venv/bin/pytest ganga/GangaDirac/test --cov-report term --cov-report xml:cov-GangaDirac.xml --cov ganga/GangaDirac --junitxml tests-GangaDirac.xml

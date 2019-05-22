@@ -501,11 +501,11 @@ def getLibFileSpecFromLibDS(libDS):
     fileBO.destinationDBlock = libDS
     if fileBO.GUID != 'NULL':
         fileBO.status = 'ready'
-    if tmpMD5Sum != None:
+    if tmpMD5Sum is not None:
         fileBO.md5sum = tmpMD5Sum
-    if tmpFSize != None:
+    if tmpFSize is not None:
         fileBO.fsize = tmpFSize
-    if tmpScope != None:
+    if tmpScope is not None:
         fileBO.scope = tmpScope
     return fileBO
 
@@ -1085,7 +1085,7 @@ class Panda(IBackend):
                 retryDestSE  = None
                 oldID = job.PandaID
                 # unify sitename
-                if retrySite == None:
+                if retrySite is None:
                     retrySite = job.computingSite
                     retryElement = job.computingElement
                     retryDestSE = job.destinationSE
@@ -1121,7 +1121,7 @@ class Panda(IBackend):
                         # add retry num
                         if file.dataset.endswith('/'):
                             retryMatch = re.search('_r(\d+)$',file.destinationDBlock)
-                            if retryMatch == None:
+                            if retryMatch is None:
                                 file.destinationDBlock += '_r1'
                             else:
                                 tmpDestinationDBlock = re.sub('_r(\d+)$','',file.destinationDBlock)

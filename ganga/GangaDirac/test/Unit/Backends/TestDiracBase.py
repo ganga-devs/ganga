@@ -276,12 +276,12 @@ def test_getOutputSandbox(db, mocker):
     temp_dir = j.getOutputWorkspace().getPath()
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         assert db.getOutputSandbox(), 'didn\'t run'
-        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % temp_dir, cred_req=mocker.ANY)
+        execute.assert_called_once_with("getOutputSandbox(1234,'%s', True)" % temp_dir, cred_req=mocker.ANY)
 
     test_dir = 'test_dir'
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         assert db.getOutputSandbox(test_dir), 'didn\'t run with modified dir'
-        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % test_dir, cred_req=mocker.ANY)
+        execute.assert_called_once_with("getOutputSandbox(1234,'%s', True)" % test_dir, cred_req=mocker.ANY)
 
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')) as execute:
         assert not db.getOutputSandbox(test_dir), 'didn\'t fail gracefully'
@@ -300,7 +300,7 @@ def test_removeOutputData(db):
 
     class TestFile(object):
         def __init__(self):
-            pass
+            self.lfn = 27
 
         def remove(self):
             return 27
@@ -316,18 +316,18 @@ def test_removeOutputData(db):
             assert job.master is None
             assert file_type == DiracFile
             assert isinstance(func, types.FunctionType)
-            assert func(TestFile()) == 27, 'Didn\'t call remove function'
 
     with patch('GangaDirac.Lib.Backends.DiracBase.outputfiles_foreach', fake_outputfiles_foreach):
-        subjob = False
-        assert db.removeOutputData() is None
+        with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True):
+            subjob = False
+            assert db.removeOutputData() is None
 
-        j.subjobs = [Job(), Job(), Job()]
-        for sj in j.subjobs:
-            sj._setParent(j)
+            j.subjobs = [Job(), Job(), Job()]
+            for sj in j.subjobs:
+                sj._setParent(j)
 
-        subjob = True
-        assert db.removeOutputData() is None
+            subjob = True
+            assert db.removeOutputData() is None
 
 
 def test_getOutputData(db, tmpdir):

@@ -272,7 +272,7 @@ class VSummaryPrinter(VPrinter):
 def full_print(obj, out=None, interactive=False):
     """Print the full contents of a GPI object without abbreviation."""
     import sys
-    if out == None:
+    if out is None:
         out = sys.stdout
 
     from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
@@ -312,7 +312,7 @@ def full_print(obj, out=None, interactive=False):
 def summary_print(obj, out=None, interactive=False):
     """Print the summary contents of a GPI object with abbreviation."""
     import sys
-    if out == None:
+    if out is None:
         out = sys.stdout
 
     _obj = stripProxy(obj)

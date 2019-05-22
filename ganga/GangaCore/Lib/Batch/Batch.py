@@ -139,7 +139,10 @@ class Batch(IBackend):
 
         queue_option = ''
         if self.queue:
-            queue_option = '-q ' + str(self.queue)
+            if isType(self, Slurm):
+                queue_option = '-p ' + str(self.queue)
+            else:
+                queue_option = '-q ' + str(self.queue)
 
         try:
             jobnameopt = "-" + self.config['jobnameopt']
@@ -153,9 +156,14 @@ class Batch(IBackend):
                 if opt in ('-o', '-e', '-oo', '-eo'):
                     logger.warning("option %s is forbidden", opt)
                     return False
-                if self.queue and opt == '-q':
-                    logger.warning("option %s is forbidden if queue is defined ( queue = '%s')", opt, self.queue)
-                    return False
+                if self.queue:
+                    if isType(self, Slurm):
+                        if opt == '-p':
+                            logger.warning("option %s is forbidden if partition is defined ( partition = '%s')", opt, self.queue)
+                            return False
+                    elif opt == '-q':
+                        logger.warning("option %s is forbidden if queue is defined ( queue = '%s')", opt, self.queue)
+                        return False
                 if jobnameopt and opt == jobnameopt:
                     jobnameopt = False
 
@@ -230,7 +238,10 @@ class Batch(IBackend):
 
         queue_option = ''
         if self.queue:
-            queue_option = '-q ' + str(self.queue)
+            if isType(self, Slurm):
+                queue_option = '-p ' + str(self.queue)
+            else:
+                queue_option = '-q ' + str(self.queue)
 
         try:
             jobnameopt = "-" + self.config['jobnameopt']
@@ -244,9 +255,14 @@ class Batch(IBackend):
                 if opt in ('-o', '-e', '-oo', '-eo'):
                     logger.warning("option %s is forbidden", opt)
                     return False
-                if self.queue and opt == '-q':
-                    logger.warning("option %s is forbidden if queue is defined ( queue = '%s')", opt, self.queue)
-                    return False
+                if self.queue:
+                    if isType(self, Slurm):
+                        if opt == '-p':
+                            logger.warning("option %s is forbidden if partition is defined ( partition = '%s')", opt, self.queue)
+                            return False
+                    elif opt == '-q':
+                        logger.warning("option %s is forbidden if queue is defined ( queue = '%s')", opt, self.queue)
+                        return False
                 if jobnameopt and opt == jobnameopt:
                     jobnameopt = False
 
@@ -298,6 +314,10 @@ class Batch(IBackend):
             with open(soutfile) as sout_file:
                 logger.warning(sout_file.read())
 
+        # clean up the tmp file
+        if os.path.exists(soutfile):
+            os.remove(soutfile)
+
         return rc == 0
 
     def kill(self):
@@ -305,6 +325,9 @@ class Batch(IBackend):
 
         with open(soutfile) as sout_file:
             sout = sout_file.read()
+        # clean up the tmp file
+        if os.path.exists(soutfile):
+            os.remove(soutfile)
         logger.debug('while killing job %s: rc = %d', self.getJobObject().getFQID('.'), rc)
         if rc == 0:
             return True

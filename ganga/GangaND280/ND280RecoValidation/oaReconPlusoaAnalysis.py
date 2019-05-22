@@ -8,7 +8,6 @@ This module is designed to run any ND280 executable accessible in the $PATH envi
 """
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -51,11 +50,12 @@ class oaReconPlusoaAnalysis(IPrepareApp):
         'reconewstr' : SimpleItem(defvalue='newreco',doc='This string will substitute filenamesubstr in the input filename to create the reco output filename.', typelist=['str']),
         'analnewstr' : SimpleItem(defvalue='validtree',doc='This string will substitute filenamesubstr in the input filename to create the oaAnalysis output filename.', typelist=['str']),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'oaReconPlusoaAnalysis'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'reco_args', 'widget' : 'String_List' },
                   { 'attribute' : 'anal_args', 'widget' : 'String_List' },
                   { 'attribute' : 'filenamesubstr', 'widget' : 'String' },
@@ -75,7 +75,7 @@ class oaReconPlusoaAnalysis(IPrepareApp):
 
 
     def configure(self,masterappconfig):
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
         # __________ Reco first ____________
@@ -90,7 +90,7 @@ class oaReconPlusoaAnalysis(IPrepareApp):
             raise ApplicationConfigurationError('Option "-o" given in reco_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
@@ -99,7 +99,7 @@ class oaReconPlusoaAnalysis(IPrepareApp):
         firstFile = fileList[0].split('/')[-1]
         # Define the output
         reco_args.append('-o')
-        if self.filenamesubstr == None:
+        if self.filenamesubstr is None:
           reco_outputfile = 'recoOutput.root'
         else:
           reco_outputfile = firstFile.replace(self.filenamesubstr, self.reconewstr)
@@ -122,7 +122,7 @@ class oaReconPlusoaAnalysis(IPrepareApp):
 
         # Define the output
         anal_args.append('-o')
-        if self.filenamesubstr == None:
+        if self.filenamesubstr is None:
           anal_outputfile = 'analOutput.root'
         else:
           anal_outputfile = firstFile.replace(self.filenamesubstr, self.analnewstr)
@@ -192,6 +192,7 @@ allHandlers.add('oaReconPlusoaAnalysis','LSF', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','Local', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','PBS', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','SGE', RTHandler)
+allHandlers.add('oaReconPlusoaAnalysis','Slurm', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','Condor', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','LCG', LCGRTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','gLite', gLiteRTHandler)

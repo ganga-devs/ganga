@@ -49,7 +49,7 @@ class runND280RDP(IPrepareApp):
         } )
     _category = 'applications'
     _name = 'runND280RDP'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'confopts', 'widget' : 'String' },
@@ -87,7 +87,7 @@ class runND280RDP(IPrepareApp):
             inputfilefnd = re.match(r"^inputfile\s*=", line)
             midas_filefnd = re.match(r"^midas_file\s*=", line)
             if inputfile_listfnd or inputfilefnd or midas_filefnd:
-              if job.inputdata == None:
+              if job.inputdata is None:
                 raise ApplicationConfigurationError('The given config file requires an input file but the inputdata of the job is not defined.')
               # TODO: Check if there is an inputdata
               infiles = job.inputdata.get_dataset_filenames()
@@ -176,6 +176,7 @@ allHandlers.add('runND280RDP','LSF', RTHandler)
 allHandlers.add('runND280RDP','Local', RTHandler)
 allHandlers.add('runND280RDP','PBS', RTHandler)
 allHandlers.add('runND280RDP','SGE', RTHandler)
+allHandlers.add('runND280RDP','Slurm', RTHandler)
 allHandlers.add('runND280RDP','Condor', RTHandler)
 allHandlers.add('runND280RDP','LCG', LCGRTHandler)
 allHandlers.add('runND280RDP','gLite', gLiteRTHandler)
@@ -186,4 +187,3 @@ allHandlers.add('runND280RDP','Cronus', RTHandler)
 allHandlers.add('runND280RDP','Remote', LCGRTHandler)
 allHandlers.add('runND280RDP','CREAM', LCGRTHandler)
 allHandlers.add('runND280RDP','Batch', RTHandler)
-allHandlers.add('runND280RDP','Slurm', RTHandler)

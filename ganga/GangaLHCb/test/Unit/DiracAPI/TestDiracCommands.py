@@ -77,8 +77,8 @@ echo '%s' > removeFile.dst
 
     api_script = """
     # Script written in TestDiracCommands.py
-    from DIRAC.Interfaces.API.Dirac import Dirac
-    from DIRAC.Interfaces.API.Job import Job
+    from LHCbDIRAC.Interfaces.API.Dirac import Dirac
+    from LHCbDIRAC.Interfaces.API.Job import Job
     from DIRAC.Core.Utilities.SiteSEMapping import getSEsForCountry
 
     uk_ses = getSEsForCountry('uk')['Value']
@@ -113,7 +113,7 @@ echo '%s' > removeFile.dst
     timeout = 1200
     end_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=timeout)
     status = execute('status([%s], %s)' % (job_id, repr(statusmapping)), return_raw_dict=True)
-    while (status['OK'] and statusmapping[status['Value'][0][1]] not in ['completed', 'failed'] )and datetime.datetime.utcnow() < end_time:
+    while (status['OK'] and statusmapping[status['Value'][0][1]] not in ['completed', 'failed']) and datetime.datetime.utcnow() < end_time:
         time.sleep(5)
         status = execute('status([%s], %s)' % (job_id, repr(statusmapping)), return_raw_dict=True)
         print("Job status: %s" % status)
@@ -133,8 +133,8 @@ echo '%s' > removeFile.dst
         time.sleep(5)
         output_data_info = execute('getOutputDataInfo("%s")' % job_id, return_raw_dict=True)
         logger.info("output_data_info:\n%s\n", output_data_info)
-        count+=1
-    
+        count += 1
+
     assert 'OK' in output_data_info, 'getOutputDataInfo Failed!'
     assert output_data_info['OK'], 'getOutputDataInfo Failed!'
 
@@ -370,5 +370,3 @@ class TestDiracCommands(object):
         confirm = execute('getLHCbInputDataCatalog("%s",0,"","")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['Message'].startswith('Failed to access') or confirm['Message'].startswith('Exception during construction'), 'Command not executed successfully'
-
-

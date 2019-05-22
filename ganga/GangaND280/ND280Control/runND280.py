@@ -43,10 +43,11 @@ class runND280(IPrepareApp):
         'cmtsetup' : SimpleItem(defvalue=[],doc='Setup script(s) in bash to set up cmt and the cmt package of the executable.', typelist=['str'],sequence=1,strict_sequence=0),
         'configfile' : SimpleItem(defvalue=None,doc='Filename of the nd280Control config file.', typelist=['str','type(None)']),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'runND280'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'configfile', 'widget' : 'String' },
@@ -76,7 +77,7 @@ class runND280(IPrepareApp):
             raise ApplicationConfigurationError('Option "-c" given in args. You must use the configfile variable instead.')
 
         # setup the config file for this job
-        if self.configfile == None:
+        if self.configfile is None:
           raise ApplicationConfigurationError('No config file given. Use args list or configfile field.')
         # check if given config file exists
         if not os.path.exists(self.configfile):
@@ -95,7 +96,7 @@ class runND280(IPrepareApp):
             inputfilefnd = re.match(r"^inputfile\s*=", line)
             midas_filefnd = re.match(r"^midas_file\s*=", line)
             if inputfile_listfnd or inputfilefnd or midas_filefnd:
-              if job.inputdata == None:
+              if job.inputdata is None:
                 raise ApplicationConfigurationError('The given config file requires an input file but the inputdata of the job is not defined.')
               # TODO: Check if there is an inputdata
               infiles = job.inputdata.get_dataset_filenames()
@@ -176,6 +177,7 @@ allHandlers.add('runND280','LSF', RTHandler)
 allHandlers.add('runND280','Local', RTHandler)
 allHandlers.add('runND280','PBS', RTHandler)
 allHandlers.add('runND280','SGE', RTHandler)
+allHandlers.add('runND280','Slurm', RTHandler)
 allHandlers.add('runND280','Condor', RTHandler)
 allHandlers.add('runND280','LCG', LCGRTHandler)
 allHandlers.add('runND280','gLite', gLiteRTHandler)

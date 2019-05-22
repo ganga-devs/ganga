@@ -281,7 +281,7 @@ class MassStorageFile(IGangaFile):
 
         cp_cmd = massStorageConfig['cp_cmd']
         ls_cmd = massStorageConfig['ls_cmd']
-        massStoragePath = massStorageConfig['path']
+        massStoragePath = os.path.expanduser(os.path.expandvars(massStorageConfig['path']))
 
         try:
             self._mkdir(massStoragePath, exitIfNotExist=True)
@@ -360,13 +360,13 @@ class MassStorageFile(IGangaFile):
         # if the user has set outputfilenameformat, validate for presence of
         # jid, sjid and fname keywords depending on job type - split or
         # non-split
-        if self.outputfilenameformat != None:
+        if self.outputfilenameformat is not None:
 
             searchFor = ['{fname}']
             isJob = False
             isSplitJob = False
 
-            if self._getParent() != None:
+            if self._getParent() is not None:
 
                 isJob = True
 
@@ -411,7 +411,7 @@ class MassStorageFile(IGangaFile):
         """
 
         self.failureReason = error
-        if self._getParent() != None:
+        if self._getParent() is not None:
             logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._getParent().fqid), self.failureReason))
         else:
             logger.error("The file can't be uploaded because of %s" % (self.failureReason))
@@ -429,12 +429,12 @@ class MassStorageFile(IGangaFile):
         for outputFile in outputFiles:
 
             outputfilenameformat = 'None'
-            if outputFile.outputfilenameformat != None and outputFile.outputfilenameformat != '':
+            if outputFile.outputfilenameformat is not None and outputFile.outputfilenameformat != '':
                 outputfilenameformat = outputFile.outputfilenameformat
 
             massStorageCommands.append(['massstorage', outputFile.namePattern, outputfilenameformat,
                                         massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'],
-                                        massStorageConfig['ls_cmd'], massStorageConfig['path']])
+                                        massStorageConfig['ls_cmd'], os.path.expanduser(os.path.expandvars(massStorageConfig['path']))])
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                         'scripts/MassStorageFileWNScript.py.template')

@@ -6,6 +6,9 @@ import getpass
 import commands
 from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours
 
+# Global Variable to enable Job Sharing mechanism required in GANGA SWAN INTEGRATION.
+# If environment variable GANGA_SWAN_INTEGRATION is present enable this mechanism.
+GANGA_SWAN_INTEGRATION = "GANGA_SWAN_INTEGRATION" in os.environ
 
 # Global Functions
 def getLCGRootPath():
@@ -25,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '7.1.0'
+_gangaVersion = '7.1.13'
 _development = True
 
 # store a path to Ganga libraries
@@ -69,13 +72,6 @@ log_config.addOption('_interactive_cache', True,
                  'if True then the cache used for interactive sessions, False disables caching')
 log_config.addOption('_customFormat', "", "custom formatting string for Ganga logging\n e.g. '%(name)-35s: %(levelname)-8s %(message)s'")
 
-# test if stomp.py logging is already set
-if 'stomp.py' in log_config:
-    pass  # config['stomp.py']
-else:
-    # add stomp.py option to Logging configuration
-    log_config.addOption('stomp.py', 'CRITICAL', 'logger for stomp.py external package')
-
 # ------------------------------------------------
 # System
 # the system variables (such as VERSION) are put to DEFAULTS section of the config module
@@ -107,11 +103,13 @@ Normally you should not worry about it.
 If an element of the path is just a name (like in the example below)
 then the plugins will be loaded using current python path. This means that
 some packages such as GangaTest may be taken from the release area.""",
-        examples="RUNTIME_PATH = GangaGUIRUNTIME_PATH = /my/SpecialExtensions:GangaTest ")
+        examples="""RUNTIME_PATH = GangaGUI
+RUNTIME_PATH = /my/SpecialExtensions:GangaTest""")
 
 conf_config.addOption('TextShell', 'IPython', """ The type of the interactive shell: IPython (cooler) or Console (limited)""")
 conf_config.addOption('StartupGPI', '', 'block of GPI commands executed at startup')
 conf_config.addOption('ReleaseNotes', True, 'Flag to print out the relevent subsection of release notes for each experiment at start up')
+conf_config.addOption('used_versions_path', '~/.cache/Ganga/', 'Path to the directory to store the file listing the used ganga versions')
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
                  'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=GangaCore.Utility.Config.expandvars)
 conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
@@ -150,12 +148,9 @@ conf_config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga sessi
 # runtime warnings issued by the interpreter may be suppresed
 conf_config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued by the interpreter may be suppresed")
 
-conf_config.addOption('UsageMonitoringMSG', True,
-                 "enable usage monitoring through MSG server defined in MSGMS configuration")
 conf_config.addOption('Batch', 'LSF', 'default batch system')
 
 conf_config.addOption('AutoStartReg', True, 'AutoStart the registries, needed to access any jobs in registry therefore needs to be True for 99.999% of use cases')
-
 # ------------------------------------------------
 # IPython
 ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration''')
@@ -170,17 +165,6 @@ makeConfig("Shell", "configuration parameters for internal Shell utility.")
 queues_config = makeConfig("Queues", "configuration section for the queues")
 queues_config.addOption('Timeout', None, 'default timeout for queue generated processes')
 queues_config.addOption('NumWorkerThreads', 5, 'default number of worker threads in the queues system')
-
-# ------------------------------------------------
-# MSGMS
-msgms_config = makeConfig('MSGMS', 'Settings for the MSGMS monitoring plugin. Cannot be changed ruding the interactive Ganga session.')
-msgms_config.addOption('server', 'dashb-mb.cern.ch', 'The server to connect to')
-msgms_config.addOption('port', 61113, 'The port to connect to')
-msgms_config.addOption('username', 'ganga', '')
-msgms_config.addOption('password', 'analysis', '')
-msgms_config.addOption('message_destination', '/queue/ganga.status', '')
-msgms_config.addOption('usage_message_destination', "/queue/ganga.usage", '')
-msgms_config.addOption('job_submission_message_destination', "/queue/ganga.jobsubmission", '')
 
 # ------------------------------------------------
 # Plugins
@@ -210,6 +194,7 @@ poll_config.addOption('enable_multiThreadMon', True, 'enable multiple threads to
 poll_config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
 poll_config.addOption('MaxNumResubmits', 5, 'Maximum number of automatic job resubmits to do before giving')
 poll_config.addOption('MaxFracForResubmit', 0.25, 'Maximum fraction of failed jobs before stopping automatic resubmission')
+poll_config.addOption('autoKillThreshold', 20, 'Maximum number of failed subjobs before a job is automatically killed by the monitoring.')
 poll_config.addOption('update_thread_pool_size', 5, 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
 poll_config.addOption('default_backend_poll_rate', 30, 'Default rate for polling job status in the thread pool. This is the default value for all backends.')
 poll_config.addOption('Local', 10, 'Poll rate for Local backend.')
@@ -374,6 +359,8 @@ lcg_config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml",
                  'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
 lcg_config.addOption('ArcConfigFile', "",
                  'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config file is specified and the default (~/arc/client.conf) is used')
+lcg_config.addOption('ArcCopyCommand', 'arcget',
+                  'sets the copy command for ARC when dealing with sandboxes')
 #lcg_config.addOption('ArcPrologue','','sets the prologue script')
 #lcg_config.addOption('ArcEpilogue','','sets the epilogue script')
 
@@ -382,6 +369,8 @@ lcg_config.addOption('CreamInputSandboxBaseURI', '',
                  'sets the baseURI for getting the input sandboxes for the job')
 lcg_config.addOption('CreamOutputSandboxBaseURI', '',
                  'sets the baseURI for putting the output sandboxes for the job')
+lcg_config.addOption('CreamCopyCommand', 'gfal-copy-url',
+                 'sets the copy command for CREAM when dealing with sandboxes')
 #lcg_config.addOption('CreamPrologue','','sets the prologue script')
 #lcg_config.addOption('CreamEpilogue','','sets the epilogue script')
 
@@ -555,26 +544,74 @@ sge_config.addOption('timeout', 600, 'Timeout in seconds after which a job is de
 
 # ------------------------------------------------
 # Slurm
-
 slurm_config = makeConfig('Slurm', 'internal Slurm command line interface')
+
 slurm_config.addOption('shared_python_executable', False, "Shared PYTHON")
+
 slurm_config.addOption('jobid_name', 'SLURM_JOB_ID', "Name of environment with ID of the job")
-# Slurm does not seem to have an envronment variable with a queue name.
-slurm_config.addOption('queue_name', 'SLURM_CLUSTER_NAME', "Name of environment with queue name of the job")
+# Note: SLURM queues are called partitions.
+slurm_config.addOption('queue_name', 'SLURM_JOB_PARTITION', "Name of environment with partition name of the job")
 slurm_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
-slurm_config.addOption('submit_str', 'cd %s; sbatch %s %s %s %s', "String used to submit job to queue")
-slurm_config.addOption('submit_res_pattern', 'Submitted batch job (?P<id>\d+)',
-                 "String pattern for replay from the submit command")
+slurm_config.addOption('submit_str', 'cd %s; sbatch %s %s %s %s', "String used to submit job to partition")
+slurm_config.addOption('submit_res_pattern', '^Submitted batch job (?P<id>\d+)\s*',
+                       "String pattern for replay from the submit command")
 
 slurm_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
 slurm_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
-slurm_config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
-slurm_config.addOption('kill_str', 'scancel %s', "String used to kill job")
 
-slurm_config.addOption('preexecute', '', "String contains commands executing before submiting job to queue")
-slurm_config.addOption('postexecute', '', "String contains commands executing before submiting job to queue")
-slurm_config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+slurm_config.addOption('kill_str', 'scancel %s', "String used to kill job")
+slurm_config.addOption('kill_res_pattern', '(^$)|(^scancel: error: .+)',
+                       "String pattern for replay from the kill command")
+
+#  Note: some SLURM systems automatically set the TMPDIR environment
+#        variable, which points to the job's temporary directory.
+#        Make sure that you remove all created files from there, otherwise
+#        SLURM will leave this directory (together with all files).
+#  Warning: some SLURM systems set TMPDIR="/tmp" and then the SLURM_TMPDIR
+#        environment variable possibly points to the job's temporary directory.
+#  Note: some SLURM systems automatically set the SCRATCHDIR environment
+#        variable, which points to the job's scratch directory.
+#        Make sure that you remove all created files from there, otherwise
+#        SLURM will leave this directory (together with all files).
+#        Usually TMPDIR="${SCRATCHDIR}/tmp"
+#  Note: some SLURM systems can set the LOCALFS and / or the SCRATCH_LOCAL
+#        environment variables, which point to the job's temporary directory
+#        and which will automatically disappear when the job ends.
+#  Note: some SLURM systems can set the MEMFS environment variable, which
+#        points to the job's "RAM disk" resident temporary directory
+#        and which will automatically disappear when the job ends.
+#  Note: some (all?) computer clusters set the SCRATCH environment variable.
+#        Usually SCRATCHDIR="${SCRATCH}/slurm_jobdir/${SLURM_JOB_ID}"
+
+tempstr = '''
+env = os.environ
+jobnumid = env.get("SLURM_JOB_ID") or env.get("SLURM_JOBID") or "pid_"+str(os.getpid())
+scratchDir = env.get("MEMFS") or env.get("LOCALFS") or env.get("SCRATCH_LOCAL") or env.get("SCRATCHDIR") or env.get("SLURM_TMPDIR") or env.get("SCRATCH") or env.get("TMPDIR") or "/tmp"
+scratchDir = scratchDir+"/workdir"
+if not jobnumid in scratchDir: scratchDir = scratchDir+"_"+jobnumid
+os.system("mkdir -p "+scratchDir)
+os.chdir(scratchDir)
+# env["PATH"]+=":."
+'''
+slurm_config.addOption('preexecute', tempstr,
+                       "String contains the first commands executing right after the job starts")
+
+tempstr = '''
+env = os.environ
+jobnumid = env.get("SLURM_JOB_ID") or env.get("SLURM_JOBID") or "pid_"+str(os.getpid())
+scratchDir = env.get("MEMFS") or env.get("LOCALFS") or env.get("SCRATCH_LOCAL") or env.get("SCRATCHDIR") or env.get("SLURM_TMPDIR") or env.get("SCRATCH") or env.get("TMPDIR") or "/tmp"
+scratchDir = scratchDir+"/workdir"
+if not jobnumid in scratchDir: scratchDir = scratchDir+"_"+jobnumid
+os.chdir("/tmp/")
+os.system("rm -rf "+scratchDir)
+'''
+slurm_config.addOption('postexecute', tempstr,
+                       "String contains the last commands executing right before the job ends")
+slurm_config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
+slurm_config.addOption('timeout', 600,
+                       'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+
 # ------------------------------------------------
 # Mergers
 merge_config = makeConfig('Mergers', 'parameters for mergers')
@@ -625,6 +662,7 @@ LocalPost = {'Local': 'client',
              'Interactive': 'client',
              'LSF': 'client',
              'SGE': 'client',
+             'Slurm': 'client',
              'PBS': 'client',
              'Condor': 'client',
              'CREAM': 'client',
@@ -645,6 +683,7 @@ output_config.addOption('LocalFile',
 LCGSEBakPost = {'LSF': 'client',
                 'PBS': 'client',
                 'SGE': 'client',
+                'Slurm': 'client',
                 'Condor': 'client',
                 'LCG': 'WN',
                 'CREAM': 'WN',
@@ -668,6 +707,7 @@ diracBackPost = {'Dirac': 'submit',
                  'LSF': 'WN',
                  'PBS': 'WN',
                  'SGE': 'WN',
+                 'Slurm': 'WN',
                  'Condor': 'WN',
                  'LCG': 'WN',
                  'CREAM': 'WN',
@@ -689,6 +729,7 @@ GoogleFileBackPost = {'Dirac': 'client',
                       'LSF': 'client',
                       'PBS': 'client',
                       'SGE': 'client',
+                      'Slurm': 'client',
                       'Condor': 'client',
                       'LCG': 'client',
                       'CREAM': 'client',
@@ -761,6 +802,7 @@ massStorageBackendPost = {'LSF': 'WN',
                           'PBS': 'WN',
                           'Condor': 'WN',
                           'SGE': 'WN',
+                          'Slurm': 'WN',
                           'LCG': 'client',
                           'CREAM': 'client',
                           'ARC': 'client',
@@ -781,6 +823,7 @@ sharedFileBackendPost = {'LSF': 'WN',
                          'Dirac': 'client',
                          'PBS': 'WN',
                          'SGE': 'WN',
+                         'Slurm': 'WN',
                          'Condor': 'WN',
                          'Interactive': 'client',
                          'Local': 'WN',
@@ -804,17 +847,17 @@ disp_config.addOption(
     'config_value_colour', 'fx.bold', 'colour print of the configuration values')
 disp_config.addOption('jobs_columns',
                  ("fqid", "status", "name", "subjobs", "application",
-                  "backend", "backend.actualCE", "comment"),
+                  "backend", "backend.actualCE", "comment", "subjob status"),
                  'list of job attributes to be printed in separate columns')
 
 disp_config.addOption('jobs_columns_width',
                  {'fqid': 8, 'status': 10, 'name': 10, 'subjobs': 8, 'application':
-                     15, 'backend': 15, 'backend.actualCE': 45, 'comment': 30},
+                     15, 'backend': 15, 'backend.actualCE': 45, 'comment': 30, 'subjob status': 15},
                  'width of each column')
 
 disp_config.addOption('jobs_columns_functions',
                  {'subjobs': "lambda j: len(j.subjobs)", 'application': "lambda j: j.application.__class__.__name__",
-                  'backend': "lambda j:j.backend.__class__.__name__", 'comment': "lambda j: j.comment"},
+                  'backend': "lambda j:j.backend.__class__.__name__", 'comment': "lambda j: j.comment", 'subjob status': "lambda j: j.returnSubjobStatuses()"},
                  'optional converter functions')
 
 disp_config.addOption('jobs_columns_show_empty',

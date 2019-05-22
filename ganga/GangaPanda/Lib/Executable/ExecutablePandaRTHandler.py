@@ -313,7 +313,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         # source URL
         matchURL = re.search("(http.*://[^/]+)/",Client.baseURLCSRVSSL)
         srcURL = ""
-        if matchURL != None:
+        if matchURL is not None:
             srcURL = matchURL.group(1)
             param += " --sourceURL %s " % srcURL
 

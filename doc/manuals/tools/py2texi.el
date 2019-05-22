@@ -37,7 +37,7 @@
 
 ;; Where to find it:
 ;; New versions of this code might be found at
-;; http://www.zamazal.org/software/python/py2texi/ .
+;; http://www.zamazal.org/software/ganga/py2texi/ .
 
 ;;; Code:
 

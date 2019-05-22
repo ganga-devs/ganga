@@ -21,11 +21,11 @@ class TestShared(GangaUnitTest):
         from GangaCore.GPI import Job, LocalFile
         j = Job()
 
-        assert(j.application.is_prepared == None)
+        assert(j.application.is_prepared is None)
         
         j.prepare()
 
-        assert(j.application.is_prepared != None)
+        assert(j.application.is_prepared is not None)
         
         TestShared.shared_area_location = j.application.is_prepared.path()
         assert(path.isdir(TestShared.shared_area_location))
@@ -47,7 +47,7 @@ class TestShared(GangaUnitTest):
 
         j = jobs[-1]
 
-        assert(j.application.is_prepared != None)
+        assert(j.application.is_prepared is not None)
 
         assert(TestShared.shared_area_location == j.application.is_prepared.path())
 
@@ -64,13 +64,13 @@ class TestShared(GangaUnitTest):
             from GangaCore.GPI import jobs
             j = jobs[-1]
 
-            assert(j.application.is_prepared != None)
+            assert(j.application.is_prepared is not None)
 
             TestShared.shared_area_location == j.application.is_prepared.path()
 
             j.unprepare()
 
-            assert(j.application.is_prepared == None)
+            assert(j.application.is_prepared is None)
 
             assert(not path.isfile(TestShared.a_file_location))
             assert(not path.isfile(TestShared.b_file_location))

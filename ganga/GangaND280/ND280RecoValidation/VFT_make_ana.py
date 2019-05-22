@@ -5,7 +5,6 @@
 ################################################################################
 
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -22,7 +21,7 @@ shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']
 
 class VFT_make_ana(IPrepareApp):
     """
-    VFT_make_ana application running reconUtils/macros/grtf_VFT/make_ana.py
+    VFT_make_ana application running macros/grtf_VFT/make_ana.py
 
     TODO documentation:
     - It is possible to run make_ana alone or make_ana+make_pdf
@@ -51,11 +50,12 @@ class VFT_make_ana(IPrepareApp):
         'pdf_output' : SimpleItem(defvalue=None,doc='Output filename or filenames. Takes a string or a list of strings.', typelist=['str','type(None)']),
         'pdf_options' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,strict_sequence=0,doc="List of user options to pass to make_pdf.py."),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
+        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         } )
     _category = 'applications'
     _name = 'VFT_make_ana'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'tree', 'widget' : 'String' },
                   { 'attribute' : 'ana_custom', 'widget' : 'String' },
@@ -84,23 +84,23 @@ class VFT_make_ana(IPrepareApp):
 
         job = self.getJobObject()
 
-        if self.cmtsetup == None:
+        if self.cmtsetup is None:
           raise ApplicationConfigurationError('No cmt setup script given.')
 
-        if not self.tree == None:
+        if not self.tree is None:
           args.append('-t')
           args.append(self.tree)
 
-        if not self.ana_custom == None:
+        if not self.ana_custom is None:
           args.append('-c')
           args.append(self.ana_custom)
 
-        if not self.ana_useropt == None:
+        if not self.ana_useropt is None:
           for UsrOpt in self.ana_useropt:
             args.append('-O')
             args.append(UsrOpt)
 
-        if self.ana_output == None:
+        if self.ana_output is None:
           raise ApplicationConfigurationError('No output file given. Fill the ana_output variable.')
         else:
           args.append('-o')
@@ -108,7 +108,7 @@ class VFT_make_ana(IPrepareApp):
 
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
-        if job.inputdata == None:
+        if job.inputdata is None:
           raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
@@ -116,7 +116,7 @@ class VFT_make_ana(IPrepareApp):
         args.extend(fileList)
 
         if self.run_pdf:
-          args.append('&&')
+          args.append('2>&1 && echo "... GRTF ..." &&')
           args.append('${ND280ANALYSISTOOLSROOT:-${RECONUTILSROOT}}/macros/grtf/pdfgen/make_pdf.py')
 
           if not 'ana_output' in [self.pdf_rdp, self.pdf_mcp, self.pdf_oldrdp, self.pdf_oldmcp]:
@@ -131,12 +131,12 @@ class VFT_make_ana(IPrepareApp):
 #          argDict = { '--custom': self.pdf_custom, '--title': self.pdf_title, '--rdp': self.pdf_rdp, '--mcp': self.pdf_mcp, '--oldrdp': self.pdf_oldrdp, '--oldmcp': self.pdf_oldmcp, '--rdptitle': self.pdf_rdptitle, '--mcptitle': self.pdf_mcptitle, '--oldrdptitle': self.pdf_oldrdptitle, '--oldmcptitle': self.pdf_oldmcptitle, '--out': self.pdf_output }
 
           for key in argDict:
-            if not getattr(self, argDict[key]) == None:
+            if not getattr(self, argDict[key]) is None:
               args.append(key+'='+getattr(self, argDict[key]))
 
           for opt in self.pdf_options:
             for key in argDict:
-              if opt.find(key) > -1 and not getattr(self, argDict[key]) == None:
+              if opt.find(key) > -1 and not getattr(self, argDict[key]) is None:
                 raise ApplicationConfigurationError('The make_pdf.py command line argument %s was set through both the ganga application variable "%s" and pdf_options "%s". Use only one of them.' % (key, argDict[key], opt))
             args.append(opt)
 
@@ -144,7 +144,9 @@ class VFT_make_ana(IPrepareApp):
         # Create the bash script and put it in input dir.
         script = '#!/bin/bash\n'
         script += 'source '+self.cmtsetup+'\n'
-        script += ' '.join(args)+'\n'
+        script += 'echo "GRTF ..."\n'
+        script += ' '.join(args)+' 2>&1\n'
+        script += 'echo "... GRTF"\n'
 
         from GangaCore.GPIDev.Lib.File import FileBuffer
 
@@ -200,6 +202,7 @@ allHandlers.add('VFT_make_ana','LSF', RTHandler)
 allHandlers.add('VFT_make_ana','Local', RTHandler)
 allHandlers.add('VFT_make_ana','PBS', RTHandler)
 allHandlers.add('VFT_make_ana','SGE', RTHandler)
+allHandlers.add('VFT_make_ana','Slurm', RTHandler)
 allHandlers.add('VFT_make_ana','Condor', RTHandler)
 allHandlers.add('VFT_make_ana','LCG', LCGRTHandler)
 allHandlers.add('VFT_make_ana','gLite', gLiteRTHandler)

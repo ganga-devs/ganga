@@ -10,13 +10,13 @@ virtualenv -p /cvmfs/sft.cern.ch/lcg/releases/LCG_88/Python/2.7.13/x86_64-slc6-g
 
 . $1/bin/activate
 
-pip install --upgrade pip
+pip install --upgrade pip setuptools
 
 pip install git+https://github.com/ganga-devs/ganga.git@$1 
 
 deactivate
 
-sed -i '1s/.*/#!\/usr\/bin\/env python/' $1/bin/ganga
+sed -i '1s/.*/#!\/usr\/bin\/env python2\.7/' $1/bin/ganga
 
 rm -f /cvmfs/ganga.cern.ch/Ganga/install/LATEST
 

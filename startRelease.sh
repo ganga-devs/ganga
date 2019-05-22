@@ -79,7 +79,7 @@ git push --tags
 #Now send the release notes to github - need some python magic
 echo "Creating new release on github"
 function sendReleaseNotes {
-version=$VERSION apitoken=$GITHUBAPITOKEN python - <<END
+version=$VERSION apiuser=$GITHUBAPIUSER apipassword=$GITHUBAPIPASSWORD python - <<END
 import requests
 import json
 import os
@@ -99,7 +99,7 @@ release = {
   'prerelease': False
 }
 
-r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), headers={'Authorization':'token %s'  % os.environ.get('apitoken')})
+r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), auth=(os.environ.get('apiuser'), os.environ.get('apipassword')))
 
 r.raise_for_status()
 END

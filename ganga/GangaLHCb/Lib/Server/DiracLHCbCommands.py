@@ -79,3 +79,36 @@ def checkTier1s():
         result['Value'] = result['Value']['Tier-1s']
     return result
 
+@diracCommand
+def getDBtagsFromLFN( lfn ):
+    ''' returns the DDDB and CONDDB tags for a given LFN. Uses the latest production step unless it is a merge, in which case the parent is used '''
+    from LHCbDIRAC.BookkeepingSystem.Client.BookkeepingClient import BookkeepingClient
+    from LHCbDIRAC.TransformationSystem.Client.TransformationClient import TransformationClient
+    import types
+    bk = BookkeepingClient()
+    tr = TransformationClient()
+    prod = long(lfn.split('/')[5]) # not sure if this works in all cases 
+    res = bk.getProductionInformations( prod )
+    #What type of step is this production ID
+    step_type = tr.getTransformation(prod).get('Value', {}).get('Type', 'Unknown')
+    #Is there a parent production step
+    parent_id = tr.getBookkeepingQuery(prod).get('Value', {}).get('ProductionID', '')
+    res = {}
+    #If the production ID of the given file is Merge, look at the parent ID for the tags
+    if step_type == 'Merge':
+        if parent_id:
+            res = bk.getProductionInformations( parent_id )
+    else:
+        res = bk.getProductionInformations( prod )
+    dddb = ''
+    conddb = ''
+    if res['OK']: # there should probably also be an 'else' for cases where no information could be retrieved 
+        val = res['Value']
+	steps = val['Steps']
+	last_step = steps[-1] # the tags are taken from the last step of production
+	dddb = last_step[4]
+	conddb = last_step[5]
+	return dddb, conddb
+    else:
+        res = {'OK': False, 'Message': 'Error getting DB tags!'}
+

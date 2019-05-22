@@ -48,7 +48,7 @@ print '''\
 
 # formatted using FILE_TEMPLATE % (release, prefix, release, extension)
 FILE_TEMPLATE = '''\
-        <td><a href="../../ftp/python/doc/%s/%s-%s%s"
+        <td><a href="../../ftp/ganga/doc/%s/%s-%s%s"
             >%dK</a></td>'''
 
 NO_FILE_TEMPLATE = '''\

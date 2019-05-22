@@ -7,52 +7,67 @@ pipeline {
     // Build stage
     stage('Build Core Image') {
       steps {
-        sh "docker build -t gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/ganga/GangaCore/test/Dockerfile ."
+        sh label: "Docker build", script: "docker build -t gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/ganga/GangaCore/test/Dockerfile ."
       }
     }
-    // Parallel testing stage
-    stage('Test') {
+    stage('Build Package Images') {
       parallel {
-        stage('GangaCore') {
-          steps {
-            sh "docker run --name GangaCore${env.BRANCH_NAME}-${env.BUILD_ID} gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID} || true"
-            sh "docker cp GangaCore${env.BRANCH_NAME}-${env.BUILD_ID}:/root/tests-GangaCore.xml ."
-            sh "docker cp GangaCore${env.BRANCH_NAME}-${env.BUILD_ID}:/root/cov-GangaCore.xml ."
-          }
-          post {
-            always {
-              junit "**/tests-GangaCore.xml"
-              sh "docker rm --force GangaCore${env.BRANCH_NAME}-${env.BUILD_ID}" 
-            }
-          }
-        }
         stage('GangaDirac') {
           steps {
-            sh "docker build -t gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/ganga/GangaDirac/test/Dockerfile ."
-            sh "docker run --name GangaDirac${env.BRANCH_NAME}-${env.BUILD_ID} -v ~/.globus:/root/.globus -e vo=gridpp gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} || true"
-            sh "docker cp GangaDirac${env.BRANCH_NAME}-${env.BUILD_ID}:/root/tests-GangaDirac.xml ."
-            sh "docker cp GangaDirac${env.BRANCH_NAME}-${env.BUILD_ID}:/root/cov-GangaDirac.xml ."
-          }
-          post {
-            always {
-              junit "**/tests-GangaDirac.xml"
-              sh "docker rm --force GangaDirac${env.BRANCH_NAME}-${env.BUILD_ID}"
-              sh "docker rmi --force gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID}"
+            withCredentials([file(credentialsId: 'GangaRobotUsercert', variable: 'X509_USER_CERT'),
+                             file(credentialsId: 'GangaRobotUserkey', variable: 'X509_USER_KEY')]) {
+              sh label: "Docker build", script: "DOCKER_BUILDKIT=1 docker build -t gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} --build-arg VO=gridpp --build-arg BRANCH_NAME=${env.BRANCH_NAME} --build-arg BUILD_ID=${env.BUILD_ID} --secret id=usercert,src=$X509_USER_CERT --secret id=userkey,src=$X509_USER_KEY -f ${env.WORKSPACE}/ganga/GangaDirac/test/Dockerfile ."
             }
           }
         }
         stage('GangaLHCb') {
           steps {
-            sh "docker build -t gangalhcbtest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/ganga/GangaLHCb/test/Dockerfile ."
-            sh "docker run --privileged --name GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID} -v ~/.globus:/root/.globus gangalhcbtest:${env.BRANCH_NAME}-${env.BUILD_ID} || true"
-            sh "docker cp GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID}:/root/tests-GangaLHCb.xml ."
-            sh "docker cp GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID}:/root/cov-GangaLHCb.xml ."
+            sh label: "Docker build", script: "docker build -t gangalhcbtest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/ganga/GangaLHCb/test/Dockerfile ."
+          }
+        }
+      }
+    }
+    // Parallel testing stage
+    stage('Run Testing') {
+      parallel {
+        stage('GangaCore') {
+          steps {
+            sh label: "Docker run", script: "docker run --name GangaCore${env.BRANCH_NAME}-${env.BUILD_ID} gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID} || true"
+            sh label: "Extract test results", script: "docker cp GangaCore${env.BRANCH_NAME}-${env.BUILD_ID}:/ganga/tests-GangaCore.xml ."
+            sh label: "Extract coverage results", script: "docker cp GangaCore${env.BRANCH_NAME}-${env.BUILD_ID}:/ganga/cov-GangaCore.xml ."
           }
           post {
             always {
+              sh label: "Force remove container" , script: "docker rm --force GangaCore${env.BRANCH_NAME}-${env.BUILD_ID} || true"
+              junit "**/tests-GangaCore.xml"
+            }
+          }
+        }
+        stage('GangaDirac') {
+          steps {
+            sh label: "Docker run", script: "docker run --name GangaDirac${BRANCH_NAME}-${BUILD_ID} gangadiractest:${BRANCH_NAME}-${BUILD_ID} || true"
+            sh label: "Extract test results", script: "docker cp GangaDirac${env.BRANCH_NAME}-${env.BUILD_ID}:/ganga/tests-GangaDirac.xml ."
+            sh label: "Extract coverage results", script: "docker cp GangaDirac${env.BRANCH_NAME}-${env.BUILD_ID}:/ganga/cov-GangaDirac.xml ."
+          }
+          post {
+            always {
+              sh label: "Force remove container", script: "docker rm --force GangaDirac${env.BRANCH_NAME}-${env.BUILD_ID} || true"
+              sh label: "Force remove image", script: "docker rmi --force gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} || true"
+              junit "**/tests-GangaDirac.xml"
+            }
+          }
+        }
+        stage('GangaLHCb') {
+          steps {
+            sh label: "Docker run", script: "docker run --privileged --name GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID} gangalhcbtest:${env.BRANCH_NAME}-${env.BUILD_ID} || true"
+            sh label: "Extract test results", script: "docker cp GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID}:/root/tests-GangaLHCb.xml ."
+            sh label: "Extract coverage results", script: "docker cp GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID}:/root/cov-GangaLHCb.xml ."
+          }
+          post {
+            always {
+              sh label: "Force remove container", script: "docker rm --force GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID} || true"
+              sh label: "Force remove image", script: "docker rmi --force gangalhcbtest:${env.BRANCH_NAME}-${env.BUILD_ID} || true"
               junit "**/tests-GangaLHCb.xml"
-              sh "docker rm --force GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID}"
-              sh "docker rmi --force gangalhcbtest:${env.BRANCH_NAME}-${env.BUILD_ID}"
             }
           }
         }
@@ -63,6 +78,7 @@ pipeline {
     always { 
       cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'cov-*.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
       sh "docker rmi --force gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID}"
+      sh "docker system prune -f"
     }
   }
 }

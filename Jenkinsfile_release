@@ -7,8 +7,8 @@ pipeline {
     // Build stage
     stage('Build Core Image') {
         steps{
-          withCredentials([usernamePassword(credentialsId: 'PyPi', passwordVariable: 'PYPI_PASSWORD', usernameVariable: 'PYPI_USER'), string(credentialsId: '3c8f4c29-6a7e-4b89-9735-de6c6ad4540e', variable: 'GITHUBAPITOKEN')]) {
-            sshagent(credentials: ['ca9d193d-edba-4a2f-b7d6-f45a25a41f39']){
+          withCredentials([usernamePassword(credentialsId: '03adcde0-64da-426d-9a59-150c2ef0656a', passwordVariable: 'PYPI_PASSWORD', usernameVariable: 'PYPI_USER'), usernamePassword(credentialsId: 'c2661e88-3a17-4c61-8386-82c38d5b9647', usernameVariable: 'GITHUBAPIUSER', passwordVariable: 'GITHUBAPIPASSWORD')]) {
+            sshagent(credentials: ['GangaDeployKey']){
               sh """
               virtualenv gangaRelease
               . gangaRelease/bin/activate

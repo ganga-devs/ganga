@@ -54,24 +54,32 @@ class TestMassStorageGetPut(GangaUnitTest):
             j.remove()
 
     @classmethod
-    def setUpClass(cls):
+    def setUpTest(cls):
         """ This creates a safe place to put the files into 'mass-storage' """
         cls.outputFilePath = tempfile.mkdtemp()
         cls.MassStorageTestConfig['uploadOptions']['path'] = cls.outputFilePath
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownTest(cls):
         """ Cleanup the current temp objects """
 
-        for file_ in cls._temp_files:
-            os.unlink(file_)
-        cls._temp_files = []
-
-        for file_ in cls._managed_files:
-            os.unlink(os.path.join(cls.outputFilePath, file_.namePattern))
-        cls._managed_files = []
-
-        shutil.rmtree(cls.outputFilePath, ignore_errors=True)
+	pass
+#        for file_ in cls._temp_files:
+#            if os.path.isfile(file_):
+#                os.unlink(file_)
+#            else:
+#                print("ERROR REMOVING FILE: '%s'" % str(file_))
+#        cls._temp_files = []
+#
+#        for file_ in cls._managed_files:
+#            file__  = os.path.join(cls.outputFilePath, file_.namePattern)
+#            if os.path.isfile(file__):
+#                os.unlink(file__)
+#            else:
+#                print("ERROR REMOVING FILE: '%s'" % str(file__))
+#        cls._managed_files = []
+#
+#        shutil.rmtree(cls.outputFilePath, ignore_errors=True)
 
     def test_a_test_put(self):
         """Test that a job can be submitted with inputfiles in the input"""
@@ -104,6 +112,7 @@ class TestMassStorageGetPut(GangaUnitTest):
 
         # Test in the case that the files don't have a parent or a localDir
         for file_ in self._managed_files:
+            print("file_: %s" % file_)
             file_.localDir = ''
             try:
                 assert file_.localDir == ''
@@ -119,6 +128,7 @@ class TestMassStorageGetPut(GangaUnitTest):
             file_.localDir = tmpdir
             print("localDir: %s" % file_.localDir)
             file_.get()
+            print("file_: %s" % str(file_))
             assert os.path.isfile(os.path.join(tmpdir, file_.namePattern))
             file_.localDir = ''
             assert file_.localDir == ''

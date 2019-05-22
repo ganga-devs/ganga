@@ -24,6 +24,7 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
             it to GangaCore.GPI
     """
     # Must do some Ganga imports here to avoid circular importing
+    from GangaCore import GANGA_SWAN_INTEGRATION
     from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor
     from GangaCore.Utility.Config import getConfig
     from GangaCore.Runtime.GPIexport import exportToInterface
@@ -55,3 +56,5 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
         my_interface = GangaCore.GPI
 
     exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
+    if GANGA_SWAN_INTEGRATION:
+        exportToInterface(my_interface, 'reloadJob', monitoring_component.reloadJob, 'Functions')

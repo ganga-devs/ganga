@@ -88,7 +88,7 @@ def getGaudiExecInputData(optsfiles, app):
 
 exportToGPI('getGaudiExecInputData', getGaudiExecInputData, 'Functions')
 
-def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder=None):
+def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder=None , myBranch='master'):
     """
         Short helper function for setting up minimal application environments on disk for job submission
         Args:
@@ -96,14 +96,25 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
             myVer (str): This is the version of 'myApp' to pass to lb-dev
             myPath (str): This is where lb-dev will be run
             myUse (str): This is a git lb-use which will be run once the lb-dev has executed
-            myFolder (str): This is a git lb-checkout after the lb-use. Assumes the master branch of the use project.
+            myFolder (str): This is a git lb-checkout after the lb-use. 
+            myBranch (str): This is the branch used for the lb-checkout. Master branch assumed if not specified
     """
+
     full_path = expandfilename(myPath, True)
     if not path.exists(full_path):
         makedirs(full_path)
+
+    #First guess a suitable platform for checking out the application
+    verStat, verOut, verErr = _exec_cmd('lb-sdb-query listPlatforms %s %s' % (myApp, myVer), full_path)
+    if verStat != 0 or len(verOut.split('\n'))==0:
+        logger.error("lb-sdb-query listPlatforms %s %s failed!" % (myApp, myVer))
+        raise ApplicationPrepareError(verErr)
+
+    platformToUse = verOut.split('\n')[-2]
+
     if not path.exists(full_path + '/' + myApp + 'Dev_' +myVer):
-        devStat, devOut, devErr = _exec_cmd('lb-dev %s/%s' % (myApp, myVer), full_path)
-        logger.info("Running lb-dev %s %s" % (myApp, myVer))
+        devStat, devOut, devErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && lb-dev %s/%s' % (platformToUse, platformToUse, myApp, myVer), full_path)
+        logger.info("Running lb-dev %s %s with platform %s" % (myApp, myVer, platformToUse))
         if devStat != 0:
             logger.error("lb-dev %s %s failed!" % (myApp, myVer))
             raise ApplicationPrepareError(devErr)
@@ -112,22 +123,22 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
     dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
     logger.info("Set up App Env at: %s" % dev_dir)
     if myUse:
-        lbUse, lbUseOut, lbUseErr = _exec_cmd('git lb-use %s' % myUse, dev_dir)
+        lbUse, lbUseOut, lbUseErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && git lb-use %s' % (platformToUse, platformToUse, myUse), dev_dir)
         logger.info("Running git lb-use %s" % myUse)
         if lbUse != 0:
             logger.error("git lb-use %s failed!" % myUse)
             raise ApplicationPrepareError(lbUseErr)
         if myFolder:
-            chk, chkOut, chkErr = _exec_cmd('git lb-checkout %s/master %s' % (myUse, myFolder), dev_dir)
-            logger.info("Running git lb-checkout %s/master %s" % (myUse, myFolder))
+            chk, chkOut, chkErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && git lb-checkout %s/%s %s' % (platformToUse, platformToUse, myUse, myBranch, myFolder), dev_dir)
+            logger.info("Running git lb-checkout %s/%s %s" % (myUse,myBranch, myFolder))
             if chk != 0:
-                logger.error("git lb-checkout %s/master %s failed!" % (myUse, myFolder))
+                logger.error("git lb-checkout %s/%s %s failed!" % (myUse, myBranch, myFolder))
                 raise ApplicationPrepareError(chkErr)
     return dev_dir
 
 exportToGPI('prepare_cmake_app', prepare_cmake_app, 'Functions')
 
-def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder=None):
+def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder=None , myBranch = 'master'):
     """
         Setup and Return a GaudiExec based upon a release version of a given App.
         Args:
@@ -135,9 +146,10 @@ def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder=
             myVer (str): This is the version of the app you want
             myPath (str): This is where lb-dev will be run
             myUse (str): This is a git lb-use which will be run once the lb-dev has executed
-            myFolder (str): This is a git lb-checkout for after the lb-use. Assumes the master branch of the project
+            myFolder (str): This is a git lb-checkout for after the lb-use. 
+            myBranch (str) : This is what is appended to the lb-checkout myFolder/myBranch , master assumed if not specified
     """
-    path = prepare_cmake_app(myApp, myVer, myPath, myUse, myFolder)
+    path = prepare_cmake_app(myApp, myVer, myPath, myUse, myFolder, myBranch)
     from GangaCore.GPI import GaudiExec
     return GaudiExec(directory=path)
 
