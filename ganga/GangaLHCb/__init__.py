@@ -15,20 +15,12 @@ from GangaCore.Utility.logging import getLogger
 
 from GangaCore.Runtime.GPIexport import exportToGPI
 
-from GangaCore.Core.exceptions import PluginError
-
 from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
 
 logger = getLogger()
 
-#First check that LbDevTools has been installed and raise an exeception if not
-try:
-    import LbDevTools
-except ImportError:
-    raise PluginError("Cannot import package LbDevTools. This is required for the LHCb plugin. Install with pip: 'pip install LbDevTools'.")
-    
 if not _after_bootstrap:
     configLHCb = GangaCore.Utility.Config.makeConfig('LHCb', 'Parameters for LHCb')
 
@@ -77,7 +69,7 @@ def _store_root_version():
 
 if not _after_bootstrap:
     store_dirac_environment()
-    _store_root_version()
+#    _store_root_version()
 
 
 def standardSetup():
