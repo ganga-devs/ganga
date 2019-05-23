@@ -17,7 +17,7 @@ ENTRYPOINT . /etc/cvmfs/run-cvmfs.sh &&\
             virtualenv -p `which python` venv &&\
             . venv/bin/activate &&\
             pip install --upgrade pip setuptools &&\
-            pip install -e ganga &&\
+            pip install -e ganga[LHCb] &&\
             (cd ganga && pip install --upgrade -r requirements.txt) &&\
             lhcb-proxy-init &&\
             /root/venv/bin/pytest --testLHCb /root/ganga/ganga/GangaLHCb/test --cov-report term --cov-report xml:cov-GangaLHCb.xml --cov /root/ganga/ganga/GangaLHCb --junitxml tests-GangaLHCb.xml
