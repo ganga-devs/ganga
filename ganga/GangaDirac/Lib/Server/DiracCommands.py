@@ -441,3 +441,63 @@ def checkSEStatus(se, access = 'Write'):
     '''
     result = dirac.checkSEAccess(se, access)
     return result
+
+@diracCommand
+def listFiles(baseDir, minAge = None):
+    ''' Return a list of LFNs for files stored on the grid in the argument
+        directory and its subdirectories
+        param baseDir: Top directory to begin search
+        type baseDir: string
+        param minAge: minimum age of files to be returned
+        type minAge: string format: "W:D:H"
+    '''
+
+    from DIRAC.Resources.Catalog.FileCatalog import FileCatalog
+    fc = FileCatalog()
+
+    from datetime import datetime, timedelta
+
+    withMetaData = False
+    cutoffTime = datetime.utcnow()
+    import re
+    r = re.compile('\d:\d:\d')
+    if r.match(minAge):
+        withMetaData = True
+        timeList = minAge.split(':')
+        timeLimit = timedelta(weeks = int(timeList[0]), days = int(timeList[1]), hours = int(timeList[2]))
+        cutoffTime = datetime.utcnow() - timeLimit
+
+    baseDir = baseDir.rstrip('/')
+
+    activeDirs = [baseDir]
+
+    allFiles = []
+    emptyDirs = []
+
+    while len(activeDirs) > 0:
+        currentDir = activeDirs.pop()	
+        res = fc.listDirectory(currentDir, withMetaData, timeout = 360)
+        if not res['OK']:
+            return "Error retrieving directory contents", "%s %s" % ( currentDir, res['Message'] )
+        elif currentDir in res['Value']['Failed']:
+            return "Error retrieving directory contents", "%s %s" % ( currentDir, res['Value']['Failed'][currentDir] )
+        else:
+            dirContents = res['Value']['Successful'][currentDir]
+            subdirs = dirContents['SubDirs']
+            files = dirContents['Files']
+            if not subdirs and not files:
+                emptyDirs.append( currentDir )
+            else:
+                for subdir in sorted( subdirs, reverse=True):
+                    if (not withMetaData) or subdirs[subdir]['CreationDate'] < cutoffTime:
+                        activeDirs.append(subdir)
+                for filename in sorted(files):
+                    fileOK = False
+                    if (not withMetaData) or files[filename]['MetaData']['CreationDate'] < cutoffTime:
+                        fileOK = True
+		    if not fileOK:
+                        files.pop(filename)
+                allFiles += sorted(files)
+
+    return allFiles
+
