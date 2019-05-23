@@ -123,7 +123,7 @@ class Node(object):
         object's root object.
 
         This lock acquires exclusive access over an object tree to prevent it
-        changing. Reading schema attributes on the object is still allowed
+        from changing. Reading schema attributes on the object is still allowed
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
@@ -282,7 +282,7 @@ class Descriptor(object):
 
     """
     This is the Descriptor class used to deal with object assignment ot attribtues of the GangaObject.
-    This class handles the lazy-loading of an object from disk when needed to resturn a value stored in the Registry
+    This class handles the lazy-loading of an object from disk when needed to return a value stored in the Registry
     This class also handles thread-locking of a class including both the getter and setter methods to ensure object consistency
     """
 
@@ -733,7 +733,7 @@ class GangaObject(Node):
         setattr(returnable, '_should_init', should_init)
         GangaObject.__init__(returnable)
         try:
-            # Initialize the most derrived class to get all of the goodness needed higher up.
+            # Initialize the most derived class to get all of the goodness needed higher up.
             returnable.__class__.__init__(returnable)
         except:
             logger.debug("Broken init method for class: %s trying to proceed silently" % cls.__name__)
