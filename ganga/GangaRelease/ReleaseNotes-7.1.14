@@ -1,0 +1,28 @@
+**************************************************************************************************************
+7.1.14 (2019/05/24)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaCore
+--------------------------------------------------------------------------------------------------------------
+* Prompt flushing moved to pre-prompt hook. Prevents the flushing whilst code is input but now the cell needs to execute to flush. #1457
+* Fix for getting job hostname. #1456
+* Mass storage file expands environment variables in the config. #1451
+* Bugfix for automatically removing job output (including remote files) when removing a job. #1445
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* New command to list files (LFNs) in a folder. `listFiles('/base/dir', minAge)`. #1465
+* Get LFNs for splitters now in new Dirac process to avoid timeout issues and revert to multithread. #1458
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Added optional branch specification for checked out packages in prepareGaudiExec. #1459
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaND280
+--------------------------------------------------------------------------------------------------------------
+* Many improvements. #1451
+**************************************************************************************************************
