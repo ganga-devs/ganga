@@ -25,6 +25,8 @@ from GangaCore.Core.exceptions import GangaValueError, GangaException
 
 from GangaCore.Utility.Plugin import allPlugins
 
+from GangaCore.Utility.Profiling import cpu_profiler, mem_profiler
+
 def _getName(obj):
     """ Return the name of an object based on what we prioritise 
     Name is defined as the first in the list of:
@@ -687,6 +689,8 @@ class ObjectMetaclass(abc.ABCMeta):
             this_schema.createDefaultConfig()
 
 
+@cpu_profiler
+@mem_profiler
 class GangaObject(Node):
     __metaclass__ = ObjectMetaclass # Change standard Python metaclass object
     _schema = None  # obligatory, specified in the derived classes
