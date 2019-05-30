@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -194,7 +194,7 @@ class LocalFile(IGangaFile):
             _actual_delete = False
             keyin = None
             while keyin is None:
-                keyin = raw_input("Do you want to remove the LocalFile: %s ? ([y]/n) " % this_file)
+                keyin = input("Do you want to remove the LocalFile: %s ? ([y]/n) " % this_file)
                 if keyin.lower() in ['y', '']:
                     _actual_delete = True
                 elif keyin.lower() == 'n':
@@ -243,7 +243,7 @@ class LocalFile(IGangaFile):
         # Deliberately do nothing.
 
     def put(self):
-	"""
+        """
         Copy the file to the detination (in the case of LocalFile the localDir)
         """
         # This is useful for placing the LocalFile in a subdir at the end of a job
@@ -305,7 +305,7 @@ for f in ###FILELIST###:
 
             replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
 
-            for k, v in replace_dict.iteritems():
+            for k, v in replace_dict.items():
                 this_cp = this_cp.replace(k, v)
 
             script = this_cp

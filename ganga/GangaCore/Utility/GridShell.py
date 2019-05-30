@@ -68,7 +68,7 @@ def constructShell():
             logger.error("File not found: %s" % config['GLITE_SETUP'])
             return None
 
-    for key, val in values.items():
+    for key, val in list(values.items()):
         s.env[key] = val
 
     # check and set env. variables for default LFC setup
@@ -108,7 +108,7 @@ def getShell(cred_req=None):
             logger.info('GridShell.getShell given credential which is invalid')
             raise InvalidCredentialError()
 
-        if cred_req in _allShells.keys():
+        if cred_req in list(_allShells.keys()):
             return _allShells[cred_req]
 
     constructed_shell = constructShell()

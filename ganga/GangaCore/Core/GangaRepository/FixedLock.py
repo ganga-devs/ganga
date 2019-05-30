@@ -4,7 +4,7 @@
 # to run locking tests (run several instances in the same directory, from
 # different machines)
 
-from __future__ import print_function
+
 
 import functools
 import threading
@@ -19,7 +19,7 @@ import datetime
 import getpass
 from pipes import quote
 
-import cPickle as pickle
+import pickle as pickle
 
 from GangaCore.Utility.logging import getLogger
 
@@ -136,7 +136,7 @@ class FixedLockManager(object):
     def make_new_ids(self, n):
         """This bumps the registry count by n ids"""
         newcount = self.cnt_read()
-        ids = range(newcount, newcount + n)
+        ids = list(range(newcount, newcount + n))
         self.count = ids[-1]+1
         self.cnt_write()
         return list(ids)

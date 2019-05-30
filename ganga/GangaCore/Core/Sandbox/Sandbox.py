@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 import os
 import sys
 import mimetypes
@@ -65,8 +65,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
     else:
         file_format = ''
 
-    with open(tgzfile, 'w:%s' % file_format) as this_tarfile:
-        tf = tarfile.open(name=tgzfile, fileobj=this_tarfile, mode="w:gz")
+    with tarfile.open(tgzfile, 'w:%s' % file_format) as tf:
         tf.dereference = True  # --not needed in Windows
 
         from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
@@ -79,8 +78,8 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                 contents = f.getContents()   # is it FileBuffer?
                 # print "Getting FileBuffer Contents"
 
-                from StringIO import StringIO
-                fileobj = StringIO(contents)
+                from io import BytesIO
+                fileobj = BytesIO(contents)
 
                 tinfo = tarfile.TarInfo()
                 # FIX for Ganga/test/Internals/FileBuffer_Sandbox
@@ -100,7 +99,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                 # tf.add(f.name,os.path.join(f.subdir,os.path.basename(f.name)))
                 logger.debug("Opening file for sandbox: %s" % f.name)
                 try:
-                    fileobj = open(f.name)
+                    fileobj = open(f.name, 'rb')
                 except Exception as err:
                     raise SandboxError("File '%s' does not exist." % f.name)
 
@@ -110,7 +109,6 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                 tinfo.mode = tinfo.mode | stat.S_IXUSR
             tf.addfile(tinfo, fileobj)
             fileobj.close()
-        tf.close()
 
     return [tgzfile]
 

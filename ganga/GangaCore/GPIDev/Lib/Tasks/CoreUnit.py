@@ -6,8 +6,8 @@ import copy
 
 
 class CoreUnit(IUnit):
-    _schema = Schema(Version(1, 0), dict(IUnit._schema.datadict.items() + {
-    }.items()))
+    _schema = Schema(Version(1, 0), dict(list(IUnit._schema.datadict.items()) + list({
+    }.items())))
 
     _category = 'units'
     _name = 'CoreUnit'

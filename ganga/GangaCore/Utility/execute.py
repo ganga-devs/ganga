@@ -2,7 +2,7 @@ import os
 import base64
 import subprocess
 import threading
-import cPickle as pickle
+import pickle as pickle
 import signal
 from copy import deepcopy
 from GangaCore.Core.exceptions import GangaException
@@ -126,7 +126,7 @@ def get_env():
     env = eval(output[0])
 
     if env:
-        for k, v in env.iteritems():
+        for k, v in env.items():
             if not str(v).startswith('() {'):
                 env[k] = os.path.expandvars(v)
             # Be careful with exported bash functions!

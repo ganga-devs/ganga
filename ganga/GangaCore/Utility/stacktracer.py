@@ -47,7 +47,7 @@ def stacktraces():
         '<body>'
         '<h1>Current Ganga Threads</h1>',
     ]
-    for thread_id, stack in sys._current_frames().items():
+    for thread_id, stack in list(sys._current_frames().items()):
         name = dict((t.ident, t.name) for t in threading.enumerate())
         title = '<h2>{0}</h2>'.format(name.get(thread_id, None))
         html.append(title)
@@ -103,7 +103,7 @@ class TraceDumper(threading.Thread):
 
     def stacktraces(self):
         try:
-            with open(self.path, 'wb+') as fout:
+            with open(self.path, 'w+') as fout:
                 fout.write(stacktraces())
         except IOError:
             pass  # Don't warn if the file faile to write

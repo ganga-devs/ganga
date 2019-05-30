@@ -70,7 +70,7 @@ from GangaCore.Core.exceptions import BackendError
 import GangaCore.Utility.logging
 from GangaCore.Utility.Config import getConfig
 
-import commands
+import subprocess
 import inspect
 import os
 import shutil
@@ -154,7 +154,7 @@ class Condor(IBackend):
         stati = self.submit_cdf(os.path.join(self.getJobObject().getInputWorkspace().getPath(),"__cdf__"))
         submitFailures = []
         for sj in rjobs:
-            if str(sj.id) in stati.keys():
+            if str(sj.id) in list(stati.keys()):
                 sj.backend.id = stati[str(sj.id)]
                 sj.updateStatus('submitted')
                 sj.time.timenow('submitted')
@@ -190,7 +190,7 @@ class Condor(IBackend):
         commandList.append(cdfpath)
         commandString = " ".join(commandList)
 
-        status, output = commands.getstatusoutput(commandString)
+        status, output = subprocess.getstatusoutput(commandString)
 
         self.id = ""
         returnIDs = {}
@@ -220,10 +220,10 @@ class Condor(IBackend):
             #Get the global ids. This should come back as a big long string, ids separated by spaces
             queryCommand = " ".join\
                         (["condor_q -format \"%s \" GlobalJobId", idString])
-            qstatus, qoutput = commands.getstatusoutput(queryCommand)
+            qstatus, qoutput = subprocess.getstatusoutput(queryCommand)
             queries = idString.rstrip().split(' ')
             returns = qoutput.rstrip().split(' ')
-            localToGlobal = zip(queries, returns)
+            localToGlobal = list(zip(queries, returns))
             for q in localToGlobal:
                 sjIndex = jobsDict[q[0]]['Iwd'].split('/').index(str(self.getJobObject().id))
                 if hasSubjobs:
@@ -330,7 +330,7 @@ class Condor(IBackend):
         else:
             killCommand = "condor_rm %s" % (idElementList[0])
 
-        status, output = commands.getstatusoutput(killCommand)
+        status, output = subprocess.getstatusoutput(killCommand)
 
         if (status != 0):
             logger.warning\
@@ -386,7 +386,7 @@ class Condor(IBackend):
             "# Condor Description File created by Ganga",
             "# %s" % (time.strftime("%c")),
             ""]
-        for key, value in cdfDict.iteritems():
+        for key, value in cdfDict.items():
             cdfList.append("%s = %s" % (key, value))
         cdfList.append(self.requirements.convert())
         cdfString = "\n".join(cdfList)
@@ -501,7 +501,7 @@ class Condor(IBackend):
 
         envList = []
         if self.env:
-            for key in self.env.keys():
+            for key in list(self.env.keys()):
                 value = self.env[key]
                 if (isinstance(value, str)):
                     value = os.path.expandvars(value)
@@ -510,7 +510,7 @@ class Condor(IBackend):
                 envList.append("=".join([key, value]))
         envString = ";".join(envList)
         if jobconfig.env:
-            for key in jobconfig.env.keys():
+            for key in list(jobconfig.env.keys()):
                 value = jobconfig.env[key]
                 if (isinstance(value, str)):
                     value = os.path.expandvars(value)
@@ -531,7 +531,7 @@ class Condor(IBackend):
             "\n#jobNo: %s " % job.getFQID('.'),
             ""]
 
-        for key, value in cdfDict.iteritems():
+        for key, value in cdfDict.items():
             cdfList.append("%s = %s" % (key, value))
         cdfList.append(self.requirements.convert())
         cdfList.append("queue")
@@ -546,7 +546,7 @@ class Condor(IBackend):
             if job.backend.id:
                 jobDict[job.backend.id] = job
 
-        idList = jobDict.keys()
+        idList = list(jobDict.keys())
 
         if not idList:
             return
@@ -560,7 +560,7 @@ class Condor(IBackend):
                 "-format \"%d \" JobStatus",
                 "-format \"%f\\n\" RemoteUserCpu"
             ])
-        status, output = commands.getstatusoutput(queryCommand)
+        status, output = subprocess.getstatusoutput(queryCommand)
         if 0 != status:
             logger.error("Problem retrieving status for Condor jobs")
             return
@@ -608,11 +608,11 @@ class Condor(IBackend):
                         "-format \"%s\" GlobalJobId",
                         id
                     ])
-                status, output = commands.getstatusoutput(queryCommand)
+                status, output = subprocess.getstatusoutput(queryCommand)
                 if 0 == status:
                     globalId = output
 
-            if globalId in allDict.keys():
+            if globalId in list(allDict.keys()):
                 status = allDict[globalId]["status"]
                 host = allDict[globalId]["host"]
                 cputime = allDict[globalId]["cputime"]

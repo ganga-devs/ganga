@@ -98,7 +98,7 @@ class GangaListIter(object):
     def __init__(self, it):
         self.it = it
 
-    def next(self):
+    def __next__(self):
         # TODO determine if this is correct or needed?
         return addProxy(next(self.it))
 
@@ -201,7 +201,7 @@ class GangaList(GangaObject):
             if '_list_get__match__' in dir(item):
                 return item._list_get__match__(to_match)
             return to_match == item
-        return makeGangaListByRef(filter(matching_filter, self._list), preparable=self._is_preparable)
+        return makeGangaListByRef(list(filter(matching_filter, self._list)), preparable=self._is_preparable)
 
     def _export_get(self, to_match):
         return addProxy(self.get(stripProxy(to_match)))

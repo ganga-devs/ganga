@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import time
 import traceback
 import sys
@@ -311,7 +311,7 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         if id is not None and type(id) is int:
             iterable_list = [self[id]]
         else:
-            iterable_list = stripProxy(self).objects.values()
+            iterable_list = list(stripProxy(self).objects.values())
 
         for p in iterable_list:
 

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -580,10 +580,10 @@ class ProxyDataDescriptor(object):
     def __recursive_strip(_val):
         ## Strip the proxies recursively for things like nested lists
         raw_val = stripProxy(_val)
-        if isinstance(_val, collections.Sequence) and not isinstance(_val, basestring):
+        if isinstance(_val, collections.Sequence) and not isinstance(_val, str):
             val = raw_val.__class__()
             if isinstance(val, dict):
-                for _key, elem in _val.iteritems():
+                for _key, elem in _val.items():
                     if isType(_key, GangaObject):
                         key = stripProxy(_key)
                     else:
@@ -945,8 +945,8 @@ def GPIProxyClassFactory(name, pluginclass):
     """)
 
     def _str(self, interactive=False):
-        import cStringIO
-        sio = cStringIO.StringIO()
+        import io
+        sio = io.StringIO()
         stripProxy(self).printSummaryTree(0, 0, '', out=sio, interactive=interactive)
         returnable = str(sio.getvalue()).rstrip()
         return returnable

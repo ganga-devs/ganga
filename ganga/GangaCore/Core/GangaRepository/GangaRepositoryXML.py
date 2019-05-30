@@ -307,8 +307,10 @@ class GangaRepositoryLocal(GangaRepository):
         if cache_time != fn_ctime:
             logger.debug("%s != %s" % (cache_time, fn_ctime))
             try:
-                with open(fn, 'r') as fobj:
+                with open(fn, 'rb') as fobj:
                     cat, cls, cache = pickle_from_file(fobj)[0]
+            except EOFError:
+                pass
             except Exception as x:
                 logger.warning("index_load Exception: %s" % x)
                 raise IOError("Error on unpickling: %s %s" %(getName(x), x))
@@ -322,7 +324,7 @@ class GangaRepositoryLocal(GangaRepository):
                     raise IOError('Failed to Parse information in Index file: %s. Err: %s' % (fn, err))
             this_cache = obj._index_cache
             this_data = this_cache if this_cache else {}
-            for k, v in cache.iteritems():
+            for k, v in cache.items():
                 this_data[k] = v
             #obj.setNodeData(this_data)
             obj._index_cache = cache
@@ -356,7 +358,7 @@ class GangaRepositoryLocal(GangaRepository):
             new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
             if not os.path.exists(ifn) or shutdown:
                 new_cache = new_idx_cache
-                with open(ifn, "w") as this_file:
+                with open(ifn, "wb") as this_file:
                     new_index = (obj._category, getName(obj), new_cache)
                     logger.debug("Writing: %s" % str(new_index))
                     pickle_to_file(new_index, this_file)
@@ -407,7 +409,7 @@ class GangaRepositoryLocal(GangaRepository):
             if os.path.isfile(_master_idx):
                 logger.debug("Reading Master index")
                 self._master_index_timestamp = os.stat(_master_idx).st_ctime
-                with open(_master_idx, 'r') as input_f:
+                with open(_master_idx, 'rb') as input_f:
                     this_master_cache = pickle_from_file(input_f)[0]
                 for this_cache in this_master_cache:
                     if this_cache[1] >= 0:
@@ -430,13 +432,13 @@ class GangaRepositoryLocal(GangaRepository):
         """
         clear the master cache(s) which have been stored in memory
         """
-        for k, v in self._cache_load_timestamp.iteritems():
+        for k, v in self._cache_load_timestamp.items():
             self._cache_load_timestamp.pop(k)
-        for k, v in self._cached_cat.iteritems():
+        for k, v in self._cached_cat.items():
             self._cached_cat.pop(k)
-        for k, v in self._cached_cls.iteritems():
+        for k, v in self._cached_cls.items():
             self._cached_cls.pop(k)
-        for k, v in self._cached_obj.iteritems():
+        for k, v in self._cached_obj.items():
             self._cached_obj.pop(k)
 
     def _write_master_cache(self, shutdown=False):
@@ -452,7 +454,7 @@ class GangaRepositoryLocal(GangaRepository):
                 if abs(self._master_index_timestamp - os.stat(_master_idx).st_ctime) < 300:
                     return
 
-            items_to_save = self.objects.iteritems()
+            items_to_save = iter(self.objects.items())
             for k, v in items_to_save:
                 if k in self.incomplete_objects:
                     continue
@@ -476,7 +478,7 @@ class GangaRepositoryLocal(GangaRepository):
                     logger.debug("Failed to update index: %s on startup/shutdown" % k)
                     logger.debug("Reason: %s" % err)
 
-            iterables = self._cache_load_timestamp.iteritems()
+            iterables = iter(self._cache_load_timestamp.items())
             for k, v in iterables:
                 if k in self.incomplete_objects:
                     continue
@@ -505,7 +507,7 @@ class GangaRepositoryLocal(GangaRepository):
                     this_master_cache.append(cached_list)
 
             try:
-                with open(_master_idx, 'w') as of:
+                with open(_master_idx, 'wb') as of:
                     pickle_to_file(this_master_cache, of)
             except IOError as err:
                 logger.debug("write_master: %s" % err)
@@ -547,7 +549,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         locked_ids = self.sessionlock.locked
 
-        for this_id in objs.keys():
+        for this_id in objs:
             deleted_ids.discard(this_id)
             # Make sure we do not overwrite older jobs if someone deleted the
             # count file
@@ -824,10 +826,10 @@ class GangaRepositoryLocal(GangaRepository):
                         self.objects[this_id]._setDirty()
                 # self.unlock([this_id])
 
-                old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.iteritems())
+                old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.items())
                 if not old_idx_subset:
                     # Old index cache isn't subset of new index cache
-                    new_idx_subset = all((k in obj._index_cache and obj._index_cache[k] == v) for k, v in new_idx_cache.iteritems())
+                    new_idx_subset = all((k in obj._index_cache and obj._index_cache[k] == v) for k, v in new_idx_cache.items())
                 else:
                     # Old index cache is subset of new index cache so no need to check
                     new_idx_subset = True

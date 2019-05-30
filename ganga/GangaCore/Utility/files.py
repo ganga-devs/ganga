@@ -81,7 +81,7 @@ def multi_glob(pats, exclude=None):
         for f in glob.glob(p):
             unique[f] = 1
 
-    return [name for name in unique.keys() if not exclude(name)]
+    return [name for name in list(unique.keys()) if not exclude(name)]
 
 
 def recursive_copy(src, dest):

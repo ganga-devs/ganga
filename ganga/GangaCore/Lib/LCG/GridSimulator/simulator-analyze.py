@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 #from GangaCore.Lib.LCG.GridSimulator import GridSimulator
 #g = GridSimulator()

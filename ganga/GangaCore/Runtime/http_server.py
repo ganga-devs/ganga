@@ -1,11 +1,11 @@
-from BaseHTTPServer import BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler
 from GangaCore.Core.GangaRepository import getRegistry, RegistryKeyError
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.Utility.util import hostname
 from GangaCore.GPIDev.Base.Proxy import getName
-from BaseHTTPServer import HTTPServer
+from http.server import HTTPServer
 
-import urlparse
+import urllib.parse
 import GangaCore.GPI
 from GangaCore.GPIDev.Lib.Config import config
 import time
@@ -215,7 +215,7 @@ def get_job_infos_in_time_range(fromDate=None, toDate=None):
 
     job_infos = []
 
-    for jobInfo in jobs_dictionary.values():
+    for jobInfo in list(jobs_dictionary.values()):
 
         timeCreated = jobInfo.getTimeCreated()
 
@@ -353,7 +353,7 @@ def get_pie_chart_json(d, colors=False, jobs=False):
     keys = []
     values = []
 
-    for k, v in d.iteritems():
+    for k, v in d.items():
         keys.append(k)
         values.append(v)
 

@@ -22,10 +22,10 @@ from __future__ import print_function
 import sys
 
 #First make sure we are using a python version between 2.7 and 3
-if sys.version_info[0] != 2 or sys.version_info[1] < 7:
-    import logging
-    logging.error("Ganga does not support python version %s.%s.%s. Make sure you have a python version 2.7.x in your path" % (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-    sys.exit(-1)
+#if sys.version_info[0] != 2 or sys.version_info[1] < 7:
+#    import logging
+#    logging.error("Ganga does not support python version %s.%s.%s. Make sure you have a python version 2.7.x in your path" % (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+#    sys.exit(-1)
 
 def standardSetup():
     """Function to perform standard setup for Ganga.
@@ -44,9 +44,10 @@ def standardSetup():
         sys.path.insert(0, envDir)    
 
     #This function is needed to add the individual ganga modules to the sys path - awful hack but saved rewriting all the code. This is needed for pip installs
-    pathsToAdd = filter(lambda p : 'ganga' in os.listdir(p), filter(lambda x : not x=='' and os.path.isdir(x), sys.path))
-    for p in pathsToAdd:
-        sys.path.insert(0, os.path.join(p, 'ganga'))
+#    pathsToAdd = filter(lambda p : 'ganga' in os.listdir(p),
+#                        filter(lambda x : not x=='' and os.path.isdir(x), sys.path))
+#    for p in pathsToAdd:
+#        sys.path.insert(0, os.path.join(p, 'ganga'))
 
     from GangaCore.PACKAGE import standardSetup
     standardSetup()

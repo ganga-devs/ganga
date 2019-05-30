@@ -7,7 +7,7 @@ from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
 from GangaCore.GPIDev.Adapters.IChecker import IChecker
 from GangaCore.GPIDev.Schema import FileItem
 from GangaCore.Utility.logging import getLogger
-import commands
+import subprocess
 import copy
 import os
 import re
@@ -48,7 +48,7 @@ class CustomChecker(IChecker):
 
         try:
             ns = {'job': job}
-            execfile(self.module.name, ns)
+            exec(compile(open(self.module.name).read(), self.module.name, 'exec'), ns)
             exec('_result = check(job)', ns)
             result = ns.get('_result', result)
         except Exception as e:

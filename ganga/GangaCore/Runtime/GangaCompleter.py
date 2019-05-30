@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 from GangaCore.Utility.ColourText import getColour
 import readline
@@ -46,8 +46,7 @@ def arg_splitter(text, strip_args=True):
         return []
     if strip_args:
         # remove () and split and strip
-        args = map(
-            lambda x: x.strip(), replacement_list.pop()[1:-1].split(','))
+        args = [x.strip() for x in replacement_list.pop()[1:-1].split(',')]
     else:
         args = replacement_list.pop()[1:-1].split(',')
 #    print "args:", str(args)
@@ -126,8 +125,8 @@ class GangaCompleter(object):
             class_label, class_name, method_name, arg_num = current_class_method_and_arg(
                 user_input, self.ns)
             args = arg_splitter(match)
-            var_args = filter(lambda x: '*' in x, args)
-            non_var_args = filter(lambda x: '*' not in x, args)
+            var_args = [x for x in args if '*' in x]
+            non_var_args = [x for x in args if '*' not in x]
             if method_name is None:  # constructor
                 match = match.replace(
                     class_name, getColour('fg.green') + class_name + getColour('fg.normal'))
@@ -143,8 +142,7 @@ class GangaCompleter(object):
                     'fg.blue') + non_var_args[arg_num] + getColour('fg.normal')
             else:
                 if var_args:
-                    var_args = map(
-                        lambda x: getColour('fg.blue') + x + getColour('fg.normal'), var_args)
+                    var_args = [getColour('fg.blue') + x + getColour('fg.normal') for x in var_args]
                 elif arg_num > 0:
                     logger.warning('Too many arguments provided')
                     match = match.replace(')', getColour(
@@ -214,7 +212,7 @@ class GangaCompleter(object):
             new = tmp[:]  # map(lambda x: x.strip(), tmp)
             wrong = False
             unrecognised = []
-            for i, arg in enumerate(itertools.ifilter(lambda x: x != '', itertools.imap(lambda x: x.strip(), new))):
+            for i, arg in enumerate(filter(lambda x: x != '', map(lambda x: x.strip(), new))):
                 if '=' in arg:
                     split_arg = arg.split('=')
                     if split_arg[0].strip() not in eval('dict(%s._impl._schema.allItems())' % class_name, self.ns):
@@ -243,7 +241,7 @@ class GangaCompleter(object):
         colour_normal = getColour('fg.normal')
 
         display_str = '\n'
-        for i, m in enumerate(itertools.ifilter(lambda x: x != '', matches)):
+        for i, m in enumerate(filter(lambda x: x != '', matches)):
             coloured_text = self.colouriser(m, user_input)
             width = column_width
             if colour_green in coloured_text:

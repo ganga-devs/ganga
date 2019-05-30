@@ -152,7 +152,7 @@ class IPrepareApp(IApplication):
             verify (bool) : If the hash is to be verified in the future True save it to the hash schema attribute
         """
         from GangaCore.GPIDev.Base.Proxy import runProxyMethod
-        import cStringIO
+        import io
         try:
             import hashlib
             digest = hashlib.new('md5')
@@ -161,9 +161,9 @@ class IPrepareApp(IApplication):
             import md5
             digest = md5.new()
 
-        sio = cStringIO.StringIO()
+        sio = io.StringIO()
         runProxyMethod(self, 'printPrepTree', sio)
-        digest.update(str(sio.getvalue()))
+        digest.update(sio.getvalue().encode('utf-8'))
         tmp = sio.getvalue()
         if verify == False:
             self.hash = digest.hexdigest()
