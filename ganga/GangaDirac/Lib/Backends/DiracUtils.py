@@ -1,4 +1,5 @@
 import time
+import re
 import itertools
 from GangaCore.Core.exceptions import GangaException, BackendError
 #from GangaDirac.BOOT       import dirac_ganga_server
@@ -128,6 +129,29 @@ def for_each(func, *iterables, **kwargs):
                            **kwargs.get('fkwargs', {})))
     return result
 
+def listFiles(baseDir, minAge = None, credential_requirements=None):
+    '''
+    Return a list of LFNs for files stored on the grid in the argument
+    directory and its subdirectories
+    param baseDir: Top directory to begin search
+    type baseDir: string
+    param minAge: minimum age of files to be returned
+    type minAge: string, "%w:%d:%H" 
+    '''
+
+    if minAge:
+        r = re.compile('\d:\d:\d')
+        if not r.match(minAge):
+            logger.error("Provided min age is not in the right format '%w:%d:H'")
+            return
+
+    lfns = execute('listFiles("%s", "%s")' % (baseDir, minAge), cred_req=credential_requirements)
+    return lfns
+
+from GangaCore.Runtime.GPIexport import exportToGPI
+exportToGPI('listFiles', listFiles, 'Functions')
+
+
 def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=None):
     """
     This is a function to get a list of the accessURLs
@@ -179,5 +203,4 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
             break
     return myURLs
 
-from GangaCore.Runtime.GPIexport import exportToGPI
 exportToGPI('getAccessURLs', getAccessURLs, 'Functions')
