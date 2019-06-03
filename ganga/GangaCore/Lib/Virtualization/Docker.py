@@ -17,21 +17,10 @@ class Docker(IVirtualization):
     _name = 'Docker'
     _schema = Schema(Version(1, 0), {
         'imageUrl': SimpleItem(defvalue="", doc='Link to the container image'),
-        'mode': SimpleItem(defvalue="", doc='Mode of container execution'
+        'mode': SimpleItem(defvalue="P1", doc='Mode of container execution'
         )})
 
-    def __init__(self, imageUrl, mode=""):
+    def __init__(self, imageUrl, mode):
         super(Docker, self).__init__()
-        
-        if isinstance(imageUrl, str):
-            self.imageUrl = imageUrl
-        else:
-            logger.error("Unkown type: %s . is not a valid format for image Url" % type(namePattern))
-
-        if isinstance(mode, str):
-            if mode == "":
-                self.mode = "P1"
-            else:
-                self.mode = mode
-        else:
-            logger.error("Unkown type: %s . is not a valid format for mode" % type(namePattern))
+        self.imageUrl = imageUrl
+        self.mode = mode

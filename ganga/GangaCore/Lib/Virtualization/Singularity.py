@@ -11,7 +11,7 @@ logger = GangaCore.Utility.logging.getLogger()
 class Singularity(IVirtualization):
 
     """
-    Handles all the config related to Docker
+    Handles all the config related to Singularity
     """
     _name = 'Singularity'
     _schema = Schema(Version(1, 0), {
