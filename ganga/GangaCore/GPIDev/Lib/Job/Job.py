@@ -219,7 +219,7 @@ class Job(GangaObject):
                                      'subjobs': ComponentItem('jobs', defvalue=GangaList(), sequence=1, protected=1, load_default=0, copyable=0, comparable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
                                      'master': ComponentItem('jobs', getter="_getMasterJob", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, doc='master job', visitable=0),
                                      'postprocessors': ComponentItem('postprocessor', defvalue=MultiPostProcessor(), doc='list of postprocessors to run after job has finished'),
-                                      'virtualization': ComponentItem('gangavirtualization', defvalue=None, load_default=0, optional=1, doc='optional virtualization to be used'),
+                                      'virtualization': ComponentItem('virtualization', defvalue=None, load_default=0, optional=1, doc='optional virtualization to be used'),
                                      'merger': ComponentItem('mergers', defvalue=None, hidden=1, copyable=0, load_default=0, optional=1, doc='optional output merger'),
                                      'do_auto_resubmit': SimpleItem(defvalue=False, doc='Automatically resubmit failed subjobs'),
                                      'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1, copyable=0),

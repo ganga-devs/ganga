@@ -15,6 +15,6 @@ class IVirtualization(GangaObject):
         super(IVirtualization, self).__init__()
     
     _schema = Schema(Version(0,0), {})
-    _category = 'gangavirtualization'
+    _category = 'virtualization'
     _name = 'IVirtualization'
     _hidden = 1
