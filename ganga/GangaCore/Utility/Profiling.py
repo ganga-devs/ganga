@@ -4,6 +4,7 @@ import os
 from memory_profiler import profile
 import cProfile
 import time
+import json
 
 # creating a timestamp
 timestr = time.strftime("-%Y%m%d-%H%M%S")
@@ -28,6 +29,7 @@ def _makedir(path):
 _makedir(path)
 cpath = _makedir(os.path.join(path, 'cpu_profile/'))
 mpath = _makedir(os.path.join(path, 'memory_profiles/'))
+ccpath = _makedir(os.path.join(path, 'call_counters/'))
 
 
 def cpu_profile(func):
@@ -66,4 +68,32 @@ def mem_profiler(cls, profile_memory=c['Profile_Memory']):
             if callable(value):
                 # adding profile decorator to every function of class
                 setattr(cls, key, profile(value, stream=fp, precision=6))
+    return cls
+
+
+function_calls = {}
+
+
+def call_counts(func):
+    def wrapper(*args, **kwargs):
+        wrapper.calls += 1
+        function_calls[(wrapper.__name__)] = wrapper.calls
+        # storing the call counter for each function
+        # Need to find a more effiecient way to store
+        with open(ccpath+'call_counter_logs'+timestr+'.json', 'w') as fp:
+            json.dump(function_calls, fp, indent=4)
+        return func(*args, **kwargs)
+    wrapper.calls = 0
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+
+def call_counter(cls, count_calls=c['Count_Calls']):
+    if not count_calls:
+        pass
+    else:
+        for key, value in vars(cls).iteritems():
+            if callable(value):
+                # adding call_counts decorator to every function of class
+                setattr(cls, key, call_counts(value))
     return cls
