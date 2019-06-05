@@ -80,11 +80,11 @@ def call_counts(func):
         function_calls[(wrapper.__name__)] = wrapper.calls
         # storing the call counter for each function
         # Need to find a more effiecient way to store
-        with open(ccpath+'call_counter_logs'+timestr+'.json', 'w') as fp:
+        with open(ccpath+'call_counter_logs'+timestr+'.json', 'w+') as fp:
             json.dump(function_calls, fp, indent=4)
         return func(*args, **kwargs)
-    wrapper.calls = 0
     wrapper.__name__ = func.__name__
+    wrapper.calls = 0
     return wrapper
 
 
