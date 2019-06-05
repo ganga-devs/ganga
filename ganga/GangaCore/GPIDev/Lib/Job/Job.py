@@ -1261,7 +1261,7 @@ class Job(GangaObject):
                     while len(finished) != len(subjobs):
                         time.sleep(0.25)
 
-                    for index in list(finished.keys()):
+                    for index in finished.keys():
                         jobsubconfig.insert(index, finished[index])
 
         else:

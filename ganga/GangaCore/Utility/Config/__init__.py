@@ -41,7 +41,7 @@ def clear_config():
     Reset all the configs back to their default values
     """
     from GangaCore.Utility.Config import allConfigs
-    for package in list(allConfigs.values()):
+    for package in allConfigs.values():
         package._user_handlers = []
         package._session_handlers = []
         package.revertToDefaultOptions()

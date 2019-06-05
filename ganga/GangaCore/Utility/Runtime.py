@@ -244,7 +244,7 @@ def initSetupRuntimePackages():
 
     # perform any setup of runtime packages
     logger.debug('Setting up Runtime Packages')
-    for r in list(allRuntimes.values()):
+    for r in allRuntimes.values():
         r.standardSetup()
 
 

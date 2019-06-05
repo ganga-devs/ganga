@@ -215,7 +215,7 @@ def get_job_infos_in_time_range(fromDate=None, toDate=None):
 
     job_infos = []
 
-    for jobInfo in list(jobs_dictionary.values()):
+    for jobInfo in jobs_dictionary.values():
 
         timeCreated = jobInfo.getTimeCreated()
 

@@ -164,7 +164,7 @@ def mygetmodule(object):
         return None
     if file in modulesbyfile:
         return sys.modules.get(modulesbyfile[file])
-    for module in list(sys.modules.values()):
+    for module in sys.modules.values():
         # check if value is indeed a module
         if inspect.ismodule(module) and hasattr(module, '__file__'):
             modulesbyfile[

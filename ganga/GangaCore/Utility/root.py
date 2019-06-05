@@ -166,7 +166,7 @@ def getpythonhome(arch=None, pythonversion=None):
         # allow other Root variables to be used in the definition
         pythonhome = configroot['pythonhome']
         # supports ${foo} type variable expansion
-        for k in list(configroot.keys()):
+        for k in configroot.keys():
             pythonhome = pythonhome.replace('${%s}' % k, configroot[k])
     except ConfigError as err:
         logger.debug("Config Error!\n%s"%str(err))

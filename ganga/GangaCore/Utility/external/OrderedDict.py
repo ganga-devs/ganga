@@ -176,12 +176,12 @@ class OrderedDict(dict):
             for key in other:
                 self[key] = other[key]
         elif hasattr(other, 'keys'):
-            for key in list(other.keys()):
+            for key in other.keys():
                 self[key] = other[key]
         else:
             for key, value in other:
                 self[key] = value
-        for key, value in list(kwds.items()):
+        for key, value in kwds.items():
             self[key] = value
 
     __update = update  # let subclasses override update without breaking __init__

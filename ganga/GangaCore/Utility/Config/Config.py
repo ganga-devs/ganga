@@ -132,7 +132,7 @@ def getLogger():
         _logger = GangaCore.Utility.logging.getLogger()
         return _logger
     except AttributeError as err:
-        print(("AttributeError: %s" % err))
+        print("AttributeError: %s" % err)
         # in such a case we return a mock proxy object which ignore all calls
         # such as logger.info()...
 
@@ -748,7 +748,7 @@ class PackageConfig(object):
         self._gangarc_handlers.append((pre, post))
 
     def deleteUndefinedOptions(self):
-        for o in list(self.options.keys()):
+        for o in self.options.keys():
             if not self.options[o].check_defined():
                 del self.options[o]
 
@@ -1119,7 +1119,7 @@ def expandConfigPath(path, top):
 
 def sanityCheck():
     logger = getLogger()
-    for c in list(allConfigs.values()):
+    for c in allConfigs.values():
         if not c._config_made:
             logger.error("sanity check failed: %s: no makeConfig() found in the code", c.name)
 

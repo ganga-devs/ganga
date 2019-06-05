@@ -1629,7 +1629,7 @@ sys.exit(0)
         # Batch the status requests by credential requirement
         status_info = []
         missing_glite_jids = []
-        for cred_req, job_ids in list(cred_to_backend_id_list.items()):
+        for cred_req, job_ids in cred_to_backend_id_list.items():
             # If the credential is not valid or doesn't exist then skip it
             cred = credential_store.get(cred_req)
             if not cred or not cred.is_valid():
@@ -1723,7 +1723,7 @@ sys.exit(0)
         # Batch the status requests by credential requirement
         status_info = []
         missing_glite_jids = []
-        for cred_req, job_list in list(cred_to_job_list.items()):
+        for cred_req, job_list in cred_to_job_list.items():
             # If the credential is not valid or doesn't exist then skip it
             cred = credential_store.get(cred_req)
             if not cred or not cred.is_valid():
@@ -1748,7 +1748,7 @@ sys.exit(0)
                 job = jobdict[cachedParentId]
 
                 # update master job's status if needed
-                if cachedParentId not in list(job.backend.status.keys()):
+                if cachedParentId not in job.backend.status:
                     # if this happens, something must be seriously wrong
                     logger.warning(
                         'job id not found in the submitted master job: %s' % cachedParentId)
@@ -1933,7 +1933,7 @@ sys.exit(0)
                 if len(toks) != 4:
                     continue
 
-                if not toks[3] in list(se_list.keys()):
+                if toks[3] not in se_list:
                     se_list[toks[3]] = []
 
                 if toks[0] == "n.a":

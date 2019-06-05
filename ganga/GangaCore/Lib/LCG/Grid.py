@@ -841,7 +841,7 @@ def expandjdl(items):
         elif key == 'Environment':
             if value:
                 text += 'Environment = {\n   "%s"\n};\n' % '",\n   "'.join(
-                    ['%s=\'%s\'' % var for var in list(value.items())])
+                    ['%s=\'%s\'' % var for var in value.items()])
 
         elif key == 'DataRequirements':
             text += 'DataRequirements = {\n'

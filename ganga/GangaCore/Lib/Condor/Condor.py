@@ -154,7 +154,7 @@ class Condor(IBackend):
         stati = self.submit_cdf(os.path.join(self.getJobObject().getInputWorkspace().getPath(),"__cdf__"))
         submitFailures = []
         for sj in rjobs:
-            if str(sj.id) in list(stati.keys()):
+            if str(sj.id) in stati:
                 sj.backend.id = stati[str(sj.id)]
                 sj.updateStatus('submitted')
                 sj.time.timenow('submitted')
@@ -501,7 +501,7 @@ class Condor(IBackend):
 
         envList = []
         if self.env:
-            for key in list(self.env.keys()):
+            for key in self.env:
                 value = self.env[key]
                 if (isinstance(value, str)):
                     value = os.path.expandvars(value)
@@ -510,7 +510,7 @@ class Condor(IBackend):
                 envList.append("=".join([key, value]))
         envString = ";".join(envList)
         if jobconfig.env:
-            for key in list(jobconfig.env.keys()):
+            for key in jobconfig.env:
                 value = jobconfig.env[key]
                 if (isinstance(value, str)):
                     value = os.path.expandvars(value)
@@ -612,7 +612,7 @@ class Condor(IBackend):
                 if 0 == status:
                     globalId = output
 
-            if globalId in list(allDict.keys()):
+            if globalId in allDict.keys():
                 status = allDict[globalId]["status"]
                 host = allDict[globalId]["host"]
                 cputime = allDict[globalId]["cputime"]

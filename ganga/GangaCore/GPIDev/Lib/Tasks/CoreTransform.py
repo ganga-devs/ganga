@@ -69,7 +69,7 @@ class CoreTransform(ITransform):
                 if self.unit_splitter.attribute != "":
                     fields = [self.unit_splitter.attribute.split(".")[0]]
                 else:
-                    for attr in list(self.unit_splitter.multi_attrs.keys()):
+                    for attr in self.unit_splitter.multi_attrs.keys():
                         fields.append(attr.split(".")[0])
 
             # now create the units from these jobs

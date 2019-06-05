@@ -150,7 +150,7 @@ class JobTime(GangaObject):
             logger.debug(
                 "j.time.timenow() caught subjob %d.%d in the '%s' status", j.master.id, j.id, status)
 
-            for written_status in list(j.time.timestamps.keys()):
+            for written_status in j.time.timestamps.keys():
                 if written_status not in j.master.time.sj_statlist:
                     j.master.time.sj_statlist.append(written_status)
                     logger.debug(
@@ -216,14 +216,12 @@ class JobTime(GangaObject):
         T = datetime.datetime.now()
         tstring = T.strftime(format)
         length = len(tstring)
-        times = [0 for k in list(self.timestamps.keys())]
-        for i in range(0, len(list(self.timestamps.keys()))):
+        times = [0 for _ in self.timestamps.keys()]
+        for i, (ts_key, ts_value) in enumerate(self.timestamps.items()):
             try:
-                times[i] = self.timestamps[list(self.timestamps.keys())[i]].strftime(
-                    format).rjust(length) + ' - ' + list(self.timestamps.keys())[i]
+                times[i] = ts_value.strftime(format).rjust(length) + ' - ' + ts_key
             except AttributeError:
-                times[i] = str(self.timestamps[list(self.timestamps.keys())[i]]).rjust(
-                    length) + ' - ' + list(self.timestamps.keys())[i]
+                times[i] = str(ts_value).rjust(length) + ' - ' + ts_key
 
         # try to make chronological - can fail when timestamps are the same to
         # nearest sec -> becomes alphabetical...
@@ -346,7 +344,7 @@ class JobTime(GangaObject):
                 "It might be unwise to print all subjobs details. Use details() and extract relevant info from dictionary.")
             return None
         pd = self.details(subjob)
-        for key in list(pd.keys()):
+        for key in pd.keys():
             logger.info(key, '\t', pd[key])
 
     def runtime(self):

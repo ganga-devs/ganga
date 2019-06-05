@@ -400,7 +400,7 @@ class SmartMerger(IMerger):
             type_map.setdefault(file_ext, []).append(f)
 
         merge_results = []
-        for ext in list(type_map.keys()):
+        for ext in type_map:
             merge_object = getMergerObject(ext)  # returns an instance
             if merge_object is None:
                 logger.error('Extension %s not recognized and so the merge will fail. '

@@ -124,7 +124,7 @@ if DEBUGFILES or MONITOR_FILES:
         from GangaCore.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("### %d OPEN FILES: [%s]" % (len(openfiles), ", ".join(
-            str(f) for f in list(openfiles.keys()) if openfiles[f] is not None)))
+            str(f) for f in openfiles if openfiles[f] is not None)))
 
     safeFiles = ['.ganga.log', '.gangarc', 'ipythonrc', 'history', 'persist']
 
@@ -950,7 +950,7 @@ under certain conditions; type license() for details.
         from GangaCore.Utility.Runtime import allRuntimes
         ###########
         # run post bootstrap hooks
-        for r in list(allRuntimes.values()):
+        for r in allRuntimes.values():
             try:
                 r.postBootstrapHook()
             except Exception as err:
@@ -1025,7 +1025,7 @@ under certain conditions; type license() for details.
 
         # load templates for user-defined runtime modules
         from GangaCore.Utility.Runtime import allRuntimes
-        for r in list(allRuntimes.values()):
+        for r in allRuntimes.values():
             r.loadTemplates(local_ns)
 
         # exec ~/.ganga.py file

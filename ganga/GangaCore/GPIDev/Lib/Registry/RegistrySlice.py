@@ -57,7 +57,7 @@ class RegistrySlice(object):
         if not isinstance(keep_going, bool):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (self.name, keep_going, method))
         result = []
-        for _id in list(self.objects.keys()):
+        for _id in self.objects.keys():
             obj = self.objects[_id]
             try:
                 if isinstance(method, str):
@@ -84,7 +84,7 @@ class RegistrySlice(object):
             maxid = sys.maxsize
         if minid is None:
             minid = 0
-        return [k for k in list(self.objects.keys()) if minid <= k <= maxid]
+        return [k for k in self.objects.keys() if minid <= k <= maxid]
 
     def clean(self, confirm=False, force=False):
         """Cleans the repository only if this slice represents the repository
@@ -198,7 +198,7 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        for this_id in list(self.objects.keys()):
+        for this_id in self.objects.keys():
             obj = self.objects[this_id]
             logger.debug("id, obj: %s, %s" % (this_id, obj))
             if select(int(this_id)):
@@ -287,7 +287,7 @@ class RegistrySlice(object):
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
-        for _id in list(self.objects.keys()):
+        for _id in self.objects.keys():
             obj = self.objects[_id]
             #obj = _unwrap(obj)
             copy = obj.clone()
@@ -305,7 +305,7 @@ class RegistrySlice(object):
         return this_slice
 
     def __contains__(self, j):
-        return j.id in list(self.objects.keys())
+        return j.id in self.objects.keys()
 
     def __call__(self, this_id):
         """ Retrieve an object by id.

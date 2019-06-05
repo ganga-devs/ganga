@@ -219,7 +219,7 @@ def post_config_handler(opt, value):
     """ This is called after a config has been set upon startup in the Schema, make the changes here immediate, change 1 option (opt) to 1 value """
 
     if config is not None and '_customFormat' in config and config['_customFormat'] != "":
-        for k in list(_formats.keys()):
+        for k in _formats.keys():
             _formats[k] = config['_customFormat']
 
     if config is not None:
