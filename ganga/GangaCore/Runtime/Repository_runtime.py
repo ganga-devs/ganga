@@ -148,7 +148,7 @@ def bootstrap():
         # Just print this from 1 repo only so chose the zeorth, nothing special
         logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
         logger.warning("Multiple Ganga sessions detected. The Monitoring Thread is being disabled.")
-        logger.warning("Type 'enableMonitoring' to restart")
+        logger.warning("Type 'enableMonitoring()' to restart")
         setConfigOption('PollThread', 'autostart', False)
 
     return retval
