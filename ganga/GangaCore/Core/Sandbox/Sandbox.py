@@ -79,7 +79,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                 # print "Getting FileBuffer Contents"
 
                 from io import BytesIO
-                fileobj = BytesIO(contents)
+                fileobj = BytesIO(contents.encode("utf-8"))
 
                 tinfo = tarfile.TarInfo()
                 # FIX for Ganga/test/Internals/FileBuffer_Sandbox
@@ -91,7 +91,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                     tinfo.name = os.path.join(f.subdir, os.path.basename(f.name))
                 import time
                 tinfo.mtime = time.time()
-                tinfo.size = fileobj.len
+                tinfo.size = len(fileobj.getvalue())
 
             else:
                 #   except AttributeError as err:         # File

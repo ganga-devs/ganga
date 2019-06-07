@@ -19,12 +19,14 @@ def env_update_script(indent=''):
         indent (str): This is the indent to apply to the script if this script is to be appended to a python file
     """
     fdread, fdwrite = os.pipe()
+    os.set_inheritable(fdread, True)
+    os.set_inheritable(fdwrite, True)
     this_script = '''
 import os
-import cPickle as pickle
+import pickle as pickle
 os.close(###FD_READ###)
 with os.fdopen(###FD_WRITE###,'wb') as envpipe:
-    pickle.dump(os.environ, envpipe)
+    pickle.dump(dict(os.environ), envpipe)
 '''
     from GangaCore.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
@@ -48,10 +50,12 @@ def python_wrapper(command, python_setup='', update_env=False, indent=''):
     This returns the file handler objects for the env_update_script, the python wrapper itself and the script which has been generated to be run
     """
     fdread, fdwrite = os.pipe()
+    os.set_inheritable(fdread, True)
+    os.set_inheritable(fdwrite, True)
     this_script = '''
 from __future__ import print_function
 import os, sys, traceback
-import cPickle as pickle
+import pickle as pickle
 os.close(###PKL_FDREAD###)
 with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     def output(data):
@@ -212,7 +216,7 @@ def execute(command,
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
             command_update, env_file_pipes = env_update_script()
-            command += ''';python -c "import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
+            command += ''';python -c "import base64;exec(base64.b64decode(%s).decode('utf-8'))"''' % base64.b64encode(command_update.encode("utf-8"))
 
     # Some minor changes to cleanup the getting of the env
     if env is None and not update_env:
@@ -220,7 +224,8 @@ def execute(command,
 
     # Construct the object which will contain the environment we want to run the command in
     p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         universal_newlines=True, close_fds=False)
 
     # This is where we store the output
     thread_output = {}

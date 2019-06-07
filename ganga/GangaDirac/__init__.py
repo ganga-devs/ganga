@@ -108,11 +108,11 @@ def standardSetup():
 
 def loadPlugins(config=None):
     logger.debug("Loading Backends")
-    from . import Lib.Backends
+    from .Lib import Backends
     logger.debug("Loading RTHandlers")
-    from . import Lib.RTHandlers
+    from .Lib import RTHandlers
     logger.debug("Loading Files")
-    from . import Lib.Files
+    from .Lib import Files
 
 def postBootstrapHook():
     dirac_conf = getConfig('DIRAC')

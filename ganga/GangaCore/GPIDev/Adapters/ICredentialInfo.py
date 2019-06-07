@@ -60,8 +60,7 @@ def cache(method):
             time_after = self.cache['mtime']
 
             if time_before != time_after:
-                for k in self.cache.keys():
-                    del self.cache[k]
+                self.cache.clear()
 
             self.cache['mtime'] = time_after
 
