@@ -28,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '7.1.13'
+_gangaVersion = '7.1.14'
 _development = True
 
 # store a path to Ganga libraries
@@ -127,6 +127,11 @@ conf_config.addOption('deleteUnusedShareDir', 'always',
 conf_config.addOption('autoGenerateJobWorkspace', False, 'Autogenerate workspace dirs for new jobs')
 
 conf_config.addOption('NoAfsToken', False, 'Do not require an AFS token when running on an AFS filesystem. Not recommended!')
+
+conf_config.addOption('Profile_Memory', False, 'Run memory profiler on Ganga Objects')
+conf_config.addOption('Profile_CPU', False, 'Run cpu profiler on Ganga Objects')
+conf_config.addOption('Count_Calls', False, 'Run function call counters on Ganga Objects')
+
 
 # add named template options
 conf_config.addOption('namedTemplates_ext', 'tpl',
