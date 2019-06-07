@@ -26,7 +26,6 @@ from GangaCore.GPIDev.Lib.Job.MetadataDict import MetadataDict
 from GangaCore.GPIDev.Schema import ComponentItem, FileItem, GangaFileItem, Schema, SimpleItem, Version
 from GangaCore.Utility.Config import ConfigError, getConfig
 from GangaCore.Utility.logging import getLogger, log_user_exception
-from GangaCore.GPIDev.Base.Objects import do_not_copy
 
 from .JobTime import JobTime
 from GangaCore.Lib.Localhost import Localhost
