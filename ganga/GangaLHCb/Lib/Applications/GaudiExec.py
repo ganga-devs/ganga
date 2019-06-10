@@ -393,14 +393,14 @@ class GaudiExec(IPrepareApp):
         """
         Return the script which wraps the running command in a correct environment
         """
-        return 'export CMTCONFIG=%s; source LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+        return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
 
     def getWNEnvScript(self):
         """
         Return the script to setup the correct env on a WN
         """
-        return 'export CMTCONFIG=%s; source $LHCb_release_area/LBSCRIPTS/prod/InstallArea/scripts/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+        return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
     def execCmd(self, cmd):
         """
@@ -439,7 +439,7 @@ class GaudiExec(IPrepareApp):
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
         if not path.isfile(path.join(self.directory, 'build.%s' %self.platform, 'run')):
-            initialCommand = 'export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
+            initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
             rc, stdout, stderr = _exec_cmd(initialCommand, self.directory)
             if rc != 0:
                 logger.error("Failed to perform initial make on a Cmake based project")
