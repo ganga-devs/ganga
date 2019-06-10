@@ -20,6 +20,8 @@ import GangaCore.Utility.logging
 
 import GangaCore.Utility.Config
 
+from GangaCore.Utility.Virtualization import checkDocker, checkUDocker, checkSingularity, installUdocker
+
 from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
 
 logger = GangaCore.Utility.logging.getLogger()
@@ -188,6 +190,24 @@ class Localhost(IBackend):
         sharedfiles = jobconfig.getSharedFiles()
 
         subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
+        
+        import tempfile
+        workdir = tempfile.mkdtemp(dir=config['location'])
+        
+        virtualization = job.virtualization
+        
+        if (isinstance(virtualization,GangaCore.Lib.Virtualization.Docker)):
+            if (checkDocker()):
+                logger.warning("Using Docker")
+            else:
+                logger.info("Docer not availabe or user doesn't have the permission to run docker demon")
+                if not (checkUDocker()):
+                    installUdocker()
+                logger.info("Using UDocker")             
+        elif (isinstance(virtualization,GangaCore.Lib.Virtualization.Singularity)):
+            logger.info("Using singularity")   
+        else:
+            logger.debug("No virtualization specified")
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         if self.nice:
@@ -199,9 +219,6 @@ class Localhost(IBackend):
         ## FIXME DON'T just use the blind list here, request the list of files to be in the output from a method.
         outputpatterns = jobconfig.outputbox
         environment = dict() if jobconfig.env is None else jobconfig.env
-
-        import tempfile
-        workdir = tempfile.mkdtemp(dir=config['location'])
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
