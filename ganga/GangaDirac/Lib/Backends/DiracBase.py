@@ -713,6 +713,9 @@ class DiracBase(IBackend):
             outputDir (str): This string represents the output dir where the sandbox is to be placed
         """
         j = self.getJobObject()
+        if j.subjobs:
+            logger.error('Cannot download a sandbox for a master job.')
+            return False
         if outputDir is None:
             outputDir = j.getOutputWorkspace().getPath()
         dirac_cmd = "getOutputSandbox(%d,'%s', %s)"  % (self.id, outputDir, unpack)
