@@ -9,6 +9,7 @@ COPY . ganga
 
 ENTRYPOINT . /etc/cvmfs/run-cvmfs.sh &&\
            . ~/.bashrc &&\
+           source LbLogin.sh -c x86_64-slc6-gcc62-opt &&\
             export X509_CERT_DIR=/cvmfs/lhcb.cern.ch/etc/grid-security/certificates &&\
             export X509_VOMS_DIR=/cvmfs/lhcb.cern.ch/etc/grid-security/vomsdir &&\
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(dirname $(dirname `which python`))/lib &&\
