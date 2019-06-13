@@ -2181,10 +2181,6 @@ class Job(GangaObject):
         src_dict = other_job.__dict__
         for key, val in src_dict.items():
             this_attr = getattr(other_job, key)
-            if isinstance(this_attr, Node) and key not in do_not_copy:
-                if this_attr._getParent() is not other_job:
-                    this_attr._setParent(other_job)
-
 
 
 class JobTemplate(Job):
