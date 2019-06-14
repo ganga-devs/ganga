@@ -229,8 +229,8 @@ def execute(command,
             command += ''';python -c "import base64;exec(base64.b64decode(%s))"''' % base64.b64encode(command_update.encode("utf-8"))
 
     # Some minor changes to cleanup the getting of the env
-    if env is None and not update_env:
-        env = get_env()
+    if env is None:
+        env = os.environ
 
     # Construct the object which will contain the environment we want to run the command in
     p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
