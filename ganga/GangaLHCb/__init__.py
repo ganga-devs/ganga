@@ -74,31 +74,31 @@ if not _after_bootstrap:
 
 def standardSetup():
 
-    import PACKAGE
+    from . import PACKAGE
     PACKAGE.standardSetup()
 
 
 def loadPlugins(config=None):
     logger.debug("Importing Backends")
-    import Lib.Backends
+    from .Lib import Backends
     logger.debug("Importing Applications")
-    import Lib.Applications
+    from .Lib import Applications
     logger.debug("Importing LHCbDataset")
-    import Lib.LHCbDataset
+    from .Lib import LHCbDataset
     logger.debug("Importing Mergers")
-    import Lib.Mergers
+    from .Lib import Mergers
     logger.debug("Importing RTHandlers")
-    import Lib.RTHandlers
+    from .Lib import RTHandlers
     logger.debug("Importing Splitters")
-    import Lib.Splitters
+    from .Lib import Splitters
     logger.debug("Importing Tasks")
-    import Lib.Tasks
+    from .Lib import Tasks
     logger.debug("Importing Files")
-    import Lib.Files
+    from .Lib import Files
     logger.debug("Importing Checkers")
-    import Lib.Checkers
+    from .Lib import Checkers
     logger.debug("Importing LHCbTasks")
-    import Lib.Tasks
+    from .Lib import Tasks
     logger.debug("Finished Importing")
 
 

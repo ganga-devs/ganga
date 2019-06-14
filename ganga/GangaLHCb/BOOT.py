@@ -51,12 +51,12 @@ def fixBKQueryInBox(newCategory='query'):
         if 'data' in files and 'box' in root and not 'box.' in root:
             path = os.path.join(root, 'data')
             logger.info("looking at " + path)
-            f1 = file(path, 'r')
-            f2 = file(path + '~', 'r')
+            f1 = open(path, 'r')
+            f2 = open(path + '~', 'r')
             lines1 = f1.readlines()
             lines2 = f2.readlines()
-            line1 = filter(_filt, lines1)
-            line2 = filter(_filt, lines2)
+            line1 = list(filter(_filt, lines1))
+            line2 = list(filter(_filt, lines2))
             f1.close()
             f2.close()
 
@@ -65,8 +65,8 @@ def fixBKQueryInBox(newCategory='query'):
                 lines1[lines1.index(line1[0])] = newline
                 logger.info('backing up old settings...')
                 os.system('cp %s %sX; mv %s~ %s~X' % (path, path, path, path))
-                f1 = file(path, 'w')
-                f2 = file(path + '~', 'w')
+                f1 = open(path, 'w')
+                f2 = open(path + '~', 'w')
                 for l in lines1:
                     f1.write(l)
                     f2.write(l)
@@ -78,8 +78,8 @@ def fixBKQueryInBox(newCategory='query'):
                 lines2[lines2.index(line2[0])] = newline
                 logger.info('backing up old settings...')
                 os.system('cp %s %sX; mv %s~ %s~X' % (path, path, path, path))
-                f1 = file(path, 'w')
-                f2 = file(path + '~', 'w')
+                f1 = open(path, 'w')
+                f2 = open(path + '~', 'w')
                 for l in lines2:
                     f1.write(l)
                     f2.write(l)

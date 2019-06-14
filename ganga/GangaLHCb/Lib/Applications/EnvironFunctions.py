@@ -115,7 +115,7 @@ exit $?
 
     script_file_name = tempfile.mktemp('.sh')
     try:
-        script_file = file(script_file_name, 'w')
+        script_file = open(script_file_name, 'w')
         script_file.write(shell_script)
         script_file.close()
     except:

@@ -87,7 +87,7 @@ def getDBtagsFromLFN( lfn ):
     import types
     bk = BookkeepingClient()
     tr = TransformationClient()
-    prod = long(lfn.split('/')[5]) # not sure if this works in all cases 
+    prod = int(lfn.split('/')[5]) # not sure if this works in all cases 
     res = bk.getProductionInformations( prod )
     #What type of step is this production ID
     step_type = tr.getTransformation(prod).get('Value', {}).get('Type', 'Unknown')
