@@ -130,33 +130,6 @@ def __timeout_func(process, timed_out):
             logger.error("Exception trying to kill process: %s" % e)
 
 
-def get_env():
-    """ Function to return a clean copy of the env that we're currently running in """
-
-    # If we're not updating the environment, and the environment ie empty we need to create a new environment to be use by the command
-    pipe = subprocess.Popen('python -c "from __future__ import print_function;import os;print(os.environ)"',
-                            env=None, cwd=None, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    output = pipe.communicate()
-    env = eval(output[0])
-
-    if env:
-        for k, v in env.items():
-            if not str(v).startswith('() {'):
-                env[k] = os.path.expandvars(v)
-            # Be careful with exported bash functions!
-            else:
-                this_string = str(v).split('\n')
-                final_str = ""
-                for line in this_string:
-                    final_str += str(os.path.expandvars(line)).strip()
-                    if not final_str.endswith(';'):
-                        final_str += " ;"
-                final_str += " "
-                env[k] = final_str
-
-    return env
-
-
 def start_timer(p, timeout):
     """ Function to construct and return the timer thread and timed_out
     Args:
