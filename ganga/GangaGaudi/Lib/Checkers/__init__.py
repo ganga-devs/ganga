@@ -1,1 +1,1 @@
-from GaudiMetaDataChecker import GaudiMetaDataChecker
+from .GaudiMetaDataChecker import GaudiMetaDataChecker
