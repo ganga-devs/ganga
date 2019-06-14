@@ -7,7 +7,7 @@ def downloadAndUnTar(fileName, url):
     from urllib2 import urlopen
 
     urlFileIn  = urlopen(url)
-    urlFileOut = file(fileName,'w')
+    urlFileOut = open(fileName,'w')
     copyfileobj(urlFileIn, urlFileOut)
     urlFileOut.close
 
@@ -46,14 +46,14 @@ def findPythonVersion(arch,rootsys):
            and picks out the python version'''
         version = None
         if os.path.exists(config):
-            configFile = file(config)
-            for line in configFile:#loop through the file looking for #define
-                if line.startswith('#define R__CONFIGUREOPTION'):
-                    for arg in line.split(' '):#look at value of #define
-                        if arg.startswith('PYTHONDIR'):
-                            arglist = arg.split('/')
-                            if arglist[-1] == arch:
-                                version = arglist[-2]
+            with open(config, "r") as configFile:
+                for line in configFile.readlines():#loop through the file looking for #define
+                    if line.startswith('#define R__CONFIGUREOPTION'):
+                        for arg in line.split(' '):#look at value of #define
+                            if arg.startswith('PYTHONDIR'):
+                                arglist = arg.split('/')
+                                if arglist[-1] == arch:
+                                    version = arglist[-2]
         return version
 
     def useRootConfig(rootsys):

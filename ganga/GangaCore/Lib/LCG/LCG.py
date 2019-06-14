@@ -1005,8 +1005,8 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
 
     global exitcode
 
-    outfile   = file('stdout','w')
-    errorfile = file('stderr','w')
+    outfile   = open('stdout','w')
+    errorfile = open('stderr','w')
 
     try:
         child = subprocess.Popen(cmd, cwd=wdir, shell=True, stdout=outfile, stderr=errorfile)
@@ -1862,7 +1862,8 @@ sys.exit(0)
             jdl_file_txt = Grid.expandjdl(jdl)
 
             jdl_file2 = tempfile.mktemp('.jdl')
-            file(jdl_file2, 'w').write(jdl_file_txt)
+            with open(jdl_file2, 'w') as file_:
+                file_.write(jdl_file_txt)
 
         matches = Grid.list_match(jdl_file2, self.credential_requirements, ce=spec_ce)
 

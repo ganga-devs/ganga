@@ -862,10 +862,10 @@ under certain conditions; type license() for details.
             if not os.path.exists(os.path.join(config['gangadir'], "server")):
                 os.makedirs(os.path.join(config['gangadir'], "server"))
 
-            si = file("/dev/null", 'r')
-            so = file(os.path.join(
+            si = open("/dev/null", 'r')
+            so = open(os.path.join(
                 config['gangadir'], "server", "server-%s.stdout" % (os.uname()[1])), 'a')
-            se = file(os.path.join(
+            se = open(os.path.join(
                 config['gangadir'], "server", "server-%s.stderr" % (os.uname()[1])), 'a', 0)
 
             os.dup2(si.fileno(), sys.stdin.fileno())

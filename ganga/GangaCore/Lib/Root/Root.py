@@ -172,7 +172,7 @@ class Root(IPrepareApp):
     if __name__ == '__main__':
         from ROOT import gRandom
 
-        output = file('gaus.txt','w')
+        output = open('gaus.txt','w')
         try:
             for i in range(100):
                 print(gRandom.Gaus(), file=output)

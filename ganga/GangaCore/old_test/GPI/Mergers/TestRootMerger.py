@@ -96,7 +96,7 @@ gBenchmark.Show( 'fillrandom' )
 import shutil
 shutil.copyfile('fillrandom.root','fillrandom.foo')
 
-out_log = file('outfile.abc','w')
+out_log = open('outfile.abc','w')
 try:
    out_log.write('This is some text output from the job')
 finally:

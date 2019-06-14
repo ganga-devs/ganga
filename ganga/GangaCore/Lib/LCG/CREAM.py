@@ -441,8 +441,8 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
 
     global exitcode
 
-    outfile   = file('stdout','w')
-    errorfile = file('stderr','w')
+    outfile   = open('stdout','w')
+    errorfile = open('stderr','w')
 
     try:
         child = subprocess.Popen(cmd, cwd=wdir, shell=True, stdout=outfile, stderr=errorfile)
