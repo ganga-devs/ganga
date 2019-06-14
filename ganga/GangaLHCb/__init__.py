@@ -69,7 +69,7 @@ def _store_root_version():
 
 if not _after_bootstrap:
     store_dirac_environment()
-    _store_root_version()
+    # _store_root_version()
 
 
 def standardSetup():

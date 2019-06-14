@@ -48,8 +48,9 @@ def store_dirac_environment():
 
     # FIXME: for v9r3+ lb-run works in compatibility mode
     # (sourcing the environment is what should be done for v9r3+)
-    cmd = 'lb-run -c best LHCBDIRAC/{version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
-    env = execute(cmd)
+    cmd = 'lb-run -c best LHCBDIRAC/{version}'.format(version=diracversion)
+    env = os.environ.copy()
+    execute(cmd, env=env, update_env=True)
 
     if isinstance(env, str):
         try:
