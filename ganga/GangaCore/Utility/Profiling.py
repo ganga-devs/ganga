@@ -1,10 +1,14 @@
 from GangaCore.Utility.Config import getConfig
 
 import os
-from memory_profiler import profile
 import cProfile
 import time
 import json
+
+
+if c['Profile_Memory']:
+    from memory_profiler import profile
+
 
 # creating a timestamp
 timestr = time.strftime("-%Y%m%d-%H%M%S")
