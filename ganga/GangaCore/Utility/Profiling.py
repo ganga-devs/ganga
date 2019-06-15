@@ -5,17 +5,15 @@ import cProfile
 import time
 import json
 
-
-if c['Profile_Memory']:
-    from memory_profiler import profile
-
-
 # creating a timestamp
 timestr = time.strftime("-%Y%m%d-%H%M%S")
 
 # Obtaining the config from .gangarc file
 c = getConfig('Configuration')
 
+if c['Profile_Memory']:
+    from memory_profiler import profile
+    
 path = os.path.join(c['gangadir'], 'logs')
 
 
