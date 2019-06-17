@@ -1,7 +1,6 @@
 from GangaCore.Utility.Config import getConfig
 
 import os
-from memory_profiler import profile
 import cProfile
 import time
 import json
@@ -12,6 +11,9 @@ timestr = time.strftime("-%Y%m%d-%H%M%S")
 # Obtaining the config from .gangarc file
 c = getConfig('Configuration')
 
+if c['Profile_Memory']:
+    from memory_profiler import profile
+    
 path = os.path.join(c['gangadir'], 'logs')
 
 

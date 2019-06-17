@@ -90,6 +90,7 @@ setup(name='ganga',
           'absl-py>=0.1.2',
           'google-api-python-client>=1.1',
       ],
+      extra_require={'profiler' : ['memory_profiler']},
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
           'Programming Language :: Python :: 2.7',
