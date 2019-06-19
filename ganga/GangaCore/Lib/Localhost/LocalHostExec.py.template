@@ -37,6 +37,9 @@ outputpatterns = ###OUTPUTPATTERNS###
 appscriptpath = ###APPSCRIPTPATH###
 environment = ###ENVIRONMENT###
 workdir = ###WORKDIR###
+virtualization = ###VIRTUALIZATION###
+virtualization_image = ###VIRTUALIZATIONIMAGE###
+virtualization_mode = ###VIRTUALIZATIONMODE###
 
 statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
@@ -84,6 +87,23 @@ errorfile=open('stderr','w')
 
 sys.stdout=open('./__syslog__','w')
 sys.stderr=sys.stdout
+
+from Virtualization import checkDocker, checkUDocker, checkSingularity, installUdocker
+
+if (virtualization == "Docker"):
+    if (checkDocker()):
+        print("Using Docker")
+    else:
+        print("Docker not availabe or user doesn't have the permission to run docker demon")
+    if not (checkUDocker()):
+        installUdocker()
+        print("Using UDocker")
+    appscriptpath[0] = "/work_dir/"+appscriptpath[0]
+    appscriptpath = ['/home/inzamam/udocker', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath            
+elif (virtualization == "Singularity"):
+    print("Using singularity")   
+else:
+    print("No virtualization specified")
 
 try:
     child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)

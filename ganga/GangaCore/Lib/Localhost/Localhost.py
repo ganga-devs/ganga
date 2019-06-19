@@ -186,28 +186,16 @@ class Localhost(IBackend):
         import inspect
 
         fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
+        virtualizationutils = File( inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
 
         sharedfiles = jobconfig.getSharedFiles()
 
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils, virtualizationutils] )
         
         import tempfile
         workdir = tempfile.mkdtemp(dir=config['location'])
         
         virtualization = job.virtualization
-        
-        if (isinstance(virtualization,GangaCore.Lib.Virtualization.Docker)):
-            if (checkDocker()):
-                logger.warning("Using Docker")
-            else:
-                logger.info("Docer not availabe or user doesn't have the permission to run docker demon")
-                if not (checkUDocker()):
-                    installUdocker()
-                logger.info("Using UDocker")             
-        elif (isinstance(virtualization,GangaCore.Lib.Virtualization.Singularity)):
-            logger.info("Using singularity")   
-        else:
-            logger.debug("No virtualization specified")
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         if self.nice:
@@ -248,7 +236,11 @@ class Localhost(IBackend):
         script = script.replace('###ENVIRONMENT###', repr(environment))
         script = script.replace('###WORKDIR###', repr(workdir))
         script = script.replace('###INPUT_DIR###', repr(job.getStringInputDir()))
-
+        script = script.replace('###VIRTUALIZATION###', repr(virtualization.__class__.__name__))
+        script = script.replace('###VIRTUALIZATIONIMAGE###', repr(virtualization.imageUrl))
+        script = script.replace('###VIRTUALIZATIONMODE###', repr(virtualization.mode))
+        print("app:")
+        print(repr(appscriptpath))
         self.workdir = workdir
 
         script = script.replace('###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
