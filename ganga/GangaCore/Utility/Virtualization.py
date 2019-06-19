@@ -14,6 +14,7 @@ def checkDocker():
     returnCode = 1
     try:
         returnCode = subprocess.call(["docker", "ps"])
+        subprocess.call(["export", "PROOT_NO_SECCOMP=1"])
     except:
         pass 
     if returnCode == 0 : return True
