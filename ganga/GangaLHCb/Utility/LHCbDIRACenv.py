@@ -48,7 +48,7 @@ def store_dirac_environment():
 
     # FIXME: for v9r3+ lb-run works in compatibility mode
     # (sourcing the environment is what should be done for v9r3+)
-    cmd = '. /cvmfs/lhcb.cern.ch/group_login.sh &>/dev/null && lb-run -c best LHCBDIRAC/{version} python -c "import os,json; print(json.dumps(dict(os.environ)))"'.format(version=diracversion)
+    cmd = '. /cvmfs/lhcb.cern.ch/group_login.sh &>/dev/null && lb-run -c best LHCBDIRAC/{version} python -c "import os; print(os.environ)"'.format(version=diracversion)
     env = execute(cmd, env={"PATH": '/usr/bin', "HOME": os.environ.get("HOME")})
 
     if isinstance(env, str):
