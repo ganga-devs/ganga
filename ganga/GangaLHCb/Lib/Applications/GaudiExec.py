@@ -420,7 +420,7 @@ class GaudiExec(IPrepareApp):
         if not path.isdir(self.directory):
             raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
-        cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
+        cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False, mode = "w")
         if not cmd.startswith('./run '):
             cmd = './run ' + cmd
 
