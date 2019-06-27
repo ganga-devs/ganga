@@ -208,7 +208,7 @@ def fillPackedSandbox(sandbox_files, destination):
             tinfo.name = os.path.join(f.subdir, os.path.basename(f.name))
             import time
             tinfo.mtime = time.time()
-            tinfo.size = fileobj.len
+            tinfo.size = len(fileobj.getvalue())
 
         if f.isExecutable():
             tinfo.mode = tinfo.mode | stat.S_IXUSR

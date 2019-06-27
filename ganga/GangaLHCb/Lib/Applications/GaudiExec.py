@@ -306,7 +306,7 @@ class GaudiExec(IPrepareApp):
                 tinfo = tarfile.TarInfo('__timestamp__')
                 tinfo.mtime = time.time()
                 fileobj = StringIO(getTimestampContent())
-                tinfo.size = fileobj.len
+                tinfo.size = len(fileobj.getvalue())
                 tar_file.addfile(tinfo, fileobj)
         else:
             unique_name = master_job.application.jobScriptArchive.namePattern
@@ -324,7 +324,7 @@ class GaudiExec(IPrepareApp):
             tinfo = tarfile.TarInfo(extra_opts_file)
             tinfo.mtime = time.time()
             fileobj = StringIO(self.extraOpts)
-            tinfo.size = fileobj.len
+            tinfo.size = len(fileobj.getvalue())
             tar_file.addfile(tinfo, fileobj)
 
             if not self.useGaudiRun:
@@ -333,7 +333,7 @@ class GaudiExec(IPrepareApp):
                 tinfo2 = tarfile.TarInfo(self.getWrapperScriptName())
                 tinfo2.mtime = time.time()
                 fileobj2 = StringIO(self.getWNPythonContents())
-                tinfo2.size = fileobj2.len
+                tinfo2.size = len(fileobj2.getvalue())
                 tar_file.addfile(tinfo2, fileobj2)
 
 
