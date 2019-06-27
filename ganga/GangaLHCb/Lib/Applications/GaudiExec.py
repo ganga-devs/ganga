@@ -10,7 +10,7 @@ import threading
 import stat
 import uuid
 from functools import wraps
-from io import StringIO
+from io import StringIO, BytesIO
 
 from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -307,7 +307,7 @@ class GaudiExec(IPrepareApp):
                 tinfo.mtime = time.time()
                 fileobj = StringIO(getTimestampContent())
                 tinfo.size = len(fileobj.getvalue())
-                tar_file.addfile(tinfo, fileobj)
+                tar_file.addfile(tinfo, BytesIO(fileobj.getvalue().encode()))
         else:
             unique_name = master_job.application.jobScriptArchive.namePattern
 
@@ -325,7 +325,7 @@ class GaudiExec(IPrepareApp):
             tinfo.mtime = time.time()
             fileobj = StringIO(self.extraOpts)
             tinfo.size = len(fileobj.getvalue())
-            tar_file.addfile(tinfo, fileobj)
+            tar_file.addfile(tinfo, BytesIO(fileobj.getvalue().encode()))
 
             if not self.useGaudiRun:
                 # Add the WN script for wrapping the job
@@ -334,7 +334,7 @@ class GaudiExec(IPrepareApp):
                 tinfo2.mtime = time.time()
                 fileobj2 = StringIO(self.getWNPythonContents())
                 tinfo2.size = len(fileobj2.getvalue())
-                tar_file.addfile(tinfo2, fileobj2)
+                tar_file.addfile(tinfo2, BytesIO(fileobj2.getvalue().encode()))
 
 
     def cleanGangaTargetArea(self, this_build_target):
@@ -491,7 +491,7 @@ class GaudiExec(IPrepareApp):
         # Whilst we are here let's store the application environment but ignore awkward ones
         env, envstdout, envstderr = self.execCmd('./run env')
         envDict = {}
-        for item in envstdout.split("\n"):
+        for item in envstdout.decode().split("\n"):
             if len(item.split("="))==2:
                 if item.split("=")[0] == 'XMLSUMMARYBASEROOT':
                     envDict[item.split("=")[0]] = item.split("=")[1]
