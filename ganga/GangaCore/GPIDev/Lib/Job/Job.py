@@ -292,6 +292,12 @@ class Job(GangaObject):
     def __hash__(self):
         return hash(self.fqid)
 
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __gt__(self, other):
+        return self.id > other.id
+
     def _getMasterJob(self):
         parent = self._getParent()
         while parent is not None:
