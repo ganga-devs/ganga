@@ -217,7 +217,7 @@ class SubJobXMLList(GangaObject):
         try:
             from GangaCore.Core.GangaRepository.PickleStreamer import to_file
             index_file = path.join(self._jobDirectory, self._subjob_master_index_name)
-            index_file_obj = open(index_file, "w")
+            index_file_obj = open(index_file, "wb")
             to_file(all_caches, index_file_obj)
             index_file_obj.close()
         ## Once I work out what the other exceptions here are I'll add them
