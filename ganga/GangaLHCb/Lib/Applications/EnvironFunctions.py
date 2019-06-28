@@ -145,7 +145,7 @@ def guess_version_SP(appname):
     rc, output, m = s.cmd1("echo 'q\n' | %s >& %s; echo" % (command, tmp.name))
     output = tmp.read()
     tmp.close()
-    version = output[output.rfind('[') + 1:output.rfind(']')]
+    version = output[output.rfind(b'[') + 1:output.rfind(b']')]
     return version
 
 
@@ -170,9 +170,9 @@ def _getshell_SP(self):
         (mpack, malg, mver) = parse_master_package(self.masterpackage)
         useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
     cmd = '. SetupProject.sh %s %s %s %s' % (
-        useflag, opts, self.appname, self.version)
+        useflag, opts, self.appname, self.version.decode())
     script += '%s \n' % cmd
-    fd.write(script)
+    fd.write(script.encode())
     fd.flush()
 
     self.shell = Shell(setup=fd.name)
@@ -182,7 +182,7 @@ def _getshell_SP(self):
     fd.close()
 
     app_ok = False
-    identifier = string.join([string.upper(self.appname), self.version],'_')
+    identifier = "_".join([self.appname.upper(), self.version.decode()])
     for var in self.shell.env:
         if self.shell.env[var].find(identifier) >= 0:
             app_ok = True

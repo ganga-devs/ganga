@@ -56,7 +56,7 @@ def unique(s):
     t = []
     try:
         t = sorted(s)
-    except TypeError:
+    except TypeError as err:
         del t  # move on to the next method
     else:
         assert n > 0
