@@ -238,7 +238,7 @@ class Localhost(IBackend):
         script = script.replace('###INPUT_DIR###', repr(job.getStringInputDir()))
         script = script.replace('###VIRTUALIZATION###', repr(virtualization.__class__.__name__))
         script = script.replace('###VIRTUALIZATIONIMAGE###', repr(virtualization.imageUrl))
-        script = script.replace('###VIRTUALIZATIONMODE###', repr(virtualization.mode))
+        script = script.replace('###VIRTUALIZATIONMODE###', repr(virtualization.mode) if hasattr(virtualization, 'mode') else repr(None)  )
         print("app:")
         print(repr(appscriptpath))
         self.workdir = workdir

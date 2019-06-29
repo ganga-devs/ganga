@@ -91,17 +91,20 @@ sys.stderr=sys.stdout
 from Virtualization import checkDocker, checkUDocker, checkSingularity, installUdocker
 
 if (virtualization == "Docker"):
+    appscriptpath[0] = "/work_dir/"+appscriptpath[0]
     if (checkDocker()):
         print("Using Docker")
+        appscriptpath = ['docker', 'run', '-v', workdir+":"+"/work_dir", virtualization_image] + appscriptpath        
     else:
         print("Docker not availabe or user doesn't have the permission to run docker demon")
-    if not (checkUDocker()):
-        installUdocker()
-        print("Using UDocker")
-    appscriptpath[0] = "/work_dir/"+appscriptpath[0]
-    appscriptpath = ['/home/inzamam/udocker', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath            
+        if not (checkUDocker()):
+            installUdocker()
+        print("Using UDocker")    
+        appscriptpath = ['/home/inzamam/udocker', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath            
 elif (virtualization == "Singularity"):
-    print("Using singularity")   
+    print("Using singularity")
+    appscriptpath[0] = "/work_dir/"+appscriptpath[0]
+    appscriptpath = ['singularity', 'exec', '--bind', workdir+":"+"/work_dir", "--no-home" ,virtualization_image] + appscriptpath   
 else:
     print("No virtualization specified")
 
