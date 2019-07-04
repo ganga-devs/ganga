@@ -176,7 +176,6 @@ def fillPackedSandbox(sandbox_files, destination):
 
     import tarfile
     import stat
-
     #tf = tarfile.open(destination,"w:gz")
 
     # "a" = append with no compression
@@ -201,8 +200,8 @@ def fillPackedSandbox(sandbox_files, destination):
                 f.name, os.path.join(f.subdir, os.path.basename(f.name)))
 
         else:                          # FileBuffer
-            from io import StringIO
-            fileobj = StringIO(contents)
+            from io import StringIO, BytesIO
+            fileobj = BytesIO(contents)
 
             tinfo = tarfile.TarInfo()
             tinfo.name = os.path.join(f.subdir, os.path.basename(f.name))
