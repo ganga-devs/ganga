@@ -253,7 +253,7 @@ class AppName(Gaudi):
         try:
             parser = self._get_parser()
         except ApplicationConfigurationError as err:
-            logger.debug("_get_parser Error:\n%s" % str(err))
+            logger.error("_get_parser Error:\n%s" % str(err))
             raise err
 
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),

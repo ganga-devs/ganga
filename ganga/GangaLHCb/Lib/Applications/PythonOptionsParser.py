@@ -93,7 +93,7 @@ class PythonOptionsParser(object):
 
         if not rc == 0:
             logger.debug('Failed to run: %s', gaudirun)
-            raise ApplicationConfigurationError(stdout + '###SPLIT###' + m)
+            raise ApplicationConfigurationError(stdout.decode() + '###SPLIT###' + m.decode())
 
         tmp_pkl.close()
         py_opts.close()
