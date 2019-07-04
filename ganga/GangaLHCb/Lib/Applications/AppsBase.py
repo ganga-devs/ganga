@@ -253,7 +253,7 @@ class AppName(Gaudi):
         try:
             parser = self._get_parser()
         except ApplicationConfigurationError as err:
-            logger.error("_get_parser Error:\n%s" % str(err))
+            logger.debug("_get_parser Error:\n%s" % str(err))
             raise err
 
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
@@ -264,6 +264,7 @@ class AppName(Gaudi):
         # are merely copied to the inputsandbox so must alread exist.
         #   share_path = os.path.join(share_dir,'inputsandbox')
         #   if not os.path.isdir(share_path): os.makedirs(share_path)
+
         fillPackedSandbox([FileBuffer('options.pkl', parser.opts_pkl_str)],
                           os.path.join(share_dir,
                                        'inputsandbox',
