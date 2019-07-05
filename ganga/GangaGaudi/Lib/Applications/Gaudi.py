@@ -147,7 +147,8 @@ class Gaudi(GaudiBase):
         if not os.path.isdir(share_path):
             os.makedirs(share_path)
         this_file = gzip.GzipFile(os.path.join(share_path, 'gaudi-env.py.gz'), 'wb')
-        this_file.write('gaudi_env = %s' % str(self.getenv(True)))
+        to_write = 'gaudi_env = %s' % str(self.getenv(True))
+        this_file.write(to_write.encode())
         this_file.close()
 
         self._parse_options()

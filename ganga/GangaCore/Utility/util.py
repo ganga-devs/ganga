@@ -53,6 +53,7 @@ def unique(s):
 
         # Sort to bring duplicate elements together and weed out the
         # duplcates in on sinle pass
+    t = []
     try:
         t = sorted(s)
     except TypeError:

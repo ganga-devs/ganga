@@ -62,8 +62,8 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
     project_areas = []
     py_project_areas = []
 
-    for line in showProj.split('\n'):
-        for entry in line.split():
+    for line in showProj.split(b'\n'):
+        for entry in line.decode().split():
             if entry.startswith(user_ra) or entry.startswith(full_user_ra):
                 tmp = entry.rstrip('\)')
                 libpath = fullpath(os.path.join(tmp, 'InstallArea', platform, 'lib'))

@@ -10,7 +10,7 @@ import threading
 import stat
 import uuid
 from functools import wraps
-from io import StringIO
+from io import StringIO, BytesIO
 
 from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -306,8 +306,8 @@ class GaudiExec(IPrepareApp):
                 tinfo = tarfile.TarInfo('__timestamp__')
                 tinfo.mtime = time.time()
                 fileobj = StringIO(getTimestampContent())
-                tinfo.size = fileobj.len
-                tar_file.addfile(tinfo, fileobj)
+                tinfo.size = len(fileobj.getvalue())
+                tar_file.addfile(tinfo, BytesIO(fileobj.getvalue().encode()))
         else:
             unique_name = master_job.application.jobScriptArchive.namePattern
 
@@ -324,8 +324,8 @@ class GaudiExec(IPrepareApp):
             tinfo = tarfile.TarInfo(extra_opts_file)
             tinfo.mtime = time.time()
             fileobj = StringIO(self.extraOpts)
-            tinfo.size = fileobj.len
-            tar_file.addfile(tinfo, fileobj)
+            tinfo.size = len(fileobj.getvalue())
+            tar_file.addfile(tinfo, BytesIO(fileobj.getvalue().encode()))
 
             if not self.useGaudiRun:
                 # Add the WN script for wrapping the job
@@ -333,8 +333,8 @@ class GaudiExec(IPrepareApp):
                 tinfo2 = tarfile.TarInfo(self.getWrapperScriptName())
                 tinfo2.mtime = time.time()
                 fileobj2 = StringIO(self.getWNPythonContents())
-                tinfo2.size = fileobj2.len
-                tar_file.addfile(tinfo2, fileobj2)
+                tinfo2.size = len(fileobj2.getvalue())
+                tar_file.addfile(tinfo2, BytesIO(fileobj2.getvalue().encode()))
 
 
     def cleanGangaTargetArea(self, this_build_target):
@@ -420,7 +420,7 @@ class GaudiExec(IPrepareApp):
         if not path.isdir(self.directory):
             raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
-        cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
+        cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False, mode = "w")
         if not cmd.startswith('./run '):
             cmd = './run ' + cmd
 
@@ -491,7 +491,7 @@ class GaudiExec(IPrepareApp):
         # Whilst we are here let's store the application environment but ignore awkward ones
         env, envstdout, envstderr = self.execCmd('./run env')
         envDict = {}
-        for item in envstdout.split("\n"):
+        for item in envstdout.decode().split("\n"):
             if len(item.split("="))==2:
                 if item.split("=")[0] == 'XMLSUMMARYBASEROOT':
                     envDict[item.split("=")[0]] = item.split("=")[1]

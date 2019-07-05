@@ -4,6 +4,7 @@ of inputdata, outputdata and output files.'''
 
 import tempfile
 import fnmatch
+import re
 from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
 from GangaCore.GPIDev.Lib.File import FileBuffer
 from GangaCore.GPIDev.Lib.File import LocalFile
@@ -37,9 +38,9 @@ class PythonOptionsParser(object):
         '''Parse the options using gaudirun.py and create a dictionary of the
         configuration and pickle the options. The app handler will make a copy
         of the .pkl file for each job.'''
-        tmp_pkl = tempfile.NamedTemporaryFile(suffix='.pkl')
-        tmp_py = tempfile.NamedTemporaryFile(suffix='.py')
-        py_opts = tempfile.NamedTemporaryFile(suffix='.py')
+        tmp_pkl = tempfile.NamedTemporaryFile(suffix='.pkl', mode="rb+")
+        tmp_py = tempfile.NamedTemporaryFile(suffix='.py', mode="r+")
+        py_opts = tempfile.NamedTemporaryFile(suffix='.py', mode="w")
         py_opts.write(self._join_opts_files())
         py_opts.flush()
 
@@ -51,11 +52,11 @@ class PythonOptionsParser(object):
 
         rc, stdout, m = shellEnv_cmd(gaudirun, self.env)
 
-        if stdout.find('Gaudi.py') >= 0:
+        if stdout.find(b'Gaudi.py') >= 0:
             msg = 'The version of gaudirun.py required for your application is not supported.'
             raise ValueError(None, msg)
 
-        elif stdout.find('no such option: -o') >= 0:
+        elif stdout.find(b'no such option: -o') >= 0:
             gaudirun = 'gaudirun.py -n -v -p %s %s' % (tmp_pkl.name, py_opts.name)
             rc, stdout, m = shellEnv_cmd(gaudirun, self.env)
             rc = 0
@@ -73,6 +74,9 @@ class PythonOptionsParser(object):
                 err_msg = 'Please check gaudirun.py -o file.py produces a ' \
                           'valid python file.'
 
+        #We have to remove the defunct long representation for python 3
+        opts_str = re.sub('(\d)L(\})', r'\1\2', opts_str)
+
         if stdout and rc == 0:
             try:
                 options = eval(opts_str)
@@ -80,7 +84,7 @@ class PythonOptionsParser(object):
                 logger.error('Cannot eval() the options file. Exception: %s', err)
                 from traceback import print_exc
                 logger.error(' ', print_exc())
-                raise ApplicationConfigurationError(stdout + '###SPLIT###' + m)
+                raise ApplicationConfigurationError(stdout.decode() + '###SPLIT###' + m.decode())
             try:
                 opts_pkl_string = tmp_pkl.read()
             except IOError as err:
@@ -89,7 +93,7 @@ class PythonOptionsParser(object):
 
         if not rc == 0:
             logger.debug('Failed to run: %s', gaudirun)
-            raise ApplicationConfigurationError(stdout + '###SPLIT###' + m)
+            raise ApplicationConfigurationError(stdout.decode() + '###SPLIT###' + m.decode())
 
         tmp_pkl.close()
         py_opts.close()

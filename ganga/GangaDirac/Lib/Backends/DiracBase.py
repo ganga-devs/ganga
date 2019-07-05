@@ -1061,7 +1061,7 @@ class DiracBase(IBackend):
                                                                                     info.get('GUID', 'NotAvailable')
                                                                                     )
                             #logger.debug("DiracFileData: %s" % str(DiracFileData))
-                            postprocesslocationsfile.write(DiracFileData)
+                            postprocesslocationsfile.write(DiracFileData.encode())
                             postprocesslocationsfile.flush()
 
                 logger.debug("Written: %s" % open(lfn_store, 'r').readlines())
