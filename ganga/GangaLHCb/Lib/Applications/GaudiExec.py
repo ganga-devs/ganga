@@ -379,7 +379,6 @@ class GaudiExec(IPrepareApp):
         for this_opt in self.options:
             
             if isinstance(this_opt, str):
-                print('string!!!!')
                 #If it is a string then assume it is a local file.
                 if not path.exists(this_opt):
                     raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % this_opt)
