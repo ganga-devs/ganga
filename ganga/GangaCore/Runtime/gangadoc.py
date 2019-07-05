@@ -185,7 +185,7 @@ def mygetmodule(object):
             return builtin
 
 
-def doc2(thing, title='Python Library Documentation: %s', forceload=0):
+def doc2(thing, title='Python Library Documentation: %s', forceload=0, output=None):
     """Display text documentation, given an object or a path to an object."""
     try:
         object, name = pydoc.resolve(thing, forceload)
