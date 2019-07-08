@@ -251,6 +251,10 @@ class GaudiExec(IPrepareApp):
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
                     opts_file.localDir=self.getSharedPath()
                     opts_file.get()
+                elif isinstance(opts_file, str):
+                    new_file = LocalFile(opts_file)
+                    self.copyIntoPrepDir(path.join( new_file.localDir, path.basename(new_file.namePattern) ))
+                    opts_file = new_file
                 else:
                     raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
@@ -373,6 +377,13 @@ class GaudiExec(IPrepareApp):
         This function returns a sanitized absolute path to the self.options file from user input
         """
         for this_opt in self.options:
+            
+            if isinstance(this_opt, str):
+                #If it is a string then assume it is a local file.
+                if not path.exists(this_opt):
+                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % this_opt)
+                new_opt = LocalFile(this_opt)
+                this_opt = new_opt
             if isinstance(this_opt, LocalFile):
                 ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
                 full_path = path.join(this_opt.localDir, this_opt.namePattern)
