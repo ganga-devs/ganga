@@ -1,4 +1,4 @@
-from mock import call, patch, Mock
+from mock import patch
 import unittest
 from GangaCore.Utility.Virtualization import checkDocker
 

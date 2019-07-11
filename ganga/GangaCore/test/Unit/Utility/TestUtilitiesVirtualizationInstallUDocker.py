@@ -1,13 +1,13 @@
-from mock import call, patch, Mock
+from mock import patch
 import unittest
 from GangaCore.Utility.Virtualization import installUdocker
 from io import BytesIO as StringIO
 
-class TestCheckDocker(unittest.TestCase):
+class TestInstallUDocker(unittest.TestCase):
 
     @patch('subprocess.check_call')
     @patch('subprocess.call')
-    def test_checkUDocker_success(self, mock_subprocess_call, mock_subprocess_check_call):
+    def test_installUDocker_success(self, mock_subprocess_call, mock_subprocess_check_call):
         mock_subprocess_call.side_effect = [0, 0, 0]
         mock_subprocess_check_call.side_effect = [0]
         assert(installUdocker() == True)
@@ -17,7 +17,7 @@ class TestCheckDocker(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     @patch('subprocess.call')
     @patch('subprocess.check_call')
-    def test_checkUDocker_download_fail(self, mock_subprocess_check_call, mock_subprocess_call, mock_print):
+    def test_installUDocker_download_fail(self, mock_subprocess_check_call, mock_subprocess_call, mock_print):
         mock_subprocess_check_call.side_effect = [1]
         assert(installUdocker() == False)
         mock_subprocess_check_call.assert_called_once()
@@ -27,7 +27,7 @@ class TestCheckDocker(unittest.TestCase):
     @patch('subprocess.call')
     @patch('sys.stdout', new_callable=StringIO)
     @patch('subprocess.check_call')
-    def test_checkUDocker_install_fail(self, mock_subprocess_check_call, mock_print, mock_subprocess_call):
+    def test_installUDocker_install_fail(self, mock_subprocess_check_call, mock_print, mock_subprocess_call):
         mock_subprocess_check_call.side_effect = [0]
         mock_subprocess_call.side_effect = [0, 1]
         assert(installUdocker() == False)
