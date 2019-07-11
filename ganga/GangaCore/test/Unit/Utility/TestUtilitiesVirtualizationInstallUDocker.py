@@ -11,7 +11,7 @@ class TestCheckDocker(unittest.TestCase):
         mock_subprocess_call.side_effect = [0, 0, 0]
         mock_subprocess_check_call.side_effect = [0]
         assert(installUdocker() == True)
-        assert(mock_subprocess_call.call_count == 3)
+        assert(mock_subprocess_call.call_count == 2)
         mock_subprocess_check_call.assert_called_once()
 
     @patch('sys.stdout', new_callable=StringIO)
