@@ -100,11 +100,11 @@ if (virtualization == "Docker"):
         if not (checkUDocker()):
             installUdocker()
         print("Using UDocker")    
-        appscriptpath = ['/home/inzamam/udocker', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath            
+        appscriptpath = ['/home/inzamam/udocker', '--quiet', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath            
 elif (virtualization == "Singularity"):
     print("Using singularity")
     appscriptpath[0] = "/work_dir/"+appscriptpath[0]
-    appscriptpath = ['singularity', 'exec', '--bind', workdir+":"+"/work_dir", "--no-home" ,virtualization_image] + appscriptpath   
+    appscriptpath = ['singularity', '-q', 'exec', '--bind', workdir+":"+"/work_dir", "--no-home" ,virtualization_image] + appscriptpath   
 else:
     print("No virtualization specified")
 
