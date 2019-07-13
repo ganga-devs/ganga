@@ -14,9 +14,7 @@ class Singularity(IVirtualization):
     Handles all the config related to Singularity
     """
     _name = 'Singularity'
-    _schema = Schema(Version(1, 0), {
-        'imageUrl': SimpleItem(defvalue="", doc='Link to the container image')
-        })
+    _schema = IVirtualization._schema.inherit_copy()
 
     def __init__(self, imageUrl):
         super(Singularity, self).__init__()
@@ -24,4 +22,7 @@ class Singularity(IVirtualization):
         if isinstance(imageUrl, str):
             self.imageUrl = imageUrl
         else:
-            logger.error("Unkown type: %s . is not a valid format for image Url" % type(namePattern))
+            logger.error("Unkown type: %s . is not a valid format for image Url" % type(imageUrl))
+
+    def getImageUrl(self):
+        return self.imageUrl

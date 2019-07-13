@@ -13,8 +13,16 @@ class IVirtualization(GangaObject):
 
     def __init__(self):
         super(IVirtualization, self).__init__()
-    
-    _schema = Schema(Version(0,0), {})
+
+    _schema = Schema(Version(1, 0), {
+        'imageUrl': SimpleItem(defvalue="", doc='Link to the container image')
+    })
     _category = 'virtualization'
     _name = 'IVirtualization'
     _hidden = 1
+
+    def getImageUrl(self):
+        return ""
+
+    def getMode(self):
+        return ""

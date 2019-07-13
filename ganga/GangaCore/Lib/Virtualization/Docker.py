@@ -15,12 +15,16 @@ class Docker(IVirtualization):
     """
 
     _name = 'Docker'
-    _schema = Schema(Version(1, 0), {
-        'imageUrl': SimpleItem(defvalue="", doc='Link to the container image'),
-        'mode': SimpleItem(defvalue="P1", doc='Mode of container execution'
-        )})
+    _schema = IVirtualization._schema.inherit_copy()
+    _schema.datadict['mode'] = SimpleItem(defvalue="P1", doc='Mode of container execution')
 
     def __init__(self, imageUrl, mode):
         super(Docker, self).__init__()
         self.imageUrl = imageUrl
         self.mode = mode
+
+    def getImageUrl(self):
+        return self.imageUrl
+
+    def getMode(self):
+        return self.mode
