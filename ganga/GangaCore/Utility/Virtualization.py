@@ -29,7 +29,6 @@ def checkUDocker():
     if (os.path.isfile(os.path.expanduser("~") + "/udocker")):
         returnCode = subprocess.call([os.path.expanduser("~") + "/udocker", "ps"], stdout=nullOutput, stderr=nullOutput)
         if (returnCode == 0):
-            os.environ["PROOT_NO_SECCOMP"] = "1"
             return True
     return False
 
@@ -45,6 +44,5 @@ def installUdocker():
     if (returnCode != 0):
         print ("Error installing uDocker")
         return False
-    os.environ["PROOT_NO_SECCOMP"] = "1"
     print ("UDocker Successfully installed")
     return True

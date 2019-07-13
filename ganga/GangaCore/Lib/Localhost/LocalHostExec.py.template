@@ -99,8 +99,9 @@ if (virtualization == "Docker"):
         print("Docker not availabe or user doesn't have the permission to run docker demon")
         if not (checkUDocker()):
             installUdocker()
-        print("Using UDocker")    
-        appscriptpath = ['/home/inzamam/udocker', '--quiet', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath            
+        print("Using UDocker")
+        os.environ["PROOT_NO_SECCOMP"] = "1"
+        appscriptpath = ['/home/inzamam/udocker', '--quiet', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath
 elif (virtualization == "Singularity"):
     print("Using singularity")
     appscriptpath[0] = "/work_dir/"+appscriptpath[0]

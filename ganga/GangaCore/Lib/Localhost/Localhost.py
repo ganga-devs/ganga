@@ -20,7 +20,7 @@ import GangaCore.Utility.logging
 
 import GangaCore.Utility.Config
 
-from GangaCore.Utility.Virtualization import checkDocker, checkUDocker, checkSingularity, installUdocker
+import GangaCore.Utility.Virtualization
 
 from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
 
@@ -191,10 +191,7 @@ class Localhost(IBackend):
         sharedfiles = jobconfig.getSharedFiles()
 
         subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils, virtualizationutils] )
-        
-        import tempfile
-        workdir = tempfile.mkdtemp(dir=config['location'])
-        
+
         virtualization = job.virtualization
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
@@ -207,6 +204,9 @@ class Localhost(IBackend):
         ## FIXME DON'T just use the blind list here, request the list of files to be in the output from a method.
         outputpatterns = jobconfig.outputbox
         environment = dict() if jobconfig.env is None else jobconfig.env
+
+        import tempfile
+        workdir = tempfile.mkdtemp(dir=config['location'])
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
@@ -237,10 +237,9 @@ class Localhost(IBackend):
         script = script.replace('###WORKDIR###', repr(workdir))
         script = script.replace('###INPUT_DIR###', repr(job.getStringInputDir()))
         script = script.replace('###VIRTUALIZATION###', repr(virtualization.__class__.__name__))
-        script = script.replace('###VIRTUALIZATIONIMAGE###', repr(virtualization.imageUrl))
-        script = script.replace('###VIRTUALIZATIONMODE###', repr(virtualization.mode) if hasattr(virtualization, 'mode') else repr(None)  )
-        print("app:")
-        print(repr(appscriptpath))
+        script = script.replace('###VIRTUALIZATIONIMAGE###', repr(virtualization.getImageUrl()) if virtualization else repr(None))
+        script = script.replace('###VIRTUALIZATIONMODE###', repr(virtualization.getMode()) if virtualization else repr(None))
+
         self.workdir = workdir
 
         script = script.replace('###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
