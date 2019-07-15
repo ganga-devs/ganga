@@ -11,8 +11,9 @@ class IVirtualization(GangaObject):
     Contains the interface for all virtualization classes, all virtualization classes should inherit from this object.
     """
 
-    def __init__(self):
+    def __init__(self, imageUrl):
         super(IVirtualization, self).__init__()
+        self.imageUrl = imageUrl
 
     _schema = Schema(Version(1, 0), {
         'imageUrl': SimpleItem(defvalue="", doc='Link to the container image')
@@ -21,8 +22,5 @@ class IVirtualization(GangaObject):
     _name = 'IVirtualization'
     _hidden = 1
 
-    def getImageUrl(self):
-        return ""
-
-    def getMode(self):
-        return ""
+    def modify_script(self, script):
+        return script.replace('###VIRTUALIZATIONIMAGE###', repr(self.imageUrl))

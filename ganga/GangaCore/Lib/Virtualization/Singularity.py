@@ -4,9 +4,6 @@
 ##########################################################################
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaCore.GPIDev.Adapters.IVirtualization import IVirtualization
-import GangaCore.Utility.logging
-
-logger = GangaCore.Utility.logging.getLogger()
 
 class Singularity(IVirtualization):
 
@@ -17,12 +14,10 @@ class Singularity(IVirtualization):
     _schema = IVirtualization._schema.inherit_copy()
 
     def __init__(self, imageUrl):
-        super(Singularity, self).__init__()
-        
-        if isinstance(imageUrl, str):
-            self.imageUrl = imageUrl
-        else:
-            logger.error("Unkown type: %s . is not a valid format for image Url" % type(imageUrl))
+        super(Singularity, self).__init__(imageUrl)
 
-    def getImageUrl(self):
-        return self.imageUrl
+    def modify_script(self, script):
+        script = super(Singularity, self).modify_script(script)
+        script = script.replace('###VIRTUALIZATION###', repr("Singularity"))
+        script = script.replace('###VIRTUALIZATION###', repr(None))
+        return script

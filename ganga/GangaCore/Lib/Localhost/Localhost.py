@@ -236,9 +236,13 @@ class Localhost(IBackend):
         script = script.replace('###ENVIRONMENT###', repr(environment))
         script = script.replace('###WORKDIR###', repr(workdir))
         script = script.replace('###INPUT_DIR###', repr(job.getStringInputDir()))
-        script = script.replace('###VIRTUALIZATION###', repr(virtualization.__class__.__name__))
-        script = script.replace('###VIRTUALIZATIONIMAGE###', repr(virtualization.getImageUrl()) if virtualization else repr(None))
-        script = script.replace('###VIRTUALIZATIONMODE###', repr(virtualization.getMode()) if virtualization else repr(None))
+
+        if virtualization:
+            script = virtualization.modify_script(script)
+        else:
+            script = script.replace('###VIRTUALIZATION###', repr(None))
+            script = script.replace('###VIRTUALIZATIONIMAGE###', repr(None))
+            script = script.replace('###VIRTUALIZATIONMODE###', repr(None))
 
         self.workdir = workdir
 
