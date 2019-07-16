@@ -34,7 +34,7 @@ def reschedule(id):
 @diracCommand
 def submit(djob, mode='wms'):
     ''' Submit a DIRAC job given by the jdl:djob with a given mode '''
-    return dirac.submit(djob, mode=mode)
+    return dirac.submitJob(djob, mode=mode)
 
 
 @diracCommand
