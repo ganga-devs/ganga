@@ -494,12 +494,21 @@ class IBackend(GangaObject):
                         for sj_id in this_block:
                             subjobs_to_monitor.append(j.subjobs[sj_id])
                         if multiThreadMon:
+                            try:
+                                if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
+                                    logger.info('done successfuly comparison')
+                                else:
+                                    logger.info('done succeful comparison 2')
+                            except Exception as err:
+                                logger.error('this is my error %s' % err)
                             if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
+                                print("about to add to queues")
                                 queues._addSystem(j.backend.updateMonitoringInformation, args=(subjobs_to_monitor,), name="Backend Monitor")
+                                print("added to uqueueue")
                         else:
                             j.backend.updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
-                        logger.error("Monitoring Error: %s" % err)
+                        logger.error("arse Monitoring Error: %s" % err)
 
                 j.updateMasterJobStatus()
 

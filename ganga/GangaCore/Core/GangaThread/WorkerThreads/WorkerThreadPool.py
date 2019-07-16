@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 import queue
 import traceback
 import threading
@@ -15,7 +16,12 @@ from collections import namedtuple
 logger = getLogger()
 QueueElement = namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
 CommandInput = namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
-FunctionInput = namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
+class FunctionInput(namedtuple('FunctionInput', ['function', 'args', 'kwargs'])):
+    def __gt__(self, other):
+        pass
+    def __lt__(self, other):
+        pass
+
 
 
 class WorkerThreadPool(object):
@@ -39,6 +45,12 @@ class WorkerThreadPool(object):
 
         self._frozen = False
         self._shutdown = False
+
+    def __lt__(self, other):
+        return self.priority < other.priority
+
+    def __gt__(self, other):
+        return self.priority > other.priority
 
     def __init_worker_threads(self, num_worker_threads, worker_thread_prefix):
         if len(self.__worker_threads) > 0:
