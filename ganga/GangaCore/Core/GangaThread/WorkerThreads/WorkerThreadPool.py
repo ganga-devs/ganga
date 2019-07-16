@@ -45,7 +45,6 @@ class WorkerThreadPool(object):
         self._frozen = False
         self._shutdown = False
 
-
     def __init_worker_threads(self, num_worker_threads, worker_thread_prefix):
         if len(self.__worker_threads) > 0:
             logger.warning("Threads already started!")
