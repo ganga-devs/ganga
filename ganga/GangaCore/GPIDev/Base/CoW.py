@@ -324,10 +324,11 @@ class in_init(object):
         self.obj._in_init = False
 
 
-class ProxyDict(OrderedDict, CoW):
+class ProxyDict(dict, CoW):
     def __init__(self, d):
         # Recursively proxify first
-        import sys
+        # import sys
+        # print d
         # sys.setrecursionlimit(100000)
         d = dict((item, proxify(d[item])) for item in d)
         CoW.__init__(self)
@@ -337,11 +338,13 @@ class ProxyDict(OrderedDict, CoW):
             self._hash_cache = None
 
             # If we're already a Proxy Dict, just pass through
-            if type(d) in [ProxyDict, OrderedDict]:
-                return OrderedDict.__init__(self, d)
+            if type(d) in [ProxyDict, dict]:
+                return dict.__init__(self, d)
 
             # Sorting this by default to reduce burden on hash
-            super(ProxyDict, self).__init__(d)
+            super(ProxyDict, self).__init__(sorted(d.items(), key=itemgetter(1)))
+
+            # super(ProxyDict, self).__init__(d)
 
     def copy(self):
         print ('yo')
@@ -357,8 +360,9 @@ class ProxyDict(OrderedDict, CoW):
     def __hash__(self):
         if self._hash_cache is None:
             try:
-                self._hash_cache = hash(tuple(self.items()))
-            except:
+                self._hash_cache = hash(repr(sorted(self.items())))
+                # print repr(self.items())
+            except Exception as e:
                 print self.items()
                 assert False
         return self._hash_cache
