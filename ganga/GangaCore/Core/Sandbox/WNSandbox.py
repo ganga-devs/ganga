@@ -14,6 +14,50 @@ import mimetypes
 import tarfile
 from contextlib import closing
 
+def multi_glob(pats, exclude=None):
+    """ glob using a list of patterns and removing duplicate files, exclude name in the list for which the callback exclude(name) return true
+    example: advanced_glob(['*.jpg','*.gif'],exclude=lambda n:len(n)>20) return a list of all JPG and GIF files which have names shorter then 20 characters
+    """
+
+    unique = {}
+    if exclude is None:
+        def exclude(n): return 0
+
+    for p in pats:
+        for f in glob.glob(p):
+            unique[f] = 1
+
+    return [name for name in unique.keys() if not exclude(name)]
+
+
+def recursive_copy(src, dest):
+    """ copy src file (or a directory tree if src specifies a directory) to dest directory. dest must be a directory and must exist.
+    if src is a relative path, then the src directory structure is preserved in dest.
+    """
+
+    if not os.path.isdir(dest):
+        raise ValueError(
+            'resursive_copy: destination %s must specify a directory (which exists)' % dest)
+
+    if os.path.isdir(src):
+        destdir = dest
+        srcdir, srcbase = os.path.split(src.rstrip('/'))
+        if not srcdir == '' and not os.path.isabs(src):
+            destdir = os.path.join(destdir, srcdir)
+            if not os.path.isdir(destdir):
+                os.makedirs(destdir)
+        shutil.copytree(src, os.path.join(destdir, srcbase))
+    else:
+
+        srcdir = os.path.dirname(src.rstrip('/'))
+        if srcdir == '' or os.path.isabs(src):
+            shutil.copy(src, dest)
+        else:
+            destdir = os.path.join(dest, srcdir)
+            if not os.path.isdir(destdir):
+                os.makedirs(destdir)
+            shutil.copy(src, destdir)
+
 def getPackedInputSandbox(tarpath, dest_dir='.'):
     """Get all sandbox_files from tarball and write them to the workdir.
        This function is called by wrapper script at the run time.
@@ -39,39 +83,6 @@ def createOutputSandbox(output_patterns, filter, dest_dir):
       'dest_dir': destination directory for output files
     """
 
-    try:
-        from files import multi_glob, recursive_copy
-    except (IOError, ImportError) as e:
-        import sys
-
-        print("Failed to import files")
-        print("sys:")
-        print(sys.path)
-        print("env:")
-        print(os.environ)
-        print("ls:")
-        print(os.listdir("."))
-        print("pattern:")
-        print(output_patterns)
-        print("destdir:")
-        print(dest_dir)
-
-        try:
-            import traceback
-            traceback.print_stack()
-        except:
-            pass
-
-        print("Trying fix")
-        sys.path.insert(0, os.path.join(os.getcwd(), PYTHON_DIR))
-
-        try:
-            from files import multi_glob, recursive_copy
-            print("Success!")
-        except (IOError, ImportError) as e:
-            print("Fail!")
-            raise e
-
     for f in multi_glob(output_patterns, filter):
         try:
             if not os.path.exists(dest_dir):
@@ -92,39 +103,6 @@ def createPackedOutputSandbox(output_patterns, _filter, dest_dir):
     """
 
     tgzfile = os.path.join(dest_dir, OUTPUT_TARBALL_NAME)
-
-    try:
-        from files import multi_glob, recursive_copy
-    except (IOError, ImportError) as e:
-        import sys
-
-        print("Failed to import files")
-        print("sys:")
-        print(sys.path)
-        print("env:")
-        print(os.environ)
-        print("ls:")
-        print(os.listdir("."))
-        print("pattern:")
-        print(output_patterns)
-        print("destdir:")
-        print(dest_dir)
-
-        try:
-            import traceback
-            traceback.print_stack()
-        except:
-            pass
-
-        print("Trying fix")
-        sys.path.insert(0, os.path.join(os.getcwd(), PYTHON_DIR))
-
-        try:
-            from files import multi_glob, recursive_copy
-            print("Success!")
-        except (IOError, ImportError) as e:
-            print("Fail!")
-            raise e
 
     outputlist = multi_glob(output_patterns, _filter)
 
