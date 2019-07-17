@@ -15,7 +15,12 @@ from collections import namedtuple
 logger = getLogger()
 QueueElement = namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
 CommandInput = namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
-FunctionInput = namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
+class FunctionInput(namedtuple('FunctionInput', ['function', 'args', 'kwargs'])):
+    def __gt__(self, other):
+        pass
+    def __lt__(self, other):
+        pass
+
 
 
 class WorkerThreadPool(object):

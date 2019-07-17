@@ -152,8 +152,10 @@ class VPrinter(object):
         else:
             if isType(stripProxy(s), list):
                 print(s, end='', file=self.out)
-            else:
+            elif hasattr(s, 'accept'):
                 stripProxy(s).accept(self)
+            else:
+                self.quote(s)
 
     def componentAttribute(self, node, name, subnode, sequence):
         if self.showAttribute(node, name):
