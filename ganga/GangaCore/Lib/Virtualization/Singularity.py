@@ -17,6 +17,12 @@ class Singularity(IVirtualization):
         super(Singularity, self).__init__(imageUrl)
 
     def modify_script(self, script):
+        """Overides parent's modify_script function
+                    Arguments other than self:
+                       script - Script that need to be modified
+
+                    Return value: modified script"""
+
         script = super(Singularity, self).modify_script(script)
         script = script.replace('###VIRTUALIZATION###', repr("Singularity"))
         script = script.replace('###VIRTUALIZATION###', repr(None))

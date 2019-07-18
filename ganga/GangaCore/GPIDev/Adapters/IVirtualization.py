@@ -23,4 +23,12 @@ class IVirtualization(GangaObject):
     _hidden = 1
 
     def modify_script(self, script):
+        """Modify the given script by
+        substituting virtualization related placeholders with relevant variables
+
+            Arguments other than self:
+               script - Script that need to be modified
+
+            Return value: modified script"""
+
         return script.replace('###VIRTUALIZATIONIMAGE###', repr(self.imageUrl))

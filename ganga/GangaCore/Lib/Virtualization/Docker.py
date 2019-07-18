@@ -20,6 +20,12 @@ class Docker(IVirtualization):
         self.mode = mode
 
     def modify_script(self, script):
+        """Overides parent's modify_script function
+            Arguments other than self:
+               script - Script that need to be modified
+
+            Return value: modified script"""
+
         script = super(Docker, self).modify_script(script)
         script = script.replace('###VIRTUALIZATION###', repr("Docker"))
         script = script.replace('###VIRTUALIZATIONMODE###', repr(self.mode))

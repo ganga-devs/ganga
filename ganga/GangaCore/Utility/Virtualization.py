@@ -3,6 +3,10 @@ import os
 
 
 def checkSingularity():
+    """Check whether Singularity is installed and the current user has right to access
+
+        Return value: True or False"""
+
     nullOutput = open(os.devnull, 'wb')
     returnCode = 1
     try:
@@ -14,6 +18,10 @@ def checkSingularity():
 
 
 def checkDocker():
+    """Check whether Docker is installed and the current user has right to access
+
+        Return value: True or False"""
+
     nullOutput = open(os.devnull, 'wb')
     returnCode = 1
     try:
@@ -25,6 +33,10 @@ def checkDocker():
 
 
 def checkUDocker():
+    """Check whether UDocker is installed and the current user has right to access
+
+        Return value: True or False"""
+
     nullOutput = open(os.devnull, 'wb')
     if (os.path.isfile(os.path.expanduser("~") + "/udocker")):
         returnCode = subprocess.call([os.path.expanduser("~") + "/udocker", "ps"], stdout=nullOutput, stderr=nullOutput)
@@ -34,6 +46,10 @@ def checkUDocker():
 
 
 def installUdocker():
+    """Download and install UDocker
+
+        Return value: True (If Success) or False"""
+
     udocker_address = "https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py"
     returnCode = subprocess.check_call(['curl', udocker_address], stdout=open(os.path.expanduser("~")+"/udocker", 'w'))
     if (returnCode != 0):
