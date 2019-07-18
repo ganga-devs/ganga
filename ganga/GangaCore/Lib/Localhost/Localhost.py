@@ -185,14 +185,17 @@ class Localhost(IBackend):
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
-        virtualizationutils = File( inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
+        virtualization = job.virtualization
 
+        utilFiles= []
+        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
+        utilFiles.append(fileutils)
+        if virtualization:
+            virtualizationutils = File( inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
+            utilFiles.append(virtualizationutils)
         sharedfiles = jobconfig.getSharedFiles()
 
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils, virtualizationutils] )
-
-        virtualization = job.virtualization
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + utilFiles)
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         if self.nice:

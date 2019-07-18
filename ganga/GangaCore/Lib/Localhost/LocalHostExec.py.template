@@ -88,7 +88,8 @@ errorfile=open('stderr','w')
 sys.stdout=open('./__syslog__','w')
 sys.stderr=sys.stdout
 
-from Virtualization import checkDocker, checkUDocker, checkSingularity, installUdocker
+if virtualization:
+    from Virtualization import checkDocker, checkUDocker, checkSingularity, installUdocker
 
 if (virtualization == "Docker"):
     appscriptpath[0] = "/work_dir/"+appscriptpath[0]
@@ -100,7 +101,6 @@ if (virtualization == "Docker"):
         if not (checkUDocker()):
             installUdocker()
         print("Using UDocker")
-        os.environ["PROOT_NO_SECCOMP"] = "1"
         appscriptpath = [os.path.expanduser("~") + '/udocker', '--quiet', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath
 elif (virtualization == "Singularity"):
     print("Using singularity")
