@@ -54,7 +54,7 @@ class AfsTokenInfo(ICredentialInfo):
         command = 'kinit'
 
         process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdoutdata, stderrdata = process.communicate(getpass('Kerberos password: '))
+        stdoutdata, stderrdata = process.communicate(getpass('Kerberos password: ').encode())
 
         if process.returncode == 0:
             logger.info('AFS token %s created. Valid for %s', self.location, self.time_left())

@@ -711,7 +711,7 @@ under certain conditions; type license() for details.
             if dir and os.path.exists(dir) and os.path.isdir(dir):
                 files = [os.path.join(dir, f) for f in os.listdir(dir) if
                          _accept(os.path.join(dir, f))]
-            return string.join(files, os.pathsep)
+            return os.pathsep.join(files)
 
         def _versionsort(s, p=re.compile(r'^(\d+)-(\d+)-*(\d*)')):
             m = p.match(s)
@@ -722,7 +722,7 @@ under certain conditions; type license() for details.
                     return int(m.group(1)), int(m.group(2)), int(m.group(3))
             if s == 'SVN':
                 return 'SVN'
-            return None
+            return 0, 0, 0
 
         if "GANGA_SITE_CONFIG_AREA" in os.environ:
             this_dir = os.environ['GANGA_SITE_CONFIG_AREA']
@@ -1042,8 +1042,10 @@ under certain conditions; type license() for details.
             # ConfigParser trims the lines and escape the space chars
             # so we have only one possibility to insert python code :
             # using explicitly '\n' and '\t' chars
-            code = config['StartupGPI'].replace(
-                '\\t', '\t').replace('\\n', '\n')
+#FIXME: Waiting for new site config to update print to python3
+#            code = config['StartupGPI'].replace(
+#                '\\t', '\t').replace('\\n', '\n')
+            code = r"print('\n === Welcome to Ganga on CVMFS. In case of problems contact lhcb-distributed-analysis@cern.ch === ')"
             exec(code, local_ns)
 
         logger.debug("loaded .ganga.py")

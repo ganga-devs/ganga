@@ -35,7 +35,7 @@ def standardSetup():
     #On CVMFS we need to point to the site-packages directory as we don't start the virtualenv
     if exeDir.startswith('/cvmfs/ganga.cern.ch', 0, 20):
         envDir = exeDir[:-3]
-        envDir = os.path.join(envDir, 'lib/python2.7/site-packages')
+        envDir = os.path.join(envDir, 'lib/python3.6/site-packages')
         sys.path.insert(0, envDir)    
 
     #This function is needed to add the individual ganga modules to the sys path - awful hack but saved rewriting all the code. This is needed for pip installs
