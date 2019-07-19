@@ -1,4 +1,4 @@
-
+import re
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy, isType, getName
@@ -375,7 +375,7 @@ class Loader(object):
                 try:
                     # unescape the special characters
                     s = unescape(self.value_construct)
-                    #logger.debug('string value: %s',s)
+                    s = re.sub('(\d)L(\})', r'\1\2', s)
                     if s not in _cached_eval_strings:
                         # This is ugly and classes which use this are bad, but this needs to be fixed in another PR
                         # TODO Make the scope of objects a lot better than whatever is in the config
@@ -390,7 +390,8 @@ class Loader(object):
                     #logger.debug('evaled value: %s type=%s',repr(val),type(val))
                     self.stack.append(val)
                     self.value_construct = None
-                except:
+                except Exception as err:
+                    print('err: ', err)
                     raise GangaException("ERROR in loading XML, failed to correctly parse attribute value: \'%s\'" % str(self.value_construct))
 
             # when </sequence> is seen we remove last items from stack (as indicated by sequence_start)

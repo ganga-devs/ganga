@@ -858,7 +858,6 @@ class GangaRepositoryLocal(GangaRepository):
             has_children (bool): This contains the result of the decision as to whether this object actually has children
             tmpobj (GangaObject): This contains the object which has been read in from the fn file
         """
-
         # If this_id is not in the objects add the object we got from reading the XML
         need_to_copy = True
         if this_id not in self.objects:
