@@ -390,8 +390,7 @@ class Loader(object):
                     #logger.debug('evaled value: %s type=%s',repr(val),type(val))
                     self.stack.append(val)
                     self.value_construct = None
-                except Exception as err:
-                    print('err: ', err)
+                except:
                     raise GangaException("ERROR in loading XML, failed to correctly parse attribute value: \'%s\'" % str(self.value_construct))
 
             # when </sequence> is seen we remove last items from stack (as indicated by sequence_start)
