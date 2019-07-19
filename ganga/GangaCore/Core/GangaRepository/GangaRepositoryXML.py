@@ -1101,7 +1101,7 @@ class GangaRepositoryLocal(GangaRepository):
             logger.debug("Exception when loading backup: %s" % err2 )
 
         logger.error("XML File failed to load for Job id: %s" % this_id)
-        logger.error("Actual Error was:\n%s" % err2)
+        logger.error("Actual Error was:\n%s" % err)
 
         # add object to incomplete_objects
         if not this_id in self.incomplete_objects:
