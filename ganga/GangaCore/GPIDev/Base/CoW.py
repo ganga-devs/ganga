@@ -18,7 +18,8 @@ flyweight_ignored_keys = [
                           "_flyweight_cb_func",
                           "_my_flyweight_cb_func"
                         ]
-flyweight_ignored_types = (int, float, type(None), bool, str) + weakref.ProxyTypes
+flyweight_ignored_types = (int, float, type(None), bool, str) \
+    + weakref.ProxyTypes
 
 
 def proxify(value):
@@ -61,8 +62,6 @@ class CoW(object):
         custom copy methods per each class, and instead utilize the
         duck typing of python to make this all transparent.
     """
-
-    # __slots__ = ['__weakref__','__cow_add_cb_pointer','_my_flyweight_cb_func','_flyweight_cache']
 
     # Using weakref to allow garbage collection
     # dict[<var_type>][__hash__]
@@ -168,9 +167,6 @@ class CoW(object):
         CoW.__init__(obj, self)
 
         return obj
-
-    def __deepcopy__(self):
-        pass
 
     def __hash__(self):
         """
@@ -328,7 +324,6 @@ class ProxyDict(dict, CoW):
     def __init__(self, d):
         # Recursively proxify first
         # import sys
-        # print d
         # sys.setrecursionlimit(100000)
         d = dict((item, proxify(d[item])) for item in d)
         CoW.__init__(self)
@@ -342,12 +337,12 @@ class ProxyDict(dict, CoW):
                 return dict.__init__(self, d)
 
             # Sorting this by default to reduce burden on hash
-            super(ProxyDict, self).__init__(sorted(d.items(), key=itemgetter(1)))
+            super(ProxyDict, self).__init__(
+                sorted(d.items(), key=itemgetter(1)))
 
             # super(ProxyDict, self).__init__(d)
 
     def copy(self):
-        print ('yo')
         return self.__copy__()
 
     def fromkeys(self, *args, **kwargs):
@@ -441,8 +436,8 @@ class ProxyList(list, CoW):
         return list_do_generic_call(self, "__iadd__", *args, **kwargs)
 
 
-proxy_list_inplace_set = ["add", "clear", "difference_pdate", "discard",
-                          "intersection_pdate", "pop", "remove",
+proxy_list_inplace_set = ["add", "clear", "difference_update", "discard",
+                          "intersection_update", "pop", "remove",
                           "symmetric_difference_update", "update"]
 
 
