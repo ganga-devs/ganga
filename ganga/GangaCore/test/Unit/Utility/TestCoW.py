@@ -646,3 +646,261 @@ class TestList(unittest.TestCase):
         self.assertEqual(t2.l, [1, 2, 3, 4])
         self.assertEqual(len(t._flyweight_cache[ProxyList]), 2)
         t._flyweight_cache.clear()
+
+
+class TestDictionary(unittest.TestCase):
+
+    def test_dict_nested_getitem_update(self):
+        t = SampleClass()
+
+        l = [1, 2, 3, [4, 5, 6, {7: 'seven', 8: ['eight']}]]
+        t.l = l
+        t.l[-1][-1][8].append(9)
+
+        self.assertEqual(t.l, [1, 2, 3, [4, 5, 6,
+                               {7: 'seven', 8: ['eight', 9]}]])
+
+    def test_dict_subdict_append(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, {4: 'four'}]
+        t.l[-1][4] = 'five'
+        self.assertEqual(t.l, [1, 2, 3, {4: 'five'}])
+
+    def test_dict_recursive_proxify(self):
+        t = SampleClass()
+
+        d = {1: 'one', 2: 'two'}
+        e = {3: 'three', 4: ['four']}
+        d['e'] = e
+
+        t.d = d
+        self.assertEqual(t.d, {1: 'one', 2: 'two',
+                               'e': {3: 'three', 4: ['four']}})
+        t._flyweight_cache.clear()
+
+    def test_dict_setitem_hash(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        old_hash = hash(t.d)
+
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t.d[1] = 'ganga'
+        new_hash = hash(t.d)
+
+        self.assertNotEqual(old_hash, new_hash)
+
+        t.d._my_flyweight_cb_func = None
+        gc.collect()
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+        self.assertIn(new_hash, t._flyweight_cache[ProxyDict])
+        t._flyweight_cache.clear()
+
+    def test_dict_popitem_hash(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        old_hash = hash(t.d)
+
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t.d.popitem()
+        new_hash = hash(t.d)
+
+        self.assertNotEqual(old_hash, new_hash)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+        self.assertIn(new_hash, t._flyweight_cache[ProxyDict])
+        t._flyweight_cache.clear()
+
+    def test_dict_values(self):
+        t = SampleClass()
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        self.assertEqual(list(t.d.values()), ['test', 'test2'])
+        t._flyweight_cache.clear()
+
+    def test_dict_update(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        t.d.update({3: 'test3'})
+        self.assertEqual(t.d, {1: 'test', 2: 'test2', 3: 'test3'})
+        self.assertEqual(t2.d, t.d)
+        t._flyweight_cache.clear()
+
+    def test_dict_setdefault(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        self.assertEqual(t.d.setdefault(2), 'test2')
+        self.assertEqual(t.d.setdefault(3, 'test3'), 'test3')
+        self.assertEqual(t.d, {1: 'test', 2: 'test2', 3: 'test3'})
+        self.assertEqual(t2.d, t.d)
+        t._flyweight_cache.clear()
+
+    def test_dict_popitem(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        self.assertIn(t.d.popitem(), [(1, 'test'), (2, 'test2')])
+        self.assertIn(t.d.popitem(), [(1, 'test'), (2, 'test2')])
+        self.assertEqual(t.d, {})
+        self.assertEqual(t2.d, d)
+        t._flyweight_cache.clear()
+
+    def test_dict_pop(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        self.assertEqual(t.d.pop(1), 'test')
+        self.assertEqual(t.d, {2: 'test2'})
+        t._flyweight_cache.clear()
+
+    def test_dict_keys(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        self.assertEqual(t.d.keys(), [1, 2])
+        t._flyweight_cache.clear()
+
+    def test_dict_items(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        self.assertEqual(t.d.items(), [(1, 'test'), (2, 'test2')])
+        t._flyweight_cache.clear()
+
+    def test_dict_get(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        self.assertEqual(t.d.get(1), 'test')
+        t._flyweight_cache.clear()
+
+    def test_dict_copy(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        self.assertEqual(t.d.copy(), t.d)
+        t._flyweight_cache.clear()
+
+    def test_dict_clear(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        t.d.clear()
+        self.assertEqual(t.d, {})
+        self.assertEqual(t2.d, {1: 'test', 2: 'test2'})
+        t._flyweight_cache.clear()
+
+    def test_dict_setitem(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+
+        t.d[1] = 'test2'
+        self.assertEqual(t.d, {1: 'test2', 2: 'test2'})
+        self.assertEqual(t2.d, {1: 'test', 2: 'test2'})
+
+        t2.d[2] = 'test3'
+        self.assertEqual(t.d, {1: 'test2', 2: 'test2'})
+        self.assertEqual(t2.d, {1: 'test', 2: 'test3'})
+
+        t.d[3] = 'ganga'
+        self.assertEqual(t.d, {1: 'test2', 2: 'test2', 3: 'ganga'})
+        self.assertEqual(t2.d, {1: 'test', 2: 'test3'})
+        t._flyweight_cache.clear()
+
+    def test_dict_basic(self):
+        t = SampleClass()
+
+        d = {1: 'test', 2: 'test2'}
+        t.d = d
+        self.assertEqual(t.d, d)
+
+        self.assertEqual(len(t._flyweight_cache[ProxyDict]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.d, t.d)
+        t._flyweight_cache.clear()
