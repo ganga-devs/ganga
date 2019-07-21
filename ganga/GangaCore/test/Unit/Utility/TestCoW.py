@@ -36,3 +36,22 @@ class TestBool(unittest.TestCase):
         self.assertEqual(len(t._flyweight_cache), 0)
         t._flyweight_cache.clear()
 
+
+class TestString(unittest.TestCase):
+
+    def test_string_basic(self):
+        t = SampleClass()
+
+        t.s = "test"
+        self.assertEqual(t.s, "test")
+
+        self.assertEqual(len(t._flyweight_cache), 0)
+
+        t2 = copy(t)
+        self.assertEqual(t2.s, t.s)
+
+        t.s += "q"
+        self.assertEqual(t.s, "testq")
+        self.assertEqual(t2.s, "test")
+        self.assertEqual(len(t._flyweight_cache), 0)
+        t._flyweight_cache.clear()
