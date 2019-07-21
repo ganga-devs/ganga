@@ -55,3 +55,24 @@ class TestString(unittest.TestCase):
         self.assertEqual(t2.s, "test")
         self.assertEqual(len(t._flyweight_cache), 0)
         t._flyweight_cache.clear()
+
+
+class TestNone(unittest.TestCase):
+
+    def test_none_basic(self):
+        t = SampleClass()
+
+        t.i = None
+        self.assertEqual(t.i, None)
+
+        # None is ignored
+        self.assertEqual(len(t._flyweight_cache), 0)
+
+        t2 = copy(t)
+        self.assertEqual(t2.i, t.i)
+
+        t.i = 1
+        self.assertEqual(t.i, 1)
+        self.assertEqual(t2.i, None)
+        self.assertEqual(len(t._flyweight_cache), 0)
+        t._flyweight_cache.clear()
