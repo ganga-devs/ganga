@@ -366,3 +366,283 @@ class TestTuple(unittest.TestCase):
         self.assertEqual(t2.l, (1, 2, 3, 4))
         self.assertEqual(len(t._flyweight_cache[ProxyTuple]), 2)
         t._flyweight_cache.clear()
+
+
+class TestList(unittest.TestCase):
+
+    def test_list_append_non_cow(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3]
+        t.l.append([1, 2, 3])
+        self.assertEqual(t.l, [1, 2, 3, [1, 2, 3]])
+        t._flyweight_cache.clear()
+
+    def test_list_dedup_var_separately(self):
+        t = SampleClass()
+        t2 = SampleClass()
+
+        t.l = [1, 2, 3]
+        t2.l = [1, 2, 3]
+
+        self.assertEqual(t.l, t2.l)
+        t._flyweight_cache.clear()
+
+    def test_list_sublist_append(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, [4, 5, 6]]
+        t.l[-1].append(7)
+        self.assertEqual(t.l, [1, 2, 3, [4, 5, 6, 7]])
+
+        t.l = [1, 2, 3, [4, 5, 6, [7, 8, 9]]]
+        t.l[-1][-1].append(10)
+        self.assertEqual(t.l, [1, 2, 3, [4, 5, 6, [7, 8, 9, 10]]])
+
+        t2 = copy(t)
+        t2.l[-1][-1].append(11)
+        self.assertEqual(t2.l, [1, 2, 3, [4, 5, 6, [7, 8, 9, 10, 11]]])
+        self.assertEqual(t.l, [1, 2, 3, [4, 5, 6, [7, 8, 9, 10]]])
+        t._flyweight_cache.clear()
+
+    def test_list_recursive_types(self):
+        t = SampleClass()
+
+        d = {1: 'one', 2: 'two'}
+        t.l = [1, 2, 3, d]
+        self.assertEqual(t.l[:3], [1, 2, 3])
+        self.assertEqual(t.l[-1], d)
+        t._flyweight_cache.clear()
+
+    def test_list_subupdate(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3]
+        self.assertEqual(t.l, [1, 2, 3])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+        t2 = copy(t)
+
+        t.l.append(t2)
+
+        # Make sure we're copying correctly
+        self.assertEqual(t.l[-1], t.l[-1])
+        self.assertEqual(t.l[-1], t2)
+
+        # Try appending to it, make sure it gets back up
+        t.l[-1].l.append(4)
+        self.assertEqual(t.l[-1].l, [1, 2, 3, 4])
+        self.assertEqual(t.l[:-1], [1, 2, 3])
+        self.assertEqual(len(t.l), 4)
+
+        # Setitem
+        t.l[-1].l[2] = 5
+        self.assertEqual(t.l[:-1], [1, 2, 3])
+        self.assertEqual(len(t.l), 4)
+        self.assertEqual(t.l[-1].l, [1, 2, 5, 4])
+
+        # Update higher in list
+        t.l.append(5)
+        self.assertEqual(t.l[:3], [1, 2, 3])
+        self.assertEqual(len(t.l), 5)
+        self.assertEqual(t.l[-1], 5)
+        self.assertEqual(t.l[-2].l, [1, 2, 5, 4])
+
+        t._flyweight_cache.clear()
+
+    def test_list_subcow(self):
+        """Adding a CoW inside the CoW"""
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+        t2 = SampleClass()
+        t2.l = [5, 6, 7, 8]
+
+        t.l.append(t2)
+
+        # Make sure we're copying correctly
+        self.assertEqual(t.l[-1], t.l[-1])
+        self.assertEqual(t.l[-1], t2)
+
+        # Try appending to it, make sure it gets back up
+        t.l[-1].l.append(9)
+        self.assertEqual(t.l[-1].l, [5, 6, 7, 8, 9])
+        t._flyweight_cache.clear()
+
+    def test_list_setitem_hash(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        old_hash = hash(t.l)
+        t.l[1] = 5
+        new_hash = hash(t.l)
+
+        self.assertNotEqual(old_hash, new_hash)
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+        self.assertIn(new_hash, t._flyweight_cache[ProxyList])
+        t._flyweight_cache.clear()
+
+    def test_list_append_hash(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        old_hash = hash(t.l)
+        t.l.append(5)
+        new_hash = hash(t.l)
+
+        self.assertNotEqual(old_hash, new_hash)
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+        self.assertIn(new_hash, t._flyweight_cache[ProxyList])
+        t._flyweight_cache.clear()
+
+    def test_list_setitem(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        t2 = copy(t)
+
+        self.assertEqual(t2.l, t.l)
+
+        t.l[2] = 10
+        self.assertEqual(t.l, [1, 2, 10, 4])
+        self.assertEqual(t2.l, [1, 2, 3, 4])
+        t._flyweight_cache.clear()
+
+    def test_list_sort(self):
+        t = SampleClass()
+
+        t.l = [4, 2, 3, 1]
+        self.assertEqual(t.l, [4, 2, 3, 1])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        t2 = copy(t)
+
+        self.assertEqual(t2.l, t.l)
+
+        t.l.sort()
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(t2.l, [4, 2, 3, 1])
+        t._flyweight_cache.clear()
+
+    def test_list_reverse(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        t2 = copy(t)
+
+        self.assertEqual(t2.l, t.l)
+
+        t.l.reverse()
+        self.assertEqual(t.l, [4, 3, 2, 1])
+        self.assertEqual(t2.l, [1, 2, 3, 4])
+        t._flyweight_cache.clear()
+
+    def test_list_remove(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        t2 = copy(t)
+
+        self.assertEqual(t2.l, t.l)
+
+        t.l.remove(4)
+        self.assertEqual(t.l, [1, 2, 3])
+        self.assertEqual(t2.l, [1, 2, 3, 4])
+        t._flyweight_cache.clear()
+
+    def test_list_pop(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        t2 = copy(t)
+
+        self.assertEqual(t2.l, t.l)
+
+        self.assertEqual(t.l.pop(2), 3)
+        self.assertEqual(t.l, [1, 2, 4])
+        self.assertEqual(t2.l, [1, 2, 3, 4])
+        t._flyweight_cache.clear()
+
+    def test_list_insert(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        t2 = copy(t)
+
+        self.assertEqual(t2.l, t.l)
+
+        t.l.insert(1, 5)
+        self.assertEqual(t.l, [1, 5, 2, 3, 4])
+        self.assertEqual(t2.l, [1, 2, 3, 4])
+        t._flyweight_cache.clear()
+
+    def test_list_extend(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        t2 = copy(t)
+
+        self.assertEqual(t2.l, t.l)
+
+        t.l.extend([5, 6, 7])
+        self.assertEqual(t.l, [1, 2, 3, 4, 5, 6, 7])
+        self.assertEqual(t2.l, [1, 2, 3, 4])
+        t._flyweight_cache.clear()
+
+    def test_list_append(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        t2 = copy(t)
+
+        self.assertEqual(t2.l, t.l)
+
+        t.l.append(5)
+        self.assertEqual(t.l, [1, 2, 3, 4, 5])
+        self.assertEqual(t2.l, [1, 2, 3, 4])
+        t._flyweight_cache.clear()
+
+    def test_list_basic(self):
+        t = SampleClass()
+
+        t.l = [1, 2, 3, 4]
+        self.assertEqual(t.l, [1, 2, 3, 4])
+
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.l, t.l)
+
+        t.l += [5]
+        self.assertEqual(t.l, [1, 2, 3, 4, 5])
+        self.assertEqual(t2.l, [1, 2, 3, 4])
+        self.assertEqual(len(t._flyweight_cache[ProxyList]), 2)
+        t._flyweight_cache.clear()
