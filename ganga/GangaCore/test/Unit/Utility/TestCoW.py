@@ -76,3 +76,29 @@ class TestNone(unittest.TestCase):
         self.assertEqual(t2.i, None)
         self.assertEqual(len(t._flyweight_cache), 0)
         t._flyweight_cache.clear()
+
+
+class TestInt(unittest.TestCase):
+
+    def test_int_basic(self):
+
+        t = SampleClass()
+
+        t.i = 12
+        self.assertEqual(t.i, 12)
+
+        # Int is ignored
+        self.assertEqual(len(t._flyweight_cache), 0)
+
+        t2 = copy(t)
+        self.assertEqual(t2.i, t.i)
+
+        t.i = 4
+        self.assertEqual(t.i, 4)
+        self.assertEqual(t2.i, 12)
+        self.assertEqual(len(t._flyweight_cache), 0)
+
+        t.i += 1
+        self.assertEqual(t.i, 5)
+        self.assertEqual(t2.i, 12)
+        t._flyweight_cache.clear()
