@@ -9,6 +9,7 @@ from GangaCore.Core.exceptions import (GangaException,
 
 import time
 import threading
+import weakref
 
 from GangaCore.Core.GangaThread.GangaThread import GangaThread
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
@@ -279,7 +280,7 @@ class Registry(object):
     Base class providing a dict-like locked and lazy-loading interface to a Ganga repository
     """
 
-    __slots__ = ('name', 'doc', '_hasStarted', '_needs_metadata', 'metadata', '_read_lock', '_flush_lock', '_parent', 'repository', '_objects', '_incomplete_objects', 'flush_thread', 'type', 'location')
+    __slots__ = ('name', 'doc', '_hasStarted', '_needs_metadata', 'metadata', '_read_lock', '_flush_lock', '_parent', 'repository', '_objects', '_incomplete_objects', 'flush_thread', 'type', 'location', '__weakref__')
 
     def __init__(self, name, doc):
         """Registry constructor, giving public name and documentation
