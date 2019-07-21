@@ -319,3 +319,50 @@ class TestSet(unittest.TestCase):
         self.assertEqual(t2.l, set([1, 2, 3, 4]))
         self.assertEqual(len(t._flyweight_cache[ProxySet]), 2)
         t._flyweight_cache.clear()
+
+
+class TestTuple(unittest.TestCase):
+
+    def test_tuple_setitem_error(self):
+        t = SampleClass()
+
+        t.l = (1, 2, 3, 4, 1, 1)
+
+        with self.assertRaises(TypeError):
+            t.l[0] = 1
+        t._flyweight_cache.clear()
+
+    def test_tuple_index(self):
+        t = SampleClass()
+
+        t.l = (1, 2, 3, 4, 1, 1)
+        self.assertEqual(t.l, (1, 2, 3, 4, 1, 1))
+        self.assertEqual(len(t._flyweight_cache[ProxyTuple]), 1)
+        self.assertEqual(t.l.index(4), 3)
+        t._flyweight_cache.clear()
+
+    def test_tuple_count(self):
+        t = SampleClass()
+
+        t.l = (1, 2, 3, 4, 1, 1)
+        self.assertEqual(t.l, (1, 2, 3, 4, 1, 1))
+        self.assertEqual(len(t._flyweight_cache[ProxyTuple]), 1)
+        self.assertEqual(t.l.count(1), 3)
+        t._flyweight_cache.clear()
+
+    def test_tuple_basic(self):
+        t = SampleClass()
+
+        t.l = (1, 2, 3, 4)
+        self.assertEqual(t.l, (1, 2, 3, 4))
+
+        self.assertEqual(len(t._flyweight_cache[ProxyTuple]), 1)
+
+        t2 = copy(t)
+        self.assertEqual(t2.l, t.l)
+
+        t.l += (5,)
+        self.assertEqual(t.l, (1, 2, 3, 4, 5))
+        self.assertEqual(t2.l, (1, 2, 3, 4))
+        self.assertEqual(len(t._flyweight_cache[ProxyTuple]), 2)
+        t._flyweight_cache.clear()
