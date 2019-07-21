@@ -102,3 +102,26 @@ class TestInt(unittest.TestCase):
         self.assertEqual(t.i, 5)
         self.assertEqual(t2.i, 12)
         t._flyweight_cache.clear()
+
+
+class TestFloat(unittest.TestCase):
+
+    def test_float_basic(self):
+        t = SampleClass()
+
+        t.i = 12.5
+        self.assertEqual(t.i, 12.5)
+
+        # float is ignored
+        self.assertEqual(len(t._flyweight_cache), 0)
+        t2 = copy(t)
+        self.assertEqual(t2.i, t.i)
+
+        t.i = 4.2
+        self.assertEqual(t.i, 4.2)
+        self.assertEqual(t2.i, 12.5)
+        self.assertEqual(len(t._flyweight_cache), 0)
+        t.i += 1
+        self.assertEqual(t.i, 5.2)
+        self.assertEqual(t2.i, 12.5)
+        t._flyweight_cache.clear()
