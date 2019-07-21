@@ -904,3 +904,7 @@ class TestDictionary(unittest.TestCase):
         t2 = copy(t)
         self.assertEqual(t2.d, t.d)
         t._flyweight_cache.clear()
+
+
+if __name__ == '__main__':
+    unittest.main()
