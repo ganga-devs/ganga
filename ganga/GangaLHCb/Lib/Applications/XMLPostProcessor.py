@@ -6,6 +6,7 @@
 # Required for post-processing script
 import os
 import sys
+import re
 from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSummaryItems
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -25,7 +26,10 @@ def postprocess(self, logger):
     # pointer
     metadataItems = {}
     if os.path.exists(parsedXML):
-        exec(compile(open(parsedXML).read(), parsedXML, 'exec'), {}, metadataItems)
+        #Get rid of the long representation
+        xml_string = open(parsedXML).read()
+        xml_string = re.sub('(\d)L(\})', r'\1\2', xml_string)
+        exec(compile(xml_string, parsedXML, 'exec'), {}, metadataItems)
 
     # Combining subjobs XMLSummaries.
     if j.subjobs:
