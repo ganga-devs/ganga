@@ -316,9 +316,7 @@ class Summary(__schema__.VTree):
         ''' fill a basic or complex stat counter, or lumi counter, from a VTree
         will merge the counter if it already exists.
         If you want to add, but not merge use the add method'''
-        print('VTREECOUNTER')
         if 'VTree' not in str(type(counter)):
-            print('raising error')
             raise TypeError('expected VTree, got '+str(type(counter))+' instead')
         if counter.tag() not in ['statEntity', __count_tag__]:
             raise TypeError('expected counter, got '+counter.tag()+' instead')
@@ -430,7 +428,6 @@ class Summary(__schema__.VTree):
 def Merge(summaries, schemafile=__default_schema__):
     '''Merge a list of summaries, return a new summary
     summaries can be a list of xml files to be parsed, or a list of summary objects'''
-    print('MyMERGE')
     if type("")==type(schemafile):
         schemafile=__schema__.Schema(schemafile)
     if type([]) != type(summaries): 

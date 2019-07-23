@@ -579,7 +579,7 @@ class Schema(object):
             'n' : lambda x: str(x),   #normalizedString
             's' : lambda x: str(x),   #string
             'f' : lambda x: float(x), #float
-            'l' : lambda x: long(x),  #long
+            'l' : lambda x: int(x),  #long
             'i' : lambda x: int(x),   #integer
             'd' : lambda x: float(x)  #double
             }
@@ -1088,7 +1088,7 @@ class Schema(object):
             def_e.tail+='\t'
         #check if it is root
         if self.Tag_isRoot(tag):
-            def_e.attrib[self.__rootattribs__.keys()[1]]=self.__rootattribs__[self.__rootattribs__.keys()[1]]
+            def_e.attrib[list(self.__rootattribs__.keys())[1]]=self.__rootattribs__[list(self.__rootattribs__.keys())[1]]
             #for key in self.__rootattribs__.keys()[:2]:
             #    def_e.attrib[key]=self.__rootattribs__[key]
         
@@ -1377,7 +1377,7 @@ class Schema(object):
         '''is this attribute required?'''
         try:
             if self.Tag_isRoot(tag) and att in self.__rootattribs__:
-                return( att==self.__rootattribs__.keys()[0])
+                return( att==list(self.__rootattribs__.keys())[0])
             
             ele=self.__attribelement__[att]
             if ele.attrib['use']=='required':

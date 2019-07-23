@@ -57,10 +57,10 @@ def postprocess(self, logger):
         #    return
 
         schemapath = os.path.join(env['XMLSUMMARYBASEROOT'], 'xml/XMLSummary.xsd')
-        import GangaLHCb.Lib.XMLSummary.summary
+        from GangaLHCb.Lib.XMLSummary.summary import Merge
 
         try:
-            XMLSummarydata = summary.Merge(summaries, schemapath)
+            XMLSummarydata = Merge(summaries, schemapath)
         except Exception as err:
             logger.error('Problem while merging the subjobs XML summaries')
             raise
