@@ -125,7 +125,7 @@ def GaudiExecPostProcess(self, logger):
         #    return
 
         schemapath = os.path.join(env['XMLSUMMARYBASEROOT'], 'xml/XMLSummary.xsd')
-        import GangaLHCb.Lib.XMLSummary.summary import Merge
+        from GangaLHCb.Lib.XMLSummary.summary import Merge
 
         try:
             XMLSummarydata = Merge(summaries, schemapath)

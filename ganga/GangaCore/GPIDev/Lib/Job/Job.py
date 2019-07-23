@@ -881,6 +881,7 @@ class Job(GangaObject):
         """
 
         name = '_input_sandbox_' + self.getFQID('_') + '%s.tgz'
+
         if master:
             if self.master is not None:
                 name = '_input_sandbox_' + self.master.getFQID('_') + '%s.tgz'
