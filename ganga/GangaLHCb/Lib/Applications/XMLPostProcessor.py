@@ -6,6 +6,7 @@
 # Required for post-processing script
 import os
 import sys
+import re
 from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSummaryItems
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -25,7 +26,10 @@ def postprocess(self, logger):
     # pointer
     metadataItems = {}
     if os.path.exists(parsedXML):
-        exec(compile(open(parsedXML).read(), parsedXML, 'exec'), {}, metadataItems)
+        #Get rid of the long representation
+        xml_string = open(parsedXML).read()
+        xml_string = re.sub('(\d)L(\})', r'\1\2', xml_string)
+        exec(compile(xml_string, parsedXML, 'exec'), {}, metadataItems)
 
     # Combining subjobs XMLSummaries.
     if j.subjobs:
@@ -42,7 +46,7 @@ def postprocess(self, logger):
                 logger.warning("XMLSummary for job %s subjobs will not be merged as 'summary.xml' not present in job %s outputdir" % (j.fqid, sj.fqid))
                 return
             elif os.path.getsize(outputxml) == 0 or os.stat(outputxml).st_size == 0:
-                logger.warning("XMLSummary fro job %s subjobs will not be merged as %s appears to be an empty file" % (j.fqid, outputxml))
+                logger.warning("XMLSummary for job %s subjobs will not be merged as %s appears to be an empty file" % (j.fqid, outputxml))
                 logger.warning("Please try to recreate this file by either resubmitting your job or re-downloading the data from the backend")
                 return
             summaries.append(outputxml)
@@ -53,12 +57,10 @@ def postprocess(self, logger):
         #    return
 
         schemapath = os.path.join(env['XMLSUMMARYBASEROOT'], 'xml/XMLSummary.xsd')
-        summarypath = os.path.join(env['XMLSUMMARYBASEROOT'], 'python/XMLSummaryBase')
-        sys.path.append(summarypath)
-        import summary
+        from GangaLHCb.Lib.XMLSummary.summary import Merge
 
         try:
-            XMLSummarydata = summary.Merge(summaries, schemapath)
+            XMLSummarydata = Merge(summaries, schemapath)
         except Exception as err:
             logger.error('Problem while merging the subjobs XML summaries')
             raise
@@ -123,12 +125,10 @@ def GaudiExecPostProcess(self, logger):
         #    return
 
         schemapath = os.path.join(env['XMLSUMMARYBASEROOT'], 'xml/XMLSummary.xsd')
-        summarypath = os.path.join(env['XMLSUMMARYBASEROOT'], 'python/XMLSummaryBase')
-        sys.path.append(summarypath)
-        import summary
+        from GangaLHCb.Lib.XMLSummary.summary import Merge
 
         try:
-            XMLSummarydata = summary.Merge(summaries, schemapath)
+            XMLSummarydata = Merge(summaries, schemapath)
         except Exception as err:
             logger.error('Problem while merging the subjobs XML summaries')
             raise

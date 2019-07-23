@@ -889,7 +889,12 @@ class Job(GangaObject):
         else:
             name = name % ""
 
-        files = [f for f in files if hasattr(f, 'name') and not f.name.startswith('.nfs')]
+        newFiles = []
+        for _f in files:
+            if hasattr(_f, 'name') and not _f.name.startswith('.nfs'):
+                newFiles.append(_f)
+        files = newFiles
+
         if not files:
             return []
 
