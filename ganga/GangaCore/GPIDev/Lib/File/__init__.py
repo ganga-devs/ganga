@@ -23,7 +23,7 @@ logger = GangaCore.Utility.logging.getLogger()
 
 
 def getFileConfigKeys():
-    keys = getConfig('Output').options.keys()
+    keys = list(getConfig('Output').options.keys())
     keys.remove('PostProcessLocationsFileName')
     keys.remove('ForbidLegacyInput')
     keys.remove('ForbidLegacyOutput')

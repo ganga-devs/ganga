@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -6,7 +6,7 @@ from __future__ import print_function, absolute_import
 ##########################################################################
 from GangaCore.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod, stripProxy
 from GangaCore.GPIDev.Base.Objects import GangaObject
-from cStringIO import StringIO
+from io import StringIO
 
 from inspect import isclass
 
@@ -152,8 +152,10 @@ class VPrinter(object):
         else:
             if isType(stripProxy(s), list):
                 print(s, end='', file=self.out)
-            else:
+            elif hasattr(s, 'accept'):
                 stripProxy(s).accept(self)
+            else:
+                self.quote(s)
 
     def componentAttribute(self, node, name, subnode, sequence):
         if self.showAttribute(node, name):

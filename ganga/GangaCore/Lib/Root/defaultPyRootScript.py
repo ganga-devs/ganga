@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
+
 class Main(object):
     def run(self):
         '''Prints out some PyRoot debug info.'''

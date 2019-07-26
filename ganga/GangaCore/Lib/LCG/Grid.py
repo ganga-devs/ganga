@@ -442,8 +442,8 @@ def get_output(jobid, directory, cred_req):
 #       some versions of LCG middleware create an extra output directory (named <uid>_<jid_hash>)
 #       inside the job.outputdir. Try to match the jid_hash in the outdir. Do output movement
 #       if the <jid_hash> is found in the path of outdir.
-    import urlparse
-    jid_hash = urlparse.urlparse(jobid)[2][1:]
+    import urllib.parse
+    jid_hash = urllib.parse.urlparse(jobid)[2][1:]
 
     if outdir.count(jid_hash):
         if getShell(cred_req).system('mv "%s"/* "%s"' % (outdir, directory)) == 0:
@@ -746,7 +746,7 @@ def cream_get_output(osb_uri_list, directory, cred_req):
     cache = GridftpSandboxCache()
     cache.uploaded_files = gfiles
 
-    return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
+    return cache.download(cred_req=cred_req, files=[x.id for x in gfiles], dest_dir=directory)
 
 
 def __get_app_exitcode__(outputdir):
@@ -784,7 +784,7 @@ def expandxrsl(items):
     """Expand xrsl items"""
 
     xrsl = "&\n"
-    for key, value in items.iteritems():
+    for key, value in items.items():
 
         if key == "inputFiles":
             # special case for input files
@@ -807,7 +807,7 @@ def expandxrsl(items):
         elif isinstance(value, dict):
             # expand if a dictionary
             xrsl += "(%s=" % key
-            for key2, value2 in value.iteritems():
+            for key2, value2 in value.items():
                 xrsl += "(\"%s\" \"%s\")\n" % (key2, value2)
 
             xrsl += ")\n"
@@ -822,7 +822,7 @@ def expandjdl(items):
     """Expand jdl items"""
 
     text = "[\n"
-    for key, value in items.iteritems():
+    for key, value in items.items():
 
         if key == 'Requirements':
             if value:

@@ -49,10 +49,11 @@ def unique(s):
     except TypeError:
         del u  # move on th the next method
     else:
-        return u.keys()
+        return list(u.keys())
 
         # Sort to bring duplicate elements together and weed out the
         # duplcates in on sinle pass
+    t = []
     try:
         t = sorted(s)
     except TypeError:
@@ -174,7 +175,7 @@ def setAttributesFromDict(d, prefix=None):
     if prefix is None:
         prefix = ''
     self = d.pop('self')
-    for n, v in d.iteritems():
+    for n, v in d.items():
         setattr(self, prefix + n, v)
 
 

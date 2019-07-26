@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -204,7 +204,7 @@ class MassStorageFile(IGangaFile):
 
         replace_dict = { '###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd }
 
-        for k, v in replace_dict.iteritems():
+        for k, v in replace_dict.items():
             script = script.replace(str(k), str(v))
 
         return script
@@ -459,7 +459,7 @@ class MassStorageFile(IGangaFile):
                         '###JOBDIR###' : str(jobid),
                         '###SUBJOBDIR###' : str(subjobid)}
 
-        for k, v in replace_dict.iteritems():
+        for k, v in replace_dict.items():
             script = script.replace(str(k), str(v))
 
         return script
@@ -499,7 +499,7 @@ class MassStorageFile(IGangaFile):
                 keyin = None
 
                 while keyin is None:
-                    keyin = raw_input("Do you want to delete file %s at Location: %s ? [y/n] " % (str(self.namePattern), str(i)))
+                    keyin = input("Do you want to delete file %s at Location: %s ? [y/n] " % (str(self.namePattern), str(i)))
                     if keyin.lower() == 'y':
                         _delete_this = True
                     elif keyin.lower() == 'n':
@@ -535,7 +535,7 @@ class MassStorageFile(IGangaFile):
 
                     keyin = None
                     while keyin is None:
-                        keyin = raw_input("Do you want to remove the local File: %s ? ([y]/n) " % str(_localFile))
+                        keyin = input("Do you want to remove the local File: %s ? ([y]/n) " % str(_localFile))
                         if keyin.lower() in ['y', '']:
                             _actual_delete = True
                         elif keyin.lower() == 'n':

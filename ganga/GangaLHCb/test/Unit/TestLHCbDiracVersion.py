@@ -1,5 +1,5 @@
 """ Test the ability to change the LHCbDIRAC version from the configuration"""
-from __future__ import absolute_import
+
 
 import os
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-from __future__ import absolute_import
+
 import time
 import traceback
 from threading import Lock
-from Queue import Empty
+from queue import Empty
 from .Algorithm import AlgorithmError
 from GangaCore.Core.GangaThread.GangaThread import GangaThread
 from GangaCore.Core.GangaThread.MTRunner.Data import DuplicateDataItemError

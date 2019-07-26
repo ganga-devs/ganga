@@ -134,7 +134,7 @@ echo "%s" > b.root
 
         self.assertEqual(len(j.outputfiles), 2)
         for df in j.outputfiles:
-            print "Testing: %s" % str(df.namePattern)
+            print("Testing: %s" % str(df.namePattern))
             self.assertIn(df.namePattern, ['a.root', 'b.root'])
             self.assertNotEqual(df.lfn, '')
             self.assertNotEqual(df.guid, '')

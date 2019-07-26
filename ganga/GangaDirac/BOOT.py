@@ -80,7 +80,7 @@ def startDiracProcess():
     global dirac_process_ids
     dirac_process_ids = (dirac_process.pid, PORT, rand_hash)
     #Pipe the random string without waiting for the process to finish.
-    dirac_process.stdin.write(bytes(str(rand_hash)))
+    dirac_process.stdin.write(str(rand_hash).encode("utf-8"))
     dirac_process.stdin.close()
 
     data = ''
@@ -100,7 +100,7 @@ def startDiracProcess():
     dirac_command = str(rand_hash)
     dirac_command = dirac_command + getDiracCommandIncludes()
     dirac_command = dirac_command + end_trans
-    s.sendall(dirac_command)
+    s.sendall(dirac_command.encode("utf-8"))
     data = s.recv(1024)
     s.close()
 

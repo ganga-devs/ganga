@@ -9,8 +9,8 @@ from GangaCore.Utility.util import unique
 import GangaCore.Utility.logging
 import GangaCore.Utility.Config
 from GangaCore.Core.exceptions import GangaException
-import CMTUtils
-import cmakeUtils
+from . import CMTUtils
+from . import cmakeUtils
 import subprocess
 import time
 import collections
@@ -176,7 +176,6 @@ def fillPackedSandbox(sandbox_files, destination):
 
     import tarfile
     import stat
-
     #tf = tarfile.open(destination,"w:gz")
 
     # "a" = append with no compression
@@ -201,14 +200,14 @@ def fillPackedSandbox(sandbox_files, destination):
                 f.name, os.path.join(f.subdir, os.path.basename(f.name)))
 
         else:                          # FileBuffer
-            from StringIO import StringIO
-            fileobj = StringIO(contents)
+            from io import StringIO, BytesIO
+            fileobj = BytesIO(contents)
 
             tinfo = tarfile.TarInfo()
             tinfo.name = os.path.join(f.subdir, os.path.basename(f.name))
             import time
             tinfo.mtime = time.time()
-            tinfo.size = fileobj.len
+            tinfo.size = len(fileobj.getvalue())
 
         if f.isExecutable():
             tinfo.mode = tinfo.mode | stat.S_IXUSR

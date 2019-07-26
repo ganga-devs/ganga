@@ -76,6 +76,12 @@ class File(GangaObject):
         if not subdir is None:
             self.subdir = subdir
 
+    def __lt__(self, other):
+        return len(self.name) < len(other.name)
+
+    def __gt__(self, other):
+        return len(self.name) > len(other.name)
+
     def __setattr__(self, attr, value):
         """
         This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.

@@ -19,7 +19,7 @@ class TestWorkerThreadPool(GangaGPITestCase):
         self.w = WorkerThreadPool()
 
     def test__init__(self):
-        from Queue import PriorityQueue
+        from queue import PriorityQueue
 
         def constructor_test(w,
                              num_worker_threads=getConfig(

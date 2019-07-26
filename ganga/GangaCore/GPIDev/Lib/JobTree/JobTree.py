@@ -221,7 +221,7 @@ class JobTree(GangaObject):
                 return True
             else:
                 return False
-        except Exception, err:
+        except Exception as err:
             clean_path = os.path.join(*path)
             logger.debug('Error getting path: %s' % clean_path)
             logger.debug('%s' % err)
@@ -249,7 +249,7 @@ class JobTree(GangaObject):
             if isType(job, Job):
                 mydir[job.getFQID('.')] = job.getFQID('.')  # job.id
             elif isType(job, JobRegistrySlice):
-                for sliceKey in job.objects.iterkeys():
+                for sliceKey in job.objects.keys():
                     mydir[sliceKey] = sliceKey
             elif isType(job, list):
                 for element in job:
@@ -258,7 +258,7 @@ class JobTree(GangaObject):
                 raise TreeError(4, "Not a job/slice/list object")
 
             self._setDirty()
-        except Exception, err:
+        except Exception as err:
             logger.error("Error: %s" % err)
             raise
         finally:
@@ -362,7 +362,7 @@ class JobTree(GangaObject):
                         j = registry[id]
                     except ValueError:
                         j = registry[int(i.split('.')[0])].subjobs[int(i.split('.')[1])]
-                except RegistryKeyError, ObjectNotInRegistryError:
+                except RegistryKeyError as ObjectNotInRegistryError:
                     do_clean = True
                 else:
                     res.objects[j.id] = j
@@ -431,7 +431,7 @@ class JobTree(GangaObject):
                         except ValueError:
                             jid = fc[i].split('.')
                             j = registry[int(jid[0])].subjobs[int(jid[1])]
-                    except RegistryKeyError, ObjectNotInRegistryError:
+                    except RegistryKeyError as ObjectNotInRegistryError:
                         #try:
                         self.__remove_dir(path=path, dir=i)
                         self._setDirty()

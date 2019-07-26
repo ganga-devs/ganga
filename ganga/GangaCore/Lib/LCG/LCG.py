@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -428,7 +428,7 @@ class LCG(IBackend):
                 '''Compose the collection JDL for the master job'''
 
                 nodes = ',\n'.join(
-                    map(lambda x: '[file = "%s";]' % x, nodeJDLFiles))
+                    ['[file = "%s";]' % x for x in nodeJDLFiles])
 
                 jdl = {
                     'Type': 'collection',
@@ -479,7 +479,7 @@ class LCG(IBackend):
             # not all bulk jobs are successfully submitted. canceling the
             # submitted jobs on WMS immediately
             logger.error('some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            Grid.cancel_multiple(runner.getResults().values(), self.credential_requirements)
+            Grid.cancel_multiple(list(runner.getResults().values()), self.credential_requirements)
             return None
         else:
             return runner.getResults()
@@ -1005,8 +1005,8 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
 
     global exitcode
 
-    outfile   = file('stdout','w')
-    errorfile = file('stderr','w')
+    outfile   = open('stdout','w')
+    errorfile = open('stderr','w')
 
     try:
         child = subprocess.Popen(cmd, cwd=wdir, shell=True, stdout=outfile, stderr=errorfile)
@@ -1748,7 +1748,7 @@ sys.exit(0)
                 job = jobdict[cachedParentId]
 
                 # update master job's status if needed
-                if cachedParentId not in job.backend.status.keys():
+                if cachedParentId not in job.backend.status:
                     # if this happens, something must be seriously wrong
                     logger.warning(
                         'job id not found in the submitted master job: %s' % cachedParentId)
@@ -1862,7 +1862,8 @@ sys.exit(0)
             jdl_file_txt = Grid.expandjdl(jdl)
 
             jdl_file2 = tempfile.mktemp('.jdl')
-            file(jdl_file2, 'w').write(jdl_file_txt)
+            with open(jdl_file2, 'w') as file_:
+                file_.write(jdl_file_txt)
 
         matches = Grid.list_match(jdl_file2, self.credential_requirements, ce=spec_ce)
 
@@ -1933,7 +1934,7 @@ sys.exit(0)
                 if len(toks) != 4:
                     continue
 
-                if not toks[3] in se_list.keys():
+                if toks[3] not in se_list:
                     se_list[toks[3]] = []
 
                 if toks[0] == "n.a":

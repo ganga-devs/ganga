@@ -28,7 +28,7 @@ class SJXLIterator(object):
         self._myCount = 0
 
     ## NB becomes __next__ in Python 3.x don't know if Python 2.7 has a wrapper here
-    def next(self):
+    def __next__(self):
         if self._myCount < len(self._mySubJobs):
             returnable = self._mySubJobs[self._myCount]
             self._myCount += 1
@@ -195,9 +195,9 @@ class SubJobXMLList(GangaObject):
 
         all_caches = {}
         if ignore_disk:
-            range_limit = self._cachedJobs.keys()
+            range_limit = list(self._cachedJobs.keys())
         else:
-            range_limit = range(len(self))
+            range_limit = list(range(len(self)))
 
         for sj_id in range_limit:
             if sj_id in self._cachedJobs:
@@ -217,7 +217,7 @@ class SubJobXMLList(GangaObject):
         try:
             from GangaCore.Core.GangaRepository.PickleStreamer import to_file
             index_file = path.join(self._jobDirectory, self._subjob_master_index_name)
-            index_file_obj = open(index_file, "w")
+            index_file_obj = open(index_file, "wb")
             to_file(all_caches, index_file_obj)
             index_file_obj.close()
         ## Once I work out what the other exceptions here are I'll add them
@@ -507,9 +507,9 @@ class SubJobXMLList(GangaObject):
         from GangaCore.Core.GangaRepository.VStreamer import to_file
 
         if ignore_disk:
-            range_limit = self._cachedJobs.keys()
+            range_limit = list(self._cachedJobs.keys())
         else:
-            range_limit = range(len(self))
+            range_limit = list(range(len(self)))
 
         for index in range_limit:
             if index in self._cachedJobs:

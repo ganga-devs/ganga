@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 import os
 import shutil
 import copy
@@ -64,7 +64,7 @@ class TestMassStorageClientInput(GangaUnitTest):
             if os.path.isfile(file_):
                 os.unlink(file_)
             else:
-                print("ERROR REMOVING FILE: '%s'" % str(file_))
+                print(("ERROR REMOVING FILE: '%s'" % str(file_)))
         cls._managed_files = []
 
         shutil.rmtree(cls.outputFilePath, ignore_errors=True)

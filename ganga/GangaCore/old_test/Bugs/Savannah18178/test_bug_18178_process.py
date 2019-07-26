@@ -11,7 +11,7 @@ if len(sys.argv) > 1:
         while True:
             time.sleep(5)
     else:
-        f = file(sys.argv[1] + '/proc_stat', 'w')
+        f = open(sys.argv[1] + '/proc_stat', 'w')
         f.write(str(pid))
         f.close()
         os.wait()

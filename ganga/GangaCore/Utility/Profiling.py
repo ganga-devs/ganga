@@ -1,7 +1,6 @@
 from GangaCore.Utility.Config import getConfig
 
 import os
-from memory_profiler import profile
 import cProfile
 import time
 import json
@@ -12,6 +11,9 @@ timestr = time.strftime("-%Y%m%d-%H%M%S")
 # Obtaining the config from .gangarc file
 c = getConfig('Configuration')
 
+if c['Profile_Memory']:
+    from memory_profiler import profile
+    
 path = os.path.join(c['gangadir'], 'logs')
 
 
@@ -51,7 +53,7 @@ def cpu_profiler(cls, profile_cpu=c['Profile_CPU']):
     if not profile_cpu:
         pass
     else:
-        for key, value in vars(cls).iteritems():
+        for key, value in vars(cls).items():
             if callable(value):
                 # adding cpu_profile decorator to every function of class
                 setattr(cls, key, cpu_profile(value))
@@ -64,7 +66,7 @@ def mem_profiler(cls, profile_memory=c['Profile_Memory']):
     else:
         file_name = mpath+cls.__name__+timestr+'.log'
         fp = open(file_name, 'w+')
-        for key, value in vars(cls).iteritems():
+        for key, value in vars(cls).items():
             if callable(value):
                 # adding profile decorator to every function of class
                 setattr(cls, key, profile(value, stream=fp, precision=6))
@@ -92,7 +94,7 @@ def call_counter(cls, count_calls=c['Count_Calls']):
     if not count_calls:
         pass
     else:
-        for key, value in vars(cls).iteritems():
+        for key, value in vars(cls).items():
             if callable(value):
                 # adding call_counts decorator to every function of class
                 setattr(cls, key, call_counts(value))

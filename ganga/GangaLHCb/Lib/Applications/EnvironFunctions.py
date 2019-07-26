@@ -115,7 +115,7 @@ exit $?
 
     script_file_name = tempfile.mktemp('.sh')
     try:
-        script_file = file(script_file_name, 'w')
+        script_file = open(script_file_name, 'w')
         script_file.write(shell_script)
         script_file.close()
     except:
@@ -134,7 +134,7 @@ def available_versions_SP(appname):
     output = tmp.read()
     tmp.close()
     versions = output[output.rfind('(') + 1:output.rfind('q[uit]')].split()
-    return versions
+    return versions.decode()
 
 
 def guess_version_SP(appname):
@@ -145,8 +145,8 @@ def guess_version_SP(appname):
     rc, output, m = s.cmd1("echo 'q\n' | %s >& %s; echo" % (command, tmp.name))
     output = tmp.read()
     tmp.close()
-    version = output[output.rfind('[') + 1:output.rfind(']')]
-    return version
+    version = output[output.rfind(b'[') + 1:output.rfind(b']')]
+    return version.decode()
 
 
 def _getshell_SP(self):
@@ -172,7 +172,7 @@ def _getshell_SP(self):
     cmd = '. SetupProject.sh %s %s %s %s' % (
         useflag, opts, self.appname, self.version)
     script += '%s \n' % cmd
-    fd.write(script)
+    fd.write(script.encode())
     fd.flush()
 
     self.shell = Shell(setup=fd.name)
@@ -182,7 +182,7 @@ def _getshell_SP(self):
     fd.close()
 
     app_ok = False
-    identifier = string.join([string.upper(self.appname), self.version],'_')
+    identifier = "_".join([self.appname.upper(), self.version])
     for var in self.shell.env:
         if self.shell.env[var].find(identifier) >= 0:
             app_ok = True

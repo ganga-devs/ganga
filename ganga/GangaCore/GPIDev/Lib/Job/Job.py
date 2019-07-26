@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import copy
 import errno
@@ -289,6 +289,14 @@ class Job(GangaObject):
             if getConfig('Preparable')['unprepare_on_copy'] is True:
                 self.unprepare()
 
+    def __hash__(self):
+        return hash(self.fqid)
+
+    def __lt__(self, other):
+        return self.id < other.id
+
+    def __gt__(self, other):
+        return self.id > other.id
 
     def _getMasterJob(self):
         parent = self._getParent()
@@ -599,7 +607,7 @@ class Job(GangaObject):
             log_user_exception()
             raise JobStatusError(x)
 
-	final_status = self.status
+        final_status = self.status
 
         if final_status != initial_status and self.master is None:
             logger.info('job %s status changed to "%s"', self.getFQID('.'), final_status)
@@ -730,7 +738,7 @@ class Job(GangaObject):
         else:
             stats = set(sj.status for sj in self.subjobs)
 
-	return stats
+        return stats
 
     def returnSubjobStatuses(self):
         stats = []
@@ -739,7 +747,7 @@ class Job(GangaObject):
         else:
             stats = [sj.status for sj in self.subjobs]
 
-	return "%s/%s/%s/%s" % (stats.count('running'), stats.count('failed') + stats.count('killed'), stats.count('completing'), stats.count('completed'))
+        return "%s/%s/%s/%s" % (stats.count('running'), stats.count('failed') + stats.count('killed'), stats.count('completing'), stats.count('completed'))
 
     def updateMasterJobStatus(self):
         """
@@ -881,7 +889,12 @@ class Job(GangaObject):
         else:
             name = name % ""
 
-        files = [f for f in files if hasattr(f, 'name') and not f.name.startswith('.nfs')]
+        newFiles = []
+        for _f in files:
+            if hasattr(_f, 'name') and not _f.name.startswith('.nfs'):
+                newFiles.append(_f)
+        files = newFiles
+
         if not files:
             return []
 
@@ -1290,7 +1303,7 @@ class Job(GangaObject):
                     rtHandler = allHandlers.get(getName(self.application), getName(self.backend))()
                 except KeyError as x:
                     msg = 'runtime handler not found for application=%s and backend=%s' % (getName(self.application), getName(self.backend))
-                    logger.error("Available: %s" % allHandlers.handlers.keys())
+                    logger.error("Available: %s" % list(allHandlers.handlers.keys()))
                     logger.error("Wanted: %s" % getName(self.backend))
                     logger.error("Available: %s" % allHandlers.handlers[getName(self.backend)])
                     logger.error("Wanted: %s" % getName(self.application))
@@ -1577,7 +1590,7 @@ class Job(GangaObject):
                 # revert to the new status
                 logger.error('%s ... reverting job %s to the new status', err, self.getFQID('.'))
                 self.updateStatus('new')
-            raise JobError("Error: %s" % err), None, sys.exc_info()[2]
+            raise JobError("Error: %s" % err).with_traceback(sys.exc_info()[2])
 
     def rollbackToNewState(self):
         """
@@ -1654,15 +1667,15 @@ class Job(GangaObject):
                 _filesToRemove.extend(collectFiles(sj))
             _filesToRemove.extend(collectFiles(self))
 
-            map(removeFiles, _filesToRemove)
+            list(map(removeFiles, _filesToRemove))
 
         if this_job_status in ['submitted', 'running']:
             try:
                 if not force:
                     self._kill(transition_update=False)
-            except GangaException, x:
+            except GangaException as x:
                 log_user_exception(logger, debug=True)
-            except Exception, x:
+            except Exception as x:
                 log_user_exception(logger)
                 logger.warning('unhandled exception in j.kill(), job id=%s', self.id)
 
@@ -1703,7 +1716,7 @@ class Job(GangaObject):
                         def doit_sj(f):
                             try:
                                 f()
-                            except OSError, err:
+                            except OSError as err:
                                 logger.warning('cannot remove file workspace associated with the sub-job %s : %s', self.getFQID('.'), err)
 
                         wsp_input = sj.getInputWorkspace(create=False)
@@ -1720,7 +1733,7 @@ class Job(GangaObject):
             def doit(f):
                 try:
                     f()
-                except OSError, err:
+                except OSError as err:
                     logger.warning('cannot remove file workspace associated with the job %s : %s', self.id, err)
 
             wsp_input = self.getInputWorkspace(create=False)
@@ -1783,7 +1796,7 @@ class Job(GangaObject):
                     revstates[s2][s1] = 1
 
             for s in revstates:
-                logger.info("%s => %s" % (s, revstates[s].keys()))
+                logger.info("%s => %s" % (s, list(revstates[s].keys())))
             return
 
         if self.status == status:
@@ -1791,7 +1804,7 @@ class Job(GangaObject):
 
         if status not in Job.allowed_force_states:
             raise JobError('force_status("%s") not allowed. Job may be forced to %s states only.' % (
-                status, Job.allowed_force_states.keys()))
+                status, list(Job.allowed_force_states.keys())))
 
         if self.status not in Job.allowed_force_states[status]:
             raise JobError('Only a job in one of %s may be forced into "%s" (job %s)' % (Job.allowed_force_states[status], status, self.getFQID('.')))
@@ -1800,7 +1813,7 @@ class Job(GangaObject):
             if self.status in ['submitted', 'running']:
                 try:
                     self._kill(transition_update=False)
-                except JobError, x:
+                except JobError as x:
                     x.what += "Use force_status('%s',force=True) to ignore kill errors." % status
                     raise x
         try:
@@ -1850,7 +1863,7 @@ class Job(GangaObject):
                 else:
                     msg = "backend.master_kill() returned False"
                     raise JobError(msg)
-            except GangaException, x:
+            except GangaException as x:
                 msg = "failed to kill job %s: %s" % (self.getFQID('.'), x)
                 logger.error(msg)
                 raise JobError(msg)
@@ -1994,7 +2007,7 @@ class Job(GangaObject):
 
                 if not result:
                     raise JobManagerError('error during submit')
-            except IncompleteJobSubmissionError, x:
+            except IncompleteJobSubmissionError as x:
                 logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s', self.getFQID('.'), x)
 
             # fix for bug 77962 plus for making auto_resubmit test work
@@ -2011,7 +2024,7 @@ class Job(GangaObject):
             # backend.master_submit already have set status to "submitted"
             self.updateStatus('submitted')
 
-        except GangaException, x:
+        except GangaException as x:
             logger.error("failed to resubmit job, %s" % x)
             logger.warning('reverting job %s to the %s status', fqid, oldstatus)
             self.status = oldstatus
@@ -2177,7 +2190,7 @@ class Job(GangaObject):
 
         ## Fix some objects losing parent knowledge
         src_dict = other_job.__dict__
-        for key, val in src_dict.iteritems():
+        for key, val in src_dict.items():
             this_attr = getattr(other_job, key)
 
 

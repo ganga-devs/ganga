@@ -1,2 +1,2 @@
-from LHCbFileMerger import LHCbFileMerger
-from GaudiExecMerger import GaudiExecMerger
+from .LHCbFileMerger import LHCbFileMerger
+from .GaudiExecMerger import GaudiExecMerger
