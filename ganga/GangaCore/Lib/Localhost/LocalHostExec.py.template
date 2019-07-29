@@ -107,8 +107,6 @@ elif (virtualization == "Singularity"):
     print("Using singularity")
     appscriptpath[0] = "/work_dir/"+appscriptpath[0]
     appscriptpath = ['singularity', '-q', 'exec', '--bind', workdir+":"+"/work_dir", "--no-home" ,virtualization_image] + appscriptpath   
-else:
-    print("No virtualization specified")
 
 try:
     child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
