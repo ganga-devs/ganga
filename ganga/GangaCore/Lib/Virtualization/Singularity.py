@@ -13,8 +13,8 @@ class Singularity(IVirtualization):
     _name = 'Singularity'
     _schema = IVirtualization._schema.inherit_copy()
 
-    def __init__(self, imageUrl):
-        super(Singularity, self).__init__(imageUrl)
+    def __init__(self, image):
+        super(Singularity, self).__init__(image)
 
     def modify_script(self, script):
         """Overides parent's modify_script function
