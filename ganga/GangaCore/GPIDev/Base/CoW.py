@@ -11,7 +11,7 @@ import types
 from collections import OrderedDict
 from operator import itemgetter
 import gc
-
+# from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 # Thing to explicitly not try to flyweight
 flyweight_ignored_keys = [
                           "_flyweight_cache",
@@ -27,10 +27,10 @@ def proxify(value):
         Wrap the value in a proxy shell if need be.
         Returns the object or the proxy object.
     """
-    if type(value) is unicode:
+    if type(value) is str:
         value = ProxyStr(value)
 
-    elif type(value) is list:
+    if type(value) is list:
         value = ProxyList(value)
 
     elif type(value) is tuple:
@@ -75,7 +75,7 @@ class CoW(object):
         # be notified when I copy update
         self._flyweight_cb_func = weakref.WeakSet()
         # print self._flyweight_cache
-        super(CoW, self).__init__()
+        super().__init__()
 
         # If we're initing from ourselves, copy over
         if len(args) >= 1 and type(args[0]) == type(self):
@@ -112,27 +112,31 @@ class CoW(object):
         # Non-flyweight classes
         if type(value) in flyweight_ignored_types or key \
                 in flyweight_ignored_keys:
-            return super(CoW, self).__setattr__(key, value)
+            return super().__setattr__(key, value)
 
         # Make sure the type is in our cache
         if type(value) not in self._flyweight_cache.keys():
             self._flyweight_cache[type(value)] = weakref.WeakValueDictionary()
 
         # If an equivalent object exists, use that
-        value_hash = hash(value)
+        
+        try:
+            value_hash = hash(value)
+        except Exception as e:
+            print (value,'----->',e)
         if value_hash in self._flyweight_cache[type(value)].keys():
-            return super(CoW, self).__setattr__(
+            return super().__setattr__(
                 key, self._flyweight_cache[type(value)][value_hash])
 
         # No matching object exists, save off this one
         self._flyweight_cache[type(value)][value_hash] = value
 
         # Set the attr
-        return super(CoW, self).__setattr__(key, value)
+        return super().__setattr__(key, value)
 
     def __getattribute__(self, key):
         # Grab the value
-        value = super(CoW, self).__getattribute__(key)
+        value = super().__getattribute__(key)
 
         # Don't proxy our own stuff
         # If this is a function, don't try to copy it
@@ -159,6 +163,7 @@ class CoW(object):
         # Deciding to only use one cb function at a time.
         # Always set it at get time so we know which obj we're talking about
         obj._flyweight_cb_func.clear()
+        #obj._flyweight_cb_func.add(self._my_flyweight_cb_func[id(obj)])
         obj._flyweight_cb_func.add(self._my_flyweight_cb_func)
 
     def __copy__(self):
@@ -248,7 +253,7 @@ def get_true_reference_count(obj):
     for ref in gc.get_referrers(obj):
         if type(ref) is dict and "_my_flyweight_cb_func" in ref:
             count += 1
-
+    # print (obj,' -------> ',count)
     return count
 
 
@@ -325,7 +330,7 @@ class ProxyDict(dict, CoW):
         # Recursively proxify first
         # import sys
         # sys.setrecursionlimit(100000)
-        d = dict((item, proxify(d[item])) for item in d)
+        d = {item: proxify(d[item]) for item in d}
         CoW.__init__(self)
 
         with in_init(self):
@@ -337,10 +342,9 @@ class ProxyDict(dict, CoW):
                 return dict.__init__(self, d)
 
             # Sorting this by default to reduce burden on hash
-            super(ProxyDict, self).__init__(
-                sorted(d.items(), key=itemgetter(1)))
+            super().__init__(sorted(d.items()))
 
-            # super(ProxyDict, self).__init__(d)
+            # super().__init__(d)
 
     def copy(self):
         return self.__copy__()
@@ -355,10 +359,10 @@ class ProxyDict(dict, CoW):
     def __hash__(self):
         if self._hash_cache is None:
             try:
-                self._hash_cache = hash(repr(sorted(self.items())))
-                # print repr(self.items())
+                self._hash_cache = hash(tuple(self.items()))
+                # print (repr(self.items()))
             except Exception as e:
-                print self.items()
+                # print (self.items())
                 assert False
         return self._hash_cache
 
@@ -366,12 +370,12 @@ class ProxyDict(dict, CoW):
         if not self._in_init:
             return CoW.__setitem__(self, *args, **kwargs)
         else:
-            return super(ProxyDict, self).__setitem__(*args, **kwargs)
+            return super().__setitem__(*args, **kwargs)
 
     def __getattribute__(self, key):
         # If we don't need to proxy this call, just do it.
         if key not in proxy_list_inplace_dict or key in vars(self).keys():
-            return super(ProxyDict, self).__getattribute__(key)
+            return super().__getattribute__(key)
 
         # Proxy this call
         return lambda *args, **kwargs: list_do_generic_call(
@@ -410,7 +414,7 @@ class ProxyList(list, CoW):
     def __getattribute__(self, key):
         # If we don't need to proxy this call, just do it.
         if key not in proxy_list_inplace_list:
-            return super(ProxyList, self).__getattribute__(key)
+            return super().__getattribute__(key)
 
         # Proxy this call -- invalidate cache as we will be changing
         return lambda *args, **kwargs: list_do_generic_call(
@@ -458,14 +462,14 @@ class ProxySet(set, CoW):
     def __getattribute__(self, key):
         # If we don't need to proxy this call, just do it.
         if key not in proxy_list_inplace_set:
-            return super(ProxySet, self).__getattribute__(key)
+            return super().__getattribute__(key)
 
         # Proxy this call
         return lambda *args, **kwargs: list_do_generic_call(
             self, key, *args, **kwargs)
 
 
-class ProxyStr(unicode, CoW):
+class ProxyStr(str, CoW):
     def __init__(self, *args, **kwargs):
         # str keeps it's setup all in __new__
         CoW.__init__(self, *args, **kwargs)
@@ -473,7 +477,7 @@ class ProxyStr(unicode, CoW):
 
     def __hash__(self):
         if self._hash_cache is None:
-            self._hash_cache = super(ProxyStr, self).__hash__()
+            self._hash_cache = super().__hash__()
         return self._hash_cache
 
     def __copy__(self):
@@ -483,14 +487,14 @@ class ProxyStr(unicode, CoW):
 class ProxyTuple(ProxyList, CoW):
     def __init__(self, tup):
         # Turning into a list so we can weakref
-        return super(ProxyTuple, self).__init__(tup)
+        return super().__init__(tup)
 
     def __eq__(self, obj):
         """Pretending to be a tuple..."""
         return tuple(self) == obj
 
     def __hash__(self):
-        return super(ProxyTuple, self).__hash__()
+        return super().__hash__()
 
     def __copy__(self):
         return ProxyTuple(self)
