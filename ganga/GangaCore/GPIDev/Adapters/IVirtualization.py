@@ -4,6 +4,7 @@
 ##########################################################################
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Lib.File.File import File
 
 class IVirtualization(GangaObject):
 
@@ -16,7 +17,7 @@ class IVirtualization(GangaObject):
         self.image = image
 
     _schema = Schema(Version(1, 0), {
-        'image': SimpleItem(defvalue="", doc='Link to the container image')
+        'image': SimpleItem(defvalue="", typelist=[str, File], doc='Link to the container image')
     })
     _category = 'virtualization'
     _name = 'IVirtualization'
@@ -31,4 +32,4 @@ class IVirtualization(GangaObject):
 
             Return value: modified script"""
 
-        return script.replace('###VIRTUALIZATIONIMAGE###', repr(self.image))
+        return None

@@ -26,7 +26,7 @@ class Docker(IVirtualization):
 
             Return value: modified script"""
 
-        script = super(Docker, self).modify_script(script)
+        script = script.replace('###VIRTUALIZATIONIMAGE###', repr(self.image))
         script = script.replace('###VIRTUALIZATION###', repr("Docker"))
         script = script.replace('###VIRTUALIZATIONMODE###', repr(self.mode))
         return script
