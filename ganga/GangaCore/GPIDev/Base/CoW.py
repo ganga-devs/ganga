@@ -44,6 +44,33 @@ def proxify(value):
 
     return value
 
+def _weakref_to_strongref(obj):
+    if (isinstance(obj, list)):
+        copied_list = []
+        for value in obj: copied_list.append(_weakref_to_strongref(value))
+        return copied_list
+    elif (isinstance(obj, dict)):
+        copied_dict = {}
+        for key in obj: copied_dict[key] = _weakref_to_strongref(obj[key])
+        return copied_dict
+    elif (isinstance(obj, tuple)):
+        copied_tup = list()
+        for value in obj: copied_tup.append(_weakref_to_strongref(value))
+        return tuple(copied_tup)
+    elif (isinstance(obj, set)):
+         copied_set = set()
+         for value in obj: copied_set.add(_weakref_to_strongref(value)) 
+    elif (isinstance(obj, weakref.WeakSet)):
+        copied_set_weak = set()
+        for value in obj:copied_set_weak.add(value)
+        return copied_set_weak
+    elif (isinstance(obj, weakref.WeakValueDictionary)):
+        copied_dict_weak = {}
+        for key in obj: copied_dict_weak[key] = _weakref_to_strongref(obj[key])
+        return copied_dict_weak
+    else:
+        return obj
+
 
 class CoW(object):
 
@@ -74,6 +101,7 @@ class CoW(object):
         # Contains refs to those functions that should
         # be notified when I copy update
         self._flyweight_cb_func = weakref.WeakSet()
+        # print (len(self._flyweight_cache))
         # print self._flyweight_cache
         super().__init__()
 
@@ -241,7 +269,14 @@ class CoW(object):
 
         except Exception as e:
             pass
+    
+    def __getstate__(self):
+        s = self.__dict__.copy()
+        s = _weakref_to_strongref(s)
+        return s
 
+    def __setstate__(self, state):
+        self.__dict__ = state.copy()
 
 def get_true_reference_count(obj):
     """
