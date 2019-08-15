@@ -717,6 +717,9 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
     _should_init = True
     _should_load = False
 
+    from GangaCore.GPIDev.Base.CoW import CoW
+    __hash__ = CoW.__hash__
+
     @classmethod
     def getNew(cls, should_load=False, should_init=False):
         """
