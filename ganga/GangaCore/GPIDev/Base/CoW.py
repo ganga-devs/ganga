@@ -105,6 +105,11 @@ class CoW(object):
 
     def __setattr__(self, key, value):
 
+        # Remove Proxy layer if any
+        from GangaCore.GPIDev.Base.Proxy import stripProxy, isProxy
+        if isProxy(value):
+            value = stripProxy(value)
+
         # Don't proxify our ignored keys
         if key not in flyweight_ignored_keys:
             value = proxify(value)
@@ -119,11 +124,7 @@ class CoW(object):
             self._flyweight_cache[type(value)] = weakref.WeakValueDictionary()
 
         # If an equivalent object exists, use that
-        
-        try:
-            value_hash = hash(value)
-        except Exception as e:
-            print (value,'----->',e)
+        value_hash = hash(value)
         if value_hash in self._flyweight_cache[type(value)].keys():
             return super().__setattr__(
                 key, self._flyweight_cache[type(value)][value_hash])
@@ -325,12 +326,12 @@ class in_init(object):
         self.obj._in_init = False
 
 
-class ProxyDict(dict, CoW):
+class ProxyDict(OrderedDict, CoW):
     def __init__(self, d):
         # Recursively proxify first
         # import sys
         # sys.setrecursionlimit(100000)
-        d = {item: proxify(d[item]) for item in d}
+        d = dict((item, proxify(d[item])) for item in d)
         CoW.__init__(self)
 
         with in_init(self):
@@ -338,13 +339,14 @@ class ProxyDict(dict, CoW):
             self._hash_cache = None
 
             # If we're already a Proxy Dict, just pass through
-            if type(d) in [ProxyDict, dict]:
-                return dict.__init__(self, d)
+            if type(d) in [ProxyDict, OrderedDict]:
+                return OrderedDict.__init__(self, d)
 
             # Sorting this by default to reduce burden on hash
-            super().__init__(sorted(d.items()))
+            # super().__init__(sorted(d.items()))
+            # super().__init__(sorted(d.items(), key=itemgetter(1)))
 
-            # super().__init__(d)
+            super().__init__(d)
 
     def copy(self):
         return self.__copy__()
