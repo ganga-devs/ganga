@@ -11,7 +11,7 @@ import types
 from collections import OrderedDict
 from operator import itemgetter
 import gc
-# from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+
 # Thing to explicitly not try to flyweight
 flyweight_ignored_keys = [
                           "_flyweight_cache",
@@ -270,13 +270,13 @@ class CoW(object):
         except Exception as e:
             pass
     
-    def __getstate__(self):
-        s = self.__dict__.copy()
-        s = _weakref_to_strongref(s)
-        return s
+    # def __getstate__(self):
+        # s = self.__dict__.copy()
+        # s = _weakref_to_strongref(s)
+        # return s
 
-    def __setstate__(self, state):
-        self.__dict__ = state.copy()
+    # def __setstate__(self, state):
+        # self.__dict__ = state.copy()
 
 def get_true_reference_count(obj):
     """
