@@ -26,6 +26,7 @@ from GangaCore.GPIDev.Lib.Job.MetadataDict import MetadataDict
 from GangaCore.GPIDev.Schema import ComponentItem, FileItem, GangaFileItem, Schema, SimpleItem, Version
 from GangaCore.Utility.Config import ConfigError, getConfig
 from GangaCore.Utility.logging import getLogger, log_user_exception
+from GangaCore.GPIDev.Base.CoW import CoW
 
 from .JobTime import JobTime
 from GangaCore.Lib.Localhost import Localhost
@@ -137,7 +138,7 @@ def _outputfieldCopyable():
         outputfieldCopyable = 1
 
 
-class Job(GangaObject):
+class Job(GangaObject, CoW):
 
     """Job is an interface for submision, killing and querying the jobs :-).
 
