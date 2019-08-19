@@ -440,15 +440,11 @@ class Item(object):
     # all calls are equivalent:
     # item.isA(SimpleItem)
     def isA(self, _what):
-
         from GangaCore.GPIDev.Base.Proxy import stripProxy
 
         what = stripProxy(_what)
-
-        if isinstance(what, object):
-            what = what.__class__
-
         return issubclass(self.__class__, what)
+
 
     def _update(self, kwds, forced=None):
         """ Add new metaproperties/override old values. To be used by derived contructors only.
