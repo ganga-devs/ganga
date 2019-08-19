@@ -4,7 +4,7 @@ except:
     import pickle
 
 from GangaCore.Utility.logging import getLogger
-
+import cloudpickle
 logger = getLogger()
 
 def from_file(fobj):
@@ -13,8 +13,8 @@ def from_file(fobj):
 
 def to_file(obj, fileobj, ignore_subs=''):
     try:
-        pickle.dump(obj, fileobj, 1)
+        cloudpickle.dump(obj, fileobj, -1)
     except Exception as err:
-        logger.error("Failed to Write: %s" % obj)
-        logger.error("Err: %s" % err)
+        logger.error(f"Failed to Write: {obj}")
+        logger.error(f"Err: {err}")
         raise
