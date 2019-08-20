@@ -2,7 +2,7 @@
 # Ganga Project. http://cern.ch/ganga
 #
 ##########################################################################
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Lib.File.File import File
 
@@ -17,7 +17,7 @@ class IVirtualization(GangaObject):
         self.image = image
 
     _schema = Schema(Version(1, 0), {
-        'image': SimpleItem(defvalue="", typelist=[str, File], doc='Link to the container image')
+        'image': SimpleItem(defvalue="", typelist=[str, GangaFileItem], doc='Link to the container image')
     })
     _category = 'virtualization'
     _name = 'IVirtualization'
