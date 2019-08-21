@@ -5,6 +5,7 @@
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaCore.GPIDev.Adapters.IVirtualization import IVirtualization
 from GangaCore.GPIDev.Lib.File.File import File
+from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
 
 class Singularity(IVirtualization):
 
@@ -25,7 +26,9 @@ class Singularity(IVirtualization):
                     Return value: modified script"""
         
         if type(self.image) is File:
-                script = script.replace('###VIRTUALIZATIONIMAGE###', repr(self.image.name))
+            script = script.replace('###VIRTUALIZATIONIMAGE###', repr(self.image.name))
+        if type(self.image) is LocalFile:
+            script = script.replace('###VIRTUALIZATIONIMAGE###', repr(self.image.namePattern))
         script = script.replace('###VIRTUALIZATIONIMAGE###', repr(self.image))
         script = script.replace('###VIRTUALIZATION###', repr("Singularity"))
         script = script.replace('###VIRTUALIZATIONMODE###', repr(None))

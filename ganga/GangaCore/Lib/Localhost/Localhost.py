@@ -5,6 +5,7 @@ import GangaCore.Utility.logic
 import GangaCore.Utility.util
 
 from GangaCore.GPIDev.Lib.File import FileBuffer
+from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
 
 import os
 import os.path
@@ -195,6 +196,8 @@ class Localhost(IBackend):
             utilFiles.append(virtualizationutils)
             if type(virtualization.image) is File:
                 utilFiles.append(virtualization.image)
+            if type(virtualization.image) is LocalFile:
+                utilFiles.append(File(virtualization.image.location()[0]))
         sharedfiles = jobconfig.getSharedFiles()
 
         subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + utilFiles)
