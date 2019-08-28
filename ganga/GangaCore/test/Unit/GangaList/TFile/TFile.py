@@ -33,16 +33,16 @@ class TFile(GangaObject):
         return cmp(self_comb, other_comb)
 
     def __le__(self, other):
-        return len(self.name) <= len(other.name)
+        return self.name <= other.name
 
     def __ge__(self, other):
-        return len(self.name) >= len(other.name)
+        return self.name >= other.name
         
     def __lt__(self, other):
-        return len(self.name) < len(other.name)
+        return self.name < other.name
 
     def __gt__(self, other):
-        return len(self.name) > len(other.name)
+        return self.name > other.name
 
     def __hash__(self):
         return self.name.__hash__() + self.subdir.__hash__()
