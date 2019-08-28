@@ -48,6 +48,10 @@ class TestGangaList(unittest.TestCase):
         subdir = TestGangaList._makeRandomString()
         return TFile(name=name, subdir=subdir)
 
+    @staticmethod
+    def cmp(a, b):
+        return (a > b) - (a < b) 
+
     def setUp(self):
         super(TestGangaList, self).setUp()
 
