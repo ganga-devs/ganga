@@ -112,7 +112,7 @@ class GangaList(GangaObject):
                       '__getitem__', '__getslice__', '__gt__', '__iadd__', '__imul__',
                       '__iter__', '__le__', '__len__', '__lt__', '__mul__', '__ne__', '__reversed__', '__radd__', '__rmul__',
                       '__setitem__', '__setslice__', 'append', 'count', 'extend', 'index',
-                      'insert', 'pop', 'remove', 'reverse', 'sort', '__hash__', 'get']
+                      'insert', 'pop', 'remove', 'reverse', 'sort', '__hash__', 'get', 'clear']
     _hidden = 1
     _enable_plugin = 1
     _name = 'GangaList'
@@ -523,6 +523,9 @@ class GangaList(GangaObject):
 
     def pop(self, index=-1):
         return self._list.pop(index)
+
+    def clear(self):
+        self._list.clear()
 
     def _export_pop(self, index=-1):
         self.checkReadOnly()
