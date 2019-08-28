@@ -49,7 +49,7 @@ class TestGangaList(unittest.TestCase):
         return TFile(name=name, subdir=subdir)
 
     @staticmethod
-    def cmp(a, b):
+    def _cmp(a, b):
         return (a > b) - (a < b) 
 
     def setUp(self):
@@ -452,7 +452,7 @@ class TestGangaList(unittest.TestCase):
 
     def testCmp(self):
 
-        self.assertEqual(cmp(self.proxied1, self.proxied2), cmp(self.plain1, self.plain2))
+        self.assertEqual(self._cmp(self.proxied1, self.proxied2), self._cmp(self.plain1, self.plain2))
 
     def testHash(self):
 
