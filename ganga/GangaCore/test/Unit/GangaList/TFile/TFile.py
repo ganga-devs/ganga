@@ -15,7 +15,7 @@ class TFile(GangaObject):
     """Test File object with well known equality properties -i.e. Does not reply on proxy!"""
 
     _category = 'files'
-    _exportmethods = ['__eq__', '__cmp__', '__hash__', '__iadd__', '__imul__']
+    _exportmethods = ['__eq__', '__cmp__', '__hash__', '__iadd__', '__imul__', '__lt__', '__gt__', '__le__', '__ge__']
     _name = 'TFile'
     _schema = File._schema.inherit_copy()
     _schema.datadict['added'] = SimpleItem(defvalue=False)
@@ -31,6 +31,18 @@ class TFile(GangaObject):
         self_comb = self.name + self.subdir
         other_comb = other.name + other.subdir
         return cmp(self_comb, other_comb)
+
+    def __le__(self, other):
+        return len(self.name) <= len(other.name)
+
+    def __ge__(self, other):
+        return len(self.name) >= len(other.name)
+        
+    def __lt__(self, other):
+        return len(self.name) < len(other.name)
+
+    def __gt__(self, other):
+        return len(self.name) > len(other.name)
 
     def __hash__(self):
         return self.name.__hash__() + self.subdir.__hash__()
