@@ -30,19 +30,27 @@ class TFile(GangaObject):
         """A hacky but correct cmp function."""
         self_comb = self.name + self.subdir
         other_comb = other.name + other.subdir
-        return cmp(self_comb, other_comb)
+        return (self_comb > other_comb) - (self_comb < other_comb)
 
     def __le__(self, other):
-        return self.name <= other.name
+        self_comb = self.name + self.subdir
+        other_comb = other.name + other.subdir
+        return self_comb <= other_comb
 
     def __ge__(self, other):
-        return self.name >= other.name
+        self_comb = self.name + self.subdir
+        other_comb = other.name + other.subdir
+        return self_comb >= other_comb
         
     def __lt__(self, other):
-        return self.name < other.name
+        self_comb = self.name + self.subdir
+        other_comb = other.name + other.subdir
+        return self_comb < other_comb
 
     def __gt__(self, other):
-        return self.name > other.name
+        self_comb = self.name + self.subdir
+        other_comb = other.name + other.subdir
+        return self_comb > other_comb
 
     def __hash__(self):
         return self.name.__hash__() + self.subdir.__hash__()
