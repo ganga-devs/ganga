@@ -13,7 +13,7 @@ def from_file(fobj):
 
 def to_file(obj, fileobj, ignore_subs=''):
     try:
-        cloudpickle.dump(obj, fileobj, -1)
+        cloudpickle.dump(obj, fileobj, 1)
     except Exception as err:
         logger.error(f"Failed to Write: {obj}")
         logger.error(f"Err: {err}")
