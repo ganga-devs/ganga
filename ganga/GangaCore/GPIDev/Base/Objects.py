@@ -717,8 +717,13 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
     _should_init = True
     _should_load = False
 
-    from GangaCore.GPIDev.Base.CoW import CoW
-    __hash__ = CoW.__hash__
+    def __hash__ (self):
+        from GangaCore.GPIDev.Base.Proxy import stripProxy, isProxy
+
+        value = self
+        if isProxy(value):
+            value = stripProxy(value)
+        return hash(repr(value))
 
     @classmethod
     def getNew(cls, should_load=False, should_init=False):
