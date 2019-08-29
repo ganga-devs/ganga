@@ -30,7 +30,7 @@ def proxify(value):
     if type(value) is str:
         value = ProxyStr(value)
 
-    if type(value) is list:
+    elif type(value) is list:
         value = ProxyList(value)
 
     elif type(value) is tuple:
@@ -101,7 +101,6 @@ class CoW(object):
         # Contains refs to those functions that should
         # be notified when I copy update
         self._flyweight_cb_func = weakref.WeakSet()
-        # print (len(self._flyweight_cache))
         # print self._flyweight_cache
         super().__init__()
 
@@ -362,7 +361,7 @@ class in_init(object):
 
 
 class ProxyDict(OrderedDict, CoW):
-    def __init__(self, d):
+    def __init__(self, d={}):
         # Recursively proxify first
         # import sys
         # sys.setrecursionlimit(100000)
