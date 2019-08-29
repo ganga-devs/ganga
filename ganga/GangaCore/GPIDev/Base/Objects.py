@@ -725,6 +725,9 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
             value = stripProxy(value)
         return hash(repr(value))
 
+    def __getstate__(self):
+        return self.__dict__
+
     @classmethod
     def getNew(cls, should_load=False, should_init=False):
         """
