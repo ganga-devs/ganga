@@ -92,7 +92,7 @@ def getScriptName(app):
         app (Job): This is the app object which contains everything useful for generating the code
     """
     job = app.getJobObject()
-    return "_".join((getConfig('Configuration')['user'], getName(app), 'Job', job.getFQID('.'), _pseudo_session_id, 'script'))+'.py'
+    return "_".join((getName(app), getConfig('Configuration')['user'], 'Job', job.getFQID('.'), _pseudo_session_id, 'script'))+'.py'
 
 
 def generateWNScript(commandline, app):
