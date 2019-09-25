@@ -265,7 +265,7 @@ def execute(command,
     try:
         # If output
         if stdout:
-            stdout_temp = pickle.loads(stdout.encode("utf-8"))
+            stdout_temp = pickle.loads(stdout.encode("utf-8"), encoding='bytes')
     # Downsides to wanting to be explicit in how this failed is you need to know all the ways it can!
     except (pickle.UnpicklingError, EOFError, ValueError) as err:
         if not shell:
