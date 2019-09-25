@@ -1,6 +1,6 @@
 import os
 import timeit
-
+import time
 from GangaCore.Utility.execute import execute
 
 # This file tests for things being returned via the stdout which is parsed by execute
@@ -41,9 +41,9 @@ def test_execute_output():
     ''' This tests the various levels when an import can occur and that complex objects can be returned via stdout '''
 
     # Test printout of pickle dump interpreted correctly
-    d = execute('import pickle, datetime\nprint(pickle.dumps(datetime.datetime(2013,12,12)))', shell=False)
-    assert hasattr(d, 'month')
-    assert d.month == 12
+    d = execute('import pickle, time\nprint(pickle.dumps(time.localtime()))', shell=False)
+    assert hasattr(d, 'tm_mon')
+    assert d.tm_mon == time.localtime().tm_mon
 
     # Test straight printout doesn't work without includes, stdout as str
     # returned by default
