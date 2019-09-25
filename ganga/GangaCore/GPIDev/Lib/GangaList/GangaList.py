@@ -348,16 +348,18 @@ class GangaList(GangaObject):
         return self._list.__ge__(self.__getListToCompare(obj_list))
 
     def __getitem__(self, index):
+        if isinstance(index, slice):
+            return makeGangaList(self._list.__getitem__(index))
         return self._list.__getitem__(index)
 
     def _export___getitem__(self, index):
         return addProxy(self.__getitem__(index))
 
-    def __getslice__(self, start, end):
-        return makeGangaList(_list=self._list.__getslice__(start, end), preparable=self._is_preparable)
+#    def __getslice__(self, start, end):
+#        return makeGangaList(_list=self._list.__getslice__(start, end), preparable=self._is_preparable)
 
-    def _export___getslice__(self, start, end):
-        return addProxy(self.__getslice__(start, end))
+#    def _export___getslice__(self, start, end):
+#        return addProxy(self.__getslice__(start, end))
 
     def __gt__(self, obj_list):
         return self._list.__gt__(self.strip_proxy_list(obj_list))
