@@ -7,10 +7,7 @@ from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
 from GangaCore.Core.exceptions import CredentialsError
 from GangaCore.Utility.Config import getConfig
 
-external = pytest.mark.skipif(
-        not pytest.config.getoption("--runexternals"),
-        reason="need --runexternals option to run external tests"
-        )
+external = pytest.mark.externals    
 
 class skipif_config(object):
     """
