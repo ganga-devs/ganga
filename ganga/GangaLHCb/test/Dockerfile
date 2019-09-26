@@ -1,7 +1,6 @@
 FROM hepsw/cvmfs-lhcb:latest
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 
-RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 RUN yum install -y wget git python-virtualenv glibc-devel gcc python36
 
 WORKDIR /root
@@ -15,7 +14,7 @@ ENTRYPOINT . /etc/cvmfs/run-cvmfs.sh &&\
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(dirname $(dirname `which python`))/lib &&\
             export GANGA_CONFIG_PATH=GangaLHCb/LHCb.ini &&\
             export GANGA_SITE_CONFIG_AREA=/cvmfs/lhcb.cern.ch/lib/GangaConfig/config &&\
-            virtualenv -p python3 venv &&\
+            virtualenv -p /cvmfs/sft.cern.ch/lcg/releases/LCG_92python3/Python/3.6.3/x86_64-slc6-gcc62-opt/bin/python3 venv &&\
             . venv/bin/activate &&\
             pip install --upgrade pip setuptools &&\
             pip install -e ganga &&\
