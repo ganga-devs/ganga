@@ -7,7 +7,6 @@ RUN yum install -y wget git python-virtualenv gcc python36
 COPY . /ganga
 WORKDIR /ganga
 
-# workdir doesn't seem to be working properly
 RUN virtualenv -p python3 /ganga/venv
 RUN . /ganga/venv/bin/activate && pip install --upgrade pip setuptools wheel
 RUN . /ganga/venv/bin/activate && pip install /ganga
