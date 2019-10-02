@@ -1,8 +1,7 @@
-FROM hepsw/cvmfs-lhcb:latest
-LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
+FROM gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v3
+LABEL maintainer "Ulrik Egede <ulrik.egede@monash.edu>"
 
-RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-RUN yum install -y wget git python-virtualenv glibc-devel gcc python36
+RUN yum install -y wget git python-virtualenv glibc-devel gcc python3
 
 WORKDIR /root
 
