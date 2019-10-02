@@ -41,8 +41,7 @@ def test_execute_output():
     ''' This tests the various levels when an import can occur and that complex objects can be returned via stdout '''
 
     # Test printout of pickle dump interpreted correctly - we have to use time here due to issues with datetime and pickling between 2 and 3
-    #d = execute('import pickle, time\nprint(pickle.dumps(time.localtime()))', shell=False)
-    d = execute('import pickle, sys, time\nprint(sys.version)', shell=False)
+    d = execute('import pickle, time\nprint(pickle.dumps(time.localtime()))', shell=False)
     assert hasattr(d, 'tm_mon')
     assert d.tm_mon == time.localtime().tm_mon
 
