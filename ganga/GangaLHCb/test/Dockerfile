@@ -7,8 +7,7 @@ WORKDIR /root
 
 COPY . ganga
 
-ENTRYPOINT . /etc/cvmfs/run-cvmfs.sh &&\
-           . ~/.bashrc &&\
+ENTRYPOINT . ~/.bashrc &&\
             export X509_CERT_DIR=/cvmfs/lhcb.cern.ch/etc/grid-security/certificates &&\
             export X509_VOMS_DIR=/cvmfs/lhcb.cern.ch/etc/grid-security/vomsdir &&\
             export GANGA_CONFIG_PATH=GangaLHCb/LHCb.ini &&\
