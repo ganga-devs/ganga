@@ -1,7 +1,6 @@
 FROM centos:7
 LABEL maintainer "Ulrik Egede <ulrik.egede@monash.edu>"
 
-RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 RUN yum install -y wget git python-virtualenv gcc python36
 
 COPY . /ganga
