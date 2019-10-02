@@ -1,6 +1,7 @@
 FROM hepsw/cvmfs-lhcb:latest
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 
+RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 RUN yum install -y wget git python-virtualenv glibc-devel gcc python36
 
 WORKDIR /root
