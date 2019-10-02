@@ -264,7 +264,11 @@ def execute(command,
     stdout_temp = None
     try:
         # If output
+        print('stdout: ', stdout)
         if stdout:
+            if isinstance(stdout, bytes):
+                stdout_temp = pickle.loads(stdout)
+            else:
             stdout_temp = pickle.loads(stdout.encode("utf-8"))
     # Downsides to wanting to be explicit in how this failed is you need to know all the ways it can!
     except (pickle.UnpicklingError, EOFError, ValueError) as err:
