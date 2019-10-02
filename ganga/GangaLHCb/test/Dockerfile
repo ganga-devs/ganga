@@ -5,7 +5,7 @@ USER root
 
 WORKDIR /root
 
-RUN yum install -y --noplugins python-virtualenv python3
+RUN yum install -y python-virtualenv python3
 
 COPY . ganga
 
