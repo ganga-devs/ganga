@@ -2,6 +2,7 @@
 . /cvmfs/lhcb.cern.ch/lib/LbLogin.sh
 export GANGA_CONFIG_PATH=GangaLHCb/LHCb.ini
 virtualenv -p python3 venv
+rm -f venv/bin/python
 . venv/bin/activate
 pip install --upgrade pip setuptools pytest
 pip install -e ganga
