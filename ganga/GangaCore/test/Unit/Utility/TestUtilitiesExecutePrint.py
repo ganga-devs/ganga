@@ -40,10 +40,15 @@ def test_execute_cwd():
 def test_execute_output():
     ''' This tests the various levels when an import can occur and that complex objects can be returned via stdout '''
 
-    # Test printout of pickle dump interpreted correctly - we have to use time here due to issues with datetime and pickling between 2 and 3
-    #d = execute('import pickle, time\nprint(pickle.dumps(time.localtime()))', shell=False)
-    #assert hasattr(d, 'tm_mon')
-    #assert d.tm_mon == time.localtime().tm_mon
+    # Test printout of pickle dump interpreted correctly
+    d = execute('import pickle, datetime\nprint(pickle.dumps(datetime.datetime(2013,12,12)).decode("latin1"))', shell=False)
+    assert hasattr(d, 'month')
+    assert d.month == 12
+
+    # Test output function works for datetime as expected.
+    d3 = execute('import datetime\noutput(datetime.datetime(2013,12,12))', shell=False)
+    assert hasattr(d3, 'month')
+    assert d.month == 12
 
     # Test straight printout doesn't work without includes, stdout as str
     # returned by default
