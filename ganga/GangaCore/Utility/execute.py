@@ -264,8 +264,6 @@ def execute(command,
     stdout_temp = None
     try:
         # If output
-        print('stdout: ', stdout)
-        print('stdout type: ', type(stdout))
         if stdout:
             if isinstance(stdout, bytes):
                 stdout_temp = pickle.loads(stdout)
