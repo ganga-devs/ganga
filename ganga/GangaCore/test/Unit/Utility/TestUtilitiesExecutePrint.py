@@ -1,5 +1,6 @@
 import os
 import timeit
+
 from GangaCore.Utility.execute import execute
 
 # This file tests for things being returned via the stdout which is parsed by execute
