@@ -48,6 +48,10 @@ class TestGangaList(unittest.TestCase):
         subdir = TestGangaList._makeRandomString()
         return TFile(name=name, subdir=subdir)
 
+    @staticmethod
+    def _cmp(a, b):
+        return (a > b) - (a < b) 
+
     def setUp(self):
         super(TestGangaList, self).setUp()
 
@@ -448,7 +452,7 @@ class TestGangaList(unittest.TestCase):
 
     def testCmp(self):
 
-        self.assertEqual(cmp(self.proxied1, self.proxied2), cmp(self.plain1, self.plain2))
+        self.assertEqual(self._cmp(self.proxied1, self.proxied2), self._cmp(self.plain1, self.plain2))
 
     def testHash(self):
 

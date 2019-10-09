@@ -35,5 +35,5 @@ class TestNotebook(unittest.TestCase):
         unique = str(uuid.uuid4())
         fb = self.notebook.wrapper([],unique,None,None)
 
-        assert string.find(fb.getContents(),unique) > -1
-        assert string.find(fb.getContents(),'\#\#\#') == -1 
+        assert fb.getContents().find(unique) > -1
+        assert fb.getContents().find('\#\#\#') == -1 
