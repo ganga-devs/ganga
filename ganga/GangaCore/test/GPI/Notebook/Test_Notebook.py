@@ -1,4 +1,3 @@
-#noop
 from os.path import dirname, join, abspath, exists
 import inspect
 
