@@ -280,7 +280,7 @@ class JobTree(GangaObject):
                     except KeyError:
                         raise TreeError(1, "%s does not exist" % pp[-1])
                 else:
-                    for k in self.__get_folders().keys():
+                    for k in list(self.__get_folders()):
                         del self.__get_folders()[k]
             else:
                 raise TreeError(3, "Can not delete the root directory")
