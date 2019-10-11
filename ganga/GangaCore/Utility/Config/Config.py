@@ -754,7 +754,7 @@ class PackageConfig(object):
 
 try:
     import configparser
-    GangaConfigParser = configparser.SafeConfigParser
+    GangaConfigParser = configparser.ConfigParser
 except ImportError:
     # For Python 3
     import configparser as ConfigParser
