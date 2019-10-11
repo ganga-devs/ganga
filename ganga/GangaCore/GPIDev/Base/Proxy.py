@@ -18,7 +18,7 @@ import collections
 import functools
 import os
 
-from inspect import isclass, getargspec
+from inspect import isclass, getfullargspec
 
 import types
 
@@ -860,7 +860,7 @@ def GPIProxyClassFactory(name, pluginclass):
             # The args will simply be passed through regardless
             elif arg_len == 0:
                 instance = pluginclass.getNew(should_init=True)
-            elif arg_len < len(getargspec(pluginclass.__init__)[0]):
+            elif arg_len < len(getfullargspec(pluginclass.__init__)[0]):
                 clean_args = (stripProxy(arg) for arg in args)
                 instance = pluginclass(*clean_args)
             else:
