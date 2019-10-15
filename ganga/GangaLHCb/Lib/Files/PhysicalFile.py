@@ -24,7 +24,7 @@ def full_expand_filename(name):
         msg = 'Can not create PhysicalFile from string that begins w/ "LFN:".'\
               ' You probably want to create a DiracFile.'
         raise GangaException(msg)
-    urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
+    urlprefix = re.compile(r'^(([a-zA-Z_][\w]*:)+/?)?/')
     if len(name) >= 4 and name[0:4].upper() == 'PFN:':
         name = name[4:]
     expanded_name = expandfilename(name)
