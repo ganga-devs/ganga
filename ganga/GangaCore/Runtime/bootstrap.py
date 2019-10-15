@@ -689,9 +689,9 @@ under certain conditions; type license() for details.
         # check if the specified config options are different from the defaults
         # and set session values appropriately
         syscfg = getConfig("System")
-        if config_path and config_path != syscfg['GANGA_CONFIG_PATH']:
+        if  config_path != syscfg['GANGA_CONFIG_PATH']:
             syscfg.setSessionValue('GANGA_CONFIG_PATH', config_path)
-        if config_path and config_file != syscfg['GANGA_CONFIG_FILE']:
+        if  config_file != syscfg['GANGA_CONFIG_FILE']:
             syscfg.setSessionValue('GANGA_CONFIG_FILE', config_file)
 
         # all relative names in the path are resolved wrt the _gangaPythonPath
