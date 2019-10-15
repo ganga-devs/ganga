@@ -331,7 +331,7 @@ class GangaUnitTest(unittest.TestCase):
         unittest.TestCase.tearDown(self)
         # Stop ganga and mimick an exit to shutdown all internal processes
         stop_ganga()
-#        sys.stdout.flush()
+        sys.stdout.flush()
 
     @classmethod
     def tearDownClass(cls):
