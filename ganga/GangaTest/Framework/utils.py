@@ -33,10 +33,10 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
     j = stripProxy(j)
     if j.master is not None:
         j = j.master
-    print('timeout: ',timeout)
+
     if timeout is None:
         timeout = config['timeout']
-        print('config timeout: ', config['timeout'])
+        
     from time import sleep
     from GangaCore.Core import monitoring_component
     from GangaCore.Core.GangaRepository import getRegistryProxy
@@ -118,8 +118,6 @@ failureException = unittest.TestCase.failureException
 try:
     from GangaCore.Utility.Config import getConfig
     config = getConfig('TestingFramework')
-    print('testing framework: ', config)
 except: # if we are outside Ganga, use a simple dict
     config={}
-    print('other: ', config)
 
