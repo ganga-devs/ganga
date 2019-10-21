@@ -130,7 +130,7 @@ class SubJobXMLList(GangaObject):
                 from GangaCore.Core.GangaRepository.PickleStreamer import from_file
 
                 try:
-                    index_file_obj = open(index_file, "r" )
+                    index_file_obj = open(index_file, "rb" )
                     self._subjobIndexData = from_file( index_file_obj )[0]
                 except IOError as err:
                     self._subjobIndexData = None
