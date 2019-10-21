@@ -110,7 +110,7 @@ class TestSJXMLCorruption(GangaUnitTest):
             handler.flush()
 
         from tempfile import NamedTemporaryFile
-        with NamedTemporaryFile(delete=False) as myTempfile:
+        with NamedTemporaryFile(mode = 'w', delete=False) as myTempfile:
             myTempfile.write(badStr)
             myTempfile.flush()
             myTempName = myTempfile.name
