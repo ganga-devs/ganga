@@ -5,7 +5,6 @@ def standardSetup():
 
 
 def loadPlugins( config = None ):
-    print('loading plugins')
     import GangaTest.Framework.runner
     import GangaTest.Lib.GListApp
     import GangaTest.Lib.TFile
@@ -13,6 +12,6 @@ def loadPlugins( config = None ):
     import GangaTest.Lib.TestSubmitter # TestSubmitter, TestSplitter here
     import GangaTest.Lib.TestRobot
     import GangaTest.Lib.TestObjects
-#    import GangaTest.Framework.runner
+    import GangaTest.Framework.runner
 
 
