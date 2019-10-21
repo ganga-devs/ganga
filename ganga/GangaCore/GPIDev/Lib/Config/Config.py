@@ -89,7 +89,7 @@ class ConfigProxy(object):
                   ' : ' + markup(stripProxy(self).docstring, docstring_colour) + '\n')
         opts = sorted(stripProxy(self).options.keys())
         INDENT = '     ' * 2
-        p = re.compile('[\.\w]*\.')
+        p = re.compile(r'[\.\w]*\.')
         for o in opts:
             sio.write(levels[stripProxy(self).getEffectiveLevel(
                 o)] + '   ' + markup(o, name_colour) + ' = ' + markup(p.sub('',repr(stripProxy(self)[o])), value_colour) + '\n')
