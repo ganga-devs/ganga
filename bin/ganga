@@ -27,6 +27,11 @@ if sys.version_info[0] != 2 or sys.version_info[1] < 7:
     logging.error("Ganga does not support python version %s.%s.%s. Make sure you have a python version 2.7.x in your path" % (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
     sys.exit(-1)
 
+from GangaCore import _gangaVersion
+if int(_gangaVersion.split('.')[0]) < 8.:
+    import logging
+    logging.warning("Python 2 is no longer supported and neither are Ganga versions < 8. Please upgrade to a python 3 enabled Ganga version (>=8.0.0).")
+
 def standardSetup():
     """Function to perform standard setup for Ganga.
     """   
