@@ -34,7 +34,7 @@ from GangaCore.Runtime.GPIexport import exportToGPI
 import threading
 
 # regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
-urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
+urlprefix = re.compile(r'^(([a-zA-Z_][\w]*:)+/?)?/')
 
 logger = getLogger()
 

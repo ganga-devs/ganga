@@ -72,7 +72,7 @@ class TestXMLCorruption(GangaUnitTest):
             handler.flush()
 
         from tempfile import NamedTemporaryFile
-        with NamedTemporaryFile(delete=False) as myTempfile:
+        with NamedTemporaryFile(mode = 'w', delete=False) as myTempfile:
             myTempfile.write(badStr)
             myTempfile.flush()
             myTempName = myTempfile.name
@@ -106,7 +106,7 @@ class TestXMLCorruption(GangaUnitTest):
         stripProxy(jobs(0))._getRegistry().flush_all()
 
         from tempfile import NamedTemporaryFile
-        with NamedTemporaryFile(delete=False) as myTempfile:
+        with NamedTemporaryFile(mode = 'w', delete=False) as myTempfile:
             myTempfile.write(badStr)
             myTempfile.flush()
             myTempName=myTempfile.name

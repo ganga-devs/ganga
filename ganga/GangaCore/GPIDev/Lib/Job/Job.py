@@ -1454,7 +1454,7 @@ class Job(GangaObject):
         # make sure nobody writes to the cache during this operation
         # job._registry.cache_writers_mutex.lock()
 
-        supports_keep_going = 'keep_going' in inspect.getargspec(self.backend.master_submit)[0]
+        supports_keep_going = 'keep_going' in inspect.getfullargspec(self.backend.master_submit)[0]
 
         if keep_going and not supports_keep_going:
             msg = 'job.submit(keep_going=True) is not supported by %s backend' % getName(self.backend)
@@ -1549,7 +1549,7 @@ class Job(GangaObject):
             # should call, not submit directly
 
             if supports_keep_going:
-                if 'parallel_submit' in inspect.getargspec(self.backend.master_submit)[0]:
+                if 'parallel_submit' in inspect.getfullargspec(self.backend.master_submit)[0]:
                     r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going, self.parallel_submit)
                 else:
                     r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going)
@@ -1945,7 +1945,7 @@ class Job(GangaObject):
 
         # check if the backend supports extra 'backend' argument for
         # master_resubmit()
-        supports_master_resubmit = len(inspect.getargspec(self.backend.master_resubmit)[0]) > 1
+        supports_master_resubmit = len(inspect.getfullargspec(self.backend.master_resubmit)[0]) > 1
 
         if not supports_master_resubmit and backend:
             raise JobError('%s backend does not support changing of backend parameters at resubmission (optional backend argument is not supported)' % getName(self.backend))

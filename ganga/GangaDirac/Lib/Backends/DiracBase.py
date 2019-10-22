@@ -33,7 +33,7 @@ default_finaliseOnMaster = configDirac['default_finaliseOnMaster']
 default_downloadOutputSandbox = configDirac['default_downloadOutputSandbox']
 default_unpackOutputSandbox = configDirac['default_unpackOutputSandbox']
 logger = getLogger()
-regex = re.compile('[*?\[\]]')
+regex = re.compile(r'[*?\[\]]')
 
 class DiracBase(IBackend):
 
@@ -309,12 +309,12 @@ class DiracBase(IBackend):
                 sjScript = sj.backend._job_script(sc, master_input_sandbox, tmp_dir)
                 sjScript = sjScript.replace("output(result)", "if isinstance(result, dict) and 'Value' in result:\n\tresultdict.update({sjNo : result['Value']})\nelse:\n\tresultdict.update({sjNo : result['Message']})")
                 if nSubjobs == 0:
-                    sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
+                    sjScript = re.sub(r"(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
                 if nSubjobs !=0 :
                     sjScript = sjScript.replace("from DIRAC.Core.Base.Script import parseCommandLine\nparseCommandLine()\n", "\n")
-                    sjScript = re.sub("from .*DIRAC\.Interfaces\.API.Dirac.* import Dirac.*","",sjScript)
-                    sjScript = re.sub("from .*DIRAC\.Interfaces\.API\..*Job import .*Job","",sjScript)
-                    sjScript = re.sub("dirac = Dirac.*\(\)","",sjScript)
+                    sjScript = re.sub(r"from .*DIRAC\.Interfaces\.API.Dirac.* import Dirac.*","",sjScript)
+                    sjScript = re.sub(r"from .*DIRAC\.Interfaces\.API\..*Job import .*Job","",sjScript)
+                    sjScript = re.sub(r"dirac = Dirac.*\(\)","",sjScript)
                     masterScript += "\nsjNo=\'%s\'" % fqid
                 masterScript += sjScript
                 nSubjobs +=1
@@ -589,15 +589,15 @@ class DiracBase(IBackend):
                 continue
 
             #First pick out the imports etc at the start
-            newScript =  re.compile(r'%s.*?%s' % ('resultdict = {}',"dirac = Dirac.*?\(\)\n"),re.S).search(script).group(0)
+            newScript =  re.compile(r'%s.*?%s' % (r'resultdict = {}',r"dirac = Dirac.*?\(\)\n"),re.S).search(script).group(0)
             newScript += '\n'
             #Now pick out the job part
             start = "sjNo='%s'" % j.fqid
             #Check if the original script included the check for the dirac output
             if "result[\'Message\']" in script:
-                newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Message'\]}\)"),re.S).search(script).group(0)
+                newScript += re.compile(r'%s.*?%s' % (start,r"resultdict.update\({sjNo : result\['Message'\]}\)"),re.S).search(script).group(0)
             else:
-                newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
+                newScript += re.compile(r'%s.*?%s' % (start,r"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
             newScript += '\noutput(resultdict)'
             
             # Modify the new script with the user settings

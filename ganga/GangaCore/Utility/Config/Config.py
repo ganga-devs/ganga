@@ -754,7 +754,7 @@ class PackageConfig(object):
 
 try:
     import configparser
-    GangaConfigParser = configparser.SafeConfigParser
+    GangaConfigParser = configparser.ConfigParser
 except ImportError:
     # For Python 3
     import configparser as ConfigParser
@@ -844,7 +844,7 @@ def read_ini_files(filenames, system_vars):
         logger.info('reading config file %s', f)
         try:
             with open(f) as file_f:
-                cc.readfp(file_f)
+                cc.read_file(file_f)
         except Exception as x:
             logger.warning('Exception reading config file %s', x)
 

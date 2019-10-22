@@ -84,23 +84,23 @@ class LCGRequirements(GangaObject):
         # from Ganga configuration
         if config['AllowedCEs']:
             ce_req = config['AllowedCEs'].strip()
-            allowed_ces += re.split('\s+', ce_req)
+            allowed_ces += re.split(r'\s+', ce_req)
 
         if config['ExcludedCEs']:
             ce_req = config['ExcludedCEs'].strip()
-            excluded_ces += re.split('\s+', ce_req)
+            excluded_ces += re.split(r'\s+', ce_req)
 
         # from LCGRequirements object
         # if string starts with '+', it means the requirement to be appeneded
-        re_append = re.compile('^(\++)\s*(.*)')
+        re_append = re.compile(r'^(\++)\s*(.*)')
         try:
             ce_req = self.allowedCEs.strip()
             if ce_req:
                 m = re_append.match(ce_req)
                 if m:
-                    allowed_ces += re.split('\s+', m.group(2))
+                    allowed_ces += re.split(r'\s+', m.group(2))
                 else:
-                    allowed_ces = re.split('\s+', ce_req)
+                    allowed_ces = re.split(r'\s+', ce_req)
         except KeyError as e:
             pass
 
@@ -109,9 +109,9 @@ class LCGRequirements(GangaObject):
             if ce_req:
                 m = re_append.match(ce_req)
                 if m:
-                    excluded_ces += re.split('\s+', m.group(2))
+                    excluded_ces += re.split(r'\s+', m.group(2))
                 else:
-                    excluded_ces = re.split('\s+', ce_req)
+                    excluded_ces = re.split(r'\s+', ce_req)
         except KeyError as e:
             pass
 

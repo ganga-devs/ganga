@@ -97,7 +97,8 @@ def is_job_completed(j):
     return is_job_state(j, ['completed'], ['new','killed','failed','unknown','removed']) 
         
 def file_contains(filename,string):
-    return file(filename).read().find(string) != -1
+    f = open(filename, 'r')
+    return f.read().find(string) != -1
 
 def write_file(filename,content):
     """ Open,write and close the file descriptor"""

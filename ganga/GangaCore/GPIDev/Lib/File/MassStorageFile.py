@@ -28,7 +28,7 @@ from GangaCore.Core.exceptions import GangaException
 
 import GangaCore.Utility.Config
 
-regex = re.compile('[*?\[\]]')
+regex = re.compile(r'[*?\[\]]')
 logger = getLogger()
 
 class MassStorageFile(IGangaFile):
@@ -231,7 +231,7 @@ class MassStorageFile(IGangaFile):
             self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
             raise GangaException(mystderr)
 
-        for directory in mystdout.split('\n'):
+        for directory in mystdout.decode().split('\n'):
             if directory.strip() == dirName:
                 directoryExists = True
                 break

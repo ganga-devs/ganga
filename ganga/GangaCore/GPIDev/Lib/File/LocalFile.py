@@ -26,7 +26,7 @@ import GangaCore.Utility.logging
 
 logger = GangaCore.Utility.logging.getLogger()
 
-regex = re.compile('[*?\[\]]')
+regex = re.compile(r'[*?\[\]]')
 
 class LocalFile(IGangaFile):
 
