@@ -5,6 +5,6 @@
 --------------------------------------------------------------------------------------------------------------
 ganga/ganga/GangaCore
 --------------------------------------------------------------------------------------------------------------
-* From version 8.0.0 Ganga is based on python 3. Therefore old versions (7.1.15 and below) are not longer supported. Please upgrade to a newer Ganga version.
+* From version 8.0.0 Ganga is based on python 3. Therefore old versions (7.1.15 and below) are no longer supported. Please upgrade to a newer Ganga version.
 
 **************************************************************************************************************
