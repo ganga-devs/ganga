@@ -8,7 +8,6 @@ raise PluginError("The GangaAtlas module has not been upgraded for python 3. The
 from GangaCore.Utility.Config import makeConfig, getConfig
 import os
 from GangaCore.Utility.logging import getLogger
-
 logger = getLogger()
 
 # -------------------------------------------------
