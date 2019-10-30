@@ -45,7 +45,7 @@ class TestString(unittest.TestCase):
         t.s = "test"
         self.assertEqual(t.s, "test")
 
-        self.assertEqual(len(t._flyweight_cache), 0)
+        self.assertEqual(len(t._flyweight_cache), 1)
 
         t2 = copy(t)
         self.assertEqual(t2.s, t.s)
@@ -53,7 +53,7 @@ class TestString(unittest.TestCase):
         t.s += "q"
         self.assertEqual(t.s, "testq")
         self.assertEqual(t2.s, "test")
-        self.assertEqual(len(t._flyweight_cache), 0)
+        self.assertEqual(len(t._flyweight_cache), 1)
         t._flyweight_cache.clear()
 
 
@@ -744,7 +744,7 @@ class TestDictionary(unittest.TestCase):
 
         t.d.update({3: 'test3'})
         self.assertEqual(t.d, {1: 'test', 2: 'test2', 3: 'test3'})
-        self.assertEqual(t2.d, t.d)
+        self.assertEqual(t2.d, d)
         t._flyweight_cache.clear()
 
     def test_dict_setdefault(self):
@@ -761,7 +761,7 @@ class TestDictionary(unittest.TestCase):
         self.assertEqual(t.d.setdefault(2), 'test2')
         self.assertEqual(t.d.setdefault(3, 'test3'), 'test3')
         self.assertEqual(t.d, {1: 'test', 2: 'test2', 3: 'test3'})
-        self.assertEqual(t2.d, t.d)
+        self.assertEqual(t2.d, d)
         t._flyweight_cache.clear()
 
     def test_dict_popitem(self):
@@ -807,7 +807,7 @@ class TestDictionary(unittest.TestCase):
         t2 = copy(t)
         self.assertEqual(t2.d, t.d)
 
-        self.assertEqual(t.d.keys(), [1, 2])
+        self.assertEqual(t.d.keys(), set([1, 2]))
         t._flyweight_cache.clear()
 
     def test_dict_items(self):
@@ -821,7 +821,7 @@ class TestDictionary(unittest.TestCase):
         t2 = copy(t)
         self.assertEqual(t2.d, t.d)
 
-        self.assertEqual(t.d.items(), [(1, 'test'), (2, 'test2')])
+        self.assertEqual(t.d.items(), set([(1, 'test'), (2, 'test2')]))
         t._flyweight_cache.clear()
 
     def test_dict_get(self):
