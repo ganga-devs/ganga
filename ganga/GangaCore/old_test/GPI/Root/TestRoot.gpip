@@ -317,7 +317,7 @@ if __name__ == '__main__':
     n = int(argv[1])
     str = argv[2]
                 
-    f = file('output.txt','w')
+    f = open('output.txt','w')
     try:
         s = '''###%d###
 @@@%s@@@
@@ -359,7 +359,7 @@ ran = []
 for i in range(n):
     ran.append(gRandom.Gaus())
                 
-f = file('output.txt','w')
+f = open('output.txt','w')
 try:
     f.write('###%d###' % len(ran))        
 finally:
@@ -386,7 +386,7 @@ finally:
     def testUsePythonFlag(self):
         '''Runs a .C file as python using the usepython flag'''
         r = self._makeRootApp("""#!/usr/bin/env python
-f = file('output.txt','w')
+f = open('output.txt','w')
 try:
     f.write('###Running###')        
 finally:

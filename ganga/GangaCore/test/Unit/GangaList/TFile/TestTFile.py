@@ -7,6 +7,10 @@ TFile = addProxy(TFile)
 
 class TestTFile(unittest.TestCase):
 
+    @staticmethod
+    def _cmp(a, b):
+        return (a > b) - (a < b)         
+
     def testEqualityName(self):
         t1 = TFile(name='foo')
         t2 = TFile(name='foo')
@@ -39,7 +43,7 @@ class TestTFile(unittest.TestCase):
         t1 = TFile(name='foo')
         t2 = TFile(name='foo')
 
-        assert cmp(t1, t2) == 0, 'Files are equal'
+        assert self._cmp(t1, t2) == 0, 'Files are equal'
 
     def testCmpOrder(self):
 
@@ -48,26 +52,26 @@ class TestTFile(unittest.TestCase):
         t2 = TFile(name='def')
         t1 = TFile(name='abc')
 
-        assert cmp(t1, t2) < 0
-        assert cmp(t2, t1) > 0
+        assert self._cmp(t1, t2) < 0
+        assert self._cmp(t2, t1) > 0
 
     def testCmpOrderSubdir(self):
 
         t2 = TFile(name='abc', subdir='a')
         t1 = TFile(name='abc')
 
-        assert cmp(t1, t2) < 0
-        assert cmp(t2, t1) > 0
+        assert self._cmp(t1, t2) < 0
+        assert self._cmp(t2, t1) > 0
 
     def testCmpList(self):
 
         a = [TFile(name='abc'), TFile(name='def')]
         b = [TFile(name='abc'), TFile(name='def'), TFile(name='ijk')]
 
-        assert cmp(a, b) < 0
+        assert self._cmp(a, b) < 0
 
         a.append(TFile(name='ijk'))
-        assert cmp(a, b) == 0, 'Lists should now be the same.'
+        assert self._cmp(a, b) == 0, 'Lists should now be the same.'
 
     def testIAdd(self):
 

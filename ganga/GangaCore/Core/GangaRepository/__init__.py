@@ -17,7 +17,7 @@ def addRegistry(registry):
 
 def getRegistries():
     """ Get all registries from the global dict"""
-    return allRegistries.values()
+    return list(allRegistries.values())
 
 def getRegistry(name):
     """ Get a specific Registry from the global dict"""

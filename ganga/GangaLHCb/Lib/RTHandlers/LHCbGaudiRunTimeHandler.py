@@ -3,7 +3,7 @@ import copy
 import os
 import pickle
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from RTHUtils import is_gaudi_child, getXMLSummaryScript, create_runscript
+from .RTHUtils import is_gaudi_child, getXMLSummaryScript, create_runscript
 from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from GangaCore.GPIDev.Lib.File import FileBuffer, LocalFile, MassStorageFile
 from GangaCore.GPIDev.Base.Proxy import addProxy

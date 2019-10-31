@@ -41,9 +41,15 @@ def test_execute_output():
     ''' This tests the various levels when an import can occur and that complex objects can be returned via stdout '''
 
     # Test printout of pickle dump interpreted correctly
-    d = execute('import pickle, datetime\nprint(pickle.dumps(datetime.datetime(2013,12,12)))', shell=False)
-    assert hasattr(d, 'month')
-    assert d.month == 12
+    import time
+    d =  execute('import pickle, time\nprint(pickle.dumps(time.localtime()).decode("latin1"))', shell=False)
+    assert hasattr(d, 'tm_mon')
+    assert d.tm_mon == time.localtime().tm_mon
+
+    # Test output function works for datetime as expected.
+    d3 = execute('import datetime\noutput(datetime.datetime(2013,12,12))', shell=False)
+    assert hasattr(d3, 'month')
+    assert d3.month == 12
 
     # Test straight printout doesn't work without includes, stdout as str
     # returned by default

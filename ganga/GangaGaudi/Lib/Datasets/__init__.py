@@ -1,1 +1,1 @@
-from GaudiDataset import GaudiDataset
+from .GaudiDataset import GaudiDataset

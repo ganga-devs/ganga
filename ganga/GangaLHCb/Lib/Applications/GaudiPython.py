@@ -16,7 +16,7 @@ from GangaCore.Core.exceptions import ApplicationConfigurationError
 from GangaCore.Utility.files import expandfilename, fullpath
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Shell import Shell
-from AppsBaseUtils import guess_version
+from .AppsBaseUtils import guess_version
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import shutil
 import tempfile
@@ -118,7 +118,7 @@ class GaudiPython(GaudiBase):
         self._init()
 
     def _getshell(self):
-        import EnvironFunctions
+        from . import EnvironFunctions
         return EnvironFunctions._getshell(self)
 
     def prepare(self, force=False):

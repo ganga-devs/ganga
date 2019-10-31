@@ -1,7 +1,7 @@
 from GangaCore.Core.exceptions import SplitterError
 from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
 from GangaCore.GPIDev.Lib.Job import Job
-from SplitterUtils import DatasetSplitter
+from .SplitterUtils import DatasetSplitter
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 #import copy
 import GangaCore.Utility.logging

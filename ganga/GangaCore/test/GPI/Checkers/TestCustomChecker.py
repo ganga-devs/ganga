@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import os
 import tempfile
@@ -63,8 +63,8 @@ def check(j):
 
     def testCustomChecker_standardCheck(self):
 
-        print('%s' % str(self.file_name_stdout))
-        print('%s' % str(self.file_name_fail))
+        print(('%s' % str(self.file_name_stdout)))
+        print(('%s' % str(self.file_name_fail)))
         self.c.module = self.file_name_stdout
-        print('%s' % type(self.c.module))
+        print(('%s' % type(self.c.module)))
         assert self.c.check(self.j)

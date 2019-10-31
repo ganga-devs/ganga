@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 from mock import patch
 from os import path
 
@@ -60,7 +60,7 @@ class TestShared(GangaUnitTest):
         
     def test_C_Unprepare(self):
         """Make sure that unprepare restore None for the shared area."""
-        with patch('__builtin__.raw_input', return_value='y') as _raw_input:
+        with patch('builtins.input', return_value='y') as _raw_input:
             from GangaCore.GPI import jobs
             j = jobs[-1]
 

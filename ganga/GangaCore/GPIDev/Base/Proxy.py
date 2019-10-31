@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -18,7 +18,7 @@ import collections
 import functools
 import os
 
-from inspect import isclass, getargspec
+from inspect import isclass, getfullargspec
 
 import types
 
@@ -580,10 +580,10 @@ class ProxyDataDescriptor(object):
     def __recursive_strip(_val):
         ## Strip the proxies recursively for things like nested lists
         raw_val = stripProxy(_val)
-        if isinstance(_val, collections.Sequence) and not isinstance(_val, basestring):
+        if isinstance(_val, collections.Sequence) and not isinstance(_val, str):
             val = raw_val.__class__()
             if isinstance(val, dict):
-                for _key, elem in _val.iteritems():
+                for _key, elem in _val.items():
                     if isType(_key, GangaObject):
                         key = stripProxy(_key)
                     else:
@@ -860,7 +860,7 @@ def GPIProxyClassFactory(name, pluginclass):
             # The args will simply be passed through regardless
             elif arg_len == 0:
                 instance = pluginclass.getNew(should_init=True)
-            elif arg_len < len(getargspec(pluginclass.__init__)[0]):
+            elif arg_len < len(getfullargspec(pluginclass.__init__)[0]):
                 clean_args = (stripProxy(arg) for arg in args)
                 instance = pluginclass(*clean_args)
             else:
@@ -945,8 +945,8 @@ def GPIProxyClassFactory(name, pluginclass):
     """)
 
     def _str(self, interactive=False):
-        import cStringIO
-        sio = cStringIO.StringIO()
+        import io
+        sio = io.StringIO()
         stripProxy(self).printSummaryTree(0, 0, '', out=sio, interactive=interactive)
         returnable = str(sio.getvalue()).rstrip()
         return returnable

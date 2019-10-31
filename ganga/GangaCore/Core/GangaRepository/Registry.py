@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 import functools
 from GangaCore.Utility.logging import getLogger
@@ -212,7 +212,7 @@ class RegistryFlusher(GangaThread):
     lost if Ganga is shut down abruptly.
     """
 
-    __slots__ = ('registry', '_stop')
+    __slots__ = ('registry', '_stop_event')
 
     def __init__(self, registry, *args, **kwargs):
         """
@@ -224,7 +224,7 @@ class RegistryFlusher(GangaThread):
         """
         super(RegistryFlusher, self).__init__(*args, **kwargs)
         self.registry = registry
-        self._stop = threading.Event()
+        self._stop_event = threading.Event()
 
     def stop(self):
         """
@@ -232,14 +232,14 @@ class RegistryFlusher(GangaThread):
         the next chance it gets.
         TODO, does this need to be exposed as a method if only used internally?
         """
-        self._stop.set()
+        self._stop_event.set()
 
     @property
     def stopped(self):
         """
         Returns if the flusher has stopped as a boolean?
         """
-        return self._stop.isSet()
+        return self._stop_event.isSet()
 
     def join(self, *args, **kwargs):
         """
@@ -327,7 +327,7 @@ class Registry(object):
             return self._objects[this_id]
         except KeyError as err:
             logger.debug("Repo KeyError: %s" % err)
-            logger.debug("Keys: %s id: %s" % (self._objects.keys(), this_id))
+            logger.debug("Keys: %s id: %s" % (list(self._objects.keys()), this_id))
             raise RegistryKeyError("Could not find object #%s" % this_id)
 
     @synchronised_read_lock
@@ -368,7 +368,7 @@ class Registry(object):
     def iteritems(self):
         """ Return the items (ID,obj) in this registry."""
         logger.debug("iteritems")
-        returnable = self.items()
+        returnable = list(self.items())
         return returnable
 
     @synchronised_read_lock
@@ -389,7 +389,7 @@ class Registry(object):
     def __iter__(self):
         """ Return an iterator for the self.values list """
         logger.debug("__iter__")
-        returnable = iter(self.values())
+        returnable = iter(list(self.values()))
         return returnable
 
     def find(self, obj):
@@ -421,7 +421,7 @@ class Registry(object):
                 logger.error("The following other sessions are active and have blocked the clearing of the repository: \n * %s" % ("\n * ".join(other_sessions)))
                 return False
         self.repository.reap_locks()
-        self.repository.delete(self._objects.keys())
+        self.repository.delete(list(self._objects.keys()))
         self.repository.clean()
 
     # Methods that can be called by derived classes or Ganga-internal classes like Job
@@ -675,7 +675,7 @@ class Registry(object):
                 raise
 
             # Now we can release locks on the objects we have
-            for obj in self._objects.values():
+            for obj in list(self._objects.values()):
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
             self.repository.shutdown()

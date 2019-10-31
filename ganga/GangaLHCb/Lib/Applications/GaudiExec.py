@@ -10,7 +10,7 @@ import threading
 import stat
 import uuid
 from functools import wraps
-from StringIO import StringIO
+from io import StringIO, BytesIO
 
 from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -251,6 +251,10 @@ class GaudiExec(IPrepareApp):
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
                     opts_file.localDir=self.getSharedPath()
                     opts_file.get()
+                elif isinstance(opts_file, str):
+                    new_file = LocalFile(opts_file)
+                    self.copyIntoPrepDir(path.join( new_file.localDir, path.basename(new_file.namePattern) ))
+                    opts_file = new_file
                 else:
                     raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
@@ -306,8 +310,8 @@ class GaudiExec(IPrepareApp):
                 tinfo = tarfile.TarInfo('__timestamp__')
                 tinfo.mtime = time.time()
                 fileobj = StringIO(getTimestampContent())
-                tinfo.size = fileobj.len
-                tar_file.addfile(tinfo, fileobj)
+                tinfo.size = len(fileobj.getvalue())
+                tar_file.addfile(tinfo, BytesIO(fileobj.getvalue().encode()))
         else:
             unique_name = master_job.application.jobScriptArchive.namePattern
 
@@ -324,8 +328,8 @@ class GaudiExec(IPrepareApp):
             tinfo = tarfile.TarInfo(extra_opts_file)
             tinfo.mtime = time.time()
             fileobj = StringIO(self.extraOpts)
-            tinfo.size = fileobj.len
-            tar_file.addfile(tinfo, fileobj)
+            tinfo.size = len(fileobj.getvalue())
+            tar_file.addfile(tinfo, BytesIO(fileobj.getvalue().encode()))
 
             if not self.useGaudiRun:
                 # Add the WN script for wrapping the job
@@ -333,8 +337,8 @@ class GaudiExec(IPrepareApp):
                 tinfo2 = tarfile.TarInfo(self.getWrapperScriptName())
                 tinfo2.mtime = time.time()
                 fileobj2 = StringIO(self.getWNPythonContents())
-                tinfo2.size = fileobj2.len
-                tar_file.addfile(tinfo2, fileobj2)
+                tinfo2.size = len(fileobj2.getvalue())
+                tar_file.addfile(tinfo2, BytesIO(fileobj2.getvalue().encode()))
 
 
     def cleanGangaTargetArea(self, this_build_target):
@@ -373,6 +377,13 @@ class GaudiExec(IPrepareApp):
         This function returns a sanitized absolute path to the self.options file from user input
         """
         for this_opt in self.options:
+            
+            if isinstance(this_opt, str):
+                #If it is a string then assume it is a local file.
+                if not path.exists(this_opt):
+                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % this_opt)
+                new_opt = LocalFile(this_opt)
+                this_opt = new_opt
             if isinstance(this_opt, LocalFile):
                 ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
                 full_path = path.join(this_opt.localDir, this_opt.namePattern)
@@ -420,7 +431,7 @@ class GaudiExec(IPrepareApp):
         if not path.isdir(self.directory):
             raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
-        cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
+        cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False, mode = "w")
         if not cmd.startswith('./run '):
             cmd = './run ' + cmd
 
@@ -491,7 +502,7 @@ class GaudiExec(IPrepareApp):
         # Whilst we are here let's store the application environment but ignore awkward ones
         env, envstdout, envstderr = self.execCmd('./run env')
         envDict = {}
-        for item in envstdout.split("\n"):
+        for item in envstdout.decode().split("\n"):
             if len(item.split("="))==2:
                 if item.split("=")[0] == 'XMLSUMMARYBASEROOT':
                     envDict[item.split("=")[0]] = item.split("=")[1]

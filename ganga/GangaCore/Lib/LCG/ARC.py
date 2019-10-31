@@ -7,7 +7,7 @@ import mimetypes
 import shutil
 from collections import defaultdict
 
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from GangaCore.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from GangaCore.Core.exceptions import GangaException
@@ -328,7 +328,7 @@ class ARC(IBackend):
             # submitted jobs on WMS immediately
             logger.error(
                 'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            Grid.arc_cancel_multiple(runner.getResults().values(), self.credential_requirements)
+            Grid.arc_cancel_multiple(list(runner.getResults().values()), self.credential_requirements)
             return None
         else:
             return runner.getResults()
@@ -412,8 +412,8 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
 
     global exitcode
 
-    outfile   = file('stdout','w')
-    errorfile = file('stderr','w')
+    outfile   = open('stdout','w')
+    errorfile = open('stderr','w')
 
     try:
         child = subprocess.Popen(cmd, cwd=wdir, shell=True, stdout=outfile, stderr=errorfile)
@@ -872,8 +872,8 @@ sys.exit(0)
         #xrsl['Requirements'] = self.requirements.merge(jobconfig.requirements).convert()
 
         if self.xRSLextras:
-            for key in self.xRSLextras.keys():
-                if key in xrsl.keys():
+            for key in self.xRSLextras:
+                if key in xrsl:
                     xrsl[key].update(self.xRSLextras[key])
                 else:
                     xrsl[key] = self.xRSLextras[key]
@@ -976,7 +976,7 @@ sys.exit(0)
 
         if node_jids:
             for sj in rjobs:
-                if sj.id in node_jids.keys():
+                if sj.id in node_jids:
                     sj.backend.id = node_jids[sj.id]
                     sj.backend.CE = self.CE
                     sj.backend.actualCE = sj.backend.CE
@@ -1013,7 +1013,7 @@ sys.exit(0)
 
         if node_jids:
             for sj in rjobs:
-                if sj.id in node_jids.keys():
+                if sj.id in node_jids:
                     self.__refresh_jobinfo__(sj)
                     sj.backend.id = node_jids[sj.id]
                     sj.backend.CE = self.CE
@@ -1186,7 +1186,7 @@ sys.exit(0)
                 jobdict[j.backend.id] = j
                 ce_list.append(j.backend.actualCE)
 
-        if len(jobdict.keys()) == 0:
+        if len(jobdict) == 0:
             return
 
         # Group jobs by the backend's credential requirements

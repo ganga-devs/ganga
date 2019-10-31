@@ -7,7 +7,9 @@ from GangaTest.Framework.utils import sleep_until_state
 
 sleep_until_state(j,60,'completed')
 
-stdout = file(j.outputdir+'/stdout').read()
-inputdat = file('input.dat').read()
+with open(j.outputdir+'/stdout') as file_:
+    stdout = file_.read()
+with open('input.dat') as file_:
+    inputdat = file_.read()
 
 assert(stdout.find(inputdat) != -1)

@@ -1,1 +1,1 @@
-import runner
+import GangaTest.Framework.runner

@@ -21,7 +21,8 @@ class SubmissionCommit2(MultipassTest):
         j.backend = Local()
         logger.info('created job '+str(j.id))
         logger.info(j)
-        file(self.name,'w').write(str(-j.id))
+        with open(self.name,'w') as file_:
+            file_.write(str(-j.id))
         logger.info('saved job id %s to file %s'%(j.id,self.name))
         disableServices()
         reactivate()
@@ -36,7 +37,8 @@ class SubmissionCommit2(MultipassTest):
             
         logger.info('PASS 2: modify the job')
         j = jobs(-jobid)
-        file(self.name,'w').write(str(j.id))
+        with open(self.name,'w') as file_:
+            file_.write(str(j.id))
         j.backend = Batch()
         j.application.exe = 'myexecutable'
         logger.info(j)

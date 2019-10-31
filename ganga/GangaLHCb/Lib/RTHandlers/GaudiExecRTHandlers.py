@@ -92,7 +92,7 @@ def getScriptName(app):
         app (Job): This is the app object which contains everything useful for generating the code
     """
     job = app.getJobObject()
-    return "_".join((getConfig('Configuration')['user'], getName(app), 'Job', job.getFQID('.'), _pseudo_session_id, 'script'))+'.py'
+    return "_".join((getName(app), getConfig('Configuration')['user'], 'Job', job.getFQID('.'), _pseudo_session_id, 'script'))+'.py'
 
 
 def generateWNScript(commandline, app):
@@ -130,6 +130,10 @@ def collectPreparedFiles(app):
         if isinstance(file_, LocalFile):
             shutil.copy(os.path.join(file_.localDir, os.path.basename(file_.namePattern)), shared_dir)
             input_files.append(os.path.join(shared_dir, file_.namePattern))
+        elif isinstance(file_, str):
+            new_file = LocalFile(file_)
+            shutil.copy(os.path.join(new_file.localDir, os.path.basename(new_file.namePattern)), shared_dir)
+            input_files.append(os.path.join(shared_dir, new_file.namePattern))
         elif not isinstance(file_, DiracFile):
             raise ApplicationConfigurationError(None, "File type: %s Not _yet_ supported in GaudiExec" % type(file_))
 
@@ -150,6 +154,8 @@ def prepareCommand(app):
             # Ideally this would NOT need the basename, however LocalFile is special in this regard.
             # TODO Fix this after fixing LocalFile
             opts_names.append(os.path.basename(opts_file.namePattern))
+        elif isinstance(opts_file, str):
+            opts_names.append(os.path.basename(opts_file))
         else:
             raise ApplicationConfigurationError("The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                                 getName(opts_file))
