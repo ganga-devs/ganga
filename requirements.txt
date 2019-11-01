@@ -4,6 +4,7 @@
 pytest
 pytest-cov
 pytest-mock
+pytest-pycodestyle
 unittest2
 coverage
 pygments

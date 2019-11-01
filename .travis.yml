@@ -2,8 +2,14 @@ language: python
 python:
   - "3.6"
 install: pip3 install --upgrade -r requirements.txt
-script: python3 setup.py tests --type=unit --coverage
-before_install:
-  - pip3 install codecov
-after_success:
-  - cd python && codecov
+jobs:
+  include:
+    - name: "Unit Tests"
+      script: python3 setup.py tests --type=unit --coverage
+      before_install:
+        - pip3 install codecov
+      after_success:
+        - cd python && codecov
+
+    - name: "Linting Tests"
+      script: python3 -m pytest --noconftest --codestyle --max-line-length=100 ganga
