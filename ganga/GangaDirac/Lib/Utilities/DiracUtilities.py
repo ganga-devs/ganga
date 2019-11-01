@@ -266,7 +266,6 @@ def execute(command,
             #Some regex nonsense to deal with the long representations in python 3
             out = re.sub('(\d)L(\})', r'\1\2', out)
             out = re.sub('(\d)L(\,)', r'\1\2', out)
-            print('out', out)
             returnable = eval(out)
 
     else:
