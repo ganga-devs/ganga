@@ -19,16 +19,18 @@ logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+
 def make(self, arguments):
 
-    if not self.newStyleApp is True:
+    if self.newStyleApp is not True:
         return CMTUtils.make(arguments)
     else:
         return cmakeUtils.make(arguments)
 
+
 def get_user_platform(self, env=os.environ):
 
-    if not self.newStyleApp is True:
+    if self.newStyleApp is not True:
         return CMTUtils.get_user_platform(env)
     else:
         return cmakeUtils.get_user_platform(env)
@@ -36,17 +38,19 @@ def get_user_platform(self, env=os.environ):
 
 def update_project_path(self, user_release_area, env=os.environ):
 
-    if not self.newStyleApp is True:
+    if self.newStyleApp is not True:
         return CMTUtils.update_project_path(user_release_area, env)
     else:
         return cmakeUtils.update_project_path(user_release_area, env)
 
+
 def get_user_dlls(self, appname, version, user_release_area, platform, env):
 
-    if not self.newStyleApp is True:
+    if self.newStyleApp is not True:
         return CMTUtils.get_user_dlls(appname, version, user_release_area, platform, env)
     else:
         return cmakeUtils.get_user_dlls(appname, version, user_release_area, platform, env)
+
 
 def pyFileCollector(dir, file_list, subdir_dict, depth_cut, depth=0, zerodepth_pathlength=0):
     if zerodepth_pathlength == 0:
@@ -121,8 +125,9 @@ def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
 
     return pipe.returncode, stdout, stderr
 
-    #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+    # \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
     # NEW, better version?
+
 
 CommandOutput = collections.namedtuple(
     'CommandOutput', ['returncode', 'stdout', 'stderr'])
@@ -194,7 +199,7 @@ def fillPackedSandbox(sandbox_files, destination):
         except AttributeError:         # File
             try:
                 fileobj = file(f.name)
-            except:
+            except BaseException:
                 raise GangaException("File %s does not exist." % f.name)
             tinfo = tf.gettarinfo(
                 f.name, os.path.join(f.subdir, os.path.basename(f.name)))
@@ -236,4 +241,3 @@ def gzipFile(filename, outputfilename=None, removeOriginal=False):
     f_in.close()
     if removeOriginal:
         os.system('rm -f %s' % filename)
-

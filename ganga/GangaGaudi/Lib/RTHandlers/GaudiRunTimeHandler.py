@@ -19,7 +19,7 @@ logger = GangaCore.Utility.logging.getLogger()
 
 class GaudiRunTimeHandler(IRuntimeHandler):
 
-    """This is the application runtime handler class for Gaudi applications 
+    """This is the application runtime handler class for Gaudi applications
     using the local, interactive and LSF backends."""
 
     def master_prepare(self, app, appmasterconfig):
@@ -73,7 +73,7 @@ else:
     import sys
     sys.stdout.write('Using the master optionsfile: '+ str(opts))
     sys.stdout.flush()
-    
+
 """
 
         script += """# check that SetupProject.sh script exists, then execute it
@@ -81,7 +81,7 @@ else:
 # add lib subdir in case user supplied shared libs where copied to pwd/lib
 os.environ['LD_LIBRARY_PATH'] = '.:%s/lib:%s\' %(os.getcwd(),
                                                  os.environ['LD_LIBRARY_PATH'])
-                                                 
+
 #run
 sys.stdout.flush()
 os.environ['PYTHONPATH'] = '%s/InstallArea/python:%s' % \\

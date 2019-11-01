@@ -9,7 +9,7 @@ logger = getLogger()
 if not _after_bootstrap:
 
     configGaudi = GangaCore.Utility.Config.makeConfig(
-    'GAUDI', 'Generic GAUDI based parameters')
+        'GAUDI', 'Generic GAUDI based parameters')
 
     dscrpt = 'The command used to make a CMT application.'
     configGaudi.addOption('make_cmd', 'make', dscrpt)

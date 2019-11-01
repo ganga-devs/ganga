@@ -1,5 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+from GangaCore.GPIDev.Base.Filters import allComponentFilters
 import tempfile
 import fnmatch
 from GangaCore.GPIDev.Lib.Dataset import Dataset
@@ -92,8 +93,6 @@ class GaudiDataset(Dataset):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-from GangaCore.GPIDev.Base.Filters import allComponentFilters
-
 
 def string_dataset_shortcut(files, item):
     from GangaCore.GPIDev.Base.Objects import ObjectMetaclass
@@ -106,13 +105,14 @@ def string_dataset_shortcut(files, item):
 
     # job.outputdata not used any more, use job.outputfiles
     #filterList  = [Job._schema['inputdata'], Job._schema['outputdata']]
-    if type(files) is not type([]):
+    if not isinstance(files, type([])):
         return None
     if item in filterList:  # inputdataList:
         ds = GaudiDataset(files)
         return ds
     else:
         return None  # used to be c'tors, but shouldn't happen now
+
 
 allComponentFilters['datasets'] = string_dataset_shortcut
 

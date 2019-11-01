@@ -18,10 +18,12 @@ class GaudiDiracRunTimeHandler(GaudiRunTimeHandler):
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         inputsandbox, outputsandbox = sandbox_prepare(
             app, appsubconfig, appmasterconfig, jobmasterconfig)
-        input_data,   parametricinput_data = dirac_inputdata(app)
+        input_data, parametricinput_data = dirac_inputdata(app)
 
         job = app.getJobObject()
-        outputfiles = [this_file.namePattern for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
+        outputfiles = [
+            this_file.namePattern for this_file in job.outputfiles if isinstance(
+                this_file, DiracFile)]
 
         gaudi_script_path = os.path.join(
             job.getInputWorkspace().getPath(), "gaudi-script.py")

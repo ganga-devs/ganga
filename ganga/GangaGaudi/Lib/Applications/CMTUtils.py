@@ -65,7 +65,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
     for line in showProj.split(b'\n'):
         for entry in line.decode().split():
             if entry.startswith(user_ra) or entry.startswith(full_user_ra):
-                tmp = entry.rstrip('\)')
+                tmp = entry.rstrip(r'\)')
                 libpath = fullpath(os.path.join(tmp, 'InstallArea', platform, 'lib'))
                 logger.debug(libpath)
                 project_areas.append(libpath)
@@ -106,7 +106,10 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
                     lib_names.append(f)
                     libs.append(fpath)
                 else:
-                    logger.warning("File %s in %s does not exist. Skipping...", str(f), str(libpath))
+                    logger.warning(
+                        "File %s in %s does not exist. Skipping...",
+                        str(f),
+                        str(libpath))
 
     for pypath in py_project_areas:
         if os.path.exists(pypath):
@@ -149,4 +152,3 @@ def cmt(self, command):
             timeout=None,
             env=self.getenv(False),
             cwd=self.user_release_area)
-

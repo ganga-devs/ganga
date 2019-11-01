@@ -75,8 +75,12 @@ class Gaudi(GaudiBase):
                                           typelist=['str', 'type(None)'], doc=docstr)
     docstr = 'The name of the optionsfile. Import statements in the file ' \
              'will be expanded at submission time and a full copy made'
-    _schema.datadict['optsfile'] = FileItem(preparable=1, sequence=1, strict_sequence=0, defvalue=[],
-                                            doc=docstr)
+    _schema.datadict['optsfile'] = FileItem(
+        preparable=1,
+        sequence=1,
+        strict_sequence=0,
+        defvalue=[],
+        doc=docstr)
     docstr = 'A python configurable string that will be appended to the '  \
              'end of the options file. Can be multiline by using a '  \
              'notation like \nHistogramPersistencySvc().OutputFile = '  \
@@ -102,12 +106,12 @@ class Gaudi(GaudiBase):
         from GangaCore.GPIDev.Lib.File.File import File
         if isType(self.optsfile, (list, tuple, GangaList)):
             for this_file in self.optsfile:
-                if type(this_file) is str:
+                if isinstance(this_file, str):
                     this_file = File(this_file)
                 else:
                     continue
 
-        elif type(self.optsfile) is str:
+        elif isinstance(self.optsfile, str):
             self.optsfile = [File(self.optsfile)]
 
         try:
@@ -152,16 +156,25 @@ class Gaudi(GaudiBase):
         this_file.close()
 
         self._parse_options()
-        #try:
+        # try:
         #    self._parse_options()
-        #except Exception, err:
+        # except Exception, err:
         #    logger.debug("_parse_options Error:\n%s" % str(err))
         #    self.unprepare()
         #    raise err
 
-        gzipFile(os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name),
-                 os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name),
-                 True)
+        gzipFile(
+            os.path.join(
+                share_dir,
+                'inputsandbox',
+                '_input_sandbox_%s.tar' %
+                self.is_prepared.name),
+            os.path.join(
+                share_dir,
+                'inputsandbox',
+                '_input_sandbox_%s.tgz' %
+                self.is_prepared.name),
+            True)
         # add the newly created shared directory into the metadata system if
         # the app is associated with a persisted object
         self.checkPreparedHasParent(self)
@@ -178,7 +191,7 @@ class Gaudi(GaudiBase):
             nonexistentOptFiles = []
             for f in self.optsfile:
                 from GangaCore.GPIDev.Lib.File.File import File
-                if type(f) is str:
+                if isinstance(f, str):
                     myFile = File(f)
                 else:
                     myFile = f

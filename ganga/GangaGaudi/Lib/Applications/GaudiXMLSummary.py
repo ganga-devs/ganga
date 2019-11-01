@@ -62,7 +62,7 @@ class GaudiXMLSummary(GangaObject):
             data = self.data
             if not data:
                 self._init()
-        except:
+        except BaseException:
             self._init()
         return self.data
 
@@ -82,10 +82,12 @@ class GaudiXMLSummary(GangaObject):
         if v not in xml_schema:
             if 'schema' in sys.modules:
                 del sys.modules['schema']
-            xml_schema[v] = importlib.machinery.SourceFileLoader('schema', p + '/schema.py').load_module()
+            xml_schema[v] = importlib.machinery.SourceFileLoader(
+                'schema', p + '/schema.py').load_module()
             if 'summary' in sys.modules:
                 del sys.modules['summary']
-            xml_summary[v] = importlib.machinery.SourceFileLoader('summary', p + '/summary.py').load_module()
+            xml_summary[v] = importlib.machinery.SourceFileLoader(
+                'summary', p + '/summary.py').load_module()
             xml_summary[v].__schema__ = xml_schema[v]
 
         sum = xml_summary[v].Summary(self._xmlSchema())
