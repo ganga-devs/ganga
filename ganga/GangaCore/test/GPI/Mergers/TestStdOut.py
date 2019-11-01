@@ -43,7 +43,8 @@ class TestStdOut(GangaUnitTest):
     def runJobSlice(self):
         for j in self.jobslice:
             j.submit()
-            assert run_until_completed(j, timeout=60), 'Timeout on job submission: job is still not finished'
+            assert run_until_completed(
+                j, timeout=60), 'Timeout on job submission: job is still not finished'
 
     def testCanSetStdOutMerge(self):
         from GangaCore.GPI import SmartMerger

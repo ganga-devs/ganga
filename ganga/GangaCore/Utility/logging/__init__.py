@@ -163,10 +163,12 @@ def _make_file_handler(logfile, logfile_size):
     global file_handler
     if logfile:
         try:
-            # This guarantees the logfile exists before we setup the handler, we've seen strange intermittent bugs if this isn't done
+            # This guarantees the logfile exists before we setup the handler, we've
+            # seen strange intermittent bugs if this isn't done
             with open(logfile, 'w'):
                 pass
-            new_file_handler = logging.handlers.RotatingFileHandler(logfile, maxBytes=logfile_size, backupCount=1)
+            new_file_handler = logging.handlers.RotatingFileHandler(
+                logfile, maxBytes=logfile_size, backupCount=1)
         except IOError as x:
             private_logger.error('Cannot open the log file: %s', str(x))
             return
@@ -210,7 +212,9 @@ def _set_log_level(logger, value):
         return value
     except AttributeError as err:
         logger.error('Attribute Error: %s', str(err))
-        logger.warning('possible configuration error: invalid level value (%s), using default level', value)
+        logger.warning(
+            'possible configuration error: invalid level value (%s), using default level',
+            value)
         return None
 
 
@@ -236,7 +240,10 @@ def post_config_handler(opt, value):
             _format = _formats[value]
         else:
             if private_logger is not None:
-                private_logger.error('illegal name of format string (%s), possible values: %s' % (str(value), list(_formats.keys())))
+                private_logger.error(
+                    'illegal name of format string (%s), possible values: %s' %
+                    (str(value), list(
+                        _formats.keys())))
             return
 
     if opt == '_colour':
@@ -283,7 +290,6 @@ def _guess_module_logger_name(modulename, frame=None):
         print('using frame from the caller')
 
     global lookup_frame_names
-
 
     this__file__ = None
     if '__file__' in frame.f_globals:
@@ -353,6 +359,7 @@ def _guess_module_logger_name(modulename, frame=None):
     # return custom module name
     return return_name
 
+
 _MemHandler = logging.handlers.MemoryHandler
 
 
@@ -388,7 +395,7 @@ class FlushedMemoryHandler(_MemHandler):
         if record.levelno > logging.WARNING:
             return True
         return (threading.currentThread().getName() == "MainThread") or \
-                _MemHandler.shouldFlush(self, record)
+            _MemHandler.shouldFlush(self, record)
 
 
 def enableCaching(custom_logger=None, custom_formatter=None):
@@ -510,6 +517,7 @@ def bootstrap(internal=False, handler=None):
             A filter which only allow messages which are WARNING or lower to be logged
             """
             __slots__ = list()
+
             def filter(self, record):
                 return record.levelno <= 30
 
@@ -556,7 +564,7 @@ def force_global_level(level):
         global _global_level
         _global_level = level
 
-    ## May wish to do this for more levels in teh future
+    # May wish to do this for more levels in teh future
     if level in ['DEBUG']:
         global default_formatter
         default_formatter = "DEBUG"

@@ -25,21 +25,62 @@ from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
 logger = GangaCore.Utility.logging.getLogger()
 config = GangaCore.Utility.Config.getConfig('Local')
 
+
 class Localhost(IBackend):
 
     """Run jobs in the background on local host.
 
     The job is run in the workdir (usually in /tmp).
     """
-    _schema = Schema(Version(1, 2), {'id': SimpleItem(defvalue=-1, protected=1, copyable=0, doc='Process id.'),
-                                     'status': SimpleItem(defvalue=None, typelist=[None, str], protected=1, copyable=0, hidden=1, doc='*NOT USED*'),
-                                     'exitcode': SimpleItem(defvalue=None, typelist=[int, None], protected=1, copyable=0, doc='Process exit code.'),
-                                     'workdir': SimpleItem(defvalue='', protected=1, copyable=0, doc='Working directory.'),
-                                     'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Hostname where the job was submitted.'),
-                                     'wrapper_pid': SimpleItem(defvalue=-1, protected=1, copyable=0, hidden=1, doc='(internal) process id of the execution wrapper'),
-                                     'nice': SimpleItem(defvalue=0, doc='adjust process priority using nice -n command'),
-                                     'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel')
-                                     })
+    _schema = Schema(
+        Version(
+            1,
+            2),
+        {
+            'id': SimpleItem(
+                defvalue=-1,
+                protected=1,
+                copyable=0,
+                doc='Process id.'),
+            'status': SimpleItem(
+                defvalue=None,
+                typelist=[
+                    None,
+                    str],
+                protected=1,
+                copyable=0,
+                hidden=1,
+                doc='*NOT USED*'),
+            'exitcode': SimpleItem(
+                defvalue=None,
+                typelist=[
+                    int,
+                    None],
+                protected=1,
+                copyable=0,
+                doc='Process exit code.'),
+            'workdir': SimpleItem(
+                defvalue='',
+                protected=1,
+                copyable=0,
+                doc='Working directory.'),
+            'actualCE': SimpleItem(
+                defvalue='',
+                protected=1,
+                copyable=0,
+                doc='Hostname where the job was submitted.'),
+            'wrapper_pid': SimpleItem(
+                defvalue=-1,
+                protected=1,
+                copyable=0,
+                hidden=1,
+                doc='(internal) process id of the execution wrapper'),
+            'nice': SimpleItem(
+                defvalue=0,
+                doc='adjust process priority using nice -n command'),
+            'force_parallel': SimpleItem(
+                defvalue=False,
+                doc='should jobs really be submitted in parallel')})
     _category = 'backends'
     _name = 'Local'
 
@@ -48,7 +89,13 @@ class Localhost(IBackend):
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
         """ Overload master_submit to avoid parallel submission with Interactive backend"""
-        return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, self.force_parallel)
+        return IBackend.master_submit(
+            self,
+            rjobs,
+            subjobconfigs,
+            masterjobconfig,
+            keep_going,
+            self.force_parallel)
 
     def submit(self, jobconfig, master_input_sandbox):
         prepared = self.preparejob(jobconfig, master_input_sandbox)
@@ -183,20 +230,23 @@ class Localhost(IBackend):
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
+        fileutils = File(inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR)
 
         sharedfiles = jobconfig.getSharedFiles()
 
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
+        subjob_input_sandbox = job.createPackedInputSandbox(
+            jobconfig.getSandboxFiles() + [fileutils])
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         if self.nice:
             appscriptpath = ['nice', '-n %d' % self.nice] + appscriptpath
         if self.nice < 0:
-            logger.warning('increasing process priority is often not allowed, your job may fail due to this')
+            logger.warning(
+                'increasing process priority is often not allowed, your job may fail due to this')
 
         sharedoutputpath = job.getOutputWorkspace().getPath()
-        ## FIXME DON'T just use the blind list here, request the list of files to be in the output from a method.
+        # FIXME DON'T just use the blind list here, request the list of files to
+        # be in the output from a method.
         outputpatterns = jobconfig.outputbox
         environment = dict() if jobconfig.env is None else jobconfig.env
 
@@ -204,8 +254,12 @@ class Localhost(IBackend):
         workdir = tempfile.mkdtemp(dir=config['location'])
 
         import inspect
-        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                        'LocalHostExec.py.template')
+        script_location = os.path.join(
+            os.path.dirname(
+                os.path.abspath(
+                    inspect.getfile(
+                        inspect.currentframe()))),
+            'LocalHostExec.py.template')
 
         from GangaCore.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '')
@@ -216,14 +270,30 @@ class Localhost(IBackend):
         from GangaCore.Utility.Config import getConfig
         jobidRepr = repr(job.getFQID('.'))
 
-
-        script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, ''))
-        script = script.replace('###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, ''))
-        script = script.replace('###CREATEINPUTDATALIST###', getWNCodeForInputdataListCreation(job, ''))
+        script = script.replace(
+            '###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(
+                job, [
+                    'stdout', 'stderr', '__syslog__'], jobidRepr))
+        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',
+                                getWNCodeForOutputPostprocessing(job, ''))
+        script = script.replace(
+            '###DOWNLOADINPUTFILES###',
+            getWNCodeForDownloadingInputFiles(
+                job,
+                ''))
+        script = script.replace(
+            '###CREATEINPUTDATALIST###',
+            getWNCodeForInputdataListCreation(
+                job,
+                ''))
 
         script = script.replace('###APPLICATION_NAME###', repr(getName(job.application)))
-        script = script.replace('###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox + sharedfiles))
+        script = script.replace(
+            '###INPUT_SANDBOX###',
+            repr(
+                subjob_input_sandbox +
+                master_input_sandbox +
+                sharedfiles))
         script = script.replace('###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
         script = script.replace('###APPSCRIPTPATH###', repr(appscriptpath))
         script = script.replace('###OUTPUTPATTERNS###', str(outputpatterns))
@@ -254,7 +324,8 @@ class Localhost(IBackend):
             # group, we can use this to kill all processes in the group
             os.kill(-self.wrapper_pid, signal.SIGKILL)
         except OSError as x:
-            logger.warning('while killing wrapper script for job %s: pid=%d, %s', job.getFQID('.'), self.wrapper_pid, str(x))
+            logger.warning('while killing wrapper script for job %s: pid=%d, %s',
+                           job.getFQID('.'), self.wrapper_pid, str(x))
             ok = False
 
         # waitpid to avoid zombies
@@ -345,17 +416,22 @@ class Localhost(IBackend):
                     # FIXME: for some strange reason the logger DOES NOT LOG (checked in python 2.3 and 2.5)
                     # print 'logger problem', logger.name
                     # print 'logger',logger.getEffectiveLevel()
-                    logger.critical('wrapper script for job %s exit with code %d', str(j.getFQID('.')), ws[1])
-                    logger.critical('report this as a bug at https://github.com/ganga-devs/ganga/issues/')
+                    logger.critical(
+                        'wrapper script for job %s exit with code %d', str(
+                            j.getFQID('.')), ws[1])
+                    logger.critical(
+                        'report this as a bug at https://github.com/ganga-devs/ganga/issues/')
                     j.updateStatus('failed')
             except OSError as x:
                 if x.errno != errno.ECHILD:
-                    logger.warning('cannot do waitpid for %d: %s', stripProxy(j.backend).wrapper_pid, str(x))
+                    logger.warning(
+                        'cannot do waitpid for %d: %s', stripProxy(
+                            j.backend).wrapper_pid, str(x))
 
             # if the exit code was collected for the application get the exit
             # code back
 
-            if not exitcode is None:
+            if exitcode is not None:
                 # status file indicates that the application finished
                 j.backend.exitcode = exitcode
 
@@ -370,4 +446,3 @@ class Localhost(IBackend):
                 # j.outputdata.fill()
 
                 j.backend.remove_workdir()
-

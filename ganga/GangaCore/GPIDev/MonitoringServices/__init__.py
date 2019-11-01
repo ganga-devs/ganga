@@ -1,14 +1,13 @@
 ##################################################
 # retrieve and cache monitoring classes by name
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig
+from GangaCore.GPIDev.MonitoringServices.Composite import CompositeMonitoringService
+from GangaCore.GPIDev.Adapters.IMonitoringService import IMonitoringService
+from GangaCore.Core.exceptions import GangaException
 _mon_classes = {}
 
-from GangaCore.Core.exceptions import GangaException
-from GangaCore.GPIDev.Adapters.IMonitoringService import IMonitoringService
-from GangaCore.GPIDev.MonitoringServices.Composite import CompositeMonitoringService
 
-from GangaCore.Utility.Config import getConfig
-
-from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 c = getConfig('MonitoringServices')
@@ -40,10 +39,15 @@ def getMonitoringClass(mclassname):
 
             try:
                 if not issubclass(monitoring_class, IMonitoringService):
-                    raise MonitoringServiceError('%s is not IMonitoringService subclass while loading %s' % (classname, mclassname))
+                    raise MonitoringServiceError(
+                        '%s is not IMonitoringService subclass while loading %s' %
+                        (classname, mclassname))
             except TypeError as err:
                 logger.debug("TypeError1: %s" % str(err))
-                raise MonitoringServiceError('%s (%s) is not IMonitoringService subclass while loading %s' % (classname, str(type(monitoring_class)), mclassname))
+                raise MonitoringServiceError(
+                    '%s (%s) is not IMonitoringService subclass while loading %s' %
+                    (classname, str(
+                        type(monitoring_class)), mclassname))
 
             # store the modname as class variable
             monitoring_class._mod_name = modname
@@ -55,12 +59,14 @@ def getMonitoringClass(mclassname):
             raise MonitoringServiceError('%s while loading %s' % (str(err), mclassname))
         except KeyError as err:
             logger.debug("KeyError %s" % str(err))
-            raise MonitoringServiceError('class %s not found while loading %s' % (classname, mclassname))
+            raise MonitoringServiceError(
+                'class %s not found while loading %s' %
+                (classname, mclassname))
 
 
 def findMonitoringClassesName(job):
     """
-    Return a comma separted list of class names for 
+    Return a comma separted list of class names for
     a gived job based on its backend and application names.
     """
 
@@ -109,15 +115,15 @@ def findMonitoringClassesName(job):
 
 def getMonitoringObject(job):
     """
-    Composite pattern: 
-     return a wrapped object implementing the IMonitoringService which contains a 
+    Composite pattern:
+     return a wrapped object implementing the IMonitoringService which contains a
      list of IMonitoringServices inside and delegating the interface methods to each of them
     """
     # read from configuration
     names = [name.strip() for name in findMonitoringClassesName(job).split(',') if name.strip()]
     # get classes, jobs and configs
     monClasses = []
-    for  name in names:
+    for name in names:
         try:
             this_class = getMonitoringClass(name)
         except MonitoringServiceError as err:
@@ -128,4 +134,3 @@ def getMonitoringObject(job):
     jobs = [job] * len(monClasses)
     configs = [monClass.getConfig() for monClass in monClasses]
     return CompositeMonitoringService(monClasses, jobs, configs)
-

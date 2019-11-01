@@ -3,6 +3,10 @@
 #
 # $Id: TestTransitions.py,v 1.1 2008-07-17 16:41:16 moscicki Exp $
 ##########################################################################
+from GangaTest.Framework.utils import sleep_until_completed
+from GangaTest.Framework.tests import GangaGPITestCase
+from GangaCore.Utility.Plugin import allPlugins
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Schema import *
 
 from GangaCore.Lib.Executable import Executable, RTHandler
@@ -29,14 +33,9 @@ class MockExeApplication(Executable):
         self.called = True
 
 
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('MockExeApplication', 'Local', RTHandler)
 
-from GangaCore.Utility.Plugin import allPlugins
 allPlugins.add(MockExeApplication, 'applications', 'MockExeApplication')
-
-from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed
 
 
 class TestTransitions(GangaGPITestCase):

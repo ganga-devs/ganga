@@ -28,14 +28,17 @@ def require_credential(method):
         try:
             cred = credential_store[cred_req]
         except KeyError:
-            if isinstance(threading.current_thread(), threading._MainThread):  # threading.main_thread() in Python 3.4
+            if isinstance(threading.current_thread(),
+                          threading._MainThread):  # threading.main_thread() in Python 3.4
                 logger.warning('Required credential [%s] not found in store', cred_req)
                 cred = credential_store.create(cred_req, create=True)
             else:
-                raise CredentialsError('Cannot get proxy which matches requirements {0}'.format(cred_req))
+                raise CredentialsError(
+                    'Cannot get proxy which matches requirements {0}'.format(cred_req))
 
         if not cred.is_valid():
-            if isinstance(threading.current_thread(), threading._MainThread):  # threading.main_thread() in Python 3.4
+            if isinstance(threading.current_thread(),
+                          threading._MainThread):  # threading.main_thread() in Python 3.4
                 logger.info('Found credential [%s] but it is invalid. Trying to renew...', cred)
                 cred.renew()
             else:
@@ -43,5 +46,3 @@ def require_credential(method):
 
         return method(self, *args, **kwargs)
     return cred_wrapped_method
-
-

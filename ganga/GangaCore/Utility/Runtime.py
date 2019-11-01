@@ -13,6 +13,7 @@
 #                    configuration parameter defining search path
 #                    to be passed as arument
 
+import GangaCore.Utility.logging
 from GangaCore.Core.exceptions import PluginError
 
 from GangaCore.Utility.util import importName
@@ -21,7 +22,6 @@ from GangaCore.Utility.util import importName
 from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
 allRuntimes = oDict()
 
-import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger(modulename=1)
 
 
@@ -64,7 +64,7 @@ def getScriptPath(name="", searchPath=""):
 def getSearchPath(configPar="SCRIPTS_PATH"):
     """Determine search path from configuration parameter
 
-       Argument: 
+       Argument:
           configPar : Name of configuration parameter defining search path
 
        Return value: Search path"""
@@ -122,7 +122,8 @@ class RuntimePackage(object):
 
         if self.name in allRuntimes:
             if allRuntimes[self.name].path != self.path:
-                logger.warning('possible clash: runtime "%s" already exists at path "%s"', self.name, allRuntimes[self.name].path)
+                logger.warning('possible clash: runtime "%s" already exists at path "%s"',
+                               self.name, allRuntimes[self.name].path)
 
         allRuntimes[self.path] = self
 
@@ -144,7 +145,10 @@ class RuntimePackage(object):
             if self.syspath:
                 if self.modpath.find(self.syspath) == -1:
                     logger.warning(
-                        "runtime '%s' imported from '%s' but specified path is '%s'. You might be getting different code than expected!", self.name, self.modpath, self.syspath)
+                        "runtime '%s' imported from '%s' but specified path is '%s'. You might be getting different code than expected!",
+                        self.name,
+                        self.modpath,
+                        self.syspath)
             else:
                 logger.debug(
                     "runtime package %s imported from %s", self.name, self.modpath)
@@ -198,12 +202,12 @@ class RuntimePackage(object):
             template_pathname = os.path.join(self.modpath, 'templates')
             if os.path.isdir(template_pathname):
                 establishNamedTemplates(template_registryname,
-       template_pathname,
-       "Registry for '%s' NamedTemplates" % self.name.strip(
-           'Ganga'),
-       file_ext=file_ext,
-       pickle_files=pickle_files)
-        except:
+                                        template_pathname,
+                                        "Registry for '%s' NamedTemplates" % self.name.strip(
+                                            'Ganga'),
+                                        file_ext=file_ext,
+                                        pickle_files=pickle_files)
+        except BaseException:
             logger.debug('failed to load named template registry')
             raise
 
@@ -211,13 +215,22 @@ class RuntimePackage(object):
         try:
             import os.path
             if os.path.isfile(os.path.join(self.modpath, 'TEMPLATES.py')):
-                exec(compile(open(os.path.join(self.modpath, 'TEMPLATES.py')).read(), os.path.join(self.modpath, 'TEMPLATES.py'), 'exec'), globals)
+                exec(
+                    compile(
+                        open(
+                            os.path.join(
+                                self.modpath,
+                                'TEMPLATES.py')).read(),
+                        os.path.join(
+                            self.modpath,
+                            'TEMPLATES.py'),
+                        'exec'),
+                    globals)
             else:
                 logger.debug("Problems adding templates for runtime package %s",
                              self.name)
         except Exception as x:
-            logger.debug\
-                ("Problems adding templates for runtime package %s", self.name)
+            logger.debug("Problems adding templates for runtime package %s", self.name)
             logger.debug(x)
 
     def shutdown(self):
@@ -257,19 +270,29 @@ def initRuntimePackages():
     from GangaCore.Utility.Config.Config import getConfig
     config = getConfig('Configuration')
 
-    #if config['IgnoreRuntimeWarnings']:
+    # if config['IgnoreRuntimeWarnings']:
     #    import warnings
     #    warnings.filterwarnings(action="ignore", category=RuntimeWarning)
-
 
     import inspect
     import os.path
 
-    GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
-    def transform(x):
-        return os.path.normpath(GangaCore.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
+    GangaRootPath = os.path.normpath(
+        os.path.join(
+            os.path.dirname(
+                os.path.abspath(
+                    inspect.getfile(
+                        inspect.currentframe()))),
+            '../..'))
 
-    paths = list(map(transform, [_f for _f in [os.path.expandvars(os.path.expanduser(x)) for x in config['RUNTIME_PATH'].split(':')] if _f]))
+    def transform(x):
+        return os.path.normpath(
+            GangaCore.Utility.files.expandfilename(
+                os.path.join(
+                    GangaRootPath, x)))
+
+    paths = list(map(transform, [_f for _f in [os.path.expandvars(
+        os.path.expanduser(x)) for x in config['RUNTIME_PATH'].split(':')] if _f]))
 
     for path in paths:
         r = RuntimePackage(path)
@@ -294,7 +317,7 @@ def loadPlugins(environment):
             raise err
         try:
             r.loadNamedTemplates(env_dict, GangaCore.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
-          GangaCore.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
+                                 GangaCore.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
         except Exception as err:
             logger.error('problems with loading Named Templates for %s', n)
             logger.error('Reason: %s' % str(err))
@@ -306,7 +329,10 @@ def loadPlugins(environment):
         except Exception as err:
             logger.error('problems with loading Plugin %s', n)
             logger.error('Reason: %s' % str(err))
-            raise PluginError("Failed to load plugin: %s. Ganga will now shutdown to prevent job corruption." % n)
+            raise PluginError(
+                "Failed to load plugin: %s. Ganga will now shutdown to prevent job corruption." %
+                n)
+
 
 def autoPopulateGPI(my_interface=None):
     """
@@ -326,6 +352,7 @@ def autoPopulateGPI(my_interface=None):
                 if n != cls.__name__:
                     exportToInterface(my_interface, cls.__name__, cls, 'Classes')
                 exportToInterface(my_interface, n, cls, 'Classes')
+
 
 def setPluginDefaults(my_interface=None):
     """
@@ -352,7 +379,6 @@ def setPluginDefaults(my_interface=None):
             else:
                 logger.warning("do not understand option %s in [Plugins]", opt)
 
-
     # set alias for default Batch plugin (it will not appear in the
     # configuration)
 
@@ -361,7 +387,9 @@ def setPluginDefaults(my_interface=None):
         batch_default = allPlugins.find('backends', batch_default_name)
     except Exception as x:
         from GangaCore.Utility.Config import ConfigError
-        raise ConfigError('Check configuration. Unable to set default Batch backend alias (%s)' % str(x))
+        raise ConfigError(
+            'Check configuration. Unable to set default Batch backend alias (%s)' %
+            str(x))
     else:
         allPlugins.add(batch_default, 'backends', 'Batch')
         from GangaCore.Runtime.GPIexport import exportToInterface
@@ -369,6 +397,3 @@ def setPluginDefaults(my_interface=None):
             import GangaCore.GPI
             my_interface = GangaCore.GPI
         exportToInterface(my_interface, 'Batch', batch_default, 'Classes')
-
-
-

@@ -13,14 +13,26 @@ from GangaCore.GPIDev.Base.Proxy import getName
 from collections import namedtuple
 
 logger = getLogger()
-QueueElement = namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
-CommandInput = namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
+QueueElement = namedtuple(
+    'QueueElement', [
+        'priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
+CommandInput = namedtuple('CommandInput',
+                          ['command',
+                           'timeout',
+                           'env',
+                           'cwd',
+                           'shell',
+                           'python_setup',
+                           'eval_includes',
+                           'update_env'])
+
+
 class FunctionInput(namedtuple('FunctionInput', ['function', 'args', 'kwargs'])):
     def __gt__(self, other):
         pass
+
     def __lt__(self, other):
         pass
-
 
 
 class WorkerThreadPool(object):
@@ -33,7 +45,7 @@ class WorkerThreadPool(object):
 
     def __init__(self, num_worker_threads=None, worker_thread_prefix='Worker_'):
         if num_worker_threads is None:
-            num_worker_threads=getConfig('Queues')['NumWorkerThreads']
+            num_worker_threads = getConfig('Queues')['NumWorkerThreads']
         self.__queue = queue.PriorityQueue()
         self.__worker_threads = []
 
@@ -125,20 +137,28 @@ class WorkerThreadPool(object):
                 if issubclass(type(e), GangaException):
                     logger.error("%s" % e)
                 else:
-                    logger.error("Exception raised executing '%s' in Thread '%s':\n%s" % (thread._command, thread.gangaName, traceback.format_exc()))
+                    logger.error(
+                        "Exception raised executing '%s' in Thread '%s':\n%s" %
+                        (thread._command, thread.gangaName, traceback.format_exc()))
                     if item.fallback_func.function is not None:
                         if isinstance(item.fallback_func, FunctionInput):
                             thread._command = getName(item.fallback_func.function)
                             thread._timeout = 'N/A'
                             try:
-                                item.fallback_func.function(e, *item.fallback_func.args, **item.fallback_func.kwargs)
+                                item.fallback_func.function(
+                                    e, *item.fallback_func.args, **item.fallback_func.kwargs)
                             except Exception as x:
                                 if not issubclass(type(e), GangaException):
-                                    logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s" % (thread._command, thread.gangaName, traceback.format_exc()))
+                                    logger.error(
+                                        "Exception raised in fallback function '%s' of Thread '%s':\n%s" %
+                                        (thread._command, thread.gangaName, traceback.format_exc()))
                                 else:
                                     logger.error("%s" % x)
                         else:
-                            logger.error("Unrecognised fallback_func type: '%s'" % repr(item.fallback_func))
+                            logger.error(
+                                "Unrecognised fallback_func type: '%s'" %
+                                repr(
+                                    item.fallback_func))
                             logger.error("                       expected: 'FunctionInput'")
             else:
                 if item.callback_func.function is not None:
@@ -155,7 +175,10 @@ class WorkerThreadPool(object):
                             else:
                                 logger.error("%s" % e)
                     else:
-                        logger.error("Unrecognised callback_func type: '%s'" % repr(item.callback_func))
+                        logger.error(
+                            "Unrecognised callback_func type: '%s'" %
+                            repr(
+                                item.callback_func))
                         logger.error("                       expected: 'FunctionInput'")
             finally:
                 # unregister as a working thread bcoz free
@@ -173,19 +196,19 @@ class WorkerThreadPool(object):
                      name=None):
 
         if not isinstance(function, collections.Callable):
-            logger.error('Only a python callable object may be added to the queue using the add_function() method')
+            logger.error(
+                'Only a python callable object may be added to the queue using the add_function() method')
             return
         if self.isfrozen() is True:
             if not self._shutdown:
                 logger.warning("Cannot Add Process as Queue is frozen!")
             return
-        self.__queue.put(QueueElement(priority=priority,
-                                      command_input=FunctionInput(
-                                          function, args, kwargs),
-                                      callback_func=FunctionInput(
-                                          callback_func, callback_args, callback_kwargs),
-                                      fallback_func=FunctionInput(fallback_func, fallback_args, fallback_kwargs), name=name
-                                      ))
+        self.__queue.put(
+            QueueElement(
+                priority=priority, command_input=FunctionInput(
+                    function, args, kwargs), callback_func=FunctionInput(
+                    callback_func, callback_args, callback_kwargs), fallback_func=FunctionInput(
+                    fallback_func, fallback_args, fallback_kwargs), name=name))
 
     def add_process(self,
                     command, timeout=None, env=None, cwd=None, shell=False,
@@ -201,13 +224,27 @@ class WorkerThreadPool(object):
             if self._shutdown:
                 logger.warning("Cannot Add Process as Queue is frozen!")
             return
-        self.__queue.put(QueueElement(priority=priority,
-                                      command_input=CommandInput(
-                                          command, timeout, env, cwd, shell, python_setup, eval_includes, update_env),
-                                      callback_func=FunctionInput(
-                                          callback_func, callback_args, callback_kwargs),
-                                      fallback_func=FunctionInput(fallback_func, fallback_args, fallback_kwargs), name=name
-                                      ))
+        self.__queue.put(
+            QueueElement(
+                priority=priority,
+                command_input=CommandInput(
+                    command,
+                    timeout,
+                    env,
+                    cwd,
+                    shell,
+                    python_setup,
+                    eval_includes,
+                    update_env),
+                callback_func=FunctionInput(
+                    callback_func,
+                    callback_args,
+                    callback_kwargs),
+                fallback_func=FunctionInput(
+                    fallback_func,
+                    fallback_args,
+                    fallback_kwargs),
+                name=name))
 
     def map(self, function, *iterables):
         if not isinstance(function, collections.Callable):
@@ -275,4 +312,3 @@ class WorkerThreadPool(object):
         return
 
 ###################################################################
-

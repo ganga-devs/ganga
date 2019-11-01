@@ -155,5 +155,3 @@ class VPrinterOld(object):
 
     def quote(self, x):
         return quoteValue(x, self.selection)
-
-

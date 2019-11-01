@@ -7,6 +7,7 @@ from GangaCore.GPIDev.Base.Proxy import stripProxy
 from GangaCore.testlib.decorators import add_config
 from GangaCore.Core.exceptions import GangaAttributeError
 
+
 @add_config([('TestingFramework', 'AutoCleanup', 'False')])
 @pytest.mark.usefixtures('gpi')
 class TestLazyLoading(object):
@@ -93,4 +94,3 @@ class TestLazyLoading(object):
         raw_j = stripProxy(jobs(0))
 
         assert not raw_j._getRegistry().has_loaded(raw_j)
-

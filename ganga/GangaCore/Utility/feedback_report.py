@@ -21,14 +21,20 @@ def _initconfigFeed():
         # constructor
         logger.debug("Import Error: %s" % err)
         pass
+
+
 _initconfigFeed()
 
 
 def report(job=None):
     """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
     import mimetypes
-    import urllib.request, urllib.parse, urllib.error
-    import urllib.request, urllib.error, urllib.parse
+    import urllib.request
+    import urllib.parse
+    import urllib.error
+    import urllib.request
+    import urllib.error
+    import urllib.parse
     import http.client
     import string
     import random
@@ -206,7 +212,7 @@ def report(job=None):
                 try:
                     fileText = fileToRead.read()
                     import re
-                    pattern = "File\(name=\'(.+?)\'"
+                    pattern = r"File\(name=\'(.+?)\'"
                     matches = re.findall(pattern, fileText)
 
                     for fileName in matches:
@@ -497,8 +503,11 @@ def report(job=None):
                         import os
                         from GangaCore.Utility.Config import getConfig
                         from GangaCore.Utility.files import expandfilename
-                        shared_path = os.path.join(expandfilename(getConfig(
-                            'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+                        shared_path = os.path.join(
+                            expandfilename(
+                                getConfig('Configuration')['gangadir']),
+                            'shared',
+                            getConfig('Configuration')['user'])
                         shareddir = os.path.join(
                             shared_path, job.application.is_prepared.name)
                         if os.path.isdir(shareddir):
@@ -597,13 +606,20 @@ def report(job=None):
             # copy shared area of the task
             try:
                 if len(task.transforms) > 0:
-                    if hasattr(task.transforms[0], 'application') and hasattr(task.transforms[0].application, 'is_prepared'):
+                    if hasattr(
+                            task.transforms[0],
+                            'application') and hasattr(
+                            task.transforms[0].application,
+                            'is_prepared'):
                         if task.transforms[0].application.is_prepared is not None and task.transforms[0].application.is_prepared is not True:
                             import os
                             from GangaCore.Utility.Config import getConfig
                             from GangaCore.Utility.files import expandfilename
-                            shared_path = os.path.join(expandfilename(getConfig(
-                                'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+                            shared_path = os.path.join(
+                                expandfilename(
+                                    getConfig('Configuration')['gangadir']),
+                                'shared',
+                                getConfig('Configuration')['user'])
                             shareddir = os.path.join(
                                 shared_path, task.transforms[0].application.is_prepared.name)
                             if os.path.isdir(shareddir):
@@ -654,7 +670,8 @@ def report(job=None):
 
         # Copy thread stack trace file
         try:
-            thread_trace_source_path = os.path.join(getConfig('Configuration')['gangadir'], thread_trace_file_name)
+            thread_trace_source_path = os.path.join(
+                getConfig('Configuration')['gangadir'], thread_trace_file_name)
             thread_trace_target_path = os.path.join(fullLogDirName, thread_trace_file_name)
             shutil.copyfile(thread_trace_source_path, thread_trace_target_path)
         except (OSError, IOError) as err:
@@ -688,7 +705,11 @@ def report(job=None):
         # print the error if there is something
         if os.path.exists(errorLogPath):
             logger.error('')
-            logger.error('An error occured while collecting report information : ' + open(errorLogPath, 'r').read())
+            logger.error(
+                'An error occured while collecting report information : ' +
+                open(
+                    errorLogPath,
+                    'r').read())
             logger.error('')
 
         # delete the errorfile from user's pc

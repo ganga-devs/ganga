@@ -106,7 +106,9 @@ class JobRegistry(Registry):
             return this_job.status in ["new"]
 
         def _killJob(this_job):
-            logger.warning("Auto-Failing job in bad state: %s was %s" % (this_job.getFQID('.'), this_job.status))
+            logger.warning(
+                "Auto-Failing job in bad state: %s was %s" %
+                (this_job.getFQID('.'), this_job.status))
             logger.warning("To try this job again resubmit or use a backend.reset()")
             this_job.force_status('failed')
 
@@ -123,11 +125,12 @@ class JobRegistry(Registry):
                 if num_loaded is 5:
                     continue
                 try:
-                    num_loaded+=1
+                    num_loaded += 1
                     self._load(v)
                     logger.debug("Loaded job: %s" % v.getFQID('.'))
                 except RegistryLockError:
-                    logger.debug("Failed to load job, it's potentially being used by another ganga sesion")
+                    logger.debug(
+                        "Failed to load job, it's potentially being used by another ganga sesion")
                     continue
                 if v.subjobs:
                     haveKilled = False
@@ -146,13 +149,13 @@ class JobRegistry(Registry):
                 if num_checked is 5:
                     continue
                 try:
-                    num_checked+=1
+                    num_checked += 1
                     self._load(v)
                     logger.debug("Loaded job: %s" % v.getFQID('.'))
                 except RegistryLockError:
-                    logger.debug("Failed to load job, it's potentially being used by another ganga sesion")
+                    logger.debug(
+                        "Failed to load job, it's potentially being used by another ganga sesion")
                     continue
-
 
     def shutdown(self):
         self.flush_thread.join()
@@ -169,6 +172,7 @@ class JobRegistry(Registry):
             logger.debug("Exception in _remove: %s" % str(err))
             pass
 
+
 class JobRegistrySlice(RegistrySlice):
 
     def __init__(self, name):
@@ -179,11 +183,13 @@ class JobRegistrySlice(RegistrySlice):
         bg = Background()
         try:
             status_colours = config['jobs_status_colours']
-            self.status_colours = dict([(k, eval(v, {'fx': fx, 'fg': fg, 'bg': bg})) for k, v in status_colours.items()])
+            self.status_colours = dict(
+                [(k, eval(v, {'fx': fx, 'fg': fg, 'bg': bg})) for k, v in status_colours.items()])
         except Exception as x:
             logger.warning('configuration problem with colour specification: "%s"', str(x))
             status_colours = config.options['jobs_status_colours'].default_value
-            self.status_colours = dict([(k, eval(v, {'fx': fx, 'fg': fg, 'bg': bg})) for k, v in status_colours.items()])
+            self.status_colours = dict(
+                [(k, eval(v, {'fx': fx, 'fg': fg, 'bg': bg})) for k, v in status_colours.items()])
         self.fx = fx
         self._proxyClass = JobRegistrySliceProxy
 
@@ -244,7 +250,8 @@ class JobRegistrySlice(RegistrySlice):
             raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
 
         if not len(ids) in [1, 2]:
-            raise RegistryAccessError('Too many ids in the access tuple, 2-tuple (job,subjob) only supported')
+            raise RegistryAccessError(
+                'Too many ids in the access tuple, 2-tuple (job,subjob) only supported')
 
         try:
             ids = [int(this_id) for this_id in ids]
@@ -265,7 +272,8 @@ class JobRegistrySlice(RegistrySlice):
             try:
                 return _wrap(j.subjobs[ids[1]])
             except IndexError:
-                raise RegistryKeyError('Subjob %s not found' % ('.'.join([str(_id) for _id in ids])))
+                raise RegistryKeyError('Subjob %s not found' %
+                                       ('.'.join([str(_id) for _id in ids])))
         else:
             return _wrap(j)
 
@@ -288,23 +296,23 @@ class JobRegistrySlice(RegistrySlice):
 
 class JobRegistrySliceProxy(RegistrySliceProxy):
 
-    """This object is an access list of jobs defined in GangaCore. 
+    """This object is an access list of jobs defined in GangaCore.
 
-    'jobs' represents all existing jobs, so a subset of jobs may 
-    be created by slicing: 
+    'jobs' represents all existing jobs, so a subset of jobs may
+    be created by slicing:
     jobs[-10:]      (to get the last ten jobs)
 
     or selecting:
     jobs.select(status='new')      (to select all new jobs)
     jobs.select(10,20)      (to select those with IDs between 10 and 20)
 
-    A new access list is created as a result of a slice/select operation. 
+    A new access list is created as a result of a slice/select operation.
     The new access list may be further restricted.
 
     This object allows one to perform collective operations such as
     killing or submiting all jobs in the current range. Setting the optional
-    parameter keep_going=True (the default) results in the operation continuing 
-    to process all jobs, irrespective of any errors encountered. If keep_going=False 
+    parameter keep_going=True (the default) results in the operation continuing
+    to process all jobs, irrespective of any errors encountered. If keep_going=False
     then the operation will stop with an Exception at the first error encountered.
 
 
@@ -354,6 +362,7 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(stripProxy(self).__getitem__(_unwrap(x)))
 
+
 def jobSlice(joblist):
     """create a 'JobSlice' from a list of jobs
     example: jobSlice([j for j in jobs if j.name.startswith("T1:")])"""
@@ -362,4 +371,3 @@ def jobSlice(joblist):
     return _wrap(this_slice)
 
 # , "Create a job slice from a job list") exported to the Runtime bootstrap
-

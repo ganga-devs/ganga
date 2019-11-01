@@ -14,7 +14,10 @@ def test_output():
 def test_execute():
     ''' This tests that the cwd returned from the output is what is requested in the script '''
     # Test shell vs python mode
-    assert execute('import os\noutput(os.getcwd())', cwd=os.getcwd(), shell=False).strip() == os.getcwd()
+    assert execute(
+        'import os\noutput(os.getcwd())',
+        cwd=os.getcwd(),
+        shell=False).strip() == os.getcwd()
 
 
 def test_execute_timeouts():
@@ -24,7 +27,11 @@ def test_execute_timeouts():
     assert execute('while True: pass', timeout=1, shell=False) == 'Command timed out!'
 
     # Test timeout doesn't hinder a normal command
-    assert execute('import os\noutput(os.getcwd())', timeout=10, cwd=os.getcwd(), shell=False).strip() == os.getcwd()
+    assert execute(
+        'import os\noutput(os.getcwd())',
+        timeout=10,
+        cwd=os.getcwd(),
+        shell=False).strip() == os.getcwd()
 
     # Test timeout doesn't delay normal command
     assert timeit.timeit(
@@ -39,6 +46,7 @@ def test_execute_cwd():
     ''' This tests that the cwd of the script is changed as per the arguments to execute '''
     # Test changing dir
     assert execute('import os\noutput(os.getcwd())', cwd='/', shell=False).strip() == '/'
+
 
 """
 def test_execute_env():
@@ -67,6 +75,7 @@ def test_execute_env():
     assert 'NEWTEST' in env
 """
 
+
 def test_execute_output():
     ''' This tests the abilty to send complex objects back through the output stream to Ganga '''
 
@@ -74,4 +83,3 @@ def test_execute_output():
     d = execute('import datetime\noutput(datetime.datetime(2013,12,12))', shell=False)
     assert hasattr(d, 'month')
     assert d.month == 12
-

@@ -146,8 +146,7 @@ def fullpath(filename=""):
 
        Return value: String giving absolute path to file
     """
-    filepath = os.path.abspath\
-        (os.path.expandvars(os.path.expanduser(filename)))
+    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filename)))
     return filepath
 
 
@@ -156,7 +155,7 @@ def load(filename="", returnList=True):
 
        Arguments:
           filename   - String [default ''] giving path to a file containing
-                       definitions of Ganga objects, such as produced with 
+                       definitions of Ganga objects, such as produced with
                        the 'export' function
                        => The path can be absolute, relative, or relative
                           to a directory in the search path LOAD_SCRIPTS,
@@ -220,4 +219,3 @@ def load(filename="", returnList=True):
         returnValue = objectList
 
     return returnValue
-

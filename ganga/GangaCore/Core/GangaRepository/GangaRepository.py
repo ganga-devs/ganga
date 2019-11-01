@@ -20,6 +20,7 @@ from GangaCore.GPIDev.Base.Proxy import getName
 
 logger = getLogger()
 
+
 class GangaRepository(object):
 
     """ GangaRepository is the base class for repository backend implementations.
@@ -66,7 +67,7 @@ class GangaRepository(object):
 
     def add(self, objs, force_ids=None):
         """add(objects) --> list of object IDs in this repository
-        Add the given objects to the repository and return their IDs 
+        Add the given objects to the repository and return their IDs
         After successfully determining the id call _internal_setitem__(id,obj)
         for each id/object pair.
         WARNING: If forcing the IDs, no locking is done here!
@@ -82,7 +83,7 @@ class GangaRepository(object):
         Delete the objects specified by the ids from the repository.
         Assumes that the objects associated to the ids are locked (!)
         Call _internal_del__(id) for each id to remove the GangaObject
-        from the Registry 
+        from the Registry
         Raise KeyError
         Raise RepositoryError
         Args:
@@ -146,6 +147,8 @@ class GangaRepository(object):
 
 
 # Optional but suggested functions
+
+
     def get_lock_session(self, id):
         """get_lock_session(id)
         Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
@@ -178,7 +181,7 @@ class GangaRepository(object):
             category (str): This is the category the object belongs to
             classname (str): This is the name of the class of the object which is used to construct it
         """
-        compound_name = str(category+"_"+classname)
+        compound_name = str(category + "_" + classname)
         if compound_name not in self._found_classes:
             cls = allPlugins.find(category, classname)
             self._found_classes[compound_name] = cls
@@ -316,4 +319,3 @@ class GangaRepositoryTransient(object):
             obj (GangaObject): object we want to know if it's in memory or not
         """
         return True
-

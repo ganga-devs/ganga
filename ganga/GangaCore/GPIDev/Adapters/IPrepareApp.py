@@ -4,6 +4,8 @@
 # $Id: IApplication.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
 
+from GangaCore.Utility.files import expandfilename
+from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Adapters.IApplication import IApplication
 from GangaCore.Core.GangaRepository import getRegistry
 from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
@@ -17,18 +19,21 @@ import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger()
 
 
-from GangaCore.Utility.Config import getConfig
-from GangaCore.Utility.files import expandfilename
-
 config = getConfig("Preparable")
+
 
 class IPrepareApp(IApplication):
 
     """
     Base class for all applications which can be placed into a prepared\
-    state. 
+    state.
     """
-    _schema = Schema(Version(0, 0), {'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=1)})
+    _schema = Schema(
+        Version(
+            0, 0), {
+            'hash': SimpleItem(
+                defvalue=None, typelist=[
+                    None, str], hidden=1)})
     _category = 'applications'
     _name = 'PrepareApp'
     _hidden = 1
@@ -48,7 +53,7 @@ class IPrepareApp(IApplication):
     def prepare(self, force=False):
         """
         Base class for all applications which can be placed into a prepared\
-        state. 
+        state.
         Args:
             force (bool) : forces the prepare function to be called no matter what when True
         """
@@ -78,7 +83,11 @@ class IPrepareApp(IApplication):
         """
         Return the full path of the shared directory where files are placed
         """
-        share_folder = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+        share_folder = os.path.join(
+            expandfilename(
+                getConfig('Configuration')['gangadir']),
+            'shared',
+            getConfig('Configuration')['user'])
         if isinstance(self.is_prepared, ShareDir):
             return os.path.join(share_folder, self.is_prepared.name)
         else:
@@ -146,7 +155,7 @@ class IPrepareApp(IApplication):
         """Calculate the MD5 digest of the application's preparable attribute(s), and store
         that value in the application schema. The value is recalculated (and compared against
         the initial value) every time the application is written to the Ganga repository. This
-        allows warnings to be generated should an application's locked attributes be changed 
+        allows warnings to be generated should an application's locked attributes be changed
         post-preparation.
         Args:
             verify (bool) : If the hash is to be verified in the future True save it to the hash schema attribute
@@ -165,7 +174,7 @@ class IPrepareApp(IApplication):
         runProxyMethod(self, 'printPrepTree', sio)
         digest.update(sio.getvalue().encode('utf-8'))
         tmp = sio.getvalue()
-        if verify == False:
+        if not verify:
             self.hash = digest.hexdigest()
         else:
             # we return true if this is called with verify=True and the current hash is the same as that stored in the schema.
@@ -173,12 +182,12 @@ class IPrepareApp(IApplication):
             # the repository
             return digest.hexdigest() == self.hash
 
-    #printPrepTree is only ever run on applications, from within IPrepareApp.py
-    #if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
-    #see the relevant code in VPrinter to understand why
-    def printPrepTree(self, f=None, sel='preparable' ):
-        ## After fixing some bugs we are left with incompatible job hashes. This should be addressd before removing
-        ## This particular class!
+    # printPrepTree is only ever run on applications, from within IPrepareApp.py
+    # if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
+    # see the relevant code in VPrinter to understand why
+    def printPrepTree(self, f=None, sel='preparable'):
+        # After fixing some bugs we are left with incompatible job hashes. This should be addressd before removing
+        # This particular class!
         from GangaCore.GPIDev.Base.VPrinterOld import VPrinterOld
         self.accept(VPrinterOld(f, sel))
 
@@ -230,7 +239,7 @@ class IPrepareApp(IApplication):
 
     def checkPreparedHasParent(self, prepared_object):
         """
-        Function which is used to check if a prepared app has a parent in a registry 
+        Function which is used to check if a prepared app has a parent in a registry
         Args:
             prepared_object (IPrepareApp): object in a registry which manages a prepared state
         """
@@ -244,4 +253,3 @@ class IPrepareApp(IApplication):
             # logger.error(self.listShareDirContents(prepared_object.is_prepared.name))
         else:
             self.incrementShareCounter(prepared_object.is_prepared)
-

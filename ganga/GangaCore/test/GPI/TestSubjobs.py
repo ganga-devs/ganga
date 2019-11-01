@@ -8,7 +8,7 @@ class TestSubjobs(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts = [ ('TestingFramework', 'AutoCleanup', 'False') ]
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False')]
         super(TestSubjobs, self).setUp(extra_opts=extra_opts)
 
     def testLargeJobSubmission(self):
@@ -59,7 +59,8 @@ class TestSubjobs(GangaUnitTest):
 
         def flush_full_job():
             mj = jobs(0)
-            mj.comment = "Make sure I'm dirty " + ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+            mj.comment = "Make sure I'm dirty " + \
+                ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
             stripProxy(mj)._getRegistry()._flush([stripProxy(mj)])
 
         # Make sure the main job is fully loaded

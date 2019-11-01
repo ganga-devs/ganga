@@ -12,7 +12,7 @@ import sqlite3
 
 try:
     import pickle as pickle
-except:
+except BaseException:
     import pickle
 
 import GangaCore.Utility.logging
@@ -85,7 +85,7 @@ class GangaRepositorySQLite(GangaRepository):
         Raise RepositoryError"""
         ids = []
         # assume the ids are already locked by Registry
-        if not force_ids is None:
+        if force_ids is not None:
             if not len(objs) == len(force_ids):
                 raise RepositoryError(
                     self, "Internal Error: add with different number of objects and force_ids!")
@@ -97,11 +97,13 @@ class GangaRepositorySQLite(GangaRepository):
             data = pickle.dumps(self.constructDataDict(obj)).replace("'", "''")
             idx = pickle.dumps(objs[i]._index_cache).replace("'", "''")
             if force_ids is None:
-                self.cur.execute("INSERT INTO objects (id,classname,category,idx,data) VALUES (NULL,'%s','%s','%s','%s')" % (
-                    cls, cat, idx, data))
+                self.cur.execute(
+                    "INSERT INTO objects (id,classname,category,idx,data) VALUES (NULL,'%s','%s','%s','%s')" %
+                    (cls, cat, idx, data))
             else:
-                self.cur.execute("INSERT INTO objects (id,classname,category,idx,data) VALUES (%i,'%s','%s','%s','%s')" % (
-                    force_ids[i], cls, cat, idx, data))
+                self.cur.execute(
+                    "INSERT INTO objects (id,classname,category,idx,data) VALUES (%i,'%s','%s','%s','%s')" %
+                    (force_ids[i], cls, cat, idx, data))
             ids.append(self.cur.lastrowid)
             self._internal_setitem__(ids[i], objs[i])
         self.con.commit()
@@ -127,7 +129,7 @@ class GangaRepositorySQLite(GangaRepository):
             _id = int(e[0])
             if e[1] is None:  # deleted object
                 continue
-            if not _id in self.objects:
+            if _id not in self.objects:
                 obj = self._make_empty_object_(_id, e[2], e[1])
             else:
                 obj = self.objects[_id]
@@ -143,7 +145,8 @@ class GangaRepositorySQLite(GangaRepository):
     def delete(self, ids):
         for id in ids:
             self.cur.execute(
-                "UPDATE objects SET classname=NULL,category=NULL,idx=NULL,data=NULL WHERE id=%s" % (id))
+                "UPDATE objects SET classname=NULL,category=NULL,idx=NULL,data=NULL WHERE id=%s" %
+                (id))
             self._internal_del__(id)
         self.con.commit()
 

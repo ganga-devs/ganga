@@ -60,4 +60,5 @@ class TestQueuedSubmit(object):
             print(j.id, end=' ')
             import sys
             sys.stdout.flush()
-            assert run_until_completed(j, sleep_period=0.1), 'Timeout on job submission: job is still not finished'
+            assert run_until_completed(
+                j, sleep_period=0.1), 'Timeout on job submission: job is still not finished'

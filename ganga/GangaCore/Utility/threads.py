@@ -1,5 +1,7 @@
 
 
+from .util import GenericWrapper
+
 
 def execInThread(target, args=None, kwargs=None, timeout=None,
                  waitFlag=False, lock=(None, None),
@@ -34,11 +36,10 @@ def execInThread(target, args=None, kwargs=None, timeout=None,
 
 # ------------------------
 
-from .util import GenericWrapper
-
 
 class SynchronisedObject(GenericWrapper):
     __slots__ = list()
+
     def __init__(self, obj, ignore=None, lock=None):
         if ignore is None:
             ignore = ()

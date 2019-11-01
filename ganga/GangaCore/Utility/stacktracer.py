@@ -20,6 +20,7 @@ try:
     from pygments import highlight
     from pygments.formatters.html import HtmlFormatter
     from pygments.lexers.python import Python3TracebackLexer
+
     def highlight_trace(string):
         return highlight(string, Python3TracebackLexer(), HtmlFormatter(noclasses=True))
 except ImportError:
@@ -69,6 +70,7 @@ class TraceDumper(threading.Thread):
     This part was heavily based on code by
     `nagylzs <http://code.activestate.com/recipes/577334-how-to-debug-deadlocked-multi-threaded-programs/>`_
     """
+
     def __init__(self, path, interval, auto):
         # type: (str, int, bool) -> None
         """

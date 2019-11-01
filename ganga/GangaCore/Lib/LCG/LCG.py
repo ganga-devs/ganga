@@ -146,7 +146,7 @@ class LCG(IBackend):
             self.requirements = reqClass()
 
             logger.debug('load %s as LCGRequirements' % reqName)
-        except:
+        except BaseException:
             logger.debug('load default LCGRequirements')
 
         # dynamic sandbox cache object loading
@@ -157,7 +157,7 @@ class LCG(IBackend):
             scClass = vars(scModule)[scName]
             self.sandboxcache = scClass()
             logger.debug('load %s as SandboxCache' % scName)
-        except:
+        except BaseException:
             logger.debug('load default LCGSandboxCAche')
 
     def __setup_sandboxcache__(self, job):
@@ -261,7 +261,8 @@ class LCG(IBackend):
             if doUpload:
 
                 logger.warning(
-                    'The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file, config['BoundSandboxLimit']))
+                    'The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' %
+                    (file, config['BoundSandboxLimit']))
 
                 if self.sandboxcache.upload([abspath]):
                     remote_sandbox = self.sandboxcache.get_cached_files()[-1]
@@ -412,7 +413,8 @@ class LCG(IBackend):
             def process(self, node_info):
                 my_node_offset = node_info['offset']
                 my_node_jdls = node_info['jdls']
-                coll_jdl_name = '__jdlfile__%d_%d__' % (my_node_offset, my_node_offset + len(my_node_jdls))
+                coll_jdl_name = '__jdlfile__%d_%d__' % (
+                    my_node_offset, my_node_offset + len(my_node_jdls))
                 # compose master JDL for collection job
                 jdl_cnt = self.__make_collection_jdl__(my_node_jdls, offset=my_node_offset)
                 jdl_path = self.inpw.writefile(FileBuffer(coll_jdl_name, jdl_cnt))
@@ -467,7 +469,9 @@ class LCG(IBackend):
             data['jdls'] = node_jdls[ibeg:iend]
             mt_data.append(data)
 
-        myAlg = MyAlgorithm(self.credential_requirements, masterInputWorkspace=job.getInputWorkspace())
+        myAlg = MyAlgorithm(
+            self.credential_requirements,
+            masterInputWorkspace=job.getInputWorkspace())
         myData = Data(collection=mt_data)
 
         runner = MTRunner(name='lcg_jsubmit', algorithm=myAlg,
@@ -478,7 +482,8 @@ class LCG(IBackend):
         if len(runner.getDoneList()) < num_chunks:
             # not all bulk jobs are successfully submitted. canceling the
             # submitted jobs on WMS immediately
-            logger.error('some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
+            logger.error(
+                'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
             Grid.cancel_multiple(list(runner.getResults().values()), self.credential_requirements)
             return None
         else:
@@ -699,8 +704,16 @@ class LCG(IBackend):
         logger.debug('cancelling the master job.')
 
         # avoid killing master jobs in the final state
-        final_states = ['Aborted', 'Cancelled', 'Cleared',
-                        'Done (Success)', 'Done (Failed)', 'Done (Exit Code !=0)', 'Done(Success)', 'Done(Failed)', 'Done(Exit Code !=0)']
+        final_states = [
+            'Aborted',
+            'Cancelled',
+            'Cleared',
+            'Done (Success)',
+            'Done (Failed)',
+            'Done (Exit Code !=0)',
+            'Done(Success)',
+            'Done(Failed)',
+            'Done(Exit Code !=0)']
         myids = []
         if isStringLike(self.id):
             if job.backend.status not in final_states:
@@ -743,7 +756,8 @@ class LCG(IBackend):
 
         # successful logging info fetching returns a file path to the
         # information
-        loginfo_output = Grid.get_loginfo(my_ids, job.outputdir, self.credential_requirements, verbosity)
+        loginfo_output = Grid.get_loginfo(
+            my_ids, job.outputdir, self.credential_requirements, verbosity)
 
         if loginfo_output:
 
@@ -841,8 +855,16 @@ class LCG(IBackend):
                     app, appmasterconfig)
 
                 # prepare the subjobs with the runtime handler
-                jobsubconfig = [rtHandler.prepare(j.application, s, appmasterconfig, jobmasterconfig) for (
-                    j, s) in zip(rjobs, appsubconfig)]
+                jobsubconfig = [
+                    rtHandler.prepare(
+                        j.application,
+                        s,
+                        appmasterconfig,
+                        jobmasterconfig) for (
+                        j,
+                        s) in zip(
+                        rjobs,
+                        appsubconfig)]
 
                 # prepare masterjob's inputsandbox
                 master_input_sandbox = self.master_prepare(jobmasterconfig)
@@ -880,11 +902,15 @@ class LCG(IBackend):
                 self.__print_no_resource_error__(jdlpath)
                 return None
 
-        self.id = Grid.submit(jdlpath, self.credential_requirements, ce=self.CE, perusable=self.perusable)
+        self.id = Grid.submit(
+            jdlpath,
+            self.credential_requirements,
+            ce=self.CE,
+            perusable=self.perusable)
 
         self.parent_id = self.id
 
-        return not self.id is None
+        return self.id is not None
 
     @require_credential
     def resubmit(self):
@@ -902,14 +928,18 @@ class LCG(IBackend):
                 self.__print_no_resource_error__(jdlpath)
                 return None
 
-        self.id = Grid.submit(jdlpath, self.credential_requirements, ce=self.CE, perusable=self.perusable)
+        self.id = Grid.submit(
+            jdlpath,
+            self.credential_requirements,
+            ce=self.CE,
+            perusable=self.perusable)
         self.parent_id = self.id
 
         if self.id:
             # refresh the lcg job information
             self.__refresh_jobinfo__(job)
 
-        return not self.id is None
+        return self.id is not None
 
     @require_credential
     def kill(self):
@@ -1317,7 +1347,9 @@ sys.exit(0)
             fname = os.path.join(job.outputdir, '_peek.dat')
 
             sh = getShell(self.credential_requirements)
-            re, output, m = sh.cmd("glite-wms-job-perusal --get --all -f stdout %s" % self.id, fname)
+            re, output, m = sh.cmd(
+                "glite-wms-job-perusal --get --all -f stdout %s" %
+                self.id, fname)
             job.viewFile(fname, cmd)
 
         return None
@@ -1378,7 +1410,7 @@ sys.exit(0)
         try:
             logger.debug('job info of monitoring service: %s' %
                          str(self.monInfo))
-        except:
+        except BaseException:
             pass
 
 
@@ -1388,8 +1420,8 @@ sys.exit(0)
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
-        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
+        fileutils = File(inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR)
+        packed_files = jobconfig.getSandboxFiles() + [fileutils]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox
@@ -1472,12 +1504,14 @@ sys.exit(0)
         jdl = {
             'VirtualOrganisation': config['VirtualOrganisation'],
             'Executable': os.path.basename(scriptPath),
-            'Environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
+            'Environment': {
+                'GANGA_LCG_VO': config['VirtualOrganisation'],
+                'GANGA_LOG_HANDLER': config['JobLogHandler'],
+                'LFC_HOST': lfc_host},
             'StdOutput': 'stdout',
             'StdError': 'stderr',
             'InputSandbox': input_sandbox,
-            'OutputSandbox': output_sandbox
-        }
+            'OutputSandbox': output_sandbox}
 
         if config['GLITE_WMS_WMPROXY_ENDPOINT'] != '':
             jdl['Environment']['GLITE_WMS_WMPROXY_ENDPOINT'] = config[
@@ -1565,7 +1599,9 @@ sys.exit(0)
                 # do nothing in this case as it's in the middle of the
                 # corresponding job downloading task
                 return
-            logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.', job.getFQID('.'))
+            logger.warning(
+                'The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',
+                job.getFQID('.'))
             job.updateStatus('failed')
 
         elif status in ['Submitted', 'Waiting', 'Scheduled', 'Ready', 'Done (Failed)', 'Done(Failed)']:
@@ -1594,7 +1630,9 @@ sys.exit(0)
                 # those jobs should be checked individually as a single job
                 for sj in j.subjobs:
                     if sj.backend.flag == 1 and sj.status in ['submitted', 'running']:
-                        logger.debug('job %s submitted individually. separate it in a different monitoring loop.' % sj.getFQID('.'))
+                        logger.debug(
+                            'job %s submitted individually. separate it in a different monitoring loop.' %
+                            sj.getFQID('.'))
                         emulated_bulk_jobs.append(sj)
 
         # invoke normal monitoring method for normal jobs
@@ -1727,9 +1765,10 @@ sys.exit(0)
             # If the credential is not valid or doesn't exist then skip it
             cred = credential_store.get(cred_req)
             if not cred or not cred.is_valid():
-                    needed_credentials.add(cred_req)
-                    continue
-            # Create a ``Grid`` for each credential requirement and request the relevant jobs through it
+                needed_credentials.add(cred_req)
+                continue
+            # Create a ``Grid`` for each credential requirement and request the
+            # relevant jobs through it
             status, missing = Grid.status(job_list, cred_req, is_collection=True)
             status_info += status
             missing_glite_jids += missing
@@ -1773,7 +1812,8 @@ sys.exit(0)
                 #  - the parent id returned from status
                 if cachedParentId != subjob.backend.parent_id:
                     logger.debug(
-                        'job %s has been resubmitted, ignore the status update.' % subjob.getFQID('.'))
+                        'job %s has been resubmitted, ignore the status update.' %
+                        subjob.getFQID('.'))
                     continue
 
                 # skip updating the cleared jobs
@@ -1784,11 +1824,13 @@ sys.exit(0)
                 # after the original bulk submission
                 if subjob.backend.flag == 1:
                     logger.debug(
-                        'job %s was resubmitted individually. skip updating it from the monitoring of its master job.' % subjob.getFQID('.'))
+                        'job %s was resubmitted individually. skip updating it from the monitoring of its master job.' %
+                        subjob.getFQID('.'))
                 # skip updating the jobs that are individually killed
                 elif subjob.status == 'killed':
                     logger.debug(
-                        'job %s was killed individually. skip updating it from the monitoring of its master job.' % subjob.getFQID('.'))
+                        'job %s was killed individually. skip updating it from the monitoring of its master job.' %
+                        subjob.getFQID('.'))
                 else:
                     if not subjob.backend.id:
                         # send out the subjob's id which is becoming available at the first time.
@@ -1801,7 +1843,8 @@ sys.exit(0)
                         #       in the master_bulk_(re)submit() methods. In Ganga 5, a clear implementation should be
                         #       applied with the new lock mechanism.
                         logger.debug(
-                            'job %s obtained backend id, transmit it to monitoring service.' % subjob.getFQID('.'))
+                            'job %s obtained backend id, transmit it to monitoring service.' %
+                            subjob.getFQID('.'))
                         subjob.backend.id = info['id']
                         subjob.getMonitoringService().submit()
 
@@ -1810,7 +1853,9 @@ sys.exit(0)
 
                     if subjob.backend.actualCE != info['destination']:
                         logger.info(
-                            'job %s has been assigned to %s', subjob.getFQID('.'), info['destination'])
+                            'job %s has been assigned to %s',
+                            subjob.getFQID('.'),
+                            info['destination'])
                         subjob.backend.actualCE = info['destination']
 
                     if subjob.backend.status != info['status']:
@@ -1961,7 +2006,7 @@ sys.exit(0)
             jdlText = jdlFileRead.read()
             hasRequirements = jdlText.find("Requirements =") > -1
 
-        if hasRequirements == False:
+        if not hasRequirements:
 
             if configexcludedCEs != '':
 
@@ -1969,7 +2014,7 @@ sys.exit(0)
 
                 with open(jdlpath, 'a') as jdlFileAppend:
                     linesToAppend.append("Requirements = \n")
-                    excludedCEs = re.split('\s+', configexcludedCEs)
+                    excludedCEs = re.split(r'\s+', configexcludedCEs)
                     index = 1
 
                     for excludedCE in excludedCEs:
@@ -2028,19 +2073,31 @@ sys.exit(0)
                     break
 
             if configexcludedCEs != '':
-                excludedCEs = re.split('\s+', configexcludedCEs)
+                excludedCEs = re.split(r'\s+', configexcludedCEs)
                 innerIndex = 1
                 for excludedCE in excludedCEs:
                     if innerIndex != len(excludedCEs):
                         newLines.insert(
-                            index + innerIndex - 1, '   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
+                            index +
+                            innerIndex -
+                            1,
+                            '   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' %
+                            excludedCE)
                     else:
                         if endOfRequirements and thereAreExcudedCEs:
                             newLines.insert(
-                                index + innerIndex - 1, '   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
+                                index +
+                                innerIndex -
+                                1,
+                                '   (!RegExp("%s",other.GlueCEUniqueID));\n' %
+                                excludedCE)
                         else:
                             newLines.insert(
-                                index + innerIndex - 1, '   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
+                                index +
+                                innerIndex -
+                                1,
+                                '   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' %
+                                excludedCE)
 
                     innerIndex += 1
 
@@ -2073,7 +2130,15 @@ class LCGJobConfig(StandardJobConfig):
 
     '''Extends the standard Job Configuration with additional attributes'''
 
-    def __init__(self, exe=None, inputbox=[], args=[], outputbox=[], env={}, inputdata=[], requirements=None):
+    def __init__(
+            self,
+            exe=None,
+            inputbox=[],
+            args=[],
+            outputbox=[],
+            env={},
+            inputdata=[],
+            requirements=None):
 
         self.inputdata = inputdata
         self.requirements = requirements

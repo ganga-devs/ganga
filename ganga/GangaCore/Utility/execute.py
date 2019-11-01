@@ -41,8 +41,8 @@ with os.fdopen(###FD_WRITE###,'wb') as envpipe:
     from GangaCore.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
-    script = script.replace('###INDENT###'  , indent      )\
-                   .replace('###FD_READ###' , str(fdread) )\
+    script = script.replace('###INDENT###', indent)\
+                   .replace('###FD_READ###', str(fdread))\
                    .replace('###FD_WRITE###', str(fdwrite))
 
     return script, (fdread, fdwrite)
@@ -82,11 +82,11 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     from GangaCore.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
-    script = script.replace('###INDENT###'     , indent              )\
-                   .replace('###SETUP###'      , python_setup.strip())\
-                   .replace('###COMMAND###'    , command.strip()     )\
-                   .replace('###PKL_FDREAD###' , str(fdread)         )\
-                   .replace('###PKL_FDWRITE###', str(fdwrite)        )
+    script = script.replace('###INDENT###', indent)\
+                   .replace('###SETUP###', python_setup.strip())\
+                   .replace('###COMMAND###', command.strip())\
+                   .replace('###PKL_FDREAD###', str(fdread))\
+                   .replace('###PKL_FDWRITE###', str(fdwrite))
     env_file_pipes = None
     if update_env:
         update_script, env_file_pipes = env_update_script()
@@ -105,7 +105,8 @@ def __reader(pipes, output_ns, output_var, require_output):
     os.close(pipes[1])
     with os.fdopen(pipes[0], 'rb') as read_file:
         try:
-            # rcurrie this deepcopy hides a strange bug that the wrong dict is sometimes returned from here. Remove at your own risk
+            # rcurrie this deepcopy hides a strange bug that the wrong dict is
+            # sometimes returned from here. Remove at your own risk
             output_ns[output_var] = deepcopy(pickle.load(read_file))
         except UnicodeDecodeError:
             output_ns[output_var] = deepcopy(bytes2string(pickle.load(read_file, encoding="bytes")))
@@ -121,7 +122,7 @@ def __timeout_func(process, timed_out):
         process (class): This is a subprocess class which knows of the pid of wrapping thread around the command we want to kill
         timed_out (Event): A threading event to be set when the command has timed out
     """
-        
+
     if process.returncode is None:
         timed_out.set()
         try:
@@ -193,13 +194,15 @@ def execute(command,
         command, pkl_file_pipes, env_file_pipes = python_wrapper(command, python_setup, update_env)
     else:
         # We want to run a shell command inside a _NEW_ shell environment.
-        # i.e. What I run here I expect to behave in the same way from the command line after I exit Ganga
+        # i.e. What I run here I expect to behave in the same way from the command
+        # line after I exit Ganga
         stream_command = "bash "
         if update_env:
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
             command_update, env_file_pipes = env_update_script()
-            command += ''';python -c "import base64;exec(base64.b64decode(%s))"''' % base64.b64encode(command_update.encode("utf-8"))
+            command += ''';python -c "import base64;exec(base64.b64decode(%s))"''' % base64.b64encode(
+                command_update.encode("utf-8"))
 
     # Some minor changes to cleanup the getting of the env
     if env is None:
@@ -218,10 +221,18 @@ def execute(command,
 
     if update_env:
         env_output_key = 'env_output'
-        update_env_thread = update_thread(env_file_pipes, thread_output, env_output_key, require_output=True)
+        update_env_thread = update_thread(
+            env_file_pipes,
+            thread_output,
+            env_output_key,
+            require_output=True)
     if not shell:
         pkl_output_key = 'pkl_output'
-        update_pkl_thread = update_thread(pkl_file_pipes, thread_output, pkl_output_key, require_output=False)
+        update_pkl_thread = update_thread(
+            pkl_file_pipes,
+            thread_output,
+            pkl_output_key,
+            require_output=False)
 
     # Execute the main command of interest
     logger.debug("Executing Command:\n'%s'" % str(command))
@@ -272,7 +283,8 @@ def execute(command,
                     stdout_temp = pickle.loads(stdout.encode("utf-8"))
                 except pickle.UnpicklingError:
                     stdout_temp = pickle.loads(stdout.encode("latin1"))
-    # Downsides to wanting to be explicit in how this failed is you need to know all the ways it can!
+    # Downsides to wanting to be explicit in how this failed is you need to
+    # know all the ways it can!
     except (pickle.UnpicklingError, EOFError, ValueError) as err:
         if not shell:
             log = logger.error
@@ -287,7 +299,7 @@ def execute(command,
         if isinstance(eval_includes, str):
             try:
                 exec(eval_includes, {}, local_ns)
-            except:
+            except BaseException:
                 logger.debug("Failed to eval the env, can't eval stdout")
                 pass
         if isinstance(stdout, str) and stdout:
@@ -301,4 +313,3 @@ def execute(command,
         stdout = stdout_temp
 
     return stdout
-

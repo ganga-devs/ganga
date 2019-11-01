@@ -3,12 +3,14 @@
 #
 # $Id: IMerger.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
+from GangaCore.GPIDev.Base.Filters import allComponentFilters
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaCore.GPIDev.Schema import Schema, Version, ComponentItem
 from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+
 
 class PostProcessException(GangaException):
 
@@ -53,9 +55,8 @@ class MultiPostProcessor(IPostProcessor):
     #_exportmethods = ['__add__', '__get__', '__str__', '__getitem__', 'append', 'remove']
     _exportmethods = ['__add__', '__get__', '__getitem__', '__len__', 'append', 'remove']
     _name = 'MultiPostProcessor'
-    _schema = Schema(Version(1, 0), {
-        'process_objects': ComponentItem('postprocessor', defvalue=[], hidden=1, doc='A list of Processors to run', sequence=1)
-    })
+    _schema = Schema(Version(1, 0), {'process_objects': ComponentItem(
+        'postprocessor', defvalue=[], hidden=1, doc='A list of Processors to run', sequence=1)})
 
     __slots__ = list()
 
@@ -88,7 +89,7 @@ class MultiPostProcessor(IPostProcessor):
 
     def remove(self, value):
         for process in self.process_objects:
-            if (isType(value, type(process)) == True):
+            if (isType(value, type(process))):
                 self.process_objects.remove(process)
                 break
 
@@ -107,11 +108,11 @@ class MultiPostProcessor(IPostProcessor):
                 continue
             # execute all postprocessors
             process_result = p.execute(job, newstatus, **options)
-            if process_result == False:
+            if not process_result:
                 newstatus = 'failed'
             process_results.append(process_result)
         # if one fails then we all fail
-        return not False in process_results
+        return False not in process_results
 
     def addProcess(self, process_object):
         """Adds a process object to the list of processes to be done."""
@@ -120,7 +121,14 @@ class MultiPostProcessor(IPostProcessor):
     def __len__(self):
         return len(self.process_objects)
 
-    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection='', interactive=False):
+    def printSummaryTree(
+            self,
+            level=0,
+            verbosity_level=0,
+            whitespace_marker='',
+            out=None,
+            selection='',
+            interactive=False):
         """If this method is overridden, the following should be noted:
 
         level: the hierachy level we are currently at in the object tree.
@@ -133,9 +141,6 @@ class MultiPostProcessor(IPostProcessor):
         out.write(str(self.process_objects))
 
 
-from GangaCore.GPIDev.Base.Filters import allComponentFilters
-
-
 def postprocessor_filter(value, item):
     from GangaCore.GPIDev.Lib.Job.Job import Job
     from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
@@ -145,10 +150,15 @@ def postprocessor_filter(value, item):
 
     from GangaCore.GPIDev.Base.Proxy import getProxyInterface
 
-    valid_jobtypes = [stripProxy(i)._schema.datadict['postprocessors'] for i in getProxyInterface().__dict__.values()
-                      if isinstance(stripProxy(i), ObjectMetaclass)
-                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), ITransform))
-                      and 'postprocessors' in stripProxy(i)._schema.datadict]
+    valid_jobtypes = [
+        stripProxy(i)._schema.datadict['postprocessors'] for i in getProxyInterface().__dict__.values() if isinstance(
+            stripProxy(i),
+            ObjectMetaclass) and (
+            issubclass(
+                stripProxy(i),
+                Job) or issubclass(
+                    stripProxy(i),
+                ITransform)) and 'postprocessors' in stripProxy(i)._schema.datadict]
 
     # Alex modified this line to that from above to allow for arbitrary dynamic LHCbJobTemplate etc types
 #    if item is Job._schema['postprocessors']:
@@ -156,12 +166,13 @@ def postprocessor_filter(value, item):
         ds = MultiPostProcessor()
         if isinstance(value, list) or isType(value, GangaList):
             for item_ in value:
-            	ds.append(item_)
+                ds.append(item_)
         else:
             ds.append(value)
         return ds
     else:
-        raise PostProcessException("j.postprocessors only takes objects of category 'postprocessor'")
+        raise PostProcessException(
+            "j.postprocessors only takes objects of category 'postprocessor'")
+
 
 allComponentFilters['postprocessor'] = postprocessor_filter
-

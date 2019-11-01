@@ -73,8 +73,8 @@ def getCredential(name="", create=True):
 #        _allCredentials[ name ] = \
 #           allPlugins.find( "credentials", name )._proxyClass()
     if name in _credentialPlugins.keys():
-        if ( not name in list(_allCredentials.keys()) ) and \
-           ( not name in list(_voidCredentials.keys()) ) and \
+        if (name not in list(_allCredentials.keys())) and \
+           (name not in list(_voidCredentials.keys())) and \
            (create is True):
             credential = _credentialPlugins[name]()
             if credential.isAvailable():

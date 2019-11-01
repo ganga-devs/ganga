@@ -16,6 +16,7 @@ logger = getLogger()
 
 _runtime_interface = None
 
+
 def requiresAfsToken():
     # Were we executed from within an AFS folder
     return fullpath(getLocalRoot(), True).find('/afs') == 0
@@ -24,14 +25,27 @@ def requiresAfsToken():
 def getLocalRoot():
     # Get the local top level directory for the Repo
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
-        return os.path.join(expandfilename(config['gangadir'], True), 'repository', config['user'], config['repositorytype'])
+        return os.path.join(
+            expandfilename(
+                config['gangadir'],
+                True),
+            'repository',
+            config['user'],
+            config['repositorytype'])
     else:
         return ''
+
 
 def getLocalWorkspace():
     # Get the local top level dirtectory for the Workspace
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
-        return os.path.join(expandfilename(config['gangadir'], True), 'workspace', config['user'], config['repositorytype'])
+        return os.path.join(
+            expandfilename(
+                config['gangadir'],
+                True),
+            'workspace',
+            config['user'],
+            config['repositorytype'])
     else:
         return ''
 
@@ -41,8 +55,10 @@ started_registries = []
 partition_warning = 95
 partition_critical = 99
 
+
 def checkDiskQuota():
-    # Throw an error atthe user if their AFS area is (extremely close to) full to avoid repo corruption
+    # Throw an error atthe user if their AFS area is (extremely close to) full
+    # to avoid repo corruption
     import subprocess
 
     repo_partition = getLocalRoot()
@@ -67,7 +83,8 @@ def checkDiskQuota():
     for data_partition in folders_to_check:
 
         if fullpath(data_partition, True).find('/afs') == 0:
-            quota = subprocess.Popen(" ".join(['fs', 'quota', '%s' % quote(data_partition)]), shell=True, stdout=subprocess.PIPE)
+            quota = subprocess.Popen(" ".join(['fs', 'quota', '%s' % quote(
+                data_partition)]), shell=True, stdout=subprocess.PIPE)
             output = quota.communicate()[0]
             logger.debug("fs quota %s:\t%s" % (quote(data_partition), output))
         else:
@@ -79,13 +96,18 @@ def checkDiskQuota():
             global partition_critical
             quota_percent = output.split('%')[0]
             if int(quota_percent) >= partition_warning:
-                logger.warning("WARNING: You're running low on disk space, Ganga may stall on launch or fail to download job output")
+                logger.warning(
+                    "WARNING: You're running low on disk space, Ganga may stall on launch or fail to download job output")
                 logger.warning("WARNING: Please free some disk space on: %s" % data_partition)
             if int(quota_percent) >= partition_critical and config['force_start'] is False:
                 logger.error("You are crtitically low on disk space!")
-                logger.error("To prevent repository corruption and data loss we won't start GangaCore.")
-                logger.error("Either set your config variable 'force_start' in .gangarc to enable starting and ignore this check.")
-                logger.error("Or, make sure you have more than %s percent free disk space on: %s" %(100-partition_critical, data_partition))
+                logger.error(
+                    "To prevent repository corruption and data loss we won't start GangaCore.")
+                logger.error(
+                    "Either set your config variable 'force_start' in .gangarc to enable starting and ignore this check.")
+                logger.error(
+                    "Or, make sure you have more than %s percent free disk space on: %s" %
+                    (100 - partition_critical, data_partition))
                 raise GangaException("Not Enough Disk Space!!!")
         except GangaException as err:
             raise
@@ -94,9 +116,10 @@ def checkDiskQuota():
 
     return
 
+
 def bootstrap_getreg():
     # Get the list of registries sorted in the bootstrap way
-    
+
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
     # or even named templated registries as the _auto__init from job will require the prep registry to
     # already be ready. This showed up when adding the named templates.
@@ -107,10 +130,12 @@ def bootstrap_getreg():
 
     return [registry for registry in sorted(getRegistries(), key=prep_filter)]
 
+
 def bootstrap_reg_names():
     # Get the list of registry names
     all_reg = bootstrap_getreg()
     return [reg.name for reg in all_reg]
+
 
 def bootstrap():
     # Bootstrap for startup and setting of parameters for the Registries
@@ -142,11 +167,13 @@ def bootstrap():
     # Assuming all registries are started for all instances of Ganga atm
     # Avoid ever, ever, calling the repository from behind the registry. This allows for all forms of bad behaviour
     # This is a form of trade off but still is something which should be strongly discouraged!
-    # TODO investigate putting access to the repository behind a getter/setter which keeps the registry locked
+    # TODO investigate putting access to the repository behind a getter/setter
+    # which keeps the registry locked
     other_sessions = bootstrap_getreg()[0].repository.get_other_sessions()
     if other_sessions:
         # Just print this from 1 repo only so chose the zeorth, nothing special
-        logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
+        logger.warning("%i other concurrent sessions:\n * %s" %
+                       (len(other_sessions), "\n * ".join(other_sessions)))
         logger.warning("Multiple Ganga sessions detected. The Monitoring Thread is being disabled.")
         logger.warning("Type 'enableMonitoring()' to restart")
         setConfigOption('PollThread', 'autostart', False)
@@ -169,7 +196,7 @@ def shutdown():
     logger = getLogger()
     logger.info('Registry Shutdown')
     #import traceback
-    #traceback.print_stack()
+    # traceback.print_stack()
 
     # Flush all repos before we shut them down
     flush_all()
@@ -194,16 +221,17 @@ def shutdown():
     for registry in getRegistries():
         thisName = registry.name
         try:
-            if not thisName in started_registries:
+            if thisName not in started_registries:
                 continue
             # in case this is called repeatedly, only call shutdown once
             started_registries.remove(thisName)
             registry.shutdown()  # flush and release locks
         except Exception as x:
-            logger.error("Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
+            logger.error(
+                "Failed to Shutdown Repository: %s !!! please check for stale lock files" %
+                thisName)
             logger.error("%s" % x)
             logger.error("Trying to Shutdown cleanly regardless")
-
 
     for registry in all_registries:
 
@@ -223,6 +251,7 @@ def shutdown():
     removeGlobalSessionFiles()
 
     removeRegistries()
+
 
 def flush_all():
     # Flush all registries in their current state with all dirty knowledge going to disk
@@ -270,12 +299,14 @@ def startUpRegistries(my_interface=None):
 
     # ShareRef
     shareref = getRegistry("prep").getShareRef()
-    exportToInterface(my_interface, 'shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
+    exportToInterface(my_interface, 'shareref', shareref, 'Objects',
+                      'Mechanism for tracking use of shared directory resources')
+
 
 def removeRegistries():
-    ## Remove lingering Objects from the GPI and fully cleanup after the startup
+    # Remove lingering Objects from the GPI and fully cleanup after the startup
 
-    ## First start with repositories
+    # First start with repositories
 
     import GangaCore.GPI
 
@@ -291,4 +322,3 @@ def removeRegistries():
             delattr(_runtime_interface, name)
 
     _runtime_interface = None
-

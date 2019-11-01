@@ -1,6 +1,5 @@
 
 
-
 import logging
 
 from GangaCore.Utility.logging import getLogger, _formats

@@ -40,7 +40,7 @@ class LCGOutputDownloadAlgorithm(Algorithm):
 
     def process(self, item):
         """
-        downloads output of one LCG job 
+        downloads output of one LCG job
         """
 
         pps_check = (True, None)
@@ -62,7 +62,10 @@ class LCGOutputDownloadAlgorithm(Algorithm):
         job.updateStatus('completing')
         outw = job.getOutputWorkspace()
 
-        pps_check = Grid.get_output(job.backend.id, outw.getPath(), job.backend.credential_requirements)
+        pps_check = Grid.get_output(
+            job.backend.id,
+            outw.getPath(),
+            job.backend.credential_requirements)
 
         if pps_check[0]:
             job.updateStatus('completed')

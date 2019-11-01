@@ -61,8 +61,11 @@ class JobTime(GangaObject):
     timestamps = {}
     sj_statlist = []
 
-    _schema = Schema(Version(0, 0), {'timestamps': SimpleItem(defvalue={}, doc="Dictionary containing timestamps for job", summary_print='_timestamps_summary_print')
-                                     })
+    _schema = Schema(
+        Version(
+            0, 0), {
+            'timestamps': SimpleItem(
+                defvalue={}, doc="Dictionary containing timestamps for job", summary_print='_timestamps_summary_print')})
 
     _category = 'jobtime'
     _name = 'JobTime'
@@ -148,7 +151,10 @@ class JobTime(GangaObject):
         # subjobs method:
         if j.master is not None:  # identifies subjobs
             logger.debug(
-                "j.time.timenow() caught subjob %d.%d in the '%s' status", j.master.id, j.id, status)
+                "j.time.timenow() caught subjob %d.%d in the '%s' status",
+                j.master.id,
+                j.id,
+                status)
 
             for written_status in j.time.timestamps.keys():
                 if written_status not in j.master.time.sj_statlist:
@@ -184,10 +190,15 @@ class JobTime(GangaObject):
                     list.append(sjs.time.timestamps[status])
                 else:
                     logger.debug(
-                        'Attempt to add a non datetime object in the timestamp, job=%d, subjob=%d', j.id, sjs.id)
+                        'Attempt to add a non datetime object in the timestamp, job=%d, subjob=%d',
+                        j.id,
+                        sjs.id)
             except KeyError:
                 logger.debug(
-                    "Status '%s' not found in timestamps of job %d.%d.", status, sjs.master.id, sjs.id)
+                    "Status '%s' not found in timestamps of job %d.%d.",
+                    status,
+                    sjs.master.id,
+                    sjs.id)
         list.sort()
         try:
             if status in final:
@@ -253,7 +264,7 @@ class JobTime(GangaObject):
                              'all' = gets details for ALL SUBJOBS. You have been warned.
                              int   = gets details for subjob number 'int'
 
-           No argument is required for a job with no subjobs.    
+           No argument is required for a job with no subjobs.
         """
         j = self.getJobObject()
         idstr = ''
@@ -280,7 +291,8 @@ class JobTime(GangaObject):
                 # ask whether user really wants to print timedetails for all
                 # their jobs:
                 while keyin is None:
-                    keyin = input("Are you sure you want details for ALL %d subjobs(y/n)?" % len(j.subjobs))
+                    keyin = input(
+                        "Are you sure you want details for ALL %d subjobs(y/n)?" % len(j.subjobs))
                     # if yes carry on at for loop
                     if keyin.lower() == 'y':
                         pass
@@ -322,7 +334,8 @@ class JobTime(GangaObject):
                         pass
                 if subjob >= len(j.subjobs):
                     logger.warning(
-                        "Index '%s' is out of range. Corresponding subjob does not exist.", str(subjob))
+                        "Index '%s' is out of range. Corresponding subjob does not exist.",
+                        str(subjob))
                     return None
 
             logger.debug(

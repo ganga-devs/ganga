@@ -45,11 +45,15 @@ class MetaDataChecker(IChecker):
         try:
             self.result = self.calculateResult(job)
         except Exception as e:
-            raise PostProcessException('There was an error parsing the checker expression: %s - MetaDataChecker will do nothing!' % e)
+            raise PostProcessException(
+                'There was an error parsing the checker expression: %s - MetaDataChecker will do nothing!' %
+                e)
         if self.result is not True and self.result is not False:
-            raise PostProcessException('The expression "%s" did not evaluate to True or False, MetaDataChecker will do nothing!' % self.expression)
+            raise PostProcessException(
+                'The expression "%s" did not evaluate to True or False, MetaDataChecker will do nothing!' %
+                self.expression)
         if self.result is False:
-            logger.info('MetaDataChecker has failed job(%s) because the expression "%s" is False' % (job.fqid, self.expression))
+            logger.info(
+                'MetaDataChecker has failed job(%s) because the expression "%s" is False' %
+                (job.fqid, self.expression))
         return self.result
-
-

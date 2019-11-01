@@ -18,14 +18,33 @@ class GangaDataset(Dataset):
     '''
     schema = {}
     docstr = 'List of File objects'
-    schema['files'] = GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will be the inputdata for the job")
-    schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
+    schema['files'] = GangaFileItem(
+        defvalue=[],
+        sequence=1,
+        doc="list of file objects that will be the inputdata for the job")
+    schema['treat_as_inputfiles'] = SimpleItem(
+        defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
     _name = "GangaDataset"
-    _exportmethods = ['append', 'extend', '__len__', 'isEmtpy', 'getFileNames', 'getFilenameList', '__getitem__', '__nonzero__', 'isEmpty',
-                        'getFileNames', 'getFilenameList', 'difference', 'isSubset', 'isSuperset', 'symmetricDifference', 'intersection',
-                        'union']
+    _exportmethods = [
+        'append',
+        'extend',
+        '__len__',
+        'isEmtpy',
+        'getFileNames',
+        'getFilenameList',
+        '__getitem__',
+        '__nonzero__',
+        'isEmpty',
+        'getFileNames',
+        'getFilenameList',
+        'difference',
+        'isSubset',
+        'isSuperset',
+        'symmetricDifference',
+        'intersection',
+        'union']
 
     def __init__(self, files=None):
         if files is None:
@@ -65,7 +84,8 @@ class GangaDataset(Dataset):
             raise GangaException('Argument "files" must be a iterable.')
         if self._getParent() is not None and self._getParent()._readonly():
             raise ReadOnlyObjectError(
-                'object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._getParent().id, getName(self)))
+                'object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' %
+                (self._getParent().id, getName(self)))
         names = self.getFileNames()
         files = [f for f in files]  # just in case they extend w/ self
         for f in files:
@@ -82,7 +102,7 @@ class GangaDataset(Dataset):
             else:
                 try:
                     names.append(i.namePattern)
-                except:
+                except BaseException:
                     logger.warning("Cannot determine filename for: %s " % i)
                     raise GangaException("Cannot Get File Name")
 
@@ -98,7 +118,9 @@ class GangaDataset(Dataset):
                 filelist += f.getFilenameList()
             else:
                 if isinstance(f, GangaObject):
-                    logger.warning("accessURL or getFilenameList not implemented for File '%s'" % getName(f))
+                    logger.warning(
+                        "accessURL or getFilenameList not implemented for File '%s'" %
+                        getName(f))
                 else:
                     logger.warning("Warning, not sure how to parse file: %s" % str(f))
 

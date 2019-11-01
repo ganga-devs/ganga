@@ -23,7 +23,7 @@ class TestPostProcessor_structure(GangaGPITestCase):
 
         try:
             self.j.postprocessors = SmartMerger()
-        except:
+        except BaseException:
             assert False, 'should be able to set one object'
 
         assert self.j.postprocessors[
@@ -35,10 +35,10 @@ class TestPostProcessor_structure(GangaGPITestCase):
 
         try:
             self.j.postprocessors.append(Notifier())
-        except:
+        except BaseException:
             assert False, 'should be able to append postprocessors'
 
         try:
             self.j.postprocessors.remove(FileChecker())
-        except:
+        except BaseException:
             assert False, 'should be able to remove postprocessors'

@@ -9,10 +9,12 @@ from inspect import isclass
 found_types = {}
 found_values = {}
 
-def dummy_func( _input ):
+
+def dummy_func(_input):
     return _input
 
-def safer_eval( _input ):
+
+def safer_eval(_input):
     try:
         from GangaCore.GPIDev.Base.Proxy import getRuntimeGPIObject
         temp_output = getRuntimeGPIObject(_input, True)
@@ -22,7 +24,7 @@ def safer_eval( _input ):
                     if not isinstance(_input, str):
                         _input = str(_input)
                     _output = eval(_input)
-                except:
+                except BaseException:
                     _output = str(_input)
             else:
                 _output = None
@@ -36,17 +38,18 @@ def safer_eval( _input ):
                 if not isinstance(_input, str):
                     _input = str(_input)
                 _output = eval(_input)
-            except:
+            except BaseException:
                 _output = str(_input)
         else:
             _output = None
 
     return _output
 
+
 def _valueTypeAllowed(val, valTypeList, logger=None):
     for _t in valTypeList:
 
-        ## Return None when None
+        # Return None when None
         if _t is None:
             if val is None:
                 return True
@@ -66,14 +69,14 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
                 if len(GangaSplit) > 1:
                     from GangaCore.Utility.util import importName
 
-                    imported_Class = importName( '.'.join(GangaSplit[:-1]), GangaSplit[-1])
+                    imported_Class = importName('.'.join(GangaSplit[:-1]), GangaSplit[-1])
 
                     if imported_Class is not None:
                         _type = imported_Class
 
         else:
             _type = _t
-        
+
         if isinstance(val, str):
             global found_values
 
@@ -97,14 +100,15 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
                 continue
 
         try:
-            ## Type Checking ""Should"" be proxy agnoistic but this may have problems loading before certain classes
+            # Type Checking ""Should"" be proxy agnoistic but this may have problems
+            # loading before certain classes
             from GangaCore.GPIDev.Base.Proxy import stripProxy
         except ImportError:
             stripProxy = dummy_func
 
         try:
             from GangaCore.GPIDev.Base.Objects import GangaObject
-        except:
+        except BaseException:
             GangaObject = None
 
         raw_type = stripProxy(_type)
@@ -119,8 +123,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
                     return True
             elif isinstance(raw_val, raw_type):
                 return True
-        except:
+        except BaseException:
             continue
 
     return False
-

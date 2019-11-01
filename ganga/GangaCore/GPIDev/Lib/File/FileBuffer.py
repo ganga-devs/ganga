@@ -4,10 +4,9 @@
 # $Id: FileBuffer.py,v 1.1 2008-07-17 16:40:53 moscicki Exp $
 ##########################################################################
 
+import os
 import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger()
-
-import os
 
 
 class FileBuffer(object):

@@ -18,6 +18,7 @@ import sys
 
 logger = getLogger(modulename=1)
 
+
 @magics_class
 class GangaMagics(Magics):
     @line_magic

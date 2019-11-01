@@ -15,7 +15,7 @@ def get_uuid(*args):
     r = random.random() * 100000000000000000
     try:
         a = socket.gethostbyname(socket.gethostname())
-    except:
+    except BaseException:
         # if we can't get a network address, just imagine one
         a = random.random() * 100000000000000000
     data = str(t) + ' ' + str(r) + ' ' + str(a) + ' ' + str(args)
@@ -32,11 +32,11 @@ def urisplit(uri):
     Basic URI Parser according to STD66 aka RFC3986
 
     >>> urisplit("scheme://authority/path?query#fragment")
-    ('scheme', 'authority', 'path', 'query', 'fragment') 
+    ('scheme', 'authority', 'path', 'query', 'fragment')
 
     """
     # regex straight from STD 66 section B
-    regex = '^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'
+    regex = r'^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'
     p = re.match(regex, uri).groups()
     scheme, authority, path, query, fragment = p[1], p[3], p[4], p[6], p[8]
     #if not path: path = None

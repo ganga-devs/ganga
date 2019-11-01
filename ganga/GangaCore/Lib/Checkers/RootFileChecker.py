@@ -112,19 +112,28 @@ class RootFileChecker(IFileChecker):
                 'None of the files to check exist, RootFileChecker will do nothing!')
         for f in filepaths:
             if f.find('.root') < 0:
-                raise PostProcessException('The file "%s" is not a ROOT file, RootFileChecker will do nothing!' % os.path.basename(f))
+                raise PostProcessException(
+                    'The file "%s" is not a ROOT file, RootFileChecker will do nothing!' %
+                    os.path.basename(f))
             if not self.checkMergeable(f):
                 return self.failure
             if (len(job.subjobs) and self.checkMerge):
                 haddoutput = f + '.hadd_output'
                 if not os.path.exists(haddoutput):
-                    logger.warning('Hadd output file %s does not exist, cannot perform check on merging.', haddoutput)
+                    logger.warning(
+                        'Hadd output file %s does not exist, cannot perform check on merging.',
+                        haddoutput)
                     return self.success
 
-                for failString in ['Could not find branch', 'One of the export branches', 'Skipped file']:
+                for failString in [
+                    'Could not find branch',
+                    'One of the export branches',
+                        'Skipped file']:
                     grepoutput = subprocess.getoutput('grep "%s" %s' % (failString, haddoutput))
                     if len(grepoutput):
-                        logger.info('There was a problem with hadd, the string "%s" was found. Will fail job', failString)
+                        logger.info(
+                            'There was a problem with hadd, the string "%s" was found. Will fail job',
+                            failString)
                         return self.failure
 
                 tf = ROOT.TFile.Open(f)
@@ -140,11 +149,13 @@ class RootFileChecker(IFileChecker):
                                 substructure = sorted(subtrees.keys())
                                 masterstructure = sorted(mastertrees.keys())
                                 if (substructure != masterstructure):
-                                    logger.info('File structure of subjob %s is not the same as master job, failing job', sj.fqid)
+                                    logger.info(
+                                        'File structure of subjob %s is not the same as master job, failing job', sj.fqid)
                                     return self.failure
 
                                 if not self.checkBranches(mastertrees, subtrees):
-                                    logger.info('The tree structure of subjob %s is not the same as merged tree, failing job', sj.fqid)
+                                    logger.info(
+                                        'The tree structure of subjob %s is not the same as merged tree, failing job', sj.fqid)
                                     return self.failure
                                 entries_dict = self.addEntries(
                                     mastertrees, subtrees, entries_dict)
@@ -154,9 +165,8 @@ class RootFileChecker(IFileChecker):
                     (n, mastertrees[n].GetEntries()) for n in set(mastertrees))
                 if (SortedValues(entries_dict) != SortedValues(master_entries_dict)):
                     logger.info(
-                        'Sum of subjob tree entries is not the same as merged tree entries for file %s, failing job (check hadd output)', os.path.basename(f))
+                        'Sum of subjob tree entries is not the same as merged tree entries for file %s, failing job (check hadd output)',
+                        os.path.basename(f))
                     return self.failure
                 tf.Close()
         return self.result
-
-

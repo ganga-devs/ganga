@@ -63,7 +63,7 @@ class Data(object):
         '''
         try to get the next item in the queue after waiting in max. 1 sec.
 
-        if nothing available, the exception "Queue.Empty" will be thrown. 
+        if nothing available, the exception "Queue.Empty" will be thrown.
         '''
 
         theItem = None

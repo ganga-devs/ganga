@@ -1,11 +1,11 @@
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 #  eliza.py
 #
 #  a cheezy little Eliza knock-off by Joe Strout <joe@strout.net>
 #  with some updates by Jeff Epler <jepler@inetnebr.com>
 #  hacked into a module and updated by Jez Higgins <jez@jezuk.co.uk>
 #  last revised: 28 February 2005
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 import string
 import re
@@ -18,10 +18,10 @@ class eliza:
         self.keys = [re.compile(x[0], re.IGNORECASE) for x in gPats]
         self.values = [x[1] for x in gPats]
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     # translate: take a string, replace any words found in dict.keys()
     #  with the corresponding dict.values()
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def translate(self, str, dict):
         words = string.split(string.lower(str))
         keys = list(dict.keys())
@@ -30,11 +30,11 @@ class eliza:
                 words[i] = dict[words[i]]
         return string.join(words)
 
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     #  respond: take a string, a set of regexps, and a corresponding
     #    set of response lists; find a match, and return a randomly
     #    chosen response from the corresponding list.
-    #----------------------------------------------------------------------
+    # ----------------------------------------------------------------------
     def respond(self, str):
         # find a match among keys
         for i in range(0, len(self.keys)):
@@ -59,10 +59,11 @@ class eliza:
                     resp = resp[:-2] + '?'
                 return resp
 
-#----------------------------------------------------------------------
+
+# ----------------------------------------------------------------------
 # gReflections, a translation table used to convert things you say
 #    into things the computer says back, e.g. "I am" --> "you are"
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 gReflections = {
     "am": "are",
     "was": "were",
@@ -80,12 +81,12 @@ gReflections = {
     "me": "you"
 }
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # gPats, the main response table.  Each element of the list is a
 #  two-element list; the first is a regexp, and the second is a
 #  list of possible responses, with group-macros labelled as
 #  %1, %2, etc.
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 gPats = [
     [r'I need (.*)',
      ["Why do you need %1?",
@@ -332,9 +333,9 @@ gPats = [
          "How do you feel when you say that?"]]
 ]
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 #  command_interface
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 
 def command_interface():

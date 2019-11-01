@@ -14,11 +14,28 @@ def test_all_exceptions(gpi):
         err_obj = err_type(test_str)
         assert test_str in str(err_obj)
 
-    err_list = ["GangaException", "GangaFileError", "PluginError", "ApplicationConfigurationError",
-                "ApplicationPrepareError", "IncompleteJobSubmissionError", "IncompleteKillError", "JobManagerError",
-                "GangaAttributeError", "GangaValueError", "GangaIOError", "SplitterError", "ProtectedAttributeError",
-                "ReadOnlyObjectError", "TypeMismatchError", "SchemaError", "SchemaVersionError", "CredentialsError",
-                "CredentialRenewalError", "InvalidCredentialError", "ExpiredCredentialError"]
+    err_list = [
+        "GangaException",
+        "GangaFileError",
+        "PluginError",
+        "ApplicationConfigurationError",
+        "ApplicationPrepareError",
+        "IncompleteJobSubmissionError",
+        "IncompleteKillError",
+        "JobManagerError",
+        "GangaAttributeError",
+        "GangaValueError",
+        "GangaIOError",
+        "SplitterError",
+        "ProtectedAttributeError",
+        "ReadOnlyObjectError",
+        "TypeMismatchError",
+        "SchemaError",
+        "SchemaVersionError",
+        "CredentialsError",
+        "CredentialRenewalError",
+        "InvalidCredentialError",
+        "ExpiredCredentialError"]
 
     for e in err_list:
         exception_test(e)
@@ -32,7 +49,8 @@ def test_all_exceptions(gpi):
     # check the InaccessibleObjectError
     from GangaCore.Core.exceptions import InaccessibleObjectError, JobManagerError
     from GangaCore.Core.GangaRepository import getRegistry
-    err = InaccessibleObjectError(getRegistry('jobs').repository, 0, JobManagerError("My JobManagerError"))
+    err = InaccessibleObjectError(getRegistry('jobs').repository, 0,
+                                  JobManagerError("My JobManagerError"))
     assert "jobs" in str(err)
     assert "#0" in str(err)
     assert "My JobManagerError" in str(err)

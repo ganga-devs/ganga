@@ -16,7 +16,7 @@ def test_voms_proxy_life_cycle(gpi):
 
     # check that we clear the credential store before we do anything else
     credential_store.clear()
-    
+
     assert len(credential_store) == 0
 
     cred = credential_store.create(VomsProxy())
@@ -36,7 +36,8 @@ def test_voms_proxy_life_cycle(gpi):
         _ = credential_store[VomsProxy()]
 
     default_cred = credential_store.create(VomsProxy())
-    explicit_default_cred = credential_store.create(VomsProxy(vo=getConfig('LCG')['VirtualOrganisation']))
+    explicit_default_cred = credential_store.create(
+        VomsProxy(vo=getConfig('LCG')['VirtualOrganisation']))
     assert explicit_default_cred == default_cred
     assert credential_store[VomsProxy(vo=getConfig('LCG')['VirtualOrganisation'])]
 

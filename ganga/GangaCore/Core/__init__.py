@@ -55,6 +55,10 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
         import GangaCore.GPI
         my_interface = GangaCore.GPI
 
-    exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
+    exportToInterface(
+        my_interface,
+        'runMonitoring',
+        monitoring_component.runMonitoring,
+        'Functions')
     if GANGA_SWAN_INTEGRATION:
         exportToInterface(my_interface, 'reloadJob', monitoring_component.reloadJob, 'Functions')

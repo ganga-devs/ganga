@@ -11,19 +11,52 @@ class LCGRequirements(GangaObject):
     See also: JDL Attributes Specification at http://cern.ch/glite/documentation
     '''
 
-    _schema = Schema(Version(1, 2), {
-        'software': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Software Installations'),
-        'nodenumber': SimpleItem(defvalue=1, doc='Number of Nodes for MPICH jobs'),
-        'memory': SimpleItem(defvalue=0, doc='Mininum available memory (MB)'),
-        'cputime': SimpleItem(defvalue=0, doc='Minimum available CPU time (min)'),
-        'walltime': SimpleItem(defvalue=0, doc='Mimimum available total time (min)'),
-        'ipconnectivity': SimpleItem(defvalue=False, doc='External connectivity'),
-        'allowedCEs': SimpleItem(defvalue='', doc='allowed CEs in regular expression'),
-        'excludedCEs': SimpleItem(defvalue='', doc='excluded CEs in regular expression'),
-        'datarequirements': SimpleItem(defvalue=[], typelist=[dict], sequence=1, doc='The DataRequirements entry for the JDL. A list of dictionaries, each with "InputData", "DataCatalogType" and optionally "DataCatalog" entries'),
-        'dataaccessprotocol': SimpleItem(defvalue=['gsiftp'], typelist=[str], sequence=1, doc='A list of strings giving the available DataAccessProtocol protocols'),
-        'other': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Other Requirements')
-    })
+    _schema = Schema(
+        Version(
+            1,
+            2),
+        {
+            'software': SimpleItem(
+                defvalue=[],
+                typelist=[str],
+                sequence=1,
+                doc='Software Installations'),
+            'nodenumber': SimpleItem(
+                defvalue=1,
+                doc='Number of Nodes for MPICH jobs'),
+            'memory': SimpleItem(
+                defvalue=0,
+                doc='Mininum available memory (MB)'),
+            'cputime': SimpleItem(
+                defvalue=0,
+                doc='Minimum available CPU time (min)'),
+            'walltime': SimpleItem(
+                defvalue=0,
+                doc='Mimimum available total time (min)'),
+            'ipconnectivity': SimpleItem(
+                defvalue=False,
+                doc='External connectivity'),
+            'allowedCEs': SimpleItem(
+                defvalue='',
+                doc='allowed CEs in regular expression'),
+            'excludedCEs': SimpleItem(
+                defvalue='',
+                doc='excluded CEs in regular expression'),
+            'datarequirements': SimpleItem(
+                defvalue=[],
+                typelist=[dict],
+                sequence=1,
+                doc='The DataRequirements entry for the JDL. A list of dictionaries, each with "InputData", "DataCatalogType" and optionally "DataCatalog" entries'),
+            'dataaccessprotocol': SimpleItem(
+                defvalue=['gsiftp'],
+                typelist=[str],
+                sequence=1,
+                doc='A list of strings giving the available DataAccessProtocol protocols'),
+            'other': SimpleItem(
+                defvalue=[],
+                typelist=[str],
+                sequence=1,
+                doc='Other Requirements')})
 
     _category = 'LCGRequirements'
     _name = 'LCGRequirements'
@@ -39,7 +72,18 @@ class LCGRequirements(GangaObject):
             return self
 
         merged = LCGRequirements()
-        for name in ['software', 'nodenumber', 'memory', 'cputime', 'walltime', 'ipconnectivity', 'allowedCEs', 'excludedCEs', 'datarequirements', 'dataaccessprotocol', 'other']:
+        for name in [
+            'software',
+            'nodenumber',
+            'memory',
+            'cputime',
+            'walltime',
+            'ipconnectivity',
+            'allowedCEs',
+            'excludedCEs',
+            'datarequirements',
+            'dataaccessprotocol',
+                'other']:
 
             attr = ''
 
@@ -60,16 +104,19 @@ class LCGRequirements(GangaObject):
         import re
 
         requirements = [
-            'Member("%s",other.GlueHostApplicationSoftwareRunTimeEnvironment)' % sw for sw in self.software]
+            'Member("%s",other.GlueHostApplicationSoftwareRunTimeEnvironment)' %
+            sw for sw in self.software]
         if self.memory:
             requirements += ['other.GlueHostMainMemoryVirtualSize >= %s' %
                              str(self.memory)]
         if self.cputime:
             requirements += [
-                '(other.GlueCEPolicyMaxCPUTime >= %s || other.GlueCEPolicyMaxCPUTime == 0)' % str(self.cputime)]
+                '(other.GlueCEPolicyMaxCPUTime >= %s || other.GlueCEPolicyMaxCPUTime == 0)' % str(
+                    self.cputime)]
         if self.walltime:
             requirements += [
-                '(other.GlueCEPolicyMaxWallClockTime >= %s || other.GlueCEPolicyMaxWallClockTime == 0)' % str(self.walltime)]
+                '(other.GlueCEPolicyMaxWallClockTime >= %s || other.GlueCEPolicyMaxWallClockTime == 0)' % str(
+                    self.walltime)]
         if self.ipconnectivity:
             requirements += ['other.GlueHostNetworkAdapterOutboundIP==true']
         requirements += self.other

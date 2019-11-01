@@ -27,9 +27,11 @@ class AfsTokenInfo(ICredentialInfo):
 
     should_warn = False
 
-    info_pattern = re.compile(r"^User's \(AFS ID \d*\) tokens for (?P<id>\w*@\S*) \[Expires (?P<expires>.*)\]$", re.MULTILINE)
+    info_pattern = re.compile(
+        r"^User's \(AFS ID \d*\) tokens for (?P<id>\w*@\S*) \[Expires (?P<expires>.*)\]$",
+        re.MULTILINE)
 
-    __slots__=('shell', 'cache', 'initial_requirements')
+    __slots__ = ('shell', 'cache', 'initial_requirements')
 
     def __init__(self, requirements, check_file=False, create=False):
         """
@@ -53,7 +55,12 @@ class AfsTokenInfo(ICredentialInfo):
 
         command = 'kinit'
 
-        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(
+            command,
+            shell=True,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
         stdoutdata, stderrdata = process.communicate(getpass('Kerberos password: ').encode())
 
         if process.returncode == 0:
@@ -108,7 +115,8 @@ class AfsTokenInfo(ICredentialInfo):
         if len(all_tokens) > 1:
             if AfsTokenInfo.should_warn:
                 logger.warning("Found multiple AFS tokens, taking soonest expiring one for safety")
-                logger.warning("Tokens found for: %s".format(" ".join([match.group('id') for match in matches])))
+                logger.warning("Tokens found for: %s".format(
+                    " ".join([match.group('id') for match in matches])))
                 AfsTokenInfo.should_warn = False
 
         soonest = None
@@ -120,7 +128,7 @@ class AfsTokenInfo(ICredentialInfo):
 
             # If the expiration date is in the past then assume it should be in the future
             if expires < now:
-                expires = expires.replace(year=now.year+1)
+                expires = expires.replace(year=now.year + 1)
 
             if not soonest or expires < soonest:
                 soonest = expires
@@ -141,10 +149,10 @@ class AfsTokenInfo(ICredentialInfo):
 
         # Lets try to find it if we can't get it from the env
         default_name_prefix = '/tmp/krb5cc_{uid}'.format(uid=os.getuid())
-        matches = glob(default_name_prefix+'*')  # Check for partial matches on disk
+        matches = glob(default_name_prefix + '*')  # Check for partial matches on disk
         if len(matches) == 1:  # If one then use it
             filename_guess = matches[0]
-        else: # Otherwise use the default
+        else:  # Otherwise use the default
             filename_guess = default_name_prefix
         return filename_guess
 
@@ -164,4 +172,3 @@ class AfsToken(ICredentialRequirement):
         Ther kerberos token doesn't encode any additional information into the token location
         """
         return ''
-

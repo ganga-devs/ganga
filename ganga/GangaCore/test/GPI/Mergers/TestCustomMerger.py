@@ -70,11 +70,11 @@ class TestCustomMerger(GangaUnitTest):
             module_file.write("""from __future__ import print_function
 def mergefiles(file_list, output_file):
     '''Free script for merging files'''
-    
+
     with open(output_file,'w') as out:
         for f in file_list:
             print(f, file=out)
-    
+
     return True
         """)
 

@@ -47,14 +47,14 @@ class CondorRequirements(GangaObject):
 Requested execution hosts, given as a string of space-separated names:
 'machine1 machine2 machine3'; or as a list of names:
 [ 'machine1', 'machine2', 'machine3' ]
-""" ),
+"""),
         "excluded_machine": SimpleItem(defvalue="",
                                        typelist=[str, list],
                                        doc="""
 Excluded execution hosts, given as a string of space-separated names:
 'machine1 machine2 machine3'; or as a list of names:
 [ 'machine1', 'machine2', 'machine3' ]
-""" ),
+"""),
         "opsys": SimpleItem(defvalue="", doc="Operating system"),
         "arch": SimpleItem(defvalue="", doc="System architecture"),
         "memory": SimpleItem(defvalue=0, doc="Mininum physical memory"),
@@ -65,7 +65,7 @@ Excluded execution hosts, given as a string of space-separated names:
 Other requirements, given as a list of strings, for example:
 [ 'OSTYPE == "SLC4"', '(POOL == "GENERAL" || POOL == "GEN_FARM")' ];
 the final requirement is the AND of all elements in the list
-""" )
+""")
     })
 
     _category = 'condor_requirements'
@@ -109,8 +109,7 @@ the final requirement is the AND of all elements in the list
             requirementList.append("Memory >= %s" % str(self.memory))
 
         if self.virtual_memory:
-            requirementList.append\
-                ("VirtualMemory >= %s" % str(self.virtual_memory))
+            requirementList.append("VirtualMemory >= %s" % str(self.virtual_memory))
 
         if self.other:
             requirementList.extend(self.other)
@@ -118,6 +117,7 @@ the final requirement is the AND of all elements in the list
         requirementString = "requirements = " + " && ".join(requirementList)
 
         return requirementString
+
 
 # Allow property values to be either string or list
 config = getConfig("defaults_CondorRequirements")

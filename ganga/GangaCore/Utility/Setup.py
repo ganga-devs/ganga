@@ -19,7 +19,7 @@ class PackageSetup(object):
             If *force=False* (default) the python version is checked and if the package
             is not required then return ('','').
 
-            If *force=True* the path is returned even if the package is not required.            
+            If *force=True* the path is returned even if the package is not required.
         """
 
         import os.path
@@ -123,7 +123,7 @@ class PackageSetup(object):
         return True
 
     def setPath(self, name, var):
-        """ 
+        """
         Update environment (os.environ) and *set* (overwrite) a package path to var.
         """
         import sys
@@ -183,8 +183,9 @@ def setPlatform(platform):
     if GangaCore.PACKAGE._defaultPlatform != platform:
         from GangaCore.Utility.logging import getLogger
         logger = getLogger(modulename=True)
-        logger.info('The platform identification string (%s) used to resolve Ganga dependencies has been explicitly set to: %s.'
-                    % (GangaCore.PACKAGE._defaultPlatform, platform))
+        logger.info(
+            'The platform identification string (%s) used to resolve Ganga dependencies has been explicitly set to: %s.' %
+            (GangaCore.PACKAGE._defaultPlatform, platform))
     GangaCore.PACKAGE._defaultPlatform = _new_platform = platform
 
 

@@ -93,7 +93,7 @@ class GangaListIter(object):
 
     """Simple wrapper around the listiterator"""
 
-    __slots__=('it',)
+    __slots__ = ('it',)
 
     def __init__(self, it):
         self.it = it
@@ -105,20 +105,54 @@ class GangaListIter(object):
     def __iter__(self):
         return self
 
+
 class GangaList(GangaObject):
 
     _category = 'internal'
-    _exportmethods = ['__add__', '__contains__', '__delitem__', '__delslice__', '__eq__', '__ge__',
-                      '__getitem__', '__getslice__', '__gt__', '__iadd__', '__imul__',
-                      '__iter__', '__le__', '__len__', '__lt__', '__mul__', '__ne__', '__reversed__', '__radd__', '__rmul__',
-                      '__setitem__', '__setslice__', 'append', 'count', 'extend', 'index',
-                      'insert', 'pop', 'remove', 'reverse', 'sort', '__hash__', 'get', 'clear']
+    _exportmethods = [
+        '__add__',
+        '__contains__',
+        '__delitem__',
+        '__delslice__',
+        '__eq__',
+        '__ge__',
+        '__getitem__',
+        '__getslice__',
+        '__gt__',
+        '__iadd__',
+        '__imul__',
+        '__iter__',
+        '__le__',
+        '__len__',
+        '__lt__',
+        '__mul__',
+        '__ne__',
+        '__reversed__',
+        '__radd__',
+        '__rmul__',
+        '__setitem__',
+        '__setslice__',
+        'append',
+        'count',
+        'extend',
+        'index',
+        'insert',
+        'pop',
+        'remove',
+        'reverse',
+        'sort',
+        '__hash__',
+        'get',
+        'clear']
     _hidden = 1
     _enable_plugin = 1
     _name = 'GangaList'
-    _schema = Schema(Version(1, 0), {'_list': SimpleItem(defvalue=[], doc='The raw list', hidden=1, category='internal'),
-                                     '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
-                                    })
+    _schema = Schema(
+        Version(
+            1, 0), {
+            '_list': SimpleItem(
+                defvalue=[], doc='The raw list', hidden=1, category='internal'), '_is_preparable': SimpleItem(
+                    defvalue=False, doc='defines if prepare lock is checked', hidden=1), })
     _enable_config = 1
 
     _additional_slots = ['_is_a_ref']
@@ -147,7 +181,7 @@ class GangaList(GangaObject):
         """
         return all([isProxy(l) for l in _list])
 
-    ## Attempt to prevent raw assignment of _list causing Proxied objects to get inside the GangaList
+    # Attempt to prevent raw assignment of _list causing Proxied objects to get inside the GangaList
     def _attribute_filter__set__(self, name, value):
         logger.debug("GangaList filter")
         if name == "_list":
@@ -165,7 +199,9 @@ class GangaList(GangaObject):
             elif self._list is None:
                 return None
             else:
-                raise GangaException("Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
+                raise GangaException(
+                    "Attempting to assign a non list item: %s to a GangaList._list!" %
+                    str(value))
         else:
             return super(GangaList, self)._attribute_filter__set__(name, value)
 
@@ -201,7 +237,12 @@ class GangaList(GangaObject):
             if '_list_get__match__' in dir(item):
                 return item._list_get__match__(to_match)
             return to_match == item
-        return makeGangaListByRef(list(filter(matching_filter, self._list)), preparable=self._is_preparable)
+        return makeGangaListByRef(
+            list(
+                filter(
+                    matching_filter,
+                    self._list)),
+            preparable=self._is_preparable)
 
     def _export_get(self, to_match):
         return addProxy(self.get(stripProxy(to_match)))
@@ -255,14 +296,20 @@ class GangaList(GangaObject):
         if self._is_preparable and hasattr(self, '_getParent'):
             if self._getParent()._category == 'applications' and hasattr(self._getParent(), 'is_prepared'):
                 from GangaCore.GPIDev.Lib.File.File import ShareDir
-                return (isinstance(self._getParent().is_prepared, ShareDir) or super(GangaList, self)._readonly())
+                return (
+                    isinstance(
+                        self._getParent().is_prepared,
+                        ShareDir) or super(
+                        GangaList,
+                        self)._readonly())
         return super(GangaList, self)._readonly()
 
     def checkReadOnly(self):
         """Puts a hook in to stop mutable access to readonly jobs."""
         if self._readonly():
             raise ReadOnlyObjectError(
-                'object %s is readonly and attribute "%s" cannot be modified now' % (repr(self), getName(self)))
+                'object %s is readonly and attribute "%s" cannot be modified now' %
+                (repr(self), getName(self)))
         else:
             self._getSessionLock()
             # TODO: BUG: This should only be set _after_ the change has been
@@ -279,7 +326,12 @@ class GangaList(GangaObject):
         if not self.is_list(obj_list):
             raise GangaTypeError('Type %s can not be concatinated to a GangaList' % type(obj_list))
 
-        return makeGangaList(self._list.__add__(self.strip_proxy_list(obj_list, True)), preparable=self._is_preparable)
+        return makeGangaList(
+            self._list.__add__(
+                self.strip_proxy_list(
+                    obj_list,
+                    True)),
+            preparable=self._is_preparable)
 
     def _export___add__(self, obj_list):
         self.checkReadOnly()
@@ -316,7 +368,11 @@ class GangaList(GangaObject):
         #logger.info("memo: %s" % str(memo))
         #logger.info("self.len: %s" % str(len(self._list)))
         if self._list != []:
-            return makeGangaListByRef(_list=copy.deepcopy(self._list, memo), preparable=self._is_preparable)
+            return makeGangaListByRef(
+                _list=copy.deepcopy(
+                    self._list,
+                    memo),
+                preparable=self._is_preparable)
         else:
             new_list = GangaList()
             new_list._is_preparable = self._is_preparable
@@ -356,7 +412,8 @@ class GangaList(GangaObject):
         return addProxy(self.__getitem__(index))
 
 #    def __getslice__(self, start, end):
-#        return makeGangaList(_list=self._list.__getslice__(start, end), preparable=self._is_preparable)
+# return makeGangaList(_list=self._list.__getslice__(start, end),
+# preparable=self._is_preparable)
 
 #    def _export___getslice__(self, start, end):
 #        return addProxy(self.__getslice__(start, end))
@@ -452,10 +509,10 @@ class GangaList(GangaObject):
         self.__setslice__(start, end, obj_list)
 
     def __repr__(self):
-        #logger.info("__repr__")
-        #return self.toString()
+        # logger.info("__repr__")
+        # return self.toString()
         #import traceback
-        #traceback.print_stack()
+        # traceback.print_stack()
         containsObj = False
         for elem in self._list:
             if isinstance(elem, GangaObject):
@@ -465,10 +522,10 @@ class GangaList(GangaObject):
             return self.toString()
         else:
             return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
-        #return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
+        # return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
 
     def __str__(self):
-        #logger.info("__str__")
+        # logger.info("__str__")
         return self.toString()
 
     def append(self, obj, my_filter=True):
@@ -485,6 +542,7 @@ class GangaList(GangaObject):
             self._list.append(stripped_e)
         elif isType(elem, list_objs):
             new_list = []
+
             def my_append(_obj):
                 if isType(_obj, GangaObject):
                     stripped_o = stripProxy(_obj)
@@ -583,7 +641,14 @@ class GangaList(GangaObject):
                     break
         return result
 
-    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=sys.stdout, selection='', interactive=False):
+    def printSummaryTree(
+            self,
+            level=0,
+            verbosity_level=0,
+            whitespace_marker='',
+            out=sys.stdout,
+            selection='',
+            interactive=False):
         """
         This funtion displays a summary of the contents of this file.
         (Docs from Gaga.GPIDev.Base.Objects # TODO determine how mch of this may be duplicated from there)
@@ -679,4 +744,3 @@ class GangaList(GangaObject):
         super(GangaList, self)._setFlushed()
 
 # export to GPI moved to the Runtime bootstrap
-

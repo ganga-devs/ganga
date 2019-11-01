@@ -1,3 +1,4 @@
+import re
 import os
 import glob
 import tempfile
@@ -11,9 +12,10 @@ from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
+
 def outputFilePostProcessingOnWN(job, outputFileClassName):
     """
-    Checks if the output files of a given job(we are interested in the backend) 
+    Checks if the output files of a given job(we are interested in the backend)
     should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
     """
     return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'WN')
@@ -21,7 +23,7 @@ def outputFilePostProcessingOnWN(job, outputFileClassName):
 
 def outputFilePostProcessingOnClient(job, outputFileClassName):
     """
-    Checks if the output files of a given job(we are interested in the backend) 
+    Checks if the output files of a given job(we are interested in the backend)
     should be postprocessed on the client, depending on job.backend_output_postprocess dictionary
     """
     return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'client')
@@ -50,6 +52,7 @@ def outputFilePostProcessingTestForWhen(job, outputFileClassName, when):
 
     return False
 
+
 def getOutputSandboxPatterns(job):
     """
     Intended for grid backends where we have to set the outputsandbox patterns for the output file types that have to be processed on the client
@@ -73,6 +76,7 @@ def getOutputSandboxPatterns(job):
 
     return outputPatterns
 
+
 def getInputFilesPatterns(job):
     """
     we have to set the inputsandbox patterns for the input files that will be copied from the client, also write the commands for downloading input files from the WN
@@ -85,7 +89,8 @@ def getInputFilesPatterns(job):
     # if GangaDataset is used, check if they want the inputfiles transferred
     inputfiles_list = copy.deepcopy(job.inputfiles if job.inputfiles else [])
     from GangaCore.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
-    if not job.subjobs and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
+    if not job.subjobs and job.inputdata and isType(
+            job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
 
     for inputFile in inputfiles_list:
@@ -162,14 +167,14 @@ for patternToZip in ###PATTERNSTOZIP###:
     for currentFile in glob.glob(patternToZip):
         os.system("gzip %s" % currentFile)
         filesToZip.append(currentFile)
-            
+
 final_list_to_copy = []
 
 for f in f_to_copy:
     if f in filesToZip:
-        final_list_to_copy.append('%s.gz' % f)  
-    else:       
-        final_list_to_copy.append(f)            
+        final_list_to_copy.append('%s.gz' % f)
+    else:
+        final_list_to_copy.append(f)
 
 for fn in final_list_to_copy:
     try:
@@ -200,7 +205,8 @@ def getWNCodeForDownloadingInputFiles(job, indent):
         Args: job(Job) This is the job which we're testing for inputfiles """
         if job.inputfiles is not None and len(job.inputfiles) != 0:
             return True
-        if job.inputdata is not None and isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
+        if job.inputdata is not None and isinstance(
+                job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
             return True
         return False
 
@@ -223,10 +229,12 @@ def getWNCodeForDownloadingInputFiles(job, indent):
         inputfiles_list = job.inputfiles
 
     if job.inputdata:
-        if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
+        if job.inputdata and isType(job.inputdata,
+                                    GangaDataset) and job.inputdata.treat_as_inputfiles:
             inputfiles_list += job.inputdata.files
     elif job.master is not None:
-        if job.master.inputdata and isType(job.master.inputdata, GangaDataset) and job.master.inputdata.treat_as_inputfiles:
+        if job.master.inputdata and isType(job.master.inputdata,
+                                           GangaDataset) and job.master.inputdata.treat_as_inputfiles:
             inputfiles_list += job.master.inputdata.files
 
     for inputFile in inputfiles_list:
@@ -282,7 +290,7 @@ for patternToZip in ###PATTERNSTOZIP###:
         if os.path.isfile(currentFile):
             os.system("gzip %s" % currentFile)
 
-postprocesslocations = open(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFILENAME###'), 'a+')  
+postprocesslocations = open(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFILENAME###'), 'a+')
 """
 
     from GangaCore.GPIDev.Lib.File import FileUtils
@@ -291,13 +299,16 @@ postprocesslocations = open(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFI
     insertScript = shortScript
 
     insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
-    insertScript = insertScript.replace('###POSTPROCESSLOCATIONSFILENAME###', getConfig('Output')['PostProcessLocationsFileName'])
+    insertScript = insertScript.replace(
+        '###POSTPROCESSLOCATIONSFILENAME###',
+        getConfig('Output')['PostProcessLocationsFileName'])
 
     for outputFileName in outputFilesProcessedOnWN.keys():
 
         if len(outputFilesProcessedOnWN[outputFileName]) > 0:
 
-            insertScript += outputFilesProcessedOnWN[outputFileName][0].getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
+            insertScript += outputFilesProcessedOnWN[outputFileName][0].getWNInjectedScript(
+                outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
 
     insertScript += """\n
 ###INDENT###postprocesslocations.close()
@@ -306,9 +317,8 @@ postprocesslocations = open(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFI
 
     return insertScript
 
-import re
 
-wildcardregex = re.compile('[*?\[\]]')
+wildcardregex = re.compile(r'[*?\[\]]')
 
 
 def iexpandWildCards(filelist):
@@ -349,4 +359,3 @@ def getWNCodeForInputdataListCreation(job, indent):
         insertScript = insertScript.replace('###FILELIST###', "[]")
 
     return insertScript
-

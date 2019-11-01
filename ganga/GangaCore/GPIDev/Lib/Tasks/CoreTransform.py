@@ -13,13 +13,36 @@ import re
 
 logger = getLogger()
 
+
 class CoreTransform(ITransform):
-    _schema = Schema(Version(1, 0), dict(list(ITransform._schema.datadict.items()) + list({
-        'unit_splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter to be used to create the units'),
-        'chaindata_as_inputfiles': SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN"),
-        'files_per_unit': SimpleItem(defvalue=-1, doc="Number of files per unit if possible. Set to -1 to just create a unit per input dataset"),
-        'fields_to_copy': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='A list of fields that should be copied when creating units, e.g. application, inputfiles. Empty (default) implies all fields are copied unless the GeenricSplitter is used '),
-    }.items())))
+    _schema = Schema(
+        Version(
+            1,
+            0),
+        dict(
+            list(
+                ITransform._schema.datadict.items()) +
+            list(
+                {
+                    'unit_splitter': ComponentItem(
+                        'splitters',
+                        defvalue=None,
+                        optional=1,
+                        load_default=False,
+                        doc='Splitter to be used to create the units'),
+                    'chaindata_as_inputfiles': SimpleItem(
+                        defvalue=False,
+                        doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN"),
+                    'files_per_unit': SimpleItem(
+                        defvalue=-
+                        1,
+                        doc="Number of files per unit if possible. Set to -1 to just create a unit per input dataset"),
+                    'fields_to_copy': SimpleItem(
+                        defvalue=[],
+                        typelist=[str],
+                        sequence=1,
+                        doc='A list of fields that should be copied when creating units, e.g. application, inputfiles. Empty (default) implies all fields are copied unless the GeenricSplitter is used '),
+                }.items())))
 
     _category = 'transforms'
     _name = 'CoreTransform'
@@ -40,8 +63,9 @@ class CoreTransform(ITransform):
             return
 
         if self.unit_splitter is None and len(self.inputdata) == 0:
-            raise ApplicationConfigurationError("No unit splitter or InputData provided for CoreTransform unit creation, Transform %d (%s)" %
-                                                (self.getID(), self.name))
+            raise ApplicationConfigurationError(
+                "No unit splitter or InputData provided for CoreTransform unit creation, Transform %d (%s)" %
+                (self.getID(), self.name))
 
         # -----------------------------------------------------------------
         # split over unit_splitter by preference
@@ -58,8 +82,9 @@ class CoreTransform(ITransform):
             subjobs = self.unit_splitter.split(j)
 
             if len(subjobs) == 0:
-                raise ApplicationConfigurationError("Unit splitter gave no subjobs after split for CoreTransform unit creation, Transform %d (%s)" %
-                                                    (self.getID(), self.name))
+                raise ApplicationConfigurationError(
+                    "Unit splitter gave no subjobs after split for CoreTransform unit creation, Transform %d (%s)" %
+                    (self.getID(), self.name))
 
             # only copy the appropriate elements
             fields = []
@@ -144,7 +169,8 @@ class CoreTransform(ITransform):
         flist = []
         for sj in self.getParentUnitJobs(parent_units):
             for f in sj.outputfiles:
-                temp_flist = stripProxy(f).getSubFiles() if len(stripProxy(f).getSubFiles()) > 0 else [stripProxy(f)]
+                temp_flist = stripProxy(f).getSubFiles() if len(
+                    stripProxy(f).getSubFiles()) > 0 else [stripProxy(f)]
                 for f2 in temp_flist:
                     if len(incl_pat_list) > 0:
                         for pat in incl_pat_list:

@@ -20,5 +20,3 @@ addRegistry(myTaskRegistry)
 def stopTasks():
     global myTaskRegistry
     myTaskRegistry.stop()
-
-

@@ -32,7 +32,7 @@ class TestRootMerger(GangaGPITestCase):
 
             # the following is from the root tutorial
             scriptString = """#!/usr/bin/env python
-            
+
 from ROOT import TCanvas, TPad, TFormula, TF1, TPaveLabel, TH1F, TFile
 from ROOT import gROOT, gBenchmark
 
@@ -141,7 +141,7 @@ if __name__ == '__main__':
 
     #process some options...the b is there for pyroot
     opts, args = getopt.getopt(sys.argv[1:],'f:g:e:b',['file=','ghistogram=','entries='])
-    
+
     file = ''
     histogram = ''
     entries = 0
@@ -278,8 +278,10 @@ if __name__ == '__main__':
                 merge_out = os.path.join(tmpdir, f)
                 assert os.path.exists(merge_out), 'File must have been created'
 
-        assert self.runHistogramEntriesTest(os.path.join(
-            tmpdir, 'fillrandom.foo'), 'h1f', 10000 * len(self.jobslice)), 'Number of entries should be increased after merge'
+        assert self.runHistogramEntriesTest(
+            os.path.join(
+                tmpdir, 'fillrandom.foo'), 'h1f', 10000 * len(
+                self.jobslice)), 'Number of entries should be increased after merge'
 
     def testSmartMergeFileNameInConfig(self):
 

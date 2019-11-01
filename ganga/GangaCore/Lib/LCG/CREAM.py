@@ -30,11 +30,12 @@ from GangaCore.GPIDev.Credentials import require_credential, credential_store, n
 from GangaCore.GPIDev.Credentials.VomsProxy import VomsProxy
 config = getConfig('LCG')
 
+
 def __cream_resolveOSBList__(job, jdl):
 
     osbURIList = []
 
-    re_osb = re.compile('^.*OutputSandbox\s+\=\s+\{(.*)\}\s?\]?$')
+    re_osb = re.compile(r'^.*OutputSandbox\s+\=\s+\{(.*)\}\s?\]?$')
 
     for l in jdl.split(';'):
         m = re_osb.match(l)
@@ -90,7 +91,7 @@ class CREAM(IBackend):
             self.requirements = reqClass()
 
             logger.debug('load %s as LCGRequirements' % reqName)
-        except:
+        except BaseException:
             logger.debug('load default LCGRequirements')
 
         # dynamic sandbox cache object loading
@@ -103,7 +104,7 @@ class CREAM(IBackend):
             scClass = vars(scModule)[scName]
             self.sandboxcache = scClass()
             logger.debug('load %s as SandboxCache' % scName)
-        except:
+        except BaseException:
             logger.debug('load default SandboxCache')
 
     def __refresh_jobinfo__(self, job):
@@ -147,7 +148,7 @@ class CREAM(IBackend):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
 
         elif self.sandboxcache._name == 'GridftpSandboxCache':
-            #If the copy command is set in the config then use it.
+            # If the copy command is set in the config then use it.
             if config['CreamCopyCommand']:
                 self.sandboxcache.copyCommand = config['CreamCopyCommand']
 
@@ -231,7 +232,8 @@ class CREAM(IBackend):
             if doUpload:
 
                 logger.warning(
-                    'The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file, config['BoundSandboxLimit']))
+                    'The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' %
+                    (file, config['BoundSandboxLimit']))
 
                 if self.sandboxcache.upload([abspath]):
                     remote_sandbox = self.sandboxcache.get_cached_files()[-1]
@@ -656,7 +658,7 @@ try:
         str_env = 'export %s="%s"' % (k, v)
 
         printInfo(' ** ' + str_env)
-        
+
         f.write(str_env + os.linesep)
     f.close()
 
@@ -689,13 +691,13 @@ try:
 
     if not status:
         raise OSError('Application execution failed.')
-    printInfo('Application execution passed with exit code %d.' % exitcode)      
+    printInfo('Application execution passed with exit code %d.' % exitcode)
 
     ###OUTPUTUPLOADSPOSTPROCESSING###
 
     for f in os.listdir(os.getcwd()):
         command = "cp %s %s" % (os.path.join(os.getcwd(),f), os.path.join(orig_wdir,f))
-        os.system(command)            
+        os.system(command)
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
@@ -781,7 +783,7 @@ sys.exit(0)
         try:
             logger.debug('job info of monitoring service: %s' %
                          str(self.monInfo))
-        except:
+        except BaseException:
             pass
 
 #       prepare input/output sandboxes
@@ -790,8 +792,8 @@ sys.exit(0)
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
-        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
+        fileutils = File(inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR)
+        packed_files = jobconfig.getSandboxFiles() + [fileutils]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox
@@ -888,13 +890,15 @@ sys.exit(0)
         jdl = {
             'VirtualOrganisation': config['VirtualOrganisation'],
             'Executable': os.path.basename(scriptPath),
-            'Environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
+            'Environment': {
+                'GANGA_LCG_VO': config['VirtualOrganisation'],
+                'GANGA_LOG_HANDLER': config['JobLogHandler'],
+                'LFC_HOST': lfc_host},
             'StdOutput': 'stdout',
             'StdError': 'stderr',
             'InputSandbox': input_sandbox,
             'OutputSandbox': output_sandbox,
-            'OutputSandboxBaseDestURI': 'gsiftp://localhost'
-        }
+            'OutputSandboxBaseDestURI': 'gsiftp://localhost'}
 
         jdl['Environment'].update({'GANGA_LCG_CE': self.CE})
         jdl['Requirements'] = self.requirements.merge(
@@ -1071,7 +1075,7 @@ sys.exit(0)
             allowed_celist = self.requirements.getce()
             if not self.CE and allowed_celist:
                 self.CE = allowed_celist[0]
-        except:
+        except BaseException:
             logger.warning(
                 'CREAM CE assigment from AtlasCREAMRequirements failed.')
 
@@ -1085,7 +1089,8 @@ sys.exit(0)
             raise GangaException('CREAM CE endpoint not set')
 
         # delegate proxy to CREAM CE
-        self.delegation_id = Grid.cream_proxy_delegation(self.CE, self.delegation_id, self.credential_requirements)
+        self.delegation_id = Grid.cream_proxy_delegation(
+            self.CE, self.delegation_id, self.credential_requirements)
         if not self.delegation_id:
             logger.warning('proxy delegation to %s failed' % self.CE)
 
@@ -1110,7 +1115,11 @@ sys.exit(0)
         jdlpath = self.preparejob(subjobconfig, master_job_sandbox)
 
         if jdlpath:
-            self.id = Grid.cream_submit(jdlpath, self.CE, self.delegation_id, self.credential_requirements)
+            self.id = Grid.cream_submit(
+                jdlpath,
+                self.CE,
+                self.delegation_id,
+                self.credential_requirements)
 
             if self.id:
                 self.actualCE = self.CE
@@ -1147,7 +1156,8 @@ sys.exit(0)
         ick = False
 
         # delegate proxy to CREAM CE
-        self.delegation_id = Grid.cream_proxy_delegation(self.CE, self.delegation_id, self.credential_requirements)
+        self.delegation_id = Grid.cream_proxy_delegation(
+            self.CE, self.delegation_id, self.credential_requirements)
         if not self.delegation_id:
             logger.warning('proxy delegation to %s failed' % self.CE)
 
@@ -1185,7 +1195,11 @@ sys.exit(0)
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
         if jdlpath:
-            self.id = Grid.cream_submit(jdlpath, self.CE, self.delegation_id, self.credential_requirements)
+            self.id = Grid.cream_submit(
+                jdlpath,
+                self.CE,
+                self.delegation_id,
+                self.credential_requirements)
 
             if self.id:
                 # refresh the lcg job information
@@ -1212,9 +1226,10 @@ sys.exit(0)
             # If the credential is not valid or doesn't exist then skip it
             cred = credential_store.get(cred_req)
             if not cred or not cred.is_valid():
-                    needed_credentials.add(cred_req)
-                    continue
-            # Create a ``Grid`` for each credential requirement and request the relevant jobs through it
+                needed_credentials.add(cred_req)
+                continue
+            # Create a ``Grid`` for each credential requirement and request the
+            # relevant jobs through it
             info = Grid.cream_status(job_ids, cred_req)
             jobInfoDict.update(info)
 
@@ -1227,7 +1242,8 @@ sys.exit(0)
 
                 job = jobdict[id]
 
-                if job.backend.status != info['Current Status'] and ('ExitCode' not in info or ('ExitCode' in info and info['ExitCode'].isdigit())):
+                if job.backend.status != info['Current Status'] and (
+                        'ExitCode' not in info or ('ExitCode' in info and info['ExitCode'].isdigit())):
 
                     if 'Worker Node' in info:
                         job.backend.workernode = info['Worker Node']
@@ -1258,7 +1274,11 @@ sys.exit(0)
 
                         if osbURIList:
 
-                            if Grid.cream_get_output(osbURIList, job.getOutputWorkspace(create=True).getPath(), job.backend.credential_requirements):
+                            if Grid.cream_get_output(
+                                    osbURIList,
+                                    job.getOutputWorkspace(
+                                        create=True).getPath(),
+                                    job.backend.credential_requirements):
                                 (ick, app_exitcode) = Grid.__get_app_exitcode__(
                                     job.getOutputWorkspace(create=True).getPath())
                                 job.backend.exitcode = app_exitcode
@@ -1275,13 +1295,13 @@ sys.exit(0)
                             try:
                                 job.backend.exitcode_cream = int(
                                     info['ExitCode'])
-                            except:
+                            except BaseException:
                                 job.backend.exitcode_cream = 1
 
                         if 'FailureReason' in info:
                             try:
                                 job.backend.reason = info['FailureReason']
-                            except:
+                            except BaseException:
                                 pass
 
                         job.backend.updateGangaJobStatus()
@@ -1326,5 +1346,5 @@ sys.exit(0)
         else:
             logger.warning('Unexpected job status "%s"', self.status)
 
-logger = getLogger()
 
+logger = getLogger()

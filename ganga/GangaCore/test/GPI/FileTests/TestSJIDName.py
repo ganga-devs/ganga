@@ -1,22 +1,27 @@
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TestSJIDName(GangaUnitTest):
     """test for sjid in filename names explain each test"""
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts = [('TestingFramework', 'AutoCleanup', 'False'), ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False'),
+                      ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestSJIDName, self).setUp(extra_opts=extra_opts)
 
     def test_a_jobSubmit(self):
         """here for testing a submit"""
         from GangaCore.GPI import Job, Executable, ArgSplitter, MassStorageFile
 
-        j=Job()
-        j.application=Executable(exe='touch')
-        j.splitter=ArgSplitter(args=[['abc.txt'], ['def.txt']])
-        j.outputfiles=[MassStorageFile(outputfilenameformat = '/test/{sjid}-{fname}', namePattern = '*.txt')]
+        j = Job()
+        j.application = Executable(exe='touch')
+        j.splitter = ArgSplitter(args=[['abc.txt'], ['def.txt']])
+        j.outputfiles = [
+            MassStorageFile(
+                outputfilenameformat='/test/{sjid}-{fname}',
+                namePattern='*.txt')]
         j.submit()
 
         from GangaTest.Framework.utils import sleep_until_completed
@@ -35,10 +40,13 @@ class TestSJIDName(GangaUnitTest):
         """here for testing job create"""
         from GangaCore.GPI import Job, Executable, ArgSplitter, MassStorageFile
 
-        j=Job()
-        j.application=Executable(exe='touch')
-        j.splitter=ArgSplitter(args=[['abc.txt'], ['def.txt']])
-        j.outputfiles=[MassStorageFile(outputfilenameformat = '/test/{sjid}-{fname}', namePattern = '*.txt')]
+        j = Job()
+        j.application = Executable(exe='touch')
+        j.splitter = ArgSplitter(args=[['abc.txt'], ['def.txt']])
+        j.outputfiles = [
+            MassStorageFile(
+                outputfilenameformat='/test/{sjid}-{fname}',
+                namePattern='*.txt')]
 
     def test_d_loadSubmit(self):
         """here for testing a loaded submit"""
@@ -48,4 +56,3 @@ class TestSJIDName(GangaUnitTest):
 
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(jobs(1))
-

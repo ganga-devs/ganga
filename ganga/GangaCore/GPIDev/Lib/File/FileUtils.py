@@ -12,6 +12,7 @@ logger = GangaCore.Utility.logging.getLogger()
 
 transformDictionary = {}
 
+
 def loadScript(scriptFilePath, indentation):
 
     if not os.path.exists(scriptFilePath):
@@ -23,6 +24,7 @@ def loadScript(scriptFilePath, indentation):
 
     return indentScript(file_data, indentation)
 
+
 def indentScript(script, indenting):
 
     script_lines = script.split('\n')
@@ -32,11 +34,14 @@ def indentScript(script, indenting):
 
     return '\n'.join(output_script)
 
+
 def __populate():
     if len(transformDictionary) == 0:
         transformDictionary[File] = LocalFile
+
         # transformDictionary[ ] =
 __populate()
+
 
 def safeTransformFile(input_file):
 
@@ -48,7 +53,8 @@ def safeTransformFile(input_file):
 
     return None
 
-def doesFileExist( input_file=None, input_list = None ):
+
+def doesFileExist(input_file=None, input_list=None):
 
     if input_file is None:
         input_file = 'some.file'
@@ -56,7 +62,7 @@ def doesFileExist( input_file=None, input_list = None ):
         input_list = []
 
     test_fileName = ''
-    if type(input_file) == type(''):
+    if isinstance(input_file, type('')):
         test_fileName = input_file
     elif hasattr(input_file, 'namePattern'):
         test_fileName = input_file.namePattern
@@ -66,16 +72,15 @@ def doesFileExist( input_file=None, input_list = None ):
     have_matched = False
     for input_fileName in input_list:
         check_str = ''
-        if type(input_fileName) == type(''):
+        if isinstance(input_fileName, type('')):
             check_str = input_fileName
         elif hasattr(input_fileName, 'namePattern'):
             check_str = input_fileName.namePattern
         else:
             raise GangaException("Failed to understand file or pattern: %s" % str(input_fileName))
 
-        if fnmatch.fnmatch( test_fileName, check_str ):
+        if fnmatch.fnmatch(test_fileName, check_str):
             have_matched = True
             break
 
     return have_matched
-

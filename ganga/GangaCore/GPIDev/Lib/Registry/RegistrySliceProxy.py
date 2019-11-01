@@ -1,7 +1,12 @@
 
 
+from GangaCore.GPIDev.Base.Proxy import isType
+from .RegistrySlice import RegistrySlice
+from GangaCore.GPIDev.Base.Objects import GangaObject
+from GangaCore.GPIDev.Base.Proxy import addProxy
 from GangaCore.GPIDev.Base.Proxy import stripProxy, implRef
 from GangaCore.Utility.logging import getLogger
+
 
 class RegistrySliceProxy(object):
 
@@ -82,11 +87,7 @@ class RegistrySliceProxy(object):
 
 # wrap Proxy around a ganga object (or a list of ganga objects)
 # leave all others unchanged
-from GangaCore.GPIDev.Base.Proxy import addProxy
-from GangaCore.GPIDev.Base.Objects import GangaObject
-from .RegistrySlice import RegistrySlice
 
-from GangaCore.GPIDev.Base.Proxy import isType
 
 def _wrap(obj):
     if isType(obj, GangaObject):
@@ -99,6 +100,6 @@ def _wrap(obj):
 
 # strip Proxy and get into the ganga object implementation
 
+
 def _unwrap(obj):
     return stripProxy(obj)
-

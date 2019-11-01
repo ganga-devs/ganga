@@ -32,9 +32,9 @@ lcg_file_index_schema_datadict = GridFileIndex._schema.inherit_copy().datadict
 class LCGFileIndex(GridFileIndex):
 
     """
-    Data object containing LCG file index information. 
+    Data object containing LCG file index information.
 
-    @author: Hurng-Chun Lee 
+    @author: Hurng-Chun Lee
     @contact: hurngchunlee@gmail.com
     """
 
@@ -54,19 +54,34 @@ class LCGFileIndex(GridFileIndex):
 class LCGSandboxCache(GridSandboxCache):
 
     '''
-    Helper class for upladong/downloading/deleting sandbox files using lcg-cr/lcg-cp/lcg-del commands. 
+    Helper class for upladong/downloading/deleting sandbox files using lcg-cr/lcg-cp/lcg-del commands.
 
-    @author: Hurng-Chun Lee 
+    @author: Hurng-Chun Lee
     @contact: hurngchunlee@gmail.com
     '''
 
-    lcg_sandbox_cache_schema_datadict.update({
-        'se': SimpleItem(defvalue='', copyable=1, doc='the LCG SE hostname'),
-        'se_type': SimpleItem(defvalue='srmv2', copyable=1, doc='the LCG SE type'),
-        'se_rpath': SimpleItem(defvalue='generated', copyable=1, doc='the relative path to the VO directory on the SE'),
-        'lfc_host': SimpleItem(defvalue='', copyable=1, doc='the LCG LFC hostname'),
-        'srm_token': SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2')
-    })
+    lcg_sandbox_cache_schema_datadict.update(
+        {
+            'se': SimpleItem(
+                defvalue='',
+                copyable=1,
+                doc='the LCG SE hostname'),
+            'se_type': SimpleItem(
+                defvalue='srmv2',
+                copyable=1,
+                doc='the LCG SE type'),
+            'se_rpath': SimpleItem(
+                defvalue='generated',
+                copyable=1,
+                doc='the relative path to the VO directory on the SE'),
+            'lfc_host': SimpleItem(
+                defvalue='',
+                copyable=1,
+                doc='the LCG LFC hostname'),
+            'srm_token': SimpleItem(
+                defvalue='',
+                copyable=1,
+                doc='the SRM space token, meaningful only when se_type is set to srmv2')})
 
     _schema = Schema(Version(1, 0), lcg_sandbox_cache_schema_datadict)
     _category = 'GridSandboxCache'
@@ -146,7 +161,7 @@ class LCGSandboxCache(GridSandboxCache):
                 if rc != 0:
                     return False
                 else:
-                    match = re.search('(guid:\S+)', output)
+                    match = re.search(r'(guid:\S+)', output)
                     if match:
                         guid = match.group(1)
 
@@ -174,7 +189,7 @@ class LCGSandboxCache(GridSandboxCache):
 
     def impl_download(self, cred_req, files=[], dest_dir=None, opts=''):
         """
-        Downloads multiple files from remote grid storages to 
+        Downloads multiple files from remote grid storages to
         a local directory.
         """
         if not dest_dir:
@@ -229,7 +244,7 @@ class LCGSandboxCache(GridSandboxCache):
 
     def impl_delete(self, cred_req, files=[], opts=''):
         """
-        Deletes multiple files from remote grid storages. 
+        Deletes multiple files from remote grid storages.
         """
 
         # the algorithm of downloading one file to a local directory

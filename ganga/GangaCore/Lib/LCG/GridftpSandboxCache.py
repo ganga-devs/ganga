@@ -1,3 +1,4 @@
+from GangaCore.Utility.logging import getLogger
 import os
 import os.path
 import re
@@ -15,9 +16,6 @@ gridftp_sandbox_cache_schema_datadict = GridSandboxCache._schema.inherit_copy(
 ).datadict
 gridftp_file_index_schema_datadict = GridFileIndex._schema.inherit_copy(
 ).datadict
-
-
-from GangaCore.Utility.logging import getLogger
 
 
 class GridftpFileIndex(GridFileIndex):
@@ -51,10 +49,18 @@ class GridftpSandboxCache(GridSandboxCache):
     @contact: hurngchunlee@gmail.com
     '''
 
-    gridftp_sandbox_cache_schema_datadict.update({
-        'baseURI': SimpleItem(defvalue='', copyable=1, doc='the base URI for storing cached files'),
-        'copyCommand': SimpleItem(defvalue='globus-copy-url', typelist=[str], copyable=1, doc='the command to be exectued to copy files'),
-    })
+    gridftp_sandbox_cache_schema_datadict.update(
+        {
+            'baseURI': SimpleItem(
+                defvalue='',
+                copyable=1,
+                doc='the base URI for storing cached files'),
+            'copyCommand': SimpleItem(
+                defvalue='globus-copy-url',
+                typelist=[str],
+                copyable=1,
+                doc='the command to be exectued to copy files'),
+        })
 
     _schema = Schema(Version(1, 0), gridftp_sandbox_cache_schema_datadict)
     _category = 'GridSandboxCache'
@@ -172,7 +178,7 @@ class GridftpSandboxCache(GridSandboxCache):
 
     def impl_download(self, cred_req, files=[], dest_dir=None, opts=''):
         """
-        Downloads multiple files from gridftp server to 
+        Downloads multiple files from gridftp server to
         a local directory.
         """
         if not dest_dir:

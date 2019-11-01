@@ -47,16 +47,19 @@ class ArgSplitter(ISplitter):
     subjob 3 : CCC  3
 """
     _name = "ArgSplitter"
-    _schema = Schema(Version(1, 0), {
-        'args': SimpleItem(defvalue=[], typelist=[list, GangaList], sequence=1, doc='A list of lists of arguments to pass to script')
-    })
+    _schema = Schema(
+        Version(
+            1, 0), {
+            'args': SimpleItem(
+                defvalue=[], typelist=[
+                    list, GangaList], sequence=1, doc='A list of lists of arguments to pass to script')})
 
     def split(self, job):
 
         subjobs = []
 
         for arg in self.args:
-            j = self.createSubjob(job,['application'])
+            j = self.createSubjob(job, ['application'])
             # Add new arguments to subjob
             app = copy.deepcopy(job.application)
             if hasattr(app, 'args'):
@@ -64,8 +67,8 @@ class ArgSplitter(ISplitter):
             elif hasattr(app, 'extraArgs'):
                 app.extraArgs = arg
             else:
-                raise SplitterError('Application has neither args or extraArgs in its schema') 
-                    
+                raise SplitterError('Application has neither args or extraArgs in its schema')
+
             j.application = app
             logger.debug('Arguments for split job is: ' + str(arg))
             subjobs.append(stripProxy(j))

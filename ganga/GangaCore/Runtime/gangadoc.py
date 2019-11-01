@@ -10,6 +10,9 @@ This module makes changes to the content of the pydoc module.
 """
 
 
+import inspect
+import sys
+from GangaCore.Utility.logging import getLogger
 import pydoc
 
 _GPIhelp = '''Ganga Public Interface (GPI) Index
@@ -24,7 +27,6 @@ _GPIhelp = '''Ganga Public Interface (GPI) Index
 
 '''
 
-from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 _GPIhelp_sections = {
@@ -122,11 +124,11 @@ This is an interactive help. At the prompt type your questions in plain english\
 
         return pydoc.Helper.help(self, request)
 
+
 pydoc.text = TextDoc2()
 pydoc.text._repr_instance.maxstring = 255
 pydoc.text._repr_instance.maxother = 70
 
-import sys
 
 pydoc.help = Helper2(sys.stdin, sys.stdout)
 
@@ -148,7 +150,6 @@ pydoc.help = Helper2(sys.stdin, sys.stdout)
 
 
 modulesbyfile = {}
-import inspect
 
 
 def mygetmodule(object):
@@ -208,6 +209,7 @@ def doc2(thing, title='Python Library Documentation: %s', forceload=0, output=No
         pydoc.pager(title % desc + '\n\n' + pydoc.text.document(object, name))
     except (ImportError, pydoc.ErrorDuringImport) as value:
         logger.error(value)
+
 
 pydoc.doc = doc2
 

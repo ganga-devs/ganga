@@ -61,4 +61,6 @@ def run_until_completed(j, timeout=60, sleep_period=0.5):
         bool: ``True`` if the job reached 'completed', ``False`` otherwise.
 
     """
-    return run_until_state(j, 'completed', timeout, ['new', 'killed', 'failed', 'unknown', 'removed'], sleep_period)
+    return run_until_state(
+        j, 'completed', timeout, [
+            'new', 'killed', 'failed', 'unknown', 'removed'], sleep_period)

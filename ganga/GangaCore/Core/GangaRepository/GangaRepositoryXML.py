@@ -37,6 +37,7 @@ logger = GangaCore.Utility.logging.getLogger()
 
 save_all_history = False
 
+
 def check_app_hash(obj):
     """Writes a file safely, raises IOError on error
     Args:
@@ -67,16 +68,22 @@ def check_app_hash(obj):
         if not hashable_app.calc_hash(True):
             try:
                 logger.warning("%s" % hashable_app)
-                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (getName(hashable_app), getName(obj), obj._registry_id))
+                logger.warning(
+                    'Protected attribute(s) of %s application (associated with %s #%s) changed!' %
+                    (getName(hashable_app), getName(obj), obj._registry_id))
             except AttributeError as err:
-                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (getName(hashable_app), getName(obj)))
+                logger.warning(
+                    'Protected attribute(s) of %s application (associated with %s) changed!!!!' %
+                    (getName(hashable_app), getName(obj)))
                 logger.warning("%s" % err)
             jobObj = stripProxy(hashable_app).getJobObject()
             if jobObj is not None:
                 logger.warning('Job: %s is now possibly corrupt!' % jobObj.getFQID('.'))
-            logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
+            logger.warning(
+                'If you knowingly circumvented the protection, ignore this message (and, optionally,')
             logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
             logger.warning('https://github.com/ganga-devs/ganga/issues/')
+
 
 def safe_save(fn, _obj, to_file, ignore_subs=''):
     """Try to save the XML for this object in as safe a way as possible
@@ -113,8 +120,10 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 
             os.rename(new_name, fn)
 
+
 # Global lock for above function - See issue #185
 safe_save.lock = threading.Lock()
+
 
 def rmrf(name, count=0):
     """
@@ -153,14 +162,14 @@ def rmrf(name, count=0):
                 if err.errno == errno.EBUSY:
                     logger.debug("rmrf Remove err: %s" % err)
                     logger.debug("name: %s" % remove_name)
-                    ## Sleep 2 sec and try again
+                    # Sleep 2 sec and try again
                     time.sleep(2.)
-                    rmrf(os.path.join(remove_name, sfn), count+1)
+                    rmrf(os.path.join(remove_name, sfn), count + 1)
         try:
             os.removedirs(remove_name)
         except OSError as err:
             if err.errno == errno.ENOTEMPTY:
-                rmrf(remove_name, count+1)
+                rmrf(remove_name, count + 1)
             elif err.errno != errno.ENOENT:
                 logger.debug("%s" % err)
                 raise
@@ -175,7 +184,7 @@ def rmrf(name, count=0):
             logger.debug("rmrf Move err: %s" % err)
             logger.debug("name: %s" % name)
             if err.errno == errno.EBUSY:
-                rmrf(name, count+1)
+                rmrf(name, count + 1)
             return
 
         try:
@@ -237,8 +246,8 @@ class GangaRepositoryLocal(GangaRepository):
             except Exception as err:
                 # Locking has not worked, lets raise an error
                 logger.error("Error: %s" % err)
-                msg="\n\nUnable to launch due to underlying filesystem not working with unix locks."
-                msg+="Please try launching again with [Configuration]lockingStrategy=FIXED to start Ganga without multiple session support."
+                msg = "\n\nUnable to launch due to underlying filesystem not working with unix locks."
+                msg += "Please try launching again with [Configuration]lockingStrategy=FIXED to start Ganga without multiple session support."
                 raise RepositoryError(self, msg)
 
             # Locks passed test so lets continue
@@ -246,7 +255,9 @@ class GangaRepositoryLocal(GangaRepository):
         elif getConfig('Configuration')['lockingStrategy'] == "FIXED":
             self.sessionlock = FixedLockManager(self, self.lockroot, self.registry.name)
         else:
-            raise RepositoryError(self, "Unable to launch due to unknown file-locking Strategy: \"%s\"" % getConfig('Configuration')['lockingStrategy'])
+            raise RepositoryError(
+                self, "Unable to launch due to unknown file-locking Strategy: \"%s\"" %
+                getConfig('Configuration')['lockingStrategy'])
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary
         # of errors
@@ -277,7 +288,12 @@ class GangaRepositoryLocal(GangaRepository):
             this_id (int): This is the object id we want the XML filename for
         """
         if this_id not in self.saved_paths:
-            self.saved_paths[this_id] = os.path.join(self.root, "%ixxx" % int(this_id * 0.001), "%i" % this_id, self.dataFileName)
+            self.saved_paths[this_id] = os.path.join(
+                self.root,
+                "%ixxx" % int(
+                    this_id * 0.001),
+                "%i" % this_id,
+                self.dataFileName)
         return self.saved_paths[this_id]
 
     def get_idxfn(self, this_id):
@@ -286,14 +302,15 @@ class GangaRepositoryLocal(GangaRepository):
             this_id (int): This is the object id we want the index filename for
         """
         if this_id not in self.saved_idxpaths:
-            self.saved_idxpaths[this_id] = os.path.join(self.root, "%ixxx" % int(this_id * 0.001), "%i.index" % this_id)
+            self.saved_idxpaths[this_id] = os.path.join(
+                self.root, "%ixxx" % int(this_id * 0.001), "%i.index" % this_id)
         return self.saved_idxpaths[this_id]
 
     def index_load(self, this_id):
         """ load the index file for this object if necessary
             Loads if never loaded or timestamp changed. Creates object if necessary
             Returns True if this object has been changed, False if not
-            Raise IOError on access or unpickling error 
+            Raise IOError on access or unpickling error
             Raise OSError on stat error
             Raise PluginManagerError if the class name is not found
         Args:
@@ -313,7 +330,7 @@ class GangaRepositoryLocal(GangaRepository):
                 pass
             except Exception as x:
                 logger.warning("index_load Exception: %s" % x)
-                raise IOError("Error on unpickling: %s %s" %(getName(x), x))
+                raise IOError("Error on unpickling: %s %s" % (getName(x), x))
             if this_id in self.objects:
                 obj = self.objects[this_id]
                 setattr(obj, "_registry_refresh", True)
@@ -321,12 +338,14 @@ class GangaRepositoryLocal(GangaRepository):
                 try:
                     obj = self._make_empty_object_(this_id, cat, cls)
                 except Exception as err:
-                    raise IOError('Failed to Parse information in Index file: %s. Err: %s' % (fn, err))
+                    raise IOError(
+                        'Failed to Parse information in Index file: %s. Err: %s' %
+                        (fn, err))
             this_cache = obj._index_cache
             this_data = this_cache if this_cache else {}
             for k, v in cache.items():
                 this_data[k] = v
-            #obj.setNodeData(this_data)
+            # obj.setNodeData(this_data)
             obj._index_cache = cache
             self._cache_load_timestamp[this_id] = fn_ctime
             self._cached_cat[this_id] = cat
@@ -334,7 +353,8 @@ class GangaRepositoryLocal(GangaRepository):
             self._cached_obj[this_id] = cache
             return True
         elif this_id not in self.objects:
-            self.objects[this_id] = self._make_empty_object_(this_id, self._cached_cat[this_id], self._cached_cls[this_id])
+            self.objects[this_id] = self._make_empty_object_(
+                this_id, self._cached_cat[this_id], self._cached_cls[this_id])
             self.objects[this_id]._index_cache = self._cached_obj[this_id]
             setattr(self.objects[this_id], '_registry_refresh', True)
             return True
@@ -375,7 +395,8 @@ class GangaRepositoryLocal(GangaRepository):
         try:
             if not os.path.exists(self.root):
                 os.makedirs(self.root)
-            obj_chunks = [d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
+            obj_chunks = [d for d in os.listdir(
+                self.root) if d.endswith("xxx") and d[:-3].isdigit()]
         except OSError as err:
             logger.debug("get_index_listing Exception: %s" % err)
             raise RepositoryError(self, "Could not list repository '%s'!" % (self.root))
@@ -385,7 +406,8 @@ class GangaRepositoryLocal(GangaRepository):
                 listing = os.listdir(os.path.join(self.root, c))
             except OSError as err:
                 logger.debug("get_index_listing Exception: %s")
-                raise RepositoryError(self, "Could not list repository '%s'!" % (os.path.join(self.root, c)))
+                raise RepositoryError(self, "Could not list repository '%s'!" %
+                                      (os.path.join(self.root, c)))
             objs.update(dict([(int(l), False) for l in listing if l.isdigit()]))
             for l in listing:
                 if l.endswith(".index") and l[:-6].isdigit():
@@ -395,7 +417,9 @@ class GangaRepositoryLocal(GangaRepository):
                     else:
                         try:
                             rmrf(self.get_idxfn(this_id))
-                            logger.warning("Deleted index file without data file: %s" % self.get_idxfn(this_id))
+                            logger.warning(
+                                "Deleted index file without data file: %s" %
+                                self.get_idxfn(this_id))
                         except OSError as err:
                             logger.debug("get_index_listing delete Exception: %s" % err)
         return objs
@@ -461,7 +485,7 @@ class GangaRepositoryLocal(GangaRepository):
                 try:
                     if k in self._fully_loaded:
                         # Check and write index first
-                        obj = v#self.objects[k]
+                        obj = v  # self.objects[k]
                         new_index = None
                         if obj is not None:
                             new_index = self.registry.getIndexCache(stripProxy(obj))
@@ -581,9 +605,11 @@ class GangaRepositoryLocal(GangaRepository):
 
             # this is bad - no or corrupted index but object not loaded yet!
             # Try to load it!
-            if not this_id in self.objects:
+            if this_id not in self.objects:
                 try:
-                    logger.debug("Loading disk based Object: %s from %s as indexes were missing" % (this_id, self.registry.name))
+                    logger.debug(
+                        "Loading disk based Object: %s from %s as indexes were missing" %
+                        (this_id, self.registry.name))
                     self.load([this_id])
                     changed_ids.append(this_id)
                     # Write out a new index if the file can be locked
@@ -595,7 +621,7 @@ class GangaRepositoryLocal(GangaRepository):
                                 self.index_write(this_id)
                             else:
                                 self.objects[this_id]._setDirty()
-                        #self.unlock([this_id])
+                        # self.unlock([this_id])
                 except KeyError as err:
                     logger.debug("update Error: %s" % err)
                     # deleted job
@@ -613,7 +639,8 @@ class GangaRepositoryLocal(GangaRepository):
             self._internal_del__(this_id)
             changed_ids.append(this_id)
         if len(deleted_ids) > 0:
-            logger.warning("Registry '%s': Job %s externally deleted." % (self.registry.name, ",".join(map(str, list(deleted_ids)))))
+            logger.warning("Registry '%s': Job %s externally deleted." % (
+                self.registry.name, ",".join(map(str, list(deleted_ids)))))
 
         if len(summary) > 0:
             cnt = {}
@@ -625,16 +652,21 @@ class GangaRepositoryLocal(GangaRepository):
                 examples[getName(x)] = str(x)
                 self.known_bad_ids.append(this_id)
                 # add object to incomplete_objects
-                if not this_id in self.incomplete_objects:
-                    logger.error("Adding: %s to Incomplete Objects to avoid loading it again in future" % this_id)
+                if this_id not in self.incomplete_objects:
+                    logger.error(
+                        "Adding: %s to Incomplete Objects to avoid loading it again in future" %
+                        this_id)
                     self.incomplete_objects.append(this_id)
 
             for exc, ids in cnt.items():
-                logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
+                logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (
+                    self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
 
             if self.printed_explanation is False:
                 logger.error("If you want to delete the incomplete objects, you can type:\n")
-                logger.error("'for i in %s.incomplete_ids(): %s(i).remove()'\n (then press 'Enter' twice)" % (self.registry.name, self.registry.name))
+                logger.error(
+                    "'for i in %s.incomplete_ids(): %s(i).remove()'\n (then press 'Enter' twice)" %
+                    (self.registry.name, self.registry.name))
                 logger.error("WARNING!!! This will result in corrupt jobs being completely deleted!!!")
                 self.printed_explanation = True
         logger.debug("updated index done")
@@ -657,7 +689,8 @@ class GangaRepositoryLocal(GangaRepository):
 
         if force_ids not in [None, []]:  # assume the ids are already locked by Registry
             if not len(objs) == len(force_ids):
-                raise RepositoryError(self, "Internal Error: add with different number of objects and force_ids!")
+                raise RepositoryError(
+                    self, "Internal Error: add with different number of objects and force_ids!")
             ids = force_ids
         else:
             ids = self.sessionlock.make_new_ids(len(objs))
@@ -670,7 +703,7 @@ class GangaRepositoryLocal(GangaRepository):
                 os.makedirs(os.path.dirname(fn))
             except OSError as e:
                 if e.errno != errno.EEXIST:
-                    raise RepositoryError( self, "OSError on mkdir: %s" % (e))
+                    raise RepositoryError(self, "OSError on mkdir: %s" % (e))
             self._internal_setitem__(ids[i], objs[i])
 
             # Set subjobs dirty - they will not be flushed if they are not.
@@ -726,8 +759,9 @@ class GangaRepositoryLocal(GangaRepository):
                             safe_save(sfn, split_cache[i], self.to_file)
                             split_cache[i]._setFlushed()
                     # Now generate an index file to take advantage of future non-loading goodness
-                    tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False, obj)
-                    ## equivalent to for sj in job.subjobs
+                    tempSubJList = SubJobXMLList(
+                        os.path.dirname(fn), self.registry, self.dataFileName, False, obj)
+                    # equivalent to for sj in job.subjobs
                     tempSubJList._setParent(obj)
                     job_dict = {}
                     for sj in getattr(obj, self.sub_split):
@@ -769,10 +803,11 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("Flushing: %s" % ids)
 
         #import traceback
-        #traceback.print_stack()
+        # traceback.print_stack()
         for this_id in ids:
             if this_id in self.incomplete_objects:
-                logger.debug("Should NEVER re-flush an incomplete object, it's now 'bad' respect this!")
+                logger.debug(
+                    "Should NEVER re-flush an incomplete object, it's now 'bad' respect this!")
                 continue
             try:
                 logger.debug("safe_flush: %s" % this_id)
@@ -785,7 +820,7 @@ class GangaRepositoryLocal(GangaRepository):
 
                 try:
                     self.index_write(this_id)
-                except:
+                except BaseException:
                     logger.debug("Index write failed")
                     pass
 
@@ -801,7 +836,8 @@ class GangaRepositoryLocal(GangaRepository):
                 self.objects[this_id]._setFlushed()
 
             except (OSError, IOError, XMLFileError) as x:
-                raise RepositoryError(self, "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x))
+                raise RepositoryError(
+                    self, "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x))
 
     def _check_index_cache(self, obj, this_id):
         """
@@ -826,18 +862,26 @@ class GangaRepositoryLocal(GangaRepository):
                         self.objects[this_id]._setDirty()
                 # self.unlock([this_id])
 
-                old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.items())
+                old_idx_subset = all(
+                    (k in new_idx_cache and new_idx_cache[k] == v) for k,
+                    v in obj._index_cache.items())
                 if not old_idx_subset:
                     # Old index cache isn't subset of new index cache
-                    new_idx_subset = all((k in obj._index_cache and obj._index_cache[k] == v) for k, v in new_idx_cache.items())
+                    new_idx_subset = all(
+                        (k in obj._index_cache and obj._index_cache[k] == v) for k,
+                        v in new_idx_cache.items())
                 else:
                     # Old index cache is subset of new index cache so no need to check
                     new_idx_subset = True
 
                 if not old_idx_subset and not new_idx_subset:
                     if not GANGA_SWAN_INTEGRATION:
-                        logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, this_id))
-                    logger.debug("old cache: %s\t\tnew cache: %s" % (obj._index_cache, new_idx_cache))
+                        logger.warning(
+                            "Incorrect index cache of '%s' object #%s was corrected!" %
+                            (self.registry.name, this_id))
+                    logger.debug(
+                        "old cache: %s\t\tnew cache: %s" %
+                        (obj._index_cache, new_idx_cache))
                     self.unlock([this_id])
             else:
                 pass
@@ -870,7 +914,8 @@ class GangaRepositoryLocal(GangaRepository):
         # If the object was already in the objects (i.e. cache object, replace the schema content wilst avoiding R/O checks and such
         # The end goal is to keep the object at this_id the same object in memory but to make it closer to tmpobj.
         # TODO investigate changing this to copyFrom
-        # The temp object is from disk so all contents have correctly passed through sanitising via setattr at least once by now so this is safe
+        # The temp object is from disk so all contents have correctly passed
+        # through sanitising via setattr at least once by now so this is safe
         if need_to_copy:
             for key, val in tmpobj._data.items():
                 obj.setSchemaAttribute(key, val)
@@ -880,8 +925,16 @@ class GangaRepositoryLocal(GangaRepository):
 
         if has_children:
             logger.debug("Adding children")
-            # NB Keep be a SetSchemaAttribute to bypass the list manipulation which will put this into a list in some cases 
-            obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, obj))
+            # NB Keep be a SetSchemaAttribute to bypass the list manipulation which
+            # will put this into a list in some cases
+            obj.setSchemaAttribute(
+                self.sub_split,
+                SubJobXMLList(
+                    os.path.dirname(fn),
+                    self.registry,
+                    self.dataFileName,
+                    load_backup,
+                    obj))
         else:
             if obj._schema.hasAttribute(self.sub_split):
                 # Infinite loop if we use setattr btw
@@ -917,10 +970,10 @@ class GangaRepositoryLocal(GangaRepository):
             load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
         """
 
-        b4=time.time()
+        b4 = time.time()
         tmpobj, errs = self.from_file(fobj)
-        a4=time.time()
-        logger.debug("Loading XML file for ID: %s took %s sec" % (this_id, a4-b4))
+        a4 = time.time()
+        logger.debug("Loading XML file for ID: %s took %s sec" % (this_id, a4 - b4))
 
         if len(errs) > 0:
             logger.error("#%s Error(s) Loading File: %s" % (len(errs), fobj.name))
@@ -929,8 +982,8 @@ class GangaRepositoryLocal(GangaRepository):
             raise InaccessibleObjectError(self, this_id, errs[0])
 
         logger.debug("Checking children: %s" % str(this_id))
-	#logger.debug("Checking in: %s" % os.path.dirname(fn))
-	#logger.debug("found: %s" % os.listdir(os.path.dirname(fn)))
+        #logger.debug("Checking in: %s" % os.path.dirname(fn))
+        #logger.debug("found: %s" % os.listdir(os.path.dirname(fn)))
 
         has_children = SubJobXMLList.checkJobHasChildren(os.path.dirname(fn), self.dataFileName)
 
@@ -962,12 +1015,14 @@ class GangaRepositoryLocal(GangaRepository):
         try:
             if not os.path.isfile(fn) and _copy_backup:
                 if os.path.isfile(fn + '~'):
-                    logger.warning("XML File: %s missing, recovering from backup, recent changes may have been lost!" % fn)
+                    logger.warning(
+                        "XML File: %s missing, recovering from backup, recent changes may have been lost!" %
+                        fn)
                     has_loaded_backup = True
                     try:
                         from shutil import copyfile
-                        copyfile(fn+'~', fn)
-                    except:
+                        copyfile(fn + '~', fn)
+                    except BaseException:
                         logger.warning("Error Recovering the backup file! loading of Job may Fail!")
             fobj = open(fn, "r")
         except IOError as x:
@@ -989,7 +1044,9 @@ class GangaRepositoryLocal(GangaRepository):
                     ld = os.listdir(os.path.dirname(fn))
                     if len(ld) == 0:
                         os.rmdir(os.path.dirname(fn))
-                        logger.warning("No job index or data found, removing empty directory: %s" % os.path.dirname(fn))
+                        logger.warning(
+                            "No job index or data found, removing empty directory: %s" %
+                            os.path.dirname(fn))
             except Exception as err:
                 logger.debug("load error %s" % err)
                 pass
@@ -1007,15 +1064,18 @@ class GangaRepositoryLocal(GangaRepository):
         """
         #print("load: %s " % ids)
         #import traceback
-        #traceback.print_stack()
-        #print("\n")
+        # traceback.print_stack()
+        # print("\n")
 
         logger.debug("Loading Repo object(s): %s" % ids)
 
         for this_id in ids:
 
             if this_id in self.incomplete_objects:
-                raise RepositoryError(self, "Trying to re-load a corrupt repository id: %s" % this_id)
+                raise RepositoryError(
+                    self,
+                    "Trying to re-load a corrupt repository id: %s" %
+                    this_id)
 
             fn = self.get_fn(this_id)
             if load_backup:
@@ -1031,7 +1091,9 @@ class GangaRepositoryLocal(GangaRepository):
             except Exception as err:
                 logger.debug("XML load: Failed to load XML file: %s" % fn)
                 logger.debug("Error was:\n%s" % err)
-                logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                logger.error(
+                    "Adding id: %s to Corrupt IDs will not attempt to re-load this session" %
+                    this_id)
                 self.incomplete_objects.append(this_id)
                 raise
 
@@ -1039,19 +1101,23 @@ class GangaRepositoryLocal(GangaRepository):
                 self._load_xml_from_obj(fobj, fn, this_id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % err)
-                logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                logger.error(
+                    "Adding id: %s to Corrupt IDs will not attempt to re-load this session" %
+                    this_id)
                 self.incomplete_objects.append(this_id)
                 raise
 
             except Exception as err:
-                
+
                 should_continue = self._handle_load_exception(err, fn, this_id, load_backup)
 
                 if should_continue is True:
                     has_loaded_backup = True
                     continue
                 else:
-                    logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                    logger.error(
+                        "Adding id: %s to Corrupt IDs will not attempt to re-load this session" %
+                        this_id)
                     self.incomplete_objects.append(this_id)
                     raise
 
@@ -1070,7 +1136,6 @@ class GangaRepositoryLocal(GangaRepository):
                 getattr(self.objects[this_id], self.sub_split)._setDirty()
 
         logger.debug("Finished 'load'-ing of: %s" % ids)
-
 
     def _handle_load_exception(self, err, fn, this_id, load_backup):
         """
@@ -1095,17 +1160,21 @@ class GangaRepositoryLocal(GangaRepository):
         # try loading backup
         try:
             self.load([this_id], True)
-            logger.warning("Object '%s' #%s loaded from backup file - recent changes may be lost." % (self.registry.name, this_id))
+            logger.warning(
+                "Object '%s' #%s loaded from backup file - recent changes may be lost." %
+                (self.registry.name, this_id))
             return True
         except Exception as err2:
-            logger.debug("Exception when loading backup: %s" % err2 )
+            logger.debug("Exception when loading backup: %s" % err2)
 
         logger.error("XML File failed to load for Job id: %s" % this_id)
         logger.error("Actual Error was:\n%s" % err)
 
         # add object to incomplete_objects
-        if not this_id in self.incomplete_objects:
-            logger.error("Loading: %s into incomplete_objects to avoid loading it again in future" % this_id)
+        if this_id not in self.incomplete_objects:
+            logger.error(
+                "Loading: %s into incomplete_objects to avoid loading it again in future" %
+                this_id)
             self.incomplete_objects.append(this_id)
             # remove index so we do not continue working with wrong
             # information
@@ -1183,7 +1252,7 @@ class GangaRepositoryLocal(GangaRepository):
         try:
             rmrf(self.root)
         except Exception as err:
-           logger.error("Failed to correctly clean repository due to: %s" % err)
+            logger.error("Failed to correctly clean repository due to: %s" % err)
         self.startup()
 
     def isObjectLoaded(self, obj):
@@ -1197,4 +1266,3 @@ class GangaRepositoryLocal(GangaRepository):
             return True
         except StopIteration:
             return False
-

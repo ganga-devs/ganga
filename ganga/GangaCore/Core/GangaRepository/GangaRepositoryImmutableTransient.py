@@ -49,7 +49,7 @@ class GangaRepositoryImmutableTransient(GangaRepository):
                 else:
                     from GangaCore.GPIDev.Base.Proxy import stripProxy
                     obj = stripProxy(load(f)[0])
-            except:
+            except BaseException:
                 logger.error("Unable to load file '%s'" % f)
                 setattr(
                     sys.modules['GangaCore.Core.GangaRepository'], 'getRegistry', old)
@@ -95,8 +95,9 @@ class GangaRepositoryImmutableTransient(GangaRepository):
 
                 else:
                     if not stripped_export(obj, fn):
-                        raise RepositoryError(self, 'Failure in stripped_export method, returned False')
-            except:
+                        raise RepositoryError(
+                            self, 'Failure in stripped_export method, returned False')
+            except BaseException:
                 logger.error("Unable to write to file '%s'" % fn)
                 raise
             else:

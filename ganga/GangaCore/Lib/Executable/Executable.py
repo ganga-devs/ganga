@@ -4,6 +4,7 @@
 # $Id: Executable.py,v 1.1 2008-07-17 16:40:57 moscicki Exp $
 ##########################################################################
 
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
@@ -23,6 +24,7 @@ import shutil
 from GangaCore.Utility.files import expandfilename
 
 logger = getLogger()
+
 
 class Executable(IPrepareApp):
 
@@ -51,13 +53,51 @@ class Executable(IPrepareApp):
        apps.args = '-v'
 
     """
-    _schema = Schema(Version(2, 0), {
-        'exe': SimpleItem(preparable=1, defvalue='echo', typelist=[str, File], comparable=1, doc='A path (string) or a File object specifying an executable.'),
-        'args': SimpleItem(defvalue=["Hello World"], typelist=[str, File, int], sequence=1, strict_sequence=0, doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
-        'env': SimpleItem(defvalue={}, typelist=[str], doc='Dictionary of environment variables that will be replaced in the running environment.'),
-       'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes')
-    })
+    _schema = Schema(
+        Version(
+            2,
+            0),
+        {
+            'exe': SimpleItem(
+                preparable=1,
+                defvalue='echo',
+                typelist=[
+                    str,
+                    File],
+                comparable=1,
+                doc='A path (string) or a File object specifying an executable.'),
+            'args': SimpleItem(
+                defvalue=["Hello World"],
+                typelist=[
+                    str,
+                    File,
+                    int],
+                sequence=1,
+                strict_sequence=0,
+                doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
+            'env': SimpleItem(
+                defvalue={},
+                typelist=[str],
+                doc='Dictionary of environment variables that will be replaced in the running environment.'),
+            'is_prepared': SimpleItem(
+                defvalue=None,
+                strict_sequence=0,
+                visitable=1,
+                copyable=1,
+                hidden=0,
+                typelist=[
+                    None,
+                    ShareDir],
+                protected=0,
+                comparable=1,
+                doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+            'hash': SimpleItem(
+                defvalue=None,
+                typelist=[
+                    None,
+                    str],
+                hidden=0,
+                doc='MD5 hash of the string representation of applications preparable attributes')})
     _category = 'applications'
     _name = 'Executable'
     _exportmethods = ['prepare', 'unprepare']
@@ -79,26 +119,28 @@ class Executable(IPrepareApp):
         """
         A method to place the Executable application into a prepared state.
 
-        The application wil have a Shared Directory object created for it. 
-        If the application's 'exe' attribute references a File() object, it 
+        The application wil have a Shared Directory object created for it.
+        If the application's 'exe' attribute references a File() object, it
         will be copied into the Shared Directory.
 
-        Otherwise, if the 'exe' is a string, it is assumed that it is referencing 
-        a file available in the user's path (as per the default "echo Hello World" 
-        example). In this case, a wrapper script which calls this same command 
+        Otherwise, if the 'exe' is a string, it is assumed that it is referencing
+        a file available in the user's path (as per the default "echo Hello World"
+        example). In this case, a wrapper script which calls this same command
         is created and placed into the Shared Directory.
 
         When the application is submitted for execution, it is the contents of the
-        Shared Directory that are shipped to the execution backend. 
+        Shared Directory that are shipped to the execution backend.
 
-        The Shared Directory contents can be queried with 
+        The Shared Directory contents can be queried with
         shareref.ls('directory_name')
 
         See help(shareref) for further information.
         """
 
         if (self.is_prepared is not None) and not force:
-            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+            raise ApplicationPrepareError(
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.' %
+                getName(self))
 
         # lets use the same criteria as the configure() method for checking file existence & sanity
         # this will bail us out of prepare if there's somthing odd with the job config - like the executable
@@ -130,7 +172,7 @@ class Executable(IPrepareApp):
             else:
                 try:
                     parent_job = self.getJobObject()
-                except:
+                except BaseException:
                     parent_job = None
                     pass
                 if parent_job is not None:
@@ -177,7 +219,10 @@ class Executable(IPrepareApp):
                     if not x.exists():
                         raise ApplicationConfigurationError('%s: file not found' % x.name)
                 except AttributeError as err:
-                    raise ApplicationConfigurationError('%s (%s): unsupported type, must be a string or File' % (str(x), str(type(x))))
+                    raise ApplicationConfigurationError(
+                        '%s (%s): unsupported type, must be a string or File' %
+                        (str(x), str(
+                            type(x))))
 
         validate_argument(self.exe, exe=1)
 
@@ -185,6 +230,7 @@ class Executable(IPrepareApp):
             validate_argument(a)
 
         return (None, None)
+
 
 # disable type checking for 'exe' property (a workaround to assign File() objects)
 # FIXME: a cleaner solution, which is integrated with type information in
@@ -220,15 +266,30 @@ class RTHandler(IRuntimeHandler):
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
-            shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+            shared_path = os.path.join(
+                expandfilename(
+                    getConfig('Configuration')['gangadir']),
+                'shared',
+                getConfig('Configuration')['user'])
             if isinstance(app.exe, str):
                 prepared_exe = app.exe
             elif isinstance(app.exe, File):
-                logger.info("Submitting a prepared application; taking any input files from %s" % (app.is_prepared.name))
-                prepared_exe = File(os.path.join(
-                    os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
+                logger.info(
+                    "Submitting a prepared application; taking any input files from %s" %
+                    (app.is_prepared.name))
+                prepared_exe = File(
+                    os.path.join(
+                        os.path.join(
+                            shared_path, app.is_prepared.name), os.path.basename(
+                            app.exe.name)))
 
-        c = StandardJobConfig(prepared_exe, stripProxy(app).getJobObject().inputsandbox, convertIntToStringArgs(app.args), stripProxy(app).getJobObject().outputsandbox, app.env)
+        c = StandardJobConfig(
+            prepared_exe,
+            stripProxy(app).getJobObject().inputsandbox,
+            convertIntToStringArgs(
+                app.args),
+            stripProxy(app).getJobObject().outputsandbox,
+            app.env)
         return c
 
 
@@ -246,10 +307,19 @@ class LCGRTHandler(IRuntimeHandler):
             elif isinstance(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
-                prepared_exe = File(os.path.join(
-                    os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
+                prepared_exe = File(
+                    os.path.join(
+                        os.path.join(
+                            shared_path, app.is_prepared.name), os.path.basename(
+                            app.exe.name)))
 
-        return LCGJobConfig(prepared_exe, app._getParent().inputsandbox, convertIntToStringArgs(app.args), app._getParent().outputsandbox, app.env)
+        return LCGJobConfig(
+            prepared_exe,
+            app._getParent().inputsandbox,
+            convertIntToStringArgs(
+                app.args),
+            app._getParent().outputsandbox,
+            app.env)
 
 
 class gLiteRTHandler(IRuntimeHandler):
@@ -269,8 +339,14 @@ class gLiteRTHandler(IRuntimeHandler):
                 prepared_exe = File(os.path.join(os.path.join(
                     shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
 
-        return gLiteJobConfig(prepared_exe, app._getParent().inputsandbox, convertIntToStringArgs(app.args), app._getParent().outputsandbox, app.env)
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+        return gLiteJobConfig(
+            prepared_exe,
+            app._getParent().inputsandbox,
+            convertIntToStringArgs(
+                app.args),
+            app._getParent().outputsandbox,
+            app.env)
+
 
 allHandlers.add('Executable', 'LSF', RTHandler)
 allHandlers.add('Executable', 'Local', RTHandler)

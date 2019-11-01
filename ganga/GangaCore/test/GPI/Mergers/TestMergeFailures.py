@@ -31,7 +31,8 @@ class TestMergeFailures(GangaUnitTest):
         j.submit()
 
         assert run_until_state(j, 'failed', timeout=60)
-        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
+        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')
+                              ), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsIgnoreFailed(self):
         from GangaCore.GPI import Job, Executable, Local, LocalFile
@@ -46,7 +47,8 @@ class TestMergeFailures(GangaUnitTest):
         j.submit()
 
         assert run_until_state(j, 'failed', timeout=60)
-        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
+        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')
+                              ), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsOverwrite(self):
         from GangaCore.GPI import Job, Executable, Local, LocalFile
@@ -61,7 +63,8 @@ class TestMergeFailures(GangaUnitTest):
         j.submit()
 
         assert run_until_state(j, 'failed', timeout=60)
-        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
+        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')
+                              ), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsFlagsSet(self):
         from GangaCore.GPI import Job, Executable, Local, LocalFile
@@ -77,7 +80,8 @@ class TestMergeFailures(GangaUnitTest):
         j.submit()
 
         assert run_until_state(j, 'failed', timeout=60)
-        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
+        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')
+                              ), 'Summary file should be created'
 
     def testMergeRemoval(self):
         from GangaCore.GPI import Job, Executable, Local, LocalFile, jobs

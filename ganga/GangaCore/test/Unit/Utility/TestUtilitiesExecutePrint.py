@@ -13,7 +13,11 @@ def test_print():
 
 def test_execute():
     ''' This tests that the script correctly changes the dir as requested via the script '''
-    assert execute('cd "{0}"; pwd'.format(os.getcwd()), shell=True, cwd=os.getcwd()).strip() == os.getcwd()
+    assert execute(
+        'cd "{0}"; pwd'.format(
+            os.getcwd()),
+        shell=True,
+        cwd=os.getcwd()).strip() == os.getcwd()
 
 
 def test_execute_timeouts():
@@ -23,7 +27,8 @@ def test_execute_timeouts():
     assert execute('while True: pass', timeout=1, shell=False) == 'Command timed out!'
 
     # Test timeout doesn't hinder a normal command
-    assert execute('cd "{0}"; pwd'.format(os.getcwd()), shell=True, timeout=10, cwd=os.getcwd()).strip() == os.getcwd()
+    assert execute('cd "{0}"; pwd'.format(os.getcwd()), shell=True,
+                   timeout=10, cwd=os.getcwd()).strip() == os.getcwd()
 
     assert timeit.timeit(
         '''
@@ -42,7 +47,9 @@ def test_execute_output():
 
     # Test printout of pickle dump interpreted correctly
     import time
-    d =  execute('import pickle, time\nprint(pickle.dumps(time.localtime()).decode("latin1"))', shell=False)
+    d = execute(
+        'import pickle, time\nprint(pickle.dumps(time.localtime()).decode("latin1"))',
+        shell=False)
     assert hasattr(d, 'tm_mon')
     assert d.tm_mon == time.localtime().tm_mon
 
@@ -61,10 +68,17 @@ def test_execute_output():
     assert isinstance(d2, str)
 
     # Test printout works with the right includes
-    d1 = execute('print(datetime.datetime(2013,12,12))', python_setup='import datetime', eval_includes='import datetime', shell=False)
-    d2 = execute('print(repr(datetime.datetime(2013,12,12)))', python_setup='import datetime', eval_includes='import datetime', shell=False)
+    d1 = execute(
+        'print(datetime.datetime(2013,12,12))',
+        python_setup='import datetime',
+        eval_includes='import datetime',
+        shell=False)
+    d2 = execute(
+        'print(repr(datetime.datetime(2013,12,12)))',
+        python_setup='import datetime',
+        eval_includes='import datetime',
+        shell=False)
     assert not hasattr(d1, 'month')
     assert isinstance(d1, str)
     assert hasattr(d2, 'month')
     assert d2.month == 12
- 

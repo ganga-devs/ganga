@@ -8,6 +8,7 @@ def license():
     with open(path.join(_gangaPythonPath, '..', 'LICENSE_GPL')) as printable:
         logger.info(printable.read())
 
+
 def typename(obj):
     """Return a name of Ganga object as a string, example: typename(j.application) -> 'DaVinci'"""
     from GangaCore.GPIDev.Base.Proxy import isProxy, stripProxy, implRef
@@ -25,8 +26,11 @@ def typename(obj):
         else:
             from GangaCore.Utility.logging import getLogger
             logger = getLogger()
-            logger.error("Object %s DOES NOT have the %s or _name parameter set" % (str(obj), str(implRef)))
+            logger.error(
+                "Object %s DOES NOT have the %s or _name parameter set" %
+                (str(obj), str(implRef)))
             return ""
+
 
 def categoryname(obj):
     """Return a category of Ganga object as a string, example: categoryname(j.application) -> 'applications'"""
@@ -45,8 +49,11 @@ def categoryname(obj):
         else:
             from GangaCore.Utility.logging import getLogger
             logger = getLogger()
-            logger.error("Object %s DOES NOT have the %s or _category parameter set" % (str(obj), str(implRef)))
+            logger.error(
+                "Object %s DOES NOT have the %s or _category parameter set" %
+                (str(obj), str(implRef)))
             return ""
+
 
 def plugins(category=None):
     """List loaded plugins.
@@ -68,19 +75,24 @@ def plugins(category=None):
         return d
 
 # FIXME: DEPRECATED
+
+
 def list_plugins(category):
     """List all plugins in a given category, OBSOLETE: use plugins(category)"""
     raise DeprecationWarning("use plugins('%s')" % category)
 
+
 def applications():
     """return a list of all available applications, OBSOLETE: use plugins('applications')"""
     raise DeprecationWarning("use plugins('applications')")
+
 
 def backends():
     """return a list of all available backends, OBSOLETE: use plugins('backends')"""
     raise DeprecationWarning("use plugins('backends')")
 
 # FIXME: END
+
 
 def convert_merger_to_postprocessor(j):
     from GangaCore.GPIDev.Base.Proxy import stripProxy
@@ -92,4 +104,3 @@ def convert_merger_to_postprocessor(j):
         mp = MultiPostProcessor()
         mp.process_objects.append(stripProxy(j).merger)
         stripProxy(j).postprocessors = mp
-

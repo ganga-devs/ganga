@@ -15,7 +15,7 @@ regex = re.compile(r'[*?\[\]]')
 
 class IGangaFile(GangaObject):
 
-    """IGangaFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, LocalFile, etc 
+    """IGangaFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, LocalFile, etc
     """
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(
         defvalue="", doc='pattern of the file name')})
@@ -41,7 +41,7 @@ class IGangaFile(GangaObject):
 
     def get(self):
         """
-        Retrieves locally all files that were uploaded before that 
+        Retrieves locally all files that were uploaded before that
         Order of priority about where a file is going to be placed are:
             1) The localDir as defined in the schema. (Exceptions thrown if this doesn't exist)
             2) The Job outpudir of the parent job if the localDir is not defined.
@@ -61,16 +61,17 @@ class IGangaFile(GangaObject):
                 logger.debug("parent: %s" % self._getParent())
                 raise GangaFileError(msg)
 
-        # FIXME CANNOT perform a remote globbing here in a nice way so have to just perform a copy when dealing with wildcards
+        # FIXME CANNOT perform a remote globbing here in a nice way so have to
+        # just perform a copy when dealing with wildcards
         if not os.path.isfile(os.path.join(to_location, self.namePattern)):
             returnable = self.copyTo(to_location)
             if not self.localDir:
                 self.localDir = to_location
             return returnable
         else:
-            logger.debug("File: %s already exists, not performing copy" % (os.path.join(to_location, self.namePattern), ))
+            logger.debug("File: %s already exists, not performing copy" %
+                         (os.path.join(to_location, self.namePattern), ))
             return True
-
 
     def getSubFiles(self, process_wildcards=False):
         """
@@ -114,13 +115,16 @@ class IGangaFile(GangaObject):
         if not isinstance(targetPath, str) and targetPath:
             raise GangaFileError("Cannot perform a copyTo with no given targetPath!")
         if regex.search(self.namePattern) is None\
-            and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
+                and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
 
             if not os.path.isfile(os.path.join(targetPath, self.namePattern)):
-                shutil.copy(os.path.join(self.localDir, self.namePattern), os.path.join(targetPath, self.namePattern))
+                shutil.copy(
+                    os.path.join(
+                        self.localDir, self.namePattern), os.path.join(
+                        targetPath, self.namePattern))
             else:
                 logger.debug("Already found file: %s" % os.path.join(targetPath, self.namePattern))
-                
+
             return True
 
         # Again, cannot perform a remote glob here so have to ignore wildcards
@@ -175,7 +179,11 @@ class IGangaFile(GangaObject):
         mystderr = ''
 
         try:
-            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            child = subprocess.Popen(
+                cmd,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
             (mystdout, mystderr) = child.communicate()
             exitcode = child.returncode
         finally:
@@ -226,7 +234,8 @@ class IGangaFile(GangaObject):
         This method cleans up the client space after performing a put of a file after a job has completed
         """
 
-        # For all other file types (not LocalFile) The file in the outputdir is temporary waiting for Ganga to pass it to the storage solution
+        # For all other file types (not LocalFile) The file in the outputdir is
+        # temporary waiting for Ganga to pass it to the storage solution
         job = self.getJobObject()
 
         for f in glob.glob(os.path.join(job.outputdir, self.namePattern)):
@@ -252,7 +261,7 @@ class IGangaFile(GangaObject):
 
         if self._getParent() is not None:
             jobfqid = self.getJobObject().fqid
-                                
+
             jobid = jobfqid
             subjobid = ''
 
@@ -261,8 +270,8 @@ class IGangaFile(GangaObject):
             if len(split) > 1:
                 jobid = split[0]
                 subjobid = split[1]
-          
-            outputStr = outputStr.replace('{jid}', jobid)                                                                    
+
+            outputStr = outputStr.replace('{jid}', jobid)
             outputStr = outputStr.replace('{sjid}', subjobid)
 
         if fileName:
@@ -271,4 +280,3 @@ class IGangaFile(GangaObject):
             outputStr = outputStr.replace('{fname}', os.path.basename(self.namePattern))
 
         return outputStr
-

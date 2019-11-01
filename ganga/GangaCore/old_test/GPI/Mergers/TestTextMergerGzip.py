@@ -76,8 +76,8 @@ class TestTextMergerGzip(GangaGPITestCase):
         output = os.path.join(tmpdir, 'out.txt.gz')
         assert os.path.exists(output), 'file must exist'
         for j in self.jobslice:
-            assert file_contains_gzip(
-                output, 'Output from job %d.' % j.id), 'File must contain the output of each individual job'
+            assert file_contains_gzip(output, 'Output from job %d.' %
+                                      j.id), 'File must contain the output of each individual job'
 
         output = os.path.join(tmpdir, 'out2.txt.gz')
         assert os.path.exists(output), 'file must exist'
@@ -100,8 +100,8 @@ class TestTextMergerGzip(GangaGPITestCase):
         output = os.path.join(tmpdir, 'out.txt.gz')
         assert os.path.exists(output), 'file must exist'
         for j in self.jobslice:
-            assert file_contains_gzip(
-                output, 'Output from job %d.' % j.id), 'File must contain the output of each individual job'
+            assert file_contains_gzip(output, 'Output from job %d.' %
+                                      j.id), 'File must contain the output of each individual job'
 
         output = os.path.join(tmpdir, 'out2.txt.gz')
         assert os.path.exists(output), 'file must exist'

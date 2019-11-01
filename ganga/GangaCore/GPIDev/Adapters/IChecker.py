@@ -64,7 +64,8 @@ class IFileChecker(IChecker):
     """
     _schema = IChecker._schema.inherit_copy()
     _schema.datadict['files'] = SimpleItem(defvalue=[], doc='File to search in')
-    _schema.datadict['filesMustExist'] = SimpleItem(True, doc='Toggle whether to fail job if a file isn\'t found.')
+    _schema.datadict['filesMustExist'] = SimpleItem(
+        True, doc='Toggle whether to fail job if a file isn\'t found.')
     _category = 'postprocessor'
     _name = 'IFileChecker'
     _hidden = 1
@@ -87,10 +88,12 @@ class IFileChecker(IChecker):
             if not len(glob.glob(filepath)):
                 if (self.filesMustExist):
                     logger.info(
-                        'The files %s does not exist, %s will fail job(%s) (to ignore missing files set filesMustExist to False)', filepath, self._name, job.fqid)
+                        'The files %s does not exist, %s will fail job(%s) (to ignore missing files set filesMustExist to False)',
+                        filepath,
+                        self._name,
+                        job.fqid)
                     self.result = False
                 else:
                     logger.warning(
                         'Ignoring file %s as it does not exist.', filepath)
         return filepaths
-

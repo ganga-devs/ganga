@@ -68,7 +68,8 @@ class TestSmartMerger(GangaUnitTest):
 
         assert j1.outputfiles == j2.outputfiles, 'File lists should be the same'
 
-        assert findFilesToMerge([j1, j2]) == ['foo.root', 'bar.root', 'out.log'], 'Should merge all files'
+        assert findFilesToMerge([j1, j2]) == ['foo.root', 'bar.root',
+                                              'out.log'], 'Should merge all files'
 
     def testNoFilesSpecifiedSomeOverlap(self):
         from GangaCore.GPI import LocalFile, Job
@@ -98,8 +99,10 @@ class TestSmartMerger(GangaUnitTest):
 
         for j in self.jobslice:
             output = os.path.join(j.outputdir, 'out.txt')
-            assert file_contains(output, 'Output from job %d.' % j.id), 'File must contain the output of each individual job'
+            assert file_contains(output, 'Output from job %d.' %
+                                 j.id), 'File must contain the output of each individual job'
 
         for j in self.jobslice:
             output = os.path.join(j.outputdir, 'out2.txt')
-            assert file_contains(output, 'Output from job %d.' % (j.id * 10)), 'File must contain the output of each individual job'
+            assert file_contains(output, 'Output from job %d.' %
+                                 (j.id * 10)), 'File must contain the output of each individual job'

@@ -43,7 +43,8 @@ class FileChecker(IFileChecker):
             raise PostProcessException('No searchStrings specified, FileChecker will do nothing!')
         filepaths = self.findFiles(job)
         if not len(filepaths):
-            raise PostProcessException('None of the files to check exist, FileChecker will do nothing!')
+            raise PostProcessException(
+                'None of the files to check exist, FileChecker will do nothing!')
         for filepath in filepaths:
             for searchString in self.searchStrings:
                 stringFound = False
@@ -54,12 +55,17 @@ class FileChecker(IFileChecker):
                         if re.search(searchString, line):
                             if self.failIfFound is True:
                                 logger.info(
-                                    'The string %s has been found in file %s, FileChecker will fail job(%s)', searchString, filepath, job.fqid)
+                                    'The string %s has been found in file %s, FileChecker will fail job(%s)',
+                                    searchString,
+                                    filepath,
+                                    job.fqid)
                                 return self.failure
                             stringFound = True
                 if not stringFound and self.failIfFound is False:
-                    logger.info('The string %s has not been found in file %s, FileChecker will fail job(%s)', searchString, filepath, job.fqid)
+                    logger.info(
+                        'The string %s has not been found in file %s, FileChecker will fail job(%s)',
+                        searchString,
+                        filepath,
+                        job.fqid)
                     return self.failure
         return self.result
-
-

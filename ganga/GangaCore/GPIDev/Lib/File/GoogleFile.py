@@ -15,9 +15,10 @@ import logging
 import GangaCore.Utility.Config
 
 logger = getLogger()
-regex = re.compile('[*?\[\]]')
+regex = re.compile(r'[*?\[\]]')
 badlogger = getLogger('oauth2client.util')
 badlogger.setLevel(logging.ERROR)
+
 
 class GoogleFile(IGangaFile):
 
@@ -69,7 +70,7 @@ class GoogleFile(IGangaFile):
         super(GoogleFile, self).__init__()
         self.namePattern = namePattern
         self.__initialized = False
-        
+
         self.cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
 
     def __initializeCred(self):
@@ -96,12 +97,12 @@ class GoogleFile(IGangaFile):
             try:
                 import webbrowser
                 webbrowser.get('macosx').open(authorize_url, 0, True)
-            except:
+            except BaseException:
                 try:
                     import webbrowser
                     webbrowser.get(
                         'windows-default').open(authorize_url, 0, True)
-                except:
+                except BaseException:
                     try:
                         import webbrowser
                         webbrowser.get('firefox').open(authorize_url, 0, True)
@@ -113,7 +114,7 @@ class GoogleFile(IGangaFile):
             code = input('Enter verification code: ').strip()
             try:
                 credentials = flow.step2_exchange(code)
-            except:
+            except BaseException:
                 deny = input(
                     'An incorrect code was entered. Have you denied Ganga access to your GoogleDrive (y/[n])?')
                 if deny.lower() in ['', 'n']:
@@ -125,12 +126,14 @@ class GoogleFile(IGangaFile):
             if credentials is not '':
                 with open(self.cred_path, "wb") as output:
                     pickle.dump(credentials, output)
-                
+
                 os.chmod(self.cred_path, stat.S_IWUSR | stat.S_IRUSR)
-                logger.info('Your GoogleDrive credentials have been stored in the file %s and are only readable by you. '
-                            'The file will give permission to modify files in your GoogleDrive. '
-                            'Permission can be revoked by going to "Manage Apps" in your GoogleDrive '
-                            'or by deleting the credentials through the deleteCredentials GoogleFile method.' % self.cred_path)
+                logger.info(
+                    'Your GoogleDrive credentials have been stored in the file %s and are only readable by you. '
+                    'The file will give permission to modify files in your GoogleDrive. '
+                    'Permission can be revoked by going to "Manage Apps" in your GoogleDrive '
+                    'or by deleting the credentials through the deleteCredentials GoogleFile method.' %
+                    self.cred_path)
 
         self.__initialized = True
 
@@ -167,8 +170,8 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().deleteCredentials()
         """
-        if self.__initilized == True:
-            if os.path.isfile(self.cred_path) == True:
+        if self.__initilized:
+            if os.path.isfile(self.cred_path):
                 os.remove(self.cred_path)
                 logger.info('GoogleDrive credentials deleted')
                 return None
@@ -201,7 +204,9 @@ class GoogleFile(IGangaFile):
 
                     else:
                         # print 'An error occurred: %s' % resp
-                        logger.info("Download unsuccessful, file \'%s\' may not exist on GoogleDrive" % f.title)
+                        logger.info(
+                            "Download unsuccessful, file \'%s\' may not exist on GoogleDrive" %
+                            f.title)
                 else:
                     # The file doesn't have any content stored on Drive.
                     logger.info(
@@ -247,7 +252,8 @@ class GoogleFile(IGangaFile):
         """
         Get the representation of the file
         """
-        return "GoogleFile(namePattern='%s', downloadURL='%s')" % (self.namePattern, self.downloadURL)
+        return "GoogleFile(namePattern='%s', downloadURL='%s')" % (
+            self.namePattern, self.downloadURL)
 
     def put(self):
         """
@@ -366,7 +372,7 @@ class GoogleFile(IGangaFile):
         # Wildcard procedure
         if regex.search(self.namePattern) is not None:
             for f in self.subfiles:
-                if permanent == True:
+                if permanent:
                     try:
                         service.files().delete(fileId=f.id).execute()
                         f.downloadURL = ''
@@ -388,7 +394,7 @@ class GoogleFile(IGangaFile):
 
         # Non-wildcard request
         else:
-            if permanent == True:
+            if permanent:
                 try:
                     service.files().delete(fileId=self.id).execute()
                     self.downloadURL = ''
@@ -426,7 +432,8 @@ class GoogleFile(IGangaFile):
                 except errors.HttpError as error:
                     # print 'An error occurred: %s' % error
                     logger.info(
-                        'File \'%s\' restore failed, or file does not exist on GoogleDrive' % f.title)
+                        'File \'%s\' restore failed, or file does not exist on GoogleDrive' %
+                        f.title)
 
         # Non-wildcard request
         else:
@@ -477,7 +484,7 @@ class GoogleFile(IGangaFile):
         from apiclient.discovery import build
         import httplib2
         http = httplib2.Http()
-        if self.__initialized == False:
+        if not self.__initialized:
             self.__initializeCred()
         with open(self.cred_path, "rb") as nput:
             credentials = pickle.load(nput)
@@ -501,5 +508,6 @@ class GoogleFile(IGangaFile):
             # note stripProxy wont work on class types that aren't instances
             return isinstance(self, to_match._impl)
         return to_match == self
+
 
 GangaCore.Utility.Config.config_scope['GoogleFile'] = GoogleFile

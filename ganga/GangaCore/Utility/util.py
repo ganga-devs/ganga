@@ -82,7 +82,7 @@ def unique(s):
 def canLoopOver(maybeIterable):
     try:
         iter(maybeIterable)
-    except:
+    except BaseException:
         return 0
     else:
         return 1
@@ -119,6 +119,7 @@ def isNestedList(obj):
     return False
 
 # ------------------------
+
 
 __executed_frames = {}
 
@@ -169,7 +170,7 @@ def hostname():
 def setAttributesFromDict(d, prefix=None):
     """
     *Python Cookbook recipe 6.18*
-    Helper function to automatically initialises instance variables 
+    Helper function to automatically initialises instance variables
     from __init_ arguments.
     """
     if prefix is None:
@@ -227,7 +228,8 @@ class GenericWrapper(object):
 
 
 class Proxy(object):
-    __slots__=('_obj',)
+    __slots__ = ('_obj',)
+
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
         self._obj = obj
@@ -239,6 +241,7 @@ class Proxy(object):
 def make_binder(unbounded_method):
     def f(self, *a, **k): return unbounded_method(self._obj, *a, **k)
     return f
+
 
 known_proxy_classes = {}
 
@@ -260,6 +263,7 @@ def proxy(obj, *specials):
 # ------------------------
 # cookbook recipe
 
+
 def importName(modulename, name):
     try:
         module = __import__(modulename, globals(), locals(), [name])
@@ -271,9 +275,9 @@ def importName(modulename, name):
         return vars(module)[name]
     else:
         return None
-    #try:
+    # try:
     #    return vars(module)[name]
-    #except KeyError, err:
+    # except KeyError, err:
     #    import sys
     #    sys.stderr.write("ImportName, KeyError: %s\n" % str(err))
     #    return None

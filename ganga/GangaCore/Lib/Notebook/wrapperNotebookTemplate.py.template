@@ -6,23 +6,25 @@ from __future__ import print_function
 # Main
 if __name__ == '__main__':
 
-    import sys, os, re
-    print (sys.version)
+    import sys
+    import os
+    import re
+    print(sys.version)
 
-    print('Unique identifier : ','###UUID###')
-    
+    print('Unique identifier : ', '###UUID###')
+
     from IPython import nbformat
     from nbconvert.preprocessors import ExecutePreprocessor
 
     files = os.listdir(os.getcwd())
 
-    matchlist = ###NBFILES###
+    matchlist =  # NBFILES###
 
     nbfiles = []
     for regexp in matchlist:
-    
+
         nbfiles.extend([name for name in files if
-                        re.search('###REGEXP###',name)])
+                        re.search('###REGEXP###', name)])
 
     print('Will try to execute the notebooks : %s' % nbfiles)
 
@@ -31,15 +33,15 @@ if __name__ == '__main__':
         print('Starting to execute %s' % name)
 
         with open(name) as f:
-            version = ###VERSION###
+            version =  # VERSION###
             if version:
                 nb = nbformat.read(f, as_version=version)
             else:
                 nb = nbformat.read(f)
 
-        timeout = ###TIMEOUT###
+        timeout =  # TIMEOUT###
         if timeout:
-            ep = ExecutePreprocessor(timeout=timeout,kernel_name='###KERNEL###')
+            ep = ExecutePreprocessor(timeout=timeout, kernel_name='###KERNEL###')
         else:
             ep = ExecutePreprocessor(kernel_name='###KERNEL###')
 

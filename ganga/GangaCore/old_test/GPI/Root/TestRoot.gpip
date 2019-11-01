@@ -21,7 +21,7 @@ class TestRoot(GangaGPITestCase):
 
     '''
     This is the Ganga testcase used by the testing framework
-    The test methods are dynamically added to TestRoot (emulate an unittest test suite). 
+    The test methods are dynamically added to TestRoot (emulate an unittest test suite).
     At the begining it is just an empty class
     '''
 
@@ -65,7 +65,7 @@ class _TestRootBase(object):
 
     def _submitJob(self, app, IJobTest=None):
         """Used to construct, configure and test a job."""
-        if IJobTest == None:
+        if IJobTest is None:
             IJobTest = _DefaultJobTest(self)
         logger.info('Backend:', self.__backend)
         j = Job(application=app, backend=self.__backend)
@@ -247,7 +247,9 @@ class _TestRootBase(object):
             def isReadyForCheck(self):
                 # Overwrite the default 'isReadyForCheck' method
                 from GangaTest.Framework.utils import is_job_state
-                return is_job_state(self.j, ['completed', 'new', 'killed', 'failed', 'unknown', 'removed'])
+                return is_job_state(
+                    self.j, [
+                        'completed', 'new', 'killed', 'failed', 'unknown', 'removed'])
 
         return self._submitJob(r, JobTest(self))
 
@@ -259,10 +261,10 @@ class _TestRootBase(object):
                     //set up main, eg command line opts
                     char* argv[] = {"runMain.C","--muons","100"};
                     int argc = 3;
-  
+
                     //compile the shared object
-                    gSystem->Exec("make");  
-                    
+                    gSystem->Exec("make");
+
                     //load the shared library
                     gSystem->Load("libMain");
 
@@ -313,16 +315,16 @@ class _TestRootBase(object):
 if __name__ == '__main__':
     from sys import argv
     assert(len(argv) == 4)
-                
+
     n = int(argv[1])
     str = argv[2]
-                
+
     f = open('output.txt','w')
     try:
         s = '''###%d###
 @@@%s@@@
 '''
-        f.write(s % (n,str))        
+        f.write(s % (n,str))
     finally:
         f.close()
         """, [n, s], usepython=True)
@@ -358,10 +360,10 @@ n = int(argv[1])
 ran = []
 for i in range(n):
     ran.append(gRandom.Gaus())
-                
+
 f = open('output.txt','w')
 try:
-    f.write('###%d###' % len(ran))        
+    f.write('###%d###' % len(ran))
 finally:
     f.close()
 """, [n], usepython=True)
@@ -388,7 +390,7 @@ finally:
         r = self._makeRootApp("""#!/usr/bin/env python
 f = open('output.txt','w')
 try:
-    f.write('###Running###')        
+    f.write('###Running###')
 finally:
     f.close()
 """, [], usepython=True, file_name='test.C')
@@ -453,6 +455,7 @@ def addTests(test_container, testinstance, testname):
                 method_name = '%s_%s' % (instanceMethodName, testname)
                 # set the method onto the Test container
                 setattr(test_container, method_name, method)
+
 
 # am forced to hard code as plugins are not loaded yet.
 # this is the list of backends to run

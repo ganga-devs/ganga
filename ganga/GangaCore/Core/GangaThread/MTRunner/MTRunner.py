@@ -71,10 +71,10 @@ class GangaWorkAgent(GangaThread):
 class MTRunner(object):
 
     """
-    Class to handle multiple concurrent threads running on the same algorithm. 
+    Class to handle multiple concurrent threads running on the same algorithm.
 
     @since: 0.0.1
-    @author: Hurng-Chun Lee 
+    @author: Hurng-Chun Lee
     @contact: hurngchunlee@gmail.com
 
     The class itself is a thread. To run it; doing the following:
@@ -93,10 +93,10 @@ class MTRunner(object):
 
     def __init__(self, name, algorithm=None, data=None, numThread=10, keepAlive=False):
         """
-        initializes the MTRunner object. 
+        initializes the MTRunner object.
 
         @since: 0.0.1
-        @author: Hurng-Chun Lee 
+        @author: Hurng-Chun Lee
         @contact: hurngchunlee@gmail.com
 
         @param algorithm is an Algorithm object defining how to process on the data

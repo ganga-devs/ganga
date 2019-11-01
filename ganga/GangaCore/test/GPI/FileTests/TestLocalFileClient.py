@@ -7,6 +7,7 @@ import glob
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.testlib.file_utils import generate_unique_temp_file
 
+
 class TestLocalFileClient(GangaUnitTest):
     """test for sjid in filename names explain each test"""
 
@@ -15,11 +16,20 @@ class TestLocalFileClient(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-    # This sets up a LocalFileConfiguration which works by placing a file on local storage somewhere we can test using standard tools
-    LocalFileConfig = {'fileExtensions': [''],
-                       'uploadOptions': {},
-                       'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
-                                              'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
+    # This sets up a LocalFileConfiguration which works by placing a file on
+    # local storage somewhere we can test using standard tools
+    LocalFileConfig = {
+        'fileExtensions': [''],
+        'uploadOptions': {},
+        'backendPostprocess': {
+            'LSF': 'client',
+            'LCG': 'client',
+            'ARC': 'client',
+            'Dirac': 'client',
+            'PBS': 'client',
+            'Interactive': 'client',
+            'Local': 'client',
+            'CREAM': 'client'}}
 
     _ext = '.root'
 
@@ -27,11 +37,11 @@ class TestLocalFileClient(GangaUnitTest):
         """
         Configure the LocalFile for the test
         """
-        extra_opts=[('PollThread', 'autostart', 'False'),
-                    ('Local', 'remove_workdir', 'False'),
-                    ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', 'LocalFile', self.LocalFileConfig),
-                    ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        extra_opts = [('PollThread', 'autostart', 'False'),
+                      ('Local', 'remove_workdir', 'False'),
+                      ('TestingFramework', 'AutoCleanup', 'False'),
+                      ('Output', 'LocalFile', self.LocalFileConfig),
+                      ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestLocalFileClient, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
@@ -65,8 +75,8 @@ class TestLocalFileClient(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(TestLocalFileClient.sj_len)])
-        j.outputfiles = [LocalFile(namePattern='*'+TestLocalFileClient._ext)]
+        j.splitter = ArgSplitter(args=[[_] for _ in range(TestLocalFileClient.sj_len)])
+        j.outputfiles = [LocalFile(namePattern='*' + TestLocalFileClient._ext)]
         j.submit()
 
     def test_b_testClientSideComplete(self):
@@ -105,15 +115,15 @@ class TestLocalFileClient(GangaUnitTest):
 
         assert len(j2.outputfiles) == 1
 
-        assert j2.outputfiles[0] == LocalFile(namePattern='*'+TestLocalFileClient._ext)
+        assert j2.outputfiles[0] == LocalFile(namePattern='*' + TestLocalFileClient._ext)
 
         assert len(j2.inputfiles) == 2
 
         self.cleanUp()
+
 
 class TestLocalFileWN(TestLocalFileClient):
     """test for sjid in filename names explain each test"""
 
     LocalFileConfig = copy.deepcopy(TestLocalFileClient.LocalFileConfig)
     LocalFileConfig['backendPostprocess']['Local'] = 'WN'
-

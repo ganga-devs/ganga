@@ -64,7 +64,6 @@ class TestNestedLists(GangaUnitTest):
 
         assert len(self.gangalist), gl_len + len(self.filelist)
 
-
     def test_f_Insert(self):
 
         gl_len = len(self.gangalist)

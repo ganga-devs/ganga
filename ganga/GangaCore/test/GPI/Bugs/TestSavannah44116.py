@@ -17,4 +17,9 @@ class TestSavannah44116(GangaUnitTest):
 
         j.submit()
 
-        self.assertTrue(sleep_until_state(j, 10, 'failed'), 'Job is not marked as failed despite app.postprocess() hook')
+        self.assertTrue(
+            sleep_until_state(
+                j,
+                10,
+                'failed'),
+            'Job is not marked as failed despite app.postprocess() hook')

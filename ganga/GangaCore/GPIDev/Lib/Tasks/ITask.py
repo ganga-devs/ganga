@@ -12,38 +12,98 @@ import time
 logger = getLogger()
 
 ########################################################################
-def addInfoString( task_obj, info_str ):
+
+
+def addInfoString(task_obj, info_str):
     """Helper function to add an info string with a timestamp"""
     if len(task_obj.info) > 0 and task_obj.info[-1].find(info_str) > -1:
         # repeated string. Add one to instances
         num_rpts = 1
         if task_obj.info[-1].find("(rpt ") > -1:
-            num_rpts = int( task_obj.info[-1][ task_obj.info[-1].find("(rpt ") + 5:-1 ] )
-            
+            num_rpts = int(task_obj.info[-1][task_obj.info[-1].find("(rpt ") + 5:-1])
+
         task_obj.info[-1] = "%s: %s (rpt %i)" % (time.ctime(), info_str, num_rpts + 1)
         return
-    
-    task_obj.info.append("%s: %s" % (time.ctime(), info_str) )
+
+    task_obj.info.append("%s: %s" % (time.ctime(), info_str))
+
 
 class ITask(GangaObject):
 
     """This is the framework of a task without special properties"""
-    _schema = Schema(Version(1, 0), {
-        'transforms': ComponentItem('transforms', defvalue=[], sequence=1, copyable=0, doc='list of transforms'),
-        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Task', typelist=[int]),
-        'name': SimpleItem(defvalue='NewTask', copyable=1, doc='Name of the Task', typelist=[str]),
-        'comment': SimpleItem('', protected=0, doc='comment of the task', typelist=[str]),
-        'status': SimpleItem(defvalue='new', protected=1, doc='Status - new, running, pause or completed', typelist=[str]),
-        'float': SimpleItem(defvalue=0, copyable=1, doc='Number of Jobs run concurrently', typelist=[int]),
-        'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1),
-        'creation_date': SimpleItem(defvalue="19700101", copyable=0, protected=1, doc='Creation date of the task', typelist=[str]),
-        'check_all_trfs': SimpleItem(defvalue=True, doc='Check all Transforms during each monitoring loop cycle'),
-    })
+    _schema = Schema(
+        Version(
+            1,
+            0),
+        {
+            'transforms': ComponentItem(
+                'transforms',
+                defvalue=[],
+                sequence=1,
+                copyable=0,
+                doc='list of transforms'),
+            'id': SimpleItem(
+                defvalue=-1,
+                protected=1,
+                doc='ID of the Task',
+                typelist=[int]),
+            'name': SimpleItem(
+                defvalue='NewTask',
+                copyable=1,
+                doc='Name of the Task',
+                typelist=[str]),
+            'comment': SimpleItem(
+                '',
+                protected=0,
+                doc='comment of the task',
+                typelist=[str]),
+            'status': SimpleItem(
+                defvalue='new',
+                protected=1,
+                doc='Status - new, running, pause or completed',
+                typelist=[str]),
+            'float': SimpleItem(
+                defvalue=0,
+                copyable=1,
+                doc='Number of Jobs run concurrently',
+                typelist=[int]),
+            'metadata': ComponentItem(
+                'metadata',
+                defvalue=MetadataDict(),
+                doc='the metadata',
+                protected=1),
+            'creation_date': SimpleItem(
+                defvalue="19700101",
+                copyable=0,
+                protected=1,
+                doc='Creation date of the task',
+                typelist=[str]),
+            'check_all_trfs': SimpleItem(
+                defvalue=True,
+                doc='Check all Transforms during each monitoring loop cycle'),
+        })
 
     _category = 'tasks'
     _name = 'ITask'
-    _exportmethods = ['run', 'appendTransform', 'overview', 'getJobs', 'remove', 'clone', 'pause', 'check', 'setBackend', 'setParameter',
-                      'insertTransform', 'removeTransform', 'table', 'resetUnitsByStatus', 'removeUnusedJobs', 'n_all', 'n_status', 'n_all']
+    _exportmethods = [
+        'run',
+        'appendTransform',
+        'overview',
+        'getJobs',
+        'remove',
+        'clone',
+        'pause',
+        'check',
+        'setBackend',
+        'setParameter',
+        'insertTransform',
+        'removeTransform',
+        'table',
+        'resetUnitsByStatus',
+        'removeUnusedJobs',
+        'n_all',
+        'n_status',
+        'n_all']
 
     _tasktype = "ITask"
 
@@ -79,7 +139,8 @@ class ITask(GangaObject):
             else:
                 return self.transforms[trf]
         else:
-            logger.warning('Incorrect type for transform referral. Allowed types are int or string.')
+            logger.warning(
+                'Incorrect type for transform referral. Allowed types are int or string.')
 
         return None
 
@@ -122,15 +183,17 @@ class ITask(GangaObject):
                 "Task is still running. Please pause before removing!")
             return
 
-        if not remove_jobs in [True, False]:
+        if remove_jobs not in [True, False]:
             logger.info("You want to remove the task %i named '%s'." %
                         (self.id, self.name))
             logger.info(
                 "Since this operation cannot be easily undone, please call this command again:")
             logger.info(
-                " * as tasks(%i).remove(remove_jobs=True) if you want to remove all associated jobs," % (self.id))
+                " * as tasks(%i).remove(remove_jobs=True) if you want to remove all associated jobs," %
+                (self.id))
             logger.info(
-                " * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id))
+                " * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." %
+                (self.id))
             return
         if remove_jobs:
 
@@ -183,7 +246,8 @@ class ITask(GangaObject):
         if self.status != "completed":
             if self.float == 0:
                 logger.warning(
-                    "The 'float', the number of jobs this task may run, is still zero. Type 'tasks(%i).float = 5' to allow this task to submit 5 jobs at a time" % self.id)
+                    "The 'float', the number of jobs this task may run, is still zero. Type 'tasks(%i).float = 5' to allow this task to submit 5 jobs at a time" %
+                    self.id)
             try:
                 for tf in self.transforms:
                     if tf.status != "completed":
@@ -260,8 +324,9 @@ class ITask(GangaObject):
         # Handle status changes here:
         if self.status != new_status:
             if new_status == "running/pause":
-                logger.info("Some Transforms of Task %i '%s' have been paused. Check tasks.table() for details!" % (
-                    self.id, self.name))
+                logger.info(
+                    "Some Transforms of Task %i '%s' have been paused. Check tasks.table() for details!" %
+                    (self.id, self.name))
             elif new_status == "completed":
                 logger.info("Task %i '%s' has completed!" %
                             (self.id, self.name))
@@ -287,7 +352,7 @@ class ITask(GangaObject):
 
     def overview(self, status=''):
         """ Show an overview of the Task """
-        if status and not status in ['bad', 'hold', 'running', 'completed', 'new']:
+        if status and status not in ['bad', 'hold', 'running', 'completed', 'new']:
             logger.error(
                 "Not a valid status for unitOverview. Possible options are: 'bad', 'hold', 'running', 'completed', 'new'.")
             return
@@ -318,4 +383,3 @@ class ITask(GangaObject):
         """Remove any unused jobs"""
         for trf in self.transforms:
             trf.removeUnusedJobs()
-

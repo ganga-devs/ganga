@@ -6,6 +6,7 @@
 # $Id: Root.py,v 1.4 2008-09-12 08:08:58 wreece Exp $
 ##########################################################################
 
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, FileItem
@@ -28,9 +29,16 @@ from GangaCore.GPIDev.Base.Proxy import getName
 logger = GangaCore.Utility.logging.getLogger()
 config = getConfig('ROOT')
 
+
 def getDefaultScript():
-    name = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'defaultRootScript.C')
+    name = os.path.join(
+        os.path.dirname(
+            os.path.abspath(
+                inspect.getfile(
+                    inspect.currentframe()))),
+        'defaultRootScript.C')
     return File(name=name)
+
 
 class Root(IPrepareApp):
 
@@ -52,8 +60,8 @@ class Root(IPrepareApp):
       std::cout << type << "  " << events << std::endl;
     }
 
-    To define an LCG job on the Ganga command line with this script, 
-    running in ROOT version 5.14.00b with the arguments 'MinBias' 
+    To define an LCG job on the Ganga command line with this script,
+    running in ROOT version 5.14.00b with the arguments 'MinBias'
     and 10, you would do the following:
 
     r = Root()
@@ -67,9 +75,9 @@ class Root(IPrepareApp):
 
     If you have private shared libraries that should be loaded you need to
     include them in the inputsandbox. Files you want back as a result of
-    running your job should be placed in your outputsandbox. 
+    running your job should be placed in your outputsandbox.
 
-    The shared library mechanism is particularly useful in order to create 
+    The shared library mechanism is particularly useful in order to create
     a thin wrapper around code that uses precompiled libraries, or
     that has not been designed to work in the CINT environment.
 
@@ -79,7 +87,7 @@ class Root(IPrepareApp):
 
     A summary of this page is given below:
 
-    Consider the follow in CINT script, runMain.C, that makes use of a ROOT 
+    Consider the follow in CINT script, runMain.C, that makes use of a ROOT
     compatible shared library:
 
     void runMain(){
@@ -96,7 +104,7 @@ class Root(IPrepareApp):
     }
 
     The class Main is as follows and has been compiled into a shared
-    library, libMain.so. 
+    library, libMain.so.
 
     Main.h:
 
@@ -143,9 +151,9 @@ class Root(IPrepareApp):
 
     It is a requirement that your script contains a function with the same
     name as the script itself and that the shared library file is built to
-    be binary compatible with the Grid environment (e.g. same architecture 
-    and version of gcc). As shown above, the wrapper class must be made CINT 
-    compatible. This restriction does not, however, apply to classes used by 
+    be binary compatible with the Grid environment (e.g. same architecture
+    and version of gcc). As shown above, the wrapper class must be made CINT
+    compatible. This restriction does not, however, apply to classes used by
     the wrapper class. When running remote (e.g. LCG) jobs, the architecture
     used is 'slc3_ia32_gcc323' if the Root version is 5.16 or earlier and
     'slc4_ia32_gcc34' otherwise. This reflects the availability of builds
@@ -159,12 +167,12 @@ class Root(IPrepareApp):
 
     Using Python and Root:
 
-    The Root project provides bindings for Python, the language supported by 
+    The Root project provides bindings for Python, the language supported by
     the Ganga command line interface. These bindings are referred to as PyRoot.
-    A job is run using PyRoot if the script has the '.py' extension or the 
+    A job is run using PyRoot if the script has the '.py' extension or the
     usepython flag is set to True.
 
-    There are many example PyRoot scripts available in the Root tutorials. 
+    There are many example PyRoot scripts available in the Root tutorials.
     A short example is given below:
 
     gengaus.py:
@@ -201,14 +209,48 @@ class Root(IPrepareApp):
     is used will depend on that used to build the Root version requested.
 
     """
-    _schema = Schema(Version(1, 1), {
-        'script': FileItem(defvalue=None, preparable=1, doc='A File object specifying the script to execute when Root starts', checkset='_checkset_script'),
-        'args': SimpleItem(defvalue=[], typelist=[str, int], sequence=1, doc="List of arguments for the script. Accepted types are numerics and strings"),
-        'version': SimpleItem(defvalue='6.04.02', doc="The version of Root to run"),
-        'usepython': SimpleItem(defvalue=False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=[None, bool], protected=1, hidden=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
-    })
+    _schema = Schema(
+        Version(
+            1,
+            1),
+        {
+            'script': FileItem(
+                defvalue=None,
+                preparable=1,
+                doc='A File object specifying the script to execute when Root starts',
+                checkset='_checkset_script'),
+            'args': SimpleItem(
+                defvalue=[],
+                typelist=[
+                    str,
+                    int],
+                sequence=1,
+                doc="List of arguments for the script. Accepted types are numerics and strings"),
+            'version': SimpleItem(
+                defvalue='6.04.02',
+                doc="The version of Root to run"),
+            'usepython': SimpleItem(
+                defvalue=False,
+                doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
+            'is_prepared': SimpleItem(
+                defvalue=None,
+                strict_sequence=0,
+                visitable=1,
+                copyable=1,
+                typelist=[
+                    None,
+                    bool],
+                protected=1,
+                hidden=0,
+                comparable=1,
+                doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+            'hash': SimpleItem(
+                defvalue=None,
+                typelist=[
+                    None,
+                    str],
+                hidden=1,
+                doc='MD5 hash of the string representation of applications preparable attributes')})
     _category = 'applications'
     _name = 'Root'
     _exportmethods = ['prepare', 'unprepare']
@@ -241,7 +283,8 @@ class Root(IPrepareApp):
         """
         if (self.is_prepared is not None) and (force is not True):
             raise ApplicationPrepareError(
-                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.' %
+                getName(self))
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
@@ -258,7 +301,7 @@ class Root(IPrepareApp):
                 self.checkPreparedHasParent(self)
                 self.post_prepare()
                 return 1
-        except:
+        except BaseException:
             self.unprepare()
             raise
 
@@ -293,7 +336,11 @@ class RootRTHandler(IRuntimeHandler):
         if 'PATH' in environ:
             setEnvironment('PATH', environ['PATH'], update=True, environment=rootenv)
         if 'LD_LIBRARY_PATH' in environ:
-            setEnvironment('LD_LIBRARY_PATH', environ['LD_LIBRARY_PATH'], update=True, environment=rootenv)
+            setEnvironment(
+                'LD_LIBRARY_PATH',
+                environ['LD_LIBRARY_PATH'],
+                update=True,
+                environment=rootenv)
 
         setEnvironment('LD_LIBRARY_PATH', join(rootsys, 'lib'), update=True, environment=rootenv)
         setEnvironment('PATH', join(rootsys, 'bin'), update=True, environment=rootenv)
@@ -315,7 +362,9 @@ class RootRTHandler(IRuntimeHandler):
                 python_version = findPythonVersion(rootsys)
 
             if (python_version is None):
-                logger.warn('Unable to find the Python version needed for Root version %s. See the [ROOT] section of your .gangarc file.', version)
+                logger.warn(
+                    'Unable to find the Python version needed for Root version %s. See the [ROOT] section of your .gangarc file.',
+                    version)
             else:
                 logger.debug('Python version found was %s', python_version)
             python_home = getpythonhome(pythonversion=python_version)
@@ -334,7 +383,8 @@ class RootRTHandler(IRuntimeHandler):
                 python_lib = join(python_home, 'lib')
 
                 if not os.path.exists(python_bin) or not os.path.exists(python_lib):
-                    logger.error('The PYTHONHOME specified does not have the expected structure. See the [ROOT] section of your .gangarc file.')
+                    logger.error(
+                        'The PYTHONHOME specified does not have the expected structure. See the [ROOT] section of your .gangarc file.')
                     logger.error('PYTHONPATH is: ' + str(os.path))
 
                 setEnvironment('LD_LIBRARY_PATH', python_lib, update=True, environment=rootenv)
@@ -365,19 +415,35 @@ class RootRTHandler(IRuntimeHandler):
         if script == File():
             script = File(defaultScript())
         else:
-            script = File(os.path.join(os.path.join(GangaCore.GPIDev.Lib.File.getSharedPath(), app.is_prepared.name), os.path.basename(app.script.name)))
+            script = File(
+                os.path.join(
+                    os.path.join(
+                        GangaCore.GPIDev.Lib.File.getSharedPath(),
+                        app.is_prepared.name),
+                    os.path.basename(
+                        app.script.name)))
 
         # Start ROOT with the -b and -q options to run without a
         # terminal attached.
-        arguments = ['-b', '-q', r'\'', os.path.relpath(join('.', script.subdir,
-                                      split(script.name)[1])) + rootarg, r'\'']
+        arguments = [
+            '-b',
+            '-q',
+            r'\'',
+            os.path.relpath(
+                join(
+                    '.',
+                    script.subdir,
+                    split(
+                        script.name)[1])) +
+            rootarg,
+            r'\'']
         inputsandbox = app._getParent().inputsandbox + [script]
 
         (rootenv, _) = self._getRootEnvSys(app.version)
         logger.debug("ROOT environment:\n %s: ", str(rootenv))
 
         returnable = StandardJobConfig('root.exe', inputsandbox, arguments,
-                                 app._getParent().outputsandbox)
+                                       app._getParent().outputsandbox)
 
         logger.debug("root jobconfig: %s" % str(returnable))
 
@@ -394,7 +460,13 @@ class RootRTHandler(IRuntimeHandler):
         if script == File():
             script = File(defaultPyRootScript())
         else:
-            script = File(os.path.join(os.path.join(GangaCore.GPIDev.Lib.File.getSharedPath(), app.is_prepared.name), os.path.basename(app.script.name)))
+            script = File(
+                os.path.join(
+                    os.path.join(
+                        GangaCore.GPIDev.Lib.File.getSharedPath(),
+                        app.is_prepared.name),
+                    os.path.basename(
+                        app.script.name)))
 
         arguments = [join('.', script.subdir, split(script.name)[1])]
         arguments.extend([str(s) for s in app.args])
@@ -452,7 +524,6 @@ class RootLCGRTHandler(IRuntimeHandler):
         return LCGJobConfig(runScript, inputsandbox, argList,
                             app._getParent().outputsandbox, rootenv)
 
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('Root', 'Cronus', RootRTHandler)
 allHandlers.add('Root', 'LSF', RootLocalRTHandler)
@@ -487,7 +558,13 @@ def downloadWrapper(app):
         else:
             script = File(defaultPyRootScript())
     else:
-        script = File(os.path.join(os.path.join(GangaCore.GPIDev.Lib.File.getSharedPath(), app.is_prepared.name), os.path.basename(app.script.name)))
+        script = File(
+            os.path.join(
+                os.path.join(
+                    GangaCore.GPIDev.Lib.File.getSharedPath(),
+                    app.is_prepared.name),
+                os.path.basename(
+                    app.script.name)))
 
     commandline = ''
     scriptPath = join('.', script.subdir, split(script.name)[1])
@@ -500,7 +577,7 @@ def downloadWrapper(app):
                 arglist.append('\\\'' + arg + '\\\'')
             else:
                 arglist.append(arg)
-        rootarg = '\(\"' + string.join([str(s) for s in arglist], ',') + '\"\)'
+        rootarg = r'\(\"' + string.join([str(s) for s in arglist], ',') + r'\"\)'
 
         # use root
         commandline = 'root.exe -b -q ' + scriptPath + rootarg + ''
@@ -512,8 +589,12 @@ def downloadWrapper(app):
     logger.debug("Command line: %s: ", commandline)
 
     # Write a wrapper script that installs ROOT and runs script
-    script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                   'wrapperScriptTemplate.py.template')
+    script_location = os.path.join(
+        os.path.dirname(
+            os.path.abspath(
+                inspect.getfile(
+                    inspect.currentframe()))),
+        'wrapperScriptTemplate.py.template')
     from GangaCore.GPIDev.Lib.File import FileUtils
     wrapperscript = FileUtils.loadScript(script_location, '')
 
@@ -534,8 +615,12 @@ def defaultScript():
     tmpdir = tempfile.mktemp()
     os.mkdir(tmpdir)
     fname = os.path.join(tmpdir, 'test.C')
-    script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                   'defaultRootScript.C')
+    script_location = os.path.join(
+        os.path.dirname(
+            os.path.abspath(
+                inspect.getfile(
+                    inspect.currentframe()))),
+        'defaultRootScript.C')
     from GangaCore.GPIDev.Lib.File import FileUtils
     script = FileUtils.loadScript(script_location, '')
     with open(fname, 'w') as f:
@@ -547,8 +632,12 @@ def defaultPyRootScript():
     tmpdir = tempfile.mktemp()
     os.mkdir(tmpdir)
     fname = os.path.join(tmpdir, 'test.py')
-    script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                   'defaultPyRootScript.py')
+    script_location = os.path.join(
+        os.path.dirname(
+            os.path.abspath(
+                inspect.getfile(
+                    inspect.currentframe()))),
+        'defaultPyRootScript.py')
 
     from GangaCore.GPIDev.Lib.File import FileUtils
     default_script = FileUtils.loadScript(script_location, '')
@@ -566,7 +655,7 @@ def randomString():
     def addToSample(sample, ascii_length):
         """Basically random.select but python2.2"""
         a = ascii_uppercase[randint(0, ascii_length - 1)]
-        if not a in sample:
+        if a not in sample:
             sample.append(a)
         else:
             # passing by referance
@@ -580,5 +669,3 @@ def randomString():
 
     # seed is set to clock during import
     return ''.join([str(a) for a in sample])
-
-

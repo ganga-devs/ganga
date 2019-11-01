@@ -19,7 +19,7 @@ class GenericSplitter(ISplitter):
     Split job by changing arbitrary job attribute.
 
     This splitter allows the creation of a series of subjobs where
-    the only difference between different jobs can be defined by giving 
+    the only difference between different jobs can be defined by giving
     the "attribute" and "values" of the splitter object.
 
     For example, to split a job according to the given application arguments:
@@ -54,11 +54,23 @@ class GenericSplitter(ISplitter):
 
     """
     _name = "GenericSplitter"
-    _schema = Schema(Version(1, 0), {
-        'attribute': SimpleItem(defvalue='', doc='The attribute on which the job is splitted'),
-        'values': SimpleItem(defvalue=[], typelist=None, sequence=1, doc='A list of the values corresponding to the attribute of the subjobs'),
-        'multi_attrs': SimpleItem(defvalue={}, doc='Dictionary to specify multiple attributes to split over'),
-    })
+    _schema = Schema(
+        Version(
+            1,
+            0),
+        {
+            'attribute': SimpleItem(
+                defvalue='',
+                doc='The attribute on which the job is splitted'),
+            'values': SimpleItem(
+                defvalue=[],
+                typelist=None,
+                sequence=1,
+                doc='A list of the values corresponding to the attribute of the subjobs'),
+            'multi_attrs': SimpleItem(
+                defvalue={},
+                doc='Dictionary to specify multiple attributes to split over'),
+        })
 
     def split(self, job):
 
@@ -66,7 +78,8 @@ class GenericSplitter(ISplitter):
 
         # sort out multiple arg splitting
         if (self.attribute != '' or len(self.values) > 0) and len(self.multi_attrs) > 0:
-            raise ApplicationConfigurationError("Setting both 'attribute'/'values' and 'multi_attrs' is unsupported")
+            raise ApplicationConfigurationError(
+                "Setting both 'attribute'/'values' and 'multi_attrs' is unsupported")
 
         if self.attribute != '':
             attrlist = [self.attribute]
@@ -99,7 +112,8 @@ class GenericSplitter(ISplitter):
         for vallist in values:
             if len(attrlist) != len(vallist):
                 raise ApplicationConfigurationError(
-                    "Number of attributes to split over doesn't equal number of values in list '%s'" % vallist)
+                    "Number of attributes to split over doesn't equal number of values in list '%s'" %
+                    vallist)
 
         # now perform the split
         for vallist in values:

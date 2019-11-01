@@ -84,8 +84,7 @@ logRepeatDuration = 120.0
 def registerCommandSet(commandClass=None):
 
     try:
-        pluginLoaded = allPlugins.all_dict\
-            ["credential_commands"][commandClass._name]
+        pluginLoaded = allPlugins.all_dict["credential_commands"][commandClass._name]
     except KeyError:
         allPlugins.add(commandClass, "credential_commands", commandClass._name)
 
@@ -97,20 +96,30 @@ class ICommandSet(GangaObject):
     """
     Class used to define shell commands and options for working with credentials
     """
-    _schema = Schema(Version(1, 0), {
-        "init": SimpleItem(defvalue="",
-                           doc="Command for creating/initialising credential"),
-        "info": SimpleItem(defvalue="",
-                           doc="Command for obtaining information about credential"),
-        "destroy": SimpleItem(defvalue="",
-                              doc="Command for destroying credential"),
-        "init_parameters": SimpleItem(defvalue={},
-                                      doc="Dictionary of parameter-value pairs to pass to init command"),
-        "destroy_parameters": SimpleItem(defvalue={},
-                                         doc="Dictionary of parameter-value pairs to pass to destroy command"),
-        "info_parameters": SimpleItem(defvalue={},
-                                      doc="Dictionary mapping from Ganga credential properties to command-line options"),
-    })
+    _schema = Schema(
+        Version(
+            1,
+            0),
+        {
+            "init": SimpleItem(
+                defvalue="",
+                doc="Command for creating/initialising credential"),
+            "info": SimpleItem(
+                defvalue="",
+                doc="Command for obtaining information about credential"),
+            "destroy": SimpleItem(
+                defvalue="",
+                doc="Command for destroying credential"),
+            "init_parameters": SimpleItem(
+                defvalue={},
+                doc="Dictionary of parameter-value pairs to pass to init command"),
+            "destroy_parameters": SimpleItem(
+                defvalue={},
+                doc="Dictionary of parameter-value pairs to pass to destroy command"),
+            "info_parameters": SimpleItem(
+                defvalue={},
+                doc="Dictionary mapping from Ganga credential properties to command-line options"),
+        })
 
     _category = "credential_commands"
     _name = "ICommandSet"
@@ -132,11 +141,12 @@ class ICommandSet(GangaObject):
                 value = config[attribute]
                 try:
                     value = eval(value)
-                except:
+                except BaseException:
                     pass
                 setattr(self, attribute, value)
             except ConfigError:
                 pass
+
 
 registerCommandSet(ICommandSet)
 
@@ -191,7 +201,7 @@ class ICredential(GangaObject):
                          credential is created only if the validity of
                          any pre-existing credential is less than the
                          value of minValidity
-                         [ Default: False ] 
+                         [ Default: False ]
 
         Note: create is the same as renew, except for the default value of check
 
@@ -238,7 +248,7 @@ class ICredential(GangaObject):
                 # Since self.inputPW_Widget is called, current arguments are
                 # ignored since renew() and create() in GUI mode will not be
                 # called with any arguments.
-                #proxy_obj = self._proxyObject ## This is removed to get rid of ref to _proxyObject
+                # proxy_obj = self._proxyObject ## This is removed to get rid of ref to _proxyObject
                 proxy_obj = self
                 if self.inputPW_Widget.ask(proxy_obj):
                     logger.dg("Proceeding to retrieve password from inputPW_Widget.")
@@ -250,7 +260,7 @@ class ICredential(GangaObject):
                         tFile = tempfile.NamedTemporaryFile()
                         tFile.write(__pw)
                         tFile.flush()
-                    except:
+                    except BaseException:
                         del __pw
                         logger.warning("Could not create secure temporary file for password!")
                         return False
@@ -305,7 +315,9 @@ class ICredential(GangaObject):
                         # Check validity but print logging messages this time
                         self.isValid("", True)
                         _credentialObject = self._name[0].lower() + self._name[1:]
-                        logger.warning("Renew by typing '%s.renew()' at the prompt." % (_credentialObject))
+                        logger.warning(
+                            "Renew by typing '%s.renew()' at the prompt." %
+                            (_credentialObject))
 
                         # notify the Core that the credential is not valid
                         _validity = self.timeInSeconds(self.timeleft())
@@ -369,7 +381,7 @@ class ICredential(GangaObject):
                          specified as string of format "hh:mm"
                          [ Defaults to valud of self.minValidity ]
 
-           log         - Print logger messages if credential not valid 
+           log         - Print logger messages if credential not valid
 
            force_check - Force credential check, rather than relying on cache
 
@@ -446,7 +458,7 @@ class ICredential(GangaObject):
                          credential is created only if the validity of
                          any pre-existing credential is less than the
                          value of minValidity
-                         [ Default: True ] 
+                         [ Default: True ]
 
         Note: renew is the same as create, except for the default value of check
 

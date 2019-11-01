@@ -44,6 +44,7 @@ class FakeRegistry(object):
 # * lock(ids) (random ids, if return True put into owned_ids)
 # * unlock(ids) (random owned ids, remove from owned_ids)
 
+
 class HammerThread(threading.Thread):
     def __init__(self, _id, repo):
         self.id = _id
@@ -76,8 +77,11 @@ class HammerThread(threading.Thread):
         try:
             self.repo.load(ids)
         except KeyError:
-            self.logger.info(str(
-                self.id) + ' load(%s) failed - one or more ids were deleted by another thread (if no other thread is running, this is an ERROR!)' % ids)
+            self.logger.info(
+                str(
+                    self.id) +
+                ' load(%s) failed - one or more ids were deleted by another thread (if no other thread is running, this is an ERROR!)' %
+                ids)
             return
         for id in ids:
             assert self.repo.objects[id].name
@@ -117,7 +121,8 @@ class HammerThread(threading.Thread):
         self.logger.info(str(self.id) + ' flush() done')
 
     def add(self):
-        from GangaTest.Lib.TestObjects import TestGangaObject  # This import is in here to avoid confusing nosetests
+        # This import is in here to avoid confusing nosetests
+        from GangaTest.Lib.TestObjects import TestGangaObject
         objs = [TestGangaObject('HT%i' % (self.id)) for i in range(self.rng.randint(1, 2))]
         self.logger.info(str(self.id) + ' add(%s)' % objs)
         ids = self.repo.add(objs)
@@ -133,7 +138,7 @@ class HammerThread(threading.Thread):
         self.logger.info(str(self.id) + ' delete(%s)' % ids)
         self.repo.delete(ids)
         for id in ids:
-            assert not id in self.repo.objects
+            assert id not in self.repo.objects
             self.owned_ids.remove(id)
         self.logger.info(str(self.id) + ' delete(%s) done!' % ids)
 
@@ -149,7 +154,8 @@ class HammerThread(threading.Thread):
             choices.extend([self.check] * 5)
             choices.extend([self.flush] * 2)
             self.rng.choice(choices)()
-            assert len(self.owned_ids) == len(list(dict(list(zip(self.owned_ids, list(range(len(self.owned_ids)))))).keys()))
+            assert len(self.owned_ids) == len(
+                list(dict(list(zip(self.owned_ids, list(range(len(self.owned_ids)))))).keys()))
             for id in self.owned_ids:
                 assert id in self.repo.objects
         self.done = True
@@ -212,4 +218,3 @@ class testRepository(object):
         self.logger.info(str(self.id) + ' shutdown()')
         self.repo.shutdown()
         self.logger.info(str(self.id) + ' shutdown() done!')
-

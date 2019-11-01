@@ -14,7 +14,7 @@ class HammerThread(threading.Thread):
         self.owned_ids = []
         self.owned_objs = {}
         self.done = False
-        super(HammerThread, self).__init__()#'HammerThread_%s' % _id)
+        super(HammerThread, self).__init__()  # 'HammerThread_%s' % _id)
         from GangaCore.Utility.logging import getLogger
         self.logger = getLogger(modulename=True)
 
@@ -33,7 +33,8 @@ class HammerThread(threading.Thread):
         self.logger.info(str(self.id) + ' update_index(None) done!')
 
     def add(self):
-        from GangaTest.Lib.TestObjects import TestGangaObject  # This import is in here to avoid confusing nosetests
+        # This import is in here to avoid confusing nosetests
+        from GangaTest.Lib.TestObjects import TestGangaObject
         self.logger.info('self.ref.keys before: %s' % list(self.reg.keys()))
         objs = [TestGangaObject('HT%i' % self.id) for _ in range(self.rng.randint(1, 2))]
         self.logger.info(str(self.id) + ' add(%s)' % objs)
@@ -69,7 +70,7 @@ class HammerThread(threading.Thread):
             try:
                 from GangaCore.GPIDev.Base.Proxy import stripProxy
                 self.logger.debug('reg_id: %s' % stripProxy(self.reg[_id]).id)
-            except:
+            except BaseException:
                 pass
             obj_to_remove = self.reg[_id]
             self.reg._remove(obj_to_remove)
@@ -82,7 +83,7 @@ class HammerThread(threading.Thread):
             try:
                 self.owned_ids.remove(_id)
                 del self.owned_ids[_id]
-            except:
+            except BaseException:
                 pass
         self.logger.info(str(self.id) + ' delete(%s) done!' % ids)
         self.logger.info('delete self.reg.keys end: %s' % list(self.reg.keys()))
@@ -103,10 +104,13 @@ class HammerThread(threading.Thread):
             self.logger.info('Wanting: %s' % _id)
             assert self.reg[_id].name.startswith('HT')
             if _id in self.owned_ids:
-                assert self.reg[_id].name == 'HT%i' % self.id, '{0} == {1}'.format(self.reg[_id].name, 'HT%i' % self.id)
+                assert self.reg[_id].name == 'HT%i' % self.id, '{0} == {1}'.format(
+                    self.reg[_id].name, 'HT%i' % self.id)
         except KeyError:  # If the object has been deleted in the meantime, it must be gone from the registry
             assert _id not in self.reg.ids()
-            self.logger.info(str(self.id) + '  %s deleted after KeyError (as per specification)' % _id)
+            self.logger.info(str(self.id) +
+                             '  %s deleted after KeyError (as per specification)' %
+                             _id)
         self.logger.info(str(self.id) + ' load(%s) done!' % _id)
 
     def lock(self):
@@ -128,7 +132,9 @@ class HammerThread(threading.Thread):
             if _id not in self.owned_ids:
                 self.owned_ids.append(_id)
         except KeyError:  # If the object has been deleted in the meantime, it must be gone from the registry
-            self.logger.info(str(self.id) + '  %s deleted after KeyError (as per specification)' % _id)
+            self.logger.info(str(self.id) +
+                             '  %s deleted after KeyError (as per specification)' %
+                             _id)
             assert _id not in self.reg
         except RegistryLockError:  # ok, this is already locked
             self.logger.info(str(self.id) + '  %s was locked...' % _id)
@@ -160,7 +166,8 @@ class HammerThread(threading.Thread):
             this_choice = self.rng.choice(choices)
             self.logger.debug('\n\n\n\n\n%s) This Choise: %s\n' % (i, this_choice))
             this_choice()
-            assert len(self.owned_ids) == len(list(dict(list(zip(self.owned_ids, list(range(len(self.owned_ids)))))).keys()))
+            assert len(self.owned_ids) == len(
+                list(dict(list(zip(self.owned_ids, list(range(len(self.owned_ids)))))).keys()))
             for _id in self.owned_ids:
                 if _id not in self.reg._objects:
                     self.logger.info('LOCKED ID DELETED: ' + str(_id))
@@ -216,4 +223,3 @@ class testReg(object):
         self.logger.info(str(self.id) + ' shutdown()')
         self.registry.shutdown()
         self.logger.info(str(self.id) + ' shutdown() done!')
-

@@ -5,6 +5,7 @@ from GangaCore.Utility.logging import getLogger
 import functools
 logger = getLogger()
 
+
 def synchronised(f):
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
@@ -66,4 +67,3 @@ class GangaThread(Thread):
     @synchronised
     def register(self):
         GangaThreadPool.getInstance().addServiceThread(self)
-

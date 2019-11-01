@@ -12,7 +12,7 @@ from GangaCore.Utility.logging import getLogger
 logger = getLogger('CompletionErrorChecker')
 
 
-complete_bracket_matcher = re.compile('(\([^()]*?\))')
+complete_bracket_matcher = re.compile(r'(\([^()]*?\))')
 # used to not keep track of the replacements
 # def bracket_sanitiser(text):
 
@@ -33,6 +33,7 @@ def bracket_sanitiser(text, replacement_list=None):
 ##        text = bracket_sanitiser(text)
         text = bracket_sanitiser(text, replacement_list)
     return text
+
 
 bracket_replacement_matcher = re.compile('##([0-9]+?)##')
 
@@ -59,7 +60,8 @@ def arg_splitter(text, strip_args=True):
         args[i] = a
     return args
 
-open_method_matcher = re.compile('([a-zA-Z0-9_.]+?)\(.*?')
+
+open_method_matcher = re.compile(r'([a-zA-Z0-9_.]+?)\(.*?')
 
 
 def current_class_method_and_arg(text, namespace=globals()):
@@ -82,7 +84,9 @@ def current_class_method_and_arg(text, namespace=globals()):
         class_name = eval('%s.__class__.__name__' % class_label, namespace)
         tmp = '.'.join([class_label, method_name])
         type_obj = eval('type(%s)' % tmp, namespace)
-        if eval('%s != types.FunctionType and %s != types.MethodType' % (type_obj, type_obj), namespace):
+        if eval(
+            '%s != types.FunctionType and %s != types.MethodType' %
+                (type_obj, type_obj), namespace):
             # constructor
             class_label = tmp
             class_name = eval('%s.__class__.__name__' % tmp, namespace)
@@ -153,7 +157,9 @@ class GangaCompleter(object):
         if user_input.endswith('.'):
             split_text = match.split('.')
             schema_items = {}
-            if eval('hasattr(%s, "_schema") and hasattr(%s, "_readonly")' % (split_text[0], split_text[0]), self.ns):
+            if eval(
+                'hasattr(%s, "_schema") and hasattr(%s, "_readonly")' %
+                    (split_text[0], split_text[0]), self.ns):
                 read_only = eval('%s._readonly()' % split_text[0], self.ns)
                 schema_items = eval('dict(%s._schema.allItems())' % split_text[0], self.ns)
 
@@ -201,7 +207,8 @@ class GangaCompleter(object):
         class_label, class_name, method_name, arg_num = current_class_method_and_arg(
             user_input, self.ns)
 
-        if num_per_line == 0 or user_input.strip().endswith('(') or user_input.strip().endswith(','):
+        if num_per_line == 0 or user_input.strip().endswith(
+                '(') or user_input.strip().endswith(','):
             num_per_line = 1
 
         # constructor
@@ -215,12 +222,19 @@ class GangaCompleter(object):
             for i, arg in enumerate(filter(lambda x: x != '', map(lambda x: x.strip(), new))):
                 if '=' in arg:
                     split_arg = arg.split('=')
-                    if split_arg[0].strip() not in eval('dict(%s._impl._schema.allItems())' % class_name, self.ns):
+                    if split_arg[0].strip() not in eval(
+                        'dict(%s._impl._schema.allItems())' %
+                            class_name, self.ns):
                         unrecognised.append((split_arg[0].strip(), class_name))
                         # include = to avoid replacing letters e.g. a in the
                         # RHS also to keep the users spaces intact
-                        new[i] = new[i].replace(split_arg[
-                                                0] + '=', getColour('fg.red') + split_arg[0] + getColour('fg.normal') + '=')
+                        new[i] = new[i].replace(
+                            split_arg[0] +
+                            '=',
+                            getColour('fg.red') +
+                            split_arg[0] +
+                            getColour('fg.normal') +
+                            '=')
                 elif not eval('isinstance(%s, %s)' % (arg, class_name), self.ns):
                     new[i] = new[i].replace(
                         arg, getColour('fg.red') + arg + getColour('fg.normal'))
@@ -228,12 +242,14 @@ class GangaCompleter(object):
 
             user_input = user_input.replace(','.join(tmp), ','.join(new))
             if wrong:
-                logger.warning('Only one positional arg allowed which must be an object of the same type to copy from')
+                logger.warning(
+                    'Only one positional arg allowed which must be an object of the same type to copy from')
                 #user_input = user_input.replace(','.join(tmp), ','.join(new))
             if unrecognised:
                 for a, c in unrecognised:
                     logger.warning(
-                        "Unrecognised keyword argument, '%s' is not a modifyable attribute of '%s'" % (a, c))
+                        "Unrecognised keyword argument, '%s' is not a modifyable attribute of '%s'" %
+                        (a, c))
 
         colour_green = getColour('fg.green')
         colour_red = getColour('fg.red')
@@ -278,8 +294,8 @@ class GangaCompleter(object):
             # like queues
             tmp_arg_spec = eval(
                 'inspect.getargspec(%s.%s)' % (class_label, method_name), self.ns)
-            arg_spec = inspect.ArgSpec(tmp_arg_spec.args[
-                                       1:], tmp_arg_spec.varargs, tmp_arg_spec.keywords, tmp_arg_spec.defaults)
+            arg_spec = inspect.ArgSpec(
+                tmp_arg_spec.args[1:], tmp_arg_spec.varargs, tmp_arg_spec.keywords, tmp_arg_spec.defaults)
         elif method_name is not None:
             arg_spec = eval('inspect.getargspec(%s)' % method_name, self.ns)
         elif class_name is not None:  # constructor
@@ -296,13 +312,15 @@ class GangaCompleter(object):
             if schema_items is None:
                 tmp_arg_spec = eval(
                     'inspect.getargspec(%s.__init__)' % class_name, self.ns)
-                arg_spec = inspect.ArgSpec(tmp_arg_spec.args[
-                                           1:], tmp_arg_spec.varargs, tmp_arg_spec.keywords, tmp_arg_spec.defaults)
+                arg_spec = inspect.ArgSpec(
+                    tmp_arg_spec.args[1:], tmp_arg_spec.varargs, tmp_arg_spec.keywords, tmp_arg_spec.defaults)
             else:
                 t_args = []
                 t_defaults = []
                 for n, item in sorted(schema_items, key=operator.itemgetter(0)):
-                    if not item._meta.get('hidden', False) and not item._meta.get('protected', False):
+                    if not item._meta.get(
+                            'hidden', False) and not item._meta.get(
+                            'protected', False):
                         t_args.append(n)
                         t_defaults.append(item._meta.get('defvalue', None))
                 if not t_defaults:

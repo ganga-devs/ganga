@@ -16,6 +16,7 @@ The standardSetup() function is used to perform automatic initialization of the 
 """
 
 # Default minimum Python version number asked for by Ganga
+from GangaCore.Utility.Setup import PackageSetup
 _defaultMinVersion = "2.6"
 _defaultMinHexVersion = 0x20600f0
 
@@ -44,11 +45,11 @@ _externalPackages = {
     'ipython': {'version': '1.2.1',
                 'noarch': True,
                 'syspath': 'lib/python'},
-#    'paramiko': {'version': '1.7.3',
-#                 'noarch': True,
-#                 'syspath': 'lib/python2.3/site-packages'},
-#    'pycrypto': {'version': '2.0.1',
-#                 'syspath': 'lib/python2.3/site-packages'},
+    #    'paramiko': {'version': '1.7.3',
+    #                 'noarch': True,
+    #                 'syspath': 'lib/python2.3/site-packages'},
+    #    'pycrypto': {'version': '2.0.1',
+    #                 'syspath': 'lib/python2.3/site-packages'},
     'httplib2': {'version': '0.8',
                  'noarch': True,
                  'syspath': 'python'},
@@ -66,7 +67,7 @@ def detectPlatform():
     Ganga provides precompiled external packages on a limited set of _default platforms_ as explained in:
     https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaSupportedPlatforms
     This function is set only to detect the well-known platform strings as defined by the LCG SPI project and is not meant to be a
-    generic platform detection utility. If the platform cannot be guessed a default one is returned. This may or may not work on 
+    generic platform detection utility. If the platform cannot be guessed a default one is returned. This may or may not work on
     other systems. In this case you should resolve the external binary dependencies yourself.
 
     Comments about current implementations:
@@ -121,7 +122,6 @@ if not _defaultPlatform:
     _defaultPlatform = detectPlatform()
 
 
-from GangaCore.Utility.Setup import PackageSetup
 # The setup object
 setup = PackageSetup(_externalPackages)
 
@@ -138,13 +138,13 @@ def standardSetup(setup=setup):
     # the caller
     if checkPythonVersion(_defaultMinVersion, _defaultMinHexVersion):
         for name in setup.packages:
-#            if name == 'pycrypto' and sys.hexversion > 0x2050000:
-#                # hack the pycrypto path for 2.5
-#                setup.packages['pycrypto']['syspath'] = setup.packages['pycrypto']['syspath'].replace('2.3', '2.5')
-#
-#            if name == 'paramiko' and sys.hexversion > 0x2050000:
-#                # hack the paramiko path for 2.5
-#                setup.packages['paramiko']['syspath'] = setup.packages['paramiko']['syspath'].replace('2.3', '2.5')
+            #            if name == 'pycrypto' and sys.hexversion > 0x2050000:
+            #                # hack the pycrypto path for 2.5
+            #                setup.packages['pycrypto']['syspath'] = setup.packages['pycrypto']['syspath'].replace('2.3', '2.5')
+            #
+            #            if name == 'paramiko' and sys.hexversion > 0x2050000:
+            #                # hack the paramiko path for 2.5
+            #                setup.packages['paramiko']['syspath'] = setup.packages['paramiko']['syspath'].replace('2.3', '2.5')
 
             setup.setSysPath(name)
             setup.prependPath(name, 'PYTHONPATH')
@@ -154,4 +154,3 @@ def standardSetup(setup=setup):
             # setup.prependPath(name,'LD_LIBRARY_PATH')
     else:
         sys.exit()
-

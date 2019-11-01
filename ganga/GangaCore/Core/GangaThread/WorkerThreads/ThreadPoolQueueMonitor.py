@@ -59,7 +59,7 @@ class ThreadPoolQueueMonitor(object):
     def _display_element(self, item):
         if hasattr(item, 'name') and item.name is not None:
             return item.name
-        elif type(item.command_input[0]) != str:
+        elif not isinstance(item.command_input[0], str):
             return getName(item.command_input[0])
         else:
             return item.command_input[0]
@@ -69,8 +69,10 @@ class ThreadPoolQueueMonitor(object):
         output = ''
         output += '{0:^67} | {1:^50}\n'.format('Ganga user threads:', 'Ganga monitoring threads:')
         output += '{0:^67} | {1:^50}\n'.format('------------------', '------------------------')
-        output += '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('Name', 'Command', 'Timeout')
-        output += '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('----', '-------', '-------')
+        output += '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format(
+            'Name', 'Command', 'Timeout')
+        output += '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format(
+            '----', '-------', '-------')
         for u, m in zip(self._user_threadpool.worker_status(),
                         self._monitoring_threadpool.worker_status()):
             # name has extra spaces as colour characters are invisible but
@@ -96,7 +98,8 @@ class ThreadPoolQueueMonitor(object):
         output += '\n'
         output += "Ganga monitoring queue:\n"
         output += "----------------------\n"
-        output += str([self._display_element(elem) for elem in self._monitoring_threadpool.get_queue()])
+        output += str([self._display_element(elem)
+                       for elem in self._monitoring_threadpool.get_queue()])
         return output
 
     def _repr_pretty_(self, p, cycle):
@@ -122,7 +125,7 @@ class ThreadPoolQueueMonitor(object):
         _user_queue = [i for i in self._user_threadpool.get_queue()]
         queue_size = len(_user_queue)
         _actually_purge = False
-        if force == True:
+        if force:
             _actually_purge = True
         if queue_size > 0 and not force:
             keyin = None
@@ -154,7 +157,7 @@ class ThreadPoolQueueMonitor(object):
 
         queue_size = len(_monitor_queue)
         _actually_purge = False
-        if force == True:
+        if force:
             _actually_purge = True
         if queue_size > 0 and not force:
             keyin = None
@@ -190,13 +193,13 @@ class ThreadPoolQueueMonitor(object):
         Note:
         ----
 
-        Unlike with the queues.addProcess (where the overhead in starting up the processes 
+        Unlike with the queues.addProcess (where the overhead in starting up the processes
         take a few seconds) code executes immediately when reported using monitoring
         command queues
 
         args:
         ----
-                   worker_code = Any python callable object to run on thread 
+                   worker_code = Any python callable object to run on thread
                    args        = Any args for the callable object given here
                                  as a tuple
                    kwargs      = Any kwargs for the callable object given here
@@ -207,7 +210,8 @@ class ThreadPoolQueueMonitor(object):
         """
         if not isinstance(worker_code, collections.Callable):
             logger.error('Only python callable objects can be added to the queue using queues.add()')
-            logger.error('Did you perhaps try to add the return value of the function/method rather than the function/method itself')
+            logger.error(
+                'Did you perhaps try to add the return value of the function/method rather than the function/method itself')
             logger.error('e.g. Incorrect:     queues.add(myfunc()) *NOTE the brackets*')
             logger.error('e.g. Correct  :     queues.add(myfunc)')
             return
@@ -265,7 +269,7 @@ class ThreadPoolQueueMonitor(object):
 
         args:
         ----
-                   command         = The command to run as a string 
+                   command         = The command to run as a string
                    timeout         = timeout for the command as int or None
                    env             = environment to run command in as dict or None
                    cwd             = working dir to run command in as string
@@ -282,15 +286,15 @@ class ThreadPoolQueueMonitor(object):
                                      queue with lower number = higher priority.
                                      This then should be an int normally 0-9
                    callback_func   = Any python callable object. This is called
-                                     once the command has finished running (or 
+                                     once the command has finished running (or
                                      timed out) and must take at least one arg.
-                                     This first arg will be the stdout of the 
+                                     This first arg will be the stdout of the
                                      executed command. This arg will be the
-                                     result of unpickling stdout, falling back to 
+                                     result of unpickling stdout, falling back to
                                      eval(stdout) such that '{}' will
                                      become a dict. Fall back to str representation
                                      if the eval fails.
-                   callback_args   = Any additional args to the callback_func 
+                   callback_args   = Any additional args to the callback_func
                                      are specified here as a tuple
                    callback_kwargs = kwargs for the callback_func are given here
                                      as a dict.
@@ -298,12 +302,12 @@ class ThreadPoolQueueMonitor(object):
                                      if the command execution throws an exception.
                                      The function must take at least one arg that
                                      will be the exception that was thrown.
-                   fallback_args   = Any additional args to the fallback_func 
+                   fallback_args   = Any additional args to the fallback_func
                                      are specified here as a tuple
                    fallback_kwargs = kwargs for the fallback_func are given here
                                      as a dict.
         """
-        if type(command) != type(''):
+        if not isinstance(command, type('')):
             logger.error("Input command must be of type 'string'")
             return
 
@@ -384,4 +388,3 @@ class ThreadPoolQueueMonitor(object):
         self._user_threadpool._start_worker_threads()
         self._monitoring_threadpool._start_worker_threads()
         return
-

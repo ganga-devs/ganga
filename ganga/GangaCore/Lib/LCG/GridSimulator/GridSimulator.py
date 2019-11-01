@@ -1,3 +1,5 @@
+import os
+import time
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 
@@ -12,6 +14,7 @@ logger.critical('LCG Grid Simulator ENABLED')
 ##########################################################################
 
 config = getConfig("GridSimulator")
+
 
 def sleep(val):
     import time
@@ -38,8 +41,6 @@ def get_number(val):
     # print t
     return t
 
-import os
-import time
 
 cmd = 'simulation'
 

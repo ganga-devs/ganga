@@ -26,12 +26,13 @@
 import sys
 from GangaCore.GPIDev.Adapters.IMonitoringService import IMonitoringService
 
+
 class CompositeMonitoringService(IMonitoringService):
 
     """ IMonitoringService container:
     Wrapper object containing a list of IMonitoringService(s) inside and delegating
-    the interface methods to each of them. (composite design pattern) 
-    This object is used automatically to transparently wrap the list of monitoring services set in the configuration    
+    the interface methods to each of them. (composite design pattern)
+    This object is used automatically to transparently wrap the list of monitoring services set in the configuration
     """
 
     def __init__(self, monClasses, jobInfos, configInfos):
@@ -77,7 +78,9 @@ class CompositeMonitoringService(IMonitoringService):
                 self.monMonServices.append(monService)
             except Exception as e:
                 # discard errors in initialization of monitoring services
-                self.logger.warning("Failed to init %s monitoring service...discarding it" % str(monClass))
+                self.logger.warning(
+                    "Failed to init %s monitoring service...discarding it" %
+                    str(monClass))
                 from GangaCore.Utility.logging import log_user_exception
                 log_user_exception(self.logger)
 
@@ -92,7 +95,7 @@ class CompositeMonitoringService(IMonitoringService):
                 ret[monClass] = monService.start(**opts)
             except Exception as e:
                 # discard errors in initialization of monitoring services
-               self.logger.warning("%s monitoring service failed to *start*: %s" % (monClass, e))
+                self.logger.warning("%s monitoring service failed to *start*: %s" % (monClass, e))
 
         return ret
 
@@ -107,7 +110,9 @@ class CompositeMonitoringService(IMonitoringService):
                 ret[monClass] = monService.progress(**opts)
             except Exception as e:
                 # discard errors in initialization of monitoring services
-                self.logger.warning("%s monitoring service failed to *progress*: %s" % (monClass, e))
+                self.logger.warning(
+                    "%s monitoring service failed to *progress*: %s" %
+                    (monClass, e))
 
         return ret
 
@@ -231,7 +236,7 @@ class CompositeMonitoringService(IMonitoringService):
 
         The info object is passed to the contructor. Info
         object may only contain the standard python types (such as lists,
-        dictionaries, int, strings). 
+        dictionaries, int, strings).
         Implementation details:
          return the job info objects as a map for each compound Monitoring Service
          @see getWrapperScriptConstructorText() method
@@ -244,6 +249,7 @@ class CompositeMonitoringService(IMonitoringService):
                 infos[monClass] = monService.getJobInfo()
             except Exception as e:
                 # discard errors in initialization of monitoring services
-                self.logger.warning("%s monitoring service failed in *getJobInfo*: %s" % (monClass, e))
+                self.logger.warning(
+                    "%s monitoring service failed in *getJobInfo*: %s" %
+                    (monClass, e))
         return infos
-

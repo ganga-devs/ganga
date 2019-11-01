@@ -1,3 +1,5 @@
+import GangaCore.Core.exceptions
+import GangaCore.GPIDev.Base.Proxy
 import unittest
 
 from GangaCore.GPIDev.Base import GangaObject
@@ -20,9 +22,11 @@ class SampleGangaObject(GangaObject):
         return 'example_string'
 
     def check_not_proxy(self, obj):
-        assert not GangaCore.GPIDev.Base.Proxy.isProxy(obj), 'incoming argument should be proxy-stripped'
+        assert not GangaCore.GPIDev.Base.Proxy.isProxy(
+            obj), 'incoming argument should be proxy-stripped'
         ret = SampleGangaObject()
-        assert not GangaCore.GPIDev.Base.Proxy.isProxy(ret), 'new object should not be proxy-wrapped'
+        assert not GangaCore.GPIDev.Base.Proxy.isProxy(
+            ret), 'new object should not be proxy-wrapped'
         return ret
 
     def not_proxied(self):
@@ -36,10 +40,6 @@ class NonProxiedGangaObject(GangaObject):
     _schema = Schema(Version(1, 0))
     _category = 'TestGangaObject'
     _name = 'TestGangaObject'
-
-
-import GangaCore.GPIDev.Base.Proxy
-import GangaCore.Core.exceptions
 
 
 class TestProxy(unittest.TestCase):
@@ -57,7 +57,9 @@ class TestProxy(unittest.TestCase):
 
     def test_dict_attributes(self):
         # Non-proxied GangaObject class
-        # self.assertFalse(hasattr(NonProxiedGangaObject, '_proxyClass'))  # This is currently know to fail. Should be fixed when class decorators are used for export
+        # self.assertFalse(hasattr(NonProxiedGangaObject, '_proxyClass'))  # This
+        # is currently know to fail. Should be fixed when class decorators are
+        # used for export
         self.assertFalse(hasattr(NonProxiedGangaObject, '_impl'))
 
         # Proxied GangaObject class

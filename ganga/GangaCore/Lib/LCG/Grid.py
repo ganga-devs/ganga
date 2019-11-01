@@ -29,7 +29,11 @@ def __set_submit_option__():
     if config['Config']:
         submit_option += ' --config %s' % config['Config']
     elif config['GLITE_ALLOWED_WMS_LIST']:
-        wms_conf_path = os.path.join(os.environ['GLITE_WMS_LOCATION'], 'etc', config['VirtualOrganisation'], 'glite_wmsui.conf')
+        wms_conf_path = os.path.join(
+            os.environ['GLITE_WMS_LOCATION'],
+            'etc',
+            config['VirtualOrganisation'],
+            'glite_wmsui.conf')
         temp_wms_conf = tempfile.NamedTemporaryFile(suffix='.conf', delete=False)
 
         with open(wms_conf_path, "r") as this_file:
@@ -132,7 +136,8 @@ def __resolve_no_matching_jobs__(cmd_output):
 
     if logfile:
 
-        re_jid = re.compile(r'^Unable to retrieve the status for: (https://\S+:9000/[0-9A-Za-z_.-]+)\s*$')
+        re_jid = re.compile(
+            r'^Unable to retrieve the status for: (https://\S+:9000/[0-9A-Za-z_.-]+)\s*$')
         re_key = re.compile(r'^.*(no matching jobs found)\s*$')
 
         myjid = ''
@@ -974,7 +979,8 @@ def arc_status(jobids, ce_list, cred_req):
     job_info_dict = {}
 
     if rc != 0:
-        logger.warning('jobs not found in XML file: arcsync will be executed to update the job information')
+        logger.warning(
+            'jobs not found in XML file: arcsync will be executed to update the job information')
         __arc_sync__(ce_list, cred_req)
 
     if rc == 0 and output:
@@ -1063,11 +1069,11 @@ def arc_get_output(jid, directory, cred_req):
     tmpdir = tempfile.gettempdir()
     jobhash = jid.split('/')[-1]
 
-    copy_cmd =  'arcget -j %s %s -D %s' % (config["ArcJobListFile"],  jid, tmpdir)
+    copy_cmd = 'arcget -j %s %s -D %s' % (config["ArcJobListFile"], jid, tmpdir)
     rc, output, m = getShell(cred_req).cmd1(copy_cmd,
                                             allowed_exit=[0, 255],
                                             timeout=config['SubmissionTimeout'])
-    #By now the job's output should be in the temp directory
+    # By now the job's output should be in the temp directory
     if rc:
         logger.error(
             "Problem downloading output for job '%s'" % jid)
@@ -1081,6 +1087,7 @@ def arc_get_output(jid, directory, cred_req):
     shutil.rmtree(files_location)
 
     return True
+
 
 def arc_purge_multiple(jobids, cred_req):
     """ARC CE job purging"""

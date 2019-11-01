@@ -45,11 +45,11 @@ servicesEnabled = True
 def _diskSpaceChecker():
     """
     the callback function used internally by Monitoring Component
-    Reads and calls the checking function provided in the configuration. 
+    Reads and calls the checking function provided in the configuration.
     If this checking function returns "False" the internal services are disabled making Ganga read-only:
     e.g:
     [PollThread]
-    DiskSpaceChecker =  
+    DiskSpaceChecker =
         import commands
         diskusage = commands.getoutput('df -l -P %s/workspace' % config['Configuration']['gangadir'])
         used  = diskusage.splitlines()[1].split()[4] # get disk usage (in %)
@@ -60,7 +60,7 @@ def _diskSpaceChecker():
         config = getConfig('PollThread')
 
         if config['DiskSpaceChecker']:
-            _checker = lambda: True
+            def _checker(): return True
             try:
                 # create the checker
                 from GangaCore.Runtime import _prog
@@ -74,19 +74,22 @@ def _diskSpaceChecker():
                     ns["check"].__code__, _prog.local_ns, 'check')
             except Exception as e:
                 log.warning(
-                    'Syntax errors in disk space checking code: %s. See [PollThread]DiskSpaceChecker' % e)
+                    'Syntax errors in disk space checking code: %s. See [PollThread]DiskSpaceChecker' %
+                    e)
                 return False
 
             # call the checker
             if _checker() is False:
                 disableInternalServices()
-                log.warning('You are running out of disk space! '
-                            'To protect against possible write errors all internal services has been disabled.'
-                            'If you believe the problem has been solved type "reactivate()" to re-enable '
-                            'interactions within this session.')
+                log.warning(
+                    'You are running out of disk space! '
+                    'To protect against possible write errors all internal services has been disabled.'
+                    'If you believe the problem has been solved type "reactivate()" to re-enable '
+                    'interactions within this session.')
     except Exception as msg:
         log.warning(
-            'Exception in free disk space checking code: %s. See [PollThread]DiskSpaceChecker' % msg)
+            'Exception in free disk space checking code: %s. See [PollThread]DiskSpaceChecker' %
+            msg)
         return False
     return True
 
@@ -116,12 +119,11 @@ def disableInternalServices():
     log.info("Ganga is now attempting to shut down all running processes accessing the repository in a clean manner")
     log.info(" ... Please be patient! ")
 
-
-    ## MOVED TO THE END OF THE SHUTDOWN SO THAT WE NEVER ACCESS A REPO BEFORE WE ARE FINISHED!
+    # MOVED TO THE END OF THE SHUTDOWN SO THAT WE NEVER ACCESS A REPO BEFORE WE ARE FINISHED!
     # flush the registries
     #log.debug("Coordinator Shutting Down Repository_runtime")
     #from GangaCore.Runtime import Repository_runtime
-    #Repository_runtime.shutdown()
+    # Repository_runtime.shutdown()
 
     global servicesEnabled
 
@@ -164,6 +166,7 @@ def enableMonitoringService():
     global servicesEnabled
     servicesEnabled = True
 
+
 def enableInternalServices():
     """
     activates the internal services previously disabled due to expired credentials
@@ -180,7 +183,9 @@ def enableInternalServices():
     Repository_runtime.bootstrap()
 
     # make sure all required credentials are valid
-    invalid_afs = [afsToken for afsToken in credential_store.get_all_matching_type(AfsToken()) if not afsToken.is_valid()]
+    invalid_afs = [
+        afsToken for afsToken in credential_store.get_all_matching_type(
+            AfsToken()) if not afsToken.is_valid()]
 
     if invalid_afs:
         log.error('No valid AFS token was found. Please re-authorise before reactivating this session.')
@@ -197,7 +202,7 @@ def enableInternalServices():
 def checkInternalServices(errMsg='Internal services disabled. Job registry is read-only.'):
     """
     Check the state of internal services and return a ReadOnlyObjectError exception
-    in case the state is disabled.    
+    in case the state is disabled.
     """
 
     global servicesEnabled
@@ -207,7 +212,7 @@ def checkInternalServices(errMsg='Internal services disabled. Job registry is re
         raise ReadOnlyObjectError(errMsg)
 
 #
-#$Log: not supported by cvs2svn $
+# $Log: not supported by cvs2svn $
 # Revision 1.1.4.1  2009/07/08 11:18:21  ebke
 # Initial commit of all - mostly small - modifications due to the new GangaRepository.
 # No interface visible to the user is changed
@@ -237,7 +242,7 @@ def checkInternalServices(errMsg='Internal services disabled. Job registry is re
 # Ganga/Core/InternalServices/Coordinator.py
 #
 # Revision 1.6  2007/12/04 12:59:03  amuraru
-#*** empty log message ***
+# *** empty log message ***
 #
 # Revision 1.5  2007/11/26 14:04:30  amuraru
 # allow indentation using \t tab char in DiskSpaceChecker
@@ -252,6 +257,6 @@ def checkInternalServices(errMsg='Internal services disabled. Job registry is re
 # credential and clean shutdown updates from Adrian (from Ganga-4-4-0-dev-branch)
 #
 # Revision 1.1.2.1  2007/07/27 13:04:00  amuraru
-#*** empty log message ***
+# *** empty log message ***
 #
 #

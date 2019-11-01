@@ -10,11 +10,13 @@ from .utilFunctions import getJobsPath, getXMLDir, getXMLFile, getIndexFile
 
 testStr = "testFooString"
 
+
 class TestXMLGenAndLoad(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts = [('Registry', 'AutoFlusherWaitTime', 5), ('TestingFramework', 'AutoCleanup', 'False')]
+        extra_opts = [('Registry', 'AutoFlusherWaitTime', 5),
+                      ('TestingFramework', 'AutoCleanup', 'False')]
         super(TestXMLGenAndLoad, self).setUp(extra_opts=extra_opts)
 
     def test_a_JobConstruction(self):
@@ -23,7 +25,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
 
         from GangaCore.GPI import Job, jobs
-        j=Job()
+        j = Job()
         assert len(jobs) == 1
         j.name = 'modified_name'
 
@@ -35,7 +37,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         print(("len: %s" % str(len(jobs))))
 
-        j=jobs(0)
+        j = jobs(0)
 
         assert path.isdir(getJobsPath())
 
@@ -56,7 +58,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         # Check they get updated
         from GangaCore.GPI import jobs
 
-        j=jobs(0)
+        j = jobs(0)
 
         XMLFileName = getXMLFile(j)
 
@@ -66,21 +68,20 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         from GangaCore.Utility.Config import getConfig
         flush_timeout = getConfig('Registry')['AutoFlusherWaitTime']
-        total_time=0.
+        total_time = 0.
         new_update = 0
         lst_update = last_update.st_mtime
-        while total_time < 2.*flush_timeout and new_update <= lst_update:
-            total_time+=1.
+        while total_time < 2. * flush_timeout and new_update <= lst_update:
+            total_time += 1.
             time.sleep(1.)
             try:
                 new_update = stat(XMLFileName).st_mtime
-            except:
+            except BaseException:
                 new_update = 0.
 
         newest_update = stat(XMLFileName)
 
         assert newest_update.st_mtime > last_update.st_mtime
-
 
     def test_d_XMLUpdated(self):
         # check they get updated elsewhere
@@ -88,11 +89,11 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         disableMonitoring()
 
-        j=jobs(0)
+        j = jobs(0)
 
         XMLFileName = getXMLFile(j)
 
-        last_update = stat(XMLFileName) 
+        last_update = stat(XMLFileName)
 
         j.submit()
 
@@ -112,9 +113,9 @@ class TestXMLGenAndLoad(GangaUnitTest):
         assert newest_update.st_mtime > last_update.st_mtime
 
         # Apparently this requirement is a bad idea. This isn't implemented in 6.1.17 but should probably be in 6.1.18
-        #if can_assert:
+        # if can_assert:
         #    assert final_update.st_mtime > newest_update.st_mtime
-        #else:
+        # else:
         #    assert final_update.st_mtime == newest_update.st_mtime
 
     def test_e_testXMLContent(self):
@@ -137,13 +138,13 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
             ignore_subs = ['time', 'subjobs', 'info', 'application', 'backend', 'id']
 
-            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file:
+            with NamedTemporaryFile(mode='w', delete=False) as new_temp_file:
                 temp_name = new_temp_file.name
 
                 to_file(stripProxy(j), new_temp_file, ignore_subs)
                 new_temp_file.flush()
 
-            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file2:
+            with NamedTemporaryFile(mode='w', delete=False) as new_temp_file2:
                 temp_name2 = new_temp_file2.name
 
                 j2 = Job()
@@ -190,5 +191,3 @@ class TestXMLGenAndLoad(GangaUnitTest):
             this_index_cache = (index_cat, index_cls, index_cache)
 
             assert this_index_cache == obj
-
-

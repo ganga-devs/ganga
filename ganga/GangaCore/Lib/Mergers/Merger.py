@@ -31,7 +31,8 @@ def getMergerObject(file_ext):
         if file_ext == 'std_merge':
             result = allPlugins.find('postprocessor', config[file_ext])()
         else:
-            # load the dictionary of file assocaitions # Why was there _ever_ an eval statement here? rcurrie
+            # load the dictionary of file assocaitions # Why was there _ever_ an eval
+            # statement here? rcurrie
             file_types = config['associate']
             associate_merger = file_types[file_ext]
             result = allPlugins.find('postprocessor', associate_merger)()
@@ -64,7 +65,7 @@ class TextMerger(IMerger):
     tm.ignorefailed = True #False by default
 
     # will produce the specified files
-    j = Job() 
+    j = Job()
     j.outputsandbox = ['job.log','results.txt']
     j.splitter = SomeSplitter()
     j.merger = tm
@@ -157,7 +158,7 @@ class RootMerger(IMerger):
     rm.args = '-f2' #pass arguments to hadd
 
     # will produce the specified files
-    j = Job() 
+    j = Job()
     j.outputsandbox = ['hist.root','trees.root']
     j.splitter = SomeSplitter()
     j.merger = rm
@@ -216,7 +217,7 @@ class RootMerger(IMerger):
             merge_cmd += ' %s ' % self.args
 
         # don't add a -f unless needed
-        if not default_arguments in merge_cmd:
+        if default_arguments not in merge_cmd:
             merge_cmd += ' %s ' % default_arguments
 
         # add the list of files, output file first
@@ -255,7 +256,7 @@ class CustomMerger(IMerger):
     This module will be imported and used by the CustomMerger. The file_list is a
     list of paths to the files to be merged. output_file is a string path for
     the output of the merge. This file must exist by the end of the merge or the
-    merge will fail. If the merge cannot proceed, then the function should return a 
+    merge will fail. If the merge cannot proceed, then the function should return a
     non-zero integer.
 
     Clearly this tool is provided for advanced ganga usage only, and should be used with
@@ -278,7 +279,8 @@ class CustomMerger(IMerger):
         else:
             module_name = self.module
         if not os.path.exists(module_name):
-            raise PostProcessException("The module '&s' does not exist and so merging will fail.", module_name)
+            raise PostProcessException(
+                "The module '&s' does not exist and so merging will fail.", module_name)
         result = False
         try:
             ns = {'file_list': copy.copy(file_list),
@@ -287,7 +289,9 @@ class CustomMerger(IMerger):
             exec('_result = mergefiles(file_list, output_file)', ns)
             result = ns.get('_result', result)
         except Exception as e:
-            raise PostProcessException('There was a problem executing the custom merge: %s. Merge will fail.' % e)
+            raise PostProcessException(
+                'There was a problem executing the custom merge: %s. Merge will fail.' %
+                e)
         if result is not True:
             raise PostProcessException('The custom merge did not return True, merge will fail.')
         return self.success
@@ -307,13 +311,16 @@ def findFilesToMerge(jobs):
         elif j.outputfiles != []:
             for file_name in j.outputfiles:
                 if isType(file_name, LocalFile):
-                    file_map[file_name.namePattern] = file_map.setdefault(file_name.namePattern, 0) + 1
+                    file_map[file_name.namePattern] = file_map.setdefault(
+                        file_name.namePattern, 0) + 1
 
     for file_name, count in file_map.items():
         if count == jobs_len:
             result.append(file_name)
         else:
-            logger.warning('The file %s was not found in all jobs to be merged and so will be ignored.', file_name)
+            logger.warning(
+                'The file %s was not found in all jobs to be merged and so will be ignored.',
+                file_name)
     logger.info('No files specified, so using %s.', str(result))
 
     return result
@@ -348,7 +355,7 @@ class SmartMerger(IMerger):
     j = Job()
     j.splitter = SomeSplitter()
     j.merger = sm
-    j.submit() 
+    j.submit()
 
     """
 
@@ -382,12 +389,14 @@ class SmartMerger(IMerger):
                     if f in ['stdout', 'stderr']:
                         file_ext = 'std_merge'
                     elif ignorefailed:
-                        logger.warning('File extension not found for file %s and so the file will be ignored. '
-                                       'Check the name of the file.', f)
+                        logger.warning(
+                            'File extension not found for file %s and so the file will be ignored. '
+                            'Check the name of the file.', f)
                         continue
                     else:
-                        logger.warning('File extension not found for file %s and so the merge will fail. '
-                                       'Check the name of the file or set the ignorefailed flag.', f)
+                        logger.warning(
+                            'File extension not found for file %s and so the merge will fail. '
+                            'Check the name of the file or set the ignorefailed flag.', f)
                         return self.failure
 
                 file_ext = file_ext.lower()  # treat as lowercase
@@ -407,10 +416,11 @@ class SmartMerger(IMerger):
                              'Check the [Mergers] section of your .gangarc file.', ext)
                 return self.failure
             else:
-                logger.debug('Extension %s matched and using appropriate object: %s' % (str(ext), str(merge_object)))
+                logger.debug(
+                    'Extension %s matched and using appropriate object: %s' %
+                    (str(ext), str(merge_object)))
             merge_object.files = type_map[ext]
             merge_result = merge_object.merge(jobs, outputdir, ignorefailed, overwrite)
             merge_results.append(merge_result)
 
-        return not False in merge_results
-
+        return False not in merge_results

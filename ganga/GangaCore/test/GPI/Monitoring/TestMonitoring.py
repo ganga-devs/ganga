@@ -9,15 +9,20 @@ master_timeout = 300.
 
 def dummySleep(someJob):
     my_timeout = 0.
-    while someJob.status not in ['completed', 'failed', 'killed', 'removed'] and my_timeout < master_timeout:
+    while someJob.status not in [
+        'completed',
+        'failed',
+        'killed',
+            'removed'] and my_timeout < master_timeout:
         time.sleep(1.)
         my_timeout += 1.
+
 
 class TestMonitoring(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts=[('PollThread', 'autostart', 'False'), ('PollThread', 'base_poll_rate', 1)]
+        extra_opts = [('PollThread', 'autostart', 'False'), ('PollThread', 'base_poll_rate', 1)]
         super(TestMonitoring, self).setUp(extra_opts=extra_opts)
 
     def tearDown(self):
@@ -27,7 +32,7 @@ class TestMonitoring(GangaUnitTest):
     def test_a_JobConstruction(self):
         from GangaCore.GPI import Job, jobs, disableMonitoring
 
-        j=Job()
+        j = Job()
 
         self.assertEqual(len(jobs), 1)
 
@@ -40,7 +45,7 @@ class TestMonitoring(GangaUnitTest):
 
         enableMonitoring()
 
-        j=Job()
+        j = Job()
         j.submit()
 
         dummySleep(j)
@@ -53,12 +58,11 @@ class TestMonitoring(GangaUnitTest):
 
         disableMonitoring()
 
-
     def test_d_anotherNewJob(self):
 
         from GangaCore.GPI import Job, jobs
 
-        j=Job()
+        j = Job()
 
         j.submit()
         self.assertNotEqual(j.status, 'new')
@@ -72,20 +76,19 @@ class TestMonitoring(GangaUnitTest):
         disableMonitoring()
         enableMonitoring()
 
-        j=Job()
+        j = Job()
         j.submit()
 
         dummySleep(j)
 
         self.assertEqual(j.status, 'completed')
 
-
     def test_f_reallyDisabled(self):
 
         from GangaCore.GPI import disableMonitoring, enableMonitoring, Job
 
         disableMonitoring()
-        j=Job()
+        j = Job()
         j.submit()
 
         self.assertEqual(j.status, 'submitted')
@@ -95,4 +98,3 @@ class TestMonitoring(GangaUnitTest):
         dummySleep(j)
 
         self.assertEqual(j.status, 'completed')
-

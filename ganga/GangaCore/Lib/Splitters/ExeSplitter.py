@@ -16,9 +16,11 @@ class ExeSplitter(ISplitter):
     This splitter is OBSOLETED use GenericSplitter or ArgSplitter instead.
     """
     _name = "ExeSplitter"
-    _schema = Schema(Version(1, 0), {
-        'apps': ComponentItem('applications', defvalue=[], sequence=1, doc='a list of Executable app objects')
-    })
+    _schema = Schema(
+        Version(
+            1, 0), {
+            'apps': ComponentItem(
+                'applications', defvalue=[], sequence=1, doc='a list of Executable app objects')})
 
     def split(self, job):
         subjobs = []

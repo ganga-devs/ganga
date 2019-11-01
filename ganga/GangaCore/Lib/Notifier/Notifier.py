@@ -3,14 +3,14 @@
 #
 ##########################################################################
 
+import getpass
+import email
+import smtplib
 from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.logging import getLogger
 import GangaCore.Utility.Config
 config = GangaCore.Utility.Config.getConfig('Configuration')
-import smtplib
-import email
-import getpass
 logger = getLogger()
 # set the checkers config up
 
@@ -19,7 +19,7 @@ class Notifier(IPostProcessor):
 
     """
     Object which emails a user about jobs status are they have finished. The default behaviour is to email when a job has failed or when a master job has completed.
-    Notes: 
+    Notes:
     * Ganga must be running to send the email, so this object is only really useful if you have a ganga session running the background (e.g. screen session).
     * Will not send emails about failed subjobs if autoresubmit is on.
     """
@@ -38,7 +38,10 @@ class Notifier(IPostProcessor):
         * job has failed but do not have auto resubmit
         * job has not failed but verbose is set to true
         """
-        if len(job.subjobs) or (newstatus == 'failed' and job.do_auto_resubmit is False) or (newstatus != 'failed' and self.verbose is True):
+        if len(
+            job.subjobs) or (
+            newstatus == 'failed' and job.do_auto_resubmit is False) or (
+                newstatus != 'failed' and self.verbose is True):
             return self.email(job, newstatus)
         return True
 
@@ -49,16 +52,17 @@ class Notifier(IPostProcessor):
         sender = 'project-ganga-developers@cern.ch'
         receivers = self.address
 
-        subject = 'Ganga Notification: Job(%s): %s has %s. (user: %s)' % (job.fqid, job.name, newstatus, getpass.getuser())
+        subject = 'Ganga Notification: Job(%s): %s has %s. (user: %s)' % (
+            job.fqid, job.name, newstatus, getpass.getuser())
         msg_string = """
 Dear User (%s),\n
 Job(%s), name : %s ,  has gone into %s state.\n
 Regards,
 Ganga\n
-PS: This is an automated notification from Ganga, 
-if you would like these messages to stop please 
+PS: This is an automated notification from Ganga,
+if you would like these messages to stop please
 remove the notifier object from future jobs.
-        """ % (getpass.getuser(), job.fqid,job.name, newstatus)
+        """ % (getpass.getuser(), job.fqid, job.name, newstatus)
         msg = email.message_from_string(msg_string)
         msg['Subject'] = subject
         msg['From'] = sender

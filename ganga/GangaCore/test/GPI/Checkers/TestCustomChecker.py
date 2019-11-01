@@ -20,7 +20,8 @@ class TestCustomChecker(GangaUnitTest):
         # write string to tmpfile
         self.j = Job()
         self.j.submit()
-        self.assertTrue(sleep_until_completed(self.j), 'Timeout on job submission: job is still not finished')
+        self.assertTrue(sleep_until_completed(self.j),
+                        'Timeout on job submission: job is still not finished')
         self.assertEqual(self.j.status, 'completed')
 
         file_obj, file_name = tempfile.mkstemp()

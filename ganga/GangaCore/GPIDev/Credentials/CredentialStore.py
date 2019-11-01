@@ -88,7 +88,9 @@ class CredentialStore(GangaObject, collections.Mapping):
             assert isinstance(create, bool), "Error checking 'create'"
             assert isinstance(check_file, bool), "Error checking 'check_file'"
         except AssertionError as err:
-            raise CredentialsError("Requirements to make a Credential are wrong. Please check your arguments. %s" % err)
+            raise CredentialsError(
+                "Requirements to make a Credential are wrong. Please check your arguments. %s" %
+                err)
 
         cred = query.info_class(query, check_file=check_file, create=create)
         self.credentials.add(cred)
@@ -111,9 +113,10 @@ class CredentialStore(GangaObject, collections.Mapping):
         self.clean()
         headers = ['Type', 'Location', 'Valid', 'Time left']
         cred_info = [
-                        [str(f) for f in (type(cred).__name__, cred.location, cred.is_valid(), cred.time_left())]  # Format each field as a string
-                        for cred in self.credentials  # for each credential in the store
-                    ]
+            [str(f) for f in (type(cred).__name__, cred.location, cred.is_valid(),
+                              cred.time_left())]  # Format each field as a string
+            for cred in self.credentials  # for each credential in the store
+        ]
         return self._create_table(headers, cred_info)
 
     @staticmethod
@@ -131,12 +134,18 @@ class CredentialStore(GangaObject, collections.Mapping):
         column_widths = [
             max(len(field) for field in column)
             for column in zip(*rows)
-            ]
+        ]
 
         def pad_row_strings(row, widths, filler=' '):
             # type: (List[str], List[int], str) -> List[str]
             """Add padding to each of ``row`` to equal the corresponding ``widths`` entry, padded with ``filler``"""
-            return ['{field:{filler}<{width}}'.format(field=field[0], filler=filler, width=field[1]) for field in zip(row, widths)]
+            return [
+                '{field:{filler}<{width}}'.format(
+                    field=field[0],
+                    filler=filler,
+                    width=field[1]) for field in zip(
+                    row,
+                    widths)]
         padded_headers = pad_row_strings(headers, column_widths)
         padded_dividers = pad_row_strings([''] * len(column_widths), column_widths, filler='-')
         padded_data = [pad_row_strings(row, column_widths) for row in data]
@@ -147,7 +156,8 @@ class CredentialStore(GangaObject, collections.Mapping):
             return ' {0} '.format(spacer).join(strings)
         header = strings_to_row(padded_headers)
         divider = strings_to_row(padded_dividers, spacer='+')
-        body = '\n'.join(strings_to_row(padded_field_strings) for padded_field_strings in padded_data)
+        body = '\n'.join(strings_to_row(padded_field_strings)
+                         for padded_field_strings in padded_data)
 
         return '\n'.join([header, divider, body])
 
@@ -222,7 +232,9 @@ class CredentialStore(GangaObject, collections.Mapping):
             if default is not None:
                 assert isinstance(default, ICredentialInfo), "Error checking 'default'"
         except AssertionError as err:
-            raise CredentialsError("Requirements for get-ing a Credential are wrong. Please check your arguments. %s" % err)
+            raise CredentialsError(
+                "Requirements for get-ing a Credential are wrong. Please check your arguments. %s" %
+                err)
 
         try:
             return self[query]
@@ -244,7 +256,9 @@ class CredentialStore(GangaObject, collections.Mapping):
         try:
             assert isinstance(query, ICredentialRequirement), "Error checking 'query'"
         except AssertionError as err:
-            raise CredentialsError("Requirements for matching all Credential are wrong. Please check your arguments. %s" % err)
+            raise CredentialsError(
+                "Requirements for matching all Credential are wrong. Please check your arguments. %s" %
+                err)
 
         return [cred for cred in self.credentials if isinstance(cred, query.info_class)]
 
@@ -263,9 +277,12 @@ class CredentialStore(GangaObject, collections.Mapping):
         try:
             assert isinstance(query, ICredentialRequirement), "Error checking 'query'"
         except AssertionError as err:
-            raise CredentialsError("Requirements for matching any Credential are wrong. Please check your arguments. %s" % err)
+            raise CredentialsError(
+                "Requirements for matching any Credential are wrong. Please check your arguments. %s" %
+                err)
 
-        return [cred for cred in self.get_all_matching_type(query) if cred.check_requirements(query)]
+        return [cred for cred in self.get_all_matching_type(
+            query) if cred.check_requirements(query)]
 
     def match(self, query):
         # type: (ICredentialRequirement) -> ICredentialInfo
@@ -282,7 +299,9 @@ class CredentialStore(GangaObject, collections.Mapping):
         try:
             assert isinstance(query, ICredentialRequirement), "Error checking 'query'"
         except AssertionError as err:
-            raise CredentialsError("Requirements for matching a Credential are wrong. Please check your arguments. %s" % err)
+            raise CredentialsError(
+                "Requirements for matching a Credential are wrong. Please check your arguments. %s" %
+                err)
 
         matches = self.matches(query)
         if len(matches) == 1:
@@ -291,7 +310,9 @@ class CredentialStore(GangaObject, collections.Mapping):
             logger.debug('More than one match...')
             # If we have a specific object and a general one. Then we ask for a general one, what should we do.
             # Does it matter since they've only asked for a general proxy? What are the use cases?
-            return matches[0]  # TODO For now just return the first one... Though perhaps we should merge them or something?
+            # TODO For now just return the first one... Though perhaps we should merge
+            # them or something?
+            return matches[0]
         return None
 
     @export
@@ -332,6 +353,7 @@ class CredentialStore(GangaObject, collections.Mapping):
             self.credentials = set(cred for cred in self.credentials if cred.exists())
             CredentialStore._last_clean = this_time
 
+
 # This is a global 'singleton'
 credential_store = CredentialStore()
 
@@ -361,4 +383,3 @@ def shutdown():
     global needed_credentials
     credential_store.clear()
     needed_credentials = set()
-

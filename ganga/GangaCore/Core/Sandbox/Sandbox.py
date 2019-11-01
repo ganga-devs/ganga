@@ -1,12 +1,11 @@
 
+from GangaCore.Core.exceptions import GangaException, GangaIOError
+from .WNSandbox import OUTPUT_TARBALL_NAME, PYTHON_DIR
 import os
 import sys
 import mimetypes
 import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger(modulename=True)
-
-from .WNSandbox import OUTPUT_TARBALL_NAME, PYTHON_DIR
-from GangaCore.Core.exceptions import GangaException, GangaIOError
 
 
 class SandboxError(GangaException):

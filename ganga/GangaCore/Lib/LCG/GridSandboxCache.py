@@ -27,9 +27,9 @@ logger = GangaCore.Utility.logging.getLogger()
 class GridFileIndex(GangaObject):
 
     '''
-    Data object for indexing a file on the grid. 
+    Data object for indexing a file on the grid.
 
-    @author: Hurng-Chun Lee 
+    @author: Hurng-Chun Lee
     @contact: hurngchunlee@gmail.com
     '''
 
@@ -55,18 +55,37 @@ class GridFileIndex(GangaObject):
 class GridSandboxCache(GangaObject):
 
     '''
-    Helper class for upladong/downloading/deleting sandbox files on a grid cache. 
+    Helper class for upladong/downloading/deleting sandbox files on a grid cache.
 
-    @author: Hurng-Chun Lee 
+    @author: Hurng-Chun Lee
     @contact: hurngchunlee@gmail.com
     '''
 
-    _schema = Schema(Version(1, 1), {
-        'protocol': SimpleItem(defvalue='', copyable=1, doc='file transfer protocol'),
-        'max_try': SimpleItem(defvalue=1, doc='max. number of tries in case of failures'),
-        'timeout': SimpleItem(defvalue=180, copyable=0, hidden=1, doc='transfer timeout in seconds'),
-        'uploaded_files': ComponentItem('GridFileIndex', defvalue=[], sequence=1, protected=1, copyable=0, hidden=1, doc='a repository record for the uploaded files')
-    })
+    _schema = Schema(
+        Version(
+            1,
+            1),
+        {
+            'protocol': SimpleItem(
+                defvalue='',
+                copyable=1,
+                doc='file transfer protocol'),
+            'max_try': SimpleItem(
+                defvalue=1,
+                doc='max. number of tries in case of failures'),
+            'timeout': SimpleItem(
+                defvalue=180,
+                copyable=0,
+                hidden=1,
+                doc='transfer timeout in seconds'),
+            'uploaded_files': ComponentItem(
+                'GridFileIndex',
+                defvalue=[],
+                sequence=1,
+                protected=1,
+                copyable=0,
+                hidden=1,
+                doc='a repository record for the uploaded files')})
 
     _category = 'GridSandboxCache'
     _name = 'GridSandboxCache'
@@ -116,7 +135,7 @@ class GridSandboxCache(GangaObject):
 
     def download(self, cred_req, files=[], dest_dir=None, opts=''):
         """
-        Downloads multiple files from remote grid storages to 
+        Downloads multiple files from remote grid storages to
         a local directory.
 
         If the file is successfully downloaded, the local file path would be:
@@ -133,7 +152,8 @@ class GridSandboxCache(GangaObject):
         """
         status = False
         myFiles = self.__get_file_index_objects__(files)
-        downloadedFiles = self.impl_download(cred_req=cred_req, files=myFiles, dest_dir=dest_dir, opts=opts)
+        downloadedFiles = self.impl_download(
+            cred_req=cred_req, files=myFiles, dest_dir=dest_dir, opts=opts)
 
         if len(downloadedFiles) == len(myFiles):
             status = True
@@ -181,7 +201,7 @@ class GridSandboxCache(GangaObject):
 
     def get_cached_files(self, opts=''):
         """
-        Gets the indexes of the uploaded files on the grid. 
+        Gets the indexes of the uploaded files on the grid.
 
         @return the dictionary indexing the uploaded files on the grid.
                 The key of the dictionary should be the main index (e.g. GUID) of the grid files.
@@ -277,10 +297,10 @@ class GridSandboxCache(GangaObject):
 
     def impl_download(self, cred_req, files=[], dest_dir=None, opts=''):
         """
-        Downloads multiple files from remote grid storages to 
+        Downloads multiple files from remote grid storages to
         a local directory.
 
-        @param files is a list of files represented by GridFileIndex objects 
+        @param files is a list of files represented by GridFileIndex objects
         @param dest_dir is a local destination directory to store the downloaded files.
 
         @return a list of successfully downloaded files represented by GridFileIndex objects
@@ -289,9 +309,9 @@ class GridSandboxCache(GangaObject):
 
     def impl_delete(self, cred_req, files=[], opts=''):
         """
-        Deletes multiple files from remote grid storages. 
+        Deletes multiple files from remote grid storages.
 
-        @param files is a list of files represented by GridFileIndex objects 
+        @param files is a list of files represented by GridFileIndex objects
         @return a list of successfully deleted files represented by GridFileIndex objects
         """
         raise NotImplementedError
@@ -301,8 +321,8 @@ class GridSandboxCache(GangaObject):
         basic implementation for bookkeeping the uploaded files.
         It simply keeps the GridFileIndex objects in the job repository.
 
-        @param files is a list of files represented by GridFileIndex objects 
-        @return True if files are successfully logged in the local index file 
+        @param files is a list of files represented by GridFileIndex objects
+        @return True if files are successfully logged in the local index file
         """
 
         self.uploaded_files = files
@@ -323,7 +343,7 @@ class GridSandboxCache(GangaObject):
     # private methods
     def __get_file_index_objects__(self, files=[]):
         '''Gets file index object according to the given file list
-             - try to get the GridFileIndex object from the local index file.  
+             - try to get the GridFileIndex object from the local index file.
 
         @param files is a list of file indexes
         @return a list of files represented by GridFileIndex objects

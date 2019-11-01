@@ -8,7 +8,8 @@ class TestCoreTasks(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Tasks object isn't destroyed between tests"""
-        extra_opts = [('TestingFramework', 'AutoCleanup', 'False'), ('Tasks', 'TaskLoopFrequency', 1.)]
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False'),
+                      ('Tasks', 'TaskLoopFrequency', 1.)]
         super(TestCoreTasks, self).setUp(extra_opts=extra_opts)
         self._numTasks = 50
 
@@ -120,4 +121,3 @@ class TestCoreTasks(GangaUnitTest):
                 assert t.transforms[0].unit_splitter.attribute == "application.args"
                 assert t.transforms[0].unit_splitter.values == ['arg 1', 'arg 2', 'arg 3']
                 assert t.float == 20
-

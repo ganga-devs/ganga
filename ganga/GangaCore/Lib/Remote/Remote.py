@@ -4,6 +4,9 @@ __author__ = "Mark Slater <mws@hep.ph.bham.ac.uk>"
 __date__ = "10 June 2008"
 __version__ = "1.0"
 
+from GangaCore.Lib.Root import randomString
+import os
+import inspect
 from GangaCore.Core import Sandbox
 from GangaCore.GPIDev.Adapters.IBackend import IBackend
 from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
@@ -11,10 +14,6 @@ from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 
 import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger()
-
-import inspect
-import os
-from GangaCore.Lib.Root import randomString
 
 
 def shutdown_transport(tr):
@@ -79,7 +78,7 @@ class Remote(IBackend):
     j.backend.host = "bluebear.bham.ac.uk"
     j.backend.username = "slatermw"
     j.backend.ganga_cmd = "/bb/projects/Ganga/runGanga"
-    j.backend.ganga_dir = "/bb/phy/slatermw/gangadir/remote_jobs"   
+    j.backend.ganga_dir = "/bb/phy/slatermw/gangadir/remote_jobs"
     j.backend.environment = {'ATLAS_VERSION' : '13.0.40'}     # Additional environment variables
     j.backend.remote_backend = LCG()
     j.backend.remote_backend.CE = 'epgce2.ph.bham.ac.uk:2119/jobmanager-lcgpbs-short'
@@ -117,7 +116,7 @@ class Remote(IBackend):
 
     _category = "backends"
     _name = "Remote"
-    #_hidden = False # KUBA: temporarily disabled from the public
+    # _hidden = False # KUBA: temporarily disabled from the public
     _port = 22
     _transport = None
     _sftp = None
@@ -228,7 +227,8 @@ print("***_FINISHED_***")
                 # register for proper shutdown
                 atexit.register(shutdown_transport, self._transport)
 
-                if self.ssh_key != "" and os.path.exists(os.path.expanduser(os.path.expandvars(self.ssh_key))):
+                if self.ssh_key != "" and os.path.exists(
+                        os.path.expanduser(os.path.expandvars(self.ssh_key))):
                     privatekeyfile = os.path.expanduser(
                         os.path.expandvars(self.ssh_key))
 
@@ -255,7 +255,10 @@ print("***_FINISHED_***")
                     logger.debug("SSH key: %s" % self.ssh_key)
                     if os.path.exists(os.path.expanduser(os.path.expandvars(self.ssh_key))):
                         logger.debug(
-                            "PATH: %s Exists" % os.path.expanduser(os.path.expandvars(self.ssh_key)))
+                            "PATH: %s Exists" %
+                            os.path.expanduser(
+                                os.path.expandvars(
+                                    self.ssh_key)))
                     else:
                         logger.debug("PATH: %s Does NOT Exist" % os.path.expanduser(
                             os.path.expandvars(self.ssh_key)))
@@ -288,7 +291,7 @@ print("***_FINISHED_***")
                 num_try = 1000
 
             except Exception as err:
-                logger.debug("Err: %s" %str(err))
+                logger.debug("Err: %s" % str(err))
                 logger.warning("Error when comunicating with remote host. Retrying...")
                 self._transport = None
                 self._sftp = None
@@ -708,7 +711,7 @@ try:
    tar = tarfile.open(j.inputdir+"/__master_input_sbx__")
    filelist = tar.getnames()
    print(filelist)
-   
+
    for f in filelist:
       fullsbxlist.append( f )
       inputsbx.append( j.inputdir + "/" + f )
@@ -734,7 +737,7 @@ if appexec in fullsbxlist:
 else:
    j.application = Executable ( exe = appexec, args = appargs, env = environment )
 
-   
+
 j.inputsandbox = inputsbx
 
 getPackedInputSandbox(j.inputdir+"/__subjob_input_sbx__", j.inputdir + "/.")
@@ -917,11 +920,13 @@ print("***_FINISHED_***")
                                     data = j.backend._sftp.open(
                                         outputdir + '/' + fname, 'r').read()
                                     open(
-                                        j.outputdir + '/' + os.path.basename(fname), 'w').write(data)
+                                        j.outputdir + '/' + os.path.basename(fname),
+                                        'w').write(data)
 
                     if not found:
                         logger.warning(
-                            "Couldn't match remote id %d with monitored job. Serious problems in Remote monitoring." % id)
+                            "Couldn't match remote id %d with monitored job. Serious problems in Remote monitoring." %
+                            id)
 
                     start_pos = stdout.find("***_START_PICKLE_***", end_pos)
                     end_pos = stdout.find(
@@ -931,4 +936,3 @@ print("***_FINISHED_***")
             j.backend._sftp.remove(j.backend.ganga_dir + script_name)
 
         return None
-

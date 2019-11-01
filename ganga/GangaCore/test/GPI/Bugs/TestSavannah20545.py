@@ -18,7 +18,7 @@ class TestSavannah10016(GangaUnitTest):
         assert f.name == path
 
         # 3. [PROTOCOL:][SETYPE:]/path/to/file
-        path='PFN:castor:/castor/cern.ch/grid/lhcb/production/DC06/v1-lumi2/00001394/DST'
+        path = 'PFN:castor:/castor/cern.ch/grid/lhcb/production/DC06/v1-lumi2/00001394/DST'
         f = File(path)
         assert f.name == path
 
@@ -28,7 +28,7 @@ class TestSavannah10016(GangaUnitTest):
         assert f.name == path
 
         # NOTE: Remove the tests because File now doesn't expand if the file isn't present
-        ## The following should be expanded
+        # The following should be expanded
         #path = 'file.txt'
         #f = File(path)
         #assert not f.name == path
@@ -41,7 +41,7 @@ class TestSavannah10016(GangaUnitTest):
         #f = File(path)
         #assert not f.name == path
 
-        #URL should start with either an underscore or character
+        # URL should start with either an underscore or character
         #path = '123:/foobar'
         #f = File(path)
         #assert not f.name == path

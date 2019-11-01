@@ -28,7 +28,8 @@ def add_config(config_values):
 
     def add_config_wrapper(obj):
         if inspect.isfunction(obj):
-            obj._config_values = getattr(obj, '_config_values', {})  # Set the value to a dict if it doesn't exist
+            # Set the value to a dict if it doesn't exist
+            obj._config_values = getattr(obj, '_config_values', {})
 
             # Since function decorators are called before class
             # decorators, existing config items take precedence

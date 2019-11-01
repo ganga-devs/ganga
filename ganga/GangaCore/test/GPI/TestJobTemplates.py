@@ -11,4 +11,3 @@ def test_jobTemplate(gpi):
 
     assert jt.name == name_str
     assert j.name == jt.name
-

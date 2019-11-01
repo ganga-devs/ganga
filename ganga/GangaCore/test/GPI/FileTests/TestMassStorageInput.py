@@ -11,6 +11,7 @@ from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFil
 from GangaCore.GPIDev.Base.Objects import _getName
 from GangaCore.GPIDev.Base.Proxy import addProxy
 
+
 class TestMassStorageClientInput(GangaUnitTest):
     """Testing MassStorage on input to a job"""
 
@@ -24,22 +25,35 @@ class TestMassStorageClientInput(GangaUnitTest):
     # Where on local storage we want to have our 'MassStorage solution'
     outputFilePath = '/tmp/Test' + _getName(fileClass) + 'Input'
 
-    # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
-    MassStorageTestConfig = {'defaultProtocol': 'file://',
-                             'fileExtensions': [''],
-                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir -p'},
-                             'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
-                                                    'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
+    # This sets up a MassStorageConfiguration which works by placing a file on
+    # local storage somewhere we can test using standard tools
+    MassStorageTestConfig = {
+        'defaultProtocol': 'file://',
+        'fileExtensions': [''],
+        'uploadOptions': {
+            'path': outputFilePath,
+            'cp_cmd': 'cp',
+            'ls_cmd': 'ls',
+            'mkdir_cmd': 'mkdir -p'},
+        'backendPostprocess': {
+            'LSF': 'client',
+            'LCG': 'client',
+            'ARC': 'client',
+            'Dirac': 'client',
+            'PBS': 'client',
+            'Interactive': 'client',
+            'Local': 'client',
+            'CREAM': 'client'}}
 
     def setUp(self):
         """
         Configure the MassStorageFile for the test
         """
-        extra_opts=[('PollThread', 'autostart', 'False'),
-                    ('Local', 'remove_workdir', 'False'),
-                    ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', _getName(self.fileClass), self.MassStorageTestConfig),
-                    ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        extra_opts = [('PollThread', 'autostart', 'False'),
+                      ('Local', 'remove_workdir', 'False'),
+                      ('TestingFramework', 'AutoCleanup', 'False'),
+                      ('Output', _getName(self.fileClass), self.MassStorageTestConfig),
+                      ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageClientInput, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
@@ -59,7 +73,7 @@ class TestMassStorageClientInput(GangaUnitTest):
 
     @classmethod
     def tearDownTest(cls):
-        """ Cleanup the current temp objects """ 
+        """ Cleanup the current temp objects """
         for file_ in cls._managed_files:
             if os.path.isfile(file_):
                 os.unlink(file_)
@@ -87,8 +101,8 @@ class TestMassStorageClientInput(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [msf_1, msf_2]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(self.sj_len)])
-        j.outputfiles = [LocalFile(namePattern='*'+_ext)]
+        j.splitter = ArgSplitter(args=[[_] for _ in range(self.sj_len)])
+        j.outputfiles = [LocalFile(namePattern='*' + _ext)]
         j.submit()
 
     def test_b_testClientInputComplete(self):
@@ -106,7 +120,7 @@ class TestMassStorageClientInput(GangaUnitTest):
 
         self.cleanUp()
 
+
 class TestMassStorageWNInput(TestMassStorageClientInput):
     """Testing SharedFile on input to a job"""
     fileClass = addProxy(SharedFile)
-

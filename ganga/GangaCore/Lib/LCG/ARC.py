@@ -30,6 +30,7 @@ from GangaCore.GPIDev.Base.Proxy import getName
 
 config = getConfig('LCG')
 
+
 class ARC(IBackend):
 
     '''ARC backend - direct job submission to an ARC CE'''
@@ -44,7 +45,7 @@ class ARC(IBackend):
         'exitcode_arc': SimpleItem(defvalue='', protected=1, copyable=0, doc='Middleware exit code'),
         'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='The ARC CE where the job actually runs.'),
         'queue': SimpleItem(defvalue='', typelist=[str], doc='The queue to send the job to.'),
-        'xRSLextras': SimpleItem(defvalue = None, typelist = [dict, None], doc='Extra things to put into the xRSL for submission.'),
+        'xRSLextras': SimpleItem(defvalue=None, typelist=[dict, None], doc='Extra things to put into the xRSL for submission.'),
         'reason': SimpleItem(defvalue='', protected=1, copyable=0, doc='Reason of causing the job status'),
         'workernode': SimpleItem(defvalue='', protected=1, copyable=0, doc='The worker node on which the job actually runs.'),
         'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on ARC CE'),
@@ -69,7 +70,7 @@ class ARC(IBackend):
             self.requirements = reqClass()
 
             logger.debug('load %s as LCGRequirements' % reqName)
-        except:
+        except BaseException:
             logger.debug('load default LCGRequirements')
             pass
 
@@ -83,7 +84,7 @@ class ARC(IBackend):
             scClass = vars(scModule)[scName]
             self.sandboxcache = scClass()
             logger.debug('load %s as SandboxCache' % scName)
-        except:
+        except BaseException:
             logger.debug('load default SandboxCache')
             pass
 
@@ -106,7 +107,7 @@ class ARC(IBackend):
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'GridftpSandboxCache':
-            #If the copy command is set in the config then use it.
+            # If the copy command is set in the config then use it.
             if config['ArcCopyCommand']:
                 self.sandboxcache.copyCommand = config['ArcCopyCommand']
 
@@ -204,7 +205,8 @@ class ARC(IBackend):
             if doUpload:
 
                 logger.warning(
-                    'The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file, config['BoundSandboxLimit']))
+                    'The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' %
+                    (file, config['BoundSandboxLimit']))
 
                 if self.sandboxcache.upload([abspath]):
                     remote_sandbox = self.sandboxcache.get_cached_files()[-1]
@@ -314,8 +316,11 @@ class ARC(IBackend):
         for id, jdl in node_jdls.items():
             mt_data.append((id, jdl))
 
-        myAlg = MyAlgorithm(cred_req=self.credential_requirements, masterInputWorkspace=job.getInputWorkspace(
-        ), ce=self.CE, arcverbose=self.verbose)
+        myAlg = MyAlgorithm(
+            cred_req=self.credential_requirements,
+            masterInputWorkspace=job.getInputWorkspace(),
+            ce=self.CE,
+            arcverbose=self.verbose)
         myData = Data(collection=mt_data)
 
         runner = MTRunner(name='arc_jsubmit', algorithm=myAlg,
@@ -328,7 +333,8 @@ class ARC(IBackend):
             # submitted jobs on WMS immediately
             logger.error(
                 'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            Grid.arc_cancel_multiple(list(runner.getResults().values()), self.credential_requirements)
+            Grid.arc_cancel_multiple(list(runner.getResults().values()),
+                                     self.credential_requirements)
             return None
         else:
             return runner.getResults()
@@ -627,7 +633,7 @@ try:
         str_env = 'export %s="%s"' % (k, v)
 
         printInfo(' ** ' + str_env)
-        
+
         f.write(str_env + os.linesep)
     f.close()
 
@@ -660,13 +666,13 @@ try:
 
     if not status:
         raise OSError('Application execution failed.')
-    printInfo('Application execution passed with exit code %d.' % exitcode)      
+    printInfo('Application execution passed with exit code %d.' % exitcode)
 
     ###OUTPUTUPLOADSPOSTPROCESSING###
 
     for f in os.listdir(os.getcwd()):
         command = "cp %s %s" % (os.path.join(os.getcwd(),f), os.path.join(orig_wdir,f))
-        os.system(command)            
+        os.system(command)
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
@@ -752,7 +758,7 @@ sys.exit(0)
         try:
             logger.debug('job info of monitoring service: %s' %
                          str(self.monInfo))
-        except:
+        except BaseException:
             pass
 
 #       prepare input/output sandboxes
@@ -761,8 +767,8 @@ sys.exit(0)
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
-        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
+        fileutils = File(inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR)
+        packed_files = jobconfig.getSandboxFiles() + [fileutils]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox
@@ -857,15 +863,15 @@ sys.exit(0)
 
         # compose ARC XRSL
         xrsl = {
-            #'VirtualOrganisation' : config['VirtualOrganisation'],
+            # 'VirtualOrganisation' : config['VirtualOrganisation'],
             'executable': os.path.basename(scriptPath),
             'environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
-            #'stdout'                : 'stdout',
-            #'stderr'                : 'stderr',
+            # 'stdout'                : 'stdout',
+            # 'stderr'                : 'stderr',
             'inputFiles': input_sandbox,
             'outputFiles': output_sandbox,
             'queue': self.queue,
-            #'OutputSandboxBaseDestURI': 'gsiftp://localhost'
+            # 'OutputSandboxBaseDestURI': 'gsiftp://localhost'
         }
 
         xrsl['environment'].update({'GANGA_LCG_CE': self.CE})
@@ -1066,7 +1072,8 @@ sys.exit(0)
 
         if not self.CE and rc != 0:
             raise GangaException(
-                "ARC CE endpoint not set and no default settings in '%s'. " % config['ArcConfigFile'])
+                "ARC CE endpoint not set and no default settings in '%s'. " %
+                config['ArcConfigFile'])
         elif self.CE:
             logger.info('ARC CE endpoint set to: ' + str(self.CE))
         else:
@@ -1182,7 +1189,9 @@ sys.exit(0)
         ce_list = []  # type: List[str]
         jobdict = {}  # type: Mapping[str, Job]
         for j in jobs:
-            if j.backend.id and ((datetime.datetime.utcnow() - j.time.timestamps["submitted"]).seconds > config["ArcWaitTimeBeforeStartingMonitoring"]):
+            if j.backend.id and (
+                (datetime.datetime.utcnow() -
+                 j.time.timestamps["submitted"]).seconds > config["ArcWaitTimeBeforeStartingMonitoring"]):
                 jobdict[j.backend.id] = j
                 ce_list.append(j.backend.actualCE)
 
@@ -1190,7 +1199,8 @@ sys.exit(0)
             return
 
         # Group jobs by the backend's credential requirements
-        cred_to_backend_id_list = defaultdict(list)  # type: Mapping[ICredentialRequirement, List[str]]
+        # type: Mapping[ICredentialRequirement, List[str]]
+        cred_to_backend_id_list = defaultdict(list)
         for jid, job in jobdict.items():
             cred_to_backend_id_list[job.backend.credential_requirements].append(jid)
 
@@ -1200,9 +1210,10 @@ sys.exit(0)
             # If the credential is not valid or doesn't exist then skip it
             cred = credential_store.get(cred_req)
             if not cred or not cred.is_valid():
-                    needed_credentials.add(cred_req)
-                    continue
-            # Create a ``Grid`` for each credential requirement and request the relevant jobs through it
+                needed_credentials.add(cred_req)
+                continue
+            # Create a ``Grid`` for each credential requirement and request the
+            # relevant jobs through it
             info = Grid.arc_status(job_ids, ce_list, cred_req)
             jobInfoDict.update(info)
 
@@ -1231,7 +1242,11 @@ sys.exit(0)
                     elif info['State'] in ['Finished', '(FINISHED)', 'Finished (FINISHED)']:
 
                         # grab output sandbox
-                        if Grid.arc_get_output(job.backend.id, job.getOutputWorkspace(create=True).getPath(), job.backend.credential_requirements):
+                        if Grid.arc_get_output(
+                                job.backend.id,
+                                job.getOutputWorkspace(
+                                    create=True).getPath(),
+                                job.backend.credential_requirements):
                             (ick, app_exitcode) = Grid.__get_app_exitcode__(
                                 job.getOutputWorkspace(create=True).getPath())
                             job.backend.exitcode = app_exitcode
@@ -1248,13 +1263,13 @@ sys.exit(0)
                             try:
                                 job.backend.exitcode_arc = int(
                                     info['Exit Code'])
-                            except:
+                            except BaseException:
                                 job.backend.exitcode_arc = 1
 
                         if 'Job Error' in info:
                             try:
                                 job.backend.reason = info['Job Error']
-                            except:
+                            except BaseException:
                                 pass
 
                         job.backend.updateGangaJobStatus()
@@ -1267,7 +1282,6 @@ sys.exit(0)
             for cred_req, job_ids in cred_to_backend_id_list.items():
                 if not Grid.arc_purge_multiple(set(job_ids) & set(jidListForPurge), cred_req):
                     logger.warning("Failed to purge all ARC jobs.")
-
 
     def updateGangaJobStatus(self):
         '''map backend job status to Ganga job status'''
@@ -1300,6 +1314,5 @@ sys.exit(0)
         else:
             logger.warning('Unexpected job status "%s"', self.status)
 
+
 logger = getLogger()
-
-

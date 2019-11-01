@@ -19,10 +19,12 @@ class CopySplitter(ISplitter):
     """A simple splitter for testing. Does nothing at all clever"""
     _category = 'splitters'
     _name = 'CopySplitter'
-    _schema = Schema(Version(1, 0), {
-        'number': SimpleItem(defvalue=5),
-        'function_hook': SimpleItem(defvalue=None, doc='Name of function in global namespace to call')
-    })
+    _schema = Schema(
+        Version(
+            1, 0), {
+            'number': SimpleItem(
+                defvalue=5), 'function_hook': SimpleItem(
+                    defvalue=None, doc='Name of function in global namespace to call')})
 
     def split(self, job):
 

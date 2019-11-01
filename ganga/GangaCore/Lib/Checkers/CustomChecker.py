@@ -25,7 +25,7 @@ class CustomChecker(IChecker):
        def check(j):
            if j has passed:
                return True
-           else: 
+           else:
                return False
 
 
@@ -35,14 +35,17 @@ class CustomChecker(IChecker):
     _category = 'postprocessor'
     _name = 'CustomChecker'
     _schema = IChecker._schema.inherit_copy()
-    _schema.datadict['module'] = FileItem(defvalue=None, doc='Path to a python module to perform the check.')
+    _schema.datadict['module'] = FileItem(defvalue=None,
+                                          doc='Path to a python module to perform the check.')
     _exportmethods = ['check']
 
     def check(self, job):
         if (self.module is None) or not self.module:
-            raise PostProcessException( "No module is specified and so the check will fail.")
+            raise PostProcessException("No module is specified and so the check will fail.")
         if (self.module.name is None) or not os.path.isfile(self.module.name):
-            raise PostProcessException("The module '%s' does not exist and so CustomChecker will do nothing!" % (self.module.name))
+            raise PostProcessException(
+                "The module '%s' does not exist and so CustomChecker will do nothing!" %
+                (self.module.name))
 
         result = None
 
@@ -52,11 +55,13 @@ class CustomChecker(IChecker):
             exec('_result = check(job)', ns)
             result = ns.get('_result', result)
         except Exception as e:
-            raise PostProcessException('There was a problem with executing the module: %s, CustomChecker will do nothing!' % e)
+            raise PostProcessException(
+                'There was a problem with executing the module: %s, CustomChecker will do nothing!' %
+                e)
         if result is not True and result is not False:
-            raise PostProcessException('The custom check module did not return True or False, CustomChecker will do nothing!')
+            raise PostProcessException(
+                'The custom check module did not return True or False, CustomChecker will do nothing!')
         if result is not True:
             logger.info('The custom check module returned False for job(%s)', job.fqid)
             return self.failure
         return self.success
-

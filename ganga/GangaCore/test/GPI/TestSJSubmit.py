@@ -1,13 +1,15 @@
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TestSJSubmit(GangaUnitTest):
 
     n_subjobs = 10
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts = [('Output', 'FailJobIfNoOutputMatched', 'True'), ('TestingFramework', 'AutoCleanup', 'False'), ('Configuration', 'resubmitOnlyFailedSubjobs', 'True')]
+        extra_opts = [('Output', 'FailJobIfNoOutputMatched', 'True'), ('TestingFramework',
+                                                                       'AutoCleanup', 'False'), ('Configuration', 'resubmitOnlyFailedSubjobs', 'True')]
         super(TestSJSubmit, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
@@ -94,7 +96,7 @@ class TestSJSubmit(GangaUnitTest):
 
     def test_d_SJResubmit_FailNotRequired(self):
         """
-        Resubmit when jobs are not required to have failed 
+        Resubmit when jobs are not required to have failed
         """
         from GangaCore.Utility.Config import setConfigOption
         setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'False')
@@ -140,7 +142,7 @@ class TestSJSubmit(GangaUnitTest):
         """
         from GangaCore.GPI import Job, Local
 
-        j=Job()
+        j = Job()
         j.splitter = self._getSplitter()
         j.backend = Local()
         j.submit()
@@ -194,4 +196,3 @@ class TestSJSubmit(GangaUnitTest):
         sleep_until_completed(j)
 
         # Test that this works when resubmitOnlyFailedSubjobs = False
-

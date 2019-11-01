@@ -40,6 +40,7 @@ _allShells = {}
 
 logger = getLogger()
 
+
 def constructShell():
     """
     Construct a grid shell based upon either the GLITE_SETUP or GLITE_LOCATION as possibly defined by the user
@@ -88,6 +89,7 @@ def constructShell():
         s.env['LFC_CONRETRYINT'] = '1'
 
     return s
+
 
 def getShell(cred_req=None):
     """

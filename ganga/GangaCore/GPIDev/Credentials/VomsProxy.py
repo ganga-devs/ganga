@@ -96,7 +96,9 @@ class VomsProxyInfo(ICredentialInfo):
         """
         This returns the identity associated with the voms proxy on disk
         """
-        status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -identity' % self.location)
+        status, output, message = self.shell.cmd1(
+            'voms-proxy-info -file "%s" -identity' %
+            self.location)
         return output.strip()
 
     @property
@@ -147,7 +149,9 @@ class VomsProxyInfo(ICredentialInfo):
         """
         This returns the time that a proxy will expire at in seconds
         """
-        status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -timeleft' % self.location)
+        status, output, message = self.shell.cmd1(
+            'voms-proxy-info -file "%s" -timeleft' %
+            self.location)
         if status != 0:
             return datetime.now()
         return datetime.now() + timedelta(seconds=int(output))
@@ -156,7 +160,8 @@ class VomsProxyInfo(ICredentialInfo):
         """
         This returns the default_location of a voms proxy on disk based only on the location and uid
         """
-        return os.getenv('X509_USER_PROXY') or os.path.join(tempfile.gettempdir(), 'x509up_u'+str(os.getuid()))
+        return os.getenv('X509_USER_PROXY') or os.path.join(
+            tempfile.gettempdir(), 'x509up_u' + str(os.getuid()))
 
 
 class VomsProxy(ICredentialRequirement):
@@ -164,10 +169,21 @@ class VomsProxy(ICredentialRequirement):
     An object specifying the requirements of a VOMS proxy file
     """
     _schema = ICredentialRequirement._schema.inherit_copy()
-    _schema.datadict['identity'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Identity for the proxy')
-    _schema.datadict['vo'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation')
-    _schema.datadict['role'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Role that the proxy must have')
-    _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy - either "group" or "group/subgroup"')
+    _schema.datadict['identity'] = SimpleItem(
+        defvalue=None, typelist=[
+            str, None], doc='Identity for the proxy')
+    _schema.datadict['vo'] = SimpleItem(
+        defvalue=None,
+        typelist=[
+            str,
+            None],
+        doc='Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation')
+    _schema.datadict['role'] = SimpleItem(
+        defvalue=None, typelist=[
+            str, None], doc='Role that the proxy must have')
+    _schema.datadict['group'] = SimpleItem(
+        defvalue=None, typelist=[
+            str, None], doc='Group for the proxy - either "group" or "group/subgroup"')
 
     _category = 'CredentialRequirement'
 
@@ -185,5 +201,9 @@ class VomsProxy(ICredentialRequirement):
         """
         This returns the additional encoding of the identity, vo, role and group which are to be encoded into the voms file location
         """
-        return ':'.join(requirement for requirement in [self.identity, self.vo, self.role, self.group] if requirement)  # filter out the empties
-
+        return ':'.join(
+            requirement for requirement in [
+                self.identity,
+                self.vo,
+                self.role,
+                self.group] if requirement)  # filter out the empties

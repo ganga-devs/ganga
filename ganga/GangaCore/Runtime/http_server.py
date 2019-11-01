@@ -541,10 +541,16 @@ def getFromDateFromTimeRange(timeRange):
 
 def getMonitoringLink(port):
 
-    webMonitoringLink = os.path.join(config['System'][
-                                     'GANGA_PYTHONPATH'], 'Ganga', 'Core', 'WebMonitoringGUI', 'client', 'index.html')
+    webMonitoringLink = os.path.join(
+        config['System']['GANGA_PYTHONPATH'],
+        'Ganga',
+        'Core',
+        'WebMonitoringGUI',
+        'client',
+        'index.html')
 
-    return 'file://' + webMonitoringLink + '?port=' + str(port) + '#user=' + config.Configuration.user + '&timeRange='
+    return 'file://' + webMonitoringLink + '?port=' + \
+        str(port) + '#user=' + config.Configuration.user + '&timeRange='
 
 
 class JobRelatedInfo:
@@ -583,7 +589,9 @@ class JobRelatedInfo:
 
     def __eq__(self, other):
 
-        return isinstance(other, JobRelatedInfo) and self.job_json == other.job_json and self.time_created == other.time_created
+        return isinstance(
+            other,
+            JobRelatedInfo) and self.job_json == other.job_json and self.time_created == other.time_created
 
 
 class HTTPServerThread(GangaThread):
@@ -603,16 +611,16 @@ class HTTPServerThread(GangaThread):
             server.socket.settimeout(1)
         except Exception:
             return
-        
-            print("Another Ganga session is already started with --webgui option" )      
+
+            print("Another Ganga session is already started with --webgui option" )
             process_details = getProcessDetails()
 
             print(reg.repository.get_other_sessions())
             print("Process id : %s, hostname : %s" % (process_details[0], process_details[1]))
-            
+
             self.stop()
-            self.unregister()   
-            return      
+            self.unregister()
+            return
         """
 
         logger.info('Starting web gui monitoring server, please wait ...')
@@ -626,7 +634,9 @@ class HTTPServerThread(GangaThread):
         fill_jobs_dictionary()
 
         logger.info('Web gui monitoring server started successfully')
-        logger.info('You can monitor your jobs at the following location: ' + getMonitoringLink(port))
+        logger.info(
+            'You can monitor your jobs at the following location: ' +
+            getMonitoringLink(port))
 
         # server.serve_forever()
 
@@ -727,6 +737,7 @@ class GetHandler(BaseHTTPRequestHandler):
 
         return
 
+
 jobs_dictionary = {}
 httpServerHost = 'localhost'
 httpServerStartTryPort = 8080
@@ -742,6 +753,7 @@ def start_server():
 
     t = HTTPServerThread("HTTP_monitoring")
     t.start()
+
 
 if __name__ == '__main__':
     start_server()

@@ -17,6 +17,7 @@ from GangaCore.Utility.Config import getConfig
 
 logger = GangaCore.Utility.logging.getLogger()
 
+
 def cache(method):
     """
     The cache decorator can be applied to any method in an ``ICredentialInfo` subclass.
@@ -50,7 +51,9 @@ def cache(method):
 
             # If the mtime has been changed, clear the cache
             if credential_store.enable_caching and os.path.exists(self.location):
-                if (time.time() - check_time > getConfig('Credentials')['AtomicDelay']) or (abs(time.time() - time_before)  > getConfig('Credentials')['AtomicDelay']):
+                if (time.time() -
+                    check_time > getConfig('Credentials')['AtomicDelay']) or (abs(time.time() -
+                                                                                  time_before) > getConfig('Credentials')['AtomicDelay']):
                     mtime = os.path.getmtime(self.location)
                     if mtime > self.cache['mtime']:
                         self.cache = {'mtime': mtime}
@@ -72,6 +75,7 @@ def cache(method):
             return self.cache[method.__name__]
     return cache_function
 
+
 def retry_command(method):
     """
     This method attempts to run the same function which can exit due to a CredetialsError
@@ -89,6 +93,7 @@ def retry_command(method):
                 pass
         return None
     return retry_function
+
 
 class ICredentialInfo(object, metaclass=ABCMeta):
     """
@@ -118,7 +123,8 @@ class ICredentialInfo(object, metaclass=ABCMeta):
         self.cache = {'mtime': 0}
         self.cache_lock = threading.RLock()
 
-        self.initial_requirements = copy.deepcopy(requirements)  # Store the requirements that the object was created with. Used for creation
+        # Store the requirements that the object was created with. Used for creation
+        self.initial_requirements = copy.deepcopy(requirements)
 
         if check_file:
             logger.debug('Trying to wrap %s', self.location)
@@ -136,8 +142,11 @@ class ICredentialInfo(object, metaclass=ABCMeta):
 
     def __str__(self):
         """ Returns a user-readable string describing the credential and it's validity """
-        return '{class_name} at {file_path} : TimeLeft = {time_left}, Valid = {currently_valid}'.format(\
-                        class_name=type(self).__name__, file_path=self.location, currently_valid=self.is_valid(), time_left=self.time_left())
+        return '{class_name} at {file_path} : TimeLeft = {time_left}, Valid = {currently_valid}'.format(
+            class_name=type(self).__name__,
+            file_path=self.location,
+            currently_valid=self.is_valid(),
+            time_left=self.time_left())
 
     def _repr_pretty_(self, p, cycle):
         """ A wrapper to self.__str__ for the pretty print methods in IPython """
@@ -221,7 +230,8 @@ class ICredentialInfo(object, metaclass=ABCMeta):
             logger.debug('Credential does NOT exit')
             return False
         logger.debug('Credential exists, checking it')
-        return all(self.check_requirement(query, requirementName) for requirementName in query._schema.datadict)
+        return all(self.check_requirement(query, requirementName)
+                   for requirementName in query._schema.datadict)
 
     def check_requirement(self, query, requirement_name):
         # type: (ICredentialRequirement, str) -> bool
@@ -238,7 +248,13 @@ class ICredentialInfo(object, metaclass=ABCMeta):
             # If this requirementName is unspecified then ignore it
             logger.debug('Param \'%s\': is None' % requirement_name)
             return True
-        logger.debug('Param \'%s\': Have \t%s Want \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
+        logger.debug(
+            'Param \'%s\': Have \t%s Want \t%s',
+            requirement_name,
+            getattr(
+                self,
+                requirement_name),
+            requirement_value)
         return getattr(self, requirement_name) == requirement_value
 
     def exists(self):
@@ -270,4 +286,3 @@ class ICredentialInfo(object, metaclass=ABCMeta):
         Returns a hash of the location of the object on disk
         """
         return hash(self.location)
-

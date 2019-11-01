@@ -11,6 +11,7 @@ from GangaTest.Framework.utils import sleep_until_completed
 from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
 from GangaCore.GPIDev.Base.Objects import _getName
 
+
 class TestMassStorageClient(GangaUnitTest):
     """test for sjid in filename names explain each test"""
 
@@ -24,12 +25,25 @@ class TestMassStorageClient(GangaUnitTest):
     # Where on local storage we want to have our 'MassStorage solution'
     outputFilePath = '/tmp/Test' + _getName(fileClass) + 'Client'
 
-    # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
-    MassStorageTestConfig = {'defaultProtocol': 'file://',
-                             'fileExtensions': [''],
-                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
-                             'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
-                                                    'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
+    # This sets up a MassStorageConfiguration which works by placing a file on
+    # local storage somewhere we can test using standard tools
+    MassStorageTestConfig = {
+        'defaultProtocol': 'file://',
+        'fileExtensions': [''],
+        'uploadOptions': {
+            'path': outputFilePath,
+            'cp_cmd': 'cp',
+            'ls_cmd': 'ls',
+            'mkdir_cmd': 'mkdir'},
+        'backendPostprocess': {
+            'LSF': 'client',
+            'LCG': 'client',
+            'ARC': 'client',
+            'Dirac': 'client',
+            'PBS': 'client',
+            'Interactive': 'client',
+            'Local': 'client',
+            'CREAM': 'client'}}
 
     _ext = '.root'
 
@@ -37,11 +51,11 @@ class TestMassStorageClient(GangaUnitTest):
         """
         Configure the MassStorageFile for the test
         """
-        extra_opts=[('PollThread', 'autostart', 'False'),
-                    ('Local', 'remove_workdir', 'False'),
-                    ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', _getName(self.fileClass), TestMassStorageClient.MassStorageTestConfig),
-                    ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        extra_opts = [('PollThread', 'autostart', 'False'),
+                      ('Local', 'remove_workdir', 'False'),
+                      ('TestingFramework', 'AutoCleanup', 'False'),
+                      ('Output', _getName(self.fileClass), TestMassStorageClient.MassStorageTestConfig),
+                      ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageClient, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
@@ -81,7 +95,8 @@ class TestMassStorageClient(GangaUnitTest):
 
         TestMassStorageClient.cleanUp()
 
-        assert getConfig('Output')[_getName(self.fileClass)]['backendPostprocess']['Local'] == 'client'
+        assert getConfig('Output')[_getName(self.fileClass)
+                                   ]['backendPostprocess']['Local'] == 'client'
 
         file_1 = generate_unique_temp_file(TestMassStorageClient._ext)
         file_2 = generate_unique_temp_file(TestMassStorageClient._ext)
@@ -90,8 +105,8 @@ class TestMassStorageClient(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(TestMassStorageClient.sj_len)])
-        j.outputfiles = [MassStorageFile(namePattern='*'+TestMassStorageClient._ext)]
+        j.splitter = ArgSplitter(args=[[_] for _ in range(TestMassStorageClient.sj_len)])
+        j.outputfiles = [MassStorageFile(namePattern='*' + TestMassStorageClient._ext)]
         j.submit()
 
     def test_b_testClientSideComplete(self):
@@ -99,7 +114,8 @@ class TestMassStorageClient(GangaUnitTest):
 
         from GangaCore.GPI import jobs
 
-        assert getConfig('Output')[_getName(self.fileClass)]['backendPostprocess']['Local'] == 'client'
+        assert getConfig('Output')[_getName(self.fileClass)
+                                   ]['backendPostprocess']['Local'] == 'client'
 
         j = jobs[-1]
 
@@ -107,7 +123,7 @@ class TestMassStorageClient(GangaUnitTest):
 
         for sj in j.subjobs:
             output_dir = stripProxy(sj).getOutputWorkspace(create=False).getPath()
-            assert os.path.isdir(output_dir) == True
+            assert os.path.isdir(output_dir)
 
             # Check that the files have been removed from the output worker dir
             for input_f in j.inputfiles:
@@ -136,7 +152,7 @@ class TestMassStorageClient(GangaUnitTest):
 
         MassStorageFile = self.fileClass
 
-        assert j2.outputfiles == [MassStorageFile(namePattern='*'+TestMassStorageClient._ext)]
+        assert j2.outputfiles == [MassStorageFile(namePattern='*' + TestMassStorageClient._ext)]
 
         assert len(j2.inputfiles) == 2
 
@@ -146,4 +162,3 @@ class TestMassStorageClient(GangaUnitTest):
 class TestSharedClient(TestMassStorageClient):
     """test for sjid in filename names explain each test"""
     fileClass = addProxy(SharedFile)
-

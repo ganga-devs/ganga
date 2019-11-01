@@ -4,15 +4,14 @@ The text of this module is sourced into the job wrapper script.
 It therefore may use ###TAGS###  which are expanded in the wrapper script.
 """
 
+from contextlib import closing
+import tarfile
+import mimetypes
+import os
 INPUT_TARBALL_NAME = '_input_sandbox.tgz'
 OUTPUT_TARBALL_NAME = '_output_sandbox.tgz'
 PYTHON_DIR = '_python'
 
-import os
-import mimetypes
-
-import tarfile
-from contextlib import closing
 
 def multi_glob(pats, exclude=None):
     """ glob using a list of patterns and removing duplicate files, exclude name in the list for which the callback exclude(name) return true
@@ -58,6 +57,7 @@ def recursive_copy(src, dest):
                 os.makedirs(destdir)
             shutil.copy(src, destdir)
 
+
 def getPackedInputSandbox(tarpath, dest_dir='.'):
     """Get all sandbox_files from tarball and write them to the workdir.
        This function is called by wrapper script at the run time.
@@ -69,7 +69,7 @@ def getPackedInputSandbox(tarpath, dest_dir='.'):
     try:
         with closing(tarfile.open(tarpath, "r:*")) as tf:
             tf.extractall(dest_dir)
-    except:
+    except BaseException:
         raise Exception("Error opening tar file: %s" % tarpath)
 
 
@@ -79,7 +79,7 @@ def createOutputSandbox(output_patterns, filter, dest_dir):
        This function is called by wrapper script at the run time.
     Arguments:
       'output_patterns': list of filenames or patterns.
-      'filter': function to filter files (return True to except) 
+      'filter': function to filter files (return True to except)
       'dest_dir': destination directory for output files
     """
 
@@ -98,7 +98,7 @@ def createPackedOutputSandbox(output_patterns, _filter, dest_dir):
        This function is called by wrapper script at the run time.
     Arguments:
       'output_patterns': list of filenames or patterns.
-      'filter': function to filter files (return True to except) 
+      'filter': function to filter files (return True to except)
       'dest_dir': destination directory for tarball
     """
 
@@ -117,4 +117,3 @@ def createPackedOutputSandbox(output_patterns, _filter, dest_dir):
             tf.dereference = True
             for f in outputlist:
                 tf.add(f)
-

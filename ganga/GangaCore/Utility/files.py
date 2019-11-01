@@ -17,6 +17,7 @@ from GangaCore.Utility.logging import getLogger
 _stored_expanded_paths = {}
 _stored_full_paths = {}
 
+
 def expandfilename(filename, force=False):
     """expand a path or filename in a standard way so that it may contain ~ and ${VAR} strings"""
     if filename in _stored_expanded_paths:
@@ -88,7 +89,7 @@ def recursive_copy(src, dest):
     """ copy src file (or a directory tree if src specifies a directory) to dest directory. dest must be a directory and must exist.
     if src is a relative path, then the src directory structure is preserved in dest.
     """
-    
+
     if not os.path.isdir(dest):
         raise ValueError(
             'resursive_copy: destination %s must specify a directory (which exists)' % dest)
@@ -135,6 +136,7 @@ def remove_prefix(fn, path_list):
             return fn[len(p) + len(os.sep):]
 
     return fn
+
 
 if __name__ == "__main__":
 

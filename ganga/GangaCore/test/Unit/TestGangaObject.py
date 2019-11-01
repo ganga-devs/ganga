@@ -45,7 +45,7 @@ class TestGangaObject(unittest.TestCase):
             raise Exception("didn't expect to have a Job")
         except AssertionError:
             pass
-        except:
+        except BaseException:
             raise
 
     def test_attribute_filter__set__(self):
@@ -181,7 +181,9 @@ class MultiThreadedTestCase(unittest.TestCase):
             still_running = [t for t in threads if t.is_alive()]
             num_threads = len(still_running)
             names = [t.name for t in still_running]
-            raise RuntimeError('Timeout while waiting for {0} threads to finish: {1}'.format(num_threads, names))
+            raise RuntimeError(
+                'Timeout while waiting for {0} threads to finish: {1}'.format(
+                    num_threads, names))
 
 
 class SimpleGangaObject(GangaObject):
@@ -287,7 +289,8 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
         def change(thread_number):
             rand = random.Random()
             rand.seed(time.clock() + thread_number)
-            for _ in range(10):  # Run this thread many times to keep it running for long enough to see problems.
+            # Run this thread many times to keep it running for long enough to see problems.
+            for _ in range(10):
                 with o.const_lock:
                     num = rand.randint(0, 1000)
                     o.a = num

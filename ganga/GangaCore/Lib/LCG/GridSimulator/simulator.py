@@ -52,7 +52,7 @@ def submit(N, K):
 
     def finished():
         for j in jobs:
-            if not j.status in ['failed', 'completed']:
+            if j.status not in ['failed', 'completed']:
                 return False
         return True
 
@@ -62,6 +62,7 @@ def submit(N, K):
     return jobs
 
 # repeat M times for better statistics (and repository scalability)
+
 
 M = 5
 

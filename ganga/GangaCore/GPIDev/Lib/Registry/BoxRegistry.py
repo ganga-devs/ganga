@@ -17,6 +17,7 @@ from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger()
 
+
 class BoxMetadataObject(GangaObject):
 
     """Internal object to store names"""
@@ -110,7 +111,8 @@ class BoxRegistry(Registry):
         if obj._category == 'applications':
             if hasattr(obj, 'is_prepared'):
                 if obj.is_prepared is not None and obj.is_prepared is not True:
-                    logger.debug('Adding a prepared application to the box and increasing the shareref counter')
+                    logger.debug(
+                        'Adding a prepared application to the box and increasing the shareref counter')
                     obj.incrementShareCounter(obj.is_prepared)
 
         obj = obj.clone()
@@ -208,7 +210,7 @@ class BoxRegistrySliceProxy(RegistrySliceProxy):
     Box objects are referenced by their IDs which can be viewed by simply calling 'box', or
     box.ids()
 
-    Once defined, box objects can be renamed:        
+    Once defined, box objects can be renamed:
     box.rename(0, 'new name')
 
     removed:
@@ -249,6 +251,5 @@ class BoxRegistrySliceProxy(RegistrySliceProxy):
         items = list(stripProxy(self).objects.items())
         for id, obj in items:
             reg = obj._getRegistry()
-            if not reg is None:
+            if reg is not None:
                 reg._remove(obj)
-

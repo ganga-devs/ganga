@@ -30,6 +30,6 @@ def test_safe_save_threadcalls():
 
     assert os.path.isfile(testfn)
     os.remove(testfn)
-    assert os.path.isfile(testfn+'~')
-    os.remove(testfn+'~')
-    assert not os.path.isfile(testfn+'.new')
+    assert os.path.isfile(testfn + '~')
+    os.remove(testfn + '~')
+    assert not os.path.isfile(testfn + '.new')

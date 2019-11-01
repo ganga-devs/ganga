@@ -24,9 +24,26 @@ class StandardJobConfig(object):
 
     """
 
-    __slots__ = ('exe', 'inputbox', 'sharedarea', 'args', 'outputbox', 'env', '__all_inputbox', '__args_strings', '__exe_string', '__sandbox_check')
+    __slots__ = (
+        'exe',
+        'inputbox',
+        'sharedarea',
+        'args',
+        'outputbox',
+        'env',
+        '__all_inputbox',
+        '__args_strings',
+        '__exe_string',
+        '__sandbox_check')
 
-    def __init__(self, exe=None, inputbox=None, args=None, outputbox=None, env=None, sharedarea=None):
+    def __init__(
+            self,
+            exe=None,
+            inputbox=None,
+            args=None,
+            outputbox=None,
+            env=None,
+            sharedarea=None):
         """
         exe - executable string to be run on the worker node or a File object to be shipped as executable script to the worker node
         args - list of strings which are passed as arguments to the executable string or File objects which are automatically added to the sandbox
@@ -97,7 +114,7 @@ class StandardJobConfig(object):
                     logger.debug('Adding shared file %s' % name)
                     sharedfiles.append(os.path.join(root, name))
         return sharedfiles
-    
+
     def processValues(self):
         '''Process original exe,args and inputbox values and extract strings suitable for the further processing.
         If the exe property is a File then this method will check if it has executable attributes.
@@ -116,7 +133,11 @@ class StandardJobConfig(object):
 
             fn = f.getPathInSandbox()
             if fn in self.__sandbox_check:
-                logger.warning('File %s already in the sandbox (source=%s). Overriding from source=%s', fn, self.__sandbox_check[fn], f.name)
+                logger.warning(
+                    'File %s already in the sandbox (source=%s). Overriding from source=%s',
+                    fn,
+                    self.__sandbox_check[fn],
+                    f.name)
             self.__sandbox_check[fn] = f.name
             return fn
 
@@ -148,7 +169,8 @@ class StandardJobConfig(object):
                 self.__exe_string = _get_path_in_sandbox(self.exe)
                 if not self.exe.isExecutable():
                     logger.warning(
-                        'file %s is not executable, overriding executable permissions in the input sandbox' % self.exe.name)
+                        'file %s is not executable, overriding executable permissions in the input sandbox' %
+                        self.exe.name)
                     self.exe.executable = True
                 self.__all_inputbox.append(self.exe)
             except AttributeError as x:

@@ -18,6 +18,6 @@ def test_roundtrip(gpi, tmpdir):
     d = stripProxy(d)
     d2 = stripProxy(d2)
 
-    assert type(d) == type(d2)
+    assert isinstance(d, type(d2))
     assert len(d) == len(d2)
     assert d == d2

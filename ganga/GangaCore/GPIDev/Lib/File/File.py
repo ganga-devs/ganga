@@ -40,6 +40,7 @@ logger = getLogger()
 
 _prepare_lock = threading.RLock()
 
+
 class File(GangaObject):
 
     """Represent the files, both local and remote and provide an interface to transparently get access to them.
@@ -49,9 +50,22 @@ class File(GangaObject):
     is not universally supported however and needs a review.
 
     """
-    _schema = Schema(Version(1, 1), {'name': SimpleItem(defvalue="", doc='path to the file source'),
-                                     'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)'),
-                                     'executable': SimpleItem(defvalue=False, hidden=True, transient=True, doc='specify if executable bit should be set when the file is created (internal framework use)')})
+    _schema = Schema(
+        Version(
+            1,
+            1),
+        {
+            'name': SimpleItem(
+                defvalue="",
+                doc='path to the file source'),
+            'subdir': SimpleItem(
+                defvalue=os.curdir,
+                doc='destination subdirectory (a relative path)'),
+            'executable': SimpleItem(
+                defvalue=False,
+                hidden=True,
+                transient=True,
+                doc='specify if executable bit should be set when the file is created (internal framework use)')})
     _category = 'files'
     _name = "File"
     _exportmethods = ["getPathInSandbox", "exists", "create", "isExecutable"]
@@ -66,14 +80,16 @@ class File(GangaObject):
     def __init__(self, name=None, subdir=os.curdir):
         super(File, self).__init__()
 
-        if not name is None:
+        if name is not None:
             try:
                 assert(isinstance(name, str))
             except AssertionError:
-                raise SchemaError("Name attribute should be a string type. Instead received: %s" % type(name))
+                raise SchemaError(
+                    "Name attribute should be a string type. Instead received: %s" %
+                    type(name))
             self.name = name
 
-        if not subdir is None:
+        if subdir is not None:
             self.subdir = subdir
 
     def __lt__(self, other):
@@ -94,7 +110,6 @@ class File(GangaObject):
         if attr == "name":
             actual_value = expandfilename(value)
         super(File, self).__setattr__(attr, actual_value)
-
 
     def _attribute_filter__set__(self, attribName, attribValue):
         if attribName is 'name':
@@ -134,9 +149,11 @@ class File(GangaObject):
         file are checked"""
         return self.executable or is_executable(expandfilename(self.name))
 
+
 # add File objects to the configuration scope (i.e. it will be possible to
 # write instatiate File() objects via config file)
 GangaCore.Utility.Config.config_scope['File'] = File
+
 
 def string_file_shortcut_file(v, item):
     if isinstance(v, str):
@@ -145,7 +162,9 @@ def string_file_shortcut_file(v, item):
         return File(v)
     return None
 
+
 allComponentFilters['files'] = string_file_shortcut_file
+
 
 class ShareDir(GangaObject):
 
@@ -155,9 +174,14 @@ class ShareDir(GangaObject):
     the Executable() application. A single ("prepared") application can be associated to multiple jobs.
 
     """
-    _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', getter="_getName", doc='path to the file source'),
-                                     'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)'),
-                                     'associated_files': GangaFileItem(defvalue=[], typelist = [str, IGangaFile], doc='A list of files associated with the sharedir')})
+    _schema = Schema(
+        Version(
+            1, 0), {
+            'name': SimpleItem(
+                defvalue='', getter="_getName", doc='path to the file source'), 'subdir': SimpleItem(
+                    defvalue=os.curdir, doc='destination subdirectory (a relative path)'), 'associated_files': GangaFileItem(
+                        defvalue=[], typelist=[
+                            str, IGangaFile], doc='A list of files associated with the sharedir')})
 
     _category = 'shareddirs'
     _exportmethods = ['add', 'ls', 'path', 'remove', 'addAssociatedFile', 'listAssociatedFiles']
@@ -245,7 +269,9 @@ class ShareDir(GangaObject):
                 else:
                     logger.error('File %s not found' % expandfilename(item))
             elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
-                logger.info('Copying file object %s to shared directory %s' % (item.name, self.name))
+                logger.info(
+                    'Copying file object %s to shared directory %s' %
+                    (item.name, self.name))
                 shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(), self.name))
                 shareref = getRegistry("prep").getShareRef()
                 shareref.increase(self)
@@ -256,7 +282,7 @@ class ShareDir(GangaObject):
     def path(self):
         """Get the full path of the ShareDir location"""
         return os.path.join(getSharedPath(), self._getName())
-                
+
     def ls(self):
         """
         Print the contents of the ShareDir
@@ -314,7 +340,7 @@ class ShareDir(GangaObject):
                 tmpobj, errs = from_file(fobj)
                 self.associated_files = tmpobj
 
-    @synchronised 
+    @synchronised
     def addAssociatedFile(self, newFile):
         """ Add an associated file to the ShareDir. Use this method to save
         it to theXML """
@@ -345,7 +371,9 @@ class ShareDir(GangaObject):
         logger.info("Removed: %s" % self.path())
         self.removeAssociatedFiles()
 
+
 GangaCore.Utility.Config.config_scope['ShareDir'] = ShareDir
+
 
 def string_sharedfile_shortcut(v, item):
     if isinstance(v, str):
@@ -353,6 +381,7 @@ def string_sharedfile_shortcut(v, item):
         # but return the implementation object (not proxy)
         return ShareDir(v)
     return None
+
 
 allComponentFilters['shareddirs'] = string_sharedfile_shortcut
 
@@ -368,12 +397,14 @@ def cleanUpShareDirs():
         this_dir = os.path.join(share_path, item)
         if os.path.isdir(this_dir):
             # NB we do need to explicitly test the length of the returned value here
-            # Checking is __MUCH__ faster than trying and failing to remove folders with contents on AFS
+            # Checking is __MUCH__ faster than trying and failing to remove folders
+            # with contents on AFS
             if len(os.listdir(this_dir)) == 0:
                 try:
                     os.rmdir(this_dir)
                 except OSError:
                     logger.debug("Failed to remove: %s" % this_dir)
+
 
 exportToGPI('cleanUpShareDirs', cleanUpShareDirs, 'Functions')
 

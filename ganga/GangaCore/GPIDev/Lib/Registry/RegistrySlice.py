@@ -19,6 +19,7 @@ logger = getLogger()
 
 config = GangaCore.Utility.Config.getConfig('Display')
 
+
 class RegistrySlice(object):
 
     def __init__(self, name, display_prefix):
@@ -41,7 +42,9 @@ class RegistrySlice(object):
             for this_col_func in col_funcs:
                 self._display_columns_functions[this_col_func] = eval(col_funcs[this_col_func])
         except Exception as x:
-            logger.error("Error on evaluating display column functions from config file: %s: %s" % (getName(x), x))
+            logger.error(
+                "Error on evaluating display column functions from config file: %s: %s" %
+                (getName(x), x))
 
         from GangaCore.Utility.ColourText import Effects
         self._colour_normal = Effects().normal
@@ -55,7 +58,9 @@ class RegistrySlice(object):
         """
         """
         if not isinstance(keep_going, bool):
-            raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (self.name, keep_going, method))
+            raise GangaException(
+                "The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" %
+                (self.name, keep_going, method))
         result = []
         for _id in self.objects.keys():
             obj = self.objects[_id]
@@ -90,15 +95,23 @@ class RegistrySlice(object):
         """Cleans the repository only if this slice represents the repository
         Returns True on success and False on failure"""
         if not hasattr(self.objects, "clean"):
-            logger.error("'clean' only works on whole registries, e.g. 'jobs.clean()'. Use remove() to delete job slices")
+            logger.error(
+                "'clean' only works on whole registries, e.g. 'jobs.clean()'. Use remove() to delete job slices")
             return False
         if not confirm:
-            logger.warning("You are about to irreversibly delete the WHOLE '%s' registry, without properly cleaning up individual jobs." % (self.objects.name))
+            logger.warning(
+                "You are about to irreversibly delete the WHOLE '%s' registry, without properly cleaning up individual jobs." %
+                (self.objects.name))
             if force:
-                logger.warning("You will also cause any other Ganga sessions accessing this repository to shut down their operations")
-                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True,force=True)" % (self.objects.name, self.objects.name))
+                logger.warning(
+                    "You will also cause any other Ganga sessions accessing this repository to shut down their operations")
+                logger.warning(
+                    "If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True,force=True)" %
+                    (self.objects.name, self.objects.name))
             else:
-                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True)" % (self.objects.name, self.objects.name))
+                logger.warning(
+                    "If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True)" %
+                    (self.objects.name, self.objects.name))
             return False
         return self.objects.clean(force)
 
@@ -124,8 +137,8 @@ class RegistrySlice(object):
         this_repr = reprlib.Repr()
         from GangaCore.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
-        ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
-        ## Required to flatten the additional arguments into a flat string in attrs_str
+        # Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
+        # Required to flatten the additional arguments into a flat string in attrs_str
         for a in attrs:
             if isclass(attrs[a]):
                 this_attr = addProxy(attrs[a]())
@@ -134,7 +147,7 @@ class RegistrySlice(object):
                 if isType(attrs[a], GangaObject):
                     this_attr = addProxy(attrs[a])
                 else:
-                    if type(attrs[a]) is str:
+                    if isinstance(attrs[a], str):
                         from GangaCore.GPIDev.Base.Proxy import getRuntimeGPIObject
                         this_attr = getRuntimeGPIObject(attrs[a], True)
                     else:
@@ -147,8 +160,13 @@ class RegistrySlice(object):
             attrs_str += ", %s=\"%s\"" % (a, flat_str)
 
         logger.debug("Attrs_Str: %s" % attrs_str)
-        logger.debug("Constructing slice: %s" % ("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
-        this_slice = self.__class__("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str))
+        logger.debug(
+            "Constructing slice: %s" %
+            ("%s.select(minid='%s', maxid='%s'%s)" %
+             (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
+        this_slice = self.__class__(
+            "%s.select(minid='%s', maxid='%s'%s)" %
+            (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str))
 
         def append(id, obj):
             this_slice.objects[id] = obj
@@ -158,17 +176,18 @@ class RegistrySlice(object):
     def do_select(self, callback, minid=None, maxid=None, **attrs):
         """Get the slice of jobs. 'minid' and 'maxid' specify optional (inclusive) slice range.
         The returned slice object has the job registry interface but it is not connected to
-        persistent storage. 
+        persistent storage.
         """
 
         logger = getLogger()
 
-        ## Loop through attrs to parse possible inputs into instances of a class where appropriate
-        ## Unlike the select method we need to populate this dictionary with instance objects, not str or class
+        # Loop through attrs to parse possible inputs into instances of a class where appropriate
+        # Unlike the select method we need to populate this dictionary with
+        # instance objects, not str or class
         for k, v in attrs.items():
             if isclass(v):
                 attrs[k] = v()
-            elif type(attrs[k]) is str:
+            elif isinstance(attrs[k], str):
                 from GangaCore.GPIDev.Base.Proxy import getRuntimeGPIObject
                 new_val = getRuntimeGPIObject(attrs[k], True)
                 if new_val is None:
@@ -249,15 +268,16 @@ class RegistrySlice(object):
                                 attrvalue = attrs[a]
 
                                 if item.isA(ComponentItem):
-                                    ## TODO we need to distinguish between passing a Class type and a defined class instance
-                                    ## If we passed a class type to select it should look only for classes which are of this type
-                                    ## If we pass a class instance a compartison of the internal attributes should be performed
+                                    # TODO we need to distinguish between passing a Class type and a defined class instance
+                                    # If we passed a class type to select it should look only for classes which are of this type
+                                    # If we pass a class instance a compartison of the internal
+                                    # attributes should be performed
                                     from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
                                     cfilter = allComponentFilters[item['category']]
                                     filtered_value = cfilter(attrs[a], item)
                                     from GangaCore.GPIDev.Base.Proxy import getName
-                                    if not filtered_value is None:
+                                    if filtered_value is not None:
                                         attrvalue = getName(filtered_value)
                                     else:
                                         attrvalue = getName(attrvalue)
@@ -314,12 +334,18 @@ class RegistrySlice(object):
             if this_id.isdigit():
                 this_id = int(this_id)
             else:
-                matches = [o for o in self.objects if fnmatch.fnmatch(o._getRegistry()._getName(o), this_id)]
+                matches = [
+                    o for o in self.objects if fnmatch.fnmatch(
+                        o._getRegistry()._getName(o), this_id)]
                 if len(matches) > 1:
-                    logger.error('Multiple Matches: Wildcards are allowed for ease of matching, however')
-                    logger.error('                  to keep a uniform response only one item may be matched.')
-                    logger.error('                  If you wanted a slice, please use the select method')
-                    raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str([x._getRegistry()._getName(x) for x in matches])))
+                    logger.error(
+                        'Multiple Matches: Wildcards are allowed for ease of matching, however')
+                    logger.error(
+                        '                  to keep a uniform response only one item may be matched.')
+                    logger.error(
+                        '                  If you wanted a slice, please use the select method')
+                    raise RegistryKeyError("Multiple matches for id='%s':%s" % (
+                        this_id, str([x._getRegistry()._getName(x) for x in matches])))
                 if len(matches) < 1:
                     return
                 return addProxy(matches[0])
@@ -412,7 +438,7 @@ class RegistrySlice(object):
                 #logger.debug("func: %s" % config[self._display_prefix + '_columns_functions'])
                 #val = self._getatr(obj, item.split('.'))
                 val = ""
-            if not val and not item in self._display_columns_show_empty:
+            if not val and item not in self._display_columns_show_empty:
                 val = ""
         except AttributeError as err:
             logger.debug("AttibErr: %s" % err)
@@ -448,7 +474,6 @@ class RegistrySlice(object):
             ds += this_format % self._display_columns
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
-
         if hasattr(self.objects, '_private_display'):
             ds += self.objects._private_display(self, this_format, default_width, markup)
 
@@ -476,11 +501,11 @@ class RegistrySlice(object):
                         continue
                     except KeyError as err:
                         logger.debug("_display KeyError: %s" % err)
-                        #pass
+                        # pass
                         if item == "fqid":
                             vals.append(self._get_display_value(obj, item))
                         elif item == 'subjob status':
-                            vals.append('---') #As this is new we don't want to reload everything
+                            vals.append('---')  # As this is new we don't want to reload everything
                         else:
                             vals.append(self._get_display_value(obj, item)[0:width])
                 ds += markup(this_format % tuple(vals), colour)
@@ -491,4 +516,3 @@ class RegistrySlice(object):
 
     def _id(self):
         return id(self)
-

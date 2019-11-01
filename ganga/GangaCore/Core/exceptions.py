@@ -4,9 +4,10 @@ This module contains all the Ganga Core specific exceptions used throughout the 
 
 """
 
+
 class GangaException(Exception):
     """Basic Ganga Exception class"""
-    __slots__=list()
+    __slots__ = list()
 
     def __str__(self):
         """
@@ -132,7 +133,8 @@ class RepositoryError(GangaException):
         self.repository = repo
         from GangaCore.Utility.logging import getLogger
         logger = getLogger()
-        logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
+        logger.error("A severe error occurred in the Repository '%s': %s" % (
+            repo.registry.name, what))
         logger.error('If you believe the problem has been solved, type "reactivate()" to re-enable ')
         try:
             from GangaCore.Core.InternalServices.Coordinator import disableInternalServices
@@ -142,8 +144,9 @@ class RepositoryError(GangaException):
             logger.error("Shutting Down Repository_runtime")
             from GangaCore.Runtime import Repository_runtime
             Repository_runtime.shutdown()
-        except:
+        except BaseException:
             logger.error("Unable to disable Internal services, they may have already been disabled!")
+
 
 class CredentialsError(GangaException):
     """
@@ -168,6 +171,7 @@ class ExpiredCredentialError(InvalidCredentialError):
     The credential has expired
     """
 
+
 class GangaKeyError(GangaException, KeyError):
     """
     Class used for known Ganga-related KeyError exception (generally to do with Credential Store) that will consequently
@@ -182,6 +186,7 @@ class GangaKeyError(GangaException, KeyError):
         KeyError.__init__(self, *args)
         self.kwds = kwds
 
+
 class GangaTypeError(GangaException, TypeError):
     """
     Class analogous to GangaKeyError. This class wraps TypeError so that users are prevented from seeing stack traces from known good exceptions thrown in Ganga code.
@@ -191,4 +196,3 @@ class GangaTypeError(GangaException, TypeError):
         super(GangaException, self).__init__(args)
         TypeError.__init__(self, *args)
         self.kwds = kwds
-
