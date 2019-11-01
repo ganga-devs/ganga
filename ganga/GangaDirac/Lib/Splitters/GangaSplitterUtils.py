@@ -26,14 +26,15 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     i = inputs.__class__()
 
     if len(inputs.getLFNs()) != len(inputs.files):
-        raise SplitterError("Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
+        raise SplitterError(
+            "Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
 
     file_replicas = {}
 
     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 
     for i in inputs:
-        #logging.debug( "getting metadata: %s" % str(i.lfn) )
+        # logging.debug( "getting metadata: %s" % str(i.lfn) )
         getQueues().add(i.getReplicas)
 
     logger.info("Requesting LFN replica info")
@@ -50,7 +51,7 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     for i in inputs:
         file_replicas[i.lfn] = i.locations
-        #logger.info( "%s" % str( i.accessURL() ) )
+        # logger.info( "%s" % str( i.accessURL() ) )
 
     logger.debug("found all replicas")
 
@@ -110,7 +111,7 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     logger.info("Created %s subsets" % str(len(split_files)))
 
-    #logger.info( "Split Files: %s" % str(split_files) )
+    # logger.info( "Split Files: %s" % str(split_files) )
 
     for dataset in split_files:
         yield dataset

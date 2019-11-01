@@ -1,4 +1,4 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import shutil
 from GangaCore.Core.exceptions import GangaException
@@ -14,16 +14,20 @@ from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 logger = getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def get_share_path(app=None):
     if not isinstance(app, IPrepareApp):
-        return os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+        return os.path.join(
+            expandfilename(
+                getConfig('Configuration')['gangadir']),
+            'shared',
+            getConfig('Configuration')['user'])
     else:
         return app.getSharedPath()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def sharedir_handler(app, root_dir_names, output):
@@ -43,17 +47,18 @@ def sharedir_handler(app, root_dir_names, output):
             if isType(output, (list, tuple, GangaList)):
                 output += [File(name=os.path.join(root, f), subdir=subdir) for f in files]
 # for f in files:
-##                 output += [File(name=os.path.join(root,f),subdir=subdir)]
-            elif type(output) is type(''):
+#                 output += [File(name=os.path.join(root,f),subdir=subdir)]
+            elif isinstance(output, type('')):
                 for d in dirs:
                     if not os.path.isdir(d):
                         os.makedirs(d)
                     for f in files:
                         shutil.copy(os.path.join(root, f), os.path.join(output, subdir, f))
             else:
-                raise GangaException('output must be either a list to append to or a path string to copy to')
+                raise GangaException(
+                    'output must be either a list to append to or a path string to copy to')
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
@@ -84,7 +89,8 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
     else:
         if len(job.inputsandbox) > 0:
             from GangaCore.GPIDev.Lib.Job import JobError
-            raise JobError("InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!")
+            raise JobError(
+                "InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!")
         inputsandbox = []
         for filepattern in getInputFilesPatterns(job)[0]:
             inputsandbox.append(File(filepattern))
@@ -104,7 +110,7 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
 
     return unique(inputsandbox), unique(outputsandbox)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig):
@@ -129,7 +135,7 @@ def sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig):
     return unique(inputsandbox), unique(outputsandbox)
 
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def script_generator(script_template,
                      outputfile_path=None,
                      remove_None=True,
@@ -161,5 +167,4 @@ def script_generator(script_template,
         f.close()
         os.system('chmod +x %s' % outputfile_path)
     return script
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

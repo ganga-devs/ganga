@@ -20,6 +20,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 
 logger = GangaCore.Utility.logging.getLogger()
 
+
 class DiracProxyInfo(VomsProxyInfo):
     """
     A wrapper around a DIRAC proxy file
@@ -50,13 +51,16 @@ class DiracProxyInfo(VomsProxyInfo):
             group_command = '--group %s --VOMS' % self.initial_requirements.group
         validTime_command = ''
         if self.initial_requirements.validTime:
-            r = re.compile('\d{2}:\d{2}$')
+            r = re.compile(r'\d{2}:\d{2}$')
             if r.match(self.initial_requirements.validTime):
                 validTime_command = '--valid %s' % self.initial_requirements.validTime
             else:
-                logger.error('Supplied time for validation not of correct format "HH:MM". Failed to create DIRAC proxy')
-                raise CredentialRenewalError('Supplied time for validation not of correct format "HH:MM". Failed to create DIRAC proxy')
-        command = getConfig('DIRAC')['proxyInitCmd'] + ' --strict --out "%s" %s %s' % (self.location, group_command, validTime_command)
+                logger.error(
+                    'Supplied time for validation not of correct format "HH:MM". Failed to create DIRAC proxy')
+                raise CredentialRenewalError(
+                    'Supplied time for validation not of correct format "HH:MM". Failed to create DIRAC proxy')
+        command = getConfig('DIRAC')[
+            'proxyInitCmd'] + ' --strict --out "%s" %s %s' % (self.location, group_command, validTime_command)
         logger.debug(command)
         self.shell.env['X509_USER_PROXY'] = self.location
         try:
@@ -64,7 +68,10 @@ class DiracProxyInfo(VomsProxyInfo):
         except subprocess.CalledProcessError:
             raise CredentialRenewalError('Failed to create DIRAC proxy')
         else:
-            logger.debug('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
+            logger.debug(
+                'Grid proxy {path} created. Valid for {time}'.format(
+                    path=self.location,
+                    time=self.time_left()))
 
     @property
     def shell(self):
@@ -152,7 +159,11 @@ class DiracProxyInfo(VomsProxyInfo):
         """
         time = self.field('timeleft')
         split_time = time.split(':')
-        return datetime.now() + timedelta(hours=int(split_time[0]), minutes=int(split_time[1]), seconds=int(split_time[2]))
+        return datetime.now() + timedelta(
+            hours=int(
+                split_time[0]), minutes=int(
+                split_time[1]), seconds=int(
+                split_time[2]))
 
     def default_location(self):
         """
@@ -171,16 +182,27 @@ class DiracProxyInfo(VomsProxyInfo):
         """
         return self.default_location()
 
+
 class DiracProxy(ICredentialRequirement):
     """
     An object specifying the requirements of a DIRAC proxy file
     """
     _schema = ICredentialRequirement._schema.inherit_copy()
-    _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy')
-    _schema.datadict['encodeDefaultProxyFileName'] = \
-        SimpleItem(defvalue=True, doc='Should the proxy be generated with the group encoded onto the end of the proxy filename')
-    _schema.datadict['dirac_env'] = SimpleItem(defvalue=None, typelist=[str, None], doc='File which can be used to access a different DIRAC backend')
-    _schema.datadict['validTime'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Time for which proxy will be valid. Default if None is 24 hours. Must be of form "HH:MM"')
+    _schema.datadict['group'] = SimpleItem(
+        defvalue=None, typelist=[
+            str, None], doc='Group for the proxy')
+    _schema.datadict['encodeDefaultProxyFileName'] = SimpleItem(
+        defvalue=True,
+        doc='Should the proxy be generated with the group encoded onto the end of the proxy filename')
+    _schema.datadict['dirac_env'] = SimpleItem(
+        defvalue=None, typelist=[
+            str, None], doc='File which can be used to access a different DIRAC backend')
+    _schema.datadict['validTime'] = SimpleItem(
+        defvalue=None,
+        typelist=[
+            str,
+            None],
+        doc='Time for which proxy will be valid. Default if None is 24 hours. Must be of form "HH:MM"')
     _category = 'CredentialRequirement'
 
     info_class = DiracProxyInfo
@@ -191,7 +213,8 @@ class DiracProxy(ICredentialRequirement):
         """
         super(DiracProxy, self).__init__(**kwargs)
         if self.group is None:
-            raise GangaValueError('DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`')
+            raise GangaValueError(
+                'DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`')
 
     def encoded(self):
         """
@@ -199,15 +222,21 @@ class DiracProxy(ICredentialRequirement):
         """
         my_config = getConfig('defaults_DiracProxy')
         default_group = my_config['group']
-        if (my_config['encodeDefaultProxyFileName'] and self.group == default_group) or self.group != default_group:
+        if (my_config['encodeDefaultProxyFileName'] and self.group ==
+                default_group) or self.group != default_group:
             if self.dirac_env is not None:
-                return ':'.join(requirement for requirement in [self.group] if requirement) + ':' + str(hash(self.dirac_env)) # filter out the empties
+                return ':'.join(requirement for requirement in [
+                                self.group] if requirement) + ':' + str(hash(self.dirac_env))  # filter out the empties
             else:
-                return ':'.join(requirement for requirement in [self.group] if requirement)  # filter out the empties
+                return ':'.join(
+                    requirement for requirement in [
+                        self.group] if requirement)  # filter out the empties
         else:
             return ''
 
-# A single global check for the DIRAC group setting. This will bail out early and safely during plugin loading.
-if getConfig('defaults_DiracProxy')['group'] is None:
-    raise GangaValueError('DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`')
 
+# A single global check for the DIRAC group setting. This will bail out
+# early and safely during plugin loading.
+if getConfig('defaults_DiracProxy')['group'] is None:
+    raise GangaValueError(
+        'DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`')

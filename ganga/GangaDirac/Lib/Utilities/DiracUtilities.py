@@ -26,20 +26,24 @@ Dirac_Proxy_Lock = threading.Lock()
 Dirac_Exec_Lock = threading.Lock()
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
+
 class GangaDiracError(GangaException):
     """ Exception type which is thrown from problems executing a command against DIRAC """
-    def __init__(self, message, dirac_id = None, job_id = None):
+
+    def __init__(self, message, dirac_id=None, job_id=None):
         GangaException.__init__(self, message)
         self.dirac_id = dirac_id
         self.job_id = job_id
+
     def __str__(self):
         if self.job_id and self.dirac_id:
-            return "GangaDiracError, Job %s with Dirac ID %s : %s" % (self.job_id, self.dirac_id, self.message)
+            return "GangaDiracError, Job %s with Dirac ID %s : %s" % (
+                self.job_id, self.dirac_id, self.message)
         else:
             return GangaException.__str__(self)
 
 
-def getDiracEnv(sourceFile = None):
+def getDiracEnv(sourceFile=None):
     """
     Returns the dirac environment stored in a global dictionary by GangaCore.
     Once loaded and stored this is used for executing all DIRAC code in future
@@ -66,7 +70,10 @@ def getDiracEnv(sourceFile = None):
                 DIRAC_ENV[sourceFile] = get_env(source_command)
             else:
                 logger.error("'DiracEnvSource' config variable empty")
-                logger.error("%s  %s" % (getConfig('DIRAC')['DiracEnvJSON'], getConfig('DIRAC')['DiracEnvSource']))
+                logger.error(
+                    "%s  %s" %
+                    (getConfig('DIRAC')['DiracEnvJSON'],
+                     getConfig('DIRAC')['DiracEnvSource']))
 
         #In case of custom location
         if os.getenv('X509_USER_PROXY'):
@@ -177,7 +184,9 @@ def getValidDiracFiles(job, names=None):
         for sj in job.subjobs:
             for df in (f for f in sj.outputfiles if isType(f, DiracFile)):
                 if df.subfiles:
-                    for valid_sf in (sf for sf in df.subfiles if sf.lfn != '' and (names is None or sf.namePattern in names)):
+                    for valid_sf in (
+                        sf for sf in df.subfiles if sf.lfn != '' and (
+                            names is None or sf.namePattern in names)):
                         yield valid_sf
                 else:
                     if df.lfn != '' and (names is None or df.namePattern in names):
@@ -185,7 +194,9 @@ def getValidDiracFiles(job, names=None):
     else:
         for df in (f for f in job.outputfiles if isType(f, DiracFile)):
             if df.subfiles:
-                for valid_sf in (sf for sf in df.subfiles if sf.lfn != '' and (names is None or sf.namePattern in names)):
+                for valid_sf in (
+                    sf for sf in df.subfiles if sf.lfn != '' and (
+                        names is None or sf.namePattern in names)):
                     yield valid_sf
             else:
                 if df.lfn != '' and (names is None or df.namePattern in names):
@@ -202,13 +213,13 @@ def execute(command,
             update_env=False,
             return_raw_dict=False,
             cred_req=None,
-            new_subprocess = False
+            new_subprocess=False
             ):
     """
     Execute a command on the local DIRAC server.
 
     This function blocks until the server returns.
-    
+
     Args:
         command (str): This is the command we're running within our DIRAC session
         timeout (int): This is the length of time that a DIRAC call has before it's decided some interaction has timed out
@@ -225,7 +236,8 @@ def execute(command,
 
     if cwd is None:
         # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
-        # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed
+        # If we are we do NOT want to execute commands which will involve any I/O
+        # on the system that isn't needed
         cwd_ = tempfile.mkdtemp()
     else:
         # We know were whe want to run, lets just run there
@@ -239,25 +251,26 @@ def execute(command,
             from GangaDirac.BOOT import running_dirac_process
             if not running_dirac_process:
                 startDiracProcess()
-            #Set up a socket to connect to the process
+            # Set up a socket to connect to the process
             from GangaDirac.BOOT import dirac_process_ids
             HOST = 'localhost'  # The server's hostname or IP address
             PORT = dirac_process_ids[1]        # The port used by the server
 
-            #Put inside a try/except in case the existing process has timed out
+            # Put inside a try/except in case the existing process has timed out
             try:
-                s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((HOST, PORT))
             except socket.error as serr:
-                #Start a new process
+                # Start a new process
                 startDiracProcess()
                 from GangaDirac.BOOT import dirac_process_ids
                 PORT = dirac_process_ids[1]
-                s= socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.connect((HOST, PORT))
 
-            #Send a random string, then change the directory to carry out the command, then send the command
-            command_to_send  = str(dirac_process_ids[2])
+            # Send a random string, then change the directory to carry out the
+            # command, then send the command
+            command_to_send = str(dirac_process_ids[2])
             command_to_send += 'os.chdir("%s")\n' % cwd_
             command_to_send += command
             s.sendall(('%s###END-TRANS###' % command_to_send).encode('utf-8'))
@@ -293,12 +306,13 @@ def execute(command,
                                       eval_includes=eval_includes,
                                       update_env=update_env)
 
-        # If the time 
+        # If the time
         if returnable == 'Command timed out!':
             raise GangaDiracError("DIRAC command timed out")
 
         # TODO we would like some way of working out if the code has been executed correctly
-        # Most commands will be OK now that we've added the check for the valid proxy before executing commands here
+        # Most commands will be OK now that we've added the check for the valid
+        # proxy before executing commands here
 
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
@@ -315,4 +329,3 @@ def execute(command,
     else:
         # Else raise an exception as it should be a dictionary
         raise GangaDiracError(returnable)
-

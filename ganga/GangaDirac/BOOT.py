@@ -10,13 +10,13 @@ from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
-#from GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
-#from GangaCore.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
+# from GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
+# from GangaCore.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 logger = getLogger()
-#user_threadpool       = WorkerThreadPool()
-#monitoring_threadpool = WorkerThreadPool()
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
+# user_threadpool       = WorkerThreadPool()
+# monitoring_threadpool = WorkerThreadPool()
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
 def diracAPI(cmd, timeout=60, cred_req=None):
@@ -45,50 +45,55 @@ def diracAPI(cmd, timeout=60, cred_req=None):
     '''
     return execute(cmd, timeout=timeout, cred_req=cred_req)
 
+
 exportToGPI('diracAPI', diracAPI, 'Functions')
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 running_dirac_process = False
 dirac_process = None
 dirac_process_ids = None
+
+
 def startDiracProcess():
     '''
     Start a subprocess that runs the DIRAC commands
     '''
-    HOST = 'localhost'  #Connect to localhost
+    HOST = 'localhost'  # Connect to localhost
     end_trans = '###END-TRANS###'
     import subprocess
     from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes, GangaDiracError
     global dirac_process
-    #Some magic to locate the python script to run
+    # Some magic to locate the python script to run
     from GangaDirac.Lib.Server.InspectionClient import runClient
-    #Create a socket and bind it to 0 to find a free port
+    # Create a socket and bind it to 0 to find a free port
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST, 0))
     PORT = s.getsockname()[1]
     s.close()
-    #Pass the port no as an argument to the popen
+    # Pass the port no as an argument to the popen
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'DiracProcess.py')
-    popen_cmd = ['python',serverpath, str(PORT)]
-    dirac_process = subprocess.Popen(popen_cmd, env = getDiracEnv(), stdin=subprocess.PIPE)
+    popen_cmd = ['python', serverpath, str(PORT)]
+    dirac_process = subprocess.Popen(popen_cmd, env=getDiracEnv(), stdin=subprocess.PIPE)
     global running_dirac_process
     running_dirac_process = (dirac_process.pid, PORT)
 
-    #Now set a random string to make sure only commands from this sessions are executed
+    # Now set a random string to make sure only commands from this sessions are executed
     rand_hash = uuid.uuid4()
     global dirac_process_ids
     dirac_process_ids = (dirac_process.pid, PORT, rand_hash)
-    #Pipe the random string without waiting for the process to finish.
+    # Pipe the random string without waiting for the process to finish.
     dirac_process.stdin.write(str(rand_hash).encode("utf-8"))
     dirac_process.stdin.close()
 
     data = ''
-    #We have to wait a little bit for the subprocess to start the server so we try until the connection stops being refused. Set a limit of one minute.
+    # We have to wait a little bit for the subprocess to start the server so
+    # we try until the connection stops being refused. Set a limit of one
+    # minute.
     connection_timeout = time.time() + 60
     started = False
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while time.time()<connection_timeout and not started:
+    while time.time() < connection_timeout and not started:
         try:
             s.connect((HOST, PORT))
             started = True
@@ -96,7 +101,7 @@ def startDiracProcess():
             time.sleep(1)
     if not started:
         raise GangaDiracError("Failed to start the Dirac server process!")
-    #Now setup the Dirac environment in the subprocess
+    # Now setup the Dirac environment in the subprocess
     dirac_command = str(rand_hash)
     dirac_command = dirac_command + getDiracCommandIncludes()
     dirac_command = dirac_command + end_trans
@@ -104,7 +109,9 @@ def startDiracProcess():
     data = s.recv(1024)
     s.close()
 
+
 exportToGPI('startDiracProcess', startDiracProcess, 'Functions')
+
 
 def stopDiracProcess():
     '''
@@ -116,7 +123,9 @@ def stopDiracProcess():
         dirac_process.kill()
         running_dirac_process = False
 
+
 exportToGPI('stopDiracProcess', stopDiracProcess, 'Functions')
+
 
 def diracAPI_interactive(connection_attempts=5):
     '''
@@ -124,27 +133,32 @@ def diracAPI_interactive(connection_attempts=5):
     '''
 
     from GangaDirac.Lib.Server.InspectionClient import runClient
-    serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'InspectionServer.py')
+    serverpath = os.path.join(
+        os.path.dirname(
+            inspect.getsourcefile(runClient)),
+        'InspectionServer.py')
     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
     getQueues().add(execute("execfile('%s')" % serverpath, timeout=None, shell=False))
 
-    #time.sleep(1)
-    sys.stdout.write( "\nType 'q' or 'Q' or 'exit' or 'exit()' to quit but NOT ctrl-D")
+    # time.sleep(1)
+    sys.stdout.write("\nType 'q' or 'Q' or 'exit' or 'exit()' to quit but NOT ctrl-D")
     i = 0
     excpt = None
     while i < connection_attempts:
         try:
             runClient()
             break
-        except:
+        except BaseException:
             if i == (connection_attempts - 1):
                 excpt = traceback.format_exc()
         finally:
             i += 1
     return excpt
+
+
 exportToGPI('diracAPI_interactive', diracAPI_interactive, 'Functions')
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
 def diracAPI_async(cmd, timeout=120):
@@ -154,16 +168,18 @@ def diracAPI_async(cmd, timeout=120):
     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
     return getQueues().add(execute(cmd, timeout=timeout))
 
+
 exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
 def getDiracFiles():
     from GangaDirac.Lib.Files.DiracFile import DiracFile
     from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
     filename = DiracFile.diracLFNBase().replace('/', '-') + '.lfns'
-    logger.info('Creating list, this can take a while if you have a large number of SE files, please wait...')
+    logger.info(
+        'Creating list, this can take a while if you have a large number of SE files, please wait...')
     execute('dirac-dms-user-lfns &> /dev/null', shell=True, timeout=None)
     g = GangaList()
     with open(filename[1:], 'r') as lfnlist:
@@ -171,9 +187,10 @@ def getDiracFiles():
         g.extend((DiracFile(lfn='%s' % lfn.strip()) for lfn in lfnlist.readlines()))
     return addProxy(g)
 
+
 exportToGPI('getDiracFiles', getDiracFiles, 'Functions')
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
 def dumpObject(object, filename):
@@ -186,8 +203,10 @@ def dumpObject(object, filename):
     try:
         with open(os.path.expandvars(os.path.expanduser(filename)), 'wb') as f:
             pickle.dump(stripProxy(object), f)
-    except:
+    except BaseException:
         logger.error("Problem when dumping file '%s': %s" % (filename, traceback.format_exc()))
+
+
 exportToGPI('dumpObject', dumpObject, 'Functions')
 
 
@@ -201,10 +220,12 @@ def loadObject(filename):
     try:
         with open(os.path.expandvars(os.path.expanduser(filename)), 'rb') as f:
             r = pickle.load(f)
-    except:
+    except BaseException:
         logger.error("Problem when loading file '%s': %s" % (filename, traceback.format_exc()))
     else:
         return addProxy(r)
+
+
 exportToGPI('loadObject', loadObject, 'Functions')
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#

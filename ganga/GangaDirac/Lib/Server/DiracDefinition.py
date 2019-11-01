@@ -1,4 +1,6 @@
 __name__ = '__main__'
+from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
+from DIRAC.Interfaces.API.Dirac import Dirac
 import os
 import sys
 import time
@@ -6,12 +8,11 @@ import datetime
 import glob
 import pickle
 from functools import wraps
-## NB parseCommandLine first then import Dirac!!
+# NB parseCommandLine first then import Dirac!!
 from DIRAC.Core.Base.Script import parseCommandLine
 parseCommandLine()
-from DIRAC.Interfaces.API.Dirac import Dirac
-from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 dirac = Dirac()
+
 
 def diracCommand(f):
     '''
@@ -24,7 +25,8 @@ def diracCommand(f):
     def diracWrapper(*args, **kwargs):
         ''' This method does the parsing of the wrapped function and it's output '''
 
-        # When pipe_out == False this function is being called internally and shouldn't pipe the output to the streams
+        # When pipe_out == False this function is being called internally and
+        # shouldn't pipe the output to the streams
         if kwargs.get('pipe_out', True) is False:
             return f(*args, **kwargs)
 
@@ -33,7 +35,8 @@ def diracCommand(f):
         try:
             # Execute the function
             cmd_output = f(*args, **kwargs)
-            if isinstance(cmd_output, dict) and 'OK' in cmd_output and ('Value' in cmd_output or 'Message' in cmd_output):
+            if isinstance(cmd_output, dict) and 'OK' in cmd_output and (
+                    'Value' in cmd_output or 'Message' in cmd_output):
                 # Handle the returned values from DIRAC HERE into a dictionary which Ganga can parse
                 output_dict = cmd_output
             else:
@@ -50,4 +53,3 @@ def diracCommand(f):
         output(output_dict)
 
     return diracWrapper
-

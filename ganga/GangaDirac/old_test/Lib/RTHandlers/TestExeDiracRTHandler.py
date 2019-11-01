@@ -6,7 +6,7 @@ from GangaCore.Core.exceptions import ApplicationConfigurationError, GangaExcept
 from GangaCore.GPI import *
 
 # GangaTest.Framework.utils defines some utility methods
-#from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
+# from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
 import unittest
 import tempfile
 import os
@@ -78,8 +78,12 @@ class TestExeDiracRTHandler(GangaGPITestCase):
                 app, self.appmasterconfig)
 
             # check the return value is of the right type
-            self.assertTrue(isinstance(jobconfig, StandardJobConfig),
-                            'Expected a StandardJobConfig object returned. Instead got %s' % repr(jobconfig))
+            self.assertTrue(
+                isinstance(
+                    jobconfig,
+                    StandardJobConfig),
+                'Expected a StandardJobConfig object returned. Instead got %s' %
+                repr(jobconfig))
 
             # create sets from the text string file names from the inputbox and
             # outputbox
@@ -88,7 +92,7 @@ class TestExeDiracRTHandler(GangaGPITestCase):
 
             # check that inputbox and outputbox contain only unique elements
             self.assertEqual(len(ipb), len(
-                jobconfig.inputbox),  'Returned inputsandbox did not contain only unique elements')
+                jobconfig.inputbox), 'Returned inputsandbox did not contain only unique elements')
             self.assertEqual(len(opb), len(
                 jobconfig.outputbox), 'Returned outputsandbox did not contain only unique elements')
 
@@ -106,8 +110,11 @@ class TestExeDiracRTHandler(GangaGPITestCase):
                 if files:
                     qualified_files = set(
                         [os.path.join(root, f) for f in files])
-                    self.assertTrue(qualified_files.issubset(
-                        idiff), 'Could not find the following prepared file(s) in jobconfig.inputbox: %s' % repr(qualified_files.difference(idiff)))
+                    self.assertTrue(
+                        qualified_files.issubset(idiff),
+                        'Could not find the following prepared file(s) in jobconfig.inputbox: %s' %
+                        repr(
+                            qualified_files.difference(idiff)))
                     # once checked that they exist in the idiff then remove
                     # them for ultimate check next
                     idiff.difference_update(qualified_files)
@@ -115,10 +122,16 @@ class TestExeDiracRTHandler(GangaGPITestCase):
             # check that no extra files, i.e. those not from the
             # job.in/outputsandbox or appconfig_in/outputbox or sharedir are
             # present
-            self.assertEqual(idiff, set(
-            ), 'jobconfig.inputbox != job.inputsandbox + appconfig.inputbox + prepared_sharedir_files: sym_diff = %s' % idiff)
-            self.assertEqual(odiff, set(
-            ), 'jobconfig.outputbox != job.outputsandbox + appconfig.outputbox: sym_diff = %s' % odiff)
+            self.assertEqual(
+                idiff,
+                set(),
+                'jobconfig.inputbox != job.inputsandbox + appconfig.inputbox + prepared_sharedir_files: sym_diff = %s' %
+                idiff)
+            self.assertEqual(
+                odiff,
+                set(),
+                'jobconfig.outputbox != job.outputsandbox + appconfig.outputbox: sym_diff = %s' %
+                odiff)
 
         # check that the proper exception is raised in case of the exe file not
         # existing
@@ -137,10 +150,14 @@ class TestExeDiracRTHandler(GangaGPITestCase):
                           msg="Checking exception raised if app not prepared")
 
     def test_prepare(self):
-        appsubconfig = StandardJobConfig(inputbox=[File('file1.txt')._impl, File('file2.txt')._impl],
-                                         outputbox=['file3.txt', 'file4.txt'])
-        jobmasterconfig = StandardJobConfig(inputbox=[File('file5.txt')._impl, File('file6.txt')._impl],
-                                            outputbox=['file7.txt', 'file8.txt'])
+        appsubconfig = StandardJobConfig(
+            inputbox=[
+                File('file1.txt')._impl, File('file2.txt')._impl], outputbox=[
+                'file3.txt', 'file4.txt'])
+        jobmasterconfig = StandardJobConfig(
+            inputbox=[
+                File('file5.txt')._impl, File('file6.txt')._impl], outputbox=[
+                'file7.txt', 'file8.txt'])
         # Start the testing for each app type
         for app in (j.application._impl for j in self.job_list):
             jobsubconfig = self._rthandler.prepare(
@@ -152,10 +169,10 @@ class TestExeDiracRTHandler(GangaGPITestCase):
             opb = set(jobsubconfig.outputbox)
 
             # check that inputbox and outputbox contain only unique elements
-            self.assertEqual(len(ipb), len(
-                jobsubconfig.inputbox),  'Returned inputsandbox did not contain only unique elements')
-            self.assertEqual(len(opb), len(
-                jobsubconfig.outputbox), 'Returned outputsandbox did not contain only unique elements')
+            self.assertEqual(len(ipb), len(jobsubconfig.inputbox),
+                             'Returned inputsandbox did not contain only unique elements')
+            self.assertEqual(len(opb), len(jobsubconfig.outputbox),
+                             'Returned outputsandbox did not contain only unique elements')
 
             # find the difference between the in/outputbox and those from the
             # defined job in/outputsandbox and appconfig_in/outputbox
@@ -175,10 +192,16 @@ class TestExeDiracRTHandler(GangaGPITestCase):
             # check that no extra files, i.e. those not from the
             # job.in/outputsandbox or appconfig_in/outputbox or sharedir are
             # present
-            self.assertEqual(idiff, set(
-            ), 'jobsubconfig.inputbox != appsubconfig.inputbox + exe-script.py + exe file: sym_diff = %s' % idiff)
-            self.assertEqual(odiff, set(
-            ), 'jobsubconfig.outputbox != appsubconfig.outputbox + jobmasterconfig.outputbox: sym_diff = %s' % odiff)
+            self.assertEqual(
+                idiff,
+                set(),
+                'jobsubconfig.inputbox != appsubconfig.inputbox + exe-script.py + exe file: sym_diff = %s' %
+                idiff)
+            self.assertEqual(
+                odiff,
+                set(),
+                'jobsubconfig.outputbox != appsubconfig.outputbox + jobmasterconfig.outputbox: sym_diff = %s' %
+                odiff)
 
             script = \
                 """# dirac job created by ganga
@@ -206,15 +229,20 @@ j.setCPUTime(172800)
 # submit the job to dirac
 result = dirac.submit(j)
 output(result)"""
-            self.assertEqual(jobsubconfig.exe,
-                             script.replace(
-                                 '###JOB_ID###', app._getParent().fqid),
-                             'Dirac API script does not match, see diff below:\n' +
-                             '\n'.join(difflib.unified_diff(jobsubconfig.exe.splitlines(),
-                                                            script.replace(
-                                                                '###JOB_ID###', app._getParent().fqid).splitlines(),
-                                                            fromfile='Coming from prepare method',
-                                                            tofile='What the test expected')))
+            self.assertEqual(
+                jobsubconfig.exe,
+                script.replace(
+                    '###JOB_ID###',
+                    app._getParent().fqid),
+                'Dirac API script does not match, see diff below:\n' +
+                '\n'.join(
+                    difflib.unified_diff(
+                        jobsubconfig.exe.splitlines(),
+                        script.replace(
+                            '###JOB_ID###',
+                            app._getParent().fqid).splitlines(),
+                        fromfile='Coming from prepare method',
+                        tofile='What the test expected')))
 
             # NEED SOME CHECK THAT THE EXE SCRIPT IS GENERATED PROPERLY
 

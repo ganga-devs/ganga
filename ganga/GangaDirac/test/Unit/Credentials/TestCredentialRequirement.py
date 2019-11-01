@@ -1,9 +1,9 @@
 
+from GangaCore.GPIDev.Credentials.AfsToken import AfsToken
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaCore.Utility.Config import getConfig
 getConfig('defaults_DiracProxy').addOption('group', 'gridpp_user', '')
 getConfig('defaults_DiracProxy').setSessionValue('group', 'gridpp_user')
-from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
-from GangaCore.GPIDev.Credentials.AfsToken import AfsToken
 
 
 def test_encoded():
@@ -70,4 +70,3 @@ def test_eq():
     assert a1 == a2
 
     assert v1 != a1
-

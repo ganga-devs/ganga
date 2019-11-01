@@ -1,3 +1,4 @@
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy, DiracProxyInfo
 import pytest
 try:
     import unittest.mock as mock
@@ -8,7 +9,7 @@ from GangaCore.Utility.Config import getConfig, makeConfig
 makeConfig('defaults_DiracProxy', '')
 getConfig('defaults_DiracProxy').addOption('group', 'gridpp_user', '')
 getConfig('defaults_DiracProxy').setSessionValue('group', 'gridpp_user')
-from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy, DiracProxyInfo
+
 
 class FakeShell(object):
     """
@@ -57,15 +58,17 @@ def resolver(dummy_class, input_):
 
 @pytest.yield_fixture(scope='function')
 def fake_shell(mocker):
-    #from GangaCore.testlib.GangaUnitTest import load_config_files, clear_config
-    #load_config_files()
+    # from GangaCore.testlib.GangaUnitTest import load_config_files, clear_config
+    # load_config_files()
     s = mocker.patch('GangaDirac.Lib.Credentials.DiracProxy.DiracProxyInfo.shell', FakeShell())
     mocker.patch('GangaDirac.Lib.Credentials.DiracProxy.DiracProxyInfo.field', resolver)
-    mocker.patch('GangaDirac.Lib.Credentials.DiracProxy.DiracProxyInfo.identity', return_value='some_user')
+    mocker.patch(
+        'GangaDirac.Lib.Credentials.DiracProxy.DiracProxyInfo.identity',
+        return_value='some_user')
     mocker.patch('GangaCore.GPIDev.Adapters.ICredentialInfo.os.path.exists', return_value=True)
     mocker.patch('GangaCore.GPIDev.Credentials.CredentialStore.CredentialStore.enable_caching', False)
     yield s
-    #clear_config()
+    # clear_config()
 
 
 def test_plain_construct(fake_shell):
@@ -109,4 +112,3 @@ def test_is_valid(fake_shell):
     fake_shell.timeleft = '0:0:0'
 
     assert not v.is_valid()
-

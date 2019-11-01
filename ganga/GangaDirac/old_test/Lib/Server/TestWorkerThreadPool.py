@@ -85,7 +85,11 @@ class TestWorkerThreadPool(GangaGPITestCase):
                 logger.info('#####################################')
                 logger.info('####             DIFF            ####')
                 logger.info('#####################################')
-            for line in difflib.unified_diff(expected.splitlines(), message.splitlines(), fromfile='expected', tofile='found'):
+            for line in difflib.unified_diff(
+                    expected.splitlines(),
+                    message.splitlines(),
+                    fromfile='expected',
+                    tofile='found'):
                 logger.info(line)
             else:
                 if message != expected:
@@ -136,9 +140,14 @@ class TestWorkerThreadPool(GangaGPITestCase):
         import sys
         import os
         # try:
-        #error_chk.append("Exception raised executing 'test_func' in Thread 'test_thread':\n%s" % 'l')
-        error_chk.append('Exception raised executing \'test_func\' in Thread \'test_thread\':\nTraceback (most recent call last):\n  File "%s", line 92, in __worker_thread\n    result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)\n  File "TestWorkerThreadPool.py", line 114, in test_func\n    raise Exception(\'help!\')\nException: help!\n' %
-                         os.path.join(os.getcwd(), sys.modules['GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool'].__file__).replace('WorkerThreadPool.pyc', 'WorkerThreadPool.py'))
+        # error_chk.append("Exception raised executing 'test_func' in Thread 'test_thread':\n%s" % 'l')
+        error_chk.append(
+            'Exception raised executing \'test_func\' in Thread \'test_thread\':\nTraceback (most recent call last):\n  File "%s", line 92, in __worker_thread\n    result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)\n  File "TestWorkerThreadPool.py", line 114, in test_func\n    raise Exception(\'help!\')\nException: help!\n' %
+            os.path.join(
+                os.getcwd(),
+                sys.modules['GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool'].__file__).replace(
+                'WorkerThreadPool.pyc',
+                'WorkerThreadPool.py'))
         # except:
         #    pass
 

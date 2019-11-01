@@ -1,13 +1,14 @@
+from GangaCore.Runtime.GPIexport import exportToGPI
 import time
 import re
 import itertools
 from GangaCore.Core.exceptions import GangaException, BackendError
-#from GangaDirac.BOOT       import dirac_ganga_server
+# from GangaDirac.BOOT       import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Base.Proxy import stripProxy
 logger = getLogger()
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def result_ok(result):
@@ -16,14 +17,19 @@ def result_ok(result):
     '''
     if result is None:
         return False
-    elif type(result) is not dict:
+    elif not isinstance(result, dict):
         return False
     else:
         output = result.get('OK', False)
         return output
 
 
-def get_result(command, exception_message=None, eval_includes=None, retry_limit=5, credential_requirements=None):
+def get_result(
+        command,
+        exception_message=None,
+        eval_includes=None,
+        retry_limit=5,
+        credential_requirements=None):
     '''
     This method returns the object from the result of running the given command against DIRAC.
     Args:
@@ -105,18 +111,18 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
     if fkwargs is None:
         fkwargs = {}
     if fargs is None:
-        fargs =  ()
+        fargs = ()
     output = []
     for f in outputfiles_iterator(job, file_type, selection_pred, include_subfiles):
         output.append(func(f, *fargs, **fkwargs))
     return output
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def ifilter_chain(selection_pred, *iterables):
     for item in filter(selection_pred,
-                                  itertools.chain(*iterables)):
+                       itertools.chain(*iterables)):
         yield item
 
 
@@ -129,18 +135,19 @@ def for_each(func, *iterables, **kwargs):
                            **kwargs.get('fkwargs', {})))
     return result
 
-def listFiles(baseDir, minAge = None, credential_requirements=None):
+
+def listFiles(baseDir, minAge=None, credential_requirements=None):
     '''
     Return a list of LFNs for files stored on the grid in the argument
     directory and its subdirectories
     param baseDir: Top directory to begin search
     type baseDir: string
     param minAge: minimum age of files to be returned
-    type minAge: string, "%w:%d:%H" 
+    type minAge: string, "%w:%d:%H"
     '''
 
     if minAge:
-        r = re.compile('\d:\d:\d')
+        r = re.compile(r'\d:\d:\d')
         if not r.match(minAge):
             logger.error("Provided min age is not in the right format '%w:%d:H'")
             return
@@ -148,11 +155,11 @@ def listFiles(baseDir, minAge = None, credential_requirements=None):
     lfns = execute('listFiles("%s", "%s")' % (baseDir, minAge), cred_req=credential_requirements)
     return lfns
 
-from GangaCore.Runtime.GPIexport import exportToGPI
+
 exportToGPI('listFiles', listFiles, 'Functions')
 
 
-def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=None):
+def getAccessURLs(lfns, defaultSE='', protocol='', credential_requirements=None):
     """
     This is a function to get a list of the accessURLs
     for a provided list of lfns. If no defaultSE is provided then one is chosen at random
@@ -160,11 +167,12 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
     protocols for the file accessURL. If left blank the default protocol for the SE will be used by Dirac.
     """
     lfnList = []
-    # Has a list of strings, which are probably lfns been given 
+    # Has a list of strings, which are probably lfns been given
     if all(isinstance(item, str) for item in lfns):
         lfnList = lfns
     else:
-        #If some elements are not strings look for the DiracFiles, separates out the LocalFiles from a job's outputfiles list
+        # If some elements are not strings look for the DiracFiles, separates out
+        # the LocalFiles from a job's outputfiles list
         for diracFile in lfns:
             try:
                 lfnList.append(diracFile.lfn)
@@ -194,7 +202,8 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
     # Remove the successfully found ones from the list and move on to the next SE.
     for SE in SEs:
         lfns = remainingLFNs
-        thisSEFiles = execute('getAccessURL(%s, "%s", %s)' % (lfns, SE, protocol), cred_req=credential_requirements)['Successful']
+        thisSEFiles = execute('getAccessURL(%s, "%s", %s)' %
+                              (lfns, SE, protocol), cred_req=credential_requirements)['Successful']
         for lfn in thisSEFiles.keys():
             myURLs.append(thisSEFiles[lfn])
             remainingLFNs.remove(lfn)
@@ -202,5 +211,6 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
         if not remainingLFNs:
             break
     return myURLs
+
 
 exportToGPI('getAccessURLs', getAccessURLs, 'Functions')

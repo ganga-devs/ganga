@@ -11,7 +11,7 @@ SocketAddress = collections.namedtuple('SocketAddress', ['address', 'port'])
 def runClient():
     end_trans = '###END-TRANS###'
     socket_addr = SocketAddress(address='localhost', port=5000)
-    while 1:
+    while True:
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect(socket_addr)
         cmd = raw_input(getColour('fg.blue') + 'diracAPI_env > ' + getColour('fg.normal'))
@@ -36,7 +36,7 @@ def runClient():
                 try:
                     print(getColour('fg.red') + 'diracAPI_env > ' +
                           getColour('fg.normal') + pformat(eval(out)) + '\n')
-                except:
+                except BaseException:
                     print(
                         getColour('fg.red') + 'diracAPI_env > ' + getColour('fg.normal') + out)
         client_socket.shutdown(socket.SHUT_RDWR)

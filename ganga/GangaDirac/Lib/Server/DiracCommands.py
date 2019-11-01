@@ -1,5 +1,6 @@
 # Dirac commands
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+
 
 @diracCommand
 def getJobGroupJobs(jg):
@@ -47,7 +48,7 @@ def ping(system, service):
 def removeFile(lfn):
     ''' Remove a given LFN from the DFC'''
     ret = {}
-    if type(lfn) is list:
+    if isinstance(lfn, list):
         for l in lfn:
             ret.update(dirac.removeFile(l))
     else:
@@ -64,13 +65,15 @@ def getMetadata(lfn):
 @diracCommand
 def getReplicas(lfns):
     ''' Return  the locations of the replicas of a given LFN in a dict format, SE: location '''
-    return dirac.getReplicas(lfns, active=True, preferDisk = True)
+    return dirac.getReplicas(lfns, active=True, preferDisk=True)
+
 
 @diracCommand
 def getReplicasForJobs(lfns):
     ''' Return the locations of the replicas of a given LFN in a dict format, SE: location.
         This is for use in the splitter to negate copies at SEs that are not to be used for user jobs '''
     return dirac.getReplicasForJobs(lfns)
+
 
 @diracCommand
 def getAccessURL(lfn, SE, protocol=False):
@@ -129,7 +132,7 @@ def uploadFile(lfn, file, diracSEs, guid=None):
                 result['Value']['Successful'][lfn].update({'GUID': guid})
             return result
         outerr.update({se: result})
-    
+
     return outerr
 
 
@@ -140,7 +143,13 @@ def addFile(lfn, file, diracSE, guid):
 
 
 @diracCommand
-def getOutputSandbox(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDir=True, pipe_out=True):
+def getOutputSandbox(
+        id,
+        outputDir=os.getcwd(),
+        unpack=True,
+        oversized=True,
+        noJobDir=True,
+        pipe_out=True):
     '''
     Get the outputsandbox and return the output from Dirac to the calling function
     id: the DIRAC jobid of interest
@@ -155,9 +164,12 @@ def getOutputSandbox(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJ
         if not noJobDir:
             tmpdir = os.path.join(outputDir, str(id))
             os.system('mv -f %s/* %s/. ; rm -rf %s' % (tmpdir, outputDir, tmpdir))
-        
-        os.system('for file in $(ls %s/*Ganga_*.log); do ln -s ${file} %s/stdout; break; done' % (outputDir, outputDir))
-    #So the download failed. Maybe the sandbox was oversized and stored on the grid. Check in the job parameters and download it
+
+        os.system(
+            'for file in $(ls %s/*Ganga_*.log); do ln -s ${file} %s/stdout; break; done' %
+            (outputDir, outputDir))
+    # So the download failed. Maybe the sandbox was oversized and stored on
+    # the grid. Check in the job parameters and download it
     else:
         parameters = dirac.getJobParameters(id)
         if parameters is not None and parameters.get('OK', False):
@@ -180,7 +192,7 @@ def getOutputDataInfo(id, pipe_out=True):
             ret[file_name]['LFN'] = lfn
             md = dirac.getLfnMetadata(lfn)
             if md.get('OK', False) and lfn in md.get('Value', {'Successful': {}})['Successful']:
-                ret[file_name]['GUID'] =  md['Value']['Successful'][lfn]['GUID']
+                ret[file_name]['GUID'] = md['Value']['Successful'][lfn]['GUID']
             # this catches if fail upload, note lfn still exists in list as
             # dirac tried it
             elif md.get('OK', False) and lfn in md.get('Value', {'Failed': {}})['Failed']:
@@ -192,7 +204,6 @@ def getOutputDataInfo(id, pipe_out=True):
             if rp.get('OK', False) and lfn in rp.get('Value', {'Successful': {}})['Successful']:
                 ret[file_name]['LOCATIONS'] = rp['Value']['Successful'][lfn].keys()
     return ret
-
 
 
 # could shrink this with dirac.getJobOutputLFNs from ##dirac
@@ -215,7 +226,7 @@ def getOutputDataLFNs(id, pipe_out=True):
         if 'UploadedOutputData' in parameters:
             lfn_list = parameters['UploadedOutputData']
             import re
-            lfns = re.split(',\s*', lfn_list)
+            lfns = re.split(r',\s*', lfn_list)
             if sandbox is not None and sandbox in lfns:
                 lfns.remove(sandbox)
             ok = True
@@ -244,7 +255,13 @@ def normCPUTime(id, pipe_out=True):
 
 
 @diracCommand
-def finished_job(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDir=True, downloadSandbox = True):
+def finished_job(
+        id,
+        outputDir=os.getcwd(),
+        unpack=True,
+        oversized=True,
+        noJobDir=True,
+        downloadSandbox=True):
     ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, takes arguments such as getOutputSandbox
     Returns the CPU time of the job as a dict, the output sandbox information in another dict and a dict of the LFN of any uploaded data'''
     out_cpuTime = normCPUTime(id, pipe_out=False)
@@ -253,7 +270,7 @@ def finished_job(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDi
     else:
         out_sandbox = None
     out_dataInfo = getOutputDataInfo(id, pipe_out=False)
-    outStateTime = {'completed' : getStateTime(id, 'completed', pipe_out=False)}
+    outStateTime = {'completed': getStateTime(id, 'completed', pipe_out=False)}
     return (out_cpuTime, out_sandbox, out_dataInfo, outStateTime)
 
 
@@ -266,11 +283,14 @@ def finaliseJobs(inputDict, statusmapping, downloadSandbox=True, oversized=True,
         returnDict[diracID] = {}
         returnDict[diracID]['cpuTime'] = normCPUTime(diracID, pipe_out=False)
         if downloadSandbox:
-            returnDict[diracID]['outSandbox'] = getOutputSandbox(diracID, inputDict[diracID], oversized, noJobDir, pipe_out=False)
+            returnDict[diracID]['outSandbox'] = getOutputSandbox(
+                diracID, inputDict[diracID], oversized, noJobDir, pipe_out=False)
         else:
             returnDict[diracID]['outSandbox'] = None
         returnDict[diracID]['outDataInfo'] = getOutputDataInfo(diracID, pipe_out=False)
-        returnDict[diracID]['outStateTime'] = {'completed' : getStateTime(diracID, 'completed', pipe_out=False)}
+        returnDict[diracID]['outStateTime'] = {
+            'completed': getStateTime(
+                diracID, 'completed', pipe_out=False)}
     return returnDict, statusList
 
 
@@ -279,7 +299,7 @@ def status(job_ids, statusmapping, pipe_out=True):
     '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
 
-    #return {'OK':True, 'Value':[['WIP', 'WIP', 'WIP', 'WIP', 'WIP']]}
+    # return {'OK':True, 'Value':[['WIP', 'WIP', 'WIP', 'WIP', 'WIP']]}
 
     result = dirac.status(job_ids)
     if not result['OK']:
@@ -295,7 +315,7 @@ def status(job_ids, statusmapping, pipe_out=True):
         if ganga_status is None:
             ganga_status = 'failed'
             dirac_status = 'Unknown: No status for Job'
-        #if dirac_status == 'Completed' and (minor_status not in ['Pending Requests']):
+        # if dirac_status == 'Completed' and (minor_status not in ['Pending Requests']):
         #    ganga_status = 'running'
         if minor_status in ['Uploading Output Data']:
             ganga_status = 'running'
@@ -304,7 +324,7 @@ def status(job_ids, statusmapping, pipe_out=True):
             from DIRAC.Core.DISET.RPCClient import RPCClient
             monitoring = RPCClient('WorkloadManagement/JobMonitoring')
             app_status = monitoring.getJobAttributes(_id)['Value']['ApplicationStatus']
-        except:
+        except BaseException:
             app_status = "unknown ApplicationStatus"
 
         status_list.append([minor_status, dirac_status, dirac_site, ganga_status, app_status])
@@ -340,7 +360,7 @@ def getStateTime(id, status, pipe_out=True):
         if checkstr in l[0]:
             T = datetime.datetime(*(time.strptime(l[3], "%Y-%m-%d %H:%M:%S")[0:6]))
             return T
-    
+
     return None
 
 
@@ -383,7 +403,7 @@ def timedetails(id):
     return d
 
 # DiracAdmin commands
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
 
 @diracCommand
@@ -403,7 +423,6 @@ def getJobPilotOutput(id, dir):
 def getServicePorts():
     ''' Get the service ports from the DiracAdmin based upon the Dirac config'''
     return DiracAdmin().getServicePorts()
-
 
 
 @diracCommand
@@ -431,7 +450,7 @@ def getSESiteMapping():
 
 
 @diracCommand
-def checkSEStatus(se, access = 'Write'):
+def checkSEStatus(se, access='Write'):
     ''' returns the value of a certain SE status flag (access or other)
       param se: Storage Element name
       type se: string
@@ -442,8 +461,9 @@ def checkSEStatus(se, access = 'Write'):
     result = dirac.checkSEAccess(se, access)
     return result
 
+
 @diracCommand
-def listFiles(baseDir, minAge = None):
+def listFiles(baseDir, minAge=None):
     ''' Return a list of LFNs for files stored on the grid in the argument
         directory and its subdirectories
         param baseDir: Top directory to begin search
@@ -460,11 +480,11 @@ def listFiles(baseDir, minAge = None):
     withMetaData = False
     cutoffTime = datetime.utcnow()
     import re
-    r = re.compile('\d:\d:\d')
+    r = re.compile(r'\d:\d:\d')
     if r.match(minAge):
         withMetaData = True
         timeList = minAge.split(':')
-        timeLimit = timedelta(weeks = int(timeList[0]), days = int(timeList[1]), hours = int(timeList[2]))
+        timeLimit = timedelta(weeks=int(timeList[0]), days=int(timeList[1]), hours=int(timeList[2]))
         cutoffTime = datetime.utcnow() - timeLimit
 
     baseDir = baseDir.rstrip('/')
@@ -475,29 +495,29 @@ def listFiles(baseDir, minAge = None):
     emptyDirs = []
 
     while len(activeDirs) > 0:
-        currentDir = activeDirs.pop()	
-        res = fc.listDirectory(currentDir, withMetaData, timeout = 360)
+        currentDir = activeDirs.pop()
+        res = fc.listDirectory(currentDir, withMetaData, timeout=360)
         if not res['OK']:
-            return "Error retrieving directory contents", "%s %s" % ( currentDir, res['Message'] )
+            return "Error retrieving directory contents", "%s %s" % (currentDir, res['Message'])
         elif currentDir in res['Value']['Failed']:
-            return "Error retrieving directory contents", "%s %s" % ( currentDir, res['Value']['Failed'][currentDir] )
+            return "Error retrieving directory contents", "%s %s" % (
+                currentDir, res['Value']['Failed'][currentDir])
         else:
             dirContents = res['Value']['Successful'][currentDir]
             subdirs = dirContents['SubDirs']
             files = dirContents['Files']
             if not subdirs and not files:
-                emptyDirs.append( currentDir )
+                emptyDirs.append(currentDir)
             else:
-                for subdir in sorted( subdirs, reverse=True):
+                for subdir in sorted(subdirs, reverse=True):
                     if (not withMetaData) or subdirs[subdir]['CreationDate'] < cutoffTime:
                         activeDirs.append(subdir)
                 for filename in sorted(files):
                     fileOK = False
                     if (not withMetaData) or files[filename]['MetaData']['CreationDate'] < cutoffTime:
                         fileOK = True
-		    if not fileOK:
+                    if not fileOK:
                         files.pop(filename)
                 allFiles += sorted(files)
 
     return allFiles
-

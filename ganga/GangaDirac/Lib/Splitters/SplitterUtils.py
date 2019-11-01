@@ -1,5 +1,5 @@
 from GangaCore.Core.exceptions import SplitterError
-#from GangaDirac.BOOT                    import dirac_ganga_server
+# from GangaDirac.BOOT                    import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaCore.Utility.Config import getConfig
@@ -23,18 +23,20 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     """
     Generator that yields a datasets for dirac split jobs
     """
-    #logger.debug( "DiracSplitter" )
-    #logger.debug( "inputs: %s" % str( inputs ) )
+    # logger.debug( "DiracSplitter" )
+    # logger.debug( "inputs: %s" % str( inputs ) )
     split_files = []
     i = inputs.__class__()
 
     if len(inputs.getLFNs()) != len(inputs.files):
-        raise SplitterError("Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
+        raise SplitterError(
+            "Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
 
-    all_files = igroup(inputs.files[:maxFiles], getConfig('DIRAC')['splitFilesChunks'], leftovers=True)
+    all_files = igroup(inputs.files[:maxFiles], getConfig(
+        'DIRAC')['splitFilesChunks'], leftovers=True)
 
-    #logger.debug( "Looping over all_files" )
-    #logger.debug( "%s" % str( all_files ) )
+    # logger.debug( "Looping over all_files" )
+    # logger.debug( "%s" % str( all_files ) )
 
     for files in all_files:
 

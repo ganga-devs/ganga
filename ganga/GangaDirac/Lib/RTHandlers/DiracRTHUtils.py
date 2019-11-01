@@ -8,7 +8,7 @@ from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaCore.GPIDev.Base.Proxy import getName
 logger = getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def mangle_job_name(app):
@@ -43,7 +43,7 @@ def mangle_job_name(app):
     elif addBracket:
         result += '}'
     return result
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def API_nullifier(item):
@@ -54,6 +54,7 @@ def API_nullifier(item):
     if item is None or len(item) == 0:
         return None
     return item
+
 
 def dirac_outputfile_jdl(output_files, empty_SE_check):
     """
@@ -70,14 +71,14 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
     file_SE_dict = {}
 
     for this_file in _output_files:
-        
+
         # Group files by destination SE
-        if not this_file.defaultSE in file_SE_dict:
+        if this_file.defaultSE not in file_SE_dict:
             file_SE_dict[this_file.defaultSE] = {}
 
         # Then group them by remoteDir
         remoteDir = this_file.expandString(this_file.remoteDir)
-        if not remoteDir in file_SE_dict[this_file.defaultSE]:
+        if remoteDir not in file_SE_dict[this_file.defaultSE]:
             file_SE_dict[this_file.defaultSE][remoteDir] = []
 
         # Now can construct string to upload the file
@@ -105,8 +106,9 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
                 myLine = myLine.replace('###OUTPUT_SE###', str([outputSE]))
             else:
                 if empty_SE_check:
-                    ## If true check, if not false check
-                    raise BackendError("Dirac", "Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
+                    # If true check, if not false check
+                    raise BackendError(
+                        "Dirac", "Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
                 myLine = myLine.replace('###OUTPUT_SE###', str([]))
 
             relative_path = ''
@@ -145,14 +147,22 @@ def dirac_inputdata(app, hasOtherInputData=False):
     if not job.inputdata and job.master and job.master.inputdata is not None and job.master.inputdata:
         wanted_job = job.master
 
-    inputLFNs = ['LFN:'+this_file.lfn for this_file in wanted_job.inputdata if isinstance(this_file, DiracFile)]
+    inputLFNs = [
+        'LFN:' +
+        this_file.lfn for this_file in wanted_job.inputdata if isinstance(
+            this_file,
+            DiracFile)]
 
     # master job with a splitter reaching prepare, hence bulk submit
     if not job.master and job.splitter:
         parametricinput_data = dirac_parametric_split(app)
-        if parametricinput_data is not None and len(parametricinput_data) > getConfig('DIRAC')['MaxDiracBulkJobs']:
-            raise BackendError('Dirac', 'Number of bulk submission jobs \'%s\' exceeds the maximum allowed \'%s\' if more are needed please modify your config. Note there is a hard limit in Dirac of currently 1000.' % (
-                len(parametricinput_data), getConfig('DIRAC')['MaxDiracBulkJobs']))
+        if parametricinput_data is not None and len(
+                parametricinput_data) > getConfig('DIRAC')['MaxDiracBulkJobs']:
+            raise BackendError(
+                'Dirac',
+                'Number of bulk submission jobs \'%s\' exceeds the maximum allowed \'%s\' if more are needed please modify your config. Note there is a hard limit in Dirac of currently 1000.' %
+                (len(parametricinput_data),
+                 getConfig('DIRAC')['MaxDiracBulkJobs']))
         # master job with no splitter or subjob already split proceed as normal
         else:
             input_data = inputLFNs
@@ -172,7 +182,7 @@ def dirac_inputdata(app, hasOtherInputData=False):
 
     return input_data, parametricinput_data
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def dirac_parametric_split(app):
@@ -183,7 +193,12 @@ def dirac_parametric_split(app):
     data = app.getJobObject().inputdata
     splitter = app.getJobObject().splitter
 
-    split_data = [dataset for dataset in DiracSplitter(data, splitter.filesPerJob, splitter.maxFiles, splitter.ignoremissing)]
+    split_data = [
+        dataset for dataset in DiracSplitter(
+            data,
+            splitter.filesPerJob,
+            splitter.maxFiles,
+            splitter.ignoremissing)]
 
     split_files = []
 
@@ -193,7 +208,7 @@ def dirac_parametric_split(app):
             if isinstance(this_file, DiracFile):
                 this_dataset.append(this_file.lfn)
             else:
-                raise SplitterError("ERROR: file: %s NOT of type DiracFile" % str(this_file) )
+                raise SplitterError("ERROR: file: %s NOT of type DiracFile" % str(this_file))
         split_files.append(this_dataset)
 
     if len(split_files) > 0:
@@ -202,7 +217,7 @@ def dirac_parametric_split(app):
     return None
 
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def dirac_ouputdata(app):
     """ TODO work out if this is still called anywhere?
     Returns the outputdata files as a tuple of files and location
@@ -215,21 +230,25 @@ def dirac_ouputdata(app):
     return None, None
 
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def diracAPI_script_template():
     """ Generate and return the DiracAPI job submission template """
 
     import inspect
     import os.path
-    script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                   'DiracRTHScript.py.template')
+    script_location = os.path.join(
+        os.path.dirname(
+            os.path.abspath(
+                inspect.getfile(
+                    inspect.currentframe()))),
+        'DiracRTHScript.py.template')
 
     from GangaCore.GPIDev.Lib.File import FileUtils
     script_template = FileUtils.loadScript(script_location, '')
 
     return script_template
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def diracAPI_script_settings(app):
@@ -241,21 +260,21 @@ def diracAPI_script_settings(app):
     """
     job = app.getJobObject()
     diracAPI_line = ''
-    if type(job.backend.settings) is not dict:
+    if not isinstance(job.backend.settings, dict):
         raise ApplicationConfigurationError('backend.settings should be a dict')
     for setting, setting_val in job.backend.settings.items():
         if str(setting).startswith('set'):
             _setting = str(setting)[3:]
         else:
             _setting = str(setting)
-        if type(setting_val) is str:
+        if isinstance(setting_val, str):
             setting_line = 'j.set###SETTING###("###VALUE###")\n'
         else:
             setting_line = 'j.set###SETTING###(###VALUE###)\n'
-        diracAPI_line += setting_line.replace('###SETTING###', _setting).replace('###VALUE###', str(setting_val))
+        diracAPI_line += setting_line.replace('###SETTING###',
+                                              _setting).replace('###VALUE###', str(setting_val))
     if diracAPI_line == '':
         diracAPI_line = None
 
     return diracAPI_line
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

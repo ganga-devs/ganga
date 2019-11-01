@@ -229,15 +229,21 @@ def test_reset(db):
     db.getJobObject().status = 'completing'
     db.reset()
     assert db.getJobObject().status == 'submitted', 'didn\t reset job'
-    assert [j.status for j in db.getJobObject().subjobs] != ['submitted', 'submitted'], 'subjobs not reset properly'
+    assert [
+        j.status for j in db.getJobObject().subjobs] != [
+        'submitted', 'submitted'], 'subjobs not reset properly'
 
     db.reset(doSubjobs=True)
-    assert [j.status for j in db.getJobObject().subjobs] == ['submitted', 'submitted'], 'subjobs not reset properly'
+    assert [
+        j.status for j in db.getJobObject().subjobs] == [
+        'submitted', 'submitted'], 'subjobs not reset properly'
 
     for j in db.getJobObject().subjobs:
         j.status = 'completed'
     db.reset(doSubjobs=True)
-    assert [j.status for j in db.getJobObject().subjobs] != ['submitted', 'submitted'], 'subjobs not supposed to reset'
+    assert [
+        j.status for j in db.getJobObject().subjobs] != [
+        'submitted', 'submitted'], 'subjobs not supposed to reset'
 
 
 def test_kill(db, mocker):
@@ -276,12 +282,16 @@ def test_getOutputSandbox(db, mocker):
     temp_dir = j.getOutputWorkspace().getPath()
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         assert db.getOutputSandbox(), 'didn\'t run'
-        execute.assert_called_once_with("getOutputSandbox(1234,'%s', True)" % temp_dir, cred_req=mocker.ANY)
+        execute.assert_called_once_with(
+            "getOutputSandbox(1234,'%s', True)" %
+            temp_dir, cred_req=mocker.ANY)
 
     test_dir = 'test_dir'
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         assert db.getOutputSandbox(test_dir), 'didn\'t run with modified dir'
-        execute.assert_called_once_with("getOutputSandbox(1234,'%s', True)" % test_dir, cred_req=mocker.ANY)
+        execute.assert_called_once_with(
+            "getOutputSandbox(1234,'%s', True)" %
+            test_dir, cred_req=mocker.ANY)
 
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')) as execute:
         assert not db.getOutputSandbox(test_dir), 'didn\'t fail gracefully'

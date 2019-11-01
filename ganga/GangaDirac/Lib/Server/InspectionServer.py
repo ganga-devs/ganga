@@ -56,10 +56,10 @@ while True:
     print("Executing command '%s'" % cmd, file=server_stdout)
     try:
         print(eval(cmd))
-    except:
+    except BaseException:
         try:
             exec(cmd)
-        except:
+        except BaseException:
             print("Exception raised executing command (cmd) '%s'\n" % cmd)
             print(traceback.format_exc())
     client_socket.sendall(end_trans)
@@ -67,4 +67,3 @@ while True:
     client_socket.close()
 server_socket.shutdown(socket.SHUT_RDWR)
 server_socket.close()
-

@@ -44,20 +44,27 @@ def test__init__(df):
     assert d1.locations == [], 'locations not initialised as empty list'
 
     d2 = DiracFile(namePattern='np', lfn='lfn', localDir='ld')
-    assert d2.namePattern == 'np', 'namePattern not keyword initialised as np, initialized as: %s\n%s' % (d2.namePattern, str(d2))
-    assert d2.lfn == 'lfn', 'lfn not keyword initialised as lfn, initialized as: %s\n%s' % (d2.lfn, str(d2))
-    assert d2.localDir == 'ld', 'localDir not keyword initialised as ld, initializes as %s\n%s' % (d2.localDir, str(d2.localDir))
+    assert d2.namePattern == 'np', 'namePattern not keyword initialised as np, initialized as: %s\n%s' % (
+        d2.namePattern, str(d2))
+    assert d2.lfn == 'lfn', 'lfn not keyword initialised as lfn, initialized as: %s\n%s' % (
+        d2.lfn, str(d2))
+    assert d2.localDir == 'ld', 'localDir not keyword initialised as ld, initializes as %s\n%s' % (
+        d2.localDir, str(d2.localDir))
 
 
 def test__attribute_filter__set__(df):
-    assert df._attribute_filter__set__('dummyAttribute', 12) == 12, 'Pass through of non-specified attribute failed'
-    assert df._attribute_filter__set__('lfn', 'a/whole/newlfn') == 'a/whole/newlfn', "setting of lfn didn't return the lfn value"
+    assert df._attribute_filter__set__(
+        'dummyAttribute', 12) == 12, 'Pass through of non-specified attribute failed'
+    assert df._attribute_filter__set__(
+        'lfn', 'a/whole/newlfn') == 'a/whole/newlfn', "setting of lfn didn't return the lfn value"
     assert df.namePattern == 'newlfn', "Setting the lfn didn't change the namePattern accordingly"
-    assert df._attribute_filter__set__('localDir', '~') == os.path.expanduser('~'), "Didn't fully expand the path"
+    assert df._attribute_filter__set__('localDir', '~') == os.path.expanduser(
+        '~'), "Didn't fully expand the path"
 
 
 def test__repr__(df):
-    assert repr(df) == "DiracFile(namePattern='%s', lfn='%s', localDir='%s')" % (df.namePattern, df.lfn, df.localDir)
+    assert repr(df) == "DiracFile(namePattern='%s', lfn='%s', localDir='%s')" % (
+        df.namePattern, df.lfn, df.localDir)
 
 
 def test__auto_remove(df):
@@ -127,13 +134,17 @@ def test_get(df):
     df.lfn = 'lfn'
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         assert df.get() is True
-        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
+        execute.assert_called_once_with(
+            'getFile("%s", destDir="%s")' %
+            (df.lfn, df.localDir), cred_req=ANY)
 
     df.lfn = '/the/root/lfn'
     df.namePattern = ''
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         assert df.get() is True
-        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
+        execute.assert_called_once_with(
+            'getFile("%s", destDir="%s")' %
+            (df.lfn, df.localDir), cred_req=ANY)
         assert df.namePattern == 'lfn'
 
     df.lfn = '/the/root/lfn.gz'
@@ -141,7 +152,9 @@ def test_get(df):
     df.namePattern = ''
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         assert df.get() is True
-        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
+        execute.assert_called_once_with(
+            'getFile("%s", destDir="%s")' %
+            (df.lfn, df.localDir), cred_req=ANY)
         assert df.namePattern == 'lfn'
 
     def getMetadata(this):
@@ -153,7 +166,9 @@ def test_get(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
             assert df.get() is True
-            execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
+            execute.assert_called_once_with(
+                'getFile("%s", destDir="%s")' %
+                (df.lfn, df.localDir), cred_req=ANY)
             assert df.guid == 'guid'
             assert df.locations == ['location']
 
@@ -161,7 +176,9 @@ def test_get(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
             assert df.get() is True
-            execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
+            execute.assert_called_once_with(
+                'getFile("%s", destDir="%s")' %
+                (df.lfn, df.localDir), cred_req=ANY)
             assert df.guid == 'guid'
             assert df.locations == ['location']
 
@@ -170,7 +187,9 @@ def test_get(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
             assert df.get() is True
-            execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
+            execute.assert_called_once_with(
+                'getFile("%s", destDir="%s")' %
+                (df.lfn, df.localDir), cred_req=ANY)
             assert df.guid == 'guid'
             assert df.locations == ['location']
 
@@ -178,4 +197,6 @@ def test_get(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracError('test Exception')) as execute:
         with pytest.raises(GangaDiracError):
             assert df.get()
-        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
+        execute.assert_called_once_with(
+            'getFile("%s", destDir="%s")' %
+            (df.lfn, df.localDir), cred_req=ANY)
