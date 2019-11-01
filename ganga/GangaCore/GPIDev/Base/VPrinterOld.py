@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -134,8 +134,10 @@ class VPrinterOld(object):
     def acceptOptional(self, s):
         if s is None:
             print(None, end=' ', file=self.out)
-        else:
+        elif hasattr(s, 'accept'):
             runProxyMethod(s, 'accept', self)
+        else:
+            self.quote(s)
 
     def componentAttribute(self, node, name, subnode, sequence):
         if self.showAttribute(node, name):

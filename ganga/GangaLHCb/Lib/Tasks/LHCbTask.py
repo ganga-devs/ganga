@@ -20,8 +20,7 @@ logger = getLogger()
 class LHCbTask(ITask):
 
     """LHCb add-ons for the Task framework"""
-    _schema = Schema(Version(1, 0), dict(ITask._schema.datadict.items() + {
-    }.items()))
+    _schema = Schema(Version(1, 0), dict(ITask._schema.datadict.items()))
 
     _category = 'tasks'
     _name = 'LHCbTask'

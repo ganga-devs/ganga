@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 from threading import Thread, RLock
 from .GangaThreadPool import GangaThreadPool
 from GangaCore.Utility.logging import getLogger

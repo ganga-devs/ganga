@@ -8,7 +8,7 @@
 Remove hardcoded limits on the help text.
 This module makes changes to the content of the pydoc module.
 """
-from __future__ import absolute_import
+
 
 import pydoc
 
@@ -55,7 +55,7 @@ def makedocindex():
 
     from GangaCore.Utility.strings import ItemizedTextParagraph
 
-    for sec, names in zip(_GPIhelp_sections.keys(), _GPIhelp_sections.values()):
+    for sec, names in zip(list(_GPIhelp_sections.keys()), list(_GPIhelp_sections.values())):
         itbuf = ItemizedTextParagraph(sec + ':')
         for name, obj, docstring in names:
             # if docstring not provided when exporting the object to GPI then
@@ -185,7 +185,7 @@ def mygetmodule(object):
             return builtin
 
 
-def doc2(thing, title='Python Library Documentation: %s', forceload=0):
+def doc2(thing, title='Python Library Documentation: %s', forceload=0, output=None):
     """Display text documentation, given an object or a path to an object."""
     try:
         object, name = pydoc.resolve(thing, forceload)

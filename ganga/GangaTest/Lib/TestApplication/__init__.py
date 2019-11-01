@@ -1,2 +1,2 @@
-from TestApplication import *
-from TestDataset import *
+from GangaTest.Lib.TestApplication import *
+from GangaTest.Lib.TestApplication.TestDataset import *

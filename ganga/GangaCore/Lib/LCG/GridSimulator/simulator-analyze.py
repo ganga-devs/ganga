@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 #from GangaCore.Lib.LCG.GridSimulator import GridSimulator
 #g = GridSimulator()
@@ -76,16 +76,15 @@ while i < len(job_finished_times) and j < len(ganga_finished_times):
         j += 1
 
 
-f = file('%s/idle.dat' % basedir, 'w')
-f.write(
-    "# time-based counter of jobs which were reported by the grid as finished but not completed/failed in ganga\n")
-f.write(
-    "# x = time in seconds from the beginning of the analysis, y = counter of 'idle' jobs\n")
-for i in idle:
-    f.write("%d %d\n" % i)
-
-f = file('%s/deltas.dat' % basedir, 'w')
-f.write(
-    "# time difference (for each individual job) between the job was reported by the grid as finished and completed/failed in ganga\n")
-for d in deltas:
-    f.write(d + '\n')
+with open('%s/idle.dat' % basedir, 'w') as f:
+    f.write(
+        "# time-based counter of jobs which were reported by the grid as finished but not completed/failed in ganga\n")
+    f.write(
+        "# x = time in seconds from the beginning of the analysis, y = counter of 'idle' jobs\n")
+    for i in idle:
+        f.write("%d %d\n" % i)
+with open('%s/deltas.dat' % basedir, 'w') as f:
+    f.write(
+        "# time difference (for each individual job) between the job was reported by the grid as finished and completed/failed in ganga\n")
+    for d in deltas:
+        f.write(d + '\n')

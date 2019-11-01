@@ -249,7 +249,7 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
     # First find the SE for each site - there is a handy DIRAC function that gives us everything quickly
     CE_to_SE_mapping = wrapped_execute('getSESiteMapping()', dict)
 
-    for lfn, repz in file_replicas.iteritems():
+    for lfn, repz in file_replicas.items():
         sitez = set([])
         for replica in repz:
             sitez.add(replica)
@@ -265,7 +265,7 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
                 del CE_to_SE_mapping[iSE]
 
     # Now calculate the 'inverse' dictionary of site for each SE
-    for SE, sites in CE_to_SE_mapping.iteritems():
+    for SE, sites in CE_to_SE_mapping.items():
         for site_i in sites:
             if site_i not in SE_to_CE_mapping:
                 SE_to_CE_mapping[site_i] = set([])
@@ -278,7 +278,7 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
     # Now lets generate a dictionary of some chosen site vs LFN to use in
     # constructing subsets
     site_dict = {}
-    for lfn, sites in SE_dict.iteritems():
+    for lfn, sites in SE_dict.items():
         site_dict[lfn] = set([])
         for site in sites:
             if site in CE_to_SE_mapping.keys():
@@ -382,7 +382,7 @@ def updateLFNData(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
                 logger.error("Error updating remoteURLs for: %s" % str(this_lfn))
 
             # If we find NO replicas then also mark this as bad!
-            if this_dict[this_lfn].keys() == []:
+            if list(this_dict[this_lfn].keys()) == []:
                 bad_lfns.append(this_lfn)
 
         for this_lfn in bad_lfns:
@@ -527,11 +527,11 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
 
     iterations = 0
     # Loop over all LFNs
-    while len(site_dict.keys()) > 0:
+    while len(site_dict) > 0:
 
         # LFN left to be used
         # NB: Can't modify this list and iterate over it directly in python
-        LFN_instances = site_dict.keys()
+        LFN_instances = list(site_dict.keys())
         # Already used LFN
         chosen_lfns = set()
 

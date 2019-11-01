@@ -3,7 +3,7 @@
 #
 # $Id: TestRootMerger.py,v 1.2 2009-03-18 10:46:01 wreece Exp $
 ##########################################################################
-from __future__ import division
+
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, write_file
 import os
@@ -96,7 +96,7 @@ gBenchmark.Show( 'fillrandom' )
 import shutil
 shutil.copyfile('fillrandom.root','fillrandom.foo')
 
-out_log = file('outfile.abc','w')
+out_log = open('outfile.abc','w')
 try:
    out_log.write('This is some text output from the job')
 finally:

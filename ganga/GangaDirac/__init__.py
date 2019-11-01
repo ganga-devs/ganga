@@ -101,18 +101,18 @@ if not _after_bootstrap:
 
 def standardSetup():
 
-    import PACKAGE
+    from . import PACKAGE
     PACKAGE.standardSetup()
 
 
 
 def loadPlugins(config=None):
     logger.debug("Loading Backends")
-    import Lib.Backends
+    from .Lib import Backends
     logger.debug("Loading RTHandlers")
-    import Lib.RTHandlers
+    from .Lib import RTHandlers
     logger.debug("Loading Files")
-    import Lib.Files
+    from .Lib import Files
 
 def postBootstrapHook():
     dirac_conf = getConfig('DIRAC')

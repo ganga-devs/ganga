@@ -112,8 +112,8 @@ class GridSimulator(object):
         inputdir = os.path.dirname(os.path.realpath(jdlpath))
 
         def write():
-            file(os.path.join(inputdir, 'params'), 'w').write(
-                repr(runtime_params))
+            with open(os.path.join(inputdir, 'params'), 'w') as file_:
+                file_.write(repr(runtime_params))
 
         runtime_params = {}
         runtime_params['submission_time_start'] = time.time()
@@ -154,11 +154,11 @@ class GridSimulator(object):
 
         sleep(config['cancel_time'])
         if failed(config['cancel_failure_rate']):
-            file(self._params_filename(jobid), 'a').write(
-                '\n failed to cancel: %d' % time.time())
+            with open(self._params_filename(jobid), 'a') as file_:
+                file_.write('\n failed to cancel: %d' % time.time())
             return False
-        file(self._params_filename(jobid), 'a').write(
-            '\ncancelled: %d' % time.time())
+        with open(self._params_filename(jobid), 'a') as file_:
+            file_.write('\ncancelled: %d' % time.time())
         return True
 
     def native_master_cancel(self, jobid):

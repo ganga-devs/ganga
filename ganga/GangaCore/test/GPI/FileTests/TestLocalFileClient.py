@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 import os
 import shutil
 import copy
@@ -50,7 +50,7 @@ class TestLocalFileClient(GangaUnitTest):
             if os.path.isfile(file_):
                 os.unlink(file_)
             else:
-                print("ERROR REMOVING FILE: '%s'" % str(file_))
+                print(("ERROR REMOVING FILE: '%s'" % str(file_)))
         TestLocalFileClient._managed_files = []
 
     def test_a_testClientSideSubmit(self):

@@ -3,7 +3,7 @@
 # determine SE type
 #
 
-import os, urllib, sys, imp, commands, re, socket
+import os, urllib, sys, importlib, commands, re, socket
 
 # error codes
 # WRAPLCG_UNSPEC
@@ -32,7 +32,7 @@ def getTiersOfATLASCache():
         print 'Failed to download TiersOfATLASCache.py'
         
     try:
-        tiersofatlas = imp.load_source('',local)
+        tiersofatlas = importlib.load_source('',local)
     except SyntaxError:
         print 'Error loading TiersOfATLASCache.py'
         sys.exit(EC_UNSPEC)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 from __future__ import print_function
 
 import os,os.path,shutil,tempfile
@@ -76,7 +76,7 @@ sys.path.insert(0, ###GANGADIR###)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
 fullenvironment = os.environ.copy()
-for key,value in environment.iteritems():
+for key,value in environment.items():
     fullenvironment[key] = value
 
 outfile=open('stdout','w')

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.testlib.monitoring import run_until_completed

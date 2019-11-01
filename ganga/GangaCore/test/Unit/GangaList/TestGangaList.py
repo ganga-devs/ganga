@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 try:
     import unittest2 as unittest
@@ -47,6 +47,10 @@ class TestGangaList(unittest.TestCase):
         name = TestGangaList._makeRandomString()
         subdir = TestGangaList._makeRandomString()
         return TFile(name=name, subdir=subdir)
+
+    @staticmethod
+    def _cmp(a, b):
+        return (a > b) - (a < b) 
 
     def setUp(self):
         super(TestGangaList, self).setUp()
@@ -120,8 +124,8 @@ class TestGangaList(unittest.TestCase):
 
     def testAddMixed2(self):
 
-        self.plain1 = range(10)
-        self.plain2 = range(10)
+        self.plain1 = list(range(10))
+        self.plain2 = list(range(10))
 
         self.assertTrue(isProxy(self.proxied2[-1]), 'Element access must get proxies')
         self.assertFalse(isProxy(self.plain1[0]), 'Element access must not proxies')
@@ -376,7 +380,7 @@ class TestGangaList(unittest.TestCase):
 
     def testExtend(self):
 
-        t1 = [self._makeRandomTFile() for _ in xrange(10)]
+        t1 = [self._makeRandomTFile() for _ in range(10)]
 
         self.plain1.extend(t1)
         self.proxied1.extend(t1)
@@ -448,7 +452,7 @@ class TestGangaList(unittest.TestCase):
 
     def testCmp(self):
 
-        self.assertEqual(cmp(self.proxied1, self.proxied2), cmp(self.plain1, self.plain2))
+        self.assertEqual(self._cmp(self.proxied1, self.proxied2), self._cmp(self.plain1, self.plain2))
 
     def testHash(self):
 
