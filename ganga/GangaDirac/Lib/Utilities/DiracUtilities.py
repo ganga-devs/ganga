@@ -68,6 +68,9 @@ def getDiracEnv(sourceFile = None):
                 logger.error("'DiracEnvSource' config variable empty")
                 logger.error("%s  %s" % (getConfig('DIRAC')['DiracEnvJSON'], getConfig('DIRAC')['DiracEnvSource']))
 
+        #In case of custom location
+        if os.getenv('X509_USER_PROXY'):
+            DIRAC_ENV[sourceFile]['X509_USER_PROXY'] = os.getenv('X509_USER_PROXY')
     return DIRAC_ENV[sourceFile]
 
 
