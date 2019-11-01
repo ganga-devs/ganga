@@ -8,7 +8,7 @@ def browseBK(gui=True):
     """Return an LHCbDataset from the GUI LHCb Bookkeeping.
 
     Utility function to launch the new LHCb bookkeeping from inside GangaCore.
-    The function returns an LHCbDataset object. 
+    The function returns an LHCbDataset object.
 
     After browsing and selecting the desired datafiles, click on the
     \"Save as ...\" button. The Browser will quit and save the seleted files
@@ -21,7 +21,7 @@ def browseBK(gui=True):
 
     # retrieve an LHCbDataset object with the selected files and store
     # them in the jobs inputdata field, ready for submission
-    j.inputdata=browseBK()    
+    j.inputdata=browseBK()
     """
     import GangaCore.Utility.logging
     from GangaCore.GPIDev.Base.Proxy import addProxy
@@ -34,6 +34,7 @@ def browseBK(gui=True):
         return None
     bkk = Bookkeeping()
     return addProxy(bkk.browse(gui))
+
 
 exportToGPI('browseBK', browseBK, 'Functions')
 
@@ -48,7 +49,7 @@ def fixBKQueryInBox(newCategory='query'):
     gangadir = getConfig('Configuration')['gangadir']
     logger.info('found gangadir = ' + gangadir)
     for root, dirs, files in os.walk(gangadir):
-        if 'data' in files and 'box' in root and not 'box.' in root:
+        if 'data' in files and 'box' in root and 'box.' not in root:
             path = os.path.join(root, 'data')
             logger.info("looking at " + path)
             f1 = open(path, 'r')
@@ -91,6 +92,7 @@ def fixBKQueryInBox(newCategory='query'):
     logger.info(
         "PLEASE NOW QUIT THIS GANGA SESSION AND RESTART TO SEE EFFECTS.")
 
+
 exportToGPI('fixBKQueryInBox', fixBKQueryInBox, 'Functions')
 
 
@@ -100,7 +102,7 @@ def restoreOLDBox():
     gangadir = getConfig('Configuration')['gangadir']
     logger.info('found gangadir = ' + gangadir)
     for root, dirs, files in os.walk(gangadir):
-        if 'dataX' in files and 'box' in root and not 'box.' in root:
+        if 'dataX' in files and 'box' in root and 'box.' not in root:
             path = os.path.join(root, 'data')
             logger.info("restoring old BKQuery box file...")
             os.system('mv %sX %s; mv %s~X %s~' % (path, path, path, path))
@@ -108,5 +110,6 @@ def restoreOLDBox():
     logger.info("box repository converted!\n")
     logger.info(
         "PLEASE NOW QUIT THIS GANGA SESSION AND RESTART TO SEE EFFECTS.")
+
 
 exportToGPI('restoreOLDBox', restoreOLDBox, 'Functions')

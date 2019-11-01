@@ -22,7 +22,8 @@ def store_dirac_environment():
 #    try:
 #        platform = os.environ[platform_env_var]
 #    except KeyError:
-#        logger.error("Environment variable %s is missing. Can't cache LHCbDIRAC environment.", platform_env_var)
+#        logger.error("Environment variable %s is missing. Can't cache LHCbDIRAC environment.",
+#                     platform_env_var)
 #        raise PluginError
     # While LHCbDirac is only available for gcc49 we shall unfortunately hard-code the platform.
     platform = 'x86_64-slc6-gcc49-opt'
@@ -36,7 +37,9 @@ def store_dirac_environment():
     try:
         # we check if a real version (e.g. v9r2, or v9r3p13 or v10r12-pre9) is requested
         if isinstance(lbVersion[1], int) and isinstance(lbVersion[3], int):
-            logger.warn("Specific version is requested (%s), please consider removing it!", requestedVersion)
+            logger.warn(
+                "Specific version is requested (%s), please consider removing it!",
+                requestedVersion)
             diracversion = requestedVersion
         else:
             diracversion = 'prod'
@@ -48,7 +51,8 @@ def store_dirac_environment():
 
     # FIXME: for v9r3+ lb-run works in compatibility mode
     # (sourcing the environment is what should be done for v9r3+)
-    cmd = '. /cvmfs/lhcb.cern.ch/group_login.sh &>/dev/null && lb-run -c best LHCBDIRAC/{version} python -c "import os; print(os.environ)"'.format(version=diracversion)
+    cmd = '. /cvmfs/lhcb.cern.ch/group_login.sh &>/dev/null && lb-run -c best LHCBDIRAC' \
+          '/{version} python -c "import os; print(os.environ)"'.format(version=diracversion)
     env = execute(cmd, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
 
     if isinstance(env, str):
@@ -58,7 +62,9 @@ def store_dirac_environment():
 
         except SyntaxError:
             logger.error("LHCbDirac version %s does not exist", diracversion)
-            raise OptionValueError("LHCbDirac version {version} does not exist".format(version=diracversion))
+            raise OptionValueError(
+                "LHCbDirac version {version} does not exist".format(
+                    version=diracversion))
     try:
         write_env_cache(env, fname)
         logger.debug("Storing new LHCbDirac environment (%s:%s)", str(diracversion), str(platform))

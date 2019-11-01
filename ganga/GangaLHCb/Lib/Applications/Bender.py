@@ -1,6 +1,9 @@
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Application handler for Bender applications in LHCb.'''
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
+from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
 import os
 import tempfile
 import pprint
@@ -29,7 +32,7 @@ from GangaLHCb.Lib.Applications import XMLPostProcessor
 
 logger = GangaCore.Utility.logging.getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 class Bender(GaudiBase):
@@ -87,7 +90,7 @@ class Bender(GaudiBase):
     _schema.version.major += 2
     _schema.version.minor += 0
 
-    #def __init__(self):
+    # def __init__(self):
     #    super(Bender, self).__init__()
 
     def _get_default_version(self, gaudi_app):
@@ -118,10 +121,18 @@ class Bender(GaudiBase):
                                        'inputsandbox',
                                        '_input_sandbox_%s.tar' % self.is_prepared.name))
 
-        gzipFile(os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name),
-                 os.path.join(
-                     share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name),
-                 True)
+        gzipFile(
+            os.path.join(
+                share_dir,
+                'inputsandbox',
+                '_input_sandbox_%s.tar' %
+                self.is_prepared.name),
+            os.path.join(
+                share_dir,
+                'inputsandbox',
+                '_input_sandbox_%s.tgz' %
+                self.is_prepared.name),
+            True)
 
         # add the newly created shared directory into the metadata system if
         # the app is associated with a persisted object
@@ -171,7 +182,7 @@ FileCatalog().Catalogs=[]\n""" % modulename
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""
         # Always check for None OR empty
-        #logger.info("self.module: %s" % str(self.module))
+        # logger.info("self.module: %s" % str(self.module))
         if isType(self.module, str):
             self.module = File(self.module)
         if self.module.name is None:
@@ -188,15 +199,12 @@ FileCatalog().Catalogs=[]\n""" % modulename
     def postprocess(self):
         XMLPostProcessor.postprocess(self, logger)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 # Associate the correct run-time handlers to GaudiPython for various backends.
 
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 
 for backend in ['LSF', 'Interactive', 'PBS', 'SGE', 'Local', 'Condor', 'Remote']:
     allHandlers.add('Bender', backend, LHCbGaudiRunTimeHandler)
 allHandlers.add('Bender', 'Dirac', LHCbGaudiDiracRunTimeHandler)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

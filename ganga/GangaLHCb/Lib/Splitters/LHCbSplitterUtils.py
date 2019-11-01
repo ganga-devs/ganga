@@ -1,5 +1,5 @@
 from GangaCore.Core.exceptions import SplitterError
-#from GangaDirac.BOOT                    import dirac_ganga_server
+# from GangaDirac.BOOT                    import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaCore.Utility.Config import getConfig
@@ -22,8 +22,8 @@ def DiracSizeSplitter(inputs, filesPerJob, maxSize, ignoremissing):
     """
     Generator that yields a datasets for LHCbdirac split jobs by size
     """
-    #logger.debug( "DiracSplitter" )
-    #logger.debug( "inputs: %s" % str( inputs ) )
+    # logger.debug( "DiracSplitter" )
+    # logger.debug( "inputs: %s" % str( inputs ) )
     split_files = []
     i = inputs.__class__()
 
@@ -34,8 +34,8 @@ def DiracSizeSplitter(inputs, filesPerJob, maxSize, ignoremissing):
     all_files = igroup(inputs.files[:filesPerJob], getConfig('DIRAC')['splitFilesChunks'],
                        leftovers=True)
 
-    #logger.debug( "Looping over all_files" )
-    #logger.debug( "%s" % str( all_files ) )
+    # logger.debug( "Looping over all_files" )
+    # logger.debug( "%s" % str( all_files ) )
 
     for files in all_files:
 
@@ -72,7 +72,7 @@ def DiracSizeSplitter(inputs, filesPerJob, maxSize, ignoremissing):
             logger.warning('Ignored file: %s' % f)
         if not ignoremissing:
             raise SplitterError('Some files not found!')
-    ###
+    # ##
 
     logger.debug("Split Files: %s" % str(split_files))
 

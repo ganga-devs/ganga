@@ -1,12 +1,17 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 import os
 from GangaCore.Utility.util import unique
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
-from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
+from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import (get_share_path, master_sandbox_prepare,
+                                                           sandbox_prepare, script_generator)
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import (dirac_inputdata, dirac_ouputdata,
+                                                     mangle_job_name, diracAPI_script_settings,
+                                                     API_nullifier)
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from GangaCore.GPIDev.Lib.File.OutputFileManager import (getOutputSandboxPatterns,
+                                                         getWNCodeForOutputPostprocessing)
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from GangaCore.Core.exceptions import ApplicationConfigurationError
@@ -16,7 +21,7 @@ from GangaCore.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 logger = getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
@@ -42,8 +47,9 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                                  outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
-        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
-        input_data,   parametricinput_data = dirac_inputdata(app)
+        inputsandbox, outputsandbox = sandbox_prepare(
+            app, appsubconfig, appmasterconfig, jobmasterconfig)
+        input_data, parametricinput_data = dirac_inputdata(app)
         logger.debug("input_data: " + str(input_data))
         job = app.getJobObject()
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
@@ -60,7 +66,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                   'INPUTDATA': input_data,
                   'PARAMETRIC_INPUTDATA': parametricinput_data,
                   'OUTPUT_SANDBOX': API_nullifier(outputsandbox),
-                  'OUTPUTFILESSCRIPT' : lhcb_dirac_outputfiles,
+                  'OUTPUTFILESSCRIPT': lhcb_dirac_outputfiles,
                   'OUTPUT_PATH': "",  # job.fqid,
                   'SETTINGS': diracAPI_script_settings(app),
                   'DIRAC_OPTS': job.backend.diracOpts,
@@ -78,7 +84,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
         wrapper_path = os.path.join(job.getInputWorkspace(create=True).getPath(),
                                     'script_wrapper.py')
         python_wrapper =\
-"""#!/usr/bin/env python
+            """#!/usr/bin/env python
 import os, sys
 def formatVar(var):
     try:
@@ -96,14 +102,15 @@ os.system('###COMMAND###' % script_args)
 ###INJECTEDCODE###
 """
 
-        python_wrapper = python_wrapper.replace('###SCRIPT_ARGS###', str('###JOINER###'.join([str(a) for a in app.args])))
+        python_wrapper = python_wrapper.replace('###SCRIPT_ARGS###', str(
+            '###JOINER###'.join([str(a) for a in app.args])))
 
-        params.update({ 'APP_NAME' : 'Root',
-                        'APP_VERSION' : app.version,
-                        'APP_SCRIPT' : wrapper_path,
-                        'APP_LOG_FILE' : 'Ganga_Root.log' })
+        params.update({'APP_NAME': 'Root',
+                       'APP_VERSION': app.version,
+                       'APP_SCRIPT': wrapper_path,
+                       'APP_LOG_FILE': 'Ganga_Root.log'})
 
-        #params.update({'ROOTPY_SCRIPT': wrapper_path,
+        # params.update({'ROOTPY_SCRIPT': wrapper_path,
         #               'ROOTPY_VERSION': app.version,
         #               'ROOTPY_LOG_FILE': 'Ganga_Root.log',
         #               'ROOTPY_ARGS': [str(a) for a in app.args]})
@@ -113,19 +120,24 @@ os.system('###COMMAND###' % script_args)
             python_wrapper = script_generator(python_wrapper,
                                               remove_unreplaced=False,
                                               FIXARGS='',
-                                              COMMAND='/usr/bin/env python %s %s' % (os.path.basename(app.script.name), '%s'),
+                                              COMMAND='/usr/bin/env python %s %s' % (
+                                                  os.path.basename(app.script.name), '%s'),
                                               JOINER=' ',
-                                              #INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
+                                              # INJECTEDCODE=getWNCodeForOutputPostprocessing(job,
+                                              #                                               '')
                                               )
-
 
         else:
             python_wrapper = script_generator(python_wrapper,
                                               remove_unreplaced=False,
-                                              FIXARGS='script_args=[formatVar(v) for v in script_args]',
-                                              COMMAND='export DISPLAY=\"localhoast:0.0\" && root -l -q \"%s(%s)\"' % (os.path.basename(app.script.name), '%s'),
+                                              FIXARGS='script_args=[formatVar(v) for v in '
+                                                      'script_args]',
+                                              COMMAND='export DISPLAY=\"localhoast:0.0\" && root '
+                                                      '-l -q \"%s(%s)\"'
+                                                      % (os.path.basename(app.script.name), '%s'),
                                               JOINER=',',
-                                              #INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
+                                              # INJECTEDCODE=getWNCodeForOutputPostprocessing(job,
+                                              #                                               '')
                                               )
 
         f.write(python_wrapper)
@@ -137,6 +149,4 @@ os.system('###COMMAND###' % script_args)
                                  outputbox=unique(outputsandbox))
 
 
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Root', 'Dirac', LHCbRootDiracRunTimeHandler)
-

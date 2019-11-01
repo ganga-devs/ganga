@@ -11,10 +11,25 @@ from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 
+
 class LHCbUnit(IUnit):
-    _schema = Schema(Version(1, 0), dict(list(IUnit._schema.datadict.items()) + list({
-        'input_datset_index': SimpleItem(defvalue=-1, protected=1, hidden=1, doc='Index of input dataset from parent Transform', typelist=["int"]),
-    }.items())))
+    _schema = Schema(
+        Version(
+            1,
+            0),
+        dict(
+            list(
+                IUnit._schema.datadict.items()) +
+            list(
+                {
+                    'input_datset_index': SimpleItem(
+                        defvalue=-
+                        1,
+                        protected=1,
+                        hidden=1,
+                        doc='Index of input dataset from parent Transform',
+                        typelist=["int"]),
+                }.items())))
 
     _category = 'units'
     _name = 'LHCbUnit'
@@ -71,7 +86,9 @@ class LHCbUnit(IUnit):
         """Update status hook"""
 
         # check for input data deletion of chain data
-        if status == "completed" and self._getParent().delete_chain_input and len(self.req_units) > 0:
+        if status == "completed" and\
+                self._getParent().delete_chain_input and\
+                len(self.req_units) > 0:
 
             # the inputdata field *must* be filled from the parent task
             # NOTE: When changing to inputfiles, will probably need to check

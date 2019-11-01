@@ -1,10 +1,10 @@
 
 # DiracLHCb commands
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
-#def getRootVersions(): output( dirac.getRootVersions() )
+# def getRootVersions(): output( dirac.getRootVersions() )
 
-#def getSoftwareVersions(): output( dirac.getSoftwareVersions() )
+# def getSoftwareVersions(): output( dirac.getSoftwareVersions() )
 
 
 @diracCommand
@@ -43,7 +43,7 @@ def getDataset(path, dqflag, this_type, start, end, sel):
         result = dirac.bkQueryPath(path, dqflag)  # dirac
     elif this_type is 'RunsByDate':
         result = dirac.bkQueryRunsByDate(path, start, end,
-                                             dqflag, sel)  # dirac
+                                         dqflag, sel)  # dirac
     elif this_type is 'Run':
         result = dirac.bkQueryRun(path, dqflag)  # dirac
     elif this_type is 'Production':
@@ -53,24 +53,29 @@ def getDataset(path, dqflag, this_type, start, end, sel):
 
     return result
 
+
 @diracCommand
 def getAccessURL(lfn, SE, protocol=''):
-    ''' Return the access URL for the given LFN, storage element and protocol. If 'root' or 'xroot' specified then request both as per LHCbDirac from which this is taken. '''
+    '''
+    Return the access URL for the given LFN, storage element and protocol. If 'root' or 'xroot'
+    specified then request both as per LHCbDirac from which this is taken.
+    '''
     if protocol == '':
-        protocol=['xroot', 'root']
+        protocol = ['xroot', 'root']
     elif 'root' in protocol and 'xroot' not in protocol:
-        protocol.insert( protocol.index( 'root' ), 'xroot' )
+        protocol.insert(protocol.index('root'), 'xroot')
     elif 'xroot' in protocol and 'root' not in protocol:
-         protocol.insert( protocol.index( 'xroot' ) + 1, 'root' )
+        protocol.insert(protocol.index('xroot') + 1, 'root')
     elif 'xroot' in protocol and 'root' in protocol:
-         indexOfRoot = protocol.index( 'root' )
-         indexOfXRoot = protocol.index( 'xroot' )
-         if indexOfXRoot > indexOfRoot:
-             protocol[indexOfRoot], protocol[indexOfXRoot] = protocol[indexOfXRoot], protocol[indexOfRoot]
+        root_indx = protocol.index('root')
+        xroot_indx = protocol.index('xroot')
+        if xroot_indx > root_indx:
+            protocol[root_indx], protocol[xroot_indx] = protocol[xroot_indx], protocol[root_indx]
     result = dirac.getAccessURL(lfn, SE, protocol)
     if result.get('OK', True):
         result['Value']['Successful'] = result['Value']['Successful'][SE]
     return result
+
 
 @diracCommand
 def checkTier1s():
@@ -79,36 +84,39 @@ def checkTier1s():
         result['Value'] = result['Value']['Tier-1s']
     return result
 
+
 @diracCommand
-def getDBtagsFromLFN( lfn ):
-    ''' returns the DDDB and CONDDB tags for a given LFN. Uses the latest production step unless it is a merge, in which case the parent is used '''
+def getDBtagsFromLFN(lfn):
+    '''
+    Returns the DDDB and CONDDB tags for a given LFN. Uses the latest production step unless it is
+    a merge, in which case the parent is used
+    '''
     from LHCbDIRAC.BookkeepingSystem.Client.BookkeepingClient import BookkeepingClient
     from LHCbDIRAC.TransformationSystem.Client.TransformationClient import TransformationClient
     import types
     bk = BookkeepingClient()
     tr = TransformationClient()
-    prod = int(lfn.split('/')[5]) # not sure if this works in all cases 
-    res = bk.getProductionInformations( prod )
-    #What type of step is this production ID
+    prod = int(lfn.split('/')[5])  # not sure if this works in all cases
+    res = bk.getProductionInformations(prod)
+    # What type of step is this production ID
     step_type = tr.getTransformation(prod).get('Value', {}).get('Type', 'Unknown')
-    #Is there a parent production step
+    # Is there a parent production step
     parent_id = tr.getBookkeepingQuery(prod).get('Value', {}).get('ProductionID', '')
     res = {}
-    #If the production ID of the given file is Merge, look at the parent ID for the tags
+    # If the production ID of the given file is Merge, look at the parent ID for the tags
     if step_type == 'Merge':
         if parent_id:
-            res = bk.getProductionInformations( parent_id )
+            res = bk.getProductionInformations(parent_id)
     else:
-        res = bk.getProductionInformations( prod )
+        res = bk.getProductionInformations(prod)
     dddb = ''
     conddb = ''
-    if res['OK']: # there should probably also be an 'else' for cases where no information could be retrieved 
+    if res['OK']:  # should probably also be 'else' for cases where no information can be retrieved
         val = res['Value']
-	steps = val['Steps']
-	last_step = steps[-1] # the tags are taken from the last step of production
-	dddb = last_step[4]
-	conddb = last_step[5]
-	return dddb, conddb
+        steps = val['Steps']
+        last_step = steps[-1]  # the tags are taken from the last step of production
+        dddb = last_step[4]
+        conddb = last_step[5]
+        return dddb, conddb
     else:
         res = {'OK': False, 'Message': 'Error getting DB tags!'}
-

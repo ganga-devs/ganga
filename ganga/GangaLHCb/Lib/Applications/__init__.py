@@ -4,7 +4,7 @@ import os
 from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.GPIDev.Base.Proxy import GPIProxyClassFactory
 
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 from GangaLHCb.Lib.Applications import AppsBaseUtils
 from GangaCore.Utility.logging import getLogger
 
@@ -43,13 +43,11 @@ for app in AppsBaseUtils.available_apps():
     app = str(app)
     this_app = cls.replace('AppName', app)
     all_apps = all_apps + str('\n\n') + this_app
-    #exec(this_exec, all_global, all_local)
+    # exec(this_exec, all_global, all_local)
     logger.debug("Adding %s" % str(app))
 
 logger.debug("Adding apps")
-modules= compile(all_apps, '<string>', 'exec')
+modules = compile(all_apps, '<string>', 'exec')
 exec(modules)
 
 logger.debug("Fin")
-
-

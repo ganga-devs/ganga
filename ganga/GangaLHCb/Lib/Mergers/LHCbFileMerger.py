@@ -1,4 +1,4 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """Merges DST files."""
 import subprocess
 import inspect
@@ -20,7 +20,7 @@ from GangaCore.Utility.logging import getLogger, log_user_exception
 logger = getLogger()
 
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class LHCbFileMerger(IMerger):
 
@@ -30,7 +30,7 @@ class LHCbFileMerger(IMerger):
     been returned *locally* in a job's outputsandbox. As such
     it is mainly useful for microDST files.
 
-    The usage is as with other merger objects. See the help for 
+    The usage is as with other merger objects. See the help for
     TextMerger or RootMerger for more details.
 
     Example:
@@ -38,12 +38,12 @@ class LHCbFileMerger(IMerger):
     lhcbm = LHCbFileMerger()
     lhcbm.files = ['dv.dst']
 
-    This object can be attached to a job object or 
-    used to merge a list of jobs with its merge 
+    This object can be attached to a job object or
+    used to merge a list of jobs with its merge
     method.
 
     It is possible to overide the default opts file
-    for performing the merge. A new opts file can 
+    for performing the merge. A new opts file can
     be provided via the 'merge_opts' field. This should
     be done with care, as some opts are assumed when
     writing the files for output.
@@ -88,7 +88,7 @@ LHCbApp().EvtMax = -1
 
         # write this out to a file
         opts_file_name = tempfile.mktemp('.py')
-        #opts_file = open(opts_file_name, 'w')
+        # opts_file = open(opts_file_name, 'w')
         try:
             opts_file = open(opts_file_name, 'w')
             opts_file.write(output_opts)
@@ -117,9 +117,10 @@ LHCbApp().EvtMax = -1
             raise PostProcessException(msg % output_file)
         # needed as exportmethods doesn't seem to cope with inheritance
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
 
 # Add it to the list of plug-ins
 allPlugins.add(LHCbFileMerger, 'postprocessor', 'LHCbFileMerger')
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

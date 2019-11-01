@@ -1,24 +1,26 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import copy
 import os
 import pickle
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from .RTHUtils import is_gaudi_child, getXMLSummaryScript, create_runscript
-from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from GangaCore.GPIDev.Lib.File.OutputFileManager import (getOutputSandboxPatterns,
+                                                         getWNCodeForOutputPostprocessing)
 from GangaCore.GPIDev.Lib.File import FileBuffer, LocalFile, MassStorageFile
 from GangaCore.GPIDev.Base.Proxy import addProxy
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.util import unique
 from GangaGaudi.Lib.RTHandlers.GaudiRunTimeHandler import GaudiRunTimeHandler
-from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import script_generator, get_share_path, master_sandbox_prepare, sandbox_prepare
+from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import (script_generator, get_share_path,
+                                                           master_sandbox_prepare, sandbox_prepare)
 logger = getLogger()
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
 
-    """This is the application runtime handler class for Gaudi applications 
+    """This is the application runtime handler class for Gaudi applications
     using the local, interactive and LSF backends."""
 
     def master_prepare(self, app, appmasterconfig):
@@ -34,16 +36,18 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
 
         logger.debug("Prepare")
 
-        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
+        inputsandbox, outputsandbox = sandbox_prepare(
+            app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job = app.getJobObject()
 
         logger.debug("Loading pickle files")
 
-        #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+        # outputfiles=set([file.namePattern for file in
+        #                  job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
         # Cant wait to get rid of this when people no-longer specify
         # inputdata in options file
-        #######################################################################
+        # ######################################################################
         # splitters ensure that subjobs pick up inputdata from job over that in
         # optsfiles but need to take sare of unsplit jobs
         if not job.master:
@@ -57,10 +61,10 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
                     job.inputdata = pickle.load(f)
                     f.close()
 
-        #######################################################################
+        # ######################################################################
         # Cant wait to get rid of this when people no-longer specify
         # outputsandbox or outputdata in options file
-        #######################################################################
+        # ######################################################################
         share_path = os.path.join(get_share_path(app),
                                   'output',
                                   'options_parser.pkl')
@@ -78,14 +82,20 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
             from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
             fileTransform = allComponentFilters['gangafiles']
-            job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)])
-            job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)])
+            job.non_copyable_outputfiles.extend([fileTransform(this_file, None)
+                                                 for this_file in outdata
+                                                 if not FileUtils.doesFileExist(this_file,
+                                                                                job.outputfiles)])
+            job.non_copyable_outputfiles.extend([fileTransform(this_file, None)
+                                                 for this_file in outbox
+                                                 if not FileUtils.doesFileExist(this_file,
+                                                                                job.outputfiles)])
 
             outputsandbox.extend([f.namePattern for f in job.non_copyable_outputfiles])
 
             outputsandbox.extend([f.namePattern for f in job.outputfiles])
             outputsandbox = unique(outputsandbox)
-        #######################################################################
+        # ######################################################################
 
         logger.debug("Doing XML Catalog stuff")
 
@@ -98,7 +108,8 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
                 logger.debug("Returning Catalogue")
                 inputsandbox.append(
                     FileBuffer('catalog.xml', data.getCatalog()))
-                cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
+                cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog()' \
+                           '.Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
                 data_str += cat_opts
 
         logger.debug("Doing splitter_data stuff")
@@ -127,7 +138,7 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
                                   PLATFORM=job.application.platform,
                                   CMDLINE=cmd,
                                   XMLSUMMARYPARSING=getXMLSummaryScript())  # ,
-                                  # OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
+        # OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
 
         logger.debug("Returning StandardJobConfig")
 
@@ -136,4 +147,4 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
                                  outputbox=unique(outputsandbox))
 
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

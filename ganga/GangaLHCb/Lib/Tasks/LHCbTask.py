@@ -24,7 +24,8 @@ class LHCbTask(ITask):
 
     _category = 'tasks'
     _name = 'LHCbTask'
-    _exportmethods = ITask._exportmethods + ['addQuery', 'updateQuery', 'removeUnusedData', 'cleanTask']
+    _exportmethods = ITask._exportmethods + ['addQuery',
+                                             'updateQuery', 'removeUnusedData', 'cleanTask']
 
     _tasktype = "ITask"
 
@@ -47,25 +48,27 @@ class LHCbTask(ITask):
         is a transform object to use as the basis for the creation of further
         transforms."""
         if not isinstance(transform, LHCbTransform):
-            raise GangaException(
-                None, 'First argument must be an LHCbTransform object to use as the basis for establishing the new transforms')
+            raise GangaException(None,
+                                 'First argument must be an LHCbTransform object to use as the '
+                                 'basis for establishing the new transforms')
 
         # Check if the template transform is associated with the Task
         try:
             self.transforms.index(transform)
-        except:
+        except BaseException:
             if associate:
                 logger.info(
                     'The transform is not associated with this Task, doing so now.')
                 self.appendTransform(transform)
 
         # Check if the BKQuery input is correct and append/update
-        if type(bkQuery) is not list:
+        if not isinstance(bkQuery, list):
             bkQuery = [bkQuery]
         for bk in bkQuery:
             if not isType(bk, BKQuery):
-                raise GangaAttributeError(
-                    None, 'LHCbTransform expects a BKQuery object or list of BKQuery objects passed to the addQuery method')
+                raise GangaAttributeError(None,
+                                          'LHCbTransform expects a BKQuery object or list of '
+                                          'BKQuery objects passed to the addQuery method')
             if len(transform.queries) != 0:  # If template has no query itself
                 logger.info('Attaching query to transform')
                 transform.addQuery(stripProxy(bk))

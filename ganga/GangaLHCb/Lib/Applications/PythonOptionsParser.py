@@ -1,4 +1,4 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Uses gaudirun.py to parse the job options file to allow for easy extraction
 of inputdata, outputdata and output files.'''
 
@@ -18,13 +18,13 @@ from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd
 from GangaCore.GPIDev.Lib.File.OutputFileManager import outputFilePostProcessingOnWN
 logger = GangaCore.Utility.logging.getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-## Due to a bug in Gaudi at some point we need this equivalenc here: see #204
+# Due to a bug in Gaudi at some point we need this equivalenc here: see #204
 DataObjectDescriptorCollection = str
 
-class PythonOptionsParser(object):
 
+class PythonOptionsParser(object):
 
     """ Parses job options file(s) w/ gaudirun.py to extract user's files"""
 
@@ -74,9 +74,9 @@ class PythonOptionsParser(object):
                 err_msg = 'Please check gaudirun.py -o file.py produces a ' \
                           'valid python file.'
 
-        #We have to remove the defunct long representation for python 3
-        opts_str = re.sub('(\d)L(\})', r'\1\2', opts_str)
-        opts_str = re.sub('(\d)L(\,)', r'\1\2', opts_str)
+        # We have to remove the defunct long representation for python 3
+        opts_str = re.sub(r'(\d)L(\})', r'\1\2', opts_str)
+        opts_str = re.sub(r'(\d)L(\,)', r'\1\2', opts_str)
 
         if stdout and rc == 0:
             try:
@@ -206,8 +206,12 @@ class PythonOptionsParser(object):
     def get_output(self, job):
         '''Builds lists of output files and output data.'''
 
-        outputdata = [f.namePattern for f in job.outputfiles if outputFilePostProcessingOnWN(job, getName(f)) ]
-        outsandbox = [f.namePattern for f in job.outputfiles if not outputFilePostProcessingOnWN(job, getName(f)) ]
+        outputdata = [
+            f.namePattern for f in job.outputfiles if outputFilePostProcessingOnWN(
+                job, getName(f))]
+        outsandbox = [
+            f.namePattern for f in job.outputfiles if not outputFilePostProcessingOnWN(
+                job, getName(f))]
 
         # if user put any files in both, remove them from the sandbox
         for f in outsandbox:
@@ -249,5 +253,4 @@ class PythonOptionsParser(object):
 
         return unique(outsandbox), unique(outputdata)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

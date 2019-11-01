@@ -46,10 +46,14 @@ if not _after_bootstrap:
              'overrides the datatype_string_default value.'
     defval = {"SVC='LHCb::MDFSelector'": ['*.raw', '*.RAW', '*.mdf', '*.MDF']}
     configLHCb.addOption('datatype_string_patterns', defval, dscrpt)
-    configLHCb.addOption('UserAddedApplications', "", "List of user added LHCb applications split by ':'")
+    configLHCb.addOption(
+        'UserAddedApplications',
+        "",
+        "List of user added LHCb applications split by ':'")
 
     configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
-                         'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
+                         'Possible SplitByFiles backend algorithms to use to split jobs into '
+                         'subjobs,\
                           options are: GangaDiracSplitter, OfflineGangaDiracSplitter, \
                           splitInputDataBySize and splitInputData')
     defaultLHCbDirac = 'prod'
@@ -110,8 +114,15 @@ def postBootstrapHook():
 
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
     configDirac.setSessionValue('userVO', 'lhcb')
-    configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'RRCKI-USER',
-                                               'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
+    configDirac.setSessionValue('allDiracSE',
+                                ['CERN-USER',
+                                 'CNAF-USER',
+                                 'GRIDKA-USER',
+                                 'RRCKI-USER',
+                                 'IN2P3-USER',
+                                 'SARA-USER',
+                                 'PIC-USER',
+                                 'RAL-USER'])
     configDirac.setSessionValue('noInputDataBannedSites', [])
     configDirac.setSessionValue('RequireDefaultSE', False)
     configDirac.setSessionValue('proxyInitCmd', 'lhcb-proxy-init')
@@ -126,12 +137,23 @@ def postBootstrapHook():
 
 # This is being dropped from 6.1.0 due to causing some bug in loading large numbers of jobs
 #
-# This will be nice to re-add once there is lazy loading support passed to the display for the 'jobs' command 09/2015 rcurrie
+# This will be nice to re-add once there is lazy loading support passed to the display for the
+# 'jobs' command 09/2015 rcurrie
 #
-#from GangaCore.GPIDev.Lib.Registry.JobRegistry import config as display_config
-#display_config.setSessionValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs', 'application', 'backend', 'backend.actualCE', 'backend.extraInfo', 'comment') )
-#display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
-#display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
+# from GangaCore.GPIDev.Lib.Registry.JobRegistry import config as display_config
+# display_config.setSessionValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs',
+#                                 'application', 'backend', 'backend.actualCE',
+#                                 'backend.extraInfo', 'comment') )
+# display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment',
+#                                 'backend.extraInfo': 'lambda j : j.backend.extraInfo ',
+#                                 'subjobs': 'lambda j: len(j.subjobs)',
+#                                 'backend.actualCE': 'lambda j:j.backend.actualCE',
+#                                 'application': 'lambda j: j.application._name',
+#                                 'backend': 'lambda j:j.backend._name'} )
+# display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10,
+#                                                       'application': 15, 'backend.extraInfo': 30,
+#                                                       'subjobs': 8, 'backend.actualCE': 17,
+#                                                       'comment': 20, 'backend': 15} )
 
     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
     queue = getQueues()
@@ -139,6 +161,7 @@ def postBootstrapHook():
         queue.add(updateCreds)
     else:
         updateCreds()
+
 
 def updateCreds():
     try:
@@ -149,9 +172,11 @@ def updateCreds():
     except KeyError:
         pass
 
+
 class gridProxy(object):
     """
-    This is a stub class which wraps functions from the `credential_store` sentinal to familiar functions from Ganga 6.2 and prior
+    This is a stub class which wraps functions from the `credential_store` sentinal to familiar
+    functions from Ganga 6.2 and prior
     """
 
     @classmethod
@@ -198,5 +223,6 @@ class gridProxy(object):
             cred.destroy()
         except KeyError:
             pass
+
 
 exportToGPI('gridProxy', gridProxy, 'Functions')

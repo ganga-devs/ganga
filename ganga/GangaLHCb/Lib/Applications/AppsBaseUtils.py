@@ -1,4 +1,4 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# -----------------------------------------------------------------------------#
 import os
 import sys
 from GangaCore.Core.exceptions import PluginError
@@ -15,7 +15,7 @@ from GangaCore.GPIDev.Schema import SimpleItem
 available_lhcb_apps = None
 available_lhcb_packs = None
 logger = getLogger()
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# -----------------------------------------------------------------------------#
 
 
 def backend_handlers():
@@ -29,6 +29,7 @@ def backend_handlers():
                 'Dirac': LHCbGaudiDiracRunTimeHandler
                 }
     return backends
+
 
 def available_apps():
     global available_lhcb_apps
@@ -94,16 +95,22 @@ def guess_version(self, appname):
     return EnvironFunctions.guess_version(self, appname)
 
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# -----------------------------------------------------------------------------#
 def lumi(xmlsummary):
     '''given an XMLSummary object, will return the integrated luminosity'''
-    #  print(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[0],'+/-',xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[2])
+    #  print(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity']\
+    #                  .value()[0],
+    #       '+/-',
+    #       xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity']\
+    #                 .value()[2])
 
-    lumiDict = dict(list(zip(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].attrib('format'),
-                        xmlsummary.counter_dict()['lumiCounters'][
-        'IntegrateBeamCrossing/Luminosity'].value()
-    ))
-    )
+    lumiDict = dict(
+        list(
+            zip(
+                xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity']
+                          .attrib('format'),
+                xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity']
+                          .value())))
     return '"%s +- %s"' % (lumiDict['Flag'], lumiDict['Flag2'])
 
 
@@ -166,4 +173,3 @@ def activeSummaryItems():
                    'xmlskippedfiles': xmlskippedfiles
                    }
     return activeItems
-

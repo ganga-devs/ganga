@@ -1,4 +1,4 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """The LHCb Bookkeeping interface to GangaCore."""
 
 import os
@@ -11,7 +11,7 @@ import GangaCore.Utility.logging
 
 logger = GangaCore.Utility.logging.getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 schema = {'status': SimpleItem(defvalue=None, protected=1, copyable=0,
                                typelist=['str', 'type(None)'],
@@ -40,19 +40,19 @@ class Bookkeeping(GangaObject):
         if gui:
             cmd = 'bookkeepingGUI("%s")' % f
             execute(cmd)
-            l = self._fileToList(f)
+            lst = self._fileToList(f)
             ds = LHCbDataset()
-            ds.extend([l])
+            ds.extend([lst])
             return ds
 
     def _fileToList(self, file):
         f = open(file)
-        l = f.read().splitlines()
+        lst = f.read().splitlines()
         # prefix files with 'LFN:' to make ganga think they are lfns
-        for i in range(len(l)):
-            if not l[i].upper().startswith('LFN'):
-                l[i] = 'LFN:' + os.path.normpath(l[i])
+        for i in range(len(lst)):
+            if not lst[i].upper().startswith('LFN'):
+                lst[i] = 'LFN:' + os.path.normpath(lst[i])
         f.close()
-        return l
+        return lst
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

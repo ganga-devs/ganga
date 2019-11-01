@@ -1,5 +1,8 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Application handler for GaudiPython applications in LHCb.'''
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
+from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
 import os
 import pprint
 from os.path import split, join
@@ -27,7 +30,7 @@ from GangaLHCb.Lib.Applications import XMLPostProcessor
 
 logger = GangaCore.Utility.logging.getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 class GaudiPython(GaudiBase):
@@ -48,7 +51,7 @@ class GaudiPython(GaudiBase):
 
     app = GaudiPython(project='DaVinci', version='v19r14')
 
-    # Give absolute path to the python file to be executed. 
+    # Give absolute path to the python file to be executed.
     # If several files are given the subsequent ones will go into the
     # sandbox but it is the users responsibility to include them
     app.script = ['/afs/...../myscript.py']
@@ -125,11 +128,32 @@ class GaudiPython(GaudiBase):
         super(GaudiPython, self).prepare(force)
         self._check_inputs()
 
-        share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'], self.is_prepared.name)
+        share_dir = os.path.join(
+            expandfilename(
+                getConfig('Configuration')['gangadir']),
+            'shared',
+            getConfig('Configuration')['user'],
+            self.is_prepared.name)
 
-        fillPackedSandbox(self.script, os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name))
-        gzipFile(os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name),
-                 os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name), True)
+        fillPackedSandbox(
+            self.script,
+            os.path.join(
+                share_dir,
+                'inputsandbox',
+                '_input_sandbox_%s.tar' %
+                self.is_prepared.name))
+        gzipFile(
+            os.path.join(
+                share_dir,
+                'inputsandbox',
+                '_input_sandbox_%s.tar' %
+                self.is_prepared.name),
+            os.path.join(
+                share_dir,
+                'inputsandbox',
+                '_input_sandbox_%s.tgz' %
+                self.is_prepared.name),
+            True)
         # add the newly created shared directory into the metadata system if
         # the app is associated with a persisted object
         self.checkPreparedHasParent(self)
@@ -175,16 +199,13 @@ class GaudiPython(GaudiBase):
     def postprocess(self):
         XMLPostProcessor.postprocess(self, logger)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 # Associate the correct run-time handlers to GaudiPython for various backends.
 
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 
 for backend in ['LSF', 'Interactive', 'PBS', 'SGE', 'Local', 'Condor', 'Remote']:
     allHandlers.add('GaudiPython', backend, LHCbGaudiRunTimeHandler)
 allHandlers.add('GaudiPython', 'Dirac', LHCbGaudiDiracRunTimeHandler)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

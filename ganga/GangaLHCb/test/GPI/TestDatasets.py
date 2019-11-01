@@ -55,8 +55,9 @@ class TestDatasets(GangaUnitTest):
 
         # test behaviour with files on the grid
 
-        LFN_DATA = ['LFN:/lhcb/LHCb/Collision17/DIMUON.DST/00067804/0003/00067804_00030224_1.dimuon.dst',
-                    'LFN:/lhcb/LHCb/Collision17/DIMUON.DST/00067804/0003/00067804_00030520_1.dimuon.dst']
+        LFN_DATA = [
+            'LFN:/lhcb/LHCb/Collision17/DIMUON.DST/00067804/0003/00067804_00030224_1.dimuon.dst',
+            'LFN:/lhcb/LHCb/Collision17/DIMUON.DST/00067804/0003/00067804_00030520_1.dimuon.dst']
 
         ds = LHCbDataset(LFN_DATA)
 

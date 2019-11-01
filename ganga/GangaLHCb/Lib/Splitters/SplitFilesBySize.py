@@ -1,3 +1,6 @@
+import pickle
+import copy
+import os
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -10,9 +13,6 @@ from GangaCore.GPIDev.Base.Proxy import stripProxy
 import GangaCore.Utility.logging
 from GangaCore.GPIDev.Lib.Job import Job
 logger = GangaCore.Utility.logging.getLogger()
-import os
-import copy
-import pickle
 
 
 class SplitFilesBySize(GaudiInputDataSplitter):
@@ -38,8 +38,8 @@ class SplitFilesBySize(GaudiInputDataSplitter):
             if value > 100:
                 logger.warning('filesPerJob exceeded DIRAC maximum')
                 logger.warning('DIRAC has a maximum dataset limit of 100.')
-                logger.warning(
-                    'BE AWARE!... will set it to this maximum value at submit time if backend is Dirac')
+                logger.warning('BE AWARE!... will set it to this maximum value at submit time if '
+                               'backend is Dirac')
         return value
 
     def _create_subjob(self, job, dataset):
@@ -52,14 +52,16 @@ class SplitFilesBySize(GaudiInputDataSplitter):
                     datatmp.extend(i)
                 else:
                     logger.error(
-                        "Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
+                        "Unkown file-type %s, cannot perform split with file %s" %
+                        (type(i), str(i)))
                     from GangaCore.Core.exceptions import GangaException
                     raise GangaException(
-                        "Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
+                        "Unkown file-type %s, cannot perform split with file %s" %
+                        (type(i), str(i)))
         elif isinstance(dataset, list):
             from GangaCore.GPIDev.Base.Proxy import isType
             for i in dataset:
-                if type(i) is str:
+                if isinstance(i, str):
                     datatmp.append(DiracFile(lfn=i))
                 elif isType(i, DiracFile()):
                     datatmp.extend(i)

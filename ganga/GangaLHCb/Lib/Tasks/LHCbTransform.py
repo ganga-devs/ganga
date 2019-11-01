@@ -16,19 +16,50 @@ from GangaCore.GPIDev.Base.Proxy import stripProxy
 
 logger = getLogger()
 
-class LHCbTransform(ITransform):
-    _schema = Schema(Version(1, 0), dict(list(ITransform._schema.datadict.items()) + list({
-        'files_per_unit': SimpleItem(defvalue=-1, doc='Maximum number of files to assign to each unit from a given input dataset. If < 1, use all files.', typelist=["int"]),
-        'splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter to be used for units'),
-        'queries': ComponentItem('query', defvalue=[], sequence=1, protected=1, optional=1, load_default=False, doc='Queries managed by this Transform'),
-        'delete_chain_input': SimpleItem(defvalue=False, doc='Delete the Dirac input files/data after completion of each unit', typelist=["bool"]),
-        'mc_num_units': SimpleItem(defvalue=0, doc="No. of units to create for MC generation"),
 
-    }.items())))
+class LHCbTransform(ITransform):
+    _schema = Schema(
+        Version(
+            1,
+            0),
+        dict(
+            list(
+                ITransform._schema.datadict.items()) +
+            list(
+                {
+                    'files_per_unit': SimpleItem(
+                        defvalue=-
+                        1,
+                        doc='Maximum number of files to assign to each unit from a given input '
+                            'dataset. If < 1, use all files.',
+                        typelist=["int"]),
+                    'splitter': ComponentItem(
+                        'splitters',
+                        defvalue=None,
+                        optional=1,
+                        load_default=False,
+                        doc='Splitter to be used for units'),
+                    'queries': ComponentItem(
+                        'query',
+                        defvalue=[],
+                        sequence=1,
+                        protected=1,
+                        optional=1,
+                        load_default=False,
+                        doc='Queries managed by this Transform'),
+                    'delete_chain_input': SimpleItem(
+                        defvalue=False,
+                        doc='Delete the Dirac input files/data after completion of each unit',
+                        typelist=["bool"]),
+                    'mc_num_units': SimpleItem(
+                        defvalue=0,
+                        doc="No. of units to create for MC generation"),
+                }.items())))
 
     _category = 'transforms'
     _name = 'LHCbTransform'
-    _exportmethods = ITransform._exportmethods + ['updateQuery', 'addQuery', 'removeUnusedData', 'cleanTransform']
+    _exportmethods = ITransform._exportmethods + \
+        ['updateQuery', 'addQuery', 'removeUnusedData', 'cleanTransform']
 
     def __init__(self):
         super(LHCbTransform, self).__init__()
@@ -85,7 +116,7 @@ class LHCbTransform(ITransform):
                         for f in sj.outputfiles:
                             if isType(f, DiracFile) == "DiracFile" and f.lfn:
                                 f.remove()
-                except:
+                except BaseException:
                     logger.error("Problem deleting data for job '%d'" % jid)
                     pass
 
@@ -135,7 +166,7 @@ class LHCbTransform(ITransform):
                     self.addUnitToTRF(unit)
                     unit.inputdata = copy.deepcopy(self.inputdata[id])
                     unit.inputdata.files = []
-                    unit.inputdata.files += new_data.files[num:num+step]
+                    unit.inputdata.files += new_data.files[num:num + step]
 
         elif self.mc_num_units > 0:
             if len(self.units) == 0:
@@ -166,7 +197,8 @@ class LHCbTransform(ITransform):
 
             for inds in self.inputdata:
                 from GangaCore.GPIDev.Lib.Tasks.TaskChainInput import TaskChainInput
-                if isType(inds, TaskChainInput) and inds.input_trf_id == parent._getParent().getID():
+                if isType(inds, TaskChainInput) and\
+                        inds.input_trf_id == parent._getParent().getID():
                     incl_pat_list += inds.include_file_mask
                     excl_pat_list += inds.exclude_file_mask
 
@@ -214,8 +246,9 @@ class LHCbTransform(ITransform):
                 None, 'Cannot call updateQuery() on an LHCbTransform without any queries')
 
         if self._getParent() is not None:
-            logger.info('Retrieving latest bookkeeping information for transform %i:%i, please wait...' % (
-                self._getParent().id, self.getID()))
+            logger.info(
+                'Retrieving latest bookkeeping information for transform %i:%i, please wait...' %
+                (self._getParent().id, self.getID()))
         else:
             logger.info(
                 'Retrieving latest bookkeeping information for transform, please wait...')
@@ -232,7 +265,8 @@ class LHCbTransform(ITransform):
 
             # Compare to previous inputdata, get new and removed
             logger.info(
-                'Checking for new and removed data for query %d, please wait...' % self.queries.index(query))
+                'Checking for new and removed data for query %d, please wait...' %
+                self.queries.index(query))
             dead_data = LHCbDataset()
             new_data = LHCbDataset()
 

@@ -1,4 +1,4 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import tempfile
 from GangaCore.Core.exceptions import ApplicationConfigurationError
@@ -10,7 +10,7 @@ from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, di
 from GangaCore.GPIDev.Base.Proxy import isType
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 logger = GangaCore.Utility.logging.getLogger()
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def jobid_as_string(job):
@@ -22,32 +22,40 @@ def jobid_as_string(job):
         jstr = str(job.id)
     return jstr
 
+
 def lhcbdirac_outputfile_jdl(output_files):
     """ Construct the setOutputFile section of the JDL for this job
     Args:
-        output_files (list): A list of DiracFile objects to have their output injected into the dirac submit script
+        output_files (list): A list of DiracFile objects to have their output injected into the
+                            dirac submit script
     """
 
     DiracScript = dirac_outputfile_jdl(output_files, False)
 
-    DiracScript = DiracScript.replace('###OUTPUT_SE###', '###OUTPUT_SE###,replicate=\'###REPLICATE###\'')
+    DiracScript = DiracScript.replace('###OUTPUT_SE###',
+                                      '###OUTPUT_SE###,replicate=\'###REPLICATE###\'')
 
     DiracScript = DiracScript.replace('outputPath', 'OutputPath').replace('outputSE', 'OutputSE')
 
     return DiracScript
 
+
 def lhcbdiracAPI_script_template():
-    """ Create a template LHCbDirac LHCbJob by taking the Dirac Job and making some modifications to teh template"""
+    """
+    Create a template LHCbDirac LHCbJob by taking the Dirac Job and making some modifications
+    to the template
+    """
 
     DiracScript = diracAPI_script_template()
 
     DiracLHCb_Options = """
-j.setApplicationScript('###APP_NAME###', '###APP_VERSION###', '###APP_SCRIPT###', logFile='###APP_LOG_FILE###', systemConfig='###PLATFORM###')
+j.setApplicationScript('###APP_NAME###', '###APP_VERSION###', '###APP_SCRIPT###',
+                       logFile='###APP_LOG_FILE###', systemConfig='###PLATFORM###')
 j.setAncestorDepth(###ANCESTOR_DEPTH###)
 """
 
-
-    DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'', '\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
+    DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'',
+                                      '\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
     DiracScript = DiracScript.replace('j.setPlatform( \'ANY\' )', 'j.setDIRACPlatform()')
 
     setName_str = 'j.setName(\'###NAME###\')'
@@ -65,6 +73,7 @@ def is_gaudi_child(app):
 
 class filenameFilter:
     """ class for returning a given filename as a filter"""
+
     def __init__(self, filename):
         self.filename = filename
 
@@ -79,12 +88,18 @@ def getXMLSummaryScript(indent=''):
     script = "###INDENT#### Parsed XMLSummary data extraction methods\n"
 
     for summaryItem in activeSummaryItems().values():
-        script += ''.join(['###INDENT###' + line for line in inspect.getsourcelines(summaryItem)[0]])
-    script += ''.join(['###INDENT###' + line for line in inspect.getsourcelines(activeSummaryItems)[0]])
+        script += ''.join(['###INDENT###' +
+                           line for line in inspect.getsourcelines(summaryItem)[0]])
+    script += ''.join(['###INDENT###' +
+                       line for line in inspect.getsourcelines(activeSummaryItems)[0]])
 
     import inspect
-    script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                   'XMLWorkerScript.py.template')
+    script_location = os.path.join(
+        os.path.dirname(
+            os.path.abspath(
+                inspect.getfile(
+                    inspect.currentframe()))),
+        'XMLWorkerScript.py.template')
 
     from GangaCore.GPIDev.Lib.File import FileUtils
     xml_script = FileUtils.loadScript(script_location, '###INDENT###')
@@ -100,8 +115,12 @@ def create_runscript(useCmake=False):
     environ_script = construct_run_environ(useCmake)
 
     import inspect
-    script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                   'WorkerScript.py.template')
+    script_location = os.path.join(
+        os.path.dirname(
+            os.path.abspath(
+                inspect.getfile(
+                    inspect.currentframe()))),
+        'WorkerScript.py.template')
 
     from GangaCore.GPIDev.Lib.File import FileUtils
     worker_script = FileUtils.loadScript(script_location, '')
@@ -110,4 +129,4 @@ def create_runscript(useCmake=False):
 
     return worker_script
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

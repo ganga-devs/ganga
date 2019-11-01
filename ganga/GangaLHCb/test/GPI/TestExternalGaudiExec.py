@@ -13,7 +13,12 @@ from GangaCore.GPIDev.Base.Proxy import stripProxy
 
 def latestLbDevVersion(app):
     import subprocess
-    pipe = subprocess.Popen('lb-dev %s -l' % app, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    pipe = subprocess.Popen(
+        'lb-dev %s -l' %
+        app,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     stdout, stderr = pipe.communicate()
     return stdout.split()[0]
 
@@ -52,16 +57,28 @@ class TestExternalGaudiExec(GangaUnitTest):
         """
         from GangaCore.GPI import Job, prepareGaudiExec
 
-        j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
+        j = Job(
+            application=prepareGaudiExec(
+                'DaVinci',
+                latestDaVinci(),
+                TestExternalGaudiExec.tmpdir_release))
 
         assert j.application.directory == path.join(TestExternalGaudiExec.tmpdir_release,
                                                     'DaVinciDev_%s' % latestDaVinci())
 
-        assert path.isfile(path.join(TestExternalGaudiExec.tmpdir_release, 'DaVinciDev_%s' % latestDaVinci(),
-                           'run'))
+        assert path.isfile(
+            path.join(
+                TestExternalGaudiExec.tmpdir_release,
+                'DaVinciDev_%s' %
+                latestDaVinci(),
+                'run'))
 
-        assert path.isfile(path.join(TestExternalGaudiExec.tmpdir_release, 'DaVinciDev_%s' % latestDaVinci(),
-                           'Makefile'))
+        assert path.isfile(
+            path.join(
+                TestExternalGaudiExec.tmpdir_release,
+                'DaVinciDev_%s' %
+                latestDaVinci(),
+                'Makefile'))
 
     def testParseInputFile(self):
         """
@@ -89,7 +106,11 @@ class TestExternalGaudiExec(GangaUnitTest):
         if os.path.exists(TestExternalGaudiExec.tmpdir_release):
             os.system("rm -rf %s/*" % TestExternalGaudiExec.tmpdir_release)
 
-        j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
+        j = Job(
+            application=prepareGaudiExec(
+                'DaVinci',
+                latestDaVinci(),
+                TestExternalGaudiExec.tmpdir_release))
 
         myHelloOpts = path.join(TestExternalGaudiExec.tmpdir_release, 'hello.py')
 
@@ -146,13 +167,17 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         from GangaCore.GPI import Job, LocalFile, prepareGaudiExec
 
-        j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
+        j = Job(
+            application=prepareGaudiExec(
+                'DaVinci',
+                latestDaVinci(),
+                TestExternalGaudiExec.tmpdir_release))
 
         myOpts = path.join(TestExternalGaudiExec.tmpdir_release, 'testfile.py')
 
         FileBuffer('testfile.py', 'print("ThisIsATest")').create(myOpts)
 
-        j.application.options=[LocalFile(myOpts)]
+        j.application.options = [LocalFile(myOpts)]
 
         return j
 
@@ -174,7 +199,8 @@ class TestExternalGaudiExec(GangaUnitTest):
 
     def testSubmitJobWithInputFile(self):
         """
-        This test adds a dummy inputfile into the job and tests that it is returned when the job is completed
+        This test adds a dummy inputfile into the job and tests that it is returned when the job is
+        completed
         """
 
         from GangaCore.GPI import LocalFile

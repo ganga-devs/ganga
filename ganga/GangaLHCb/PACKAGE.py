@@ -6,8 +6,8 @@
 """ Refer to Ganga/PACKAGE.py for details on the purpose of this module.
 """
 
-external_packages = {}
 from GangaCore.Utility.Setup import PackageSetup
+external_packages = {}
 
 setup = PackageSetup(external_packages)
 

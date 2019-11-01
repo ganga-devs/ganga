@@ -3,7 +3,7 @@
 # compatability in the simplest of cases, where the user needs to do something more
 # complicated they're encouraged to update their code
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 import os
@@ -16,7 +16,7 @@ from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
 import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def full_expand_filename(name):
@@ -32,7 +32,7 @@ def full_expand_filename(name):
         return expanded_name
     return os.path.abspath(expanded_name)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 class PhysicalFile(LocalFile):
@@ -44,12 +44,37 @@ class PhysicalFile(LocalFile):
     pfn.upload("/some/lfn.file","CERN-USER") # upload the PFN to LFC
     [...etc...]
     '''
-    _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', doc='PFN'),
-                                     'namePattern': SimpleItem(defvalue="", doc='pattern of the file name', transient=1),
-                                     'localDir': SimpleItem(defvalue="", doc='local dir where the file is stored, used from get and put methods', transient=1),
-                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=['GangaCore.GPIDev.Lib.File.LocalFile'],
-                                                               sequence=1, copyable=0, doc="collected files from the wildcard namePattern", transient=1),
-                                     'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere', transient=1)})
+    _schema = Schema(
+        Version(
+            1,
+            0),
+        {
+            'name': SimpleItem(
+                defvalue='',
+                doc='PFN'),
+            'namePattern': SimpleItem(
+                defvalue="",
+                doc='pattern of the file name',
+                transient=1),
+            'localDir': SimpleItem(
+                defvalue="",
+                doc='local dir where the file is stored, used from get and put methods',
+                transient=1),
+            'subfiles': ComponentItem(
+                category='gangafiles',
+                defvalue=[],
+                hidden=1,
+                typelist=['GangaCore.GPIDev.Lib.File.LocalFile'],
+                sequence=1,
+                copyable=0,
+                doc="collected files from the wildcard namePattern",
+                transient=1),
+            'compressed': SimpleItem(
+                defvalue=False,
+                typelist=['bool'],
+                protected=0,
+                doc='wheather the output file should be compressed before sending somewhere',
+                transient=1)})
     _category = 'gangafiles'
     _name = 'PhysicalFile'
     _exportmethods = ['location', 'upload']
@@ -60,10 +85,9 @@ class PhysicalFile(LocalFile):
         self.namePattern = os.path.basename(name)
         self.localDir = os.path.dirname(val)
         self.name = val
-        logger.warning(
-            "!!! PhysicalFile has been deprecated, this is now just a wrapper to the LocalFile object")
-        logger.warning(
-            "!!! Please update your scripts before PhysicalFile is removed")
+        logger.warning("!!! PhysicalFile has been deprecated, this is now just a wrapper to the "
+                       "LocalFile object")
+        logger.warning("!!! Please update your scripts before PhysicalFile is removed")
 
     def _attribute_filter__set__(self, n, v):
         if n == 'name':
@@ -84,4 +108,4 @@ class PhysicalFile(LocalFile):
 
         return diracFile
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

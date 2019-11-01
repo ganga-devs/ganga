@@ -24,6 +24,7 @@ import copy
 
 logger = getLogger()
 
+
 class GaudiExecMerger(IMerger):
 
     """Merger class for GaudiExec jobs
@@ -40,7 +41,7 @@ class GaudiExecMerger(IMerger):
     gm.args = '-f2' #pass arguments to hadd
 
     # will produce the specified files
-    j = Job() 
+    j = Job()
     j.outputfiles = ['hist.root','trees.root']
     j.splitter = SomeSplitter()
     j.postprocessors = gm
@@ -71,8 +72,8 @@ class GaudiExecMerger(IMerger):
     If outputdir is not specified, the default location specfied
     in the [Mergers] section of the .gangarc file will be used.
 
-    The way this works is to copy the compressed cmake input sandbox from the sharedir to your tmp area,
-    untar it and execute ./run hadd in order to make use of the correct environment.
+    The way this works is to copy the compressed cmake input sandbox from the sharedir to your tmp
+    area, untar it and execute ./run hadd in order to make use of the correct environment.
 
     """
 
@@ -106,7 +107,11 @@ class GaudiExecMerger(IMerger):
         if isType(jobs, Job):
             if outputdir is None:
                 outputdir = jobs.outputdir
-            return self.merge(jobs.subjobs, outputdir=outputdir, ignorefailed=ignorefailed, overwrite=overwrite)
+            return self.merge(
+                jobs.subjobs,
+                outputdir=outputdir,
+                ignorefailed=ignorefailed,
+                overwrite=overwrite)
 
         if not len(jobs):
             logger.warning('The jobslice given was empty. The merge will not continue.')
@@ -119,21 +124,30 @@ class GaudiExecMerger(IMerger):
                 # check if we can keep going
                 if j.status == 'failed' or j.status == 'killed':
                     if ignorefailed:
-                        logger.warning('Job %s has status %s and is being ignored.', j.fqid, j.status)
+                        logger.warning(
+                            'Job %s has status %s and is being ignored.', j.fqid, j.status)
                         continue
                     else:
-                        raise PostProcessException('Job %s has status %s and so the merge can not continue. '
-                                                   'This can be overridden with the ignorefailed flag.' % (j.fqid, j.status))
+                        raise PostProcessException(
+                            'Job %s has status %s and so the merge can not continue. '
+                            'This can be overridden with the ignorefailed flag.' %
+                            (j.fqid, j.status))
                 else:
-                    raise PostProcessException("Job %s is in an unsupported status %s and so the merge can not continue. '\
-                    'Supported statuses are 'completed', 'failed' or 'killed' (if the ignorefailed flag is set)." % (j.fqid, j.status))
+                    raise PostProcessException("Job %s is in an unsupported status %s and so the "
+                                               "merge can not continue. Supported statuses are "
+                                               "'completed', 'failed' or 'killed' (if the "
+                                               "ignorefailed flag is set)." % (j.fqid, j.status))
 
             if len(j.subjobs):
                 sub_result = self.merge(
-                    j.subjobs, outputdir=j.outputdir, ignorefailed=ignorefailed, overwrite=overwrite)
+                    j.subjobs,
+                    outputdir=j.outputdir,
+                    ignorefailed=ignorefailed,
+                    overwrite=overwrite)
                 if (sub_result == self.failure) and not ignorefailed:
-                    raise PostProcessException('The merge of Job %s failed and so the merge can not continue. '
-                                               'This can be overridden with the ignorefailed flag.' % j.fqid)
+                    raise PostProcessException(
+                        'The merge of Job %s failed and so the merge can not continue. '
+                        'This can be overridden with the ignorefailed flag.' % j.fqid)
 
             import glob
             for f in self.files:
@@ -154,19 +168,24 @@ class GaudiExecMerger(IMerger):
 
                 if not len(glob.glob(os.path.join(j.outputdir, f))):
                     if ignorefailed:
-                        logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.', f, j.fqid)
+                        logger.warning('The file pattern %s in Job %s was not found. The file will '
+                                       'be ignored.', f, j.fqid)
                         continue
                     else:
-                        raise PostProcessException('The file pattern %s in Job %s was not found and so the merge can not continue. '
-                                                   'This can be overridden with the ignorefailed flag.' % (f, j.fqid))
+                        raise PostProcessException('The file pattern %s in Job %s was not found '
+                                                   'and so the merge can not continue. This can be '
+                                                   'overridden with the ignorefailed flag.' %
+                                                   (f, j.fqid))
                 # files[f].extend(matchedFiles)
 
         for k in files.keys():
             # make sure we are not going to over write anything
             outputfile = os.path.join(outputdir, k)
             if os.path.exists(outputfile) and not overwrite:
-                raise PostProcessException('The merge process can not continue as it will result in over writing. '
-                                           'Either move the file %s or set the overwrite flag to True.' % outputfile)
+                raise PostProcessException(
+                    'The merge process can not continue as it will result in over writing. '
+                    'Either move the file %s or set the overwrite flag to True.' %
+                    outputfile)
 
             # make the directory if it does not exist
             if not os.path.exists(outputdir):
@@ -187,7 +206,8 @@ class GaudiExecMerger(IMerger):
             for f in files[k]:
                 if f == outputfile:
                     raise PostProcessException(
-                        'Output file %s equals input file %s. The merge will fail.' % (outputfile, f))
+                        'Output file %s equals input file %s. The merge will fail.' %
+                        (outputfile, f))
             # merge the lists of files with a merge tool into outputfile
             msg = None
             try:
@@ -214,17 +234,16 @@ class GaudiExecMerger(IMerger):
 
         return self.success
 
-
     def mergefiles(self, masterjob, file_list, output_file):
 
-        #First grab the job object etc.
+        # First grab the job object etc.
         j = masterjob
         sharedir = j.application.is_prepared.path()
         tmp_dir = tempfile.gettempdir()
-        #Extract the run script
+        # Extract the run script
         tar = tarfile.open(os.path.join(sharedir, "cmake-input-sandbox.tgz"), "r:gz")
         tar.extractall(tmp_dir)
-        #Run the hadd command from the application environment.
+        # Run the hadd command from the application environment.
         merge_cmd = os.path.join(tmp_dir, 'run')
         default_arguments = '-f'
         merge_cmd += ' hadd '
@@ -232,7 +251,7 @@ class GaudiExecMerger(IMerger):
             merge_cmd += ' %s ' % self.args
 
         # don't add a -f unless needed
-        if not default_arguments in merge_cmd:
+        if default_arguments not in merge_cmd:
             merge_cmd += ' %s ' % default_arguments
 
         # add the list of files, output file first
@@ -243,17 +262,16 @@ class GaudiExecMerger(IMerger):
         rc, out = subprocess.getstatusoutput(merge_cmd)
 
         try:
-            #Clean up - first make a list of everything in the tarfile
+            # Clean up - first make a list of everything in the tarfile
             tarlist = tar.getnames()
-            #Pop the run script and find the common prefix of the application folder
+            # Pop the run script and find the common prefix of the application folder
             tarlist.pop(tarlist.index('run'))
             folderToRemove = os.path.commonprefix(tarlist)
-            #Now remove the files
+            # Now remove the files
             os.remove(os.path.join(tmp_dir, 'run'))
             shutil.rmtree(os.path.join(tmp_dir, folderToRemove))
         except OSError:
             logger.error('Failed to remove temporary files from merging at %s' % tmp_dir)
-
 
         log_file = '%s.hadd_output' % output_file
         with open(log_file, 'w') as log:

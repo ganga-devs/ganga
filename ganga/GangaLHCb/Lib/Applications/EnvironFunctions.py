@@ -11,7 +11,7 @@ import GangaCore.Utility.Config
 # Cannot configure LHCb without Gaudi changing underneath
 gaudiConfig = GangaCore.Utility.Config.getConfig('GAUDI')
 
-#---------------------------------------
+# ---------------------------------------
 
 
 def available_versions(self, appname):
@@ -82,7 +82,8 @@ f=os.popen('which SetupProject.sh')
 setup_script=f.read()[:-1]
 f.close()
 if os.path.exists(setup_script):
-    os.system('''/usr/bin/env bash -c '. `which LbLogin.sh` -c %s && source %s %s %s %s && printenv > env.tmp' ''' % (platform, setup_script,project_opts,app,version))
+    os.system(r"/usr/bin/env bash -c '. `which LbLogin.sh` -c %s && source %s %s %s %s && printenv "
+              "> env.tmp' " % (platform, setup_script, project_opts, app, version))
     for line in open('env.tmp').readlines():
         varval = line.strip().split('=')
         if len(varval) < 2:
@@ -111,14 +112,14 @@ else
 fi
 gaudirun.py %s
 exit $?
-""" % ( DaVinci_version, scriptName)
+""" % (DaVinci_version, scriptName)
 
     script_file_name = tempfile.mktemp('.sh')
     try:
         script_file = open(script_file_name, 'w')
         script_file.write(shell_script)
         script_file.close()
-    except:
+    except BaseException:
         from GangaCore.Core.exceptions import PostProcessException
         raise PostProcessException('Problem writing merge script')
 
@@ -163,7 +164,7 @@ def _getshell_SP(self):
             expandfilename(self.user_release_area)
     if self.platform:
         script += '. `which LbLogin.sh` -c %s\n' % self.platform
-        #script += 'export CMTCONFIG=%s\n' % self.platform
+        # script += 'export CMTCONFIG=%s\n' % self.platform
     useflag = ''
     if self.masterpackage:
         from GangaLHCb.Lib.Applications.CMTscript import parse_master_package
@@ -195,4 +196,3 @@ def _getshell_SP(self):
     self.env = copy.deepcopy(self.shell.env)
 
     return self.shell.env
-

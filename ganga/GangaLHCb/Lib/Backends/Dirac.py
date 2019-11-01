@@ -1,3 +1,4 @@
+from GangaCore.GPIDev.Credentials import require_credential
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
@@ -8,7 +9,6 @@ from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger()
-from GangaCore.GPIDev.Credentials              import require_credential
 
 
 class Dirac(DiracBase):
@@ -29,8 +29,9 @@ class Dirac(DiracBase):
         if hasattr(j.inputfiles, 'get'):
             for f in j.inputfiles.get(DiracFile):
                 if f.lfn == '':
-                    raise GangaException(
-                        'Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' % f.namePattern)
+                    raise GangaException('Can not add the lfn of of the DiracFile with name '
+                                         'pattern: %s as the lfn property has not been set.' %
+                                         f.namePattern)
                 else:
                     input_sandbox.append('LFN:' + f.lfn)
         return input_sandbox

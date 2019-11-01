@@ -1,4 +1,4 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 from GangaCore.Utility.Config import getConfig, ConfigError
 import GangaCore.Utility.logging
@@ -11,7 +11,7 @@ from GangaLHCb.Lib.Files import LogicalFile, PhysicalFile
 
 logger = GangaCore.Utility.logging.getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def isLFN(file):
@@ -36,7 +36,8 @@ def strToDataFile(name, allowNone=True):
         if allowNone:
             return None
         else:
-            raise GangaException( "Cannot construct file object: %s" % str(name) )
+            raise GangaException("Cannot construct file object: %s" % str(name))
+
 
 def getDataFile(file_):
     if isType(file_, DiracFile):
@@ -47,4 +48,4 @@ def getDataFile(file_):
         return strToDataFile(file_)
     return None
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
