@@ -28,7 +28,7 @@ class TestGangaObject(unittest.TestCase):
         self.obj._setRegistry(None)
 
     def test_getRegistryID(self):
-        print self.obj._getRegistryID()
+        print(self.obj._getRegistryID())
 
     def test_setDirty(self):
         self.obj._setDirty()
@@ -84,8 +84,7 @@ class TestGangaObject(unittest.TestCase):
 class TestObjectMetaclass(unittest.TestCase):
 
     def testObjectMetaclass(self):
-        class GangaObject(Node):
-            __metaclass__ = ObjectMetaclass
+        class GangaObject(Node, metaclass=ObjectMetaclass):
             _schema = None
             _category = None
             _hidden = True
@@ -97,7 +96,7 @@ class TestObjectMetaclass(unittest.TestCase):
 
 class _ExcThread(threading.Thread):
     def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
-        super(_ExcThread, self).__init__(group, target, name, args, kwargs, verbose)
+        super().__init__(group, target, name, args, kwargs)
         if kwargs is None:
             kwargs = {}
         self.target = target
@@ -118,7 +117,7 @@ class _ExcThread(threading.Thread):
     def join(self, *args, **kwargs):
         threading.Thread.join(self, *args, **kwargs)
         if self.exc:
-            raise self.exc[0], self.exc[1], self.exc[2]
+            raise self.exc[0](self.exc[1]).with_traceback(self.exc[2])
 
 
 class MultiThreadedTestCase(unittest.TestCase):

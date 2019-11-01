@@ -34,7 +34,7 @@ from GangaCore.Runtime.GPIexport import exportToGPI
 import threading
 
 # regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
-urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
+urlprefix = re.compile(r'^(([a-zA-Z_][\w]*:)+/?)?/')
 
 logger = getLogger()
 
@@ -75,6 +75,12 @@ class File(GangaObject):
 
         if not subdir is None:
             self.subdir = subdir
+
+    def __lt__(self, other):
+        return len(self.name) < len(other.name)
+
+    def __gt__(self, other):
+        return len(self.name) > len(other.name)
 
     def __setattr__(self, attr, value):
         """

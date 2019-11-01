@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from GangaCore.Utility.Config import getConfig, setSessionValuesFromFiles
 
 if __name__ == "__main__":

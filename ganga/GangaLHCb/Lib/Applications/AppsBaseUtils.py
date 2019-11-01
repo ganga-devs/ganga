@@ -84,13 +84,13 @@ def addNewLHCbapp(appname, use=''):
 
 def available_versions(self, appname):
     """Provide a list of the available Gaudi application versions"""
-    import EnvironFunctions
+    from . import EnvironFunctions
     return EnvironFunctions.available_versions(self, appname)
 
 
 def guess_version(self, appname):
     """Guess the default Gaudi application version"""
-    import EnvironFunctions
+    from . import EnvironFunctions
     return EnvironFunctions.guess_version(self, appname)
 
 
@@ -99,10 +99,10 @@ def lumi(xmlsummary):
     '''given an XMLSummary object, will return the integrated luminosity'''
     #  print(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[0],'+/-',xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[2])
 
-    lumiDict = dict(zip(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].attrib('format'),
+    lumiDict = dict(list(zip(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].attrib('format'),
                         xmlsummary.counter_dict()['lumiCounters'][
         'IntegrateBeamCrossing/Luminosity'].value()
-    )
+    ))
     )
     return '"%s +- %s"' % (lumiDict['Flag'], lumiDict['Flag2'])
 

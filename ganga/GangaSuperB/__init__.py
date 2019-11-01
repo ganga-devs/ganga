@@ -1,3 +1,6 @@
+#Bail out when loading this module as it is not python3 compliant
+from GangaCore.Core.exceptions import PluginError
+raise PluginError("The GangaSuperB module has not been upgraded for python 3. The last python 2 Ganga version is 7.1.15 . Please contact the ganga devs to discuss updating this module.")
 
 from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.Utility.Config import *

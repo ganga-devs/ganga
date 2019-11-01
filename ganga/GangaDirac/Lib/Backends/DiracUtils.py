@@ -69,7 +69,7 @@ def get_parametric_datasets(dirac_script_lines):
         return API_line.find(method_str) >= 0
         # return API_line.find('.setParametricInputData(') >= 0
 
-    parametric_line = filter(parametric_input_filter, dirac_script_lines)
+    parametric_line = list(filter(parametric_input_filter, dirac_script_lines))
     if len(parametric_line) is 0:
         raise BackendError(
             'Dirac', 'No "setParametricInputData()" lines in dirac API')
@@ -93,7 +93,7 @@ def outputfiles_iterator(job, file_type, selection_pred=None,
 
     for f in itertools.chain(job.outputfiles, job.non_copyable_outputfiles):
         if include_subfiles and hasattr(f, 'subfiles') and f.subfiles:
-            for sf in itertools.ifilter(combined_pred, f.subfiles):
+            for sf in filter(combined_pred, f.subfiles):
                 yield sf
         else:
             if combined_pred(f):
@@ -115,7 +115,7 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
 
 
 def ifilter_chain(selection_pred, *iterables):
-    for item in itertools.ifilter(selection_pred,
+    for item in filter(selection_pred,
                                   itertools.chain(*iterables)):
         yield item
 

@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import
+import re
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy, isType, getName
@@ -18,7 +18,7 @@ from .GangaRepository import SchemaVersionError
 
 import xml.sax.saxutils
 import copy
-from cStringIO import StringIO
+from io import StringIO
 
 logger = getLogger()
 
@@ -375,7 +375,7 @@ class Loader(object):
                 try:
                     # unescape the special characters
                     s = unescape(self.value_construct)
-                    #logger.debug('string value: %s',s)
+                    s = re.sub('(\d)L(\})', r'\1\2', s)
                     if s not in _cached_eval_strings:
                         # This is ugly and classes which use this are bad, but this needs to be fixed in another PR
                         # TODO Make the scope of objects a lot better than whatever is in the config

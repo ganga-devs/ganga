@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from GangaCore.testlib.mark import external
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
@@ -13,7 +13,7 @@ class TestDatasets(GangaUnitTest):
         # test constructors/setters
         ds = LHCbDataset(['lfn:a', 'pfn:b'])
         assert len(ds) == 2
-        print(ds[0])
+        print((ds[0]))
         assert isinstance(ds[0], DiracFile)
         assert isinstance(ds[1], LocalFile)
         ds = LHCbDataset()
@@ -30,7 +30,7 @@ class TestDatasets(GangaUnitTest):
         assert isinstance(j.inputdata, LHCbDataset)
         j.outputfiles = ['a', DiracFile('b')]
         assert isinstance(j.outputfiles[0], LocalFile)
-        print(type(j.outputfiles[1]))
+        print((type(j.outputfiles[1])))
         assert isinstance(j.outputfiles[1], DiracFile)
 
         # check the LHCbDataset functions:
@@ -60,5 +60,5 @@ class TestDatasets(GangaUnitTest):
 
         ds = LHCbDataset(LFN_DATA)
 
-        assert len(ds.getReplicas().keys()) == 2
+        assert len(list(ds.getReplicas().keys())) == 2
         assert ds.getCatalog()

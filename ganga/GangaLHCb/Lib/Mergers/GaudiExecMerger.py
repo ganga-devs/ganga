@@ -15,7 +15,7 @@ from GangaCore.Utility.Config import ConfigError, getConfig
 from GangaCore.Utility.Plugin import allPlugins
 from GangaCore.Utility.logging import getLogger
 import tarfile
-import commands
+import subprocess
 import tempfile
 import os
 import shutil
@@ -240,7 +240,7 @@ class GaudiExecMerger(IMerger):
         arg_list.extend(file_list)
         merge_cmd += string.join(arg_list, ' ')
 
-        rc, out = commands.getstatusoutput(merge_cmd)
+        rc, out = subprocess.getstatusoutput(merge_cmd)
 
         try:
             #Clean up - first make a list of everything in the tarfile

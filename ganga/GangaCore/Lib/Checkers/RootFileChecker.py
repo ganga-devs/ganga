@@ -7,7 +7,7 @@ from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
 from GangaCore.GPIDev.Adapters.IChecker import IFileChecker
 from GangaCore.GPIDev.Schema import FileItem, SimpleItem
 from GangaCore.Utility.logging import getLogger
-import commands
+import subprocess
 import copy
 import os
 import re
@@ -35,7 +35,7 @@ def GetTreeObjects(f, dir=""):
             continue
         absdir = os.path.join(dir, tdir)
         if isinstance(f.Get(tdir), ROOT.TDirectory):
-            for absdir, tree in GetTreeObjects(f, absdir).iteritems():
+            for absdir, tree in GetTreeObjects(f, absdir).items():
                 tree_dict[absdir] = tree
         if isinstance(f.Get(absdir), ROOT.TTree):
             tree_dict[absdir] = f.Get(absdir)
@@ -59,8 +59,8 @@ class RootFileChecker(IFileChecker):
 
     def checkBranches(self, mastertrees, subtrees):
         import ROOT
-        for masterpath, mastertree in mastertrees.iteritems():
-            for subpath, subtree in subtrees.iteritems():
+        for masterpath, mastertree in mastertrees.items():
+            for subpath, subtree in subtrees.items():
                 if (subpath == masterpath):
                     subbranches = [branch.GetName()
                                    for branch in subtree.GetListOfBranches()]
@@ -72,8 +72,8 @@ class RootFileChecker(IFileChecker):
 
     def addEntries(self, mastertrees, subtrees, entries_dict):
         import ROOT
-        for masterpath, mastertree in mastertrees.iteritems():
-            for subpath, subtree in subtrees.iteritems():
+        for masterpath, mastertree in mastertrees.items():
+            for subpath, subtree in subtrees.items():
                 if (subpath == masterpath):
                     if (subpath in entries_dict):
                         entries_dict[subpath] += subtree.GetEntries()
@@ -122,7 +122,7 @@ class RootFileChecker(IFileChecker):
                     return self.success
 
                 for failString in ['Could not find branch', 'One of the export branches', 'Skipped file']:
-                    grepoutput = commands.getoutput('grep "%s" %s' % (failString, haddoutput))
+                    grepoutput = subprocess.getoutput('grep "%s" %s' % (failString, haddoutput))
                     if len(grepoutput):
                         logger.info('There was a problem with hadd, the string "%s" was found. Will fail job', failString)
                         return self.failure

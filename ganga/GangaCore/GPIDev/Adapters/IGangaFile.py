@@ -10,7 +10,7 @@ from GangaCore.Utility.logging import getLogger
 from fnmatch import fnmatch
 
 logger = getLogger()
-regex = re.compile('[*?\[\]]')
+regex = re.compile(r'[*?\[\]]')
 
 
 class IGangaFile(GangaObject):

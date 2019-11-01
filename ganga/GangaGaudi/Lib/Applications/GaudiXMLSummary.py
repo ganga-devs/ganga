@@ -2,7 +2,7 @@
 
 import os
 import sys
-import imp
+import importlib
 import tempfile
 import pickle
 import subprocess
@@ -82,10 +82,10 @@ class GaudiXMLSummary(GangaObject):
         if v not in xml_schema:
             if 'schema' in sys.modules:
                 del sys.modules['schema']
-            xml_schema[v] = imp.load_source('schema', p + '/schema.py')
+            xml_schema[v] = importlib.machinery.SourceFileLoader('schema', p + '/schema.py').load_module()
             if 'summary' in sys.modules:
                 del sys.modules['summary']
-            xml_summary[v] = imp.load_source('summary', p + '/summary.py')
+            xml_summary[v] = importlib.machinery.SourceFileLoader('summary', p + '/summary.py').load_module()
             xml_summary[v].__schema__ = xml_schema[v]
 
         sum = xml_summary[v].Summary(self._xmlSchema())

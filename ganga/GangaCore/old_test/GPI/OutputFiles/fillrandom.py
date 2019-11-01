@@ -1,24 +1,16 @@
 #!/usr/bin/env python
 
-wrfile = file('fillrandom.root', 'w')
-
-wrfile.write('this is just a test')
-wrfile.close()
+with open('fillrandom.root', 'w') as wrfile:
+    wrfile.write('this is just a test')
 
 
-wrfile1 = file('fillrandom1.root', 'w')
-
-wrfile1.write('this is another a test')
-wrfile1.close()
+with open('fillrandom1.root', 'w') as wrfile1:
+    wrfile1.write('this is another a test')
 
 
-wrfile2 = file('fillrandom.root1', 'w')
-
-wrfile2.write('this is another a test')
-wrfile2.close()
+with open('fillrandom.root1', 'w') as wrfile2:
+    wrfile2.write('this is another a test')
 
 
-wrfile3 = file('fillrandom1.root1', 'w')
-
-wrfile3.write('this is another a test')
-wrfile3.close()
+with open('fillrandom1.root1', 'w') as wrfile3:
+    wrfile3.write('this is another a test')

@@ -98,7 +98,7 @@ class GangaListIter(object):
     def __init__(self, it):
         self.it = it
 
-    def next(self):
+    def __next__(self):
         # TODO determine if this is correct or needed?
         return addProxy(next(self.it))
 
@@ -112,7 +112,7 @@ class GangaList(GangaObject):
                       '__getitem__', '__getslice__', '__gt__', '__iadd__', '__imul__',
                       '__iter__', '__le__', '__len__', '__lt__', '__mul__', '__ne__', '__reversed__', '__radd__', '__rmul__',
                       '__setitem__', '__setslice__', 'append', 'count', 'extend', 'index',
-                      'insert', 'pop', 'remove', 'reverse', 'sort', '__hash__', 'get']
+                      'insert', 'pop', 'remove', 'reverse', 'sort', '__hash__', 'get', 'clear']
     _hidden = 1
     _enable_plugin = 1
     _name = 'GangaList'
@@ -201,7 +201,7 @@ class GangaList(GangaObject):
             if '_list_get__match__' in dir(item):
                 return item._list_get__match__(to_match)
             return to_match == item
-        return makeGangaListByRef(filter(matching_filter, self._list), preparable=self._is_preparable)
+        return makeGangaListByRef(list(filter(matching_filter, self._list)), preparable=self._is_preparable)
 
     def _export_get(self, to_match):
         return addProxy(self.get(stripProxy(to_match)))
@@ -348,16 +348,18 @@ class GangaList(GangaObject):
         return self._list.__ge__(self.__getListToCompare(obj_list))
 
     def __getitem__(self, index):
+        if isinstance(index, slice):
+            return makeGangaList(self._list.__getitem__(index))
         return self._list.__getitem__(index)
 
     def _export___getitem__(self, index):
         return addProxy(self.__getitem__(index))
 
-    def __getslice__(self, start, end):
-        return makeGangaList(_list=self._list.__getslice__(start, end), preparable=self._is_preparable)
+#    def __getslice__(self, start, end):
+#        return makeGangaList(_list=self._list.__getslice__(start, end), preparable=self._is_preparable)
 
-    def _export___getslice__(self, start, end):
-        return addProxy(self.__getslice__(start, end))
+#    def _export___getslice__(self, start, end):
+#        return addProxy(self.__getslice__(start, end))
 
     def __gt__(self, obj_list):
         return self._list.__gt__(self.strip_proxy_list(obj_list))
@@ -523,6 +525,9 @@ class GangaList(GangaObject):
 
     def pop(self, index=-1):
         return self._list.pop(index)
+
+    def clear(self):
+        self._list.clear()
 
     def _export_pop(self, index=-1):
         self.checkReadOnly()

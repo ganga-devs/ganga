@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
@@ -43,7 +43,7 @@ class TestNestedXMLWorking(GangaUnitTest):
 
         assert len(jobs) == 1
 
-        print("len: %s" % len(jobs))
+        print(("len: %s" % len(jobs)))
 
         j = jobs(0)
 
@@ -95,12 +95,12 @@ class TestNestedXMLWorking(GangaUnitTest):
 
             ignore_subs = ''
 
-            with NamedTemporaryFile(delete=False) as new_temp_file:
+            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file:
 
                 to_file(stripProxy(j), new_temp_file, ignore_subs)
                 new_temp_file.flush()
 
-            with NamedTemporaryFile(delete=False) as new_temp_file2:
+            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file2:
                 j2 = Job()
                 j2.splitter = ArgSplitter()
                 j2.splitter.args = getNestedList()

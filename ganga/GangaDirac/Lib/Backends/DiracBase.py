@@ -33,7 +33,7 @@ default_finaliseOnMaster = configDirac['default_finaliseOnMaster']
 default_downloadOutputSandbox = configDirac['default_downloadOutputSandbox']
 default_unpackOutputSandbox = configDirac['default_unpackOutputSandbox']
 logger = getLogger()
-regex = re.compile('[*?\[\]]')
+regex = re.compile(r'[*?\[\]]')
 
 class DiracBase(IBackend):
 
@@ -242,20 +242,21 @@ class DiracBase(IBackend):
                     j.subjobs[int(sjNo)].updateStatus('failed')
                     submitFailures.update({jobNo : 'DIRAC error!'})
         else:
-            if isinstance(result[result.keys()[0]], int):
-                j.backend.id = result[result.keys()[0]]
+            result_id = list(result.keys())[0]
+            if isinstance(result[result_id], int):
+                j.backend.id = result[result_id]
                 j.updateStatus('submitted')
                 j.time.timenow('submitted')
                 stripProxy(j.info).increment()
-            elif isinstance(result[result.keys()[0]], str):
+            elif isinstance(result[result_id], str):
                 j.updateStatus('failed')
-                submitFailures.update({result.keys()[0] : result[result.keys()[0]]})
+                submitFailures.update({result_id: result[result_id]})
             else:
                 j.updateStatus('failed')
-                submitFailures.update({result.keys()[0] : 'DIRAC error!'})
+                submitFailures.update({result_id: 'DIRAC error!'})
 
         #Check that every subjob got submitted ok
-        if len(submitFailures.keys()) > 0:
+        if len(submitFailures) > 0:
             for sjNo in submitFailures.keys():
                 logger.error('Job submission failed for job %s : %s' % (sjNo, submitFailures[sjNo]))
             raise GangaDiracError("Some subjobs failed to submit! Check their status!")
@@ -308,12 +309,12 @@ class DiracBase(IBackend):
                 sjScript = sj.backend._job_script(sc, master_input_sandbox, tmp_dir)
                 sjScript = sjScript.replace("output(result)", "if isinstance(result, dict) and 'Value' in result:\n\tresultdict.update({sjNo : result['Value']})\nelse:\n\tresultdict.update({sjNo : result['Message']})")
                 if nSubjobs == 0:
-                    sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
+                    sjScript = re.sub(r"(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
                 if nSubjobs !=0 :
                     sjScript = sjScript.replace("from DIRAC.Core.Base.Script import parseCommandLine\nparseCommandLine()\n", "\n")
-                    sjScript = re.sub("from .*DIRAC\.Interfaces\.API.Dirac.* import Dirac.*","",sjScript)
-                    sjScript = re.sub("from .*DIRAC\.Interfaces\.API\..*Job import .*Job","",sjScript)
-                    sjScript = re.sub("dirac = Dirac.*\(\)","",sjScript)
+                    sjScript = re.sub(r"from .*DIRAC\.Interfaces\.API.Dirac.* import Dirac.*","",sjScript)
+                    sjScript = re.sub(r"from .*DIRAC\.Interfaces\.API\..*Job import .*Job","",sjScript)
+                    sjScript = re.sub(r"dirac = Dirac.*\(\)","",sjScript)
                     masterScript += "\nsjNo=\'%s\'" % fqid
                 masterScript += sjScript
                 nSubjobs +=1
@@ -533,7 +534,7 @@ class DiracBase(IBackend):
             :script.find(start_user_settings) + len(start_user_settings)]
 
         job_ident = get_job_ident(script.split('\n'))
-        for key, value in self.settings.iteritems():
+        for key, value in self.settings.items():
             if str(key).startswith('set'):
                 _key = key[3:]
             else:
@@ -588,15 +589,15 @@ class DiracBase(IBackend):
                 continue
 
             #First pick out the imports etc at the start
-            newScript =  re.compile(r'%s.*?%s' % ('resultdict = {}',"dirac = Dirac.*?\(\)\n"),re.S).search(script).group(0)
+            newScript =  re.compile(r'%s.*?%s' % (r'resultdict = {}',r"dirac = Dirac.*?\(\)\n"),re.S).search(script).group(0)
             newScript += '\n'
             #Now pick out the job part
             start = "sjNo='%s'" % j.fqid
             #Check if the original script included the check for the dirac output
             if "result[\'Message\']" in script:
-                newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Message'\]}\)"),re.S).search(script).group(0)
+                newScript += re.compile(r'%s.*?%s' % (start,r"resultdict.update\({sjNo : result\['Message'\]}\)"),re.S).search(script).group(0)
             else:
-                newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
+                newScript += re.compile(r'%s.*?%s' % (start,r"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
             newScript += '\noutput(resultdict)'
             
             # Modify the new script with the user settings
@@ -606,7 +607,7 @@ class DiracBase(IBackend):
                 :newScript.find(start_user_settings) + len(start_user_settings)]
 
             job_ident = get_job_ident(newScript.split('\n'))
-            for key, value in self.settings.iteritems():
+            for key, value in self.settings.items():
                 if str(key).startswith('set'):
                     _key = key[3:]
                 else:
@@ -804,7 +805,7 @@ class DiracBase(IBackend):
         else:
             suceeded.extend([download(f, j, False) for f in outputfiles_iterator(j, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
 
-        return filter(lambda x: x is not None, suceeded)
+        return [x for x in suceeded if x is not None]
 
     def getOutputDataLFNs(self):
         """Retrieve the list of LFNs assigned to outputdata"""
@@ -883,7 +884,7 @@ class DiracBase(IBackend):
             jobStateDict (dict): This is a dict of {job.backend.id : job_status, } elements
             bulk_time_lookup (dict): Dict of result of multiple calls to getBulkStateTime, performed in advance
         """
-        for this_state, these_jobs in jobStateDict.iteritems():
+        for this_state, these_jobs in jobStateDict.items():
             if bulk_time_lookup == {} or this_state not in bulk_time_lookup:
                 bulk_result = execute("getBulkStateTime(%s,\'%s\')" % (repr([j.backend.id for j in these_jobs]), this_state), cred_req=these_jobs[0].backend.credential_requirements)  # TODO split jobs by cred_req
             else:
@@ -1032,7 +1033,7 @@ class DiracBase(IBackend):
                         raise GangaDiracError("Error understanding OutputDataInfo: %s" % str(file_info_dict))
 
                     ## Caution is not clear atm whether this 'Value' is an LHCbism or bug
-                    list_of_files = file_info_dict.get('Value', file_info_dict.keys())
+                    list_of_files = file_info_dict.get('Value', list(file_info_dict.keys()))
 
                     for file_name in list_of_files:
                         file_name = os.path.basename(file_name)
@@ -1060,7 +1061,7 @@ class DiracBase(IBackend):
                                                                                     info.get('GUID', 'NotAvailable')
                                                                                     )
                             #logger.debug("DiracFileData: %s" % str(DiracFileData))
-                            postprocesslocationsfile.write(DiracFileData)
+                            postprocesslocationsfile.write(DiracFileData.encode())
                             postprocesslocationsfile.flush()
 
                 logger.debug("Written: %s" % open(lfn_store, 'r').readlines())
@@ -1080,7 +1081,7 @@ class DiracBase(IBackend):
             #If the sandbox dict includes a Succesful key then the sandbox has been download from grid storage, likely due to being oversized. Untar it and issue a warning.
             elif job.backend.downloadSandbox and isinstance(getSandboxResult['Value'], dict) and getSandboxResult['Value'].get('Successful', False):
                     try:
-                        sandbox_name = getSandboxResult['Value']['Successful'].values()[0]
+                        sandbox_name = list(getSandboxResult['Value']['Successful'].values())[0]
                         check_output(['tar', '-xvf', sandbox_name, '-C', output_path])
                         check_output(['rm', sandbox_name])
                         logger.warning('Output sandbox for job %s downloaded from grid storage due to being oversized.' % job.fqid)
@@ -1231,7 +1232,7 @@ class DiracBase(IBackend):
                         raise GangaDiracError("Error understanding OutputDataInfo: %s" % str(returnDict[sj.backend.id]['outDataInfo']))
 
                     ## Caution is not clear atm whether this 'Value' is an LHCbism or bug
-                    list_of_files = returnDict[sj.backend.id]['outDataInfo'].get('Value', returnDict[sj.backend.id]['outDataInfo'].keys())
+                    list_of_files = returnDict[sj.backend.id]['outDataInfo'].get('Value', list(returnDict[sj.backend.id]['outDataInfo'].keys()))
                     for file_name in list_of_files:
                         file_name = os.path.basename(file_name)
                         info = returnDict[sj.backend.id]['outDataInfo'].get(file_name)

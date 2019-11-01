@@ -1,1 +1,1 @@
-from GaudiXMLSummary import GaudiXMLSummary, GaudiXMLSummaryMerger
+from .GaudiXMLSummary import GaudiXMLSummary, GaudiXMLSummaryMerger

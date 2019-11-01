@@ -3,7 +3,7 @@ import os
 import re
 import inspect
 import getpass
-import commands
+import subprocess
 from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours
 
 # Global Variable to enable Job Sharing mechanism required in GANGA SWAN INTEGRATION.
@@ -229,7 +229,7 @@ poll_config.addOption('forced_shutdown_first_prompt_time', 5,
                  "User will get the FIRST prompt after N seconds, as specified by this parameter. This parameter also defines the time that Ganga will wait before shutting down, if there are only non-critical threads alive, in both interactive and batch mode.")
 
 import sys
-poll_config.addOption('HeartBeatTimeOut', sys.maxint, 'Time before the user gets the warning that a thread has locked up due to failing to update the heartbeat attribute')
+poll_config.addOption('HeartBeatTimeOut', sys.maxsize, 'Time before the user gets the warning that a thread has locked up due to failing to update the heartbeat attribute')
 
 poll_config.addOption('autoCheckCredentials', True, 'Check credentials using the monitoring loop')
 
@@ -793,7 +793,7 @@ protoByExperiment = {'atlas': 'root://eosatlas.cern.ch',
                      'undefined': 'root://eos.cern.ch'}
 defaultMassStorageProto = protoByExperiment[groupname]
 
-eosinstalled, prefix = commands.getstatusoutput('which eos')
+eosinstalled, prefix = subprocess.getstatusoutput('which eos')
 if not eosinstalled == 0:
     prefix = ''
     massStoragePath = ''    

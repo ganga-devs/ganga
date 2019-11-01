@@ -24,8 +24,6 @@ class FileBuffer(object):
         """
         self.name = name
         self._contents = contents
-        if not isinstance(contents, str):
-            self._contents = contents.read()
         self.subdir = subdir
         self.executable = executable
 

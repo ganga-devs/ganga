@@ -26,7 +26,8 @@ class SubmissionCommit(MultipassTest):
         logger.info('sub')
         j.submit()
         logger.info(j)
-        file(self.name,'w').write(str(j.id))
+        with open(self.name,'w') as file_:
+            file_.write(str(j.id))
         logger.info('saved job id %s to file %s'%(j.id,self.name))
         assert(j.backend.start_time != 0)
 

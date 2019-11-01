@@ -256,11 +256,11 @@ def execute(command,
             command_to_send  = str(dirac_process_ids[2])
             command_to_send += 'os.chdir("%s")\n' % cwd_
             command_to_send += command
-            s.sendall(b'%s###END-TRANS###' % command_to_send)
+            s.sendall(('%s###END-TRANS###' % command_to_send).encode('utf-8'))
             out = ''
             while '###END-TRANS###' not in out:
                 data = s.recv(1024)
-                out += data
+                out += data.decode("utf-8")
             s.close()
             returnable = eval(out)
 
@@ -297,16 +297,16 @@ def execute(command,
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
-    if isinstance(returnable, dict) and not return_raw_dict:
+    if isinstance(returnable, dict):
+        if return_raw_dict:
+            # If the output is a dictionary return and it has been requested, then return it
+            return returnable
         # If the output is a dictionary allow for automatic error detection
         if returnable['OK']:
             return returnable['Value']
         else:
             raise GangaDiracError(returnable['Message'])
-    elif isinstance(returnable, dict):
-        # If the output is a dictionary return and it has been requested, then return it
-        return returnable
     else:
         # Else raise an exception as it should be a dictionary
-        raise  GangaDiracError(returnable)
+        raise GangaDiracError(returnable)
 

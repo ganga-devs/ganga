@@ -2,12 +2,24 @@ import os
 import base64
 import subprocess
 import threading
-import cPickle as pickle
+import pickle as pickle
 import signal
 from copy import deepcopy
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Utility.logging import getLogger
 logger = getLogger()
+
+
+def bytes2string(obj):
+    if isinstance(obj, bytes):
+        return obj.decode("utf-8")
+    if isinstance(obj, dict):
+        return {bytes2string(key): bytes2string(value) for key, value in obj.items()}
+    if isinstance(obj, list):
+        return [bytes2string(item) for item in obj]
+    if isinstance(obj, tuple):
+        return tuple(bytes2string(item) for item in obj)
+    return obj
 
 
 def env_update_script(indent=''):
@@ -19,12 +31,12 @@ def env_update_script(indent=''):
         indent (str): This is the indent to apply to the script if this script is to be appended to a python file
     """
     fdread, fdwrite = os.pipe()
+    os.set_inheritable(fdwrite, True)
     this_script = '''
 import os
-import cPickle as pickle
-os.close(###FD_READ###)
+import pickle as pickle
 with os.fdopen(###FD_WRITE###,'wb') as envpipe:
-    pickle.dump(os.environ, envpipe)
+    pickle.dump(dict(os.environ), envpipe, 2)
 '''
     from GangaCore.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
@@ -48,14 +60,14 @@ def python_wrapper(command, python_setup='', update_env=False, indent=''):
     This returns the file handler objects for the env_update_script, the python wrapper itself and the script which has been generated to be run
     """
     fdread, fdwrite = os.pipe()
+    os.set_inheritable(fdwrite, True)
     this_script = '''
 from __future__ import print_function
 import os, sys, traceback
-import cPickle as pickle
-os.close(###PKL_FDREAD###)
+import pickle as pickle
 with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     def output(data):
-        print(pickle.dumps(data), file=PICKLE_STREAM)
+        pickle.dump(data, PICKLE_STREAM, 2)
     local_ns = {'pickle'        : pickle,
                 'PICKLE_STREAM' : PICKLE_STREAM,
                 'output'        : output}
@@ -64,7 +76,7 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
         full_command += """ \n###COMMAND### """
         exec(full_command, local_ns)
     except:
-        print(pickle.dumps(traceback.format_exc()), file=PICKLE_STREAM)
+        pickle.dump(traceback.format_exc(), PICKLE_STREAM, 2)
 
 '''
     from GangaCore.GPIDev.Lib.File.FileUtils import indentScript
@@ -95,6 +107,8 @@ def __reader(pipes, output_ns, output_var, require_output):
         try:
             # rcurrie this deepcopy hides a strange bug that the wrong dict is sometimes returned from here. Remove at your own risk
             output_ns[output_var] = deepcopy(pickle.load(read_file))
+        except UnicodeDecodeError:
+            output_ns[output_var] = deepcopy(bytes2string(pickle.load(read_file, encoding="bytes")))
         except Exception as err:
             if require_output:
                 logger.error('Error getting output stream from command: %s', err)
@@ -114,33 +128,6 @@ def __timeout_func(process, timed_out):
             os.killpg(process.pid, signal.SIGKILL)
         except Exception as e:
             logger.error("Exception trying to kill process: %s" % e)
-
-
-def get_env():
-    """ Function to return a clean copy of the env that we're currently running in """
-
-    # If we're not updating the environment, and the environment ie empty we need to create a new environment to be use by the command
-    pipe = subprocess.Popen('python -c "from __future__ import print_function;import os;print(os.environ)"',
-                            env=None, cwd=None, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    output = pipe.communicate()
-    env = eval(output[0])
-
-    if env:
-        for k, v in env.iteritems():
-            if not str(v).startswith('() {'):
-                env[k] = os.path.expandvars(v)
-            # Be careful with exported bash functions!
-            else:
-                this_string = str(v).split('\n')
-                final_str = ""
-                for line in this_string:
-                    final_str += str(os.path.expandvars(line)).strip()
-                    if not final_str.endswith(';'):
-                        final_str += " ;"
-                final_str += " "
-                env[k] = final_str
-
-    return env
 
 
 def start_timer(p, timeout):
@@ -212,15 +199,16 @@ def execute(command,
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
             command_update, env_file_pipes = env_update_script()
-            command += ''';python -c "import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
+            command += ''';python -c "import base64;exec(base64.b64decode(%s))"''' % base64.b64encode(command_update.encode("utf-8"))
 
     # Some minor changes to cleanup the getting of the env
-    if env is None and not update_env:
-        env = get_env()
+    if env is None:
+        env = os.environ
 
     # Construct the object which will contain the environment we want to run the command in
     p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         universal_newlines=True, close_fds=False)
 
     # This is where we store the output
     thread_output = {}
@@ -277,7 +265,13 @@ def execute(command,
     try:
         # If output
         if stdout:
-            stdout_temp = pickle.loads(stdout)
+            if isinstance(stdout, bytes):
+                stdout_temp = pickle.loads(stdout)
+            else:
+                try:
+                    stdout_temp = pickle.loads(stdout.encode("utf-8"))
+                except pickle.UnpicklingError:
+                    stdout_temp = pickle.loads(stdout.encode("latin1"))
     # Downsides to wanting to be explicit in how this failed is you need to know all the ways it can!
     except (pickle.UnpicklingError, EOFError, ValueError) as err:
         if not shell:

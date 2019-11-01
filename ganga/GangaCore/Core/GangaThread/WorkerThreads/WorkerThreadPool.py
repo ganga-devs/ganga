@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-import Queue
+import queue
 import traceback
+import threading
 import collections
 from GangaCore.Core.exceptions import GangaException, GangaTypeError
 from GangaCore.Core.GangaThread import GangaThread
@@ -14,7 +15,12 @@ from collections import namedtuple
 logger = getLogger()
 QueueElement = namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
 CommandInput = namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
-FunctionInput = namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
+class FunctionInput(namedtuple('FunctionInput', ['function', 'args', 'kwargs'])):
+    def __gt__(self, other):
+        pass
+    def __lt__(self, other):
+        pass
+
 
 
 class WorkerThreadPool(object):
@@ -28,7 +34,7 @@ class WorkerThreadPool(object):
     def __init__(self, num_worker_threads=None, worker_thread_prefix='Worker_'):
         if num_worker_threads is None:
             num_worker_threads=getConfig('Queues')['NumWorkerThreads']
-        self.__queue = Queue.PriorityQueue()
+        self.__queue = queue.PriorityQueue()
         self.__worker_threads = []
 
         self._saved_num_worker = num_worker_threads
@@ -51,24 +57,24 @@ class WorkerThreadPool(object):
             t = GangaThread(name=worker_thread_prefix + str(i),
                             auto_register=False,
                             target=self.__worker_thread)
-            t._Thread__args = (t,)
             t._name = worker_thread_prefix + str(i)
             t._command = 'idle'
             t._timeout = 'N/A'
             t.start()
             self.__worker_threads.append(t)
 
-    def __worker_thread(self, thread):
+    def __worker_thread(self):
         """
         Code run by worker threads to allow parallelism in GangaCore.
 
         Can be used for executing non-blocking calls to local DIRAC server
         """
+        thread = threading.current_thread()
         # Occasionally when shutting down the Queue import at top has been garbage collected
         # and line "except Queue.Empty: continue" will throw
         # <type 'exceptions.AttributeError'>: 'NoneType' object has no attribute 'Empty'
         # im hoping that importing within the thread will avoid this.
-        import Queue
+        import queue
 
         oldname = thread.gangaName
 
@@ -77,7 +83,7 @@ class WorkerThreadPool(object):
         while not thread.should_stop():
             try:
                 item = self.__queue.get(True, 0.05)
-            except Queue.Empty:
+            except queue.Empty:
                 # wait 0.05 sec then loop again to give shutdown a chance
                 continue
 

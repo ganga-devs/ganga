@@ -97,7 +97,7 @@ class TransientRegistrySlice(RegistrySlice):
                     logger.error(
                         '                  If you wanted a slice, please use the select method')
                     raise RegistryKeyError(
-                        "Multiple matches for id='%s':%s" % (id, str(map(lambda x: x.name, matches))))
+                        "Multiple matches for id='%s':%s" % (id, str([x.name for x in matches])))
                 if len(matches) < 1:
                     return _wrap(TransientRegistrySlice(self.name))
                 return matches[0]

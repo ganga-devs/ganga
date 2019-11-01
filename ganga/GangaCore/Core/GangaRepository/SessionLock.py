@@ -4,7 +4,7 @@
 # to run locking tests (run several instances in the same directory, from
 # different machines)
 
-from __future__ import print_function
+
 
 import functools
 import threading
@@ -20,7 +20,7 @@ import getpass
 from pipes import quote
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle
 
@@ -40,7 +40,7 @@ session_lock_last = 0
 session_expiration_timeout = 0
 try:
     session_expiration_timeout = getConfig('Configuration')['DiskIOTimeout']
-except ConfigError, err:
+except ConfigError as err:
     session_expiratrion_timeout = 30
 
 session_lock_refresher = None
@@ -407,17 +407,17 @@ class SessionLockManager(object):
         if not os.path.exists(self.cntfn):
             fd = None
             try:
-                fd = os.open(self.cntfn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
-                os.write(fd, "0")
+                fd = open(self.cntfn, 'w')
+                fd.write("0")
             except OSError as x:
                 if x.errno != errno.EEXIST:
                     raise RepositoryError(self.repo, "OSError on count file create: %s" % x)
             finally:
                 if fd is not None:
-                    os.close(fd)
+                    fd.close()
         try:
             self.count = max(self.count, self.cnt_read())
-        except ValueError, err:
+        except ValueError as err:
             logger.debug("Startup ValueError Exception: %s" % err)
             logger.error("Corrupt count file '%s'! Trying to recover..." % (self.cntfn))
         except OSError as err:
@@ -617,16 +617,16 @@ class SessionLockManager(object):
             _output = None
             fd = None
             try:
-                fd = os.open(self.cntfn, os.O_RDWR)
+                fd = open(self.cntfn, "r")
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
                 # 100 bytes should be enough for any ID. Can raise ValueErrorr
-                _output = int(os.read(fd, 100).split("\n")[0])
+                _output = int(fd.read(100).split("\n")[0])
             finally:
                 if fd is not None:
                     if not self.afs:  # additional locking for NFS
                         fcntl.lockf(fd, fcntl.LOCK_UN)
-                    os.close(fd)
+                    fd.close()
 
                 if _output is not None:
                     self.last_count_access = SessionLockManager.LastCountAccess(os.stat(self.cntfn).st_ctime, _output)
@@ -654,15 +654,15 @@ class SessionLockManager(object):
             # possible)
             fd = None
             try:
-                fd = os.open(self.cntfn, os.O_RDWR)
+                fd = open(self.cntfn, "w")
                 if not self.afs:
                     fcntl.lockf(fd, fcntl.LOCK_EX)
-                os.write(fd, str(self.count) + "\n")
+                fd.write(str(self.count) + "\n")
                 if not self.afs:
                     fcntl.lockf(fd, fcntl.LOCK_UN)
             finally:
                 if fd is not None:
-                    os.close(fd)
+                    fd.close()
             finished = True
         except OSError as x:
             if x.errno != errno.ENOENT:
@@ -696,7 +696,7 @@ class SessionLockManager(object):
         # someone used force_ids (for example old repository imports)
         if self.locked and max(self.locked) >= newcount:
             newcount = max(self.locked) + 1
-        ids = range(newcount, newcount + n)
+        ids = list(range(newcount, newcount + n))
         if not GANGA_SWAN_INTEGRATION:
             # If sharing sessions don't update id to locked.
             self.locked.update(ids)
@@ -868,6 +868,6 @@ class SessionLockManager(object):
         si = session.split(".")
         try:
             return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], ".".join(si[-5:-3]))
-        except Exception, err:
+        except Exception as err:
             logger.debug( "Session Info Exception: %s" % err)
             return session

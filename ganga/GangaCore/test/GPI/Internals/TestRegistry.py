@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import random
 import threading
@@ -34,7 +34,7 @@ class HammerThread(threading.Thread):
 
     def add(self):
         from GangaTest.Lib.TestObjects import TestGangaObject  # This import is in here to avoid confusing nosetests
-        self.logger.info('self.ref.keys before: %s' % self.reg.keys())
+        self.logger.info('self.ref.keys before: %s' % list(self.reg.keys()))
         objs = [TestGangaObject('HT%i' % self.id) for _ in range(self.rng.randint(1, 2))]
         self.logger.info(str(self.id) + ' add(%s)' % objs)
         ids = []
@@ -54,15 +54,15 @@ class HammerThread(threading.Thread):
         assert len(ids) == len(objs)
         # TODO: Check if objects stay the same
         self.owned_ids.extend(ids)
-        self.logger.info('self.reg.keys after: %s' % self.reg.keys())
+        self.logger.info('self.reg.keys after: %s' % list(self.reg.keys()))
 
     def delete(self):
         _ids = self.reg.ids()
-        self.logger.info('delete self.reg.keys start: %s' % self.reg.keys())
+        self.logger.info('delete self.reg.keys start: %s' % list(self.reg.keys()))
         if len(_ids) == 0:
             return
-        n = min(len(self.reg.keys()), self.rng.randint(1, 2))
-        ids = self.rng.sample(self.reg.keys(), n)
+        n = min(len(list(self.reg.keys())), self.rng.randint(1, 2))
+        ids = self.rng.sample(list(self.reg.keys()), n)
         self.logger.info(str(self.id) + ' delete(%s)' % ids)
         for _id in ids:
             self.logger.debug('Removing: %s' % _id)
@@ -76,16 +76,16 @@ class HammerThread(threading.Thread):
             self.logger.info('Finished Remove\n\n')
         # [self.reg._remove(self.reg[id]) for id in ids]
         for _id in ids:
-            self.logger.info('keys: %s' % self.reg.keys())
+            self.logger.info('keys: %s' % list(self.reg.keys()))
             self.logger.info('testing: %s' % _id)
-            assert _id not in self.reg.keys()
+            assert _id not in list(self.reg.keys())
             try:
                 self.owned_ids.remove(_id)
                 del self.owned_ids[_id]
             except:
                 pass
         self.logger.info(str(self.id) + ' delete(%s) done!' % ids)
-        self.logger.info('delete self.reg.keys end: %s' % self.reg.keys())
+        self.logger.info('delete self.reg.keys end: %s' % list(self.reg.keys()))
 
     def load(self):
         ids = self.reg.ids()
@@ -160,7 +160,7 @@ class HammerThread(threading.Thread):
             this_choice = self.rng.choice(choices)
             self.logger.debug('\n\n\n\n\n%s) This Choise: %s\n' % (i, this_choice))
             this_choice()
-            assert len(self.owned_ids) == len(dict(zip(self.owned_ids, range(len(self.owned_ids)))).keys())
+            assert len(self.owned_ids) == len(list(dict(list(zip(self.owned_ids, list(range(len(self.owned_ids)))))).keys()))
             for _id in self.owned_ids:
                 if _id not in self.reg._objects:
                     self.logger.info('LOCKED ID DELETED: ' + str(_id))
