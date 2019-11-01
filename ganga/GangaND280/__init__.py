@@ -1,5 +1,9 @@
 # File: GangaND280/__init__.py
 
+#Bail out when loading this module as it is not python3 compliant
+from GangaCore.Core.exceptions import PluginError
+raise PluginError("The GangaND280 module has not been upgraded for python 3. The last python 2 Ganga version is 7.1.15 . Please contact the ganga devs to discuss updating this module.")
+
 from GangaCore.Utility.Config import makeConfig
 from GangaCore.Utility.Config.Config import _after_bootstrap
 

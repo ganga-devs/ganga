@@ -59,7 +59,7 @@ class JobManagerError(GangaException):
     """Exception for failed submission/configuration"""
 
 
-class GangaAttributeError(GangaException):
+class GangaAttributeError(GangaException, AttributeError):
     """Exception raised for bad attributes"""
 
 

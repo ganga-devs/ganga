@@ -34,8 +34,8 @@ import os as __os__
 __schema__= None
 
 try:
-    import imp as __imp__
-    __schema__=__imp__.load_source('schema',__os__.sep.join(__file__.split(__os__.sep)[:-1]+['schema.py']))
+    import importlib as __imp__
+    __schema__=__imp__.machinery.SourceFileLoader('schema',__os__.sep.join(__file__.split(__os__.sep)[:-1]+['schema.py'])).load_module()
     #print 'loaded from file'
 except (ImportError, IOError):
     try:

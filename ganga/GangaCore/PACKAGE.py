@@ -99,7 +99,7 @@ def detectPlatform():
 
     import platform
     import re
-    c = re.compile('\S+-redhat-(?P<ver>\S+)-\S+')
+    c = re.compile(r'\S+-redhat-(?P<ver>\S+)-\S+')
     r = c.match(platform.platform())
     if r and r.group('ver').split('.')[0] == '5':
         platfstring = platf5

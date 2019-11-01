@@ -126,7 +126,7 @@ def __resolve_no_matching_jobs__(cmd_output):
     """Parsing the glite-wms-job-status log to get the glite jobs which have been removed from the WMS"""
 
     logfile = __resolve_gridcmd_log_path__(
-        '(.*-job-status.*\.log)', cmd_output)
+        r'(.*-job-status.*\.log)', cmd_output)
 
     glite_ids = []
 
@@ -153,7 +153,7 @@ def __resolve_no_matching_jobs__(cmd_output):
 def list_match(jdlpath, cred_req, ce=None):
     """Returns a list of computing elements can run the job"""
 
-    re_ce = re.compile('^\s*\-\s*(\S+:(2119|8443)/\S+)\s*$')
+    re_ce = re.compile(r'^\s*\-\s*(\S+:(2119|8443)/\S+)\s*$')
 
     matched_ces = []
 
@@ -220,7 +220,7 @@ def submit(jdlpath, cred_req, ce=None, perusable=False):
     if output:
         output = "%s" % output.strip()
 
-    match = re.search('.*(https://\S+:9000/[0-9A-Za-z_\.\-]+)', output)
+    match = re.search(r'.*(https://\S+:9000/[0-9A-Za-z_\.\-]+)', output)
 
     if match:
         logger.debug('job id: %s' % match.group(1))
@@ -229,12 +229,12 @@ def submit(jdlpath, cred_req, ce=None, perusable=False):
             getShell(cred_req).cmd1("glite-wms-job-perusal --set -f stdout %s" % match.group(1))
 
         # remove the glite command log if it exists
-        __clean_gridcmd_log__('(.*-job-submit.*\.log)', output)
+        __clean_gridcmd_log__(r'(.*-job-submit.*\.log)', output)
         return match.group(1)
 
     else:
         logger.warning('Job submission failed.')
-        __print_gridcmd_log__('(.*-job-submit.*\.log)', output)
+        __print_gridcmd_log__(r'(.*-job-submit.*\.log)', output)
         return
 
 
@@ -262,12 +262,12 @@ def native_master_cancel(jobids, cred_req):
 
     if rc != 0:
         logger.warning('Job cancellation failed.')
-        __print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+        __print_gridcmd_log__(r'(.*-job-cancel.*\.log)', output)
         return False
     else:
         # job cancellation succeeded, try to remove the glite command
         # logfile if it exists
-        __clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+        __clean_gridcmd_log__(r'(.*-job-cancel.*\.log)', output)
         return True
 
 
@@ -304,27 +304,27 @@ def status(jobids, cred_req, is_collection=False):
             logger.debug('jobs removed from WMS: %s' %
                          repr(missing_glite_jids))
         else:
-            __print_gridcmd_log__('(.*-job-status.*\.log)', output)
+            __print_gridcmd_log__(r'(.*-job-status.*\.log)', output)
 
     # job status query succeeded, try to remove the glite command logfile
     # if it exists
-    __clean_gridcmd_log__('(.*-job-status.*\.log)', output)
+    __clean_gridcmd_log__(r'(.*-job-status.*\.log)', output)
 
-    re_id = re.compile('^\s*Status info for the Job : (https://.*\S)\s*$')
-    re_status = re.compile('^\s*Current Status:\s+(.*\S)\s*$')
+    re_id = re.compile(r'^\s*Status info for the Job : (https://.*\S)\s*$')
+    re_status = re.compile(r'^\s*Current Status:\s+(.*\S)\s*$')
 
     # from glite UI version 1.5.14, the attribute 'Node Name:' is no longer available
     # for distinguishing master and node jobs. A new way has to be applied.
-    re_exit = re.compile('^\s*Exit code:\s+(.*\S)\s*$')
-    re_reason = re.compile('^\s*Status Reason:\s+(.*\S)\s*$')
-    re_dest = re.compile('^\s*Destination:\s+(.*\S)\s*$')
+    re_exit = re.compile(r'^\s*Exit code:\s+(.*\S)\s*$')
+    re_reason = re.compile(r'^\s*Status Reason:\s+(.*\S)\s*$')
+    re_dest = re.compile(r'^\s*Destination:\s+(.*\S)\s*$')
 
     # pattern to distinguish master and node jobs
-    re_master = re.compile('^BOOKKEEPING INFORMATION:\s*$')
-    re_node = re.compile('^- Nodes information.*\s*$')
+    re_master = re.compile(r'^BOOKKEEPING INFORMATION:\s*$')
+    re_node = re.compile(r'^- Nodes information.*\s*$')
 
     # pattern for node jobs
-    re_nodename = re.compile('^\s*NodeName\s*=\s*"(gsj_[0-9]+)";\s*$')
+    re_nodename = re.compile(r'^\s*NodeName\s*=\s*"(gsj_[0-9]+)";\s*$')
 
     info = []
     is_node = False
@@ -401,12 +401,12 @@ def get_loginfo(jobids, directory, cred_req, verbosity=1):
     os.remove(idsfile)
 
     if rc != 0:
-        __print_gridcmd_log__('(.*-logging-info.*\.log)', output)
+        __print_gridcmd_log__(r'(.*-logging-info.*\.log)', output)
         return False
     else:
         # logging-info checking succeeded, try to remove the glite command
         # logfile if it exists
-        __clean_gridcmd_log__('(.*-logging-info.*\.log)', output)
+        __clean_gridcmd_log__(r'(.*-logging-info.*\.log)', output)
         # returns the path to the saved logging info if success
         return log_output
 
@@ -426,16 +426,16 @@ def get_output(jobid, directory, cred_req):
 
     rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
-    match = re.search('directory:\n\s*([^\t\n\r\f\v]+)\s*\n', output)
+    match = re.search(r'directory:\n\s*([^\t\n\r\f\v]+)\s*\n', output)
 
     if not match:
         logger.warning('Job output fetch failed.')
-        __print_gridcmd_log__('(.*-output.*\.log)', output)
+        __print_gridcmd_log__(r'(.*-output.*\.log)', output)
         return False, 'cannot fetch job output'
 
     # job output fetching succeeded, try to remove the glite command
     # logfile if it exists
-    __clean_gridcmd_log__('(.*-output.*\.log)', output)
+    __clean_gridcmd_log__(r'(.*-output.*\.log)', output)
 
     outdir = match.group(1)
 
@@ -489,11 +489,11 @@ def cancel_multiple(jobids, cred_req):
     if rc == 0:
         # job cancelling succeeded, try to remove the glite command logfile
         # if it exists
-        __clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+        __clean_gridcmd_log__(r'(.*-job-cancel.*\.log)', output)
         return True
     else:
         logger.warning("Failed to cancel jobs.\n%s" % output)
-        __print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+        __print_gridcmd_log__(r'(.*-job-cancel.*\.log)', output)
         return False
 
 
@@ -511,11 +511,11 @@ def cancel(jobid, cred_req):
     if rc == 0:
         # job cancelling succeeded, try to remove the glite command logfile
         # if it exists
-        __clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+        __clean_gridcmd_log__(r'(.*-job-cancel.*\.log)', output)
         return True
     else:
         logger.warning("Failed to cancel job %s.\n%s" % (jobid, output))
-        __print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+        __print_gridcmd_log__(r'(.*-job-cancel.*\.log)', output)
         return False
 
 
@@ -1121,11 +1121,11 @@ def arc_cancel(jobid, cred_req):
     if rc == 0:
         # job cancelling succeeded, try to remove the glite command logfile
         # if it exists
-        __clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+        __clean_gridcmd_log__(r'(.*-job-cancel.*\.log)', output)
         return True
     else:
         logger.warning("Failed to cancel job %s.\n%s" % (jobid, output))
-        __print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+        __print_gridcmd_log__(r'(.*-job-cancel.*\.log)', output)
         return False
 
 
@@ -1153,11 +1153,11 @@ def arc_cancel_multiple(jobids, cred_req):
     if rc == 0:
         # job cancelling succeeded, try to remove the glite command logfile
         # if it exists
-        __clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+        __clean_gridcmd_log__(r'(.*-job-cancel.*\.log)', output)
         return True
     else:
         logger.warning("Failed to cancel jobs.\n%s" % output)
-        __print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+        __print_gridcmd_log__(r'(.*-job-cancel.*\.log)', output)
         return False
 
 

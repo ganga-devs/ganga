@@ -653,7 +653,7 @@ under certain conditions; type license() for details.
         try:
             with open(config_file) as cf:
                 first_line = cf.readline()
-                r = re.compile('# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
+                r = re.compile(r'# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
                 this_logger = getLogger("Configure")
                 if not r:
                     this_logger.error('file %s does not seem to be a Ganga config file', config_file)
@@ -686,7 +686,6 @@ under certain conditions; type license() for details.
 
         if config_path:
             config_path = GangaCore.Utility.files.expandfilename(os.path.join(GangaRootPath, config_path))
-
         # check if the specified config options are different from the defaults
         # and set session values appropriately
         syscfg = getConfig("System")
@@ -704,7 +703,7 @@ under certain conditions; type license() for details.
 
         def _createpath(dir):
 
-            def _accept(fname, p=re.compile('.*\.ini$')):
+            def _accept(fname, p=re.compile(r'.*\.ini$')):
                 return (os.path.isfile(fname) or os.path.islink(fname)) and p.match(fname)
 
             files = []

@@ -21,6 +21,11 @@
 from __future__ import print_function
 import sys
 
+#First make sure we are using a python version above 3.0
+if sys.version_info[0] != 3 or sys.version_info[1] < 6:
+    import logging
+    logging.error("Ganga does not support python version %s.%s.%s. Make sure you have a python version >= 3.6 in your path" % (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+    sys.exit(-1)
 
 def standardSetup():
     """Function to perform standard setup for Ganga.

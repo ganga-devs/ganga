@@ -63,7 +63,7 @@ class TestMassStorageGetPut(GangaUnitTest):
     def tearDownTest(cls):
         """ Cleanup the current temp objects """
 
-	pass
+        pass
 #        for file_ in cls._temp_files:
 #            if os.path.isfile(file_):
 #                os.unlink(file_)

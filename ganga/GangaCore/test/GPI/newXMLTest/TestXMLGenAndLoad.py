@@ -137,14 +137,13 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
             ignore_subs = ['time', 'subjobs', 'info', 'application', 'backend', 'id']
 
-            with NamedTemporaryFile(delete=False) as new_temp_file:
+            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file:
                 temp_name = new_temp_file.name
-
 
                 to_file(stripProxy(j), new_temp_file, ignore_subs)
                 new_temp_file.flush()
 
-            with NamedTemporaryFile(delete=False) as new_temp_file2:
+            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file2:
                 temp_name2 = new_temp_file2.name
 
                 j2 = Job()
@@ -176,7 +175,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         assert path.isfile(getIndexFile(j))
 
-        with open(getIndexFile(j)) as handler:
+        with open(getIndexFile(j), 'rb') as handler:
             obj, errs = from_file(handler)
 
             assert isinstance(obj, tuple)

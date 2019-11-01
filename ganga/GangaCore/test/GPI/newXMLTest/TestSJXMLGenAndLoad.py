@@ -143,7 +143,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         j=jobs(0)
         XMLFileName = getXMLFile(j)
         assert path.isfile(XMLFileName)
-        with open(XMLFileName) as handler:
+        with open(XMLFileName, 'rb') as handler:
             tmpobj, errs = from_file(handler)
 
             assert hasattr(tmpobj, 'name')
@@ -152,13 +152,13 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
             ignore_subs = ['status', 'subjobs', 'time', 'backend', 'id', 'splitter', 'info', 'application']
 
-            with NamedTemporaryFile(delete=False) as new_temp_file:
+            with NamedTemporaryFile(mode= 'w', delete=False) as new_temp_file:
                 temp_name = new_temp_file.name
 
                 to_file(stripProxy(j), new_temp_file, ignore_subs)
                 new_temp_file.flush()
 
-            with NamedTemporaryFile(delete=False) as new_temp_file2:
+            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file2:
                 temp_name2 = new_temp_file2.name
 
                 j2=Job()
@@ -183,7 +183,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         ignore_subs = ['subjobs', 'time', 'backend', 'id', 'splitter', 'info', 'application', 'inputdata']
 
-        with NamedTemporaryFile(delete=False) as new_temp_file_a:
+        with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file_a:
             temp_name_a = new_temp_file_a.name
 
             j=jobs(0)
@@ -195,12 +195,12 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             XMLFileName = getSJXMLFile(sj)
             assert path.isfile(XMLFileName)
 
-            with open(XMLFileName) as handler:
+            with open(XMLFileName, 'rb') as handler:
                 tmpobj, errs = from_file(handler)
                 assert hasattr(tmpobj, 'id')
                 assert tmpobj.id == counter
 
-                with NamedTemporaryFile(delete=False) as new_temp_file:
+                with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file:
                     temp_name = new_temp_file.name
                     to_file(stripProxy(sj), new_temp_file, ignore_subs)
                     new_temp_file.flush()
@@ -225,7 +225,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         assert path.isfile(getIndexFile(j))
 
-        with open(getIndexFile(j)) as handler:
+        with open(getIndexFile(j), 'rb') as handler:
             obj, errs = from_file(handler)
 
             assert isinstance(obj, tuple)
@@ -254,7 +254,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         j=jobs(0)
 
-        with open(getSJXMLIndex(j)) as handler:
+        with open(getSJXMLIndex(j), 'rb') as handler:
             obj, errs = from_file(handler)
 
             assert isinstance(obj, dict)

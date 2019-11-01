@@ -1,16 +1,17 @@
 
 def standardSetup():
-    import PACKAGE
+    import GangaTest.PACKAGE
     PACKAGE.standardSetup()
 
 
 def loadPlugins( config = None ):
-    import Lib.GListApp
-    import Lib.TFile
-    import Lib.TestApplication
-    import Lib.TestSubmitter # TestSubmitter, TestSplitter here
-    import Lib.TestRobot
-    import Lib.TestObjects
-    import Framework.runner
+    import GangaTest.Framework.runner
+    import GangaTest.Lib.GListApp
+    import GangaTest.Lib.TFile
+    import GangaTest.Lib.TestApplication
+    import GangaTest.Lib.TestSubmitter # TestSubmitter, TestSplitter here
+    import GangaTest.Lib.TestRobot
+    import GangaTest.Lib.TestObjects
+    import GangaTest.Framework.runner
 
 

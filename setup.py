@@ -7,7 +7,7 @@ import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
-_gangaVersion = '7.1.14'
+_gangaVersion = '7.1.15'
 
 def version():
     return _gangaVersion
@@ -93,7 +93,7 @@ setup(name='ganga',
       extra_require={'profiler' : ['memory_profiler']},
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.6',
       ],
       include_package_data=True,
       package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh', 'tools/ganga-cvmfs-install-dev.sh']},

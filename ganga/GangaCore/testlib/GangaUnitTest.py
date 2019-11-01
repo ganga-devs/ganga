@@ -92,7 +92,7 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     # These are the default options for all test instances
     # They can be overridden by extra_opts
 
-    lhcb_test = pytest.config.getoption("--testLHCb")
+    lhcb_test = False
 
     if lhcb_test:
         import getpass
@@ -341,9 +341,11 @@ class GangaUnitTest(unittest.TestCase):
         print("Tearing down test fully on completion")
         start_ganga(gangadir_for_test=cls._test_dir, extra_opts=cls._test_args)
         # Should Ganga clean up properly on test finishing?
-        stop_ganga(not pytest.config.getoption("--keepRepo"))
-        if not pytest.config.getoption("--keepRepo"):
-            shutil.rmtree(cls._test_dir, ignore_errors=True)
+#        stop_ganga(not pytest.config.getoption("--keepRepo"))
+#        if not pytest.config.getoption("--keepRepo"):
+#            shutil.rmtree(cls._test_dir, ignore_errors=True)
+        stop_ganga(False)
+
         cls._test_dir = ''
         cls._test_args = {}
 
