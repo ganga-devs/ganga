@@ -7,6 +7,7 @@ import shutil
 import json
 import time
 import socket
+import re
 from copy import deepcopy
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
@@ -262,6 +263,7 @@ def execute(command,
                 data = s.recv(1024)
                 out += data.decode("utf-8")
             s.close()
+            out = re.sub('(\d)L(\})', r'\1\2', out)
             returnable = eval(out)
 
     else:
