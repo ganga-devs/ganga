@@ -7,16 +7,17 @@
 from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
 from GangaCore.GPIDev.Schema import *
 
+
 class TestSplitter(ISplitter):
     """ Splitting to different backends...
-    """    
+    """
     _name = "TestSplitter"
-    _schema = Schema(Version(1,0), {
-        'backs' : ComponentItem('backends',defvalue=[],sequence=1,doc='a list of Backend objects'),
-        'fail' : SimpleItem(defvalue='',doc='Define the artificial runtime failures: "exception"'),
-        } )
+    _schema = Schema(Version(1, 0), {
+        'backs': ComponentItem('backends', defvalue=[], sequence=1, doc='a list of Backend objects'),
+        'fail': SimpleItem(defvalue='', doc='Define the artificial runtime failures: "exception"'),
+    })
 
-    def split(self,job):
+    def split(self, job):
         from GangaCore.GPIDev.Lib.Job import Job
         subjobs = []
         if self.fail == 'exception':
@@ -29,7 +30,7 @@ class TestSplitter(ISplitter):
             subjobs.append(j)
         return subjobs
 
-                
+
 #
 #
 # $Log: not supported by cvs2svn $

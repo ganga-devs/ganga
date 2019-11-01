@@ -8,10 +8,16 @@ from GangaCore.Utility.logging import getLogger
 import GangaCore.Utility.Config
 from GangaRobot.Framework.exceptions import *
 
-import os, urllib.request, urllib.parse, urllib.error, datetime, time
+import os
+import urllib.request
+import urllib.parse
+import urllib.error
+import datetime
+import time
 from os.path import join
 
 logger = getLogger()
+
 
 class Installer(IAction):
 
@@ -36,38 +42,36 @@ class Installer(IAction):
         """
         #raise GangaRobotBreakError("Testing checking time",ValueError)
         Datalist = []
-        
+
         self._getConfigInfo()
 
         logger.info("Running install script")
         self._Install()
-        #update last download time
-
+        # update last download time
 
     def _getConfigInfo(self):
         """ Gets the config info from the ganga config file """
-        config = GangaCore.Utility.Config.getConfig('TestRobot')     
+        config = GangaCore.Utility.Config.getConfig('TestRobot')
         self.InstallPath = config['InstallPath']
-        self.downloadURL = config['ReleasePath']        
+        self.downloadURL = config['ReleasePath']
         self.VersionNumber = config['VersionNumber']
 
     def _Install(self):
-
         """ Calls the ganga installation script """
-        try: 
-            f, inf = urllib.request.urlretrieve("http://ganga.web.cern.ch/ganga/download/ganga-install")
+        try:
+            f, inf = urllib.request.urlretrieve(
+                "http://ganga.web.cern.ch/ganga/download/ganga-install")
         except IOError as e:
             raise GangaRobotBreakError(e, IOError)
-            
+
         config = GangaCore.Utility.Config.getConfig('IndependantTest')
 
-        cmd = "python "+f+" --prefix="+self.InstallPath+" --extern=GangaTest "+self.VersionNumber
-        logger.debug("Executing command: '%s'",cmd)
+        cmd = "python " + f + " --prefix=" + self.InstallPath + " --extern=GangaTest " + self.VersionNumber
+        logger.debug("Executing command: '%s'", cmd)
         try:
             os.system(cmd)
             logger.debug('Ganga installed')
 
         except Exception as e:
             logger.error('ganga installation failed')
-            raise GangaRobotBreakError(Exception, e) # breaks the run and starts again
-            
+            raise GangaRobotBreakError(Exception, e)  # breaks the run and starts again
