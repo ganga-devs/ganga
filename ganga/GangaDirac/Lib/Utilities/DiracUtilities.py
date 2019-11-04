@@ -268,7 +268,7 @@ def execute(command,
             s.close()
             #Some regex nonsense to deal with the long representations in python 3
             out = re.sub('(\d)L(\})', r'\1\2', out)
-            out = re.sub('(\d)L(\,)', r'\1\2', out)
+            out = re.sub(r'((?:^|\s|,|{|\()\d+)L([^A-Za-z0-9\"\'])', r'\1\2', out)
             returnable = eval(out)
 
     else:
