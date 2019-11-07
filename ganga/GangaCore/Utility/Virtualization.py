@@ -58,7 +58,7 @@ def installUdocker():
     subprocess.call(["chmod", "u+rx", os.path.expanduser("~")+"/udocker"])
     returnCode = subprocess.call([os.path.expanduser("~")+"/udocker", "install"])
     if (returnCode != 0):
-        print ("Error installing uDocker")
+        print('Error installing uDocker')
         return False
-    print ("UDocker Successfully installed")
+    print('UDocker Successfully installed')
     return True
