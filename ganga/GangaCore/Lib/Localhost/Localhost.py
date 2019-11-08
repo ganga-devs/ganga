@@ -194,10 +194,6 @@ class Localhost(IBackend):
         if virtualization:
             virtualizationutils = File( inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
             utilFiles.append(virtualizationutils)
-            if type(virtualization.image) is File:
-                utilFiles.append(virtualization.image)
-            if type(virtualization.image) is LocalFile:
-                utilFiles.append(File(virtualization.image.location()[0]))
         sharedfiles = jobconfig.getSharedFiles()
 
         subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + utilFiles)

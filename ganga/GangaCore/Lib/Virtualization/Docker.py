@@ -15,8 +15,7 @@ class Docker(IVirtualization):
     _schema.datadict['mode'] = SimpleItem(defvalue="P1", doc='Mode of container execution')
 
     def __init__(self, image, mode):
-        super(Docker, self).__init__(image)
-        self.image = image
+        super().__init__(image)
         self.mode = mode
 
     def modify_script(self, script):

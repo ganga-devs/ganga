@@ -37,9 +37,10 @@ def checkUDocker():
 
         Return value: True or False"""
 
+    fname = os.path.join(os.path.expanduser("~"),"udocker")
     nullOutput = open(os.devnull, 'wb')
-    if (os.path.isfile(os.path.expanduser("~") + "/udocker")):
-        returnCode = subprocess.call([os.path.expanduser("~") + "/udocker", "ps"], stdout=nullOutput, stderr=nullOutput)
+    if (os.path.isfile(fname)):
+        returnCode = subprocess.call([fname, "ps"], stdout=nullOutput, stderr=nullOutput)
         if (returnCode == 0):
             return True
     return False
@@ -50,15 +51,14 @@ def installUdocker():
 
         Return value: True (If Success) or False"""
 
+    fname = os.path.join(os.path.expanduser("~"),"udocker")
     udocker_address = "https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py"
-    returnCode = subprocess.check_call(['curl', udocker_address], stdout=open(os.path.expanduser("~")+"/udocker", 'w'))
+    returnCode = subprocess.check_call(['curl', udocker_address], stdout=open(fname, 'w'))
     if (returnCode != 0):
-        print ("Error downloading UDocker")
-        return False
-    subprocess.call(["chmod", "u+rx", os.path.expanduser("~")+"/udocker"])
-    returnCode = subprocess.call([os.path.expanduser("~")+"/udocker", "install"])
+        raise OSError('Error downloading UDocker')
+    subprocess.call(["chmod", "u+rx", fname])
+    returnCode = subprocess.call([fname, "install"])
     if (returnCode != 0):
-        print('Error installing uDocker')
-        return False
+        raise OSError('Error installing uDocker')
     print('UDocker Successfully installed')
-    return True
+

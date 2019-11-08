@@ -17,7 +17,7 @@ class IVirtualization(GangaObject):
         self.image = image
 
     _schema = Schema(Version(1, 0), {
-        'image': SimpleItem(defvalue="", typelist=[str, GangaFileItem], doc='Link to the container image')
+        'image': SimpleItem(defvalue="", typelist=[str], doc='Link to the container image')
     })
     _category = 'virtualization'
     _name = 'IVirtualization'

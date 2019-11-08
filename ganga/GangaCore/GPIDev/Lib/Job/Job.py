@@ -327,6 +327,7 @@ class Job(GangaObject):
         c.comment = self.comment
         c.postprocessors = copy.deepcopy(self.postprocessors)
         c.splitter = copy.deepcopy(self.splitter)
+        c.virtualization = copy.deepcopy(self.virtualization)
         c.parallel_submit = self.parallel_submit
 
         # Continue as before
