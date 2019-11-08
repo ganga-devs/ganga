@@ -22,11 +22,17 @@ For Singularity images you provide the image name and tag as follow,
 ::
   j=Job()
   j.virtualization = Singularity("shub://image:tag")`
+
+or it can be used with a Docker image
+
+  j.virtualization = Singularity("docker://gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v3")   
   
-or you can provide a GangaFile Object which points to a simg file as shown below,
-In that case the simg image file will be copied to the worker node.
+or you can provide a GangaFile Object which points to a image file as shown below,
+It is your own responsibility to add the image file to the inputfiles.
 ::
   j=Job()
-  j.virtualization = Singularity(LocalFile("path_to_image.simg"))`
+  imagefile = LocalFile("path_to_image.sif")
+  j.virtualization = Singularity(image= imagefile)
+  j.inputfiles = j.inputfiles + [imagefile]
 
 
