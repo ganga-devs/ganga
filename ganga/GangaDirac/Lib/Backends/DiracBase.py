@@ -692,6 +692,9 @@ class DiracBase(IBackend):
                 result = execute(dirac_cmd, cred_req=self.credential_requirements)
             except GangaDiracError as err:
                 raise BackendError('Dirac', 'Dirac failed to kill job %d.' % j.id)
+        if not len(result)==len(kill_list):
+            diff = list(set(kill_list) - set(result))
+            raise BackendError('Dirac', 'Dirac failed to kill jobs %s' % diff)
         return True
 
     @require_credential

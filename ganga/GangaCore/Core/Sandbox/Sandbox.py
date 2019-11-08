@@ -79,7 +79,10 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                 # print "Getting FileBuffer Contents"
 
                 from io import BytesIO
-                fileobj = BytesIO(contents.encode("utf-8"))
+                if isinstance(contents, bytes):
+                    fileobj = BytesIO(contents)
+                else:
+                    fileobj = BytesIO(contents.encode("utf-8"))
 
                 tinfo = tarfile.TarInfo()
                 # FIX for Ganga/test/Internals/FileBuffer_Sandbox
