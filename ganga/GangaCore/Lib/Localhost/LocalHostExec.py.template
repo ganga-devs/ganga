@@ -9,7 +9,6 @@ import mimetypes
 import subprocess
 import tarfile
 import time
-from urllib.error import URLError
 
 # FIXME: print as DEBUG: to __syslog__ file
 #print(sys.path)
@@ -113,7 +112,7 @@ if (virtualization == "Docker"):
         if not (checkUDocker(location)):
             try:
                 installUdocker(location)
-            except (OSError, URLError) as x:
+            except OSError as x:
                 failurereport(statusfile, 'PROBLEM WITH UDOCKER: \'%s\''% str(x))
         print("Using UDocker")
         fullenvironment["PROOT_NO_SECCOMP"]="1"
