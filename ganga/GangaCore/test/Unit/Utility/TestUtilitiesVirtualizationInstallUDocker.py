@@ -15,7 +15,7 @@ class TestInstallUDocker(unittest.TestCase):
         shutil.rmtree(dir)
         assert(mock_subprocess_call.call_count == 2)
 
-    @patch('urllib.request.urlopen')
+    @patch('GangaCore.Utility.Virtualization.urlopen')
     def test_installUDocker_download_fail(self, mock_urlopen):
         cm = MagicMock()
         cm.getcode.return_value = 404
