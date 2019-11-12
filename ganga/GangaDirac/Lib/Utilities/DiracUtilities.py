@@ -7,6 +7,7 @@ import shutil
 import json
 import time
 import socket
+import re
 from copy import deepcopy
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
@@ -67,6 +68,9 @@ def getDiracEnv(sourceFile = None):
                 logger.error("'DiracEnvSource' config variable empty")
                 logger.error("%s  %s" % (getConfig('DIRAC')['DiracEnvJSON'], getConfig('DIRAC')['DiracEnvSource']))
 
+        #In case of custom location
+        if os.getenv('X509_USER_PROXY'):
+            DIRAC_ENV[sourceFile]['X509_USER_PROXY'] = os.getenv('X509_USER_PROXY')
     return DIRAC_ENV[sourceFile]
 
 
@@ -262,6 +266,8 @@ def execute(command,
                 data = s.recv(1024)
                 out += data.decode("utf-8")
             s.close()
+            #Some regex nonsense to deal with the long representations in python 3
+            out = re.sub(r'((?:^|\s|,|{|\()\d+)L([^A-Za-z0-9\"\'])', r'\1\2', out)
             returnable = eval(out)
 
     else:
