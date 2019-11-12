@@ -5,7 +5,6 @@ import GangaCore.Utility.logic
 import GangaCore.Utility.util
 
 from GangaCore.GPIDev.Lib.File import FileBuffer
-from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
 
 import os
 import os.path
@@ -247,6 +246,7 @@ class Localhost(IBackend):
             script = script.replace('###VIRTUALIZATION###', repr(None))
             script = script.replace('###VIRTUALIZATIONIMAGE###', repr(None))
             script = script.replace('###VIRTUALIZATIONMODE###', repr(None))
+            script = script.replace('###UDOCKERLOCATION###', repr(None))
 
         self.workdir = workdir
 

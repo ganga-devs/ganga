@@ -1,38 +1,27 @@
-from mock import patch
 import unittest
+import tempfile
+import shutil
+from mock import patch, MagicMock
 from GangaCore.Utility.Virtualization import installUdocker
-from io import BytesIO as StringIO
+from urllib.error import URLError
 
 class TestInstallUDocker(unittest.TestCase):
 
-    @patch('builtins.open')
-    @patch('subprocess.check_call')
     @patch('subprocess.call')
-    def test_installUDocker_success(self, mock_subprocess_call, mock_subprocess_check_call, mock_open):
-        mock_subprocess_call.side_effect = [0, 0, 0]
-        mock_subprocess_check_call.side_effect = [0]
-        installUdocker()
+    def test_installUDocker_success(self, mock_subprocess_call):
+        mock_subprocess_call.side_effect = [0, 0]
+        dir = tempfile.mkdtemp()
+        installUdocker(dir)
+        shutil.rmtree(dir)
         assert(mock_subprocess_call.call_count == 2)
-        mock_subprocess_check_call.assert_called_once()
-        mock_open.assert_called_once()
 
-    @patch('builtins.open')
-    @patch('subprocess.call')
-    @patch('subprocess.check_call')
-    def test_installUDocker_download_fail(self, mock_subprocess_check_call, mock_subprocess_call, mock_open):
-        mock_subprocess_check_call.side_effect = [1]
-        self.assertRaises(OSError, installUdocker)
-        mock_subprocess_check_call.assert_called_once()
-        mock_subprocess_call.assert_not_called()
-        mock_open.assert_called_once()
-
-    @patch('builtins.open')
-    @patch('subprocess.call')
-    @patch('subprocess.check_call')
-    def test_installUDocker_install_fail(self, mock_subprocess_check_call, mock_subprocess_call, mock_open):
-        mock_subprocess_check_call.side_effect = [0]
-        mock_subprocess_call.side_effect = [0, 1]
-        self.assertRaises(OSError, installUdocker)
-        mock_subprocess_check_call.assert_called_once()
-        assert(mock_subprocess_call.call_count == 2)
-        mock_open.assert_called_once()
+    @patch('urllib.request.urlopen')
+    def test_installUDocker_download_fail(self, mock_urlopen):
+        cm = MagicMock()
+        cm.getcode.return_value = 404
+        cm.read.return_value = 'abc'
+        cm.__enter__.side_effect = URLError('Error')
+        cm.__enter__.return_value = cm
+        mock_urlopen.return_value = cm
+        self.assertRaises(URLError, installUdocker)
+        assert mock_urlopen.call_count == 1

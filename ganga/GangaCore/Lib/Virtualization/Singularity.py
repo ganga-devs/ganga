@@ -31,9 +31,6 @@ class Singularity(IVirtualization):
                                            typelist=[str,'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile'],
                                            doc='Link to the container image')
 
-    def __init__(self, image):
-        super().__init__(image)
-
     def modify_script(self, script):
         """Overides parent's modify_script function
                     Arguments other than self:

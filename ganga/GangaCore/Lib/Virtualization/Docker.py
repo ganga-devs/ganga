@@ -3,7 +3,9 @@
 #
 ##########################################################################
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Adapters.IVirtualization import IVirtualization
+
 
 class Docker(IVirtualization):
 
@@ -25,7 +27,9 @@ class Docker(IVirtualization):
 
             Return value: modified script"""
 
+        udockerlocation = getConfig('Configuration')['UDockerlocation']
         script = script.replace('###VIRTUALIZATIONIMAGE###', repr(self.image))
         script = script.replace('###VIRTUALIZATION###', repr("Docker"))
         script = script.replace('###VIRTUALIZATIONMODE###', repr(self.mode))
+        script = script.replace('###UDOCKERLOCATION###', repr(udockerlocation))
         return script

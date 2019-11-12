@@ -9,6 +9,7 @@ import mimetypes
 import subprocess
 import tarfile
 import time
+from urllib.error import URLError
 
 # FIXME: print as DEBUG: to __syslog__ file
 #print(sys.path)
@@ -49,6 +50,7 @@ workdir = ###WORKDIR###
 virtualization = ###VIRTUALIZATION###
 virtualization_image = ###VIRTUALIZATIONIMAGE###
 virtualization_mode = ###VIRTUALIZATIONMODE###
+virtualization_udockerlocation = ###UDOCKERLOCATION###
 
 statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
@@ -107,14 +109,17 @@ if (virtualization == "Docker"):
         appscriptpath = ['docker', 'run', '-v', workdir+":"+"/work_dir", virtualization_image] + appscriptpath        
     else:
         print("Docker not availabe or user doesn't have the permission to run docker demon")
-        if not (checkUDocker()):
+        location = os.path.expanduser(virtualization_udockerlocation)
+        if not (checkUDocker(location)):
             try:
-                installUdocker()
-            except OSError as x:
+                installUdocker(location)
+            except (OSError, URLError) as x:
                 failurereport(statusfile, 'PROBLEM WITH UDOCKER: \'%s\''% str(x))
         print("Using UDocker")
         fullenvironment["PROOT_NO_SECCOMP"]="1"
-        appscriptpath = [os.path.join(os.path.expanduser("~"),'udocker'), '--quiet', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath
+        fullenvironment['UDOCKER_DIR']=os.path.join(location,'.udocker')
+        binary = os.path.join(location,'udocker')
+        appscriptpath = [binary, '--quiet', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath
 elif (virtualization == "Singularity"):
     print("Using singularity")
     if appscriptpath[0].startswith('./'): 
