@@ -1,6 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """Merges DST files."""
-import commands
+import subprocess
 import inspect
 import os
 import string
@@ -88,9 +88,9 @@ LHCbApp().EvtMax = -1
 
         # write this out to a file
         opts_file_name = tempfile.mktemp('.py')
-        opts_file = file(opts_file_name, 'w')
+        #opts_file = open(opts_file_name, 'w')
         try:
-            opts_file = file(opts_file_name, 'w')
+            opts_file = open(opts_file_name, 'w')
             opts_file.write(output_opts)
         finally:
             opts_file.close()

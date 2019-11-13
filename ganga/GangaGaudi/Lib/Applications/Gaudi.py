@@ -15,7 +15,7 @@ from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.files import expandfilename
-from GaudiBase import GaudiBase
+from .GaudiBase import GaudiBase
 from GangaCore.Utility.files import fullpath
 from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
 logger = GangaCore.Utility.logging.getLogger()
@@ -112,7 +112,7 @@ class Gaudi(GaudiBase):
 
         try:
             super(Gaudi, self).prepare(force)
-        except Exception, err:
+        except Exception as err:
             logger.debug("Super Prepare Error:\n%s" % str(err))
             raise err
 
@@ -137,7 +137,7 @@ class Gaudi(GaudiBase):
         # prepared state altered from the readInputData pseudo-static member
         try:
             self._check_inputs()
-        except Exception, err:
+        except Exception as err:
             logger.debug("_check_inputs Error:\n%s" % str(err))
             self.unprepare()
             raise err
@@ -147,7 +147,8 @@ class Gaudi(GaudiBase):
         if not os.path.isdir(share_path):
             os.makedirs(share_path)
         this_file = gzip.GzipFile(os.path.join(share_path, 'gaudi-env.py.gz'), 'wb')
-        this_file.write('gaudi_env = %s' % str(self.getenv(True)))
+        to_write = 'gaudi_env = %s' % str(self.getenv(True))
+        this_file.write(to_write.encode())
         this_file.close()
 
         self._parse_options()

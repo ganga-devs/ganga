@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
@@ -72,7 +72,7 @@ class TestXMLCorruption(GangaUnitTest):
             handler.flush()
 
         from tempfile import NamedTemporaryFile
-        with NamedTemporaryFile(delete=False) as myTempfile:
+        with NamedTemporaryFile(mode = 'w', delete=False) as myTempfile:
             myTempfile.write(badStr)
             myTempfile.flush()
             myTempName = myTempfile.name
@@ -99,14 +99,14 @@ class TestXMLCorruption(GangaUnitTest):
         
         from GangaCore.GPIDev.Base.Proxy import stripProxy
 
-        print("%s" % stripProxy(jobs(0)).__dict__)
+        print(("%s" % stripProxy(jobs(0)).__dict__))
         assert stripProxy(jobs(0))._dirty is True
 
         stripProxy(jobs(0))._setDirty()
         stripProxy(jobs(0))._getRegistry().flush_all()
 
         from tempfile import NamedTemporaryFile
-        with NamedTemporaryFile(delete=False) as myTempfile:
+        with NamedTemporaryFile(mode = 'w', delete=False) as myTempfile:
             myTempfile.write(badStr)
             myTempfile.flush()
             myTempName=myTempfile.name

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 from GangaCore.testlib.mark import external
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest

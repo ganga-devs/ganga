@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import random
 import threading
@@ -71,7 +71,7 @@ class HammerThread(threading.Thread):
 
     def load(self):
         n = min(len(self.repo.objects), self.rng.randint(1, 2))
-        ids = self.rng.sample(self.repo.objects.keys(), n)
+        ids = self.rng.sample(list(self.repo.objects.keys()), n)
         self.logger.info(str(self.id) + ' load(%s)' % ids)
         try:
             self.repo.load(ids)
@@ -85,7 +85,7 @@ class HammerThread(threading.Thread):
 
     def lock(self):
         n = min(len(self.repo.objects), self.rng.randint(1, 2))
-        ids = self.rng.sample(self.repo.objects.keys(), n)
+        ids = self.rng.sample(list(self.repo.objects.keys()), n)
         self.logger.info(str(self.id) + ' lock(%s)' % ids)
         lids = self.repo.lock(ids)
         for id in ids:
@@ -149,7 +149,7 @@ class HammerThread(threading.Thread):
             choices.extend([self.check] * 5)
             choices.extend([self.flush] * 2)
             self.rng.choice(choices)()
-            assert len(self.owned_ids) == len(dict(zip(self.owned_ids, range(len(self.owned_ids)))).keys())
+            assert len(self.owned_ids) == len(list(dict(list(zip(self.owned_ids, list(range(len(self.owned_ids)))))).keys()))
             for id in self.owned_ids:
                 assert id in self.repo.objects
         self.done = True

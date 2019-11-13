@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import os
 import tempfile
@@ -71,7 +71,7 @@ class TestCustomMerger(GangaUnitTest):
 def mergefiles(file_list, output_file):
     '''Free script for merging files'''
     
-    with file(output_file,'w') as out:
+    with open(output_file,'w') as out:
         for f in file_list:
             print(f, file=out)
     

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import collections
 from GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
 from GangaCore.Utility.Config import getConfig
@@ -129,7 +129,7 @@ class ThreadPoolQueueMonitor(object):
             while keyin is None:
                 print("User queue contains unfinished tasks:")
                 print(str([self._display_element(i) for i in _user_queue]))
-                keyin = raw_input("Do you want to Purge the user queue ([y]/n): ")
+                keyin = input("Do you want to Purge the user queue ([y]/n): ")
                 if keyin.lower() in ['y', '']:
                     _actually_purge = True
                 elif keyin.lower() == 'n':
@@ -161,7 +161,7 @@ class ThreadPoolQueueMonitor(object):
             while keyin is None:
                 print("Monitoring queue contains unfinished tasks:")
                 print(str([self._display_element(i) for i in _monitor_queue]))
-                keyin = raw_input("Do you want to Purge the monitoring queue ([y]/n): ")
+                keyin = input("Do you want to Purge the monitoring queue ([y]/n): ")
                 if keyin.lower() in ['y', '']:
                     _actually_purge = True
                 elif keyin.lower() == 'n':

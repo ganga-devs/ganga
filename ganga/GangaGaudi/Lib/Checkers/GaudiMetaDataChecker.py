@@ -11,7 +11,7 @@ from GangaCore.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem,
 from GangaCore.Utility.Config import makeConfig, ConfigError, getConfig
 from GangaCore.Utility.Plugin import allPlugins
 from GangaCore.Utility.logging import getLogger, log_user_exception
-import commands
+import subprocess
 import copy
 import os
 import string
@@ -52,7 +52,7 @@ class GaudiMetaDataChecker(MetaDataChecker):
         if self.expression.find('inputevents') > -1:
             try:
                 inputevents = j.metadata['events']['input']
-            except Exception, err:
+            except Exception as err:
                 logger.error("%s" % str(err))
                 raise PostProcessException("The metadata value j.events['input'] was not defined")
         if self.expression.find('outputevents') > -1:

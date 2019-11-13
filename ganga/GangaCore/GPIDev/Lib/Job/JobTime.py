@@ -216,14 +216,12 @@ class JobTime(GangaObject):
         T = datetime.datetime.now()
         tstring = T.strftime(format)
         length = len(tstring)
-        times = [0 for k in self.timestamps.keys()]
-        for i in range(0, len(self.timestamps.keys())):
+        times = [0 for _ in self.timestamps.keys()]
+        for i, (ts_key, ts_value) in enumerate(self.timestamps.items()):
             try:
-                times[i] = self.timestamps[self.timestamps.keys()[i]].strftime(
-                    format).rjust(length) + ' - ' + self.timestamps.keys()[i]
+                times[i] = ts_value.strftime(format).rjust(length) + ' - ' + ts_key
             except AttributeError:
-                times[i] = str(self.timestamps[self.timestamps.keys()[i]]).rjust(
-                    length) + ' - ' + self.timestamps.keys()[i]
+                times[i] = str(ts_value).rjust(length) + ' - ' + ts_key
 
         # try to make chronological - can fail when timestamps are the same to
         # nearest sec -> becomes alphabetical...
@@ -282,7 +280,7 @@ class JobTime(GangaObject):
                 # ask whether user really wants to print timedetails for all
                 # their jobs:
                 while keyin is None:
-                    keyin = raw_input("Are you sure you want details for ALL %d subjobs(y/n)?" % len(j.subjobs))
+                    keyin = input("Are you sure you want details for ALL %d subjobs(y/n)?" % len(j.subjobs))
                     # if yes carry on at for loop
                     if keyin.lower() == 'y':
                         pass

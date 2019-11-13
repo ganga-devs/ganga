@@ -1,7 +1,7 @@
 import collections
 import fnmatch
 import re
-import repr
+import reprlib
 import sys
 from inspect import isclass
 import GangaCore.Utility.logging
@@ -121,7 +121,7 @@ class RegistrySlice(object):
 
         logger = getLogger()
 
-        this_repr = repr.Repr()
+        this_repr = reprlib.Repr()
         from GangaCore.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
         ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
@@ -165,7 +165,7 @@ class RegistrySlice(object):
 
         ## Loop through attrs to parse possible inputs into instances of a class where appropriate
         ## Unlike the select method we need to populate this dictionary with instance objects, not str or class
-        for k, v in attrs.iteritems():
+        for k, v in attrs.items():
             if isclass(v):
                 attrs[k] = v()
             elif type(attrs[k]) is str:
@@ -319,7 +319,7 @@ class RegistrySlice(object):
                     logger.error('Multiple Matches: Wildcards are allowed for ease of matching, however')
                     logger.error('                  to keep a uniform response only one item may be matched.')
                     logger.error('                  If you wanted a slice, please use the select method')
-                    raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str(map(lambda x: x._getRegistry()._getName(x), matches))))
+                    raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str([x._getRegistry()._getName(x) for x in matches])))
                 if len(matches) < 1:
                     return
                 return addProxy(matches[0])
@@ -335,11 +335,11 @@ class RegistrySlice(object):
         class Iterator(object):
 
             def __init__(self, reg):
-                self.it = reg.objects.values().__iter__()
+                self.it = list(reg.objects.values()).__iter__()
 
             def __iter__(self): return self
 
-            def next(self):
+            def __next__(self):
                 return next(self.it)
         return Iterator(self)
 
