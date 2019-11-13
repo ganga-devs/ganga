@@ -131,7 +131,7 @@ conf_config.addOption('NoAfsToken', False, 'Do not require an AFS token when run
 conf_config.addOption('Profile_Memory', False, 'Run memory profiler on Ganga Objects')
 conf_config.addOption('Profile_CPU', False, 'Run cpu profiler on Ganga Objects')
 conf_config.addOption('Count_Calls', False, 'Run function call counters on Ganga Objects')
-
+conf_config.addOption('UDockerlocation', '~', 'Directory where udocker will be installed for local jobs if used for virtualization')
 
 # add named template options
 conf_config.addOption('namedTemplates_ext', 'tpl',

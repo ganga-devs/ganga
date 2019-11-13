@@ -20,6 +20,8 @@ import GangaCore.Utility.logging
 
 import GangaCore.Utility.Config
 
+import GangaCore.Utility.Virtualization
+
 from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
 
 logger = GangaCore.Utility.logging.getLogger()
@@ -183,11 +185,17 @@ class Localhost(IBackend):
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
+        virtualization = job.virtualization
 
+        utilFiles= []
+        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
+        utilFiles.append(fileutils)
+        if virtualization:
+            virtualizationutils = File( inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
+            utilFiles.append(virtualizationutils)
         sharedfiles = jobconfig.getSharedFiles()
 
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + utilFiles)
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         if self.nice:
@@ -231,6 +239,14 @@ class Localhost(IBackend):
         script = script.replace('###ENVIRONMENT###', repr(environment))
         script = script.replace('###WORKDIR###', repr(workdir))
         script = script.replace('###INPUT_DIR###', repr(job.getStringInputDir()))
+
+        if virtualization:
+            script = virtualization.modify_script(script)
+        else:
+            script = script.replace('###VIRTUALIZATION###', repr(None))
+            script = script.replace('###VIRTUALIZATIONIMAGE###', repr(None))
+            script = script.replace('###VIRTUALIZATIONMODE###', repr(None))
+            script = script.replace('###UDOCKERLOCATION###', repr(None))
 
         self.workdir = workdir
 
