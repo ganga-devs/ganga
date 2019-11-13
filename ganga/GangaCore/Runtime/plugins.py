@@ -51,4 +51,7 @@ import GangaCore.Lib.Checkers
 logger.debug("Loading Notifier")
 import GangaCore.Lib.Notifier
 
+logger.debug("Loading virtualization classes")
+import GangaCore.Lib.Virtualization
+
 logger.debug("Finished Runtime.plugins")
