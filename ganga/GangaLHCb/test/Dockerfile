@@ -12,4 +12,3 @@ COPY . ganga
 ENTRYPOINT /bin/bash
 
 ENTRYPOINT . /etc/entrypoint.sh /root/ganga/ganga/GangaLHCb/test/testrunner
-
