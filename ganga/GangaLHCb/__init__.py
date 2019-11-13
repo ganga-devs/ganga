@@ -72,7 +72,6 @@ if not _after_bootstrap:
     # _store_root_version()
 
 
-
 def standardSetup():
 
     from . import PACKAGE
