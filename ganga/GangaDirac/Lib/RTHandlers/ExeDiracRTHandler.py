@@ -44,6 +44,11 @@ class ExeDiracRTHandler(IRuntimeHandler):
         job = stripProxy(app).getJobObject()
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
+        #Grab the platform if the app has that attribute
+        platform = 'ANY'
+        if hasattr(app, 'platform'):
+            platform = app.platform
+
         commandline = []
         commandline.append(app.exe)
         if isType(app.exe, File):
@@ -106,6 +111,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         OUTPUT_PATH="",  # job.fqid,
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
+                                        PLATFORM=platform,
                                         REPLICATE='True' if config['ReplicateOutputData'] else '',
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
