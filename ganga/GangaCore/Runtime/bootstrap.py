@@ -1039,9 +1039,8 @@ under certain conditions; type license() for details.
             # so we have only one possibility to insert python code :
             # using explicitly '\n' and '\t' chars
 #FIXME: Waiting for new site config to update print to python3
-#            code = config['StartupGPI'].replace(
-#                '\\t', '\t').replace('\\n', '\n')
-            code = r"print('\n === Welcome to Ganga on CVMFS. In case of problems contact lhcb-distributed-analysis@cern.ch === ')"
+            code = config['StartupGPI'].replace(
+                '\\t', '\t').replace('\\n', '\n')
             exec(code, local_ns)
 
         logger.debug("loaded .ganga.py")
