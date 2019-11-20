@@ -244,11 +244,11 @@ class GaudiExec(IPrepareApp):
             all_opts_files = self.getOptsFiles()
             for opts_file in all_opts_files:
                 if isinstance(opts_file, LocalFile):
-                    if opts_file.namePatter == 'data.py':
+                    if opts_file.namePattern == 'data.py':
                         raise ApplicationConfigurationError("Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
                     self.copyIntoPrepDir(path.join( opts_file.localDir, path.basename(opts_file.namePattern) ))
                 elif isinstance(opts_file, DiracFile):
-                    if opts_file.namePatter == 'data.py':
+                    if opts_file.namePattern == 'data.py':
                         raise ApplicationConfigurationError("Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
                     # NB safe to put it here as should have expressly setup a path for this job by now.
                     # We cannot _not_ place this here based upon the backend.
