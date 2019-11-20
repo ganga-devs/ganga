@@ -124,7 +124,7 @@ except:
     filefilter = None
 
 from files import multi_glob, recursive_copy
-    
+
 createOutputSandbox(outputpatterns,filefilter,sharedoutputpath)
 
 def printError(message):
