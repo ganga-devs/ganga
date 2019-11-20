@@ -250,7 +250,6 @@ class GaudiExec(IPrepareApp):
                 elif isinstance(opts_file, DiracFile):
                     if opts_file.namePatter == 'data.py':
                         raise ApplicationConfigurationError("Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
-
                     # NB safe to put it here as should have expressly setup a path for this job by now.
                     # We cannot _not_ place this here based upon the backend.
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
