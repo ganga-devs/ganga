@@ -410,14 +410,14 @@ class GaudiExec(IPrepareApp):
         """
         Return the script which wraps the running command in a correct environment
         """
-        return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && ' % (self.platform)
+        return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv || lb-set-platform %s && ' % (self.platform)
 
 
     def getWNEnvScript(self):
         """
         Return the script to setup the correct env on a WN
         """
-        return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && ' % (self.platform)
+        return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv || lb-set-platform %s && ' % (self.platform)
 
     def execCmd(self, cmd):
         """
@@ -438,8 +438,8 @@ class GaudiExec(IPrepareApp):
             raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False, mode = "w")
-        if not cmd.startswith('./run '):
-            cmd = './run ' + cmd
+#        if not cmd.startswith('./run '):
+#            cmd = './run ' + cmd
 
         cmd_file.write("#!/bin/bash")
         cmd_file.write("\n")
@@ -456,7 +456,7 @@ class GaudiExec(IPrepareApp):
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
         if not path.isfile(path.join(self.directory, 'build.%s' %self.platform, 'run')):
-            initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && make' % (self.platform)
+            initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv || lb-set-platform %s && make' % (self.platform)
             rc, stdout, stderr = _exec_cmd(initialCommand, self.directory)
             if rc != 0:
                 logger.error("Failed to perform initial make on a Cmake based project")
@@ -467,11 +467,11 @@ class GaudiExec(IPrepareApp):
                 rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
         else:
             rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
-
         if rc != 0:
             logger.error("Failed to execute command: %s" % cmd_file.name)
             logger.error("Tried to execute command in: %s" % self.directory)
-            logger.error("StdErr: %s" % str(stdout))
+            logger.error("StdErr: %s" % str(stderr.decode()))
+            logger.error("StdOut: %s" % str(stdout.decode()))
             raise GangaException("Failed to Execute command")
 
         unlink(cmd_file.name)
