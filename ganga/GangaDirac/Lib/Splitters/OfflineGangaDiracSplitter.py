@@ -257,7 +257,7 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
         SE_dict[lfn] = sitez
 
     # Remove the banned sites (CE) from the mappings
-    for iSE in CE_to_SE_mapping.keys():
+    for iSE in list(CE_to_SE_mapping.keys()):
         for site in CE_to_SE_mapping[iSE]:
             if any(site == item for item in bannedSites):
                 CE_to_SE_mapping[iSE].remove(site)
