@@ -406,18 +406,25 @@ class GaudiExec(IPrepareApp):
         else:
             raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
 
-    def getEnvScript(self):
+    def getEnvScript(self, isLbEnv):
         """
         Return the script which wraps the running command in a correct environment
         """
-        return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
+        if isLbEnv:
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
+        else:
+            return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
 
-    def getWNEnvScript(self):
+    def getWNEnvScript(self, isLbEnv):
         """
         Return the script to setup the correct env on a WN
         """
-        return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh %s && ' % (self.platform)
+        if isLbEnv:
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh %s && ' % (self.platform)
+        else:
+            return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+
 
     def execCmd(self, cmd):
         """
@@ -437,13 +444,19 @@ class GaudiExec(IPrepareApp):
         if not path.isdir(self.directory):
             raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
+        #Check if this was checked out with LbEnv or not
+        isLbEnv = False
+        with open(self.directory+'/Makefile', "r") as makefile:
+            if 'LbEnv' in makefile.read():
+                isLbEnv = True
+
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False, mode = "w")
 #        if not cmd.startswith('./run '):
 #            cmd = './run ' + cmd
 
         cmd_file.write("#!/bin/bash")
         cmd_file.write("\n")
-        cmd_file.write(self.getEnvScript())
+        cmd_file.write(self.getEnvScript(isLbEnv))
         cmd_file.write(cmd)
         cmd_file.flush()
         cmd_file.close()
@@ -456,7 +469,9 @@ class GaudiExec(IPrepareApp):
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
         if not path.isfile(path.join(self.directory, 'build.%s' %self.platform, 'run')):
-            initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && make' % (self.platform)
+            initialCommand = 'export CMTCONFIG=%s && source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
+            if isLbEnv:
+                initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && make' % (self.platform)
             rc, stdout, stderr = _exec_cmd(initialCommand, self.directory)
             if rc != 0:
                 logger.error("Failed to perform initial make on a Cmake based project")
