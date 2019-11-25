@@ -421,7 +421,7 @@ class GaudiExec(IPrepareApp):
         Return the script to setup the correct env on a WN
         """
         if isLbEnv:
-            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh %s && ' % (self.platform)
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
         else:
             return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
