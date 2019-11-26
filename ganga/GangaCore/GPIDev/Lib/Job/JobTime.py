@@ -150,7 +150,7 @@ class JobTime(GangaObject):
             logger.debug(
                 "j.time.timenow() caught subjob %d.%d in the '%s' status", j.master.id, j.id, status)
 
-            for written_status in j.time.timestamps.keys():
+            for written_status in list(j.time.timestamps.keys()):
                 if written_status not in j.master.time.sj_statlist:
                     j.master.time.sj_statlist.append(written_status)
                     logger.debug(
