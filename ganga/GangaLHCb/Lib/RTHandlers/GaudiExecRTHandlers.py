@@ -128,9 +128,13 @@ def collectPreparedFiles(app):
 
     for file_ in app.getJobObject().inputfiles:
         if isinstance(file_, LocalFile):
+            if file_.namePattern == 'data.py':
+                raise ApplicationConfigurationError("You should not name any inputfiles 'data.py' to avoid conflict with the generated inputdata. Please rename the file and submit again.")
             shutil.copy(os.path.join(file_.localDir, os.path.basename(file_.namePattern)), shared_dir)
             input_files.append(os.path.join(shared_dir, file_.namePattern))
         elif isinstance(file_, str):
+            if 'data.py' in file_:
+                raise ApplicationConfigurationError("You should not name any inputfiles 'data.py' to avoid conflict with the generated inputdata. Please rename the file and submit again.")
             new_file = LocalFile(file_)
             shutil.copy(os.path.join(new_file.localDir, os.path.basename(new_file.namePattern)), shared_dir)
             input_files.append(os.path.join(shared_dir, new_file.namePattern))
