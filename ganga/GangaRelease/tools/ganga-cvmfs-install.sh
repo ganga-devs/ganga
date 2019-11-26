@@ -12,7 +12,7 @@ cd /cvmfs/ganga.cern.ch/Ganga/install
 
 pip install --upgrade pip setuptools
 
-pip install git+https://github.com/ganga-devs/ganga.git@$1 
+pip install git+https://github.com/ganga-devs/ganga.git@$1#egg=ganga[LHCb] 
 
 deactivate
 
