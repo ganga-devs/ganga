@@ -242,16 +242,13 @@ class Localhost(IBackend):
 
         if virtualization:
             script = virtualization.modify_script(script)
-        else:
-            script = script.replace('###VIRTUALIZATION###', repr(None))
-            script = script.replace('###VIRTUALIZATIONIMAGE###', repr(None))
-            script = script.replace('###VIRTUALIZATIONMODE###', repr(None))
-            script = script.replace('###UDOCKERLOCATION###', repr(None))
 
         self.workdir = workdir
 
         script = script.replace('###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
 
+        script = re.sub(r'###[\w_]+###',repr(None),script) 
+        
         wrkspace = job.getInputWorkspace()
         scriptPath = wrkspace.writefile(FileBuffer('__jobscript__', script), executable=1)
 

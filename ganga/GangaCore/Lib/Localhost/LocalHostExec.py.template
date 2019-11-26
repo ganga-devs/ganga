@@ -1,6 +1,5 @@
-#!/usr/bin/python2
+#!/usr/bin/env python2
 from __future__ import print_function
-
 import os,os.path,shutil,tempfile
 import sys,time
 import glob
@@ -31,11 +30,11 @@ if len(sys.argv)>1 and sys.argv[1] == 'subprocess':
 
 ############################################################################################
 def failurereport(filehandle, message):
-    errfile = open( 'stderr', 'w' )
+    errfile = open('stderr', 'w' )
     errfile.close()
-    print('EXITCODE: %d'%-9999, file=filehandle)
+    print('EXITCODE: %d' % -9999, file=filehandle)
     print('FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y'), file=filehandle)
-    print('PROBLEM STARTING THE APPLICATION SCRIPT: \'%s\' \'%s\''%(appscriptpath,str(x)), file=filehandle)
+    print('PROBLEM STARTING THE APPLICATION SCRIPT: \'%s\' \'%s\''%(execmd,str(x)), file=filehandle)
     print('FILES FOUND ARE: %s' % os.listdir('.'), file=filehandle)
     filehandle.close()
     sys.exit()
@@ -43,13 +42,9 @@ def failurereport(filehandle, message):
 input_sandbox = ###INPUT_SANDBOX###
 sharedoutputpath= ###SHAREDOUTPUTPATH###
 outputpatterns = ###OUTPUTPATTERNS###
-appscriptpath = ###APPSCRIPTPATH###
+execmd = ###APPSCRIPTPATH###
 environment = ###ENVIRONMENT###
 workdir = ###WORKDIR###
-virtualization = ###VIRTUALIZATION###
-virtualization_image = ###VIRTUALIZATIONIMAGE###
-virtualization_mode = ###VIRTUALIZATIONMODE###
-virtualization_udockerlocation = ###UDOCKERLOCATION###
 
 statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
@@ -83,13 +78,14 @@ for f in input_sandbox:
 
 # create inputdata list
 ###CREATEINPUTDATALIST###
+gangadir = ###GANGADIR###
 
-sys.path.insert(0, ###GANGADIR###)
+sys.path.insert(0, gangadir)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
-fullenvironment = os.environ.copy()
+runenv = os.environ.copy()
 for key,value in environment.items():
-    fullenvironment[key] = value
+    runenv[key] = value
 
 outfile=open('stdout','w')
 errorfile=open('stderr','w')
@@ -97,38 +93,12 @@ errorfile=open('stderr','w')
 sys.stdout=open('./__syslog__','w')
 sys.stderr=sys.stdout
 
-if virtualization:
-    from Virtualization import checkDocker, checkUDocker, checkSingularity, installUdocker
-
-if (virtualization == "Docker"):
-    if appscriptpath[0].startswith('./'): 
-        appscriptpath[0] = "/work_dir/"+appscriptpath[0]
-    if (checkDocker()):
-        print("Using Docker")
-        appscriptpath = ['docker', 'run', '-v', workdir+":"+"/work_dir", virtualization_image] + appscriptpath        
-    else:
-        print("Docker not availabe or user doesn't have the permission to run docker demon")
-        location = os.path.expanduser(virtualization_udockerlocation)
-        if not (checkUDocker(location)):
-            try:
-                installUdocker(location)
-            except OSError as x:
-                failurereport(statusfile, 'PROBLEM WITH UDOCKER: \'%s\''% str(x))
-        print("Using UDocker")
-        fullenvironment["PROOT_NO_SECCOMP"]="1"
-        fullenvironment['UDOCKER_DIR']=os.path.join(location,'.udocker')
-        binary = os.path.join(location,'udocker')
-        appscriptpath = [binary, '--quiet', 'run', '--nosysdirs', '--volume', workdir+":"+"/work_dir", virtualization_image] + appscriptpath
-elif (virtualization == "Singularity"):
-    print("Using singularity")
-    if appscriptpath[0].startswith('./'): 
-        appscriptpath[0] = "/work_dir/"+appscriptpath[0]
-    appscriptpath = ['singularity', '-q', 'exec', '--bind', workdir+":"+"/work_dir", "--no-home" ,virtualization_image] + appscriptpath   
+###VIRTUALIZATION###
 
 try:
-    child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
+    child = subprocess.Popen(execmd, shell=False, stdout=outfile, stderr=errorfile, env=runenv)
 except OSError as x:
-    failurereport(statusfile, 'PROBLEM STARTING THE APPLICATION SCRIPT: \'%s\' \'%s\''%(appscriptpath,str(x)))
+    failurereport(statusfile, 'PROBLEM STARTING THE APPLICATION SCRIPT: \'%s\' \'%s\''%(execmd,str(x)))
                 
 print('PID: %d'%child.pid, file=statusfile)
 statusfile.flush()
