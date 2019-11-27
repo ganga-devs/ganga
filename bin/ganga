@@ -21,6 +21,13 @@
 from __future__ import print_function
 import sys
 
+import os
+
+if 'LBENV_SOURCED' in os.environ.keys():
+    #If we are in an LbEnv venv we want to supress the iPython warning
+    import warnings
+    warnings.filterwarnings("ignore", message="Attempting to work in a virtualenv. If you encounter problems, please install IPython inside the virtualenv.")
+        
 #First make sure we are using a python version above 3.0
 if sys.version_info[0] != 3 or sys.version_info[1] < 6:
     import logging
