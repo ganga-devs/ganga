@@ -28,7 +28,6 @@ if 'LBENV_SOURCED' in os.environ.keys():
     import warnings
     warnings.filterwarnings("ignore", message="Attempting to work in a virtualenv. If you encounter problems, please install IPython inside the virtualenv.")
         
-
 #First make sure we are using a python version above 3.0
 if sys.version_info[0] != 3 or sys.version_info[1] < 6:
     import logging
@@ -50,7 +49,6 @@ def standardSetup():
         envDir = exeDir[:-3]
         envDir = os.path.join(envDir, 'lib/python3.6/site-packages')
         sys.path.insert(0, envDir)    
-
 
     #This function is needed to add the individual ganga modules to the sys path - awful hack but saved rewriting all the code. This is needed for pip installs
     pathsToAdd = filter(lambda p : 'ganga' in os.listdir(p),
