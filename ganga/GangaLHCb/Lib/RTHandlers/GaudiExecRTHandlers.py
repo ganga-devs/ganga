@@ -164,7 +164,13 @@ def prepareCommand(app):
             raise ApplicationConfigurationError("The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                                 getName(opts_file))
 
-    sourceEnv = app.getWNEnvScript()
+    #Check if this was checked out with LbEnv or not
+    isLbEnv = False
+    with open(app.directory+'/Makefile', "r") as makefile:
+        if 'LbEnv' in makefile.read():
+            isLbEnv = True
+
+    sourceEnv = app.getWNEnvScript(isLbEnv)
 
     run_cmd = ' export ganga_jobid=%s && ./run ' % app.getJobObject().fqid
 
