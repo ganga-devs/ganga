@@ -1284,7 +1284,7 @@ class Job(GangaObject):
             appmasterconfig = self._getMasterAppConfig()
             jobmasterconfig = self._getJobMasterConfig()
             appsubconfig = self._getAppSubConfig(self)
-            logger.info("Job %s Calling rtHandler.prepare once for self" % self.getFQID('.'))
+            logger.debug("Job %s Calling rtHandler.prepare once for self" % self.getFQID('.'))
             jobsubconfig = [rtHandler.prepare(self.application, appsubconfig[0], appmasterconfig, jobmasterconfig)]
 
         self._storedJobSubConfig = jobsubconfig
