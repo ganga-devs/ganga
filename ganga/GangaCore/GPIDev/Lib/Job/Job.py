@@ -1267,10 +1267,10 @@ class Job(GangaObject):
                     finished = {}
 
                     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
+                    index = 0
                     for sub_j, sub_conf in zip(subjobs, appsubconfig):
-                        #The index needs to be the subjob number
-                        index = sub_j.getFQID('.').split('.')[1]
                         getQueues()._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, sub_j.application, sub_conf, appmasterconfig, jobmasterconfig, finished))
+                        index += 1
 
                     while len(finished) != len(subjobs):
                         time.sleep(0.25)
