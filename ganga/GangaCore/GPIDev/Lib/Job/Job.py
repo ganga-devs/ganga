@@ -1276,7 +1276,7 @@ class Job(GangaObject):
                         time.sleep(0.25)
 
                     for index in finished.keys():
-                        jobsubconfig[int(index)] = finished[index]
+                        jobsubconfig[index] = finished[index]
 
         else:
             #   I am a sub-job, lets calculate my config
