@@ -81,7 +81,8 @@ def shellEnv_cmd(cmd, environ=None, cwdir=None):
                             env=environ,
                             cwd=cwdir,
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+                            stderr=subprocess.PIPE,
+                            stdin=subprocess.DEVNULL)
     stdout, stderr = pipe.communicate()
     while pipe.poll() is None:
         time.sleep(0.5)
@@ -109,7 +110,8 @@ def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
                             env=environ,
                             cwd=cwdir,
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+                            stderr=subprocess.PIPE,
+                            stdin=subprocess.DEVNULL)
     stdout, stderr = pipe.communicate()
     while pipe.poll() is None:
         time.sleep(0.5)
@@ -140,7 +142,8 @@ def run(cmd, env=None, cwd=None, timeout=None):
                             env=env,
                             cwd=cwd,
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+                            stderr=subprocess.PIPE,
+                            stdin=subprocess.DEVNULL)
     if timeout is not None:
         time_start = time.time()
         while proc.poll() is None:

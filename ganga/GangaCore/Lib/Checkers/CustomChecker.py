@@ -7,7 +7,6 @@ from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
 from GangaCore.GPIDev.Adapters.IChecker import IChecker
 from GangaCore.GPIDev.Schema import FileItem
 from GangaCore.Utility.logging import getLogger
-import subprocess
 import copy
 import os
 import re
