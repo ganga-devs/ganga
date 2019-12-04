@@ -22,8 +22,8 @@ class Docker(IVirtualization):
 
     If the image is a private image, the username and password of the deploy token can be given like
 
-    j.virtualization.username = 'gitlab+deploy-token-123'
-    j.virtualization.password = 'gftrh84dgel-245^ghHH'
+    j.virtualization.tokenuser = 'gitlab+deploy-token-123'
+    j.virtualization.tokenpassword = 'gftrh84dgel-245^ghHH'
 
     Note that images stored in a docker repository hosted by Github at present doesn't work with uDocker 
     as uDocker is not updated to the latest version of the API.
@@ -48,8 +48,8 @@ class Docker(IVirtualization):
             Return value: modified script"""
 
         extra = 'virtualization_image = ' + repr(self.image) + '\n'
-        extra = extra + 'virtualization_user = ' + repr(self.username) + '\n'
-        extra = extra + 'virtualization_password = ' + repr(self.password) + '\n'
+        extra = extra + 'virtualization_user = ' + repr(self.tokenuser) + '\n'
+        extra = extra + 'virtualization_password = ' + repr(self.tokenpassword) + '\n'
         extra = extra + 'virtualization_mounts = ' + repr(self.mounts) + '\n'
         extra = extra + 'virtualization_options = ' + repr(self.options) + '\n'
 

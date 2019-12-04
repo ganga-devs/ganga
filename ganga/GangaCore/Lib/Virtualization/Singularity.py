@@ -29,8 +29,8 @@ class Singularity(IVirtualization):
 
     If the image is a private image, the username and password of the deploy token can be given like
 
-    j.virtualization.username = 'gitlab+deploy-token-123'
-    j.virtualization.password = 'gftrh84dgel-245^ghHH'
+    j.virtualization.tokenuser = 'gitlab+deploy-token-123'
+    j.virtualization.tokenpassword = 'gftrh84dgel-245^ghHH'
 
     Directories can be mounted from the host to the container using key-value pairs to the mount option.
 
@@ -54,8 +54,8 @@ class Singularity(IVirtualization):
             extra = 'virtualization_image = ' + repr(self.image.namePattern) + '\n'
         else:
             extra = 'virtualization_image = ' + repr(self.image) + '\n'
-        extra = extra + 'virtualization_user = ' + repr(self.username) + '\n'
-        extra = extra + 'virtualization_password = ' + repr(self.password) + '\n'
+        extra = extra + 'virtualization_user = ' + repr(self.tokenuser) + '\n'
+        extra = extra + 'virtualization_password = ' + repr(self.tokenpassword) + '\n'
         extra = extra + 'virtualization_mounts = ' + repr(self.mounts) + '\n'
         extra = extra + 'virtualization_options = ' + repr(self.options) + '\n'
 

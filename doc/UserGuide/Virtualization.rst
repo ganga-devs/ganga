@@ -27,16 +27,20 @@ or it can be provided as a Docker image from a repository. The default repositor
 
   j.virtualization = Docker("docker://fedora:latest")   
 
-Another option is to provide a `GangaFile` Object which points to a singularity file. In that case the singularity image file will be copied to the worker node. It is the responsibility of the user to place the image file as an inputfile. The file can be any `GangaFile` object.
+Another option is to provide a `GangaFile` Object which points to a singularity file. In that case the singularity image file will be copied to the worker node. The first example is with an image located on some shared disk. This will be effective for running on a local backend or a batch system with a shared disk system.
 ::
-  imagefile = LocalFile("path_to_image.sif")
+  imagefile = SharedFile('myimage.sif', locations=['/my/full/path/myimage.sif'])
   j.virtualization = Singularity(image= imagefile)
-  j.inputfiles = j.inputfiles + [imagefile]
 
-If the image is a private image, the username and password of the deploy token can be given like. Look inside Gitlab setting for how to set this up. The token will only need access to the images and nothing else.
+while a second example is with an image located in he Dirac Storage Element. This will be effective when using the Dirac backend.
 ::
-  j.virtualization.username = 'gitlab+deploy-token-123'
-  j.virtualization.password = 'gftrh84dgel-245^ghHH'
+  imagefile = DiracFile('myimage.sif', lfn=['/some/lfn/path'])
+  j.virtualization = Singularity(image= imagefile)
+  
+If the image is a private image, the username and password of the deploy token can be given like the example below. Look inside Gitlab setting for how to set this up. The token will only need access to the images and nothing else.
+::
+  j.virtualization.tokenuser = 'gitlab+deploy-token-123'
+  j.virtualization.tokenpassword = 'gftrh84dgel-245^ghHH'
 
 Directories can be mounted from the host to the container using key-value pairs to the mount option. If the directory is not vailable on the host, a warning will be written to stderr of the job and no mount will be attempted.
 ::
@@ -53,4 +57,4 @@ the image from the docker hub.
   j.virtualization = Docker("image:tag")`
 
 Ganga will try to run the container using Docker if Docker is availabe in the worker node and if the user has the 
-permission to run docker containers. If not ganga will download `UDocker <https://github.com/indigo-dc/udocker>`_ which provides the ability to run docker containers in userspace. The runmode in Udocker can be changed as seen in the documentation. Using Singualrity as the run mode is not recommended; use the `Singularity` class above instead.
+permission to run docker containers. If not ganga will download `UDocker <https://github.com/indigo-dc/udocker>`_ which provides the ability to run docker containers in userspace. The runmode in Udocker can be changed as seen in the documentation. Using Singualarity as the run mode is not recommended; use the `Singularity` class above instead.

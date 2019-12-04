@@ -479,7 +479,7 @@ class Batch(IBackend):
         for k, v in replace_dict.items():
             text = text.replace(str(k), str(v))
 
-        text = re.sub(r'###.*###',repr(None),text) 
+        text = re.sub(r'###.*###', repr(None), text)
             
         logger.debug('subjob input sandbox %s ', subjob_input_sandbox)
         logger.debug('master input sandbox %s ', master_input_sandbox)

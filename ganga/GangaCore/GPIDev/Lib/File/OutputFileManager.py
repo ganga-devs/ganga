@@ -5,6 +5,7 @@ import copy
 
 from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
 
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 
@@ -78,8 +79,6 @@ def getInputFilesPatterns(job):
     we have to set the inputsandbox patterns for the input files that will be copied from the client, also write the commands for downloading input files from the WN
     """
 
-    tmpDir = tempfile.mkdtemp()
-
     inputPatterns = []
 
     # if GangaDataset is used, check if they want the inputfiles transferred
@@ -88,6 +87,11 @@ def getInputFilesPatterns(job):
     if not job.subjobs and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
 
+    if job.virtualization and isinstance(job.virtualization.image, IGangaFile):
+        inputfiles_list.append(job.virtualization.image)
+        
+    tmpDir = tempfile.mkdtemp() if inputfiles_list else None
+        
     for inputFile in inputfiles_list:
 
         inputFileClassName = getName(inputFile)
@@ -202,6 +206,8 @@ def getWNCodeForDownloadingInputFiles(job, indent):
             return True
         if job.inputdata is not None and isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
             return True
+        if job.virtualization and isinstance(job.virtualization.image, IGangaFile):
+            return True
         return False
 
     if job.master is not None:
@@ -229,16 +235,20 @@ def getWNCodeForDownloadingInputFiles(job, indent):
         if job.master.inputdata and isType(job.master.inputdata, GangaDataset) and job.master.inputdata.treat_as_inputfiles:
             inputfiles_list += job.master.inputdata.files
 
+    if job.virtualization and isinstance(job.virtualization.image, IGangaFile):
+        inputfiles_list.append(job.virtualization.image)
+            
     for inputFile in inputfiles_list:
 
         inputfileClassName = getName(inputFile)
 
-        inputFile.processWildcardMatches()
-        if inputFile.subfiles:
-            for subfile in inputFile.subfiles:
-                insertScript += subfile.getWNScriptDownloadCommand(indent)
-        else:
-            insertScript += inputFile.getWNScriptDownloadCommand(indent)
+        if outputFilePostProcessingOnWN(job, inputfileClassName):
+            inputFile.processWildcardMatches()
+            if inputFile.subfiles:
+                for subfile in inputFile.subfiles:
+                    insertScript += subfile.getWNScriptDownloadCommand(indent)
+            else:
+                insertScript += inputFile.getWNScriptDownloadCommand(indent)
 
     insertScript = insertScript.replace('###INDENT###', indent)
 
