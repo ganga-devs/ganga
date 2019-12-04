@@ -18,9 +18,12 @@ The Singularity class can be used for either Singularity or Docker images. It re
 For Singularity images you provide the image name and tag from Singularity hub like
 ::
   j=Job()
-  j.virtualization = Singularity("shub://image:tag")`
+  j.application=Executable(exe=File('my/full/path/to/executable'))
+  j.virtualization = Singularity("shub://image:tag")
 
-or it can be provided as a Docker image from a repository. The default repository is Docker hub.
+Notice how the executable is given as a `File` object. This ensures that it is copied to the working directory and thus will be accessible inside the container.
+  
+The container can also be provided as a Docker image from a repository. The default repository is Docker hub.
   
 ::
   j.virtualization = Singularity("docker://gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v3")
