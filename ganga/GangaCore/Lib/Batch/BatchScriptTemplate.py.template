@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 from __future__ import print_function
 import shutil
 import os
@@ -6,6 +6,9 @@ import time
 import popen2
 import glob
 import mimetypes
+import sys
+import tarfile
+import subprocess
 
 ############################################################################################
 
@@ -17,7 +20,7 @@ import mimetypes
 input_sandbox = ###INPUT_SANDBOX###
 sharedoutputpath = ###SHAREDOUTPUTPATH###
 outputpatterns = ###OUTPUTPATTERNS###
-appscriptpath = ###APPSCRIPTPATH###
+execmd = ###APPSCRIPTPATH###
 environment = ###ENVIRONMENT###
 
 # jobid is a string
@@ -54,8 +57,6 @@ except:
 statusfile.writelines(line)
 flush_file(statusfile)
 
-import tarfile
-
 # -- WARNING: get the input files including the python modules BEFORE sys.path.insert()
 # -- SINCE PYTHON 2.6 THERE WAS A SUBTLE CHANGE OF SEMANTICS IN THIS AREA
 
@@ -73,15 +74,13 @@ for f in input_sandbox:
 # create inputdata list
 ###CREATEINPUTDATALIST###
 
-import sys
+workdir = os.getcwd()
 sys.path.insert(0, ###GANGADIR###)
-sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
+sys.path.insert(0,os.path.join(workdir,PYTHON_DIR))
 
-import subprocess
-
-fullenvironment = os.environ.copy()
+runenv = os.environ.copy()
 for key,value in environment.iteritems():
-    fullenvironment[key] = value
+    runenv[key] = value
 
 sysout2 = os.dup(sys.stdout.fileno())
 syserr2 = os.dup(sys.stderr.fileno())
@@ -94,12 +93,12 @@ flush_file(sys.stderr)
 sys.stdout=open('./__syslog__','w')
 sys.stderr=sys.stdout
 
+###VIRTUALIZATION###
+
 result = 255
 
-
-
 try:
-    child = subprocess.Popen(appscriptpath, shell=False, stdout=sysout2, stderr=syserr2, env=fullenvironment)
+    child = subprocess.Popen(execmd, shell=False, stdout=sysout2, stderr=syserr2, env=runenv)
 
     while 1:
         result = child.poll()
@@ -150,5 +149,3 @@ heartbeatfile.close()
 os.unlink(heartbeatfilename)
 
 sys.exit(result)
-
-

@@ -145,7 +145,7 @@ class GaudiXMLSummaryMerger(IMerger):
         script.close()
 
         # run it
-        proc = subprocess.Popen(['python', script_name])
+        proc = subprocess.Popen(['python', script_name], stdin=subprocess.DEVNULL)
         proc.wait()
         rc = proc.poll()
         if rc != 0:
