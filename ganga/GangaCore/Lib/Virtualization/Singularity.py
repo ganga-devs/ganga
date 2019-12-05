@@ -9,33 +9,60 @@ from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
 class Singularity(IVirtualization):
 
     """
-    The job will be run inside a container using singularity as the virtualization method.
+    The Singularity class can be used for either Singularity or Docker images. 
+    It requires that singularity is installed on the worker node.
 
-    j=Job()
-    j.virtualization = Singularity("shub://image:tag")
-  
-    or it can be used with a Docker image
+    For Singularity images you provide the image name and tag from Singularity 
+    hub like
 
-    j.virtualization = Singularity("docker://gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v3")
+      j=Job()
+      j.application=Executable(exe=File('my/full/path/to/executable'))
+      j.virtualization = Singularity("shub://image:tag")
 
-    j.virtualization = Docker("docker://fedora:latest")   
+    Notice how the executable is given as a `File` object. This ensures that it 
+    is copied to the working directory and thus will be accessible inside the 
+    container.
 
-    or you can provide a GangaFile Object which points to a singularity file as shown below,
+    The container can also be provided as a Docker image from a repository. The 
+    default repository is Docker hub.
 
-    In that case the singularity image file will be copied to the worker node.
-    imagefile = LocalFile("path_to_image.sif")
-    j.virtualization = Singularity(image= imagefile)
-    j.inputfiles = j.inputfiles + [imagefile]
 
-    If the image is a private image, the username and password of the deploy token can be given like
+      j.virtualization = Singularity("docker://gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v3")
 
-    j.virtualization.tokenuser = 'gitlab+deploy-token-123'
-    j.virtualization.tokenpassword = 'gftrh84dgel-245^ghHH'
+      j.virtualization = Docker("docker://fedora:latest")   
 
-    Directories can be mounted from the host to the container using key-value pairs to the mount option.
+    Another option is to provide a `GangaFile` Object which points to a 
+    singularity file. In that case the singularity image file will be copied to 
+    the worker node. The first example is with an image located on some shared 
+    disk. This will be effective for running on a local backend or a batch 
+    system with a shared disk system.
 
-    j.virtualization.mount = {'/cvmfs':'/cvmfs'}
+      imagefile = SharedFile('myimage.sif', locations=['/my/full/path/myimage.sif'])
+      j.virtualization = Singularity(image= imagefile)
 
+    while a second example is with an image located in he Dirac Storage 
+    Element. This will be effective when using the Dirac backend.
+
+      imagefile = DiracFile('myimage.sif', lfn=['/some/lfn/path'])
+      j.virtualization = Singularity(image= imagefile)
+
+    If the image is a private image, the username and password of the deploy 
+    token can be given like the example below. Look inside Gitlab setting for 
+    how to set this up. The token will only need access to the images and 
+    nothing else.
+
+      j.virtualization.tokenuser = 'gitlab+deploy-token-123'
+      j.virtualization.tokenpassword = 'gftrh84dgel-245^ghHH'
+
+    Directories can be mounted from the host to the container using key-value 
+    pairs to the mount option. If the directory is not vailable on the host, a 
+    warning will be written to stderr of the job and no mount will be attempted.
+
+      j.virtualization.mount = {'/cvmfs':'/cvmfs'}
+
+    By default the container is started in singularity with the `--nohome` 
+    option. Extra options can be provided through the `options` attribute. See 
+    the Singularity documentation for what is possible.
     """
     _name = 'Singularity'
     _schema = IVirtualization._schema.inherit_copy()

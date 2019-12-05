@@ -35,7 +35,7 @@ Another option is to provide a `GangaFile` Object which points to a singularity 
   imagefile = SharedFile('myimage.sif', locations=['/my/full/path/myimage.sif'])
   j.virtualization = Singularity(image= imagefile)
 
-while a second example is with an image located in he Dirac Storage Element. This will be effective when using the Dirac backend.
+while a second example is with an image located in the Dirac Storage Element. This will be effective when using the Dirac backend.
 ::
   imagefile = DiracFile('myimage.sif', lfn=['/some/lfn/path'])
   j.virtualization = Singularity(image= imagefile)
