@@ -165,7 +165,7 @@ def _exec_cmd(cmd, cwdir):
             cwdir (str): The folder the command is to be run in
     """
     pipe = subprocess.Popen(cmd, shell=True, env=None, cwd=cwdir,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
     stdout, stderr = pipe.communicate()
     while pipe.poll() is None:
         time.sleep(0.5)

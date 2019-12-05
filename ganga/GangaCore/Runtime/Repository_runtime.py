@@ -67,11 +67,11 @@ def checkDiskQuota():
     for data_partition in folders_to_check:
 
         if fullpath(data_partition, True).find('/afs') == 0:
-            quota = subprocess.Popen(" ".join(['fs', 'quota', '%s' % quote(data_partition)]), shell=True, stdout=subprocess.PIPE)
+            quota = subprocess.Popen(" ".join(['fs', 'quota', '%s' % quote(data_partition)]), shell=True, stdout=subprocess.PIPE, stdin=subprocess.DEVNULL)
             output = quota.communicate()[0]
             logger.debug("fs quota %s:\t%s" % (quote(data_partition), output))
         else:
-            df = subprocess.Popen(["df", '-Pk', '%s' % data_partition], stdout=subprocess.PIPE)
+            df = subprocess.Popen(["df", '-Pk', '%s' % data_partition], stdout=subprocess.PIPE, stdin=subprocess.DEVNULL)
             output = df.communicate()[0]
 
         try:

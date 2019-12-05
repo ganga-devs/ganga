@@ -160,7 +160,7 @@ class Shell(object):
                 this_cwd = os.path.abspath(tempfile.gettempdir())
             logger.debug("Using CWD: %s" % this_cwd)
 
-            process = subprocess.Popen(command, env=self.env, cwd=this_cwd)
+            process = subprocess.Popen(command, env=self.env, cwd=this_cwd, stdin = subprocess.DEVNULL)
             pid = process.pid
             while True:
                 wpid, sts = os.waitpid(pid, os.WNOHANG)

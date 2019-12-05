@@ -11,7 +11,6 @@ from GangaCore.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem,
 from GangaCore.Utility.Config import makeConfig, ConfigError, getConfig
 from GangaCore.Utility.Plugin import allPlugins
 from GangaCore.Utility.logging import getLogger, log_user_exception
-import subprocess
 import copy
 import os
 import string
