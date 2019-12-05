@@ -10,7 +10,7 @@ from __future__ import print_function, absolute_import
 import sys
 import os
 import inspect
-from itertools import izip_longest
+from itertools import zip_longest
 import shutil
 
 doc_dir = os.path.dirname(os.path.realpath(__file__))
