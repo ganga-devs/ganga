@@ -114,7 +114,7 @@ class GangaCompleter(object):
         # note in python 3 can just do
         # shutil.get_terminal_size
         size_list = subprocess.Popen(
-            ['stty', 'size'], stdout=subprocess.PIPE).communicate()[0].split()
+            ['stty', 'size'], stdout=subprocess.PIPE, stdin = subprocess.DEVNULL).communicate()[0].split()
         return eval(size_list[0]), eval(size_list[1])
 
     # want to push all colouring into the displayer as then wont mess up text

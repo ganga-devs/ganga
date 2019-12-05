@@ -13,7 +13,7 @@ from GangaCore.GPIDev.Base.Proxy import stripProxy
 
 def latestLbDevVersion(app):
     import subprocess
-    pipe = subprocess.Popen('lb-dev %s -l' % app, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    pipe = subprocess.Popen('lb-dev %s -l' % app, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
     stdout, stderr = pipe.communicate()
     return stdout.split()[0]
 
