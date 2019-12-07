@@ -20,6 +20,7 @@ from GangaSNOplus.Lib.Applications.RATUser import RATUser
 from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
+
 class TestRatUser(unittest.TestCase):
 
     def _clean_application(self):
@@ -47,8 +48,13 @@ class TestRatUser(unittest.TestCase):
         app_master_config = app_config[1]
         app_sub_config = j.application._impl.configure(app_config)
         app_config = (app_master_config, app_sub_config)
-        job_master_config = rthandler.master_prepare(j.application, app_master_config)
-        rthandler.prepare(j.application._impl, app_sub_config, app_master_config, job_master_config)
+        job_master_config = rthandler.master_prepare(
+            j.application, app_master_config)
+        rthandler.prepare(
+            j.application._impl,
+            app_sub_config,
+            app_master_config,
+            job_master_config)
         j.remove()
 
     def test_user_runs(self):
@@ -64,15 +70,16 @@ class TestRatUser(unittest.TestCase):
         # Also need to ensure that the monitoring loop runs during this time!
         break_states = ['failed', 'killed', 'new', 'removed', 'unknown']
         timeout = 120
-        while j.status not in break_states and j.status!='completed' and timeout>0:
+        while j.status not in break_states and j.status != 'completed' and timeout > 0:
             Core.monitoring_component.runMonitoring(timeout=1)
             time.sleep(1)
             timeout -= 1
         self.assertEqual(j.status, "completed")
-        
+
 
 def main():
     unittest.main()
+
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,7 @@
 ##################################################
 # Toolset to assist with GangaSNOplus RATUser and
 # RATProd.
-# 
+#
 # Author: Matt Mottram <m.mottram@qmul.ac.uk>
 #
 # - Macro checking tools
@@ -29,26 +29,36 @@ import time
 from GangaSNOplus.Lib.Applications import job_tools
 
 
-######################################################################################
+##########################################################################
 # Git archiving tools
 #
-######################################################################################
+##########################################################################
 
-def download_snapshot(fork, version, filename, username=None, password=None, retry=False):
+def download_snapshot(
+        fork,
+        version,
+        filename,
+        username=None,
+        password=None,
+        retry=False):
     """Download a tarball of a given rat version.
 
     Version may be either the commit hash or the branch name (if latest commit is desired).
-    However, a commit hash is preferred as the branch name will mean that newer commits are not 
+    However, a commit hash is preferred as the branch name will mean that newer commits are not
     grabbed if rerunning at a later date.
     """
     url = "https://github.com/%s/rat/archive/%s.tar.gz" % (fork, version)
     url_request = urllib2.Request(url)
     # Only ever downloading once, so prompt for the username here
     if not username:
-        username = raw_input("Username: ") #This might not be the same as the fork...
+        # This might not be the same as the fork...
+        username = raw_input("Username: ")
     if not password:
         password = getpass.getpass("Password: ")
-    b64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
+    b64string = base64.encodestring(
+        '%s:%s' %
+        (username, password)).replace(
+        '\n', '')
     url_request.add_header("Authorization", "Basic %s" % b64string)
     try:
         remote_file = urllib2.urlopen(url_request)
@@ -57,13 +67,20 @@ def download_snapshot(fork, version, filename, username=None, password=None, ret
         raise
     try:
         download_size = int(remote_file.info().getheaders("Content-Length")[0])
-    except:
-        # For some reason GitHub sometimes rejects the first connection attempt.
+    except BaseException:
+        # For some reason GitHub sometimes rejects the first connection
+        # attempt.
         if retry is False:
-            download_snapshot(fork, version, filename, username, password, True)
+            download_snapshot(
+                fork,
+                version,
+                filename,
+                username,
+                password,
+                True)
         else:
             raise
-    local_file = open(filename, "wb")    
+    local_file = open(filename, "wb")
     local_file.write(remote_file.read())
     local_file.close()
     remote_file.close()
@@ -73,7 +90,7 @@ def make_rat_snapshot(fork, version, update, zip_prefix='archived/',
                       cache_path=os.path.expanduser('~/gaspCache')):
     '''Create a snapshot of RAT from an existing git repo.
 
-    Stores the snapshot in the cache_path, downloads from the named 
+    Stores the snapshot in the cache_path, downloads from the named
     github fork and version; update=True forces an updated version.
     '''
     if not os.path.exists(cache_path):
@@ -86,10 +103,11 @@ def make_rat_snapshot(fork, version, update, zip_prefix='archived/',
         download_snapshot(fork, version, filename)
     return filename
 
-######################################################################################
+##########################################################################
 # Macro checking tools
 #
-######################################################################################
+##########################################################################
+
 
 def check_command(filename, command):
     '''Check to see if a command is present.
@@ -101,6 +119,7 @@ def check_command(filename, command):
             command_exists = True
     return command_exists
 
+
 def check_option(filename, command):
     '''Check to see if a command and an option for that command is present.
     '''
@@ -110,6 +129,7 @@ def check_option(filename, command):
         if check_option_line(command, line):
             option_exists = True
     return option_exists
+
 
 def check_command_line(command, line):
     '''Checks for a list of commands/options.
@@ -135,11 +155,12 @@ def check_command_line(command, line):
             full_match = False
     return full_match
 
+
 def check_option_line(command, line):
     '''Checks for a command string.
 
     Returns true if an option is present.
-    (Will return False if no command is present or if command but no option). 
+    (Will return False if no command is present or if command but no option).
     '''
     pattern = re.compile(r'''\s*(?P<command>\S*)\s*(?P<option>\S*)''')
     search = pattern.search(line)
@@ -156,31 +177,34 @@ def check_option_line(command, line):
     return has_option
 
 
-
-######################################################################################
+##########################################################################
 # Resource checking functions
 #
-######################################################################################
+##########################################################################
 
 def get_ce_set():
     '''Just a call to lcg-infosites ce
     '''
     ce_set = set()
-    rtc, out, err = job_tools.execute('lcg-infosites', ['--vo', 'snoplus.snolab.ca', 'ce'])
+    rtc, out, err = job_tools.execute(
+        'lcg-infosites', ['--vo', 'snoplus.snolab.ca', 'ce'])
     for line in out:
         bits = line.split()
-        if len(bits)==6:
-            ce_name = urlparse.urlparse("ce://%s" % bits[5]) # fake a scheme (ce://) for urlparse
-            ce_set.add(unicode(ce_name.hostname)) # unicode for simpler comparison with database
+        if len(bits) == 6:
+            ce_name = urlparse.urlparse(
+                "ce://%s" %
+                bits[5])  # fake a scheme (ce://) for urlparse
+            # unicode for simpler comparison with database
+            ce_set.add(unicode(ce_name.hostname))
     return ce_set
 
 
-######################################################################################
+##########################################################################
 # Database functions
 #
-######################################################################################
+##########################################################################
 
-def encode_url(db_host, relative_path, query_options = None):
+def encode_url(db_host, relative_path, query_options=None):
     '''Set up url for couchdb query
 
     db_host should be a urlparse.ParseResult object.
@@ -193,8 +217,8 @@ def encode_url(db_host, relative_path, query_options = None):
     return url
 
 
-def get_response(host, port, url, request_type = "GET", headers = None, body = None):
-    import json # Don't import at the top, python 2.5+ required
+def get_response(host, port, url, request_type="GET", headers=None, body=None):
+    import json  # Don't import at the top, python 2.5+ required
     if port is not None:
         connection = httplib.HTTPConnection(host, port=port)
     else:
@@ -208,15 +232,15 @@ def get_response(host, port, url, request_type = "GET", headers = None, body = N
     return json.loads(response.read())
 
 
-######################################################################################
+##########################################################################
 # .gangasnoplus configuration
 #
-######################################################################################
+##########################################################################
 
 class GridConfig:
     '''A singleton object to cache information on grid configuration information.
     '''
-    
+
     _instance = None
 
     class SingletonHelper:
@@ -231,15 +255,15 @@ class GridConfig:
     def __init__(self):
         '''Initialise and load configuration access information.
         '''
-        self._last_update = None # To ensure the first call updates
-        self._refresh_every = 3600 # Update once per hour
+        self._last_update = None  # To ensure the first call updates
+        self._refresh_every = 3600  # Update once per hour
         self._worker_node_info = {}
         self._config_path = os.path.expanduser("~/.gangasnoplus")
         self._config_version = 1
 
     def load_access(self):
         '''Load access credentials for the processing database
-        
+
         If unavailable, create them.
         '''
         try:
@@ -267,10 +291,13 @@ class GridConfig:
         username = raw_input("Set database username: ")
         password = getpass.getpass("Set database password: ")
         if not urlparse.urlparse(server).hostname:
-            server = 'http://' + server # so that urlparse works
-        url = urlparse.urlparse(server) # save as a ParseResult class 
-        info = {"url": url, "name": name, "credentials": base64.encodestring('%s:%s' % (username, password))[:-1],
-                "version": self._config_version}
+            server = 'http://' + server  # so that urlparse works
+        url = urlparse.urlparse(server)  # save as a ParseResult class
+        info = {
+            "url": url, "name": name, "credentials": base64.encodestring(
+                '%s:%s' %
+                (username, password))[
+                :-1], "version": self._config_version}
         pickle.dump(info, cred_file)
         cred_file.close()
 
@@ -298,9 +325,13 @@ class GridConfig:
         '''
         database_info = self.load_access()
         url = database_info['url']
-        query_url = encode_url(url, "%s/_design/ganga/_view/ce_list" % (database_info['name']))
-        response = get_response(url.hostname, url.port, query_url, "GET",
-                                {"Authorization": "Basic %s" % database_info['credentials']})
+        query_url = encode_url(
+            url, "%s/_design/ganga/_view/ce_list" %
+            (database_info['name']))
+        response = get_response(
+            url.hostname, url.port, query_url, "GET", {
+                "Authorization": "Basic %s" %
+                database_info['credentials']})
         results = response["rows"]
         database_ce_info = {}
         for i, row in enumerate(results):

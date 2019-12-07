@@ -8,6 +8,7 @@ import optparse
 
 all_env = {}
 
+
 class CheckRootException(Exception):
     def __init__(self, error):
         Exception.__init__(self, error)
@@ -16,8 +17,10 @@ class CheckRootException(Exception):
 class OutputChecker(object):
     '''Base class for the output checker
     '''
+
     def __init__(self):
         pass
+
     def get_root_entries(self, filename, n_entries):
         pass
 
@@ -28,6 +31,7 @@ class OutputCheckerDev(OutputChecker):
     Does nothing, because we have no idea which version of RAT is being used
     without checking the git log and doing loads of unreliable stuff.
     '''
+
     def __init__(self):
         super(OutputCheckerDev, self).__init__()
 
@@ -35,8 +39,10 @@ class OutputCheckerDev(OutputChecker):
 class OutputCheckerPre460(OutputChecker):
     '''Output checker for RAT-4.5.0 and earlier.
     '''
+
     def __init__(self):
         super(OutputCheckerPre460, self).__init__()
+
     def get_root_entries(self, filename, n_entries):
         import ROOT
         import rat
@@ -50,22 +56,26 @@ class OutputCheckerPre460(OutputChecker):
             elif tf.Get("output"):
                 tt = tf.Get("output")
             else:
-                raise CheckRootException("Neither TTree 'T' nor TTree 'output' exist")
+                raise CheckRootException(
+                    "Neither TTree 'T' nor TTree 'output' exist")
 
             # check entries in TTrees
             if n_entries == tt.GetEntries():
                 pass
             else:
-                raise CheckRootException("Number of events simulated is incorrect")
+                raise CheckRootException(
+                    "Number of events simulated is incorrect")
         except Exception as e:
             raise CheckRootException("Cannot get TTree: %s" % e)
-    
+
 
 class OutputCheckerPost460(OutputChecker):
     '''Output checker for RAT-4.6.0 and later.
     '''
+
     def __init__(self):
         super(OutputCheckerPost460, self).__init__()
+
     def get_root_entries(self, filename, n_entries):
         import ROOT
         import rat
@@ -74,18 +84,20 @@ class OutputCheckerPost460(OutputChecker):
             if rat.dsreader(filename):
                 for ds, run in rat.dsreader(filename):
                     if n_entries == run.GetNumberOfEventsSimulated(run):
-                        break # assume simulations only do one run
+                        break  # assume simulations only do one run
                     else:
-                        raise CheckRootException("Number of events simulated is incorrect")
+                        raise CheckRootException(
+                            "Number of events simulated is incorrect")
 
-            #check soc files
+            # check soc files
             elif rat.socreader(filename):
                 for soc, run in rat.socreader(filename):
                     if n_entries == run.GetNumberOfEventsSimulated(run):
-                        break # assume simulations only do one run
+                        break  # assume simulations only do one run
                     else:
-                        raise CheckRootException("Number of events simulated is incorrect")
-            #check ntuples
+                        raise CheckRootException(
+                            "Number of events simulated is incorrect")
+            # check ntuples
             else:
                 tf = ROOT.TFile(filename)
                 tt = tf.Get("output")
@@ -94,7 +106,8 @@ class OutputCheckerPost460(OutputChecker):
                 if n_entries == tt.GetEntries():
                     pass
                 else:
-                    raise CheckRootException("Number of events simulated is incorrect")            
+                    raise CheckRootException(
+                        "Number of events simulated is incorrect")
         except Exception as e:
             raise CheckRootException("Cannot get TTree: %s" % e)
 
@@ -102,12 +115,12 @@ class OutputCheckerPost460(OutputChecker):
 def get_checker(rat_version):
     try:
         (major, minor, patch) = (int(s) for s in rat_version.split('.'))
-        if major>4 or (major==4 and minor>5):
+        if major > 4 or (major == 4 and minor > 5):
             return OutputCheckerPost460()
         else:
             return OutputCheckerPre460()
     except ValueError:
-        if rat_version=='dev':
+        if rat_version == 'dev':
             return OutputCheckerDev()
         else:
             raise CheckRootException("Unknown rat version: %s" % rat_version)
