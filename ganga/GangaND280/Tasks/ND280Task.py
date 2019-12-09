@@ -4,16 +4,17 @@ from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegis
 import time
 from GangaCore.GPIDev.Lib.Tasks import ITask
 
-########################################################################                                                                                                                                                                     
+########################################################################
+
 
 class ND280Task(ITask):
     """T2K add-ons for the Task framework"""
-    _schema = Schema(Version(1,0), dict(ITask._schema.datadict.items() + {
-        }.items()))
+    _schema = Schema(Version(1, 0), dict(ITask._schema.datadict.items() + {
+    }.items()))
 
     _category = 'tasks'
     _name = 'ND280Task'
-    _exportmethods = ITask._exportmethods + [ ]
+    _exportmethods = ITask._exportmethods + []
 
     _tasktype = "ITask"
 
