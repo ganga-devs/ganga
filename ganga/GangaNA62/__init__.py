@@ -1,22 +1,22 @@
-#Bail out when loading this module as it is not python3 compliant
+# Bail out when loading this module as it is not python3 compliant
+import GangaCore.Utility.Config
+import GangaCore.Utility.logging
+import os
 from GangaCore.Core.exceptions import PluginError
 raise PluginError("The GangaNA62 module has not been upgraded for python 3. The last python 2 Ganga version is 7.1.15 . Please contact the ganga devs to discuss updating this module.")
 
-import os
-import GangaCore.Utility.logging
-import GangaCore.Utility.Config
 
 def standardSetup():
 
-   import PACKAGE
-   PACKAGE.standardSetup()
+    import PACKAGE
+    PACKAGE.standardSetup()
 
 
-def loadPlugins( config = {} ):
-   import Lib.Applications
-   import Lib.Tasks
-   import Lib.Requirements
-   
+def loadPlugins(config={}):
+    import Lib.Applications
+    import Lib.Tasks
+    import Lib.Requirements
+
     #import Lib.Backends
     #import Lib.Applications
     #import Lib.LHCbDataset
