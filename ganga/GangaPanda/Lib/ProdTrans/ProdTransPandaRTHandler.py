@@ -1,4 +1,11 @@
-import commands, exceptions, random, re, sys, time
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.Utility.Config import getConfig
+import commands
+import exceptions
+import random
+import re
+import sys
+import time
 
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -9,8 +16,8 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getDatasets
 import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger()
 
-from GangaCore.Utility.Config import getConfig
 configPanda = getConfig('Panda')
+
 
 def getLatestDBReleaseCaching():
     import tempfile
@@ -20,7 +27,7 @@ def getLatestDBReleaseCaching():
 
     TMPDIR = tempfile.gettempdir()
     nickname = getNickname(allowMissingNickname=False)
-    DBRELCACHE = '%s/ganga.latestdbrel.%s'%(TMPDIR,nickname)
+    DBRELCACHE = '%s/ganga.latestdbrel.%s' % (TMPDIR, nickname)
 
     try:
         fh = open(DBRELCACHE)
@@ -31,14 +38,14 @@ def getLatestDBReleaseCaching():
             return dbrelCache['atlas_dbrelease']
         else:
             raise Exception()
-    except:
+    except BaseException:
         logger.debug('Updating local LATEST DBRelease cache')
         atlas_dbrelease = Client.getLatestDBRelease(False)
         dbrelCache = {}
         dbrelCache['mtime'] = time.time()
         dbrelCache['atlas_dbrelease'] = atlas_dbrelease
-        fh = open(DBRELCACHE,'w')
-        pickle.dump(dbrelCache,fh)
+        fh = open(DBRELCACHE, 'w')
+        pickle.dump(dbrelCache, fh)
         fh.close()
         return atlas_dbrelease
 
@@ -52,7 +59,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
 
         job = app._getParent()
         logger.debug('ProdTransPandaRTHandler master_prepare() for %s',
-                    job.getFQID('.'))
+                     job.getFQID('.'))
 
         return None
 
@@ -66,7 +73,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         from taskbuffer.FileSpec import FileSpec
         from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
         from GangaPanda.Lib.Panda.Panda import refreshPandaSpecs
-        
+
         # make sure we have the correct siteType
         refreshPandaSpecs()
 
@@ -86,18 +93,31 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         try:
             outDsLocation = Client.PandaSites[job.backend.site]['ddm']
             tmpDsExist = False
-            if (configPanda['processingType'].startswith('gangarobot') or configPanda['processingType'].startswith('hammercloud')):
-                #if Client.getDatasets(job.outputdata.datasetname):
+            if (configPanda['processingType'].startswith(
+                    'gangarobot') or configPanda['processingType'].startswith('hammercloud')):
+                # if Client.getDatasets(job.outputdata.datasetname):
                 if getDatasets(job.outputdata.datasetname):
                     tmpDsExist = True
-                    logger.info('Re-using output dataset %s'%job.outputdata.datasetname)
-            if not configPanda['specialHandling']=='ddm:rucio' and not  configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
-                Client.addDataset(job.outputdata.datasetname,False,location=outDsLocation,allowProdDisk=True,dsExist=tmpDsExist)
-            logger.info('Output dataset %s registered at %s'%(job.outputdata.datasetname,outDsLocation))
+                    logger.info(
+                        'Re-using output dataset %s' %
+                        job.outputdata.datasetname)
+            if not configPanda['specialHandling'] == 'ddm:rucio' and not configPanda['processingType'].startswith(
+                    'gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
+                Client.addDataset(
+                    job.outputdata.datasetname,
+                    False,
+                    location=outDsLocation,
+                    allowProdDisk=True,
+                    dsExist=tmpDsExist)
+            logger.info(
+                'Output dataset %s registered at %s' %
+                (job.outputdata.datasetname, outDsLocation))
             dq2_set_dataset_lifetime(job.outputdata.datasetname, outDsLocation)
         except exceptions.SystemExit:
-            raise BackendError('Panda','Exception in adding dataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
-        
+            raise BackendError(
+                'Panda', 'Exception in adding dataset %s: %s %s' %
+                (job.outputdata.datasetname, sys.exc_info()[0], sys.exc_info()[1]))
+
         # JobSpec.
         jspec = JobSpec()
         jspec.currentPriority = app.priority
@@ -136,15 +156,16 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         if app.dbrelease == 'LATEST':
             try:
                 latest_dbrelease = getLatestDBReleaseCaching()
-            except:
+            except BaseException:
                 from pandatools import Client
                 latest_dbrelease = Client.getLatestDBRelease()
-            m = re.search('(.*):DBRelease-(.*)\.tar\.gz', latest_dbrelease)
+            m = re.search(r'(.*):DBRelease-(.*)\.tar\.gz', latest_dbrelease)
             if m:
                 self.dbrelease_dataset = m.group(1)
                 self.dbrelease = m.group(2)
             else:
-                raise ApplicationConfigurationError("Error retrieving LATEST DBRelease. Try setting application.dbrelease manually.")
+                raise ApplicationConfigurationError(
+                    "Error retrieving LATEST DBRelease. Try setting application.dbrelease manually.")
         else:
             self.dbrelease_dataset = app.dbrelease_dataset
             self.dbrelease = app.dbrelease
@@ -152,12 +173,15 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
 
         if self.dbrelease:
             if self.dbrelease == 'current':
-                jspec.jobParameters += ' --DBRelease=current' 
+                jspec.jobParameters += ' --DBRelease=current'
             else:
-                if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
-                    jspec.jobParameters += ' --DBRelease=DBRelease-%s.tar.gz' % (self.dbrelease,)
+                if jspec.transformation.endswith(
+                        "_tf.py") or jspec.transformation.endswith("_tf"):
+                    jspec.jobParameters += ' --DBRelease=DBRelease-%s.tar.gz' % (
+                        self.dbrelease,)
                 else:
-                    jspec.jobParameters += ' DBRelease=DBRelease-%s.tar.gz' % (self.dbrelease,)
+                    jspec.jobParameters += ' DBRelease=DBRelease-%s.tar.gz' % (
+                        self.dbrelease,)
                 dbspec = FileSpec()
                 dbspec.lfn = 'DBRelease-%s.tar.gz' % self.dbrelease
                 dbspec.dataset = self.dbrelease_dataset
@@ -174,18 +198,20 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 runnumber = 105200
             else:
                 runnumber = int(m.group(2))
-            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
+            if jspec.transformation.endswith(
+                    "_tf.py") or jspec.transformation.endswith("_tf"):
                 jspec.jobParameters += ' --runNumber %d' % runnumber
             else:
                 jspec.jobParameters += ' RunNumber=%d' % runnumber
-        
+
         # Output files.
         randomized_lfns = []
         ilfn = 0
-        for lfn, lfntype in zip(app.output_files,app.output_type):
+        for lfn, lfntype in zip(app.output_files, app.output_type):
             ofspec = FileSpec()
             if app.randomize_lfns:
-                randomized_lfn = lfn + ('.%s.%d.%s' % (job.backend.site, int(time.time()), commands.getoutput('uuidgen 2> /dev/null')[:4] ) )
+                randomized_lfn = lfn + ('.%s.%d.%s' % (job.backend.site, int(
+                    time.time()), commands.getoutput('uuidgen 2> /dev/null')[:4]))
             else:
                 randomized_lfn = lfn
 
@@ -197,19 +223,25 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             ofspec.type = 'output'
             jspec.addFile(ofspec)
 
-            # remove the first section of the file name if it matches the file type
-            if len(randomized_lfn.split('.')) > 1 and randomized_lfn.split('.')[0].find(lfntype) != -1:
+            # remove the first section of the file name if it matches the file
+            # type
+            if len(randomized_lfn.split('.')) > 1 and randomized_lfn.split(
+                    '.')[0].find(lfntype) != -1:
                 randomized_lfn = '.'.join(randomized_lfn.split('.')[1:])
 
-            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
-                jspec.jobParameters += ' --output%sFile %s' % (lfntype, randomized_lfn)
+            if jspec.transformation.endswith(
+                    "_tf.py") or jspec.transformation.endswith("_tf"):
+                jspec.jobParameters += ' --output%sFile %s' % (
+                    lfntype, randomized_lfn)
             else:
-                jspec.jobParameters += ' output%sFile=%s' % (lfntype, randomized_lfn)
-            ilfn=ilfn+1
+                jspec.jobParameters += ' output%sFile=%s' % (
+                    lfntype, randomized_lfn)
+            ilfn = ilfn + 1
 
         # Input files.
         if job.inputdata:
-            for guid, lfn, size, checksum, scope in zip(job.inputdata.guids, job.inputdata.names, job.inputdata.sizes, job.inputdata.checksums, job.inputdata.scopes):
+            for guid, lfn, size, checksum, scope in zip(
+                    job.inputdata.guids, job.inputdata.names, job.inputdata.sizes, job.inputdata.checksums, job.inputdata.scopes):
                 ifspec = FileSpec()
                 ifspec.lfn = lfn
                 ifspec.GUID = guid
@@ -227,13 +259,16 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
 
             # Change inputfile parameter depending on input type
             if job.backend.requirements.transfertype.upper() == 'DIRECT':
-                tmp_in_file = "@tmpin_" + job.inputdata.dataset[0].split(':')[-1]
+                tmp_in_file = "@tmpin_" + \
+                    job.inputdata.dataset[0].split(':')[-1]
             else:
                 tmp_in_file = ','.join(job.inputdata.names)
 
             # set the inputfile parameter
-            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
-                jspec.jobParameters += ' --input%sFile %s' % (itype, tmp_in_file)
+            if jspec.transformation.endswith(
+                    "_tf.py") or jspec.transformation.endswith("_tf"):
+                jspec.jobParameters += ' --input%sFile %s' % (
+                    itype, tmp_in_file)
             else:
                 jspec.jobParameters += ' input%sFile=%s' % (itype, tmp_in_file)
 
@@ -241,12 +276,12 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         lfspec = FileSpec()
         lfspec.lfn = '%s.job.log.tgz' % jspec.jobName
         lfspec.destinationDBlock = jspec.destinationDBlock
-        lfspec.destinationSE  = jspec.destinationSE
+        lfspec.destinationSE = jspec.destinationSE
         lfspec.dataset = jspec.destinationDBlock
         lfspec.type = 'log'
         jspec.addFile(lfspec)
-        
+
         return jspec
 
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+
 allHandlers.add('ProdTrans', 'Panda', ProdTransPandaRTHandler)
