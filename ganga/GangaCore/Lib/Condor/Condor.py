@@ -371,7 +371,7 @@ class Condor(IBackend):
         exeString = jobconfig.getExeString().strip()
         quotedArgList = []
         for arg in jobconfig.getArgStrings():
-            quotedArgList.append("\\'%s\\'" % arg)
+            quotedArgList.append("%s" % arg)
         exeCmd = [exeString] + quotedArgList
 
         for filePath in inbox:
