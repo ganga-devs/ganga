@@ -247,8 +247,6 @@ class Localhost(IBackend):
 
         script = script.replace('###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
 
-        script = re.sub(r'###[\w_]+###',repr(None),script) 
-        
         wrkspace = job.getInputWorkspace()
         scriptPath = wrkspace.writefile(FileBuffer('__jobscript__', script), executable=1)
 
