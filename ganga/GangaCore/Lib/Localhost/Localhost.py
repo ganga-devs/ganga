@@ -82,7 +82,7 @@ class Localhost(IBackend):
 
     def run(self, scriptpath):
         try:
-            process = subprocess.Popen(["python2", scriptpath, 'subprocess'])
+            process = subprocess.Popen(["python2", scriptpath, 'subprocess'], stdin=subprocess.DEVNULL)
         except OSError as x:
             logger.error('cannot start a job process: %s', str(x))
             return 0
@@ -242,11 +242,6 @@ class Localhost(IBackend):
 
         if virtualization:
             script = virtualization.modify_script(script)
-        else:
-            script = script.replace('###VIRTUALIZATION###', repr(None))
-            script = script.replace('###VIRTUALIZATIONIMAGE###', repr(None))
-            script = script.replace('###VIRTUALIZATIONMODE###', repr(None))
-            script = script.replace('###UDOCKERLOCATION###', repr(None))
 
         self.workdir = workdir
 

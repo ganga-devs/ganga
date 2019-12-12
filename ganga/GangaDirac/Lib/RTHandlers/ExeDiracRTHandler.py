@@ -1,5 +1,8 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
+import inspect
+import GangaCore.Utility.Virtualization
+from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
@@ -64,22 +67,25 @@ class ExeDiracRTHandler(IRuntimeHandler):
         #exe_script_path = os.path.join(job.getInputWorkspace().getPath(), "exe-script.py")
         exe_script_name = 'exe-script.py'
 
-        logger.info("Setting Command to be: '%s'" % repr(commandline))
+        logger.debug("Setting Command to be: '%s'" % repr(commandline))
 
-        inputsandbox.append(FileBuffer(name=exe_script_name,
-                            contents=script_generator(exe_script_template(),
-                                                    #remove_unreplaced = False,
-                                                    # ,
-                                                    COMMAND=repr(commandline),
-                                                    OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
-                                                    ),
-                                       executable=True))
+        contents = exe_script_template()
 
-        contents=script_generator(exe_script_template(), COMMAND=repr(commandline),
-                                    OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
-                                    )
+        virtualization = job.virtualization
+        if virtualization:
+            contents = virtualization.modify_script(exe_script_template(), sandbox=True)
 
-        #logger.info("Script is: %s" % str(contents))
+            virtualizationutils = File(inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
+            inputsandbox.append(virtualizationutils)
+
+        contents = script_generator(contents,
+                                    COMMAND=repr(commandline),
+                                    PYTHONDIR=repr(PYTHON_DIR),
+                                    OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, ''))
+            
+        inputsandbox.append(FileBuffer(name=exe_script_name, contents=contents, executable=True))
+
+        logger.debug("Script is: %s" % str(contents))
 
         from os.path import abspath, expanduser
 
@@ -133,46 +139,49 @@ class ExeDiracRTHandler(IRuntimeHandler):
 
 
 def exe_script_template():
-    script_template = """#!/usr/bin/env python
+    script_template = """#!/usr/bin/env python2
 '''Script to run Executable application'''
-from __future__ import print_function
-from os import system, environ, pathsep, getcwd, listdir, path
-import sys
+import sys, os
 import subprocess
+from os import system, environ, pathsep, getcwd, listdir, path
 
-# Main
-if __name__ == '__main__':
+runenv = environ.copy()
+runenv['PATH'] = getcwd() + (pathsep + runenv['PATH'])
 
-    my_env = environ.copy()
-    my_env['PATH'] = getcwd() + (pathsep + my_env['PATH'])
+PYTHON_DIR = ###PYTHONDIR###
+workdir = getcwd()
 
-    exe_cmd = ###COMMAND###
+sys.path.insert(0,path.join(workdir, PYTHON_DIR))
 
-    if isinstance(exe_cmd, str):
-        exe_cmd = [exe_cmd]
+execmd = ###COMMAND###
 
-    if isinstance(exe_cmd, list):
-        if path.isfile(path.abspath(exe_cmd[0])):
-            exe_cmd[0] = path.abspath(exe_cmd[0])
+if isinstance(execmd, str):
+    execmd = [execmd]
 
-    err = None
-    try:
-        rc = subprocess.call(exe_cmd, env=my_env, shell=False)
-    except Exception as x:
-        rc = -9999
-        print('Exception occured in running process: ' + repr(exe_cmd))
-        print('Err was: ' + str(x))
-        subprocess.call('echo $PATH', shell=True)
-        print('PATH: ' + str(my_env['PATH']))
-        print('PWD: ' + str(my_env['PWD']))
-        print("files on WN: " + str(listdir('.')))
-        raise
+if isinstance(execmd, list):
+    if path.isfile(path.abspath(execmd[0])):
+        execmd[0] = path.abspath(execmd[0])
 
+###VIRTUALIZATION###
+
+err = None
+try:
+    rc = subprocess.call(execmd, env=runenv, shell=False)
+except Exception as x:
+    rc = -9999
+    print('Exception occured in running process: ' + repr(execmd))
+    print('Err was: ' + str(x))
+    subprocess.call('echo $PATH', shell=True)
+    print('PATH: ' + str(runenv['PATH']))
+    print('PWD: ' + str(runenv['PWD']))
     print("files on WN: " + str(listdir('.')))
+    raise
 
-    ###OUTPUTFILESINJECTEDCODE###
+print("files on WN: " + str(listdir('.')))
 
-    sys.exit(rc)
+###OUTPUTFILESINJECTEDCODE###
+
+sys.exit(rc)
 """
     return script_template
 

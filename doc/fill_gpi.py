@@ -10,7 +10,7 @@ from __future__ import print_function, absolute_import
 import sys
 import os
 import inspect
-from itertools import izip_longest
+from itertools import zip_longest
 import shutil
 
 doc_dir = os.path.dirname(os.path.realpath(__file__))
@@ -77,7 +77,7 @@ def signature(func, name=None):
     # we get args=['a', 'b', 'c', 'd'] and defaults=['None', '4']
     # We must match them backwards from the end and pad the beginning with None
     # to get arg_pairs=[('a', None), ('b', None), ('c', 'None'), ('d', '4')]
-    arg_pairs = reversed([(a, d) for a, d in izip_longest(reversed(args), reversed(defaults), fillvalue=None)])
+    arg_pairs = reversed([(a, d) for a, d in zip_longest(reversed(args), reversed(defaults), fillvalue=None)])
     # Based on arg_pairs we convert it into
     # arg_strings=['a', 'b', 'a=None', 'd=4']
     arg_strings = []

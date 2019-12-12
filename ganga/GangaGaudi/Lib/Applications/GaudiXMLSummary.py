@@ -79,23 +79,12 @@ class GaudiXMLSummary(GangaObject):
 
         p = self._xmlPath()
         v = self.env_var
-        if v not in xml_schema:
-            if 'schema' in sys.modules:
-                del sys.modules['schema']
-            xml_schema[v] = importlib.machinery.SourceFileLoader('schema', p + '/schema.py').load_module()
-            if 'summary' in sys.modules:
-                del sys.modules['summary']
-            xml_summary[v] = importlib.machinery.SourceFileLoader('summary', p + '/summary.py').load_module()
-            xml_summary[v].__schema__ = xml_schema[v]
 
-        sum = xml_summary[v].Summary(self._xmlSchema())
+        from GangaGaudi.Lib.XMLSummary.summary import Summary
+        sum = Summary(self._xmlSchema())
         sum.parse(self.file)
         self.data = sum
 
-        if 'schema' in sys.modules:
-            del sys.modules['schema']
-        if 'summary' in sys.modules:
-            del sys.modules['summary']
         return
 
     def create(self, job, file='summary.xml'):
@@ -156,7 +145,7 @@ class GaudiXMLSummaryMerger(IMerger):
         script.close()
 
         # run it
-        proc = subprocess.Popen(['python', script_name])
+        proc = subprocess.Popen(['python', script_name], stdin=subprocess.DEVNULL)
         proc.wait()
         rc = proc.poll()
         if rc != 0:

@@ -12,7 +12,6 @@ import os
 import glob
 import stat
 import shutil
-from GangaCore.Utility.logging import getLogger
 
 _stored_expanded_paths = {}
 _stored_full_paths = {}
@@ -27,7 +26,6 @@ def expandfilename(filename, force=False):
     if os.path.exists(expanded_path) or force:
         return expanded_path
 
-    getLogger().debug("Filename: %s doesn't exist using it anyway" % filename)
     return filename
 
 
@@ -41,7 +39,6 @@ def fullpath(path, force=False):
     if os.path.exists(full_path) or force:
         return full_path
 
-    getLogger().debug("path: %s doesn't exist using it anyway" % path)
     return path
 
 

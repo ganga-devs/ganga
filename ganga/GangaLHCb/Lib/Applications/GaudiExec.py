@@ -244,14 +244,20 @@ class GaudiExec(IPrepareApp):
             all_opts_files = self.getOptsFiles()
             for opts_file in all_opts_files:
                 if isinstance(opts_file, LocalFile):
+                    if opts_file.namePattern == 'data.py':
+                        raise ApplicationConfigurationError("Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
                     self.copyIntoPrepDir(path.join( opts_file.localDir, path.basename(opts_file.namePattern) ))
                 elif isinstance(opts_file, DiracFile):
+                    if opts_file.namePattern == 'data.py':
+                        raise ApplicationConfigurationError("Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
                     # NB safe to put it here as should have expressly setup a path for this job by now.
                     # We cannot _not_ place this here based upon the backend.
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
                     opts_file.localDir=self.getSharedPath()
                     opts_file.get()
                 elif isinstance(opts_file, str):
+                    if 'data.py' in opts_file:
+                        raise ApplicationConfigurationError("Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
                     new_file = LocalFile(opts_file)
                     self.copyIntoPrepDir(path.join( new_file.localDir, path.basename(new_file.namePattern) ))
                     opts_file = new_file
@@ -400,18 +406,25 @@ class GaudiExec(IPrepareApp):
         else:
             raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
 
-    def getEnvScript(self):
+    def getEnvScript(self, isLbEnv):
         """
         Return the script which wraps the running command in a correct environment
         """
-        return 'export CMTCONFIG=%s; source LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+        if isLbEnv:
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
+        else:
+            return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
 
-    def getWNEnvScript(self):
+    def getWNEnvScript(self, isLbEnv):
         """
         Return the script to setup the correct env on a WN
         """
-        return 'export CMTCONFIG=%s; source $LHCb_release_area/LBSCRIPTS/prod/InstallArea/scripts/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+        if isLbEnv:
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
+        else:
+            return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+
 
     def execCmd(self, cmd):
         """
@@ -431,13 +444,17 @@ class GaudiExec(IPrepareApp):
         if not path.isdir(self.directory):
             raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
+        #Check if this was checked out with LbEnv or not
+        isLbEnv = False
+        with open(self.directory+'/Makefile', "r") as makefile:
+            if 'LbEnv' in makefile.read():
+                isLbEnv = True
+
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False, mode = "w")
-        if not cmd.startswith('./run '):
-            cmd = './run ' + cmd
 
         cmd_file.write("#!/bin/bash")
         cmd_file.write("\n")
-        cmd_file.write(self.getEnvScript())
+        cmd_file.write(self.getEnvScript(isLbEnv))
         cmd_file.write(cmd)
         cmd_file.flush()
         cmd_file.close()
@@ -450,7 +467,9 @@ class GaudiExec(IPrepareApp):
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
         if not path.isfile(path.join(self.directory, 'build.%s' %self.platform, 'run')):
-            initialCommand = 'export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
+            initialCommand = 'export CMTCONFIG=%s && source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
+            if isLbEnv:
+                initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && make' % (self.platform)
             rc, stdout, stderr = _exec_cmd(initialCommand, self.directory)
             if rc != 0:
                 logger.error("Failed to perform initial make on a Cmake based project")
@@ -461,11 +480,11 @@ class GaudiExec(IPrepareApp):
                 rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
         else:
             rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
-
         if rc != 0:
             logger.error("Failed to execute command: %s" % cmd_file.name)
             logger.error("Tried to execute command in: %s" % self.directory)
-            logger.error("StdErr: %s" % str(stdout))
+            logger.error("StdErr: %s" % str(stderr.decode()))
+            logger.error("StdOut: %s" % str(stdout.decode()))
             raise GangaException("Failed to Execute command")
 
         unlink(cmd_file.name)

@@ -4,71 +4,12 @@
 # $Id: Condor.py,v 1.8 2009/04/02 17:52:24 karl Exp $
 ###############################################################################
 # File: Condor.py
-# Author: K. Harrison
-# Created: 051228
-#
-# KH - 060321: Additions from Johannes Elmsheuser, to allow use with Condor-G
-#
-# KH - 060728: Changes for framework migration
-#
-# KH - 061012: Updates in submit and preparejob methods, for core changes
-#
-# KH - 061027: Corrections for case of no shared filesystem
-#
-# KH - 080213: Changes made to use global Condor id for tracking job status
-#
-# KH - 080215: Correction for passing quoted strings as a command-line argument
-#              to an executable
-#
-# KH - 080410: Corrections made to kill() method of Condor class
-#
-# KH - 080410: Implemented resubmit() method of Condor class
-#
-# KH - 080729: Updates for changes to JobConfig class in Ganga 5
-#              Error message printed in case submit command fails
-#
-# KH - 081008 : Added typelist information for schema property "submit_options"
-#
-# KH - 081102 : Remove spurious print statement
-#
-# KH - 090128 : Added getenv property to Condor class, to allow environment of
-#               submit machine to be passed to worker node
-#
-#               Added creation of bash job wrapper, to allow environment
-#               setup by defining BASH_ENV to point to setup script
-#
-#               Set status to failed for job with non-zero exit code
-#
-# KH - 090307 : Modified kill() method to assume success even in case of
-#               non-zero return code from condor_rm
-#
-# KH - 090308 : Modified updateMonitoringInformation() method
-#               to deal with case where all queues are empty
-#
-# KH - 090402 : Corrected bug that meant application arguments were ignored
-#
-#               In script to be run on worker node, print warning if unable
-#               to find startup script pointed to by BASH_ENV
-#
-# KH - 090809 : Changed logic for updating job status to final value -
-#               Condor log file is now searched to check whether job
-#               is marked as "aborted" or "terminated"
 
 """Module containing class for handling job submission to Condor backend"""
 
 __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "09 August 2009"
 __version__ = "2.5"
-
-from GangaCore.Core import Sandbox
-from GangaCore.GPIDev.Adapters.IBackend import IBackend
-from GangaCore.GPIDev.Base.Proxy import stripProxy
-from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
-from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
-from GangaCore.Utility.ColourText import Foreground, Effects
-from GangaCore.Core.exceptions import BackendError
-import GangaCore.Utility.logging
-from GangaCore.Utility.Config import getConfig
 
 import subprocess
 import inspect
@@ -77,6 +18,21 @@ import shutil
 import time
 import datetime
 import re
+
+import GangaCore.Utility.logging
+import GangaCore.Utility.Virtualization
+
+from GangaCore.Core import Sandbox
+from GangaCore.GPIDev.Adapters.IBackend import IBackend
+from GangaCore.GPIDev.Base.Proxy import stripProxy
+from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
+from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from GangaCore.Utility.ColourText import Foreground, Effects
+from GangaCore.Core.exceptions import BackendError
+from GangaCore.Utility.Config import getConfig
+from GangaCore.GPIDev.Lib.File import File
+from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
+
 logger = GangaCore.Utility.logging.getLogger()
 
 
@@ -399,7 +355,14 @@ class Condor(IBackend):
     def prepareSubjob(self, job, jobconfig, master_input_sandbox):
         """Prepare a Condor description string for a subjob"""
 
-        inbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles())
+        virtualization = job.virtualization
+
+        utilFiles= []
+        if virtualization:
+            virtualizationutils = File( inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
+            utilFiles.append(virtualizationutils)
+
+        inbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + utilFiles)
         inpDir = job.getInputWorkspace().getPath()
         outDir = job.getOutputWorkspace().getPath()
 
@@ -408,8 +371,8 @@ class Condor(IBackend):
         exeString = jobconfig.getExeString().strip()
         quotedArgList = []
         for arg in jobconfig.getArgStrings():
-            quotedArgList.append("\\'%s\\'" % arg)
-        exeCmdString = " ".join([exeString] + quotedArgList)
+            quotedArgList.append("%s" % arg)
+        exeCmd = [exeString] + quotedArgList
 
         for filePath in inbox:
             if not filePath in infileList:
@@ -431,7 +394,7 @@ class Condor(IBackend):
         wrapperName = "_".join(["Ganga", str(job.id), name])
 
         commandList = [
-            "#!/usr/bin/env python",
+            "#!/usr/bin/env python2",
             "from __future__ import print_function",
             "# Condor job wrapper created by Ganga",
             "# %s" % (time.strftime("%c")),
@@ -446,6 +409,11 @@ class Condor(IBackend):
             "startTime = time.strftime"
             + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
             "",
+            "workdir = os.getcwd()",
+            "execmd = %s" % repr(exeCmd),
+            "",
+            "###VIRTUALIZATION###",
+            "",
             "for inFile in %s:" % str(fileList),
             "   if mimetypes.guess_type(inFile)[1] in ['gzip', 'bzip2']:",
             "       getPackedInputSandbox( inFile )",
@@ -454,7 +422,7 @@ class Condor(IBackend):
             "",
             "exePath = '%s'" % exeString,
             "if os.path.isfile( '%s' ):" % os.path.basename(exeString),
-            "   os.chmod( '%s', 0755 )" % os.path.basename(exeString),
+            "   os.chmod( '%s', 0755)" % os.path.basename(exeString),
             "wrapperName = '%s_bash_wrapper.sh'" % wrapperName,
             "wrapperFile = open( wrapperName, 'w' )",
             "wrapperFile.write( '#!/bin/bash\\n' )",
@@ -468,7 +436,7 @@ class Condor(IBackend):
             "wrapperFile.write( '  fi\\n' )",
             "wrapperFile.write( 'fi\\n' )",
             "wrapperFile.write( 'echo \"\"\\n' )",
-            "wrapperFile.write( '%s\\n' )" % exeCmdString,
+            "wrapperFile.write( '%s\\n' % \' \'.join(execmd) )",
             "wrapperFile.write( 'exit ${?}\\n' )",
             "wrapperFile.close()",
             "os.chmod( wrapperName, 0755 )",
@@ -483,6 +451,10 @@ class Condor(IBackend):
         ]
 
         commandString = "\n".join(commandList)
+
+        if virtualization:
+            commandString = virtualization.modify_script(commandString)
+        
         wrapper = job.getInputWorkspace().writefile\
             (FileBuffer(wrapperName, commandString), executable=1)
 
