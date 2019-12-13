@@ -99,10 +99,10 @@ class ExeDiracRTHandler(IRuntimeHandler):
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
         dirac_script = script_generator(diracAPI_script_template(),
-                                        DIRAC_IMPORT='from DIRAC.Interfaces.API.Dirac import Dirac',
-                                        DIRAC_JOB_IMPORT='from DIRAC.Interfaces.API.Job import Job',
-                                        DIRAC_OBJECT='Dirac()',
-                                        JOB_OBJECT='Job()',
+                                        DIRAC_IMPORT='from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
+                                        DIRAC_JOB_IMPORT='from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
+                                        DIRAC_OBJECT='DiracLHCb()',
+                                        JOB_OBJECT='LHCbJob()',
                                         NAME=mangle_job_name(app),
                                         # os.path.basename(exe_script_path),
                                         EXE=exe_script_name,
