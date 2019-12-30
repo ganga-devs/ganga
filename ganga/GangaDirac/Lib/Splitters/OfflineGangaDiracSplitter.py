@@ -239,6 +239,7 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
     Returns:
         site_dict (dict): Dict of {'LFN':set([sites]), ...}
     """
+
     SE_dict = dict()
     maps_size = 0
     found = []

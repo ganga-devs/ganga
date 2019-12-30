@@ -165,6 +165,7 @@ RecoToDST-07/90000000/DST" ,
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate,
                                                                self.endDate, self.selection)
         result = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
+
         logger.debug("Finished Running Command")
 
         files = []
