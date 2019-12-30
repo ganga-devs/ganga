@@ -426,30 +426,8 @@ class LHCbDataset(GangaDataset):
         'Returns the bookkeeping metadata for all LFNs. '
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
-        b = get_result(cmd, 'Error removing replica. Replica rm error.')
+        b = get_result(cmd, 'Error getting metadata.')
         return b
-
-    # def pop(self,file):
-    #    if type(file) is str: file = strToDataFile(file,False)
-    #    try: job = self.getJobObject()
-    #    except: job = None
-    #    if job:
-    #        if job.status != 'new' and job.status != 'failed':
-    #            msg = 'Cannot pop file b/c the job status is "%s". '\
-    #                  'Job must be either "new" or "failed".' % job.status
-    #            raise GangaException(msg)
-    #        master = job.master
-    #        if job.subjobs:
-    #            self.removeFile(file)
-    #            for sj in job.subjobs:
-    #                try: sj.inputdata.removeFile(file)
-    #                except: pass
-    #        elif master:
-    #            master.inputdata.removeFile(file)
-    #            self.removeFile(file)
-    #        else: self.removeFile(file)
-    #    else:
-    #        self.removeFile(file)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

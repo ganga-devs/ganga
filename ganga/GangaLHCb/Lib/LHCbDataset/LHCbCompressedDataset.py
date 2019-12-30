@@ -10,6 +10,7 @@ from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.Utility.Config import getConfig, ConfigError
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 import GangaCore.Utility.logging
+from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from .LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
@@ -40,6 +41,7 @@ class LHCbCompressedDataset(GangaDataset):
     docstr = 'List of PhysicalFile and DiracFile objects'
     schema['lfn_prefix'] = SimpleItem(defvalue = '', typelist=['str'])
     schema['files'] = GangaFileItem(defvalue=[], typelist=['str'], sequence=1, doc=docstr)
+    schema['XMLCatalogueSlice'] = GangaFileItem(defvalue=None, doc='Use contents of file rather than generating catalog.')
     schema['credential_requirements'] = ComponentItem('CredentialRequirement', defvalue=None)
     schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
 
@@ -53,48 +55,14 @@ class LHCbCompressedDataset(GangaDataset):
                       'symmetricDifference', 'union', 'bkMetadata',
                       'isEmpty', 'hasPFNs', 'getPFNs']  # ,'pop']
 
-    def __init__(self, files=None, persistency=None, depth=0, fromRef=False):
+    def __init__(self, lfn_prefix = None, files=None, persistency=None, depth=0, fromRef=False):
         super(LHCbCompressedDataset, self).__init__()
         if files is None:
             files = []
-        self.files = GangaList()
-        process_files = True
-        if fromRef:
-            self.files._list.extend(files)
-            process_files = False
-        elif isinstance(files, GangaList):
-            def isFileTest(_file):
-                return isinstance(_file, IGangaFile)
-            areFiles = all([isFileTest(f) for f in files._list])
-            if areFiles:
-                self.files._list.extend(files._list)
-                process_files = False
-        elif isinstance(files, LHCbCompressedDataset):
-            self.files._list.extend(files.files._list)
-            process_files = False
-
-        if process_files:
-            if isType(files, LHCbCompressedDataset):
-                for this_file in files:
-                    self.files.append(deepcopy(this_file))
-            elif isType(files, IGangaFile):
-                self.files.append(deepcopy(files))
-            elif isType(files, (list, tuple, GangaList)):
-                new_list = []
-                for this_file in files:
-                    if type(this_file) is str:
-                        new_file = string_datafile_shortcut_lhcb(this_file, None)
-                    elif isType(this_file, IGangaFile):
-                        new_file = stripProxy(this_file)
-                    else:
-                        new_file = strToDataFile(this_file)
-                    new_list.append(new_file)
-                self.files.extend(new_list)
-            elif type(files) is str:
-                self.files.append(string_datafile_shortcut_lhcb(files, None), False)
-            else:
-                raise GangaException("Unknown object passed to LHCbCompressedDataset constructor!")
-
+        else:
+            self.files = files
+        self.lfn_prefix = lfn_prefix
+ 
         self.files._setParent(self)
 
         logger.debug("Processed inputs, assigning files")
@@ -110,9 +78,11 @@ class LHCbCompressedDataset(GangaDataset):
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
-        print('lfn_prefix: ', self.lfn_prefix)
-        df = DiracFile(lfn= self.lfn_prefix + self.files[i], credential_requirements = self.credential_requirements)
-        return df
+        if type(i) == type(slice(0)):
+            ds = LHCbCompressedDataset(lfn_prefix = self.lfn_prefix, files = self.files[i])
+        else:
+            ds = DiracFile(lfn = self.lfn_prefix + self.files[i], credential_requirements = self.credential_requirements)
+        return ds
 
     def getReplicas(self):
         'Returns the replicas for all files in the dataset.'
@@ -406,7 +376,7 @@ class LHCbCompressedDataset(GangaDataset):
         'Returns the bookkeeping metadata for all LFNs. '
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
-        b = get_result(cmd, 'Error removing replica. Replica rm error.')
+        b = get_result(cmd, 'Error removing getting metadata.')
         return b
 
 
