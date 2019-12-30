@@ -142,7 +142,7 @@ RecoToDST-07/90000000/DST" ,
         return {'OK': False, 'Value': metadata}
 
     @require_credential
-    def getDataset(self):
+    def getDataset(self, compressed = False):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
             return None
@@ -165,7 +165,6 @@ RecoToDST-07/90000000/DST" ,
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate,
                                                                self.endDate, self.selection)
         result = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
-
         logger.debug("Finished Running Command")
 
         files = []
@@ -176,30 +175,31 @@ RecoToDST-07/90000000/DST" ,
             # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
             files = list(files.keys())
 
-        logger.debug("Creating DiracFile objects")
+        logger.debug("Creating dataset")
 
-        ## Doesn't work not clear why
-        from GangaDirac.Lib.Files.DiracFile import DiracFile
-        #new_files = []
-        #def _createDiracLFN(this_file):
-        #    return DiracFile(lfn = this_file)
-        #GangaObject.__createNewList(new_files, files, _createDiracLFN)
+        if compressed:
+            import os
+            from GangaLHCb.Lib.LHCbDataset import LHCbCompressedDataset
+            commonpath = os.path.commonpath(files)
+            logger.debug("commonpath: %s" % commonpath)
+            suffixes = [_lfn.replace(commonpath, '') for _lfn in files]
+            ds = LHCbCompressedDataset()
+            ds.lfn_prefix = commonpath
+            ds.files = suffixes
 
-        logger.debug("Creating new list")
-        new_files = [DiracFile(lfn=f) for f in files]
+        else:
+            from GangaDirac.Lib.Files.DiracFile import DiracFile
 
-        #new_files = [DiracFile(lfn=_file) for _file in files]
-        #for f in files:
-        #    new_files.append(DiracFile(lfn=f))
-            #ds.extend([DiracFile(lfn = f)])
+            logger.debug("Creating new list")
+            new_files = [DiracFile(lfn=f) for f in files]
 
-        logger.info("Constructing LHCbDataset")
+            logger.info("Constructing LHCbDataset")
 
-        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-        logger.debug("Imported LHCbDataset")
-        ds = LHCbDataset(files=new_files, fromRef=True)
+            from GangaLHCb.Lib.LHCbDataset import LHCbDataset
+            logger.debug("Imported LHCbDataset")
+            ds = LHCbDataset(files=new_files, fromRef=True)
 
-        logger.debug("Returning Dataset")
+            logger.debug("Returning Dataset")
 
         return addProxy(ds)
 
