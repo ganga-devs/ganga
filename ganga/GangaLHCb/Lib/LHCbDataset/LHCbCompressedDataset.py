@@ -42,6 +42,7 @@ class LHCbCompressedDataset(GangaDataset):
     schema['lfn_prefix'] = SimpleItem(defvalue = '', typelist=['str'])
     schema['files'] = GangaFileItem(defvalue=[], typelist=['str'], sequence=1, doc=docstr)
     schema['XMLCatalogueSlice'] = GangaFileItem(defvalue=None, doc='Use contents of file rather than generating catalog.')
+    schema['persistency'] = SimpleItem(defvalue=None, typelist=['str', 'type(None)'], doc='Specify the dataset persistency technology')
     schema['credential_requirements'] = ComponentItem('CredentialRequirement', defvalue=None)
     schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
 
