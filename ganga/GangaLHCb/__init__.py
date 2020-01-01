@@ -54,6 +54,7 @@ if not _after_bootstrap:
                           splitInputDataBySize and splitInputData')
     defaultLHCbDirac = 'prod'
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
+    configLHCb.addOption('defaultPlatform', 'x86_64-centos7-gcc8-opt', 'The default platform for applications to use')
 
 
 def _store_root_version():

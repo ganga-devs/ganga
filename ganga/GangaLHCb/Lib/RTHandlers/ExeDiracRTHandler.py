@@ -17,9 +17,10 @@ from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.util import unique
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, dirac_outputfile_jdl
 logger = getLogger()
 config = getConfig('DIRAC')
-
+configLHCb = getConfig('LHCb')
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
@@ -52,6 +53,11 @@ class ExeDiracRTHandler(IRuntimeHandler):
         platform = 'ANY'
         if hasattr(app, 'platform'):
             platform = app.platform
+
+        #We have to specify a platform for the WN
+        if platform == 'ANY':
+            platform = configLHCb['defaultPlatform'] 
+            logger.warning('No application platform specified. Using default platform %s' % platform)
 
         commandline = []
         commandline.append(app.exe)
@@ -96,7 +102,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
                     inputsandbox.append(File(abspath(expanduser(name))))
 
         lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
-
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
         dirac_script = script_generator(lhcbdiracAPI_script_template(),
@@ -151,6 +156,8 @@ if 'PATH' in runenv.keys():
     runenv['PATH'] = getcwd() + (pathsep + runenv['PATH'])
 else:
     runenv['PATH'] = getcwd()
+if not 'PWD' in runenv.keys():
+    runenv['PWD'] = getcwd()
 
 PYTHON_DIR = ###PYTHONDIR###
 workdir = getcwd()
