@@ -185,8 +185,8 @@ RecoToDST-07/90000000/DST" ,
             logger.debug("commonpath: %s" % commonpath)
             suffixes = [_lfn.replace(commonpath, '') for _lfn in files]
             ds = LHCbCompressedDataset()
-            ds.lfn_prefix = commonpath
-            ds.files = suffixes
+            ds.lfn_prefix.append(commonpath)
+            ds.files.append(suffixes)
 
         else:
             from GangaDirac.Lib.Files.DiracFile import DiracFile

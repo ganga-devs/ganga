@@ -39,8 +39,8 @@ class LHCbCompressedDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['lfn_prefix'] = SimpleItem(defvalue = '', typelist=['str'])
-    schema['files'] = GangaFileItem(defvalue=[], typelist=['str'], sequence=1, doc=docstr)
+    schema['lfn_prefix'] = SimpleItem(defvalue = [], typelist=[list], doc='A list of the lfn prefixes')
+    schema['files'] = SimpleItem(defvalue=[], typelist=[list], sequence=1, doc='A list of lists of the file suffixes')
     schema['XMLCatalogueSlice'] = GangaFileItem(defvalue=None, doc='Use contents of file rather than generating catalog.')
     schema['persistency'] = SimpleItem(defvalue=None, typelist=['str', 'type(None)'], doc='Specify the dataset persistency technology')
     schema['credential_requirements'] = ComponentItem('CredentialRequirement', defvalue=None)
@@ -58,31 +58,68 @@ class LHCbCompressedDataset(GangaDataset):
 
     def __init__(self, lfn_prefix = None, files=None, persistency=None, depth=0, fromRef=False):
         super(LHCbCompressedDataset, self).__init__()
-        if files is None:
-            files = []
-        else:
-            self.files = files
-        self.lfn_prefix = lfn_prefix
+        self.files = []
+        self.lfn_prefix = []
+        if files:
+            self.files.append(files)
+        if lfn_prefix:
+            self.lfn_prefix.append(lfn_prefix)
  
         self.files._setParent(self)
-
-        logger.debug("Processed inputs, assigning files")
-
-        # Feel free to turn this on again for debugging but it's potentially quite expensive
-        #logger.debug( "Creating dataset with:\n%s" % self.files )
-        
-        logger.debug("Assigned files")
-
         self.persistency = persistency
-        self.depth = depth
         logger.debug("Dataset Created")
+
+    def _location(self, i):
+        '''Figure out where a file of index i is. Returns the subset no and the location within that subset'''
+        setNo = 0
+        fileTotal = 0
+        while fileTotal < i+1 and setNo < len(self.files):
+            fileTotal += len(self.files[setNo])
+            setNo += 1
+        if fileTotal < i:
+            return -1, -1
+        setNo = setNo - 1
+        fileTotal = fileTotal - len(self.files[setNo])
+        setLocation = i - fileTotal
+        return setNo, setLocation
+
+    def _totalNFiles(self):
+        '''Return the total no. of files in the dataset'''
+        total = 0
+        for _set in self.files:
+            total += len(_set)
+        return total
+
+    def __len__(self):
+        '''Redefine the __len__ function'''
+        return self._totalNFiles()
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
         if type(i) == type(slice(0)):
-            ds = LHCbCompressedDataset(lfn_prefix = self.lfn_prefix, files = self.files[i])
+            #We construct a list of all LFNs first. Not the most efficient but it allows us to use the standard slice machinery
+            newLFNs = self.getLFNs()[i]
+            #Now pull out the prefixes/suffixes
+            new_prefixes = []
+            new_suffixes = []
+            for _lfn in newLFNs:
+                for _prefix in self.lfn_prefix:
+                    if _prefix in _lfn:
+                        if _prefix not in new_prefixes:
+                            new_prefixes.append(_prefix)
+                            new_suffixes.append([])
+                        new_suffixes[-1].append(_lfn.replace(_prefix, ''))
+            ds = LHCbCompressedDataset()
+            ds.lfn_prefix = new_prefixes
+            ds.files = new_suffixes
+            ds.credential_requirements = self.credential_requirements
         else:
-            ds = DiracFile(lfn = self.lfn_prefix + self.files[i], credential_requirements = self.credential_requirements)
+            #Figure out where the file lies
+            setNo, setLocation = self._location(i)
+            if setNo < 0 or i >= self._totalNFiles():
+                logger.error("Unable to retrieve file %s. It is larger than the dataset size" % i)
+                return
+            ds = DiracFile(lfn = self.lfn_prefix[setNo] + self.files[setNo][setLocation], credential_requirements = self.credential_requirements)
         return ds
 
     def getReplicas(self):
@@ -106,41 +143,17 @@ class LHCbCompressedDataset(GangaDataset):
                 return True
         return False
 
-    def replicate(self, destSE=''):
-        '''Replicate all LFNs to destSE.  For a list of valid SE\'s, type
-        ds.replicate().'''
-
-        if not destSE:
-            from GangaDirac.Lib.Files.DiracFile import DiracFile
-            DiracFile().replicate('')
-            return
-        if not self.hasLFNs():
-            raise GangaException('Cannot replicate dataset w/ no LFNs.')
-
-        retry_files = []
-
-        for f in self.files:
-            if not isDiracFile(f):
-                continue
-            try:
-                result = f.replicate( destSE=destSE )
-            except Exception as err:
-                msg = 'Replication error for file %s (will retry in a bit).' % f.lfn
-                logger.warning(msg)
-                logger.warning("Error: %s" % str(err))
-                retry_files.append(f)
-
-        for f in retry_files:
-            try:
-                result = f.replicate( destSE=destSE )
-            except Exception as err:
-                msg = '2nd replication attempt failed for file %s. (will not retry)' % f.lfn
-                logger.warning(msg)
-                logger.warning(str(err))
-
-    def extend(self, files, unique=False):
+    def extend(self, other, unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
+
+        for _q in range(0, len(other.lfn_prefix)):
+            self.lfn_prefix.append(other.lfn_prefix[_q])
+            self.files.append(other.files[_q])
+
+        """
+
+
         from GangaCore.GPIDev.Base import ReadOnlyObjectError
 
         if self._parent is not None and self._parent._readonly():
@@ -186,20 +199,17 @@ class LHCbCompressedDataset(GangaDataset):
                 continue
             self.files.append(stripProxy(_file))
 
-    def removeFile(self, input_file):
-        try:
-            self.files.remove(input_file)
-        except:
-            raise GangaException('Dataset has no file named %s' % input_file.namePattern)
+        """
 
     def getLFNs(self):
         'Returns a list of all LFNs (by name) stored in the dataset.'
         lfns = []
         if not self:
             return lfns
-        lfns = [self.lfn_prefix + _suffix for _suffix in self.files]
-
-        #logger.debug( "Returning LFNS:\n%s" % str(lfns) )
+        i = 0
+        while i < len(self.lfn_prefix):
+            lfns.extend([self.lfn_prefix[i] + _suffix for _suffix in self.files[i]])
+            i += 1
         logger.debug("Returning #%s LFNS" % str(len(lfns)))
         return lfns
 
@@ -319,9 +329,11 @@ class LHCbCompressedDataset(GangaDataset):
 
     def _checkOtherFiles(self, other ):
         if isType(other, GangaList) or isType(other, []):
-            other_files = LHCbCompressedDataset(other).getFullFileNames()
+            other_files = other
         elif isType(other, LHCbCompressedDataset):
-            other_files = other.getFullFileNames()
+            other_files = other.getLFNs()
+        elif isType(other, LHCbDataset):
+            other_files = other.getLFNs()
         else:
             raise GangaException("Unknown type for difference")
         return other_files
@@ -329,48 +341,44 @@ class LHCbCompressedDataset(GangaDataset):
     def difference(self, other):
         '''Returns a new data set w/ files in this that are not in other.'''
         other_files = self._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).difference(other_files)
+        files = set(self.getLFNs()).difference(other_files)
         data = LHCbCompressedDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        data.files.append(list(files))
         return data
 
     def isSubset(self, other):
         '''Is every file in this data set in other?'''
         other_files = self._checkOtherFiles(other)
-        return set(self.getFileNames()).issubset(other_files)
+        return set(self.getLFNs()).issubset(other_files)
 
     def isSuperset(self, other):
         '''Is every file in other in this data set?'''
         other_files = self._checkOtherFiles(other)
-        return set(self.getFileNames()).issuperset(other_files)
+        return set(self.getLFNs()).issuperset(other_files)
 
     def symmetricDifference(self, other):
         '''Returns a new data set w/ files in either this or other but not
         both.'''
         other_files = other._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).symmetric_difference(other_files)
+        files = set(self.getLFNs()).symmetric_difference(other_files)
         data = LHCbCompressedDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        data.files.append(list(files))
         return data
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
         other_files = other._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).intersection(other_files)
+        files = set(self.getLFNs()).intersection(other_files)
         data = LHCbCompressedDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        data.files.append(list(files))
         return data
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
         other_files = self._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).union(other_files)
+        files = set(self.getLFNs()).union(other_files)
         data = LHCbCompressedDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        data.files.append(list(files))
         return data
 
     def bkMetadata(self):
