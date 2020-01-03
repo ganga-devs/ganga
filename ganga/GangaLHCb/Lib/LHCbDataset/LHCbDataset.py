@@ -59,6 +59,7 @@ class LHCbDataset(GangaDataset):
 
     def __init__(self, files=None, persistency=None, depth=0, fromRef=False):
         super(LHCbDataset, self).__init__()
+        print('type: ', type(files))
         if files is None:
             files = []
         self.files = GangaList()

@@ -51,20 +51,74 @@ class LHCbCompressedDataset(GangaDataset):
     _name = "LHCbCompressedDataset"
     _exportmethods = ['getReplicas', '__len__', '__getitem__', 'replicate',
                       'hasLFNs', 'append', 'extend', 'getCatalog', 'optionsString',
-                      'getLFNs', 'getFileNames', 'getFullFileNames',
+                      'getLFNs', 'getFullFileNames', 'getFullDataset',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata',
                       'isEmpty', 'hasPFNs', 'getPFNs']  # ,'pop']
 
-    def __init__(self, lfn_prefix = None, files=None, persistency=None, depth=0, fromRef=False):
+    def __init__(self, files=None, lfn_prefix = None, persistency=None, depth=0, fromRef=False):
         super(LHCbCompressedDataset, self).__init__()
         self.files = []
         self.lfn_prefix = []
-        if files:
-            self.files.append(files)
-        if lfn_prefix:
-            self.lfn_prefix.append(lfn_prefix)
- 
+        #If we just get a list of files without prefix
+        if not lfn_prefix:
+            #if files is an LHCbDataset
+            if files and isType(files, LHCbDataset):
+                lfns = files.getLFNs()
+                commonpath = os.path.commonpath(lfns)
+                suffixes = [_lfn.replace(commonpath, '') for _lfn in lfns]
+                self.lfn_prefix.append(commonpath)
+                self.files.append(suffixes)
+            #if files is an LHCbCompressedDataset
+            if files and isType(files, LHCbCompressedDataset):
+                self.lfn_prefix = files.lfn_prefix
+                self.files = files.files
+            #if files is just a string
+            if files and isType(files, str):
+                self.files.append([files])
+            #if files is a single DiracFile
+            if files and isType(files, DiracFile):
+                self.files.append([files.lfn])
+            #if files is a list
+            if files and isType(files, [list, GangaList]):
+                #Is it a list of strings?
+                if isType(files[0], str):
+                    commonpath = os.path.commonpath(files)
+                    suffixes = [_lfn.replace(commonpath, '') for _lfn in files]
+                    self.lfn_prefix.append(commonpath)
+                    self.files.append(suffixes)
+                #Is it a list of DiracFiles?
+                if isType(files[0], DiracFile):
+                    lfns = []
+                    for _df in files:
+                        lfns.append(df.lfn)
+                    commonpath = os.path.commonpath(lfns)
+                    suffixes = [_lfn.replace(commonpath, '') for _lfn in lfns]
+                    self.lfn_prefix.append(commonpath)
+                    self.files.append(suffixes)
+                #Is it a list of lists?
+                if isType(files[0], [list, GangaList]):
+                    for _l in files:
+                        #I only want to deal with strings here
+                        if isType(_l, str):
+                            commonpath = os.path.commonpath(_l)
+                            suffixes = [_lfn.replace(commonpath, '') for _lfn in _l]
+                            self.lfn_prefix.append(commonpath)
+                            self.files.append(suffixes)
+        #Otherwise we have been given a prefix
+        else:
+            if isType(lfn_prefix, str):
+                self.lfn_prefix.append(lfn_prefix)
+                if isType(files, [list, GangaList]):
+                    self.files.append(files)
+                elif isType(files, str):
+                    self.files.append([files])
+            elif isType(lfn_prefix, [list, GangaList]):
+                if not len(lfn_prefix) == len(files) and not isType(files[0], [list, GangaList]):
+                    raise GangaException("Length of LFN prefixes list must match length of files list") 
+                self.lfn_prefix = lfn_prefix
+                self.files = files
+
         self.files._setParent(self)
         self.persistency = persistency
         logger.debug("Dataset Created")
@@ -237,6 +291,14 @@ class LHCbCompressedDataset(GangaDataset):
                     logger.warning("Cannot determine filename for: %s " % f)
                     raise GangaException("Cannot Get File Name")
         return names
+
+    def getFullDataset(self):
+        '''Returns an LHCb dataset'''
+        ds = LHCbDataset.LHCbDataset(persistency = self.persistency)
+        lfns = self.getLFNs()
+        for _lfn in lfns:
+            ds.extend(DiracFile(lfn = _lfn))
+        return ds
 
     def getCatalog(self, site=''):
         '''Generates an XML catalog from the dataset (returns the XML string).
