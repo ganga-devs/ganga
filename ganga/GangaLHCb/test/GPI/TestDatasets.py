@@ -71,32 +71,22 @@ class TestDatasets(GangaUnitTest):
         #First with a list of lfns
         ds = LHCbCompressedDataset(['/path/to/some/file', '/path/to/some/otherfile'])
         assert len(ds) == 2
-        assert ds.lfn_prefix == ['/path/to/some']
-
-        #Now with a list of prefixes and suffixes.
-        ds = LHCbCompressedDataset([['a', 'b'], ['c', 'd']], ['/first/path/set/', '/second/path/set/'])
-        assert len(ds) == 4
-        assert ds.lfn_prefix == ['/first/path/set/', '/second/path/set/']
 
         #Check the indexing and slicing - the __getitem__ and __len__ methods
+        ds1 = LHCbCompressedDataset(['/first/path/set/a', '/first/path/set/b'])
+        ds2 = LHCbCompressedDataset(['/second/path/set/c', '/second/path/set/d'])
+        ds1.extend(ds2)
         assert isinstance(ds[0], DiracFile)
         assert ds[0].lfn == '/first/path/set/a'
         assert isinstance(ds[2], DiracFile)
         assert ds[2].lfn == '/second/path/set/c'
         assert isinstance(ds[0:2], LHCbCompressedDataset)
         assert len(ds[0:2]) == 2
-        assert len(ds[0:2].lfn_prefix == 1)
-        assert ds[0:2].lfn_prefix[0] == '/first/path/set/'
         assert len(ds[0:2].files) == 1
-        assert ds[0:2].files[0] == ['a','b']
         assert len(ds[::2]) == 2
-        assert ds[::2].lfn_prefix == ['/first/path/set/', '/second/path/set/']
-        assert ds[::2].files == [['a'], ['c']]
-        assert ds[1:3].lfn_prefix == ['/first/path/set/', '/second/path/set/']
-        assert ds[1:3].files = [['b'], ['c']]
 
         #Check the getLFNs
-        assert ds.getLFNs == ['/first/path/set/a', '/first/path/set/b', '/second/path/set/c', '/second/path/set/d']
+        assert ds1.getLFNs == ['/first/path/set/a', '/first/path/set/b', '/second/path/set/c', '/second/path/set/d']
 
         #Check extend, union, subset superset, difference
         ds1 = LHCbCompressedDataset(['/path/to/some/file/a', '/path/to/some/otherfile/b'])
