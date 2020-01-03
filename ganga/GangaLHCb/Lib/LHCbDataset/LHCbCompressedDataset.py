@@ -75,9 +75,11 @@ class LHCbCompressedDataset(GangaDataset):
                 self.files = files.files
             #if files is just a string
             if files and isType(files, str):
+                self.lfn_prefix.append('')
                 self.files.append([files])
             #if files is a single DiracFile
             if files and isType(files, DiracFile):
+                self.lfn_prefix.append('')
                 self.files.append([files.lfn])
             #if files is a list
             if files and isType(files, [list, GangaList]):
@@ -199,61 +201,30 @@ class LHCbCompressedDataset(GangaDataset):
 
     def extend(self, other, unique=False):
         '''Extend the dataset. If unique, then only add files which are not
-        already in the dataset.'''
+        already in the dataset. You may extend with another LHCbCompressedDataset,
+        LHCbDataset, DiracFile or a list of string of LFNs'''
 
-        for _q in range(0, len(other.lfn_prefix)):
-            self.lfn_prefix.append(other.lfn_prefix[_q])
-            self.files.append(other.files[_q])
-
-        """
-
-
-        from GangaCore.GPIDev.Base import ReadOnlyObjectError
-
-        if self._parent is not None and self._parent._readonly():
-            raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, getName(self)))
-
-        _external_files = []
-
-        if type(files) is str or isType(files, IGangaFile):
-            _external_files = [files]
-        elif type(files) in [list, tuple]:
-            _external_files = files
-        elif isType(files, LHCbCompressedDataset):
-            _external_files = files.files
+        if isType(other, LHCbCompressedDataset):
+            for _q in range(0, len(other.lfn_prefix)):
+                self.lfn_prefix.append(other.lfn_prefix[_q])
+                self.files.append(other.files[_q])
+        elif isType(other, LHCbDataset):
+            lfns = other.getLFNs()
+            commonpath = os.path.commonpath(lfns)
+            suffixes = [_lfn.replace(commonpath, '') for _lfn in lfns]
+            self.lfn_prefix.append(commonpath)
+            self.files.append(suffixes)
+        elif isType(other, DiracFile):
+            self.lfn_prefix.append('')
+            self.files.append(other.lfn)
+        elif isType(other, [list, tuple, GangaList]):
+            commonpath = os.path.commonpath(other)
+            lfns = [_lfn.replace(commonpath,'') for _lfn in other]
+            self.lfn_prefix.append(commonpath)
+            self.files.append(lfns)
         else:
-            if not hasattr(files, "__getitem__") or not hasattr(files, '__iter__'):
-                _external_files = [files]
-
-        # just in case they extend w/ self
-        _to_remove = []
-        for this_file in _external_files:
-            if hasattr(this_file, 'subfiles'):
-                if len(this_file.subfiles) > 0:
-                    _external_files = makeGangaListByRef(this_file.subfiles)
-                    _to_remove.append(this_file)
-            if type(this_file) is str:
-                _external_files.append(string_datafile_shortcut_lhcb(this_file, None))
-                _to_remove.append(this_file)
-
-        for _this_file in _to_remove:
-            _external_files.pop(_external_files.index(_this_file))
-
-        for this_f in _external_files:
-            _file = getDataFile(this_f)
-            if _file is None:
-                _file = this_f
-            if not isinstance(_file, IGangaFile):
-                raise GangaException('Cannot extend LHCbCompressedDataset based on this object type: %s' % type(_file) )
-            myName = _file.namePattern
-            from GangaDirac.Lib.Files.DiracFile import DiracFile
-            if isType(_file, DiracFile):
-                myName = _file.lfn
-            if unique and myName in self.getFileNames():
-                continue
-            self.files.append(stripProxy(_file))
-
-        """
+            logger.error("Cannot add object of type %s to an LHCbCompressedDataset" % type(other))
+                
 
     def getLFNs(self):
         'Returns a list of all LFNs (by name) stored in the dataset.'
