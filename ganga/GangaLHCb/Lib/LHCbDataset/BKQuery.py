@@ -11,7 +11,11 @@ from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+from GangaCore.Utility.Config import getConfig
 
+configLHCb = getConfig('LHCb')
+defaultCompressed = configLHCb['compressedDataset']
+defaultMetadata = configLHCb['datasetWithMetadata']
 
 class BKQuery(GangaObject):
 
@@ -142,7 +146,7 @@ RecoToDST-07/90000000/DST" ,
         return {'OK': False, 'Value': metadata}
 
     @require_credential
-    def getDataset(self, compressed = False, getFileMetadata = False):
+    def getDataset(self, compressed = defaultCompressed, getFileMetadata = defaultMetadata):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
             return None

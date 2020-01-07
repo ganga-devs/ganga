@@ -54,7 +54,8 @@ if not _after_bootstrap:
                           splitInputDataBySize and splitInputData')
     defaultLHCbDirac = 'prod'
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
-
+    configLHCb.addOption('compressedDataset', False, 'Use the compressed dataset with BKQuery by default')
+    configLHCb.addOption('datasetWithMetadata', False, 'Get the file metadata (luminosity etc) with the compressed dataset')
 
 def _store_root_version():
     if 'ROOTSYS' in os.environ:
