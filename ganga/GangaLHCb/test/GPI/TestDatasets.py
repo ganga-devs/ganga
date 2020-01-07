@@ -65,7 +65,7 @@ class TestDatasets(GangaUnitTest):
 
     def testCompressedDatasetsFunctions(self):
 
-        from GangaCore.GPI import DiracFile, LHCbCompressedDataset, Job, LocalFile
+        from GangaCore.GPI import DiracFile, LHCbCompressedDataset, Job
 
         # test constructors/setters
         #First with a list of lfns
@@ -76,14 +76,14 @@ class TestDatasets(GangaUnitTest):
         ds1 = LHCbCompressedDataset(['/first/path/set/a', '/first/path/set/b'])
         ds2 = LHCbCompressedDataset(['/second/path/set/c', '/second/path/set/d'])
         ds1.extend(ds2)
-        assert isinstance(ds[0], DiracFile)
-        assert ds[0].lfn == '/first/path/set/a'
-        assert isinstance(ds[2], DiracFile)
-        assert ds[2].lfn == '/second/path/set/c'
-        assert isinstance(ds[0:2], LHCbCompressedDataset)
-        assert len(ds[0:2]) == 2
-        assert len(ds[0:2].files) == 1
-        assert len(ds[::2]) == 2
+        assert isinstance(ds1[0], DiracFile)
+        assert ds1[0].lfn == '/first/path/set/a'
+        assert isinstance(ds1[2], DiracFile)
+        assert ds1[2].lfn == '/second/path/set/c'
+        assert isinstance(ds1[0:2], LHCbCompressedDataset)
+        assert len(ds1[0:2]) == 2
+        assert len(ds1[0:2].files) == 1
+        assert len(ds1[::2]) == 2
 
         #Check the getLFNs
         assert ds1.getLFNs == ['/first/path/set/a', '/first/path/set/b', '/second/path/set/c', '/second/path/set/d']

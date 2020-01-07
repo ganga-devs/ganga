@@ -182,16 +182,19 @@ class LHCbCompressedDataset(GangaDataset):
             ds = LHCbCompressedDataset()
             tempList = []
             tempMetadata = []
-            for j in range(0, len(newLFNs)):
+            j = 0
+            while j < len(newLFNs):
                 if newLFNs[j] in self.files[setNo].getLFNs():
                     tempList.append(newLFNs[j])
                     if metLen == indexLen:
                         tempMetadata.append(newMetadata[j])
+                    j += 1
                 else:
                     if len(tempList) > 0:
                         ds.addSet(LHCbCompressedFileSet(tempList, metadata = tempMetadata))
                     setNo += step
                     tempList = []
+                    tempMetadata = []
             ds.addSet(LHCbCompressedFileSet(tempList, metadata = tempMetadata))
         else:
             #Figure out where the file lies
