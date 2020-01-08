@@ -23,13 +23,15 @@ from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.files import expandfilename, fullpath
-
+from GangaCore.Utility.Config import getConfig
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 
 from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampContent, gaudiPythonWrapper
 
 logger = getLogger()
+
+configLHCb = getConfig('LHCb')
 
 def gaudiExecBuildLock(f):
     """ Method used to lock the build methods in GaudiExec so we don't run multiple builds in parallel.
@@ -152,7 +154,7 @@ class GaudiExec(IPrepareApp):
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
-        'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc62-opt', typelist=[str], doc='Platform the application was built for'),
+        'platform' :    SimpleItem(defvalue=configLHCb['defaultPlatform'], typelist=[str], doc='Platform the application was built for'),
         'autoDBtags' :  SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
