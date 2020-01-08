@@ -83,7 +83,7 @@ class LHCbCompressedDataset(GangaDataset):
     schema['persistency'] = SimpleItem(defvalue=None, typelist=['str', 'type(None)'], doc='Specify the dataset persistency technology')
     schema['credential_requirements'] = ComponentItem('CredentialRequirement', defvalue=None)
     schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
-
+    schema['depth'] = SimpleItem(defvalue = 0, doc='Depth')
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
     _name = "LHCbCompressedDataset"
@@ -160,6 +160,13 @@ class LHCbCompressedDataset(GangaDataset):
     def __len__(self):
         '''Redefine the __len__ function'''
         return self._totalNFiles()
+
+    def __getattr__(self, name):
+        print('name: ', name)
+        if name == 'thing':
+            return self.fileLFNs()
+        else:
+            raise AttributeError
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
