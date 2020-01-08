@@ -14,12 +14,32 @@ from GangaCore.Utility.Config.Config import _after_bootstrap
 from GangaCore.Utility.logging import getLogger
 
 from GangaCore.Runtime.GPIexport import exportToGPI
-
+from GangaCore.Utility.execute import execute
 from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
 
 logger = getLogger()
+
+def guessPlatform():
+    defaultPlatform = 'x86_64-centos7-gcc8-opt'
+    cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &> /dev/null && python -c "import os; print(os.environ)"'
+    env = execute(cmd)
+    if isinstance(env, str):
+        try:
+            env_temp = eval(env)
+            env = env_temp
+        except SyntaxError:
+            logger.debug("Unable to extract platform - using default platform: %s" % defaultPlatform)
+            return defaultPlatform
+    if 'CMTCONFIG' in env.keys():
+        defaultPlatform = env['CMTCONFIG']
+        logger.debug("Setting the default application platform to %s" % defaultPlatform)
+    else:
+        logger.debug("Unable to extract platform - using default platform: %s" % defaultPlatform)
+
+    return defaultPlatform
+
 
 if not _after_bootstrap:
     configLHCb = GangaCore.Utility.Config.makeConfig('LHCb', 'Parameters for LHCb')
@@ -54,6 +74,8 @@ if not _after_bootstrap:
                           splitInputDataBySize and splitInputData')
     defaultLHCbDirac = 'prod'
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
+    defaultPlatform = guessPlatform()
+    configLHCb.addOption('defaultPlatform', defaultPlatform, 'The default platform for applications to use')
 
 
 def _store_root_version():
@@ -148,6 +170,7 @@ def updateCreds():
             credential_store[DiracProxy(group=group)]
     except KeyError:
         pass
+
 
 class gridProxy(object):
     """
