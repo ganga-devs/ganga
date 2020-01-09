@@ -29,6 +29,7 @@ class LHCbCompressedFileSet(GangaObject):
     schema['suffixes'] = SimpleItem(defvalue = [], typelist = [GangaList, 'str'], sequence=1, doc = 'The individual end of each LFN')
     schema['metadata'] = SimpleItem(defvalue = [], typelist = [tuple], sequence=1, doc = 'A list of tuples containing the metadata for each file')
     _schema = Schema(Version(3, 0), schema)
+    _exportmethods = ['__len__', 'getLFNs', 'getMetadata', 'getLFN']
     def __init__(self, files=None, lfn_prefix=None, metadata = None):
         super(LHCbCompressedFileSet, self).__init__()
         if lfn_prefix:
@@ -60,6 +61,7 @@ class LHCbCompressedFileSet(GangaObject):
     def getLFN(self, i):
         new_lfn = self.lfn_prefix + self.suffixes[i]
         return new_lfn
+
 
 class LHCbCompressedDataset(GangaDataset):
 
@@ -98,6 +100,7 @@ class LHCbCompressedDataset(GangaDataset):
         super(LHCbCompressedDataset, self).__init__()
         self.files = []
         #if files is an LHCbDataset
+
         if files and isType(files, LHCbDataset):
             newset = LHCbCompressedFileSet(files.getLFNs())
             self.files.append(newset)
@@ -136,6 +139,7 @@ class LHCbCompressedDataset(GangaDataset):
         self.persistency = persistency
         logger.debug("Dataset Created")
 
+
     def _location(self, i):
         '''Figure out where a file of index i is. Returns the subset no and the location within that subset'''
         setNo = 0
@@ -160,13 +164,6 @@ class LHCbCompressedDataset(GangaDataset):
     def __len__(self):
         '''Redefine the __len__ function'''
         return self._totalNFiles()
-
-    def __getattr__(self, name):
-        print('name: ', name)
-        if name == 'thing':
-            return self.fileLFNs()
-        else:
-            raise AttributeError
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
@@ -244,7 +241,6 @@ class LHCbCompressedDataset(GangaDataset):
             self.files.append(LHCbCompressedFileSet(other))
         else:
             logger.error("Cannot add object of type %s to an LHCbCompressedDataset" % type(other))
-                
 
     def getLFNs(self):
         'Returns a list of all LFNs (by name) stored in the dataset.'
@@ -311,7 +307,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def getFullDataset(self):
         '''Returns an LHCb dataset'''
-        ds = LHCbDataset.LHCbDataset(persistency = self.persistency)
+        ds = LHCbDataset(persistency = self.persistency)
         lfns = self.getLFNs()
         for _lfn in lfns:
             ds.extend(DiracFile(lfn = _lfn))
