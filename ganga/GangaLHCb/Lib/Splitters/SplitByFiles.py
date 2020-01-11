@@ -115,15 +115,14 @@ class SplitByFiles(GaudiInputDataSplitter):
         j.splitterCopy(stripProxy(job), ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles', 'fqid', 'outputdir', 'master', 'merger', 'metadata', 'been_queued', 'parallel_submit', 'inputdir', 'non_copyable_outputfiles', 'id','status'])
         logger.debug("Unsetting Splitter")
         j.splitter = None
-        #logger.debug("Unsetting Merger")
-        #j.merger = None
-        #j.inputsandbox = [] ## master added automatically
-        #j.inputfiles = []
         logger.debug("Setting InputData")
-        j.inputdata = LHCbDataset(files=datatmp[:],
+        if isType(job.inputdata, LHCbCompressedDataset):
+            newDs = LHCbCompressedDataset(dataset)
+        else:
+            newDs = LHCbDataset(files=datatmp[:],
                                   persistency=self.persistency,
                                   depth=self.depth)
-        #j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
+        j.inputdata = newDs
         logger.debug("Returning new subjob")
         return j
 

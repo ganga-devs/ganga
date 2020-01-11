@@ -89,9 +89,9 @@ class LHCbCompressedDataset(GangaDataset):
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
     _name = "LHCbCompressedDataset"
-    _exportmethods = ['getReplicas', '__len__', '__getitem__', 'replicate',
+    _exportmethods = ['getReplicas', '__len__', '__getitem__', '__iter__', '__next__', 'replicate',
                       'append', 'extend', 'getCatalog', 'optionsString',
-                      'getLFNs', 'getFullFileNames', 'getFullDataset',
+                      'getLFNs', 'getFullFileNames', 'getFullDataset', 'getFile'
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata', 'getAllMetadata',
                       'getLuminosity', 'getEvtStat', 'isEmpty', 'getPFNs'] 
@@ -128,7 +128,7 @@ class LHCbCompressedDataset(GangaDataset):
             if isType(files[0], DiracFile):
                 lfns = []
                 for _df in files:
-                    lfns.append(df.lfn)
+                    lfns.append(_df.lfn)
                 newset = LHCbCompressedFileSet(lfns)
                 self.files.append(newset)
             #Is it a list of file sets?
@@ -137,6 +137,8 @@ class LHCbCompressedDataset(GangaDataset):
 
         self.files._setParent(self)
         self.persistency = persistency
+        self.current = 0
+        self.total = self._totalNFiles()
         logger.debug("Dataset Created")
 
 
@@ -163,7 +165,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def __len__(self):
         '''Redefine the __len__ function'''
-        return self._totalNFiles()
+        return self.total
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
@@ -205,18 +207,25 @@ class LHCbCompressedDataset(GangaDataset):
             setNo, setLocation = self._location(i)
             if setNo < 0 or i >= self._totalNFiles():
                 logger.error("Unable to retrieve file %s. It is larger than the dataset size" % i)
-                return
+                return None
             ds = DiracFile(lfn = self.files[setNo].getLFN(setLocation), credential_requirements = self.credential_requirements)
         return ds
 
-    def getLuminosity(self, i):
-        '''Returns the luminosity of the given file index. If a slice is given, the total luminosity of the slice is returned'''
-        if type(i) == type(slice(0)):
-            tempMetadata = self.getAllMetadata()
+    def __iter__(self):
+        self.current = 0
+        return self
+
+    def __next__(self):
+        if self.current == self.total:
+            raise StopIteration
+        else:
+            self.current += 1
+            return self[self.current-1]
 
     def addSet(self, newSet):
         '''Add a new FileSet to the dataset'''
         self.files.append(newSet)
+        self.total = self._totalNFiles()
 
     def getReplicas(self):
         'Returns the replicas for all files in the dataset.'
@@ -241,9 +250,10 @@ class LHCbCompressedDataset(GangaDataset):
             self.files.append(LHCbCompressedFileSet(other))
         else:
             logger.error("Cannot add object of type %s to an LHCbCompressedDataset" % type(other))
+        self.total = self._totalNFiles()
 
     def getLFNs(self):
-        'Returns a list of all LFNs (by name) stored in the dataset.'
+        '''Returns a list of all LFNs (by name) stored in the dataset.'''
         lfns = []
         if not self:
             return lfns
@@ -251,6 +261,14 @@ class LHCbCompressedDataset(GangaDataset):
             lfns.extend(fileset.getLFNs())
         logger.debug("Returning #%s LFNS" % str(len(lfns)))
         return lfns
+
+    def getFiles(self, lfnList):
+        '''Return a compressed dataset from the LFN list'''
+        newMetadata = []
+        lfns = self.getLFNs()
+        for _lfn in lfnList:
+            idx = lfns.index(_lfn)
+
 
     def getAllMetadata(self):
         '''Returns a list of all the metadata'''

@@ -129,6 +129,7 @@ def dirac_inputdata(app, hasOtherInputData=False):
         app (IApplication): app which belongs to the job of interest
         hasOtherInputData (bool): This is used to stop BannedSites being added to the JDL structure through backend.settings
     """
+    print('DiracRTHUtils')
     job = app.getJobObject()
     input_data = None
     parametricinput_data = None
@@ -140,13 +141,13 @@ def dirac_inputdata(app, hasOtherInputData=False):
 
     if not job.inputdata and (not job.master or not job.master.inputdata):
         return input_data, parametricinput_data
-
+    print('got past a prematur finish')
     wanted_job = job
     if not job.inputdata and job.master and job.master.inputdata is not None and job.master.inputdata:
         wanted_job = job.master
-
+    print('aboue to construct a list: ', len(wanted_job.inputdata))
     inputLFNs = ['LFN:'+this_file.lfn for this_file in wanted_job.inputdata if isinstance(this_file, DiracFile)]
-
+    print('list constructed')
     # master job with a splitter reaching prepare, hence bulk submit
     if not job.master and job.splitter:
         parametricinput_data = dirac_parametric_split(app)
