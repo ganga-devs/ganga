@@ -22,7 +22,12 @@ logger = GangaCore.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class LHCbCompressedFileSet(GangaObject):
-    '''A class for handling sets of files'''
+    '''A class for handling sets of files. This stores the common start of the lfns,
+    a list of all the non-common ends and a list of the metadata for each file.
+
+    The metadata is stored as a list of tuples of numbers. If it is filled the order is
+    (Luminosity, EvtStat, RunNo, TCK)
+    '''
 
     schema = {}
     schema['lfn_prefix'] = SimpleItem(defvalue = None, typelist = ['str', None], doc = 'The common starting path of the LFN')
@@ -54,13 +59,16 @@ class LHCbCompressedFileSet(GangaObject):
         return len(self.suffixes)
 
     def getLFNs(self):
+        '''Return a list of all the LFNs contained in this set'''
         lfns = [self.lfn_prefix + _suffix for _suffix in self.suffixes]
         return lfns
 
     def getMetadata(self):
+        '''Return a list with all the file metadata'''
         return self.metadata
 
     def getLFN(self, i):
+        '''Get a siingle LFN from the set'''
         new_lfn = self.lfn_prefix + self.suffixes[i]
         return new_lfn
 
@@ -68,20 +76,18 @@ class LHCbCompressedFileSet(GangaObject):
 class LHCbCompressedDataset(GangaDataset):
 
     '''Class for handling LHCb data sets (i.e. inputdata for LHCb jobs).
+    This is a version of LHCbDataset that should use less disk space.
+    It should only be used with DiracFile objects, and is best constructed
+    from a BKQuery.
 
-    Example Usage:
-    ds = LHCbCompressedDataset(["lfn:/some/lfn.file","pfn:/some/pfn.file"])
-    ds[0] # DiracFile("/some/lfn.file") - see DiracFile docs for usage
-    ds[1] # PhysicalFile("/some/pfn.file")- see PhysicalFile docs for usage
-    len(ds) # 2 (number of files)
-    ds.getReplicas() # returns replicas for *all* files in the data set
-    ds.replicate("CERN-USER") # replicate *all* LFNs to "CERN-USER" SE
-    ds.getCatalog() # returns XML catalog slice
-    ds.optionsString() # returns Gaudi-sytle options 
-    [...etc...]
+    All of the usual methods for datasets can be used here (extend, union, difference etc).
+    These also work if the other dataset is a regular LHCbDataset.
+
+    The LHCbCompressedDataset furthermore offers the ability to store some metadata about
+    the files in it, i.e. Luminosity, EvtStat, Run no, and TCK
     '''
     schema = {}
-    docstr = 'List of PhysicalFile and DiracFile objects'
+    docstr = 'List of DiracFile objects'
     schema['files'] = SimpleItem(defvalue=[], typelist=[LHCbCompressedFileSet], sequence=1, doc='A list of lists of the file suffixes')
     schema['XMLCatalogueSlice'] = GangaFileItem(defvalue=None, doc='Use contents of file rather than generating catalog.')
     schema['persistency'] = SimpleItem(defvalue=None, typelist=['str', 'type(None)'], doc='Specify the dataset persistency technology')
@@ -214,10 +220,12 @@ class LHCbCompressedDataset(GangaDataset):
         return ds
 
     def __iter__(self):
+        '''Fix the iterator'''
         self.current = 0
         return self
 
     def __next__(self):
+        '''Fix the iterator'''
         if self.current == self.total:
             raise StopIteration
         else:
@@ -328,18 +336,10 @@ class LHCbCompressedDataset(GangaDataset):
         return pfns
 
     def getFullFileNames(self):
-        'Returns all file names w/ PFN or LFN prepended.'
+        'Returns all file names with LFN prepended.'
         names = []
-        from GangaDirac.Lib.Files.DiracFile import DiracFile
-        for f in self.files:
-            if isType(f, DiracFile):
-                names.append('LFN:%s' % f.lfn)
-            else:
-                try:
-                    names.append('PFN:%s' % f.namePattern)
-                except:
-                    logger.warning("Cannot determine filename for: %s " % f)
-                    raise GangaException("Cannot Get File Name")
+        for _lfn in self.getLFNs():
+                names.append('LFN:%s' % _lfn)
         return names
 
     def getFullDataset(self):
@@ -495,76 +495,4 @@ class LHCbCompressedDataset(GangaDataset):
         cmd = 'bkMetaData(%s)' % self.getLFNs()
         b = get_result(cmd, 'Error removing getting metadata.')
         return b
-
-
-
-from GangaCore.GPIDev.Base.Filters import allComponentFilters
-"""
-
-def string_datafile_shortcut_lhcb(name, item):
-
-    # Overload the LHCb instance if the Core beet us to it
-    mainFileOutput = None
-    try:
-        mainFileOutput = GangaCore.GPIDev.Lib.File.string_file_shortcut(name, item)
-    except Exception as x:
-        logger.debug("Failed to Construct a default file type: %s" % str(name))
-        pass
-
-    #   We can do some 'magic' with strings so lets do that here
-    if (mainFileOutput is not None):
-        #logger.debug( "Core Found: %s" % str( mainFileOutput ) )
-        if (type(name) is not str):
-            return mainFileOutput
-
-    if type(name) is not str:
-        return None
-    if item is None and name is None:
-        return None  # used to be c'tor, but shouldn't happen now
-    else:  # something else...require pfn: or lfn:
-        try:
-            this_file = strToDataFile(name, True)
-            if this_file is None:
-                if not mainFileOutput is None:
-                    return mainFileOutput
-                else:
-                    raise GangaException("Failed to find filetype for: %s" % str(name))
-            return this_file
-        except Exception as x:
-            # if the Core can make a file object from a string then use that,
-            # else raise an error
-            if not mainFileOutput is None:
-                return mainFileOutput
-            else:
-                raise x
-    return None
-
-allComponentFilters['gangafiles'] = string_datafile_shortcut_lhcb
-"""
-# Name of this method set in the GPIComponentFilters section of the
-# Core... either overload this default or leave it
-"""
-def string_dataset_shortcut(files, item):
-    from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
-    from GangaCore.GPIDev.Base.Objects import ObjectMetaclass
-    # This clever change mirrors that in IPostprocessor (see there)
-    # essentially allows for dynamic extensions to JobTemplate
-    # such as LHCbJobTemplate etc.
-    from GangaCore.GPIDev.Base.Proxy import getProxyInterface
-    inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in getProxyInterface().__dict__.values()
-                     if isinstance(stripProxy(i), ObjectMetaclass)
-                     and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))
-                     and 'inputdata' in stripProxy(i)._schema.datadict]
-    if type(files) not in [list, tuple, GangaList]:
-        return None
-    if item in inputdataList:
-        ds = LHCbCompressedDataset()
-        ds.extend(files)
-        return ds
-    else:
-        return None  # used to be c'tors, but shouldn't happen now
-
-allComponentFilters['datasets'] = string_dataset_shortcut
-"""
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
