@@ -76,7 +76,6 @@ if not _after_bootstrap:
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
 
     configLHCb.addOption('compressedDataset', False, 'Use the compressed dataset with BKQuery by default')
-    configLHCb.addOption('datasetWithMetadata', False, 'Get the file metadata (luminosity etc) with the compressed dataset')
 
     defaultPlatform = guessPlatform()
     configLHCb.addOption('defaultPlatform', defaultPlatform, 'The default platform for applications to use')

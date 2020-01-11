@@ -15,7 +15,6 @@ from GangaCore.Utility.Config import getConfig
 
 configLHCb = getConfig('LHCb')
 defaultCompressed = configLHCb['compressedDataset']
-defaultMetadata = configLHCb['datasetWithMetadata']
 
 class BKQuery(GangaObject):
 
@@ -146,7 +145,7 @@ RecoToDST-07/90000000/DST" ,
         return {'OK': False, 'Value': metadata}
 
     @require_credential
-    def getDataset(self, compressed = defaultCompressed, getFileMetadata = defaultMetadata):
+    def getDataset(self, compressed = defaultCompressed):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
             return None
@@ -171,27 +170,10 @@ RecoToDST-07/90000000/DST" ,
         result = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
         logger.debug("Finished Running Command")
         files = []
-        file_metadata = []
         value = result
         if 'LFNs' in value:
             files = value['LFNs']
-        if not type(files) is list:  # i.e. a dict of LFN:Metadata
-            # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
-            if compressed and getFileMetadata:
-                for _item in value['LFNs'].values():
-                    _lumi = 0
-                    _evtStat = 0
-                    _runNo = 0
-                    _tck = 0
-                    if 'Luminosity' in _item.keys():
-                        _lumi = _item['Luminosity']
-                    if 'EventStat' in _item.keys():
-                        _evtStat = _item['EventStat']
-                    if 'Runnumber' in _item.keys():
-                        _runNo = _item['Runnumber']
-                    if 'TCK' in _item.keys():
-                        _tck = _item['TCK']
-                    file_metadata.append((_lumi, _evtStat, _runNo, _tck))
+        if not type(files) is list:
             files = list(files.keys())
 
         logger.debug("Creating dataset")
@@ -199,7 +181,7 @@ RecoToDST-07/90000000/DST" ,
         if compressed:
             import os
             from GangaLHCb.Lib.LHCbDataset import LHCbCompressedDataset
-            ds = LHCbCompressedDataset(files, metadata = file_metadata)
+            ds = LHCbCompressedDataset(files)
 
         else:
             from GangaDirac.Lib.Files.DiracFile import DiracFile

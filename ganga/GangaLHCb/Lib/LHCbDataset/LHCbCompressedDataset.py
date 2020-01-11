@@ -32,10 +32,9 @@ class LHCbCompressedFileSet(GangaObject):
     schema = {}
     schema['lfn_prefix'] = SimpleItem(defvalue = None, typelist = ['str', None], doc = 'The common starting path of the LFN')
     schema['suffixes'] = SimpleItem(defvalue = [], typelist = [GangaList, 'str'], sequence=1, doc = 'The individual end of each LFN')
-    schema['metadata'] = SimpleItem(defvalue = [], typelist = [tuple], sequence=1, doc = 'A list of tuples containing the metadata for each file')
     _schema = Schema(Version(3, 0), schema)
-    _exportmethods = ['__len__', 'getLFNs', 'getMetadata', 'getLFN']
-    def __init__(self, files=None, lfn_prefix=None, metadata = None):
+    _exportmethods = ['__len__', 'getLFNs', 'getLFN']
+    def __init__(self, files=None, lfn_prefix=None):
         super(LHCbCompressedFileSet, self).__init__()
         if lfn_prefix:
             self.lfn_prefix = lfn_prefix
@@ -53,8 +52,7 @@ class LHCbCompressedFileSet(GangaObject):
                 self.suffixes = suffixes
             else:
                 self.files.append(files)
-        if metadata:
-            self.metadata.extend(metadata)
+
     def __len__(self):
         return len(self.suffixes)
 
@@ -62,10 +60,6 @@ class LHCbCompressedFileSet(GangaObject):
         '''Return a list of all the LFNs contained in this set'''
         lfns = [self.lfn_prefix + _suffix for _suffix in self.suffixes]
         return lfns
-
-    def getMetadata(self):
-        '''Return a list with all the file metadata'''
-        return self.metadata
 
     def getLFN(self, i):
         '''Get a siingle LFN from the set'''
@@ -104,7 +98,7 @@ class LHCbCompressedDataset(GangaDataset):
                       'getLFNs', 'getFullFileNames', 'getFullDataset', 'getFile',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata', 'getMetadata',
-                      'getLuminosity', 'getEvtStat', 'isEmpty', 'getPFNs'] 
+                      'getLuminosity', 'getEvtStat', 'getRunNumbers', 'isEmpty', 'getPFNs'] 
 
     def __init__(self, files=None, metadata = None, persistency=None, depth=0, fromRef=False):
         super(LHCbCompressedDataset, self).__init__()
@@ -112,18 +106,18 @@ class LHCbCompressedDataset(GangaDataset):
         #if files is an LHCbDataset
 
         if files and isType(files, LHCbDataset):
-            newset = LHCbCompressedFileSet(files.getLFNs(), metadata = metadata)
+            newset = LHCbCompressedFileSet(files.getLFNs())
             self.files.append(newset)
         #if files is an LHCbCompressedDataset
         if files and isType(files, LHCbCompressedDataset):
             self.files.extend(files.files)
         #if files is just a string
         if files and isType(files, str):
-            newset = LHCbCompressedFileSet(files, metadata = metadata)
+            newset = LHCbCompressedFileSet(files)
             self.files.append(newset)
         #if files is a single DiracFile
         if files and isType(files, DiracFile):
-            newset = LHCbCompressedFileSet(files.lfn, metadata = metadata)
+            newset = LHCbCompressedFileSet(files.lfn)
             self.files.append(newset)
         #if files is a single LHCbCompressedFileSet
         if files and isType(files, LHCbCompressedFileSet):
@@ -132,14 +126,14 @@ class LHCbCompressedDataset(GangaDataset):
         if files and isType(files, [list, GangaList]):
             #Is it a list of strings? Then it may have been produced from the BKQuery so pass along the metadata as well
             if isType(files[0], str):
-                newset = LHCbCompressedFileSet(files, metadata = metadata)
+                newset = LHCbCompressedFileSet(files)
                 self.files.append(newset)
             #Is it a list of DiracFiles?
             if isType(files[0], DiracFile):
                 lfns = []
                 for _df in files:
                     lfns.append(_df.lfn)
-                newset = LHCbCompressedFileSet(lfns, metadata = metadata)
+                newset = LHCbCompressedFileSet(lfns)
                 self.files.append(newset)
             #Is it a list of file sets?
             if isType(files[0], LHCbCompressedFileSet):
@@ -182,10 +176,8 @@ class LHCbCompressedDataset(GangaDataset):
         if type(i) == type(slice(0)):
             #We construct a list of all LFNs first. Not the most efficient but it allows us to use the standard slice machinery
             newLFNs = self.getLFNs()[i]
-            newMetadata = self.getMetadata()[i]
             #We define these here for future speed
             indexLen = len(newLFNs)
-            metLen = len(newMetadata)
             #Now pull out the prefixes/suffixes
             setNo = 0
             step = 1
@@ -197,21 +189,17 @@ class LHCbCompressedDataset(GangaDataset):
             #Iterate over the LFNs and find out where it came from
             ds = LHCbCompressedDataset()
             tempList = []
-            tempMetadata = []
             j = 0
             while j < len(newLFNs):
                 if newLFNs[j] in self.files[setNo].getLFNs():
                     tempList.append(newLFNs[j])
-                    if metLen == indexLen:
-                        tempMetadata.append(newMetadata[j])
                     j += 1
                 else:
                     if len(tempList) > 0:
-                        ds.addSet(LHCbCompressedFileSet(tempList, metadata = tempMetadata))
+                        ds.addSet(LHCbCompressedFileSet(tempList))
                     setNo += step
                     tempList = []
-                    tempMetadata = []
-            ds.addSet(LHCbCompressedFileSet(tempList, metadata = tempMetadata))
+            ds.addSet(LHCbCompressedFileSet(tempList))
         else:
             #Figure out where the file lies
             setNo, setLocation = self._location(i)
@@ -290,9 +278,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def getFiles(self, lfnList, ignore_missing = True):
         '''Return a compressed dataset from the LFN list'''
-        newMetadata = []
         lfns = self.getLFNs()
-        mets = self.getMetadata()
         thisLfn = ''
         for _lfn in lfnList:
             try:
@@ -300,46 +286,42 @@ class LHCbCompressedDataset(GangaDataset):
                     thisLfn = _lfn.lfn
                 else:
                     thisLfn = _lfn
-                idx = lfns.index(thisLfn)
-                newMetadata.append(mets[idx])
             except ValueError:
                 if ignore_missing:
                     logger.warning('LFN %s not found in the dataset list. Continuing without it.' % thisLfn)
                 else:
                     raise GangaException('LFN %s not found in the dataset list.' % thisLfn)
-        newDs = LHCbCompressedDataset(lfnList, newMetadata)
+        newDs = LHCbCompressedDataset(lfnList)
         return newDs
 
-    def getMetadata(self, i = None):
+    def getMetadata(self):
         '''Returns a list of all the metadata'''
-        mets = []
-        for fileset in self.files:
-            if not len(fileset.metadata) == len(fileset):
-                mets.extend((0 for i in range(0, len(fileset))))
-            else:
-                mets.extend(fileset.getMetadata())
-        if i or i == 0:
-            return mets[i]
-        else:
-            return mets
+        from GangaLHCb.Lib.Backends.Dirac import getLFNMetadata
+        return getLFNMetadata(self.getLFNs())
 
     def getLuminosity(self):
         '''Returns the total luminosity'''
         lumi = 0
         mets = self.getMetadata()
-        for _f in mets:
-            if len(_f) == 4:
-                lumi += _f[0]
+        for _f in mets.keys():
+            lumi += mets[_f]['Luminosity']
         return lumi
 
     def getEvtStat(self):
         '''Returns the total events'''
         evtStat = 0
         mets = self.getMetadata()
-        for _f in mets:
-            if len(_f) == 4:
-                evtStat += _f[1]
+        for _f in mets.keys():
+            evtStat += mets[_f]['EventStat']
         return evtStat
+
+    def getRunNumbers(self):
+        '''Returns a list of the run numbers'''
+        runNos = []
+        mets = self.getMetadata()
+        for _f in mets.keys():
+            runNos.append(mets[_f]['RunNumber'])
+        return runNos
 
     def getPFNs(self):
         'Returns a list of all PFNs (by name) stored in the dataset.'
