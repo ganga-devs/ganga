@@ -86,19 +86,19 @@ class TestDatasets(GangaUnitTest):
         assert len(ds1[::2]) == 2
 
         #Check the getLFNs
-        assert ds1.getLFNs == ['/first/path/set/a', '/first/path/set/b', '/second/path/set/c', '/second/path/set/d']
+        assert ds1.getLFNs() == ['/first/path/set/a', '/first/path/set/b', '/second/path/set/c', '/second/path/set/d']
 
         #Check extend, union, subset superset, difference
         ds1 = LHCbCompressedDataset(['/path/to/some/file/a', '/path/to/some/otherfile/b'])
         ds2 = LHCbCompressedDataset(['/otherpath/to/some/file/c', '/path/to/some/otherfile/d'])
         ds3 = ds1.union(ds2)
         assert len(ds3) == 4
-        assert ds3.getLFNs() == ['/path/to/some/file/a', '/path/to/some/otherfile/b', '/otherpath/to/some/file/c', '/path/to/some/otherfile/d']
-        assert(ds3.isSubset(ds1))
-        assert(ds2.isSuperSet(ds3))
+        assert sorted(ds3.getLFNs()) == ['/otherpath/to/some/file/c', '/path/to/some/file/a', '/path/to/some/otherfile/b', '/path/to/some/otherfile/d']
+        assert(ds1.isSubset(ds3))
+        assert(ds3.isSuperset(ds2))
 
-        ds4 = ds1.difference(ds3)
-        assert ds4.getLFNs() == ['/path/to/some/file/a', '/path/to/some/otherfile/b']
+        ds4 = ds3.difference(ds1)
+        assert sorted(ds4.getLFNs()) == ['/otherpath/to/some/file/c', '/path/to/some/otherfile/d']
 
         ds1.extend(ds2)
         assert len(ds1) == 4

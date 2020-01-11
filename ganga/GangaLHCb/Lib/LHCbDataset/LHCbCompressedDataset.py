@@ -41,7 +41,9 @@ class LHCbCompressedFileSet(GangaObject):
                 raise GangaException("Incorrect type %s passed to LHCbCompressedFileSet" % type(files))
             if isType(files, [list, tuple, GangaList]):
                 commonpath = os.path.commonpath(files)
-                suffixes = [_lfn.replace(commonpath, '') for _lfn in files]
+                if commonpath == '/':
+                    commonpath = ''
+                suffixes = [_lfn.replace(commonpath, '', 1) for _lfn in files]
                 self.lfn_prefix = commonpath
                 self.suffixes = suffixes
             else:
@@ -91,7 +93,7 @@ class LHCbCompressedDataset(GangaDataset):
     _name = "LHCbCompressedDataset"
     _exportmethods = ['getReplicas', '__len__', '__getitem__', '__iter__', '__next__', 'replicate',
                       'append', 'extend', 'getCatalog', 'optionsString',
-                      'getLFNs', 'getFullFileNames', 'getFullDataset', 'getFile'
+                      'getLFNs', 'getFullFileNames', 'getFullDataset', 'getFile',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata', 'getMetadata',
                       'getLuminosity', 'getEvtStat', 'isEmpty', 'getPFNs'] 
@@ -452,7 +454,7 @@ class LHCbCompressedDataset(GangaDataset):
         '''Returns a new data set w/ files in this that are not in other.'''
         other_files = self._checkOtherFiles(other)
         files = set(self.getLFNs()).difference(other_files)
-        data = LHCbCompressedDataset(files)
+        data = LHCbCompressedDataset(list(files))
         return data
 
     def isSubset(self, other):
@@ -468,23 +470,23 @@ class LHCbCompressedDataset(GangaDataset):
     def symmetricDifference(self, other):
         '''Returns a new data set w/ files in either this or other but not
         both.'''
-        other_files = other._checkOtherFiles(other)
+        other_files = self._checkOtherFiles(other)
         files = set(self.getLFNs()).symmetric_difference(other_files)
-        data = LHCbCompressedDataset(files)
+        data = LHCbCompressedDataset(list(files))
         return data
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
-        other_files = other._checkOtherFiles(other)
+        other_files = self._checkOtherFiles(other)
         files = set(self.getLFNs()).intersection(other_files)
-        data = LHCbCompressedDataset(files)
+        data = LHCbCompressedDataset(list(files))
         return data
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
         other_files = self._checkOtherFiles(other)
         files = set(self.getLFNs()).union(other_files)
-        data = LHCbCompressedDataset(files)
+        data = LHCbCompressedDataset(list(files))
         return data
 
     def bkMetadata(self):
