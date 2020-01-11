@@ -93,7 +93,7 @@ class LHCbCompressedDataset(GangaDataset):
                       'append', 'extend', 'getCatalog', 'optionsString',
                       'getLFNs', 'getFullFileNames', 'getFullDataset', 'getFile'
                       'difference', 'isSubset', 'isSuperset', 'intersection',
-                      'symmetricDifference', 'union', 'bkMetadata', 'getAllMetadata',
+                      'symmetricDifference', 'union', 'bkMetadata', 'getMetadata',
                       'getLuminosity', 'getEvtStat', 'isEmpty', 'getPFNs'] 
 
     def __init__(self, files=None, metadata = None, persistency=None, depth=0, fromRef=False):
@@ -102,18 +102,18 @@ class LHCbCompressedDataset(GangaDataset):
         #if files is an LHCbDataset
 
         if files and isType(files, LHCbDataset):
-            newset = LHCbCompressedFileSet(files.getLFNs())
+            newset = LHCbCompressedFileSet(files.getLFNs(), metadata = metadata)
             self.files.append(newset)
         #if files is an LHCbCompressedDataset
         if files and isType(files, LHCbCompressedDataset):
             self.files.extend(files.files)
         #if files is just a string
         if files and isType(files, str):
-            newset = LHCbCompressedFileSet(files)
+            newset = LHCbCompressedFileSet(files, metadata = metadata)
             self.files.append(newset)
         #if files is a single DiracFile
         if files and isType(files, DiracFile):
-            newset = LHCbCompressedFileSet(files.lfn)
+            newset = LHCbCompressedFileSet(files.lfn, metadata = metadata)
             self.files.append(newset)
         #if files is a single LHCbCompressedFileSet
         if files and isType(files, LHCbCompressedFileSet):
@@ -129,7 +129,7 @@ class LHCbCompressedDataset(GangaDataset):
                 lfns = []
                 for _df in files:
                     lfns.append(_df.lfn)
-                newset = LHCbCompressedFileSet(lfns)
+                newset = LHCbCompressedFileSet(lfns, metadata = metadata)
                 self.files.append(newset)
             #Is it a list of file sets?
             if isType(files[0], LHCbCompressedFileSet):
@@ -172,7 +172,7 @@ class LHCbCompressedDataset(GangaDataset):
         if type(i) == type(slice(0)):
             #We construct a list of all LFNs first. Not the most efficient but it allows us to use the standard slice machinery
             newLFNs = self.getLFNs()[i]
-            newMetadata = self.getAllMetadata()[i]
+            newMetadata = self.getMetadata()[i]
             #We define these here for future speed
             indexLen = len(newLFNs)
             metLen = len(newMetadata)
@@ -262,15 +262,29 @@ class LHCbCompressedDataset(GangaDataset):
         logger.debug("Returning #%s LFNS" % str(len(lfns)))
         return lfns
 
-    def getFiles(self, lfnList):
+    def getFiles(self, lfnList, ignore_missing = True):
         '''Return a compressed dataset from the LFN list'''
         newMetadata = []
         lfns = self.getLFNs()
+        mets = self.getMetadata()
+        thisLfn = ''
         for _lfn in lfnList:
-            idx = lfns.index(_lfn)
+            try:
+                if isType(_lfn, DiracFile):
+                    thisLfn = _lfn.lfn
+                else:
+                    thisLfn = _lfn
+                idx = lfns.index(thisLfn)
+                newMetadata.append(mets[idx])
+            except ValueError:
+                if ignore_missing:
+                    logger.warning('LFN %s not found in the dataset list. Continuing without it.' % thisLfn)
+                else:
+                    raise GangaException('LFN %s not found in the dataset list.' % thisLfn)
+        newDs = LHCbCompressedDataset(lfnList, newMetadata)
+        return newDs
 
-
-    def getAllMetadata(self):
+    def getMetadata(self, i = None):
         '''Returns a list of all the metadata'''
         mets = []
         for fileset in self.files:
@@ -278,12 +292,15 @@ class LHCbCompressedDataset(GangaDataset):
                 mets.extend((0 for i in range(0, len(fileset))))
             else:
                 mets.extend(fileset.getMetadata())
-        return mets
+        if i or i == 0:
+            return mets[i]
+        else:
+            return mets
 
     def getLuminosity(self):
         '''Returns the total luminosity'''
         lumi = 0
-        mets = self.getAllMetadata()
+        mets = self.getMetadata()
         for _f in mets:
             if len(_f) == 4:
                 lumi += _f[0]
@@ -292,7 +309,7 @@ class LHCbCompressedDataset(GangaDataset):
     def getEvtStat(self):
         '''Returns the total events'''
         evtStat = 0
-        mets = self.getAllMetadata()
+        mets = self.getMetadata()
         for _f in mets:
             if len(_f) == 4:
                 evtStat += _f[1]
