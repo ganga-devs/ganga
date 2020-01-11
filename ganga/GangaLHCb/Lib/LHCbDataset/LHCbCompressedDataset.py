@@ -95,7 +95,7 @@ class LHCbCompressedDataset(GangaDataset):
     _name = "LHCbCompressedDataset"
     _exportmethods = ['getReplicas', '__len__', '__getitem__', '__iter__', '__next__', 'replicate',
                       'append', 'extend', 'getCatalog', 'optionsString', 'getFileNames', 'getFilenameList',
-                      'getLFNs', 'getFullFileNames', 'getFullDataset', 'getFile',
+                      'getLFNs', 'getFullFileNames', 'getFullDataset',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata', 'getMetadata',
                       'getLuminosity', 'getEvtStat', 'getRunNumbers', 'isEmpty', 'getPFNs'] 
@@ -275,24 +275,6 @@ class LHCbCompressedDataset(GangaDataset):
             lfns.extend(fileset.getLFNs())
         logger.debug("Returning #%s LFNS" % str(len(lfns)))
         return lfns
-
-    def getFiles(self, lfnList, ignore_missing = True):
-        '''Return a compressed dataset from the LFN list'''
-        lfns = self.getLFNs()
-        thisLfn = ''
-        for _lfn in lfnList:
-            try:
-                if isType(_lfn, DiracFile):
-                    thisLfn = _lfn.lfn
-                else:
-                    thisLfn = _lfn
-            except ValueError:
-                if ignore_missing:
-                    logger.warning('LFN %s not found in the dataset list. Continuing without it.' % thisLfn)
-                else:
-                    raise GangaException('LFN %s not found in the dataset list.' % thisLfn)
-        newDs = LHCbCompressedDataset(lfnList)
-        return newDs
 
     def getMetadata(self):
         '''Returns a list of all the metadata'''

@@ -117,7 +117,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         j.splitter = None
         logger.debug("Setting InputData")
         if isType(job.inputdata, LHCbCompressedDataset):
-            newDs = job.inputdata.getFiles(datatmp[:])
+            newDs = LHCbCompressedDataset(datatmp[:])
         else:
             newDs = LHCbDataset(files=datatmp[:],
                                   persistency=self.persistency,
