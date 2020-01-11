@@ -85,6 +85,8 @@ class LHCbCompressedDataset(GangaDataset):
 
     The LHCbCompressedDataset furthermore offers the ability to store some metadata about
     the files in it, i.e. Luminosity, EvtStat, Run no, and TCK
+
+    For this dataset everything revolves around the LFN rather than individual file objects
     '''
     schema = {}
     docstr = 'List of DiracFile objects'
@@ -98,7 +100,7 @@ class LHCbCompressedDataset(GangaDataset):
     _category = 'datasets'
     _name = "LHCbCompressedDataset"
     _exportmethods = ['getReplicas', '__len__', '__getitem__', '__iter__', '__next__', 'replicate',
-                      'append', 'extend', 'getCatalog', 'optionsString',
+                      'append', 'extend', 'getCatalog', 'optionsString', 'getFileNames', 'getFilenameList',
                       'getLFNs', 'getFullFileNames', 'getFullDataset', 'getFile',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata', 'getMetadata',
@@ -236,6 +238,20 @@ class LHCbCompressedDataset(GangaDataset):
         '''Add a new FileSet to the dataset'''
         self.files.append(newSet)
         self.total = self._totalNFiles()
+
+    def getFileNames(self):
+        'Returns a list of the names of all files stored in the dataset'
+        names = []
+        for _lfn in self.getLFNs():
+            names.append(_lfn)
+        return names
+
+    def getFilenameList(self):
+        'Return a list of filenames to be created as input.txt on the WN. These will be the PFNs'
+        #We know these are DiracFiles so collate the LFNs and get the accessURLs together
+        from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
+        fileList = getAccessURLs(self.getLFNs())
+        return fileList
 
     def getReplicas(self):
         'Returns the replicas for all files in the dataset.'
