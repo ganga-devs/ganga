@@ -307,13 +307,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def getPFNs(self):
         'Returns a list of all PFNs (by name) stored in the dataset.'
-        pfns = []
-        if not self:
-            return pfns
-        for f in self.files:
-            if isPFN(f):
-                pfns.append(f.namePattern)
-        return pfns
+        return self.getFilenameList()
 
     def getFullFileNames(self):
         'Returns all file names with LFN prepended.'
