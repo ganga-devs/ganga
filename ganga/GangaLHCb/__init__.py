@@ -74,9 +74,9 @@ if not _after_bootstrap:
                           splitInputDataBySize and splitInputData')
     defaultLHCbDirac = 'prod'
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
+
     defaultPlatform = guessPlatform()
     configLHCb.addOption('defaultPlatform', defaultPlatform, 'The default platform for applications to use')
-
 
 def _store_root_version():
     if 'ROOTSYS' in os.environ:

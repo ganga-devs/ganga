@@ -330,12 +330,17 @@ def lookUpLFNReplicas(inputs, ignoremissing):
     # Sort this information and store is in the relevant Ganga objects
     updateLFNData(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
 
+    file_replicas = {}
+    for _lfn in LFNdict:
+        if not _lfn in bad_lfns:
+            file_replicas[_lfn] = LFNdict[_lfn].locations
+
     # Check if we have any bad lfns
     if bad_lfns and ignoremissing is False:
         logger.error("Errors found getting LFNs:\n%s" % str(bad_lfns))
         raise SplitterError("Error trying to split dataset with invalid LFN and ignoremissing = False")
 
-    return bad_lfns
+    return bad_lfns, file_replicas
 
 
 def updateLFNData(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
@@ -433,15 +438,9 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
     logger.info("Requesting LFN replica info")
 
     # Perform a lookup of where LFNs are all stored
-    bad_lfns = lookUpLFNReplicas(inputs, ignoremissing)
+    bad_lfns, file_replicas = lookUpLFNReplicas(inputs, ignoremissing)
 
     logger.info("Got all good replicas")
-
-    for this_input in inputs:
-        if this_input.lfn not in bad_lfns:
-            file_replicas[this_input.lfn] = this_input.locations
-
-    logger.info("found all replicas")
 
     # This contains information on the mapping between CE and SE(site) in DIRAC as multiple CE may access an SE(site)
     CE_to_SE_mapping = {}

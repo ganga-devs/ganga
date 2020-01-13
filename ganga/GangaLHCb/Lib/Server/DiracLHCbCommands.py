@@ -112,3 +112,12 @@ def getDBtagsFromLFN( lfn ):
     else:
         res = {'OK': False, 'Message': 'Error getting DB tags!'}
 
+@diracCommand
+def getFileMetadata( lfns ):
+    ''' returns all the information for a given LFN or list of LFNs '''
+    from LHCbDIRAC.BookkeepingSystem.Client.BookkeepingClient import BookkeepingClient
+    bk = BookkeepingClient()
+    res = bk.getFileMetadata( lfns )
+    return res
+
+

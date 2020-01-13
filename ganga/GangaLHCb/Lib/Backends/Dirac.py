@@ -75,3 +75,19 @@ class Dirac(DiracBase):
         for f in downloaded_files:
             ds.files.append(DiracFile(lfn=f))
         return GPIProxyObjectFactory(ds)
+
+def getLFNMetadata(lfns, credential_requirements=None):
+    '''Return the file metadata for a given LFN or list of LFNs'''
+    result = execute('getFileMetadata(%s)' % lfns, cred_req = credential_requirements )
+    returnDict = {}
+    if 'Successful' in result.keys():
+        for _lfn in result['Successful'].keys():
+            returnDict[_lfn] = {}
+            returnDict[_lfn]['Luminosity'] = result['Successful'][_lfn]['Luminosity']
+            returnDict[_lfn]['EventStat'] = result['Successful'][_lfn]['EventStat']
+            returnDict[_lfn]['RunNumber'] = result['Successful'][_lfn]['RunNumber']
+
+    return returnDict
+
+from GangaCore.Runtime.GPIexport import exportToGPI
+exportToGPI('getLFNMetadata', getLFNMetadata, 'Functions')
