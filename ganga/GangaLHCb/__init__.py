@@ -75,8 +75,6 @@ if not _after_bootstrap:
     defaultLHCbDirac = 'prod'
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
 
-    configLHCb.addOption('compressedDataset', False, 'Use the compressed dataset with BKQuery by default')
-
     defaultPlatform = guessPlatform()
     configLHCb.addOption('defaultPlatform', defaultPlatform, 'The default platform for applications to use')
 
