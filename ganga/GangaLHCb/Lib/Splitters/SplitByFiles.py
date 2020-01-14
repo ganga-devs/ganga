@@ -17,7 +17,8 @@ from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
 from GangaCore.GPIDev.Base.Filters import allComponentFilters
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 from GangaCore.GPIDev.Credentials import require_credential
-
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
+from GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset import LHCbCompressedDataset
 logger = GangaCore.Utility.logging.getLogger()
 
 
@@ -80,8 +81,6 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("dataset size: %s" % str(len(dataset)))
         #logger.debug( "dataset: %s" % str(dataset) )
 
-        from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-
         if isinstance(dataset, LHCbDataset):
             for i in dataset:
                 if isType(i, DiracFile):
@@ -116,15 +115,14 @@ class SplitByFiles(GaudiInputDataSplitter):
         j.splitterCopy(stripProxy(job), ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles', 'fqid', 'outputdir', 'master', 'merger', 'metadata', 'been_queued', 'parallel_submit', 'inputdir', 'non_copyable_outputfiles', 'id','status'])
         logger.debug("Unsetting Splitter")
         j.splitter = None
-        #logger.debug("Unsetting Merger")
-        #j.merger = None
-        #j.inputsandbox = [] ## master added automatically
-        #j.inputfiles = []
         logger.debug("Setting InputData")
-        j.inputdata = LHCbDataset(files=datatmp[:],
+        if isType(job.inputdata, LHCbCompressedDataset):
+            newDs = LHCbCompressedDataset(datatmp[:])
+        else:
+            newDs = LHCbDataset(files=datatmp[:],
                                   persistency=self.persistency,
                                   depth=self.depth)
-        #j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
+        j.inputdata = newDs
         logger.debug("Returning new subjob")
         return j
 
@@ -144,7 +142,10 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         logger.debug("_splitter")
 
-        indata = inputdata
+        if isType(inputdata, LHCbCompressedDataset):
+            indata = inputdata.getFullDataset()
+        else:
+            indata = inputdata
 
         if indata is not None:
 

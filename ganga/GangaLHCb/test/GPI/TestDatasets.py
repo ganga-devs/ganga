@@ -62,3 +62,46 @@ class TestDatasets(GangaUnitTest):
 
         assert len(list(ds.getReplicas().keys())) == 2
         assert ds.getCatalog()
+
+    def testCompressedDatasetsFunctions(self):
+
+        from GangaCore.GPI import DiracFile, LHCbCompressedDataset, Job
+
+        # test constructors/setters
+        #First with a list of lfns
+        ds = LHCbCompressedDataset(['/path/to/some/file', '/path/to/some/otherfile'])
+        assert len(ds) == 2
+
+        #Check the indexing and slicing - the __getitem__ and __len__ methods
+        ds1 = LHCbCompressedDataset(['/first/path/set/a', '/first/path/set/b'])
+        ds2 = LHCbCompressedDataset(['/second/path/set/c', '/second/path/set/d'])
+        ds1.extend(ds2)
+        assert isinstance(ds1[0], DiracFile)
+        assert ds1[0].lfn == '/first/path/set/a'
+        assert isinstance(ds1[2], DiracFile)
+        assert ds1[2].lfn == '/second/path/set/c'
+        assert isinstance(ds1[0:2], LHCbCompressedDataset)
+        assert len(ds1[0:2]) == 2
+        assert len(ds1[0:2].files) == 1
+        assert len(ds1[::2]) == 2
+
+        #Check the getLFNs
+        assert ds1.getLFNs() == ['/first/path/set/a', '/first/path/set/b', '/second/path/set/c', '/second/path/set/d']
+
+        #Check extend, union, subset superset, difference
+        ds1 = LHCbCompressedDataset(['/path/to/some/file/a', '/path/to/some/otherfile/b'])
+        ds2 = LHCbCompressedDataset(['/otherpath/to/some/file/c', '/path/to/some/otherfile/d'])
+        ds3 = ds1.union(ds2)
+        assert len(ds3) == 4
+        assert sorted(ds3.getLFNs()) == ['/otherpath/to/some/file/c', '/path/to/some/file/a', '/path/to/some/otherfile/b', '/path/to/some/otherfile/d']
+        assert(ds1.isSubset(ds3))
+        assert(ds3.isSuperset(ds2))
+
+        ds4 = ds3.difference(ds1)
+        assert sorted(ds4.getLFNs()) == ['/otherpath/to/some/file/c', '/path/to/some/otherfile/d']
+
+        ds1.extend(ds2)
+        assert len(ds1) == 4
+        assert ds1.getLFNs() == ['/path/to/some/file/a', '/path/to/some/otherfile/b', '/otherpath/to/some/file/c', '/path/to/some/otherfile/d']
+
+

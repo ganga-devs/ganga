@@ -3,7 +3,7 @@ import os
 import inspect
 import GangaCore.Utility.Virtualization
 from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
@@ -16,9 +16,11 @@ from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.util import unique
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
+from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, dirac_outputfile_jdl
 logger = getLogger()
 config = getConfig('DIRAC')
-
+configLHCb = getConfig('LHCb')
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
@@ -51,6 +53,11 @@ class ExeDiracRTHandler(IRuntimeHandler):
         platform = 'ANY'
         if hasattr(app, 'platform'):
             platform = app.platform
+
+        #We have to specify a platform for the WN
+        if platform == 'ANY':
+            platform = configLHCb['defaultPlatform'] 
+            logger.warning('No application platform specified. Using default platform %s' % platform)
 
         commandline = []
         commandline.append(app.exe)
@@ -94,11 +101,10 @@ class ExeDiracRTHandler(IRuntimeHandler):
                 for name in this_file.getFilenameList():
                     inputsandbox.append(File(abspath(expanduser(name))))
 
-        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, config['RequireDefaultSE'])
-
+        lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
-        dirac_script = script_generator(diracAPI_script_template(),
+        dirac_script = script_generator(lhcbdiracAPI_script_template(),
                                         DIRAC_IMPORT='from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
                                         DIRAC_JOB_IMPORT='from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
                                         DIRAC_OBJECT='DiracLHCb()',
@@ -113,7 +119,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),
-                                        OUTPUTFILESSCRIPT=dirac_outputfiles,
+                                        OUTPUTFILESSCRIPT=lhcbdirac_outputfiles,
                                         OUTPUT_PATH="",  # job.fqid,
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
@@ -146,7 +152,12 @@ import subprocess
 from os import system, environ, pathsep, getcwd, listdir, path
 
 runenv = environ.copy()
-runenv['PATH'] = getcwd() + (pathsep + runenv['PATH'])
+if 'PATH' in runenv.keys():
+    runenv['PATH'] = getcwd() + (pathsep + runenv['PATH'])
+else:
+    runenv['PATH'] = getcwd()
+if not 'PWD' in runenv.keys():
+    runenv['PWD'] = getcwd()
 
 PYTHON_DIR = ###PYTHONDIR###
 workdir = getcwd()
