@@ -5,6 +5,12 @@
 --------------------------------------------------------------------------------------------------------------
 ganga/ganga/Ganga
 --------------------------------------------------------------------------------------------------------------
-* ...
+* Add platform attribute to Executable. This requests a specific platform when submitting jobs to Dirac. #1528, #1555, #1556
+* Made thread timeout configurable 'Queues' - ['ShutDownTimeout'] to reduce CPU usage. #1558
 
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Update Executable Dirac RT handler to use LHCbDiracJob and request a specific platform. #1528, #1555, #1556
+* Created LHCbCompressedDataset for use with BKQuery. The full dataset can be requested with BKQuery().getDataset(False) #1557, 1559
 **************************************************************************************************************
