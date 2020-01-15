@@ -10,7 +10,7 @@ from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.Utility.Config import getConfig, ConfigError
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 import GangaCore.Utility.logging
-from GangaLHCb.Lib.LHCbDataset import LHCbDataset
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from .LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate

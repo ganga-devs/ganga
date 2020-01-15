@@ -63,6 +63,7 @@ class LHCbDataset(GangaDataset):
             files = []
         self.files = GangaList()
         process_files = True
+        from GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset import LHCbCompressedDataset
         if fromRef:
             self.files._list.extend(files)
             process_files = False
@@ -75,6 +76,9 @@ class LHCbDataset(GangaDataset):
                 process_files = False
         elif isinstance(files, LHCbDataset):
             self.files._list.extend(files.files._list)
+            process_files = False
+        elif isinstance(files, LHCbCompressedDataset):
+            self.files._list.extend(files.getFullDataset().files._list)
             process_files = False
 
         if process_files:
@@ -184,7 +188,7 @@ class LHCbDataset(GangaDataset):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
         from GangaCore.GPIDev.Base import ReadOnlyObjectError
-
+        from GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset import LHCbCompressedDataset
         if self._parent is not None and self._parent._readonly():
             raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, getName(self)))
 
@@ -196,6 +200,8 @@ class LHCbDataset(GangaDataset):
             _external_files = files
         elif isType(files, LHCbDataset):
             _external_files = files.files
+        elif isType(files, LHCbCompressedDataset):
+            _external_files = files.getFullDataset().files
         else:
             if not hasattr(files, "__getitem__") or not hasattr(files, '__iter__'):
                 _external_files = [files]
@@ -367,10 +373,11 @@ class LHCbDataset(GangaDataset):
                 return snew + sdatasetsnew + sold + sdatasetsold
 
     def _checkOtherFiles(self, other ):
+        from GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset import LHCbCompressedDataset
         if isType(other, GangaList) or isType(other, []):
-            other_files = LHCbDataset(other).getFullFileNames()
-        elif isType(other, LHCbDataset):
-            other_files = other.getFullFileNames()
+            other_files = LHCbDataset(other).getFileNames()
+        elif isType(other, [LHCbDataset, LHCbCompressedDataset]):
+            other_files = other.getFileNames()
         else:
             raise GangaException("Unknown type for difference")
         return other_files
@@ -378,7 +385,7 @@ class LHCbDataset(GangaDataset):
     def difference(self, other):
         '''Returns a new data set w/ files in this that are not in other.'''
         other_files = self._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).difference(other_files)
+        files = set(self.getFileNames()).difference(other_files)
         data = LHCbDataset()
         data.extend(list(files))
         data.depth = self.depth
@@ -398,7 +405,7 @@ class LHCbDataset(GangaDataset):
         '''Returns a new data set w/ files in either this or other but not
         both.'''
         other_files = other._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).symmetric_difference(other_files)
+        files = set(self.getFileNames()).symmetric_difference(other_files)
         data = LHCbDataset()
         data.extend(list(files))
         data.depth = self.depth
@@ -407,7 +414,7 @@ class LHCbDataset(GangaDataset):
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
         other_files = other._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).intersection(other_files)
+        files = set(self.getFileNames()).intersection(other_files)
         data = LHCbDataset()
         data.extend(list(files))
         data.depth = self.depth
@@ -416,7 +423,7 @@ class LHCbDataset(GangaDataset):
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
         other_files = self._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).union(other_files)
+        files = set(self.getFileNames()).union(other_files)
         data = LHCbDataset()
         data.extend(list(files))
         data.depth = self.depth
