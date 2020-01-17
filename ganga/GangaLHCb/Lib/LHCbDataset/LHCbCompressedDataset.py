@@ -10,7 +10,7 @@ from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.Utility.Config import getConfig, ConfigError
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 import GangaCore.Utility.logging
-from GangaLHCb.Lib.LHCbDataset import LHCbDataset
+import GangaLHCb.Lib.LHCbDataset
 from .LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
@@ -105,7 +105,7 @@ class LHCbCompressedDataset(GangaDataset):
         self.files = []
         #if files is an LHCbDataset
 
-        if files and isType(files, LHCbDataset):
+        if files and isType(files, GangaLHCb.Lib.LHCbDataset.LHCbDataset):
             newset = LHCbCompressedFileSet(files.getLFNs())
             self.files.append(newset)
         #if files is an LHCbCompressedDataset
@@ -255,7 +255,7 @@ class LHCbCompressedDataset(GangaDataset):
 
         if isType(other, LHCbCompressedDataset):
             self.files.extend(other.files)
-        elif isType(other, LHCbDataset):
+        elif isType(other, GangaLHCb.Lib.LHCbDataset.LHCbDataset):
             lfns = other.getLFNs()
             self.files.append(LHCbCompressedFileSet(lfns))
         elif isType(other, DiracFile):
@@ -318,7 +318,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def getFullDataset(self):
         '''Returns an LHCb dataset'''
-        ds = LHCbDataset(persistency = self.persistency)
+        ds = GangaLHCb.Lib.LHCbDataset.LHCbDataset(persistency = self.persistency)
         lfns = self.getLFNs()
         for _lfn in lfns:
             ds.extend(DiracFile(lfn = _lfn))
@@ -418,7 +418,7 @@ class LHCbCompressedDataset(GangaDataset):
             other_files = other
         elif isType(other, LHCbCompressedDataset):
             other_files = other.getLFNs()
-        elif isType(other, LHCbDataset):
+        elif isType(other, GangaLHCb.Lib.LHCbDataset.LHCbDataset):
             other_files = other.getLFNs()
         else:
             raise GangaException("Unknown type for difference")
