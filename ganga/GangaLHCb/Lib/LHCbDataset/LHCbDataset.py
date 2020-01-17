@@ -15,7 +15,7 @@ from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-import GangaLHCb.Lib.LHCbCompressedDataset
+import GangaLHCb.Lib.LHCbDataset
 logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -77,7 +77,7 @@ class LHCbDataset(GangaDataset):
         elif isinstance(files, LHCbDataset):
             self.files._list.extend(files.files._list)
             process_files = False
-        elif isinstance(files, LHCbCompressedDataset.LHCbCompressedDataset):
+        elif isinstance(files, GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset):
             self.files._list.extend(files.getFullDataset().files._list)
             process_files = False
 
@@ -199,7 +199,7 @@ class LHCbDataset(GangaDataset):
             _external_files = files
         elif isType(files, LHCbDataset):
             _external_files = files.files
-        elif isType(files, LHCbCompressedDataset.LHCbCompressedDataset):
+        elif isType(files, GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset):
             _external_files = files.getFullDataset().files
         else:
             if not hasattr(files, "__getitem__") or not hasattr(files, '__iter__'):
@@ -374,7 +374,7 @@ class LHCbDataset(GangaDataset):
     def _checkOtherFiles(self, other ):
         if isType(other, GangaList) or isType(other, []):
             other_files = LHCbDataset(other).getFileNames()
-        elif isType(other, [LHCbDataset, LHCbCompressedDataset.LHCbCompressedDataset]):
+        elif isType(other, [LHCbDataset, GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset]):
             other_files = other.getFileNames()
         else:
             raise GangaException("Unknown type for difference")
