@@ -169,6 +169,7 @@ makeConfig("Shell", "configuration parameters for internal Shell utility.")
 # Queues
 queues_config = makeConfig("Queues", "configuration section for the queues")
 queues_config.addOption('Timeout', None, 'default timeout for queue generated processes')
+queues_config.addOption('ShutDownTimeout', 0.1, 'timeout before looping again over queue to give shutdown a chance')
 queues_config.addOption('NumWorkerThreads', 5, 'default number of worker threads in the queues system')
 
 # ------------------------------------------------
