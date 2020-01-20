@@ -373,7 +373,6 @@ def generateJobScripts(app, appendJobScripts):
     gzipFile(scriptArchive, scriptArchive+'.gz', True)
     app.jobScriptArchive.namePattern = app.jobScriptArchive.namePattern + '.gz'
 
-
 def generateDiracScripts(app):
     """
     Construct a DIRAC scripts which must be unique to each job to have unique checksum.
