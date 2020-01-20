@@ -12,6 +12,9 @@ from GangaCore.GPIDev.Base.Proxy import getName
 
 from collections import namedtuple
 
+timeout = getConfig('Queues')['ShutDownTimeout']
+timeout = 0.1 if timeout==None else timeout
+
 logger = getLogger()
 QueueElement = namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
 CommandInput = namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
@@ -82,9 +85,9 @@ class WorkerThreadPool(object):
         # easier to unit test this way though with a dummy thread.
         while not thread.should_stop():
             try:
-                item = self.__queue.get(True, 0.05)
+                item = self.__queue.get(True,timeout)
             except queue.Empty:
-                # wait 0.05 sec then loop again to give shutdown a chance
+                # wait 'timeout' sec then loop again to give shutdown a chance
                 continue
 
             # regster as a working thread
