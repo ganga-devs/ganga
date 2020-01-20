@@ -86,9 +86,10 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
             from GangaCore.GPIDev.Lib.Job import JobError
             raise JobError("InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!")
         inputsandbox = []
-        for filepattern in getInputFilesPatterns(job)[0]:
+        (fileNames, tmpDir) = getInputFilesPatterns(job)
+        for filepattern in fileNames:
             inputsandbox.append(File(filepattern))
-
+        shutil.rmtree(tmpDir)
     if len(inputsandbox) > 100:
         logger.warning('InputSandbox exceeds maximum size (100) supported by the Dirac backend')
         raise GangaException(None, 'InputSandbox exceed maximum size')

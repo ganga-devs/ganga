@@ -5,7 +5,6 @@ import datetime
 from os.path import exists, isdir, realpath, isfile, islink
 from os import pathsep, listdir, environ, fdopen
 import subprocess
-import tempfile
 import GangaCore.Utility.logging
 import GangaCore.Utility.Config
 from optparse import OptionParser, OptionValueError

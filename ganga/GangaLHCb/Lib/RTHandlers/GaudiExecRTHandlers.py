@@ -314,6 +314,8 @@ def generateDiracInput(app):
 
     app.uploadedInput = new_df
     app.is_prepared.addAssociatedFile(DiracFile(lfn = new_df.lfn))
+    #Finally remove the tmp_dir
+    shutil.rmtree(tmp_dir, ignore_errors = True)
 
 def generateJobScripts(app, appendJobScripts):
     """
@@ -372,6 +374,9 @@ def generateJobScripts(app, appendJobScripts):
 
     gzipFile(scriptArchive, scriptArchive+'.gz', True)
     app.jobScriptArchive.namePattern = app.jobScriptArchive.namePattern + '.gz'
+
+    #Finally clean up the tmp_dir
+    shutil.rmtree(tmp_dir, ignore_errors = True)
 
 def generateDiracScripts(app):
     """
