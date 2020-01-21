@@ -8,7 +8,6 @@ ganga/ganga/Ganga
 * Add platform attribute to Executable. This requests a specific platform when submitting jobs to Dirac. #1528, #1555, #1556
 * Made thread timeout configurable 'Queues' - ['ShutDownTimeout'] to reduce CPU usage. #1558
 
-
 --------------------------------------------------------------------------------------------------------------
 ganga/ganga/GangaDirac
 --------------------------------------------------------------------------------------------------------------
