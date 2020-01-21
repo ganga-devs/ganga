@@ -1,6 +1,5 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
-import tempfile
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 import GangaCore.Utility.Config
 from GangaCore.Utility.files import expandfilename
