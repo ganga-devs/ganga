@@ -95,7 +95,7 @@ class LHCbCompressedDataset(GangaDataset):
     _name = "LHCbCompressedDataset"
     _exportmethods = ['getReplicas', '__len__', '__getitem__', '__iter__', '__next__', 'replicate',
                       'append', 'extend', 'getCatalog', 'optionsString', 'getFileNames', 'getFilenameList',
-                      'getLFNs', 'getFullFileNames', 'getFullDataset',
+                      'getLFNs', 'getFullFileNames', 'getFullDataset', 'hasLFNs',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata', 'getMetadata',
                       'getLuminosity', 'getEvtStat', 'getRunNumbers', 'isEmpty', 'getPFNs'] 
@@ -305,6 +305,17 @@ class LHCbCompressedDataset(GangaDataset):
             runNos.append(mets[_f]['RunNumber'])
         return runNos
 
+    def isEmpty(self):
+        '''Does this contain files'''
+        if len(self) > 0:
+            return True
+        else:
+            return False
+
+    def hasLFNs(self):
+        '''Does it contain LFNs'''
+        return self.isEmpty()
+
     def getPFNs(self):
         'Returns a list of all PFNs (by name) stored in the dataset.'
         return self.getFilenameList()
@@ -370,12 +381,12 @@ class LHCbCompressedDataset(GangaDataset):
 
         dtype_str_default = getConfig('LHCb')['datatype_string_default']
         dtype_str_patterns = getConfig('LHCb')['datatype_string_patterns']
-        for f in self.files:
+        for _f in self.getLFNs():
             dtype_str = dtype_str_default
             for this_str in dtype_str_patterns:
                 matched = False
                 for pat in dtype_str_patterns[this_str]:
-                    if fnmatch.fnmatch(f.namePattern, pat):
+                    if fnmatch.fnmatch(_f, pat):
                         dtype_str = this_str
                         matched = True
                         break
@@ -383,12 +394,10 @@ class LHCbCompressedDataset(GangaDataset):
                     break
             sdatasetsnew += '\n        '
             sdatasetsold += '\n        '
-            if isDiracFile(f):
-                sdatasetsnew += """ \"LFN:%s\",""" % f.lfn
-                sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.lfn, dtype_str)
-            else:
-                sdatasetsnew += """ \"%s\",""" % f.accessURL()[0]
-                sdatasetsold += """ \"DATAFILE='%s' %s\",""" % (f.accessURL()[0], dtype_str)
+            #f is always a DiracFile
+            sdatasetsnew += """ \"LFN:%s\",""" % _f
+            sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (_f, dtype_str)
+
         if sdatasetsold.endswith(","):
             if self.persistency == 'ROOT':
                 sdatasetsnew = sdatasetsnew[:-1] + """\n], clear=True)"""
