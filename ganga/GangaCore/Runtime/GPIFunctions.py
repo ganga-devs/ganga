@@ -1,3 +1,5 @@
+import runpy
+
 
 def license():
     'Print the full license (GPL)'
@@ -92,4 +94,10 @@ def convert_merger_to_postprocessor(j):
         mp = MultiPostProcessor()
         mp.process_objects.append(stripProxy(j).merger)
         stripProxy(j).postprocessors = mp
+
+def runfile(path_to_file):
+    """ A wrapper for the runpy.run_path() function. """
+    if not type(path_to_file) == str:
+        raise ValueError("path_to_file must be a string containing the path to the file to be executed. ")
+    return runpy.run_path(path_to_file)
 
