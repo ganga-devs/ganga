@@ -1,9 +1,11 @@
-from sqlalchemy import create_engine, Column, Integer, ForeignKey
+from sqlalchemy import  Column, Integer, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.orm import relationship
 
-engine = create_engine('sqlite:///ganga.db', echo = True)
+from GangaCore.Core.GangaRepository.GangaAlchemy.db_engine import db_engine
+
+engine = db_engine()
 
 GangaBase = declarative_base()
 
@@ -41,36 +43,6 @@ class JobModel(GangaBase):
     _parallel_submit = Column('parallel_submit',LargeBinary())
 
     subjob = relationship('SubJobModel', back_populates='jobs')
-
-    def __init__(self, **kwargs):
-        self._id = kwargs['id']
-        self._inputsandbox = kwargs['inputsandbox']
-        self._outputsandbox = kwargs['outputsandbox']
-        self._info = kwargs['info']
-        self._comment = kwargs['comment']
-        self._time = kwargs['time']
-        self._application = kwargs['application']
-        self._backend = kwargs['backend']
-        self._inputfiles = kwargs['inputfiles']
-        self._outputfiles = kwargs['outputfiles']
-        self._non_copyable_outputfiles = kwargs['non_copyable_outputfiles']
-        self._status = kwargs['status']
-        self._name = kwargs['name']
-        self._inputdir = kwargs['inputdir']
-        self._outputdir = kwargs['outputdir']
-        self._inputdata = kwargs['inputdata']
-        self._outputdata = kwargs['outputdata']
-        self._splitter = kwargs['splitter']
-        self._subjobs = kwargs['subjobs']
-        self._master = kwargs['master']
-        self._postprocessors = kwargs['postprocessors']
-        self._virtualization = kwargs['virtualization']
-        self._merger = kwargs['merger']
-        self._do_auto_resubmit = kwargs['do_auto_resubmit']
-        self._metadata = kwargs['metadata']
-        self._fqid = kwargs['fqid']
-        self._been_queued = kwargs['been_queued']
-        self._parallel_submit = kwargs['parallel_submit']
 
     def __repr__(self):
         return '{}'.format(self.id)

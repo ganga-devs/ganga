@@ -960,3 +960,16 @@ reg_config.addOption('DisableLoadCheck', True, 'Disable the checking of recent b
 cred_config = makeConfig('Credentials', 'This configures the credentials singleton')
 cred_config.addOption('CleanDelay', 1, 'Seconds between auto-clean of credentials when proxy externally destroyed')
 cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on disk')
+
+# ------------------------------------------------
+# Database
+db_config = makeConfig("DatabaseConfigurations", "selection of database for ganga. For sqlite, none of the other options are required.")
+db_config.addOption('database', 'sqlite', 'sqlite postgresql oracle mysql mssql')
+db_config.addOption('driver', None, 'psycopg2, pyodbc, etc')
+db_config.addOption('username', None, 'username')
+db_config.addOption('password', None, 'password')
+db_config.addOption('host', None, 'host')
+db_config.addOption('port', None, 'port')
+db_config.addOption('dbname', None, 'name of database')
+
+# ------------------------------------------------
