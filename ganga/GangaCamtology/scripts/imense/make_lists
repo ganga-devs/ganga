@@ -1,0 +1,8 @@
+for DISK in 1 2 3 4 5 6; do
+  URLROOT="http://stream2.hep.phy.cam.ac.uk/data${DISK}"
+  INDIR="/data${DISK}"
+  OUTDIR="/home/karl/image_lists/data${DISK}"
+  PREFIX="data${DISK}_"
+  mkdir -p ${OUTDIR}
+  walker -i ${INDIR} -x -n 1000 -u ${URLROOT} -o ${OUTDIR} -p ${PREFIX} &
+done
