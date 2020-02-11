@@ -41,7 +41,7 @@ TextMerger
     :dedent: 8
 
 
-Used for merging ``.txt``,``.log``, etc. In addition to the normal attributes, you can also choose to compress
+Used for merging ``.txt``, ``.log``, etc. In addition to the normal attributes, you can also choose to compress
 the output with
 
 RootMerger
