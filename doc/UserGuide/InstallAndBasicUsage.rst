@@ -68,8 +68,6 @@ run using a ``virtualenv``:
     # Install Ganga 
     pip install -e git+git://github.com/ganga-devs/ganga.git#egg=ganga
 
-Note that this will not install any of the additional packages Ganga requires so you may have import errors when running. If so, please install the appropriate python packages on your system.
-
 
 Starting Ganga
 --------------
