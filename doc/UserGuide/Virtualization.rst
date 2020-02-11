@@ -27,7 +27,6 @@ The container can also be provided as a Docker image from a repository. The defa
   
 ::
   j.virtualization = Singularity("docker://gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v3")
-
   j.virtualization = Docker("docker://fedora:latest")   
 
 Another option is to provide a `GangaFile` Object which points to a singularity file. In that case the singularity image file will be copied to the worker node. The first example is with an image located on some shared disk. This will be effective for running on a local backend or a batch system with a shared disk system.

@@ -102,7 +102,7 @@ Given this selection, you can then perform a number of operations on all of the 
     :end-before: # -- JOBMANIPULATION JOBSELECTOP STOP
     :dedent: 8
 
-Available operations are: ``submit``, ``copy`, ``kill``, ``resubmit``, ``remove``. These also take the ``keep_going``
+Available operations are: ``submit``, ``copy``, ``kill``, ``resubmit``, ``remove``. These also take the ``keep_going``
 argument which, if set to ``True`` will mean that it will keep looping through the jobs even if an error occurs
 performing the operation on one of them. These operations can also be performed on subjobs as well - see
 :doc:`SplittersAndPostprocessors` for more info.
@@ -110,7 +110,7 @@ performing the operation on one of them. These operations can also be performed 
 Export and Import of Ganga Objects
 ----------------------------------
 
-Ganga is able to export a Job object (or a ``select``ion of Job objects) or any other Ganga object using the ``export``
+Ganga is able to export a Job object (or a ``selection`` of Job objects) or any other Ganga object using the ``export``
 method which will create a human readable text file that you can edit manually and then load in using ``load``:
 
 .. literalinclude:: ../../ganga/GangaCore/test/GPI/TutorialTests.py
