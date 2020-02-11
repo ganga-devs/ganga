@@ -180,7 +180,7 @@ CustomChecker
 
 This is probably the most useful checker and allows the user to use private python code to decide if a job should
 fail or not. The ``CustomChecker`` will execute your script and fail the job based on the output. For example, you
-can make a checker in your home directory called '``mychecker.py``'. In this file you must define a function called
+can make a checker in your home directory called ``mychecker.py``. In this file you must define a function called
 ``check(j)``, which takes in your job as input and returns ``True`` (pass) or ``False`` (fail)
 
 .. code-block:: python
