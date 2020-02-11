@@ -8,10 +8,7 @@ Installation
 There are several ways to install and run Ganga:
 
 
-NOTE
-^^^^
-
-Currently Ganga is only available for python3 releases and supported on Linux distributions.
+**NOTE -** Currently Ganga is only available for python3 releases and supported on Linux distributions.
 
 
 CVMFS
