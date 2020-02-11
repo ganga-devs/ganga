@@ -48,32 +48,6 @@ Alternatively if you want you can install it using pip to your local user enviro
 
 ``pip install ganga --user``
 
-Ganga Install Script
-^^^^^^^^^^^^^^^^^^^^
-
-There is an install script provided `here <http://ganga.web.cern.ch/ganga/download/ganga-install>`_ that will not
-only download and install Ganga but also all the externals required as well. To run it, download it and do the
-following:
-
-.. code-block:: bash
-
-    wget http://ganga.web.cern.ch/ganga/download/ganga-install
-    python ganga-install --extern=GangaDirac <RELEASE>
-
-(Here <RELEASE> is in the format x.y.z)
-
-
-To update an install to the latest code form github develop (FOR DEVELOPERS ONLY, THIS IS UNSUPPORTED) try something similar to the following:
-
-.. code-block:: bash
-
-    wget http://ganga.web.cern.ch/ganga/download/ganga-install
-    chmod +x ganga-install
-    ./ganga-install 6.1.20
-    cd ~/Ganga/install
-    rm -fr 6.1.20
-    git clone https://github.com/ganga-devs/ganga
-    mv ganga 6.1.20
 
 From Github
 ^^^^^^^^^^^
