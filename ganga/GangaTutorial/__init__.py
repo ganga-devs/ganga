@@ -2,8 +2,9 @@
 
 def loadPlugins( config = {} ):
 
-    import Lib.PrimeFactorizer
-    import Lib.PrimeFactorizerSplitter
-    import Lib.PrimeTableDataset
+    import GangaTutorial
+    #import Lib.PrimeFactorizer
+    #import Lib.PrimeFactorizerSplitter
+    #import Lib.PrimeTableDataset
 
     return None
