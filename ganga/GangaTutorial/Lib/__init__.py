@@ -1,1 +1,2 @@
-from PrimeFactorizer import *
+from GangaTutorial.Lib.PrimeFactorizer import *
+
