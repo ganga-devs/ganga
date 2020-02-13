@@ -6,8 +6,6 @@
 # NOTE: Make sure that _data and __dict__ of any GangaObject are only referenced
 # here - this is necessary for write locking and lazy loading!
 
-from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
-from .Filters import allComponentFilters
 from functools import partial
 import inspect
 import abc
@@ -51,7 +49,13 @@ def _getName(obj):
 
 logger = getLogger()
 
-do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data_dict', '_lock', '_proxyObject']
+do_not_copy = [
+    '_index_cache_dict',
+    '_parent',
+    '_registry',
+    '_data_dict',
+    '_lock',
+    '_proxyObject']
 
 
 def synchronised(f):
@@ -83,7 +87,8 @@ class Node(object, metaclass=abc.ABCMeta):
     def __init__(self, parent=None):
         super(Node, self).__init__()
         self._parent = parent
-        self._lock = threading.RLock()  # Don't write from out of thread when modifying an object
+        # Don't write from out of thread when modifying an object
+        self._lock = threading.RLock()
         self._dirty = False  # dirty flag is true if the object has been modified locally and its contents is out-of-sync with its repository
 
     def __deepcopy__(self, memo=None):
@@ -106,7 +111,8 @@ class Node(object, metaclass=abc.ABCMeta):
         # type: () -> Node
         return self._parent
 
-    @synchronised  # This will lock the _current_ (soon to be _old_) root object
+    # This will lock the _current_ (soon to be _old_) root object
+    @synchronised
     def _setParent(self, parent):
         """
         This sets the parent of this Node to be a new object
@@ -364,7 +370,8 @@ class Descriptor(object):
         """
         name = _getName(self)
 
-        # If obj is None then the getter was called on the class so return the Item
+        # If obj is None then the getter was called on the class so return the
+        # Item
         if obj is None:
             return cls._schema[name]
 
@@ -372,7 +379,8 @@ class Descriptor(object):
             # Fixme set the parent of Node objects?!?!
             return self._bind_method(obj, self._getter_name)()
 
-        # First we want to try to get the information without prompting a load from disk
+        # First we want to try to get the information without prompting a load
+        # from disk
 
         # ._data takes priority ALWAYS over ._index_cache
         # This access should not cause the object to be loaded
@@ -389,7 +397,8 @@ class Descriptor(object):
         except KeyError:
             pass
 
-        # Since we couldn't find the information in the cache, we will need to fully load the object
+        # Since we couldn't find the information in the cache, we will need to
+        # fully load the object
         obj._loadObject()
 
         # Do we have the attribute now?
@@ -402,7 +411,9 @@ class Descriptor(object):
         if obj._schema.hasItem(name):
             return obj._schema.getDefaultValue(name)
 
-        raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
+        raise AttributeError(
+            'Could not find attribute {0} in {1}'.format(
+                name, obj))
 
     @staticmethod
     def cloneObject(v, obj, name):
@@ -418,7 +429,8 @@ class Descriptor(object):
 
         if v is None:
             if item.hasProperty('category'):
-                assertion = item['optional'] and (item['category'] != 'internal')
+                assertion = item['optional'] and (
+                    item['category'] != 'internal')
             else:
                 assertion = item['optional']
             # assert(assertion)
@@ -426,7 +438,8 @@ class Descriptor(object):
                 logger.warning(
                     "Item: '%s'. of class type: '%s'. Has a Default value of 'None' but is NOT optional!!!" %
                     (name, type(obj)))
-                logger.warning("Please contact the developers and make sure this is updated!")
+                logger.warning(
+                    "Please contact the developers and make sure this is updated!")
             return None
         elif isinstance(v, str):
             return str(v)
@@ -487,7 +500,9 @@ class Descriptor(object):
                     '%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' %
                     (name, _getName(v), item['category']))
         else:
-            if v._category not in [item['category'], 'internal'] and item['category'] != 'internal':
+            if v._category not in [
+                item['category'],
+                    'internal'] and item['category'] != 'internal':
                 from GangaCore.GPIDev.Base.Proxy import GangaAttributeError
                 raise GangaAttributeError(
                     '%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' %
@@ -577,7 +592,8 @@ class Descriptor(object):
             # Else we need to work out what we've got.
             if isinstance(item, ComponentItem):
                 if isinstance(val, (list, tuple, GangaList)):
-                    # Can't have a GangaList inside a GangaList easily so lets not
+                    # Can't have a GangaList inside a GangaList easily so lets
+                    # not
                     if isinstance(obj, GangaList):
                         new_val = []
                     else:
@@ -627,7 +643,11 @@ class Descriptor(object):
         del obj._data[_getName(self)]
 
     @staticmethod
-    def createNewList(_final_list, _input_elements, action=None, extra_args=None):
+    def createNewList(
+            _final_list,
+            _input_elements,
+            action=None,
+            extra_args=None):
         """ Create a new list object which contains the old object with a possible action parsing the elements before they're added
         Args:
             _final_list (list): The list object which is to have the new elements appended to it
@@ -673,9 +693,14 @@ class ObjectMetaclass(abc.ABCMeta):
 
         # This reduces the memory footprint
         # TODO explore migrating the _data_dict object to a non-dictionary type as it's a fixed size and we can potentially save big here!
-        # Adding the __dict__ here is an acknowledgement that we don't control all
-        # Ganga classes higher up.
-        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject')
+        # Adding the __dict__ here is an acknowledgement that we don't control
+        # all Ganga classes higher up.
+        cls.__slots__ = (
+            '_index_cache_dict',
+            '_registry',
+            '_data_dict',
+            '__dict__',
+            '_proxyObject')
 
         # Add all class members of type `Schema.Item` to the _schema object
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
@@ -687,7 +712,8 @@ class ObjectMetaclass(abc.ABCMeta):
 
         # sanity checks for schema...
         if '_schema' not in this_dict:
-            s = "Class %s must _schema (it cannot be silently inherited)" % (name,)
+            s = "Class %s must _schema (it cannot be silently inherited)" % (
+                name,)
             logger.error(s)
             raise GangaValueError(s)
 
@@ -696,19 +722,29 @@ class ObjectMetaclass(abc.ABCMeta):
         if hasattr(cls, '_additional_slots'):
             attrs_to_add += [_ for _ in cls._additional_slots]
 
-        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict',
-                         '__dict__', '_proxyObject') + tuple(attrs_to_add)
+        cls.__slots__ = (
+            '_index_cache_dict',
+            '_registry',
+            '_data_dict',
+            '__dict__',
+            '_proxyObject') + tuple(attrs_to_add)
 
-        # If a class has not specified a '_name' then default to using the class '__name__'
+        # If a class has not specified a '_name' then default to using the
+        # class '__name__'
         if not cls.__dict__.get('_name'):
             cls._name = name
 
         if this_schema._pluginclass is not None:
-            logger.warning('Possible schema clash in class %s between %s and %s',
-                           name, _getName(cls), _getName(this_schema._pluginclass))
+            logger.warning(
+                'Possible schema clash in class %s between %s and %s',
+                name,
+                _getName(cls),
+                _getName(
+                    this_schema._pluginclass))
 
         # export visible properties... do not export hidden properties
-        # This constructs one Descriptor for each attribute which can be set for this class
+        # This constructs one Descriptor for each attribute which can be set
+        # for this class
         for attr, item in this_schema.allItems():
             setattr(cls, attr, Descriptor(attr, item))
 
@@ -717,17 +753,20 @@ class ObjectMetaclass(abc.ABCMeta):
         # in the schema
         for attr, item in this_schema.simpleItems():
             if not item['getter']:
-                item._check_type(item['defvalue'], '.'.join([name, attr]), False)
+                item._check_type(item['defvalue'],
+                                 '.'.join([name, attr]), False)
 
         # create reference in schema to the pluginclass
         this_schema._pluginclass = cls
 
         # if we've not even declared this we don't want to use it!
-        if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
+        if not cls._declared_property(
+                'hidden') or cls._declared_property('enable_plugin'):
             allPlugins.add(cls, cls._category, _getName(cls))
 
         # create a configuration unit for default values of object properties
-        if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
+        if not cls._declared_property(
+                'hidden') or cls._declared_property('enable_config'):
             this_schema.createDefaultConfig()
 
 
@@ -772,7 +811,8 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         # Build an object of this type
         returnable = cls.__new__(cls, (), {})
 
-        # We have implicit knowledge about whether we should attempt to load this object from disk
+        # We have implicit knowledge about whether we should attempt to load
+        # this object from disk
         setattr(returnable, '_should_load', should_load)
 
         Node.__init__(returnable)
@@ -780,7 +820,8 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         setattr(returnable, '_should_init', should_init)
         GangaObject.__init__(returnable)
         try:
-            # Initialize the most derived class to get all of the goodness needed higher up.
+            # Initialize the most derived class to get all of the goodness
+            # needed higher up.
             returnable.__class__.__init__(returnable)
         except BaseException:
             logger.debug(
@@ -802,7 +843,8 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         self._registry = None
         self._data_dict = {}
 
-        # Just a flag to prevent expensive double-declarations and to avoid this where needed
+        # Just a flag to prevent expensive double-declarations and to avoid
+        # this where needed
         if self._should_init:
             self.populate_from_schema()
 
@@ -812,8 +854,8 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         """
         self._data_dict = dict.fromkeys(self._schema.datadict)
         for attr, item in self._schema.allItems():
-            # If an object is hidden behind a getter method we can't assign a parent
-            # or defvalue so don't bother - rcurrie
+            # If an object is hidden behind a getter method we can't assign a
+            # parent or defvalue so don't bother - rcurrie
             if item.getProperties()['getter'] is None:
                 setattr(self, attr, self._schema.getDefaultValue(attr))
 
@@ -836,15 +878,21 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
 
         for (name, item) in self._schema.simpleItems():
             if item['visitable']:
-                visitor.simpleAttribute(self, name, getattr(self, name), item['sequence'])
+                visitor.simpleAttribute(
+                    self, name, getattr(
+                        self, name), item['sequence'])
 
         for (name, item) in self._schema.sharedItems():
             if item['visitable']:
-                visitor.sharedAttribute(self, name, getattr(self, name), item['sequence'])
+                visitor.sharedAttribute(
+                    self, name, getattr(
+                        self, name), item['sequence'])
 
         for (name, item) in self._schema.componentItems():
             if item['visitable']:
-                visitor.componentAttribute(self, name, getattr(self, name), item['sequence'])
+                visitor.componentAttribute(
+                    self, name, getattr(
+                        self, name), item['sequence'])
 
         visitor.nodeEnd(self)
 
@@ -865,12 +913,19 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         # Check if this object is derived from the source object, then the copy
         # will not throw away information
 
-        if not hasattr(_srcobj, '__class__') and not inspect.isclass(_srcobj.__class__):
+        if not hasattr(
+                _srcobj,
+                '__class__') and not inspect.isclass(
+                _srcobj.__class__):
             raise GangaValueError(
                 "Can't copyFrom a non-class object: %s isclass: %s" %
                 (_srcobj, inspect.isclass(_srcobj)))
 
-        if not isinstance(self, _srcobj.__class__) and not isinstance(_srcobj, self.__class__):
+        if not isinstance(
+                self,
+                _srcobj.__class__) and not isinstance(
+                _srcobj,
+                self.__class__):
             raise GangaValueError(
                 "copyFrom: Cannot copy from %s to %s!" %
                 (_getName(_srcobj), _getName(self)))
@@ -906,7 +961,8 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
                 continue
 
             #logger.debug("Copying: %s : %s" % (name, item))
-            if name == 'application' and hasattr(_srcobj.application, 'is_prepared'):
+            if name == 'application' and hasattr(
+                    _srcobj.application, 'is_prepared'):
                 _app = _srcobj.application
                 if _app.is_prepared not in [None, True]:
                     _app.incrementShareCounter(_app.is_prepared)
@@ -993,7 +1049,9 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
             attrib_value (unknown): the value to set it to
         """
         self._data[attrib_name] = attrib_value
-        if isinstance(attrib_value, Node) and attrib_value._getParent() is not self:
+        if isinstance(
+                attrib_value,
+                Node) and attrib_value._getParent() is not self:
             self._data[attrib_name]._setParent(self)
 
     @property
@@ -1005,10 +1063,12 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         """
         if self._fullyLoadedFromDisk():
             if self._getRegistry() is not None:
-                # Fully loaded so lets regenerate this on the fly to avoid losing data
+                # Fully loaded so lets regenerate this on the fly to avoid
+                # losing data
                 return self._getRegistry().getIndexCache(self)
             else:
-                # No registry therefore can't work out the Cache, probably empty, lets return that
+                # No registry therefore can't work out the Cache, probably
+                # empty, lets return that
                 return self._index_cache_dict
         # Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache_dict
@@ -1022,7 +1082,8 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
             new_inde_cache (dict): Dict of new entries for the new_index_cache
         """
         if self._fullyLoadedFromDisk():
-            logger.debug("Warning: Setting IndexCache data on live object, please avoid!")
+            logger.debug(
+                "Warning: Setting IndexCache data on live object, please avoid!")
         self._index_cache_dict = new_index_cache
 
     def _fullyLoadedFromDisk(self):
@@ -1080,13 +1141,19 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         global do_not_copy
         if self._schema is not None:
             for name, item in self._schema.allItems():
-                if not item['copyable'] or name in do_not_copy or not hasattr(self, name):
-                    setattr(self_copy, name, self._schema.getDefaultValue(name))
+                if not item['copyable'] or name in do_not_copy or not hasattr(
+                        self, name):
+                    setattr(
+                        self_copy,
+                        name,
+                        self._schema.getDefaultValue(name))
                 else:
                     setattr(self_copy, name, deepcopy(getattr(self, name)))
 
                 this_attr = getattr(self_copy, name)
-                if isinstance(this_attr, Node) and this_attr._getParent() is not self_copy:
+                if isinstance(
+                        this_attr,
+                        Node) and this_attr._getParent() is not self_copy:
                     this_attr._setParent(self_copy)
 
                 if item.isA(SharedItem):
@@ -1211,7 +1278,8 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
                         continue
                 else:
                     continue
-                # Avoid attributes the likes of job.master which crawl back up the tree
+                # Avoid attributes the likes of job.master which crawl back up
+                # the tree
                 k_props = self._schema[k].getProperties()
                 if not k_props['visitable'] or k_props['transient']:
                     continue
@@ -1253,7 +1321,9 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
             return r
         elif isinstance(self, Job):
             return self
-        raise AssertionError('No Parent associated with object \'%s\'' % repr(self))
+        raise AssertionError(
+            'No Parent associated with object \'%s\'' %
+            repr(self))
 
     # Customization of the GPI attribute assignment: Attribute Filters
     #
@@ -1311,7 +1381,10 @@ def string_type_shortcut_filter(val, item):
 # TestNativeSpecific.testFileSequence
 
 
+from .Filters import allComponentFilters
 allComponentFilters.setDefault(string_type_shortcut_filter)
+
+from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 
 
 #
