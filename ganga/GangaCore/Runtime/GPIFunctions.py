@@ -1,4 +1,5 @@
 import runpy
+from GangaCore.GPI import *
 
 
 def license():
@@ -95,7 +96,7 @@ def convert_merger_to_postprocessor(j):
         mp.process_objects.append(stripProxy(j).merger)
         stripProxy(j).postprocessors = mp
 
-def runfile(path_to_file, init_globals=None):
+def runfile(path_to_file):
     """
     A wrapper for the runpy.run_path() function.
     Usage:
@@ -107,9 +108,10 @@ def runfile(path_to_file, init_globals=None):
 
     then you have to run the function with init_globals=globals() in the Ganga interpreter like this
 
-     Ganga In[]: runfile('myfile.py', init_globals=globals())
+     Ganga In[]: runfile('myfile.py', init_globals=globals());
+    Note: The semicolon in the end is to supress the output of the run_path function.
     """
     if not isinstance(path_to_file, str):
         raise ValueError("path_to_file must be a string containing the path to the file to be executed. ")
-    return runpy.run_path(path_to_file, init_globals=init_globals)
+    return runpy.run_path(path_to_file, init_globals=globals())
 
