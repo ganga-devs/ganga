@@ -2,17 +2,17 @@
 import grp
 import pwd
 import sys
-import GangaCore.Utility.files
-from GangaCore.Utility.Config import makeConfig, getConfig, expandvars
 import os
 import re
 import inspect
 import getpass
 import subprocess
 from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours
+from GangaCore.Utility.Config import makeConfig, getConfig, expandvars
 
 # Global Variable to enable Job Sharing mechanism required in GANGA SWAN INTEGRATION.
-# If environment variable GANGA_SWAN_INTEGRATION is present enable this mechanism.
+# If environment variable GANGA_SWAN_INTEGRATION is present enable this
+# mechanism.
 GANGA_SWAN_INTEGRATION = "GANGA_SWAN_INTEGRATION" in os.environ
 
 # Global Functions
@@ -20,8 +20,9 @@ GANGA_SWAN_INTEGRATION = "GANGA_SWAN_INTEGRATION" in os.environ
 
 def getLCGRootPath():
 
-    lcg_release_areas = {'afs': '/afs/cern.ch/sw/lcg/releases/LCG_79',
-                         'cvmfs': '/cvmfs/lhcb.cern.ch/lib/lcg/releases/LCG_79'}
+    lcg_release_areas = {
+        'afs': '/afs/cern.ch/sw/lcg/releases/LCG_79',
+        'cvmfs': '/cvmfs/lhcb.cern.ch/lib/lcg/releases/LCG_79'}
 
     # CAUTION This could be sensitive to mixed AFS/CVMFS running but I doubt
     # this setup is common or likely
@@ -37,7 +38,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '8.0.0'
+_gangaVersion = '8.2.0'
 _development = True
 
 # store a path to Ganga libraries
@@ -69,12 +70,18 @@ The log level may be one of: CRITICAL ERROR WARNING INFO DEBUG
 # are reviewed in all the code
 log_config.addOption('Ganga', "INFO", "top-level logger")
 log_config.addOption('GangaCore.Runtime.bootstrap', "INFO", 'FIXME')
-log_config.addOption('GangaCore.GPIDev', "INFO", "logger of GangaCore.GPIDev.* packages")
+log_config.addOption(
+    'GangaCore.GPIDev',
+    "INFO",
+    "logger of GangaCore.GPIDev.* packages")
 log_config.addOption(
     'GangaCore.Utility.logging',
     "WARNING",
     "logger of the Ganga logging package itself (use with care!)")
-log_config.addOption('_format', "NORMAL", "format of logging messages: TERSE,NORMAL,VERBOSE,DEBUG")
+log_config.addOption(
+    '_format',
+    "NORMAL",
+    "format of logging messages: TERSE,NORMAL,VERBOSE,DEBUG")
 log_config.addOption(
     '_colour',
     True,
@@ -84,8 +91,10 @@ log_config.addOption(
     '_logfile_size',
     100000,
     "the size of the logfile (in bytes), the rotating log will never exceed this file size")  # 100 K
-log_config.addOption('_interactive_cache', True,
-                     'if True then the cache used for interactive sessions, False disables caching')
+log_config.addOption(
+    '_interactive_cache',
+    True,
+    'if True then the cache used for interactive sessions, False disables caching')
 log_config.addOption(
     '_customFormat',
     "",
@@ -96,7 +105,10 @@ log_config.addOption(
 # the system variables (such as VERSION) are put to DEFAULTS section of the config module
 # so you can refer to them in the config file
 # additionally they will be visible in the (write protected) [System]
-# config module - write protection is done in bootstrap at present though this should be changed
+# config module - write protection is done in bootstrap at present though
+# this should be changed
+import GangaCore.Utility.files
+
 config_path = GangaCore.Utility.files.expandfilename(
     os.path.normpath(
         os.path.join(
@@ -105,9 +117,15 @@ config_path = GangaCore.Utility.files.expandfilename(
                     inspect.getfile(
                         inspect.currentframe()))),
             '..')))
-sys_config = makeConfig('System', "parameters of this ganga session (read-only)", cfile=False)
+sys_config = makeConfig(
+    'System',
+    "parameters of this ganga session (read-only)",
+    cfile=False)
 sys_config.addOption('GANGA_VERSION', _gangaVersion, '')
-sys_config.addOption('GANGA_PYTHONPATH', _gangaPythonPath, 'location of the ganga core packages')
+sys_config.addOption(
+    'GANGA_PYTHONPATH',
+    _gangaPythonPath,
+    'location of the ganga core packages')
 sys_config.addOption(
     'GANGA_CONFIG_PATH',
     config_path + '/',
@@ -116,7 +134,10 @@ sys_config.addOption(
     'GANGA_CONFIG_FILE',
     os.path.expanduser('~/.gangarc'),
     'current user config file used')
-sys_config.addOption('GANGA_HOSTNAME', hostname, 'local hostname where ganga is running')
+sys_config.addOption(
+    'GANGA_HOSTNAME',
+    hostname,
+    'local hostname where ganga is running')
 
 # ------------------------------------------------
 # Configuration
@@ -125,24 +146,35 @@ sys_config.addOption('GANGA_HOSTNAME', hostname, 'local hostname where ganga is 
 conf_config = makeConfig(
     "Configuration",
     "global configuration parameters.\nthis is a catch all section.")
-conf_config.addOption('SCRIPTS_PATH', 'Ganga/scripts', """the search path to scripts directory.
+conf_config.addOption(
+    'SCRIPTS_PATH',
+    'Ganga/scripts',
+    """the search path to scripts directory.
 When running a script from the system shell (e.g. ganga script) this path is used to search for script""")
 
-conf_config.addOption('LOAD_PATH', '', "the search path for the load() function")
-conf_config.addOption('RUNTIME_PATH', '',
-                      """path to runtime plugin packages where custom handlers may be added.
+conf_config.addOption(
+    'LOAD_PATH',
+    '',
+    "the search path for the load() function")
+conf_config.addOption(
+    'RUNTIME_PATH',
+    '',
+    """path to runtime plugin packages where custom handlers may be added.
 Normally you should not worry about it.
 If an element of the path is just a name (like in the example below)
 then the plugins will be loaded using current python path. This means that
 some packages such as GangaTest may be taken from the release area.""",
-                      examples="""RUNTIME_PATH = GangaGUI
+    examples="""RUNTIME_PATH = GangaGUI
 RUNTIME_PATH = /my/SpecialExtensions:GangaTest""")
 
 conf_config.addOption(
     'TextShell',
     'IPython',
     """ The type of the interactive shell: IPython (cooler) or Console (limited)""")
-conf_config.addOption('StartupGPI', '', 'block of GPI commands executed at startup')
+conf_config.addOption(
+    'StartupGPI',
+    '',
+    'block of GPI commands executed at startup')
 conf_config.addOption(
     'ReleaseNotes',
     True,
@@ -158,7 +190,11 @@ conf_config.addOption(
         '~/gangadir'),
     'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.',
     filter=GangaCore.Utility.Config.expandvars)
-conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
+conf_config.addOption(
+    'repositorytype',
+    'LocalXML',
+    'Type of the repository.',
+    examples='LocalXML')
 conf_config.addOption(
     'lockingStrategy',
     'UNIX',
@@ -182,17 +218,30 @@ conf_config.addOption(
 conf_config.addOption('deleteUnusedShareDir', 'always',
                       'If set to ask the user is presented with a prompt asking whether Shared directories not associated with a persisted Ganga object should be deleted upon Ganga exit. If set to never, shared directories will not be deleted upon exit, even if they are not associated with a persisted Ganga object. If set to always (the default), then shared directories will always be deleted if not associated with a persisted Ganga object.')
 
-conf_config.addOption('autoGenerateJobWorkspace', False, 'Autogenerate workspace dirs for new jobs')
+conf_config.addOption('autoGenerateJobWorkspace', False,
+                      'Autogenerate workspace dirs for new jobs')
 
 conf_config.addOption(
     'NoAfsToken',
     False,
     'Do not require an AFS token when running on an AFS filesystem. Not recommended!')
 
-conf_config.addOption('Profile_Memory', False, 'Run memory profiler on Ganga Objects')
-conf_config.addOption('Profile_CPU', False, 'Run cpu profiler on Ganga Objects')
-conf_config.addOption('Count_Calls', False, 'Run function call counters on Ganga Objects')
-
+conf_config.addOption(
+    'Profile_Memory',
+    False,
+    'Run memory profiler on Ganga Objects')
+conf_config.addOption(
+    'Profile_CPU',
+    False,
+    'Run cpu profiler on Ganga Objects')
+conf_config.addOption(
+    'Count_Calls',
+    False,
+    'Run function call counters on Ganga Objects')
+conf_config.addOption(
+    'UDockerlocation',
+    '~',
+    'Directory where udocker will be installed for local jobs if used for virtualization')
 
 # add named template options
 conf_config.addOption(
@@ -203,8 +252,14 @@ conf_config.addOption('namedTemplates_pickle', False,
                       'Determines if named template system stores templates in pickle file format (True) or in the Ganga streamed object format (False). By default streamed object format which is human readable is used. If a package sets up their own by calling "establishNamedTemplates" from python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override this without needing the config option')
 
 # add server options
-conf_config.addOption('ServerPort', 434343, 'Port for the Ganga server to listen on')
-conf_config.addOption('ServerTimeout', 60, 'Timeout in minutes for auto-server shutdown')
+conf_config.addOption(
+    'ServerPort',
+    434343,
+    'Port for the Ganga server to listen on')
+conf_config.addOption(
+    'ServerTimeout',
+    60,
+    'Timeout in minutes for auto-server shutdown')
 conf_config.addOption(
     'ServerUserScript',
     "",
@@ -239,7 +294,9 @@ conf_config.addOption(
     'AutoStart the registries, needed to access any jobs in registry therefore needs to be True for 99.999% of use cases')
 # ------------------------------------------------
 # IPython
-ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration''')
+ipython_config = makeConfig(
+    'TextShell_IPython',
+    '''IPython shell configuration''')
 ipython_config.addOption(
     'colourscheme',
     'LightBG',
@@ -252,7 +309,14 @@ makeConfig("Shell", "configuration parameters for internal Shell utility.")
 # ------------------------------------------------
 # Queues
 queues_config = makeConfig("Queues", "configuration section for the queues")
-queues_config.addOption('Timeout', None, 'default timeout for queue generated processes')
+queues_config.addOption(
+    'Timeout',
+    None,
+    'default timeout for queue generated processes')
+queues_config.addOption(
+    'ShutDownTimeout',
+    0.1,
+    'timeout before looping again over queue to give shutdown a chance')
 queues_config.addOption(
     'NumWorkerThreads',
     5,
@@ -260,7 +324,9 @@ queues_config.addOption(
 
 # ------------------------------------------------
 # Plugins
-default_plugins_cfg = makeConfig('Plugins', '''General control of plugin mechanism.
+default_plugins_cfg = makeConfig(
+    'Plugins',
+    '''General control of plugin mechanism.
 Set the default plugin in a given category.
 For example:
 default_applications = DaVinci
@@ -283,7 +349,9 @@ gpi_config.addOption(
 
 # ------------------------------------------------
 # PollThread
-poll_config = makeConfig('PollThread', 'background job status monitoring and output retrieval')
+poll_config = makeConfig(
+    'PollThread',
+    'background job status monitoring and output retrieval')
 poll_config.addOption(
     'repeat_messages',
     False,
@@ -301,7 +369,11 @@ poll_config.addOption(
     'enable_multiThreadMon',
     True,
     'enable multiple threads to be used for running monitoring tasks')
-poll_config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
+poll_config.addOption(
+    'base_poll_rate',
+    2,
+    'internal supervising thread',
+    hidden=1)
 poll_config.addOption(
     'MaxNumResubmits',
     5,
@@ -333,23 +405,39 @@ poll_config.addOption('Panda', 50, 'Poll rate for Panda backend.')
 
 # Note: the rate of this callback is actually
 # MAX(base_poll_rate,callbacks_poll_rate)
-poll_config.addOption('creds_poll_rate', 30, "The frequency in seconds for credentials checker")
-poll_config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
+poll_config.addOption(
+    'creds_poll_rate',
+    30,
+    "The frequency in seconds for credentials checker")
+poll_config.addOption(
+    'diskspace_poll_rate',
+    30,
+    "The frequency in seconds for free disk checker")
 poll_config.addOption(
     'DiskSpaceChecker',
     "",
     "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
-poll_config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
-poll_config.addOption('numParallelJobs', 25, 'Number of Jobs to update the status for in parallel')
+poll_config.addOption(
+    'max_shutdown_retries',
+    5,
+    'OBSOLETE: this option has no effect anymore')
+poll_config.addOption(
+    'numParallelJobs',
+    25,
+    'Number of Jobs to update the status for in parallel')
 
 poll_config.addOption(
     'forced_shutdown_policy',
     'session_type',
     'If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')
-poll_config.addOption('forced_shutdown_timeout', 60,
-                      "Timeout in seconds for forced Ganga shutdown in batch mode.")
-poll_config.addOption('forced_shutdown_prompt_time', 10,
-                      "User will get the prompt every N seconds, as specified by this parameter.")
+poll_config.addOption(
+    'forced_shutdown_timeout',
+    60,
+    "Timeout in seconds for forced Ganga shutdown in batch mode.")
+poll_config.addOption(
+    'forced_shutdown_prompt_time',
+    10,
+    "User will get the prompt every N seconds, as specified by this parameter.")
 poll_config.addOption(
     'forced_shutdown_first_prompt_time',
     5,
@@ -360,7 +448,10 @@ poll_config.addOption(
     sys.maxsize,
     'Time before the user gets the warning that a thread has locked up due to failing to update the heartbeat attribute')
 
-poll_config.addOption('autoCheckCredentials', True, 'Check credentials using the monitoring loop')
+poll_config.addOption(
+    'autoCheckCredentials',
+    True,
+    'Check credentials using the monitoring loop')
 
 # ------------------------------------------------
 # Feedback
@@ -379,19 +470,36 @@ assoc_config = makeConfig(
     'Default associations between file types and file-viewing commands. The name identifies the extension and the value the commans. New extensions can be added. A single & after the command indicates that the process will be started in the background. A && after the command indicates that a new terminal will be opened and the command executed in that terminal.',
     is_open=True)
 
-assoc_config.addOption("newterm_command", "xterm",
-                       'Command for opening a new terminal (xterm, gnome-terminal, ...')
-assoc_config.addOption("newterm_exeopt", "-e",
-                       'Option to give to a new terminal to tell it to execute a command.')
 assoc_config.addOption(
-    "listing_command", "ls -ltr", 'Command for listing the content of a directory')
-assoc_config.addOption('fallback_command', 'less',
-                       'Default command to use if there is no association with the file type')
+    "newterm_command",
+    "xterm",
+    'Command for opening a new terminal (xterm, gnome-terminal, ...')
+assoc_config.addOption(
+    "newterm_exeopt",
+    "-e",
+    'Option to give to a new terminal to tell it to execute a command.')
+assoc_config.addOption(
+    "listing_command",
+    "ls -ltr",
+    'Command for listing the content of a directory')
+assoc_config.addOption(
+    'fallback_command',
+    'less',
+    'Default command to use if there is no association with the file type')
 assoc_config.addOption('htm', 'firefox &', 'Command for viewing html files.')
 assoc_config.addOption('html', 'firefox &', 'Command for viewing html files.')
-assoc_config.addOption('root', 'root.exe &&', 'Command for opening ROOT files.')
-assoc_config.addOption('tar', 'file-roller &', 'Command for opening tar files.')
-assoc_config.addOption('tgz', 'file-roller &', 'Command for opening tar files.')
+assoc_config.addOption(
+    'root',
+    'root.exe &&',
+    'Command for opening ROOT files.')
+assoc_config.addOption(
+    'tar',
+    'file-roller &',
+    'Command for opening tar files.')
+assoc_config.addOption(
+    'tgz',
+    'file-roller &',
+    'Command for opening tar files.')
 
 # ------------------------------------------------
 # Root
@@ -406,11 +514,17 @@ root_config.addOption(
     '%s/ROOT/6.04.02/x86_64-slc6-gcc48-opt' %
     getLCGRootPath(),
     'Location of ROOT')
-root_config.addOption('path', '', 'Set to a specific ROOT version. Will override other options.')
+root_config.addOption(
+    'path',
+    '',
+    'Set to a specific ROOT version. Will override other options.')
 # Doesn't appear to work see above ^^^
 #config.addOption('pythonhome', '${lcgpath}/Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
-root_config.addOption('pythonhome', '%s/Python/2.7.9.p1/x86_64-slc6-gcc48-opt' %
-                      getLCGRootPath(), 'Location of the python used for execution of PyROOT script')
+root_config.addOption(
+    'pythonhome',
+    '%s/Python/2.7.9.p1/x86_64-slc6-gcc48-opt' %
+    getLCGRootPath(),
+    'Location of the python used for execution of PyROOT script')
 root_config.addOption(
     'pythonversion',
     '2.7.9.p1',
@@ -436,9 +550,11 @@ local_config.addOption(
 lcg_config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')
 
-lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                     'sets the LCG-UI environment setup script for the GLITE middleware',
-                     filter=GangaCore.Utility.Config.expandvars)
+lcg_config.addOption(
+    'GLITE_SETUP',
+    '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
+    'sets the LCG-UI environment setup script for the GLITE middleware',
+    filter=GangaCore.Utility.Config.expandvars)
 
 lcg_config.addOption('VirtualOrganisation', '',
                      'sets the name of the grid virtual organisation')
@@ -450,15 +566,22 @@ lcg_config.addOption(
     filter=GangaCore.Utility.Config.expandvars)
 
 lcg_config.addOption(
-    'AllowedCEs', '', 'sets allowed computing elements by a regular expression')
+    'AllowedCEs',
+    '',
+    'sets allowed computing elements by a regular expression')
 lcg_config.addOption(
-    'ExcludedCEs', '', 'sets excluded computing elements by a regular expression')
+    'ExcludedCEs',
+    '',
+    'sets excluded computing elements by a regular expression')
 
-lcg_config.addOption(
-    'GLITE_WMS_WMPROXY_ENDPOINT', '', 'sets the WMProxy service to be contacted')
+lcg_config.addOption('GLITE_WMS_WMPROXY_ENDPOINT', '',
+                     'sets the WMProxy service to be contacted')
 lcg_config.addOption('GLITE_ALLOWED_WMS_LIST', [], '')
 
-lcg_config.addOption('MyProxyServer', 'myproxy.cern.ch', 'sets the myproxy server')
+lcg_config.addOption(
+    'MyProxyServer',
+    'myproxy.cern.ch',
+    'sets the myproxy server')
 lcg_config.addOption('RetryCount', 3, 'sets maximum number of job retry')
 lcg_config.addOption(
     'ShallowRetryCount', 10, 'sets maximum number of job shallow retry')
@@ -475,7 +598,9 @@ lcg_config.addOption(
     '',
     'sets the space token for storing temporary files (e.g. oversized input sandbox)')
 lcg_config.addOption(
-    'DefaultLFC', 'prod-lfc-shared-central.cern.ch', 'sets the file catalogue server')
+    'DefaultLFC',
+    'prod-lfc-shared-central.cern.ch',
+    'sets the file catalogue server')
 lcg_config.addOption(
     'BoundSandboxLimit',
     10 *
@@ -483,20 +608,30 @@ lcg_config.addOption(
     1024,
     'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\'')
 
-lcg_config.addOption('Requirements', 'GangaCore.Lib.LCG.LCGRequirements',
-                     'sets the full qualified class name for other specific LCG job requirements')
-
-lcg_config.addOption('SandboxCache', 'GangaCore.Lib.LCG.LCGSandboxCache',
-                     'sets the full qualified class name for handling the oversized input sandbox')
-
-lcg_config.addOption('GliteBulkJobSize', 50,
-                     'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
-
-lcg_config.addOption('SubmissionThread', 10,
-                     'sets the number of concurrent threads for job submission to gLite WMS')
+lcg_config.addOption(
+    'Requirements',
+    'GangaCore.Lib.LCG.LCGRequirements',
+    'sets the full qualified class name for other specific LCG job requirements')
 
 lcg_config.addOption(
-    'SubmissionTimeout', 300, 'sets the gLite job submission timeout in seconds')
+    'SandboxCache',
+    'GangaCore.Lib.LCG.LCGSandboxCache',
+    'sets the full qualified class name for handling the oversized input sandbox')
+
+lcg_config.addOption(
+    'GliteBulkJobSize',
+    50,
+    'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
+
+lcg_config.addOption(
+    'SubmissionThread',
+    10,
+    'sets the number of concurrent threads for job submission to gLite WMS')
+
+lcg_config.addOption(
+    'SubmissionTimeout',
+    300,
+    'sets the gLite job submission timeout in seconds')
 
 lcg_config.addOption('StatusPollingTimeout', 300,
                      'sets the gLite job status polling timeout in seconds')
@@ -506,11 +641,15 @@ lcg_config.addOption(
     10,
     'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
 
-lcg_config.addOption('SandboxTransferTimeout', 60,
-                     'sets the transfer timeout of the oversized input sandbox')
+lcg_config.addOption(
+    'SandboxTransferTimeout',
+    60,
+    'sets the transfer timeout of the oversized input sandbox')
 
 lcg_config.addOption(
-    'JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
+    'JobLogHandler',
+    'WMS',
+    'sets the way the job\'s stdout/err are being handled.')
 
 lcg_config.addOption(
     'MatchBeforeSubmit',
@@ -537,38 +676,51 @@ lcg_config.addOption(
     'ArcConfigFile',
     "",
     'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config file is specified and the default (~/arc/client.conf) is used')
-lcg_config.addOption('ArcCopyCommand', 'arcget',
-                     'sets the copy command for ARC when dealing with sandboxes')
+lcg_config.addOption(
+    'ArcCopyCommand',
+    'arcget',
+    'sets the copy command for ARC when dealing with sandboxes')
 #lcg_config.addOption('ArcPrologue','','sets the prologue script')
 #lcg_config.addOption('ArcEpilogue','','sets the epilogue script')
 
 # add CREAM specific configuration options
-lcg_config.addOption('CreamInputSandboxBaseURI', '',
-                     'sets the baseURI for getting the input sandboxes for the job')
-lcg_config.addOption('CreamOutputSandboxBaseURI', '',
-                     'sets the baseURI for putting the output sandboxes for the job')
-lcg_config.addOption('CreamCopyCommand', 'gfal-copy-url',
-                     'sets the copy command for CREAM when dealing with sandboxes')
+lcg_config.addOption(
+    'CreamInputSandboxBaseURI',
+    '',
+    'sets the baseURI for getting the input sandboxes for the job')
+lcg_config.addOption(
+    'CreamOutputSandboxBaseURI',
+    '',
+    'sets the baseURI for putting the output sandboxes for the job')
+lcg_config.addOption(
+    'CreamCopyCommand',
+    'gfal-copy-url',
+    'sets the copy command for CREAM when dealing with sandboxes')
 #lcg_config.addOption('CreamPrologue','','sets the prologue script')
 #lcg_config.addOption('CreamEpilogue','','sets the epilogue script')
 
 # ------------------------------------------------
 # GridSimulator
-gridsim_config = makeConfig('GridSimulator', 'Grid Simulator configuration parameters')
+gridsim_config = makeConfig('GridSimulator',
+                            'Grid Simulator configuration parameters')
 
 gridsim_config.addOption(
     'submit_time',
     'random.uniform(1,10)',
     'python expression which returns the time it takes (in seconds) to complete the Grid.submit() command (also for subjob in bulk emulation)')
 gridsim_config.addOption(
-    'submit_failure_rate', 0.0, 'probability that the Grid.submit() method fails')
+    'submit_failure_rate',
+    0.0,
+    'probability that the Grid.submit() method fails')
 
 gridsim_config.addOption(
     'cancel_time',
     'random.uniform(1,5)',
     'python expression which returns the time it takes (in seconds) to complete the Grid.cancel() command (also for subjob in bulk emulation)')
 gridsim_config.addOption(
-    'cancel_failure_rate', 0.0, 'probability that the Grid.cancel() method fails')
+    'cancel_failure_rate',
+    0.0,
+    'probability that the Grid.cancel() method fails')
 
 gridsim_config.addOption(
     'status_time',
@@ -598,7 +750,9 @@ gridsim_config.addOption(
     'random.uniform(10,20)',
     'python expression which returns the time when the job enters the Done success or Failed state')
 gridsim_config.addOption(
-    'job_failure_rate', 0.0, 'probability of the job to enter the Failed state')
+    'job_failure_rate',
+    0.0,
+    'probability of the job to enter the Failed state')
 
 # ------------------------------------------------
 # Condor
@@ -614,17 +768,36 @@ lsf_config = makeConfig('LSF', 'internal LSF command line interface')
 # fix bug #21687
 lsf_config.addOption('shared_python_executable', False, "Shared PYTHON")
 
-lsf_config.addOption('jobid_name', 'LSB_BATCH_JID', "Name of environment with ID of the job")
-lsf_config.addOption('queue_name', 'LSB_QUEUE', "Name of environment with queue name of the job")
-lsf_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
+lsf_config.addOption(
+    'jobid_name',
+    'LSB_BATCH_JID',
+    "Name of environment with ID of the job")
+lsf_config.addOption(
+    'queue_name',
+    'LSB_QUEUE',
+    "Name of environment with queue name of the job")
+lsf_config.addOption(
+    'heartbeat_frequency',
+    '30',
+    "Heartbeat frequency config variable")
 
-lsf_config.addOption('submit_str', 'cd %s; bsub %s %s %s %s', "String used to submit job to queue")
-lsf_config.addOption('submit_res_pattern',
-                     r'^Job <(?P<id>\d*)> is submitted to .*queue <(?P<queue>\S*)>',
-                     "String pattern for replay from the submit command")
+lsf_config.addOption(
+    'submit_str',
+    'cd %s; bsub %s %s %s %s',
+    "String used to submit job to queue")
+lsf_config.addOption(
+    'submit_res_pattern',
+    r'^Job <(?P<id>\d*)> is submitted to .*queue <(?P<queue>\S*)>',
+    "String pattern for replay from the submit command")
 
-lsf_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
-lsf_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
+lsf_config.addOption(
+    'stdoutConfig',
+    '-o %s/stdout',
+    "String pattern for defining the stdout")
+lsf_config.addOption(
+    'stderrConfig',
+    '-e %s/stderr',
+    "String pattern for defining the stderr")
 
 lsf_config.addOption('kill_str', 'bkill %s', "String used to kill job")
 lsf_config.addOption(
@@ -634,8 +807,10 @@ lsf_config.addOption(
 
 tempstr = '''
 '''
-lsf_config.addOption('preexecute', tempstr,
-                     "String contains commands executing before submiting job to queue")
+lsf_config.addOption(
+    'preexecute',
+    tempstr,
+    "String contains commands executing before submiting job to queue")
 
 tempstr = '''
 def filefilter(fn):
@@ -664,16 +839,34 @@ pbs_config = makeConfig('PBS', 'internal PBS command line interface')
 
 pbs_config.addOption('shared_python_executable', False, "Shared PYTHON")
 
-pbs_config.addOption('jobid_name', 'PBS_JOBID', "Name of environment with ID of the job")
-pbs_config.addOption('queue_name', 'PBS_QUEUE', "Name of environment with queue name of the job")
-pbs_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
+pbs_config.addOption(
+    'jobid_name',
+    'PBS_JOBID',
+    "Name of environment with ID of the job")
+pbs_config.addOption(
+    'queue_name',
+    'PBS_QUEUE',
+    "Name of environment with queue name of the job")
+pbs_config.addOption(
+    'heartbeat_frequency',
+    '30',
+    "Heartbeat frequency config variable")
 
-pbs_config.addOption('submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
+pbs_config.addOption(
+    'submit_str',
+    'cd %s; qsub %s %s %s %s',
+    "String used to submit job to queue")
 pbs_config.addOption('submit_res_pattern', '^(?P<id>\d*)\.pbs\s*',
                      "String pattern for replay from the submit command")
 
-pbs_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
-pbs_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
+pbs_config.addOption(
+    'stdoutConfig',
+    '-o %s/stdout',
+    "String pattern for defining the stdout")
+pbs_config.addOption(
+    'stderrConfig',
+    '-e %s/stderr',
+    "String pattern for defining the stderr")
 
 pbs_config.addOption('kill_str', 'qdel %s', "String used to kill job")
 pbs_config.addOption('kill_res_pattern', '(^$)|(qdel: Unknown Job Id)',
@@ -686,8 +879,10 @@ os.system("mkdir /tmp/%s/" %jobnumid)
 os.chdir("/tmp/%s/" %jobnumid)
 os.environ["PATH"]+=":."
 '''
-pbs_config.addOption('preexecute', tempstr,
-                     "String contains commands executing before submiting job to queue")
+pbs_config.addOption(
+    'preexecute',
+    tempstr,
+    "String contains commands executing before submiting job to queue")
 
 tempstr = '''
 env = os.environ
@@ -695,8 +890,10 @@ jobnumid = env["PBS_JOBID"]
 os.chdir("/tmp/")
 os.system("rm -rf /tmp/%s/" %jobnumid)
 '''
-pbs_config.addOption('postexecute', tempstr,
-                     "String contains commands executing before submiting job to queue")
+pbs_config.addOption(
+    'postexecute',
+    tempstr,
+    "String contains commands executing before submiting job to queue")
 pbs_config.addOption(
     'jobnameopt',
     'N',
@@ -712,19 +909,36 @@ sge_config = makeConfig('SGE', 'internal SGE command line interface')
 
 sge_config.addOption('shared_python_executable', False, "Shared PYTHON")
 
-sge_config.addOption('jobid_name', 'JOB_ID', "Name of environment with ID of the job")
-sge_config.addOption('queue_name', 'QUEUE', "Name of environment with queue name of the job")
-sge_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
+sge_config.addOption(
+    'jobid_name',
+    'JOB_ID',
+    "Name of environment with ID of the job")
+sge_config.addOption(
+    'queue_name',
+    'QUEUE',
+    "Name of environment with queue name of the job")
+sge_config.addOption(
+    'heartbeat_frequency',
+    '30',
+    "Heartbeat frequency config variable")
 
 # the -V options means that all environment variables are transferred to
 # the batch job (ie the same as the default behaviour on LSF at CERN)
-sge_config.addOption('submit_str', 'cd %s; qsub -cwd -S /usr/bin/python -V %s %s %s %s',
-                     "String used to submit job to queue")
+sge_config.addOption(
+    'submit_str',
+    'cd %s; qsub -cwd -S /usr/bin/python -V %s %s %s %s',
+    "String used to submit job to queue")
 sge_config.addOption('submit_res_pattern', 'Your job (?P<id>\d+) (.+)',
                      "String pattern for replay from the submit command")
 
-sge_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
-sge_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
+sge_config.addOption(
+    'stdoutConfig',
+    '-o %s/stdout',
+    "String pattern for defining the stdout")
+sge_config.addOption(
+    'stderrConfig',
+    '-e %s/stderr',
+    "String pattern for defining the stderr")
 
 sge_config.addOption('kill_str', 'qdel %s', "String used to kill job")
 sge_config.addOption(
@@ -744,8 +958,10 @@ sge_config.addOption(
 # =============================
 
 
-sge_config.addOption('preexecute', 'os.chdir(os.environ["TMPDIR"])\nos.environ["PATH"]+=":."',
-                     "String contains commands executing before submiting job to queue")
+sge_config.addOption(
+    'preexecute',
+    'os.chdir(os.environ["TMPDIR"])\nos.environ["PATH"]+=":."',
+    "String contains commands executing before submiting job to queue")
 sge_config.addOption(
     'postexecute',
     '',
@@ -765,21 +981,37 @@ slurm_config = makeConfig('Slurm', 'internal Slurm command line interface')
 
 slurm_config.addOption('shared_python_executable', False, "Shared PYTHON")
 
-slurm_config.addOption('jobid_name', 'SLURM_JOB_ID', "Name of environment with ID of the job")
+slurm_config.addOption(
+    'jobid_name',
+    'SLURM_JOB_ID',
+    "Name of environment with ID of the job")
 # Note: SLURM queues are called partitions.
 slurm_config.addOption(
     'queue_name',
     'SLURM_JOB_PARTITION',
     "Name of environment with partition name of the job")
-slurm_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
+slurm_config.addOption(
+    'heartbeat_frequency',
+    '30',
+    "Heartbeat frequency config variable")
 
-slurm_config.addOption('submit_str', 'cd %s; sbatch %s %s %s %s',
-                       "String used to submit job to partition")
-slurm_config.addOption('submit_res_pattern', '^Submitted batch job (?P<id>\d+)\s*',
-                       "String pattern for replay from the submit command")
+slurm_config.addOption(
+    'submit_str',
+    'cd %s; sbatch %s %s %s %s',
+    "String used to submit job to partition")
+slurm_config.addOption(
+    'submit_res_pattern',
+    r'^Submitted batch job (?P<id>\d+)\s*',
+    "String pattern for replay from the submit command")
 
-slurm_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
-slurm_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
+slurm_config.addOption(
+    'stdoutConfig',
+    '-o %s/stdout',
+    "String pattern for defining the stdout")
+slurm_config.addOption(
+    'stderrConfig',
+    '-e %s/stderr',
+    "String pattern for defining the stderr")
 
 slurm_config.addOption('kill_str', 'scancel %s', "String used to kill job")
 slurm_config.addOption('kill_res_pattern', '(^$)|(^scancel: error: .+)',
@@ -815,8 +1047,10 @@ os.system("mkdir -p "+scratchDir)
 os.chdir(scratchDir)
 # env["PATH"]+=":."
 '''
-slurm_config.addOption('preexecute', tempstr,
-                       "String contains the first commands executing right after the job starts")
+slurm_config.addOption(
+    'preexecute',
+    tempstr,
+    "String contains the first commands executing right after the job starts")
 
 tempstr = '''
 env = os.environ
@@ -827,8 +1061,10 @@ if not jobnumid in scratchDir: scratchDir = scratchDir+"_"+jobnumid
 os.chdir("/tmp/")
 os.system("rm -rf "+scratchDir)
 '''
-slurm_config.addOption('postexecute', tempstr,
-                       "String contains the last commands executing right before the job ends")
+slurm_config.addOption(
+    'postexecute',
+    tempstr,
+    "String contains the last commands executing right before the job ends")
 slurm_config.addOption(
     'jobnameopt',
     'J',
@@ -854,7 +1090,8 @@ merge_config.addOption('std_merge', 'TextMerger', 'Standard (default) merger')
 
 # ------------------------------------------------
 # Preparable
-preparable_config = makeConfig('Preparable', 'Parameters for preparable applications')
+preparable_config = makeConfig('Preparable',
+                               'Parameters for preparable applications')
 preparable_config.addOption(
     'unprepare_on_copy',
     False,
@@ -871,7 +1108,9 @@ e.g: {'datasets':{'lhcbdatasets':lhcbFilter, 'testdatasets':testFilter}...}
 
 # ------------------------------------------------
 # Output
-output_config = makeConfig("Output", "configuration section for postprocessing the output")
+output_config = makeConfig(
+    "Output",
+    "configuration section for postprocessing the output")
 output_config.addOption(
     'AutoRemoveFilesWithJob',
     False,
@@ -939,7 +1178,9 @@ LCGSEBakPost = {'LSF': 'client',
                 'Local': 'WN',
                 'Interactive': 'WN'
                 }
-LCGSEUpOpt = {'LFC_HOST': 'lfc-dteam.cern.ch', 'dest_SRM': 'srm-public.cern.ch'}
+LCGSEUpOpt = {
+    'LFC_HOST': 'lfc-dteam.cern.ch',
+    'dest_SRM': 'srm-public.cern.ch'}
 LCGSEFileExt = docstr_Ext % ('LCG SE', 'LCG')
 
 output_config.addOption('LCGSEFile',
@@ -968,7 +1209,8 @@ output_config.addOption('DiracFile',
                         {'fileExtensions': ['*.dst'],
                          'backendPostprocess': diracBackPost,
                          'uploadOptions': {},
-                         'defaultSite': {'upload': 'CERN-USER', 'download': 'CERN-USER'}},
+                            'defaultSite': {'upload': 'CERN-USER',
+                                            'download': 'CERN-USER'}},
                         diracFileExts)
 
 # GoogleFile
@@ -1040,8 +1282,11 @@ if not eosinstalled == 0:
     prefix = ''
     massStoragePath = ''
 
-massStorageUploadOptions = {'mkdir_cmd': prefix + ' mkdir', 'cp_cmd':
-                            prefix + ' cp', 'ls_cmd': prefix + ' ls', 'path': massStoragePath}
+massStorageUploadOptions = {
+    'mkdir_cmd': prefix + ' mkdir',
+    'cp_cmd': prefix + ' cp',
+    'ls_cmd': prefix + ' ls',
+    'path': massStoragePath}
 
 massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
@@ -1079,7 +1324,7 @@ sharedFileBackendPost = {'LSF': 'WN',
 output_config.addOption('SharedFile',
                         {'fileExtensions': [''],
                          'backendPostprocess': sharedFileBackendPost,
-                         'uploadOptions': {'path': None,
+                         'uploadOptions': {'path': '~',
                                            'cp_cmd': 'cp',
                                            'ls_cmd': 'ls',
                                            'mkdir_cmd': 'mkdir'},
@@ -1092,16 +1337,30 @@ output_config.addOption('SharedFile',
 disp_config = makeConfig(
     'Display',
     'control the printing style of the different registries ("jobs","box","tasks"...)')
-disp_config.addOption('config_name_colour', 'fx.bold',
-                      'colour print of the names of configuration sections and options')
 disp_config.addOption(
-    'config_docstring_colour', 'fg.green', 'colour print of the docstrings and examples')
+    'config_name_colour',
+    'fx.bold',
+    'colour print of the names of configuration sections and options')
 disp_config.addOption(
-    'config_value_colour', 'fx.bold', 'colour print of the configuration values')
-disp_config.addOption('jobs_columns',
-                      ("fqid", "status", "name", "subjobs", "application",
-                       "backend", "backend.actualCE", "comment", "subjob status"),
-                      'list of job attributes to be printed in separate columns')
+    'config_docstring_colour',
+    'fg.green',
+    'colour print of the docstrings and examples')
+disp_config.addOption(
+    'config_value_colour',
+    'fx.bold',
+    'colour print of the configuration values')
+disp_config.addOption(
+    'jobs_columns',
+    ("fqid",
+     "status",
+     "name",
+     "subjobs",
+     "application",
+     "backend",
+     "backend.actualCE",
+     "comment",
+     "subjob status"),
+    'list of job attributes to be printed in separate columns')
 
 disp_config.addOption('jobs_columns_width',
                       {'fqid': 8,
@@ -1138,9 +1397,13 @@ disp_config.addOption('jobs_status_colours',
                       'colours for jobs status')
 
 # add display default values for the box
-disp_config.addOption('box_columns',
-                      ("id", "type", "name", "application"),
-                      'list of job attributes to be printed in separate columns')
+disp_config.addOption(
+    'box_columns',
+    ("id",
+     "type",
+     "name",
+     "application"),
+    'list of job attributes to be printed in separate columns')
 
 disp_config.addOption('box_columns_width',
                       {'id': 5, 'type': 20, 'name': 40, 'application': 15},
@@ -1158,10 +1421,16 @@ disp_config.addOption(
 # display default values for task list
 markup = ANSIMarkup()
 str_done = markup("done", overview_colours["completed"])
-disp_config.addOption('tasks_columns',
-                      ("id", "Type", "Name", "State",
-                       "Comment", "Jobs", str_done),
-                      'list of job attributes to be printed in separate columns')
+disp_config.addOption(
+    'tasks_columns',
+    ("id",
+     "Type",
+     "Name",
+     "State",
+     "Comment",
+     "Jobs",
+     str_done),
+    'list of job attributes to be printed in separate columns')
 
 disp_config.addOption('tasks_columns_width',
                       {"id": 5, "Type": 13, "Name": 22, "State": 9,
@@ -1194,16 +1463,24 @@ disp_config.addOption(
 # ------------------------------------------------
 # Tasks
 tasks_config = makeConfig('Tasks', 'Tasks configuration options')
-tasks_config.addOption('TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in seconds")
+tasks_config.addOption(
+    'TaskLoopFrequency',
+    60.,
+    "Frequency of Task Monitoring loop in seconds")
 tasks_config.addOption(
     'ForceTaskMonitoring',
     False,
     "Monitor tasks even if the monitoring loop isn't enabled")
-tasks_config.addOption('disableTaskMon', False, "Should I disable the Task Monitoring loop?")
+tasks_config.addOption(
+    'disableTaskMon',
+    False,
+    "Should I disable the Task Monitoring loop?")
 
 # ------------------------------------------------
 # MonitoringServices
-mon_config = makeConfig('MonitoringServices', """External monitoring systems are used
+mon_config = makeConfig(
+    'MonitoringServices',
+    """External monitoring systems are used
 to follow the submission and execution of jobs. Each entry in this section
 defines a monitoring plugin used for a particular combination of application
 and backend. Asterisks may be used to specify any application or any
@@ -1215,21 +1492,35 @@ Example: DummyMS plugin will be used to track executables run on all backends:
 
 Executable/* = GangaCore.Lib.MonitoringServices.DummyMS.DummyMS
 
-""", is_open=True)
+""",
+    is_open=True)
 
 # ------------------------------------------------
 # Registry Dirty Monitoring Services (not related to actual Job Monitoring)
-reg_config = makeConfig('Registry', 'This config controls the speed of flushing objects to disk')
-reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')
-reg_config.addOption('EnableAutoFlush', True, 'Enable Registry auto-flushing feature')
+reg_config = makeConfig(
+    'Registry',
+    'This config controls the speed of flushing objects to disk')
+reg_config.addOption(
+    'AutoFlusherWaitTime',
+    30,
+    'Time to wait between auto-flusher runs')
+reg_config.addOption(
+    'EnableAutoFlush',
+    True,
+    'Enable Registry auto-flushing feature')
 reg_config.addOption(
     'DisableLoadCheck',
     True,
     'Disable the checking of recent bad jobs in bad state. Mainly used in testing.')
 
-cred_config = makeConfig('Credentials', 'This configures the credentials singleton')
+cred_config = makeConfig(
+    'Credentials',
+    'This configures the credentials singleton')
 cred_config.addOption(
     'CleanDelay',
     1,
     'Seconds between auto-clean of credentials when proxy externally destroyed')
-cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on disk')
+cred_config.addOption(
+    'AtomicDelay',
+    1,
+    'Seconds between checking credential on disk')
