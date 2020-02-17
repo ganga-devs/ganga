@@ -108,9 +108,8 @@ def runfile(path_to_file):
 
     then you have to run the function with init_globals=globals() in the Ganga interpreter like this
 
-     Ganga In[]: runfile('myfile.py');
-    Note: The semicolon in the end is to supress the output of the run_path function.
+     Ganga In[]: runfile('myfile.py')
     """
     if not isinstance(path_to_file, str):
         raise ValueError("path_to_file must be a string containing the path to the file to be executed. ")
-    return runpy.run_path(path_to_file, init_globals=globals())
+    runpy.run_path(path_to_file, init_globals=globals())
