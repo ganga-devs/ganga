@@ -16,7 +16,6 @@ from GangaCore.Utility.Plugin import allPlugins
 from GangaCore.Utility.logging import getLogger
 import subprocess
 import os
-import string
 import copy
 
 logger = getLogger()
@@ -222,7 +221,7 @@ class RootMerger(IMerger):
         # add the list of files, output file first
         arg_list = [output_file]
         arg_list.extend(file_list)
-        merge_cmd += string.join(arg_list, ' ')
+        merge_cmd += ' '.join(arg_list)
 
         rc, out = subprocess.getstatusoutput(merge_cmd)
 
