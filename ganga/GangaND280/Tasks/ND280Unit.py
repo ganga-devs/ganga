@@ -13,92 +13,101 @@ from copy import deepcopy
 
 logger = getLogger()
 
+
 class ND280Unit(IUnit):
-   _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
+    _schema = Schema(Version(1, 0), dict(IUnit._schema.datadict.items() + {
     }.items()))
 
-   _category = 'units'
-   _name = 'ND280Unit'
-   _exportmethods = IUnit._exportmethods + [ ]
+    _category = 'units'
+    _name = 'ND280Unit'
+    _exportmethods = IUnit._exportmethods + []
 
-   def __init__(self):
-      super(ND280Unit, self).__init__()
-      
-   def createNewJob(self):
-      """Create any jobs required for this unit"""      
-      j = GPI.Job()
-      j._impl.backend = self._getParent().backend.clone()
-      j._impl.application = self._getParent().application.clone()
-      if not self.inputdata is None:
-        j.inputdata = self.inputdata.clone()
+    def __init__(self):
+        super(ND280Unit, self).__init__()
 
-      trf = self._getParent()
-      task = trf._getParent()
+    def createNewJob(self):
+        """Create any jobs required for this unit"""
+        j = GPI.Job()
+        j._impl.backend = self._getParent().backend.clone()
+        j._impl.application = self._getParent().application.clone()
+        if self.inputdata is not None:
+            j.inputdata = self.inputdata.clone()
 
-      # copy across the outputfiles
-      for f in trf.outputfiles:
-         j.outputfiles += [f.clone()]
+        trf = self._getParent()
+        task = trf._getParent()
 
-      j.inputsandbox = trf.inputsandbox
+        # copy across the outputfiles
+        for f in trf.outputfiles:
+            j.outputfiles += [f.clone()]
 
-      # Sort out the splitter
-      if trf.splitter:
-         j.splitter = trf.splitter.clone()
+        j.inputsandbox = trf.inputsandbox
 
-      # Postprocessors
-      for pp in trf.postprocessors:
-         j.postprocessors.append(deepcopy(pp))
-         
-      return j
+        # Sort out the splitter
+        if trf.splitter:
+            j.splitter = trf.splitter.clone()
 
-   def checkMajorResubmit(self, job):
-      """Check if a failed job shold be 'rebrokered' (new job created) rather than just resubmitted"""
-      return False
+        # Postprocessors
+        for pp in trf.postprocessors:
+            j.postprocessors.append(deepcopy(pp))
 
-   def majorResubmit(self, job):
-      """Do any bookkeeping before a major resubmit is done"""
-      super(ND280Unit,self).majorResubmit(job)
+        return j
 
-   def reset(self):
-      """Reset the unit completely"""
-      super(ND280Unit,self).reset()
+    def checkMajorResubmit(self, job):
+        """Check if a failed job shold be 'rebrokered' (new job created) rather than just resubmitted"""
+        return False
 
-   def updateStatus(self, status):
-      """Update status hook"""
-      super(ND280Unit,self).updateStatus(status)
+    def majorResubmit(self, job):
+        """Do any bookkeeping before a major resubmit is done"""
+        super(ND280Unit, self).majorResubmit(job)
 
-   def checkForSubmission(self):
-      """Additional checks for unit submission"""
+    def reset(self):
+        """Reset the unit completely"""
+        super(ND280Unit, self).reset()
 
-      # call the base class
-      if not super(ND280Unit,self).checkForSubmission():
-         return False
+    def updateStatus(self, status):
+        """Update status hook"""
+        super(ND280Unit, self).updateStatus(status)
 
-      return True
+    def checkForSubmission(self):
+        """Additional checks for unit submission"""
 
-   def copyOutput(self):
-      """Copy the output data to local storage"""
+        # call the base class
+        if not super(ND280Unit, self).checkForSubmission():
+            return False
 
-      job = GPI.jobs(self.active_job_ids[0])
-      
-      if self.copy_output._name != "TaskLocalCopy" or job.outputdata._impl._name != "DQ2OutputDataset":
-         logger.error("Cannot transfer from DS type '%s' to '%s'. Please contact plugin developer." % (job.outputdata._name, self.copy_output._name))
-         return False
+        return True
 
-      # check which fies still need downloading
-      to_download = []
-      for f in job.outputfiles:
-         
-         # check for REs
-         if self.copy_output.isValid( os.path.join(f.localDir, f.namePattern)) and not self.copy_output.isDownloaded( os.path.join(f.localDir, f.namePattern)):
-            to_download.append(f)
+    def copyOutput(self):
+        """Copy the output data to local storage"""
 
-      # is everything downloaded?
-      if len(to_download) == 0:
-         return True
+        job = GPI.jobs(self.active_job_ids[0])
 
-      # nope, so pick the requested number and off we go
-      for f in to_download:
-         f.get()
+        if self.copy_output._name != "TaskLocalCopy" or job.outputdata._impl._name != "DQ2OutputDataset":
+            logger.error(
+                "Cannot transfer from DS type '%s' to '%s'. Please contact plugin developer." %
+                (job.outputdata._name, self.copy_output._name))
+            return False
 
-      return False
+        # check which fies still need downloading
+        to_download = []
+        for f in job.outputfiles:
+
+            # check for REs
+            if self.copy_output.isValid(
+                os.path.join(
+                    f.localDir,
+                    f.namePattern)) and not self.copy_output.isDownloaded(
+                os.path.join(
+                    f.localDir,
+                    f.namePattern)):
+                to_download.append(f)
+
+        # is everything downloaded?
+        if len(to_download) == 0:
+            return True
+
+        # nope, so pick the requested number and off we go
+        for f in to_download:
+            f.get()
+
+        return False

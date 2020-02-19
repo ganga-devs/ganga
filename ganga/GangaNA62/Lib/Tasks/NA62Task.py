@@ -7,26 +7,28 @@ from GangaNA62.Lib.Applications.NA62MC import NA62MC
 
 ########################################################################
 
+
 class NA62Task(ITask):
     """NA62 add-ons for the Task framework"""
-    _schema = Schema(Version(1,0), dict(ITask._schema.datadict.items() + {
-        }.items()))
-    
+    _schema = Schema(Version(1, 0), dict(ITask._schema.datadict.items() + {
+    }.items()))
+
     _category = 'tasks'
     _name = 'NA62Task'
-    _exportmethods = ITask._exportmethods + [ 'initFromString' ]
+    _exportmethods = ITask._exportmethods + ['initFromString']
 
     _tasktype = "ITask"
-    
+
     default_registry = "tasks"
-    
-    def initFromString(self, cfg_str, backend = None):
+
+    def initFromString(self, cfg_str, backend=None):
         """Initialize this Task with the config string. Format is:
         $prod_name|$chan|$radcor|$runs|$events|$mcversion|$script|$sites
         """
-        
+
         if self.status != "new":
-            logger.error("Cannot add more data to a new task yet. Give me time :)")
+            logger.error(
+                "Cannot add more data to a new task yet. Give me time :)")
             return
 
         # extract and check params
@@ -34,7 +36,7 @@ class NA62Task(ITask):
         if len(toks) != 9:
             logger.error("Error in format of input string %s" % cfg_str)
             return
-        
+
         prod_name = toks[0]
         decay_chan = int(toks[1])
         if (toks[2] == "1"):
@@ -46,8 +48,8 @@ class NA62Task(ITask):
         mc_version = int(toks[5])
         revision = int(toks[6])
         scr_name = toks[7]
-        sites = [ s.strip() for s in toks[8].split(",") ]
-            
+        sites = [s.strip() for s in toks[8].split(",")]
+
         # create a transform
         trf = NA62Transform()
         trf.name = prod_name
@@ -55,11 +57,11 @@ class NA62Task(ITask):
 
         if backend:
             trf.backend = backend._impl.clone()
-            
+
         if (trf.backend._name == "LCG"):
             trf.backend.requirements.allowedSites = sites
             trf.backend.requirements.memory = 2000
-        
+
         app = NA62MC()
         app.decay_type = decay_chan
         app.num_events = num_events

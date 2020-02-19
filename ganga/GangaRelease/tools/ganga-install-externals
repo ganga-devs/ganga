@@ -10,6 +10,7 @@ It is only used by the testing and packaging framework
 
 from __future__ import print_function
 
+import GangaCore.PACKAGE
 import sys
 import os
 import argparse
@@ -22,8 +23,10 @@ args = parser.parse_args()
 
 CONFIG = {}
 CONFIG['prefix'] = args.prefix
-CONFIG['tarball_dir'] = '%(prefix)s/tarball' % CONFIG    # all ganga tarballs are stored in this directory
-CONFIG['external_dir'] = '%(prefix)s/external' % CONFIG  # all external packages are unpacked here
+# all ganga tarballs are stored in this directory
+CONFIG['tarball_dir'] = '%(prefix)s/tarball' % CONFIG
+# all external packages are unpacked here
+CONFIG['external_dir'] = '%(prefix)s/external' % CONFIG
 CONFIG['plugin_packages'] = ['GangaLHCb', 'GangaAtlas', 'GangaPanda']
 CONFIG['VERSION'] = args.version
 CONFIG['platform'] = args.platform
@@ -38,12 +41,15 @@ def error(what=None):
 
 
 def untar(tar_file_name, target_dir):
-    print('Extracting {tar} to {dest}'.format(tar=tar_file_name, dest=target_dir))
+    print('Extracting {tar} to {dest}'.format(
+        tar=tar_file_name, dest=target_dir))
     tar_file_name = os.path.join(CONFIG['tarball_dir'], tar_file_name)
     cmd = 'cd %s; tar xfz %s' % (target_dir, tar_file_name)
 
     if os.system(cmd) != 0:
-        error('Error untarring file: %s in directory %s' % (tar_file_name, target_dir))
+        error(
+            'Error untarring file: %s in directory %s' %
+            (tar_file_name, target_dir))
 
 
 def import_name(modulename, name):
@@ -58,9 +64,9 @@ if not os.path.isdir(ganga_install):
 sys.path.insert(0, ganga_install + '/ganga')
 
 if CONFIG['plugin_packages']:
-    print("Resolving additional external dependencies for: ", ' '.join(CONFIG['plugin_packages']))
+    print("Resolving additional external dependencies for: ",
+          ' '.join(CONFIG['plugin_packages']))
 
-import GangaCore.PACKAGE
 GangaCore.PACKAGE._defaultPlatform = CONFIG['platform']
 # we need a tarPath relative to the externalHome
 GangaCore.PACKAGE._defaultExternalHome = ''
@@ -71,7 +77,10 @@ for pkg in ['GangaCore'] + CONFIG['plugin_packages']:
         setup = import_name(pkg + '.PACKAGE', 'setup')
 
     except Exception as x:
-        print('WARNING: Cannot find dependency information in file ' + pkg+'/PACKAGE.py')
+        print(
+            'WARNING: Cannot find dependency information in file ' +
+            pkg +
+            '/PACKAGE.py')
         print(x)
         continue
 

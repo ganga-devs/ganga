@@ -27,7 +27,9 @@ from __future__ import print_function
 # If URL (http address) is given, then file is downloaded and unzipped first.
 #
 
-import sys,os
+import math
+import sys
+import os
 
 NUMBER = long(sys.argv[1])
 
@@ -36,12 +38,13 @@ pfns = sys.argv[2:]
 factors = []
 
 for pfn in pfns:
-    # download primes file from the web server, unzip and replace extension from .zip to .txt
+    # download primes file from the web server, unzip and replace extension
+    # from .zip to .txt
     if pfn.find('http://') != -1:
-        os.system('wget %s'%pfn)
+        os.system('wget %s' % pfn)
         pfn = os.path.basename(pfn)
-        os.system('unzip %s'%pfn)
-        pfn = os.path.splitext(pfn)[0]+'.txt'
+        os.system('unzip %s' % pfn)
+        pfn = os.path.splitext(pfn)[0] + '.txt'
 
     pf = file(pfn)
 
@@ -51,37 +54,37 @@ for pfn in pfns:
 
     line = pf.readline()
 
-    # scan all lines in the file and try to divide the NUMBER by consecutive primes
+    # scan all lines in the file and try to divide the NUMBER by consecutive
+    # primes
     while line:
         primes = [int(x) for x in line.split()]
 
         for p in primes:
             k = 0
             n = NUMBER
-            while n%p == 0:
+            while n % p == 0:
                 k += 1
                 n /= p
 
-            if k>0:
-                factors.append((p,k))
-    
+            if k > 0:
+                factors.append((p, k))
+
         line = pf.readline()
 
-print('Prime factors:',factors)
+print('Prime factors:', factors)
 
 # check if all prime factors have been found
-import math
 check = 1
 for f in factors:
-    check *= long(math.pow(f[0],f[1]))
+    check *= long(math.pow(f[0], f[1]))
 
 if long(check) == NUMBER:
     print('All prime factors found!')
 else:
-    print('Some prime factors are still to be found. Known factors multiply to',check)
+    print('Some prime factors are still to be found. Known factors multiply to', check)
 
 # write the factors to a data file
-ofn = 'factors-%d.dat'%NUMBER
-of = file(ofn,'w')
+ofn = 'factors-%d.dat' % NUMBER
+of = file(ofn, 'w')
 of.write(factors)
-print('Created data file',ofn)
+print('Created data file', ofn)

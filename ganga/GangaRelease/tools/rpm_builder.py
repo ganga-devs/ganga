@@ -1,10 +1,16 @@
 #!/usr/bin/env python
-import glob, sys, os, getopt, shutil, string
+import glob
+import sys
+import os
+import getopt
+import shutil
+import string
 from subprocess import call
 
 """
 Default distutils 'setup' method overwritten.
 """
+
 
 def usage():
     print '''
@@ -19,17 +25,18 @@ Tool to build Ganga RPMs and/or Python Eggs.
     Location in which to perform RPM builds
     Default: /tmp/gangabuild
 
--v, --version 
+-v, --version
     Version of ganga we're building. This will be checked out of
-    SVN and into [builddir]. Assumed to be available at 
+    SVN and into [builddir]. Assumed to be available at
     svn.cern.ch/reps/ganga/tags/Ganga-<version>
-    Example: 6.0.0 will retrieve tags/Ganga-6-0-0 
+    Example: 6.0.0 will retrieve tags/Ganga-6-0-0
     Note the automatic conversion of '.' to '-'.
 '''
 
+
 try:
     options, args = getopt.getopt(sys.argv[1:], "hv:", ["help", "version="])
-except getopt.error, x:
+except getopt.error as x:
     print "command line syntax error"
     usage()
     sys.exit(2)
@@ -43,30 +50,30 @@ for opt, arg in options:
     elif opt in ('-b', '--builddir'):
         builddir = arg
     elif opt in ('-v', '--version'):
-        this_version = arg 
+        this_version = arg
     else:
         usage()
         sys.exit(2)
 
 if this_version is None:
-   print "Missing [-v/--version] parameter"
-   usage()
-   sys.exit(2)
+    print "Missing [-v/--version] parameter"
+    usage()
+    sys.exit(2)
 
 if builddir is None:
-   builddir = '/tmp/gangabuild'
+    builddir = '/tmp/gangabuild'
 else:
-   print "Missing builddir option"
-   usage()
-   sys.exit()
+    print "Missing builddir option"
+    usage()
+    sys.exit()
 
 workdir = os.path.join(builddir, 'workspace')
 
 if os.path.isdir(builddir):
-   shutil.rmtree(builddir)
-   os.makedirs(workdir)
+    shutil.rmtree(builddir)
+    os.makedirs(workdir)
 else:
-   os.makedirs(workdir)
+    os.makedirs(workdir)
 
 topdir = 'Ganga-' + string.replace(this_version, '.', '-')
 
@@ -76,13 +83,13 @@ svnurl = 'svn+ssh://svn.cern.ch/reps/ganga/tags/' + topdir
 svncmd = 'svn export -q ' + svnurl
 exitcode = call([svncmd], shell=True)
 if exitcode != 0:
-   print "Problem exporting Ganga from SVN. Exiting."
-   sys.exit()
+    print "Problem exporting Ganga from SVN. Exiting."
+    sys.exit()
 else:
-   print "Successfully exported Ganga " + this_version + " from SVN."
-   shutil.move(builddir + '/' + topdir, builddir + '/GangaSuite')
-   topdir = 'GangaSuite'
-   os.makedirs(builddir + '/' + topdir + '/python/GangaBin')
+    print "Successfully exported Ganga " + this_version + " from SVN."
+    shutil.move(builddir + '/' + topdir, builddir + '/GangaSuite')
+    topdir = 'GangaSuite'
+    os.makedirs(builddir + '/' + topdir + '/python/GangaBin')
 
 rpm_script = '''
 rm -rf $RPM_INSTALL_PREFIX/python/%{name}*egg*
@@ -98,7 +105,7 @@ then
 fi
 '''
 
-rpm_postinfile = open(builddir +'/postin-packages.sh','w')
+rpm_postinfile = open(builddir + '/postin-packages.sh', 'w')
 print "Writing " + rpm_postinfile.name
 rpm_postinfile.write(rpm_script)
 rpm_postinfile.close()
@@ -117,7 +124,7 @@ else
   #echo "Deleting" $RPM_INSTALL_PREFIX/python/%{name}
   rm -rf $RPM_INSTALL_PREFIX/python/%{name}
 fi
-  
+
 if [ ! "$(ls -A $RPM_INSTALL_PREFIX/python)" ]; then
   echo "$RPM_INSTALL_PREFIX/python is empty...removing."
   rm -rf $RPM_INSTALL_PREFIX/python
@@ -129,104 +136,111 @@ if [ ! "$(ls -A $RPM_INSTALL_PREFIX)" ]; then
 fi
 '''
 
-rpm_postfile = open(builddir +'/postun-packages.sh','w')
+rpm_postfile = open(builddir + '/postun-packages.sh', 'w')
 print "Writing " + rpm_postfile.name
 rpm_postfile.write(rpm_script)
 rpm_postfile.close()
 
-#create a manifest template because we need to force the inclusion of
-#all files in the rpm including non-python files.
+# create a manifest template because we need to force the inclusion of
+# all files in the rpm including non-python files.
 man_script = '''global-include *
-''' 
+'''
 
-man_file = open(builddir + '/MANIFEST.in','w')
+man_file = open(builddir + '/MANIFEST.in', 'w')
 print "Writing " + man_file.name
 man_file.write(man_script)
 man_file.close()
 
 abstopdir = os.path.join(builddir, topdir)
 
-#copy this set of directories into a fake package directory so we can package them all up together
-#this could probably be much more elegant.
-shutil.copytree(str(abstopdir)+'/bin', abstopdir + '/python/GangaBin/bin')
-shutil.copytree(str(abstopdir)+'/doc', abstopdir + '/python/GangaBin/doc')
-shutil.copytree(str(abstopdir)+'/release', abstopdir + '/python/GangaBin/release')
-shutil.copytree(str(abstopdir)+'/templates', abstopdir + '/python/GangaBin/templates')
-shutil.copy(str(abstopdir)+'/LICENSE_GPL', abstopdir + '/python/GangaBin')
-#we need to trick distutils into thinking GangaBin is a real python package
-#for this we need to add a __init__.py file
-#this should then be removed with the post_install script
-trickfile = open(abstopdir + '/python/GangaBin/__init__.py','w')
+# copy this set of directories into a fake package directory so we can package them all up together
+# this could probably be much more elegant.
+shutil.copytree(str(abstopdir) + '/bin', abstopdir + '/python/GangaBin/bin')
+shutil.copytree(str(abstopdir) + '/doc', abstopdir + '/python/GangaBin/doc')
+shutil.copytree(
+    str(abstopdir) +
+    '/release',
+    abstopdir +
+    '/python/GangaBin/release')
+shutil.copytree(
+    str(abstopdir) +
+    '/templates',
+    abstopdir +
+    '/python/GangaBin/templates')
+shutil.copy(str(abstopdir) + '/LICENSE_GPL', abstopdir + '/python/GangaBin')
+# we need to trick distutils into thinking GangaBin is a real python package
+# for this we need to add a __init__.py file
+# this should then be removed with the post_install script
+trickfile = open(abstopdir + '/python/GangaBin/__init__.py', 'w')
 trickfile.close()
 
 print abstopdir
 packageDirs = glob.glob(abstopdir + '/python/Ganga*')
 
 rpm_require_map = {
-'GangaSuite' : "python >= 2.4.3",
-'GangaBin' : "python >= 2.4.3, Ganga == "+this_version,
-'Ganga' : "GangaBin == "+this_version,
-'GangaAtlas' : "Ganga == "+this_version,
-'GangaCamtology' : "Ganga == "+this_version,
-'GangaCMS' : "Ganga == "+this_version,
-'GangaDirac' : "Ganga == "+this_version,
-'GangaGaudi' : "Ganga == "+this_version,
-'GangaLHCb' : "Ganga == "+this_version,
-'GangaNA62' : "Ganga == "+this_version,
-'GangaPanda' : "Ganga == "+this_version,
-'GangaPlotter' : "Ganga == "+this_version,
-'GangaRobot' : "Ganga == "+this_version,
-'GangaSAGA' : "Ganga == "+this_version,
-'GangaService' : "Ganga == "+this_version,
-'GangaSuperB' : "Ganga == "+this_version,
-'GangaSNOplus' : "Ganga == "+this_version,
-'GangaTest' : "Ganga == "+this_version,
-'GangaTutorial' : "Ganga == "+this_version
+    'GangaSuite': "python >= 2.4.3",
+    'GangaBin': "python >= 2.4.3, Ganga == " + this_version,
+    'Ganga': "GangaBin == " + this_version,
+    'GangaAtlas': "Ganga == " + this_version,
+    'GangaCamtology': "Ganga == " + this_version,
+    'GangaCMS': "Ganga == " + this_version,
+    'GangaDirac': "Ganga == " + this_version,
+    'GangaGaudi': "Ganga == " + this_version,
+    'GangaLHCb': "Ganga == " + this_version,
+    'GangaNA62': "Ganga == " + this_version,
+    'GangaPanda': "Ganga == " + this_version,
+    'GangaPlotter': "Ganga == " + this_version,
+    'GangaRobot': "Ganga == " + this_version,
+    'GangaSAGA': "Ganga == " + this_version,
+    'GangaService': "Ganga == " + this_version,
+    'GangaSuperB': "Ganga == " + this_version,
+    'GangaSNOplus': "Ganga == " + this_version,
+    'GangaTest': "Ganga == " + this_version,
+    'GangaTutorial': "Ganga == " + this_version
 }
 
 egg_require_map = {
-'GangaSuite' : ["python>=2.4.3"],
-'GangaBin' : ["python>=2.4.3"],
-'Ganga' : ["GangaBin=="+this_version],
-'GangaAtlas' : ["Ganga=="+this_version],
-'GangaCamtology' : ["Ganga=="+this_version],
-'GangaCMS' : ["Ganga=="+this_version],
-'GangaDirac' : ["Ganga=="+this_version],
-'GangaGaudi' : ["Ganga=="+this_version],
-'GangaLHCb' : ["Ganga=="+this_version],
-'GangaNA62' : ["Ganga=="+this_version],
-'GangaPanda' : ["Ganga=="+this_version],
-'GangaPlotter' : ["Ganga=="+this_version],
-'GangaRobot' : ["Ganga=="+this_version],
-'GangaSAGA' : ["Ganga=="+this_version],
-'GangaService' : ["Ganga=="+this_version],
-'GangaSuperB' : ["Ganga=="+this_version],
-'GangaSNOplus' : ["Ganga =="+this_version],
-'GangaTest' : ["Ganga=="+this_version],
-'GangaTutorial' : ["Ganga=="+this_version]
+    'GangaSuite': ["python>=2.4.3"],
+    'GangaBin': ["python>=2.4.3"],
+    'Ganga': ["GangaBin==" + this_version],
+    'GangaAtlas': ["Ganga==" + this_version],
+    'GangaCamtology': ["Ganga==" + this_version],
+    'GangaCMS': ["Ganga==" + this_version],
+    'GangaDirac': ["Ganga==" + this_version],
+    'GangaGaudi': ["Ganga==" + this_version],
+    'GangaLHCb': ["Ganga==" + this_version],
+    'GangaNA62': ["Ganga==" + this_version],
+    'GangaPanda': ["Ganga==" + this_version],
+    'GangaPlotter': ["Ganga==" + this_version],
+    'GangaRobot': ["Ganga==" + this_version],
+    'GangaSAGA': ["Ganga==" + this_version],
+    'GangaService': ["Ganga==" + this_version],
+    'GangaSuperB': ["Ganga==" + this_version],
+    'GangaSNOplus': ["Ganga ==" + this_version],
+    'GangaTest': ["Ganga==" + this_version],
+    'GangaTutorial': ["Ganga==" + this_version]
 }
 
 description_map = {
-'GangaSuite' : 'The entire Ganga suite in a single package',
-'Ganga' : 'The Core Ganga package', 
-'GangaBin' : 'Contains the Ganga executable, release scripts, documents and templates', 
-'GangaAtlas' : 'The Ganga ATLAS package',
-'GangaCamtology' : 'The Ganga Camtology package',
-'GangaCMS' : 'The Ganga CMS package',
-'GangaDirac' : 'The Ganga Dirac package',
-'GangaGaudi' : 'The Ganga Gaudi package',
-'GangaLHCb' : 'The Ganga LHCb package',
-'GangaNA62' : 'The Ganga NA62 package',
-'GangaPanda' : 'The Ganga Panda package',
-'GangaPlotter' : 'The Ganga Plotter package',
-'GangaRobot' : 'The Ganga Robot package',
-'GangaSAGA' : 'The Ganga SAGA package',
-'GangaService' : 'The Ganga Service package',
-'GangaSuperB' : 'The Ganga SuperB package',
-'GangaSNOplus' : 'The Ganga SNO+ package',
-'GangaTest' : 'The Ganga Testing package',
-'GangaTutorial' : 'The Ganga Tutorial package'
-}
+    'GangaSuite': 'The entire Ganga suite in a single package',
+    'Ganga': 'The Core Ganga package',
+    'GangaBin': 'Contains the Ganga executable, release scripts, documents and templates',
+    'GangaAtlas': 'The Ganga ATLAS package',
+    'GangaCamtology': 'The Ganga Camtology package',
+    'GangaCMS': 'The Ganga CMS package',
+    'GangaDirac': 'The Ganga Dirac package',
+    'GangaGaudi': 'The Ganga Gaudi package',
+    'GangaLHCb': 'The Ganga LHCb package',
+    'GangaNA62': 'The Ganga NA62 package',
+    'GangaPanda': 'The Ganga Panda package',
+    'GangaPlotter': 'The Ganga Plotter package',
+    'GangaRobot': 'The Ganga Robot package',
+    'GangaSAGA': 'The Ganga SAGA package',
+    'GangaService': 'The Ganga Service package',
+    'GangaSuperB': 'The Ganga SuperB package',
+    'GangaSNOplus': 'The Ganga SNO+ package',
+    'GangaTest': 'The Ganga Testing package',
+    'GangaTutorial': 'The Ganga Tutorial package'}
 
 long_desc_map = {}
 
@@ -238,22 +252,20 @@ for package in packageDirs:
     pack = str(os.path.basename(package))
     if not pack == 'GangaSuite':
         os.chdir(workdir)
-        fullpath = os.path.join(abstopdir+'/python/'+pack)
-        shutil.copy(builddir+'/MANIFEST.in', workdir)
+        fullpath = os.path.join(abstopdir + '/python/' + pack)
+        shutil.copy(builddir + '/MANIFEST.in', workdir)
         shutil.copytree(str(fullpath), './' + str(pack))
     else:
         os.chdir(abstopdir)
-        #we need to trick distutils into thinking GangaSuite is a real python package
-        #for this we need to add a __init__.py file
-        #this should then be removed with the post_install script
-        trickfile = open(abstopdir + '/__init__.py','w')
+        # we need to trick distutils into thinking GangaSuite is a real python package
+        # for this we need to add a __init__.py file
+        # this should then be removed with the post_install script
+        trickfile = open(abstopdir + '/__init__.py', 'w')
         trickfile.close()
-        shutil.copy(builddir+'/MANIFEST.in', abstopdir)
-
-
+        shutil.copy(builddir + '/MANIFEST.in', abstopdir)
 
     print "################################################################"
-    print "Working on package " + pack 
+    print "Working on package " + pack
     print "################################################################"
 
     print str(fullpath)
@@ -283,9 +295,11 @@ install_lib     = /opt/ganga/install/python
 compile         = 0
 '''
 
-    config_script = config_script.replace('###REQUIREMENTS###', 'requires = ' + rpm_require_map[pack])
+    config_script = config_script.replace(
+        '###REQUIREMENTS###',
+        'requires = ' + rpm_require_map[pack])
     print config_script
-    conf_file = open('setup.cfg','w')
+    conf_file = open('setup.cfg', 'w')
     print "Writing " + conf_file.name
     conf_file.write(config_script)
     conf_file.close()
@@ -325,23 +339,30 @@ setup(
 '''
 
     filenames = []
-    
-#    setup_script = setup_script.replace('###PACKAGES###', 'packages = ' + str([pack])+',')
-    setup_script = setup_script.replace('###REQUIREMENTS###', 'install_requires = ' + str(egg_require_map[pack])+',')
-    setup_script = setup_script.replace('###PACKAGENAME###', 'name = \"' + pack + '\",')
-    setup_script = setup_script.replace('###THISVERSION###', 'version = \"' + this_version+ '\",')
 
-    setup_file = open('setup.py','w')
+# setup_script = setup_script.replace('###PACKAGES###', 'packages = ' +
+# str([pack])+',')
+    setup_script = setup_script.replace(
+        '###REQUIREMENTS###', 'install_requires = ' + str(egg_require_map[pack]) + ',')
+    setup_script = setup_script.replace(
+        '###PACKAGENAME###', 'name = \"' + pack + '\",')
+    setup_script = setup_script.replace(
+        '###THISVERSION###',
+        'version = \"' + this_version + '\",')
+
+    setup_file = open('setup.py', 'w')
     print "Writing " + setup_file.name
     setup_file.write(setup_script)
     setup_file.close()
 
-    #if call(["python setup.py --quiet bdist_rpm --post-uninstall " + abstopdir + "/release/tools/postun-packages.sh > /dev/null 2>&1"], shell=True, stdin = None, stdout = None) == 0:
+    # if call(["python setup.py --quiet bdist_rpm --post-uninstall " +
+    # abstopdir + "/release/tools/postun-packages.sh > /dev/null 2>&1"],
+    # shell=True, stdin = None, stdout = None) == 0:
 
     build_cmd = "python setup.py bdist_rpm "
     build_cmd += " --post-install " + builddir + "/postin-packages.sh "
     build_cmd += " --post-uninstall " + builddir + "/postun-packages.sh "
-#uncomment the following line to prevent automatic determination of RPM dependencies
+# uncomment the following line to prevent automatic determination of RPM dependencies
 #    build_cmd += " --no-autoreq "
     build_cmd += " &> " + builddir + "/" + pack + ".log"
     print build_cmd
@@ -349,7 +370,7 @@ setup(
         summaryDict[pack] = 'OK'
     else:
         summaryDict[pack] = 'Failure'
-   
+
 #    print "Moving " + str(pack) + " to " + str(fullpath)
 #    shutil.copytree(str(pack), str(fullpath))
     if not pack == 'GangaSuite':
@@ -367,19 +388,19 @@ for k in summaryDict.keys():
     print "%15s: %15s" % (k, summaryDict[k])
 
 if 'Failure' in summaryDict.values():
-   print "######## Detected a problem building at least one package ########"
-   print "Not running createrepo. Exiting"
-   sys.exit(1)
+    print "######## Detected a problem building at least one package ########"
+    print "Not running createrepo. Exiting"
+    sys.exit(1)
 else:
-   print "################################"
-   print "##### Build Yum repository #####"
-   print "################################"
-   exitcode = call(['createrepo /afs/cern.ch/sw/ganga/www/download/repo/NOARCH'], shell=True)
-   if exitcode != 0:
-      print "Problem creating repo."
-      sys.exit(1)
-   print "Successfully created Yum repository at:" 
-   print "/afs/cern.ch/sw/ganga/www/download/repo/NOARCH"
-   sys.exit(0)
-
-
+    print "################################"
+    print "##### Build Yum repository #####"
+    print "################################"
+    exitcode = call(
+        ['createrepo /afs/cern.ch/sw/ganga/www/download/repo/NOARCH'],
+        shell=True)
+    if exitcode != 0:
+        print "Problem creating repo."
+        sys.exit(1)
+    print "Successfully created Yum repository at:"
+    print "/afs/cern.ch/sw/ganga/www/download/repo/NOARCH"
+    sys.exit(0)

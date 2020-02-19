@@ -19,7 +19,11 @@ class TestJobUtils(unittest.TestCase):
         '''Ensure execute_complex raises CommandExceptions for failed scripts
         '''
         script = 'FunctionFails\n'
-        self.assertRaises(job_tools.CommandException, job_tools.execute_complex, script, exit_if_fail=True)
+        self.assertRaises(
+            job_tools.CommandException,
+            job_tools.execute_complex,
+            script,
+            exit_if_fail=True)
 
     def test_execute_complex_passes(self):
         '''Ensure execute_complex returns 0, output, error for passed scripts
@@ -28,7 +32,7 @@ class TestJobUtils(unittest.TestCase):
         rtc, out, err = job_tools.execute_complex(script)
         self.assertEquals(rtc, 0)
         self.assertEquals(out[0], "done")
-        
+
 
 class TestJobChecker(unittest.TestCase):
 
@@ -39,11 +43,15 @@ class TestJobChecker(unittest.TestCase):
         check_root_output.get_checker('dev')
         check_root_output.get_checker('4.5.0')
         check_root_output.get_checker('4.7.0')
-        self.assertRaises(check_root_output.CheckRootException, check_root_output.get_checker, 'none')
+        self.assertRaises(
+            check_root_output.CheckRootException,
+            check_root_output.get_checker,
+            'none')
 
 
 def main():
     unittest.main()
+
 
 if __name__ == "__main__":
     main()
