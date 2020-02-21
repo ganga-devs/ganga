@@ -43,7 +43,7 @@ try:
 except Exception as x:
     logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', x)
     logger.exception(x)
-    raise(GangaException(x), None, sys.exc_info()[2])
+    raise GangaException.with_traceback(sys.exc_info()[2])
 
 from GangaCore.Utility.Runtime import initSetupRuntimePackages, loadPlugins, autoPopulateGPI
 initSetupRuntimePackages()
@@ -83,4 +83,3 @@ for r in allRuntimes.values():
     except Exception as err:
         logger.error("problems with post bootstrap hook for %s" % r.name)
         logger.error("Reason: %s" % str(err))
-
