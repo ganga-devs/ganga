@@ -43,7 +43,7 @@ try:
 except Exception as x:
     logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', x)
     logger.exception(x)
-    raise GangaException(x), None, sys.exc_info()[2]
+    raise(GangaException(x), None, sys.exc_info()[2])
 
 from GangaCore.Utility.Runtime import initSetupRuntimePackages, loadPlugins, autoPopulateGPI
 initSetupRuntimePackages()
