@@ -36,10 +36,10 @@ def report(job=None):
     import os
     import platform
 
-    import GangaCore.GPIDev.Lib.Config.config as config
+    import GangaCore.GPIDev.Lib.Config
     from GangaCore.GPIDev.Base.VPrinter import full_print
 
-    import Ganga
+    #import Ganga
 
     # global variables that will print sumamry report to the user along with
     # the download link
@@ -51,7 +51,7 @@ def report(job=None):
     PYTHON_PATH = ''
 
     def random_string(length):
-        return ''.join([random.choice(string.letters) for ii in range(length + 1)])
+        return ''.join([random.choice(string.ascii_letters) for ii in range(length + 1)])
 
     def encode_multipart_formdata(files):
         boundary = random_string(30)
@@ -74,7 +74,10 @@ def report(job=None):
                 'Content-Disposition: form-data; name="file"; filename="%s"' % (file))
             lines.append('Content-Type: %s' % get_content_type(file))
             lines.append('')
-            lines.append(open(file, 'rb').read())
+            #lines.append(open(file, 'rb').read())
+            printable = set(string.printable)
+            s = open(file,'rb').read()
+            lines.append(''.join(filter(lambda x : x in printable,s)))
         lines.append('--' + boundary + '--')
         lines.append('')
         body = retnl.join(lines)
@@ -106,12 +109,12 @@ def report(job=None):
 
         data = urllib.parse.urlencode(encoded_data[1])
         req = urllib.request.Request(url, data=data)
-        if req.has_data():
+        if req.data:
             logger.debug("urllib2: Success!")
         else:
             logger.debug("urllib2: Fail!!!")
 
-        connection = http.client.HTTPConnection(req.get_host())
+        connection = http.client.HTTPConnection(req.host)
         # connection.set_debuglevel(1)
         logger.debug("Requesting: 'POST', %s, %s " % (url, encoded_data[1]))
 #                connection.request( method='POST', url=req.get_selector(), body=encoded_data[0], headers=encoded_data[1] )
@@ -380,7 +383,7 @@ def report(job=None):
             writeErrorLog(str(sys.exc_info()[1]))
 
         # import gangalog in a file
-        userLogFileLocation = config["Logging"]._logfile
+        userLogFileLocation = GangaCore.GPIDev.Lib.Config.config["Logging"]._logfile
         userLogFileLocation = os.path.expanduser(userLogFileLocation)
 
         try:
