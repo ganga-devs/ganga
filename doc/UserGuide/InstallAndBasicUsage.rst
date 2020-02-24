@@ -8,6 +8,9 @@ Installation
 There are several ways to install and run Ganga:
 
 
+**NOTE -** Currently Ganga is only available for python3 releases and supported on Linux distributions.
+
+
 CVMFS
 ^^^^^
 
@@ -32,8 +35,11 @@ run using a ``virtualenv``:
 
 .. code-block:: bash
 
-    virtualenv ~/gangaenv
-    source ~/gangaenv/activate
+    # Create a virtualenv
+    virtualenv -ppython3 gangaenv
+    cd gangaenv/
+    . bin/activate
+    # Install Ganga 
     pip install ganga
 
 To install pip locally if it's not on your system and you don't have admin access please consult: https://pip.pypa.io/en/stable/installing/
@@ -42,89 +48,25 @@ Alternatively if you want you can install it using pip to your local user enviro
 
 ``pip install ganga --user``
 
-Ganga Install Script
-^^^^^^^^^^^^^^^^^^^^
-
-There is an install script provided `here <http://ganga.web.cern.ch/ganga/download/ganga-install>`_ that will not
-only download and install Ganga but also all the externals required as well. To run it, download it and do the
-following:
-
-.. code-block:: bash
-
-    wget http://ganga.web.cern.ch/ganga/download/ganga-install
-    python ganga-install --extern=GangaDirac <RELEASE>
-
-(Here <RELEASE> is in the format x.y.z)
-
-
-To update an install to the latest code form github develop (FOR DEVELOPERS ONLY, THIS IS UNSUPPORTED) try something similar to the following:
-
-.. code-block:: bash
-
-    wget http://ganga.web.cern.ch/ganga/download/ganga-install
-    chmod +x ganga-install
-    ./ganga-install 6.1.20
-    cd ~/Ganga/install
-    rm -fr 6.1.20
-    git clone https://github.com/ganga-devs/ganga
-    mv ganga 6.1.20
 
 From Github
 ^^^^^^^^^^^
 
-You can always download a ``.zip/.tar.gz`` of a release from github
-`here <https://github.com/ganga-devs/ganga/releases>`_ Simply unzip the file where you want Ganga to be available and
-then you can run it using:
+You can always install Ganga's most recent commit at the time of writing by running 
 
-``<install-dir>/ganga-<RELEASE>/bin/ganga``
+``pip install -e git+git://github.com/ganga-devs/ganga.git#egg=ganga``
 
-Note that this will not install any of the additional packages Ganga requires so you may have import errors when
-running. If so, please install the appropriate python packages on your system.
-
-
-For LHCb
-^^^^^^^^
-
-(This has been tested on lxplus, feel free to open an issue if this fails on cvmfs/CernVM)
-
-First grab the LHCb installer script:
+If you don't have System Administrator rights or just want to do a private install then it can be beneficial to
+run using a ``virtualenv``:
 
 .. code-block:: bash
 
-    wget https://github.com/ganga-devs/lhcbsetupproject/raw/master/scripts/lhcb-prepare
-    chmod +x $TMPDIR/lhcb-prepare
-
-To install locally run one of the following:
-
-* For the official Ganga releases:
-.. code-block:: bash
-
-        ./lhcb-prepare v601r14
-
-* For an 'in development' release:
-.. code-block:: bash
-
-        ./lhcb-prepare -p v601r15
-
-* To keep the git history of the project so that you can develop patches and branches etc:
-.. code-block:: bash
-
-        ./lhcb-prepare -k -t v601r15
-
-You now have Ganga installed in ``$HOME/cmtuser/GANGA/GANGA_v601r15``
-
-* To update your install of Ganga to use the latest git code:
-.. code-block:: bash
-
-        cd $HOME/cmtuser/GANGA/GANGA_v601r15
-        git checkout develop
-
-* Finally use:
-.. code-block:: bash
-
-        SetupProject ganga v601r15
-
-to get a Ganga environment setup.
+    # Create a virtualenv
+    virtualenv -ppython3 gangaenv
+    cd gangaenv/
+    . bin/activate
+    # Install Ganga 
+    pip install -e git+git://github.com/ganga-devs/ganga.git#egg=ganga
 
 
 Starting Ganga

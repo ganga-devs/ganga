@@ -154,9 +154,10 @@ def manualExportToGPI(my_interface=None):
     exportToInterface(my_interface, 'ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
     exportToInterface(my_interface, 'JobError', JobError, 'Exceptions')
 
-    from GangaCore.Runtime.GPIFunctions import license, typename, categoryname, plugins, convert_merger_to_postprocessor
+    from GangaCore.Runtime.GPIFunctions import license, typename, categoryname, plugins, convert_merger_to_postprocessor, runfile
 
     exportToInterface(my_interface, 'license', license, 'Functions')
+    exportToInterface(my_interface, 'runfile', runfile, 'Functions')
     # FIXME:
     #from GangaCore.Runtime.GPIFunctions import applications, backends, list_plugins
     #exportToInterface(my_interface, 'applications', applications, 'Functions)
