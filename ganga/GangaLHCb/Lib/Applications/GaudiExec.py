@@ -375,38 +375,60 @@ class GaudiExec(IPrepareApp):
         Args:
             masterappconfig (unknown): This is the output from the master_configure from the parent app
         """
-        # Lets test the inputs
-        opt_file = self.getOptsFiles()
-        dir_name = self.directory
         return (None, None)
 
-    def getOptsFiles(self):
+    def getOptsFiles(self, isPrepared = False):
         """
-        This function returns a sanitized absolute path to the self.options file from user input
+        This function returns a sanitized absolute path to the self.options file from user input.
+        If the app has previously been prepared as denoted by isPrepared then point to the sharedir
         """
-        for this_opt in self.options:
-            
-            if isinstance(this_opt, str):
-                #If it is a string then assume it is a local file.
-                if not path.exists(this_opt):
-                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % this_opt)
-                new_opt = LocalFile(this_opt)
-                this_opt = new_opt
-            if isinstance(this_opt, LocalFile):
-                ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
-                full_path = path.join(this_opt.localDir, this_opt.namePattern)
-                if not path.exists(full_path):
-                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
-            elif isinstance(this_opt, DiracFile):
-                pass
-            else:
-                logger.error("opts: %s" % self.options)
-                raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
 
-        if self.options or self.extraOpts:
-            return self.options
+        if isPrepared:
+            new_opts = []
+            share_path = self.is_prepared.path()
+            for this_opt in self.options:
+                if isinstance(this_opt, str):
+                    loc = path.join(share_path, path.basename(this_opt))
+                    if not path.exists(loc):
+                        raise ApplicationConfigurationError("Application previously configure but option file %s not found in the sharedir. Unprepare and resubmit." % path.basename(this_opt))
+                    new_opts.append(LocalFile(loc))
+                elif isinstance(this_opt, LocalFile):
+                    loc = path.join(share_path, this_opt.namePattern)
+                    if not path.exists(loc):
+                        raise ApplicationConfigurationError("Application previously configure but option file %s not found in the sharedir. Unprepare and resubmit." % this_opt.namePattern)
+                    new_opts.append(LocalFile(loc))
+                elif isinstance(this_opt, DiracFile):
+                    new_opts.append(this_opt)
+                else:
+                    logger.error("opts: %s" % self.options)
+                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+            if new_opts or self.extraOpts:
+                return new_opts
+            else:
+                raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
         else:
-            raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
+            for this_opt in self.options:        
+                if isinstance(this_opt, str):
+                    #If it is a string then assume it is a local file.
+                    if not path.exists(this_opt):
+                        raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % this_opt)
+                    new_opt = LocalFile(this_opt)
+                    this_opt = new_opt
+                if isinstance(this_opt, LocalFile):
+                    ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
+                    full_path = path.join(this_opt.localDir, this_opt.namePattern)
+                    if not path.exists(full_path):
+                        raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
+                elif isinstance(this_opt, DiracFile):
+                    pass
+                else:
+                    logger.error("opts: %s" % self.options)
+                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+
+            if self.options or self.extraOpts:
+                return self.options
+            else:
+                raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
 
     def getEnvScript(self, isLbEnv):
         """

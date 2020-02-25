@@ -151,7 +151,7 @@ def prepareCommand(app):
         app (GaudiExec): This expects only the GaudiExec app
     """
 
-    all_opts_files = app.getOptsFiles()
+    all_opts_files = app.getOptsFiles(True)
     opts_names = []
     for opts_file in all_opts_files:
         if isinstance(opts_file, (LocalFile, DiracFile)):
@@ -572,7 +572,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         # We can support inputfiles and opts_file here. Locally should be submitted once, remotely can be referenced.
 
-        all_opts_files = app.getOptsFiles()
+        all_opts_files = app.getOptsFiles(True)
 
         for opts_file in all_opts_files:
             if isinstance(opts_file, DiracFile):
