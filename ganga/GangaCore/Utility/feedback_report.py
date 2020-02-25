@@ -76,8 +76,8 @@ def report(job=None):
             lines.append('')
             #lines.append(open(file, 'rb').read())
             printable = set(string.printable)
-            s = open(file,'rb').read()
-            lines.append(''.join(filter(lambda x : x in printable,s)))
+            file_read = open(file,'rb').read()
+            lines.append(''.join(filter(lambda x : x in printable,file_read)))
         lines.append('--' + boundary + '--')
         lines.append('')
         body = retnl.join(lines)
@@ -114,27 +114,41 @@ def report(job=None):
         else:
             logger.debug("urllib2: Fail!!!")
 
+        
         connection = http.client.HTTPConnection(req.host)
         # connection.set_debuglevel(1)
         logger.debug("Requesting: 'POST', %s, %s " % (url, encoded_data[1]))
 #                connection.request( method='POST', url=req.get_selector(), body=encoded_data[0], headers=encoded_data[1] )
+        
+        if url.startswith("http://"):
+            extended_path = url.replace('http://'+req.host,'')
+        elif url.startswith("https://"):
+            extended_path = url.replace('https://'+req.host,'')
+        else:
+            extended_path = url.replace(req.host,'')
+        
         connection.request(
-            method='POST', url=url, body=encoded_data[0], headers=encoded_data[1])
+            method='POST', url=extended_path+'/', body=encoded_data[0], headers=encoded_data[1])
         response = connection.getresponse()
+        
 
         logger.debug("httplib POST request response was: %s , because: %s" % (
             response.status, response.reason))
+        
+        # considering current response to be HttpResponse
+        # in case if response is a JsonResponse then
+        #import json
+        #responseResult = json.loads(response.read())
 
-        responseResult = response.read()
-
+        responseResult = response.read().decode()
+        
         #logger.debug("Responce.read(): --%s--" % responseResult )
-
+        
         responseResult = responseResult[
-            responseResult.find("<span id=\"download_path\""):]
-        startIndex = responseResult.find("path:") + 5
-        endIndex = responseResult.find("</span>")
-
-        logger.debug("Responce.read(): --%s--" %
+            responseResult.find('<span id=\"download_path\"'):]
+        startIndex = responseResult.find('path:') + 5
+        endIndex = responseResult.find('</span>')
+        logger.debug("Response.read(): --%s--" %
                      responseResult[startIndex:endIndex])
 
         logger.info(
