@@ -162,7 +162,7 @@ class IPrepareApp(IApplication):
             digest = md5.new()
 
         sio = io.StringIO()
-        runProxyMethod(self, 'printPrepTree', sio)
+        runProxyMethod(self, 'printTree', sio)
         digest.update(sio.getvalue().encode('utf-8'))
         tmp = sio.getvalue()
         if verify == False:
@@ -173,10 +173,10 @@ class IPrepareApp(IApplication):
             # the repository
             return digest.hexdigest() == self.hash
 
-    #printPrepTree is only ever run on applications, from within IPrepareApp.py
-    #if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
+    #printTree is only ever run on applications, from within IPrepareApp.py
+    #if you (manually) try to run printTree on anything other than an application, it will not work as expected
     #see the relevant code in VPrinter to understand why
-    def printPrepTree(self, f=None, sel='preparable' ):
+    def printTree(self, f=None, sel='preparable' ):
         ## After fixing some bugs we are left with incompatible job hashes. This should be addressd before removing
         ## This particular class!
         from GangaCore.GPIDev.Base.VPrinterOld import VPrinterOld
