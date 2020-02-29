@@ -111,7 +111,7 @@ class Localhost(IBackend):
     def getStateTime(self, status):
         """Obtains the timestamps for the 'running', 'completed', and 'failed' states.
 
-           The __jobstatus__ file in the job's output directory is read to obtain the start and stop times of the job.
+           The __heartbeat__ file in the job's output directory is read to obtain the start and stop times of the job.
            These are converted into datetime objects and returned to the user.
         """
         j = self.getJobObject()
@@ -133,7 +133,7 @@ class Localhost(IBackend):
             return None
 
         try:
-            p = os.path.join(j.outputdir, '__jobstatus__')
+            p = os.path.join(j.outputdir, '__heartbeat__')
             logger.debug("Opening output file at: %s", p)
             f = open(p)
         except IOError:
@@ -164,7 +164,7 @@ class Localhost(IBackend):
         j = self.getJobObject()
         # check for file. if it's not there don't bother calling getSateTime
         # (twice!)
-        p = os.path.join(j.outputdir, '__jobstatus__')
+        p = os.path.join(j.outputdir, '__heartbeat__')
         if not os.path.isfile(p):
             logger.error('unable to open file %s', p)
             return None
@@ -213,11 +213,13 @@ class Localhost(IBackend):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                        'LocalHostExec.py.template')
+                                                        '../BackendScriptTemplate.py.template')
 
         from GangaCore.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '')
 
+        script = script.replace('###BACKEND###', "'LOCAL'")
+        script = script.replace('###HEARTBEATFREQUENCE###', '0')
         script = script.replace('###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
 
         from GangaCore.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles, getWNCodeForInputdataListCreation
@@ -329,7 +331,7 @@ class Localhost(IBackend):
 
             # try to get the application exit code from the status file
             try:
-                statusfile = os.path.join(outw.getPath(), '__jobstatus__')
+                statusfile = os.path.join(outw.getPath(), '__heartbeat__')
                 if j.status == 'submitted':
                     pid = get_pid(statusfile)
                     if pid:

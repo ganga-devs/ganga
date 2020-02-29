@@ -432,7 +432,7 @@ class Batch(IBackend):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                       'BatchScriptTemplate.py.template')
+                                                       '../BackendScriptTemplate.py.template')
 
         from GangaCore.GPIDev.Lib.File import FileUtils
         text = FileUtils.loadScript(script_location, '')
@@ -448,6 +448,10 @@ class Batch(IBackend):
 
         replace_dict = {
 
+        '###BACKEND###' : "'BATCH'",
+        
+        '###WORKDIR###' : "'.'",
+        
         '###OUTPUTSANDBOXPOSTPROCESSING###' : getWNCodeForOutputSandbox(job, ['__syslog__'], jobidRepr),
 
         '###OUTPUTUPLOADSPOSTPROCESSING###' : getWNCodeForOutputPostprocessing(job, ''),
@@ -470,7 +474,6 @@ class Batch(IBackend):
         '###POSTEXECUTE###' : self.config['postexecute'],
         '###JOBIDNAME###' : self.config['jobid_name'],
         '###QUEUENAME###' : self.config['queue_name'],
-        '###HEARTBEATFREQUENCE###' : self.config['heartbeat_frequency'],
         '###INPUT_DIR###' : repr(job.getStringInputDir()),
 
         '###GANGADIR###' : repr(getConfig('System')['GANGA_PYTHONPATH'])

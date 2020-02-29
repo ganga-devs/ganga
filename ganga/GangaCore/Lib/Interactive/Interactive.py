@@ -296,7 +296,7 @@ class Interactive(IBackend):
                     raw_backend.status = "completed"
 
             if j.backend.status in ["completed", "failed", "killed"]:
-                raw_backend.exitcode = raw_backend._getIntFromOutfile("EXITCODE:", "__jobstatus__")
+                raw_backend.exitcode = raw_backend._getIntFromOutfile("EXITCODE:", "__heartbeat__")
                # Set job status to failed for non-zero exit code
                 if j.backend.exitcode:
                     if j.backend.exitcode in [2, 9, 256]:
