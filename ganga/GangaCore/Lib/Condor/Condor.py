@@ -73,9 +73,12 @@ class Condor(IBackend):
         "globusscheduler": SimpleItem(defvalue="", doc="Globus scheduler to be used (required for Condor-G submission)"),
         "globus_rsl": SimpleItem(defvalue="",
                                  doc="Globus RSL settings (for Condor-G submission)"),
-        "spool" : SimpleItem(defvalue=True, doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd. Required for EOS, see: http://batchdocs.web.cern.ch/batchdocs/troubleshooting/eos_submission.html"),
-        "accounting_group": SimpleItem(defvalue='', doc="Provide an accounting group for this job."),
-        "cdf_options": SimpleItem(defvalue={}, doc="Additional options to set in the CDF file given by a dictionary")
+        "spool" : SimpleItem(defvalue=True,
+                             doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd. Required for EOS, see: http://batchdocs.web.cern.ch/batchdocs/troubleshooting/eos_submission.html"),
+        "accounting_group": SimpleItem(defvalue='',
+                                       doc="Provide an accounting group for this job."),
+        "cdf_options": SimpleItem(defvalue={},
+                                  doc="Additional options to set in the CDF file given by a dictionary")
     })
 
     _category = "backends"
@@ -389,92 +392,7 @@ class Condor(IBackend):
         for filePath in infileList:
             fileList.append(filePath)
 
-        if job.name:
-            name = job.name
-        else:
-            name = job.application._name
-        name = "_".join(name.split())
-        wrapperName = "_".join(["Ganga", str(job.id), name])
-
-        commandList = [
-            "#!/usr/bin/env python2",
-            "from __future__ import print_function",
-            "# Condor job wrapper created by Ganga",
-            "# %s" % (time.strftime("%c")),
-            "",
-            inspect.getsource(Sandbox.WNSandbox),
-            "",
-            "import os",
-            "import time",
-            "import mimetypes",
-            "import shutil",
-            "",
-            "startTime = time.strftime"
-            + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
-            "",
-            getWNCodeForInputdataListCreation(job, ''),
-            "",
-            "workdir = os.getcwd()",
-            "execmd = %s" % repr(exeCmd),
-            "",
-            "###VIRTUALIZATION###",
-            "",
-            "for inFile in %s:" % str(fileList),
-            "   if mimetypes.guess_type(inFile)[1] in ['gzip', 'bzip2']:",
-            "       getPackedInputSandbox( inFile )",
-            "   else:",
-            "       shutil.copy(inFile, os.path.join(os.getcwd(), os.path.basename(inFile)))",
-            "",
-            "exePath = '%s'" % exeString,
-            "if os.path.isfile( '%s' ):" % os.path.basename(exeString),
-            "   os.chmod( '%s', 0755)" % os.path.basename(exeString),
-            "wrapperName = '%s_bash_wrapper.sh'" % wrapperName,
-            "wrapperFile = open( wrapperName, 'w' )",
-            "wrapperFile.write( '#!/bin/bash\\n' )",
-            "wrapperFile.write( 'echo \"\"\\n' )",
-            "wrapperFile.write( 'echo \"Hostname: $(hostname -f)\"\\n' )",
-            "wrapperFile.write( 'echo \"\\${BASH_ENV}: ${BASH_ENV}\"\\n' )",
-            "wrapperFile.write( 'if ! [ -z \"${BASH_ENV}\" ]; then\\n' )",
-            "wrapperFile.write( '  if ! [ -f \"${BASH_ENV}\" ]; then\\n' )",
-            "wrapperFile.write( '    echo \"*** Warning: "
-            + "\\${BASH_ENV} file not found ***\"\\n' )",
-            "wrapperFile.write( '  fi\\n' )",
-            "wrapperFile.write( 'fi\\n' )",
-            "wrapperFile.write( 'echo \"\"\\n' )",
-            "wrapperFile.write( '%s\\n' % \' \'.join(execmd) )",
-            "wrapperFile.write( 'exit ${?}\\n' )",
-            "wrapperFile.close()",
-            "os.chmod( wrapperName, 0755 )",
-            "result = os.system( './%s' % wrapperName )",
-            "os.remove( wrapperName )",
-            "",
-            "endTime = time.strftime"
-              + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
-            "print('\\nJob start: ' + startTime)",
-            "print('Job end: ' + endTime)",
-            "print('Exit code: %s' % str( result ))"
-        ]
-
-        commandString = "\n".join(commandList)
-
-        if virtualization:
-            commandString = virtualization.modify_script(commandString)
-        
-        wrapper = job.getInputWorkspace().writefile\
-            (FileBuffer(wrapperName, commandString), executable=1)
-
-        infileString = ",".join(infileList)
-        outfileString = ",".join(jobconfig.outputbox)
-
-        cdfDict = \
-            {
-                'transfer_input_files': wrapper,
-                'initialdir': outDir,
-                'arguments': wrapperName
-            }
-
-        # extend with additional cdf options
-        cdfDict.update(self.cdf_options)
+        jobidRepr = repr(job.getFQID('.'))
 
         envList = []
         if self.env:
@@ -495,6 +413,50 @@ class Condor(IBackend):
                     value = str(value)
                 envList.append("=".join([key, value]))
         envString = ";".join(envList)
+
+        import inspect
+        script_location = os.path.join(os.path.dirname(
+            os.path.abspath(inspect.getfile(
+                inspect.currentframe()))),'../BackendScriptTemplate.py.template')
+
+        from GangaCore.GPIDev.Lib.File import FileUtils
+        text = FileUtils.loadScript(script_location, '')
+
+        if virtualization:
+            text = virtualization.modify_script(text)
+
+        replace_dict = {
+            "###BACKEND###" : "'CONDOR'",
+            "###WORKDIR###" : os.getcwd(),
+            "###JOBID###" : jobidRepr,
+            "###GANGADIR###" : repr(getConfig('System')['GANGA_PYTHONPATH']),
+            "###INLINEMODULES###" : inspect.getsource(Sandbox.WNSandbox),
+            "###APPSCRIPTPATH###" : repr(exeCmd),
+            "###ENVIRONMENT###" : repr(envString),
+            "###INPUT_SANDBOX###": (fileList),
+            "###SHAREDOUTPUTPATH###": repr(outDir),
+            "###OUTPUTPATTERNS###": str(jobconfig.outputbox),
+            "###CREATEINPUTDATALIST###": getWNCodeForInputdataListCreation(job, ''),
+
+        }
+        
+        for k, v in replace_dict.items():
+            text = text.replace(str(k), str(v))
+
+        wrapper = job.getInputWorkspace().writefile(FileBuffer('__jobscript__', text), executable=1)
+
+        infileString = ",".join(infileList)
+        outfileString = ",".join(jobconfig.outputbox)
+
+        cdfDict = {
+            'transfer_input_files': wrapper,
+            'initialdir': outDir,
+            'arguments': '__jobscript__'
+        }
+
+        # extend with additional cdf options
+        cdfDict.update(self.cdf_options)
+
         if envString:
             cdfDict['environment'] = envString
 

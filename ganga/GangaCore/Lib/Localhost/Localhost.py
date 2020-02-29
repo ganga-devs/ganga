@@ -111,7 +111,7 @@ class Localhost(IBackend):
     def getStateTime(self, status):
         """Obtains the timestamps for the 'running', 'completed', and 'failed' states.
 
-           The __jobstatus__ file in the job's output directory is read to obtain the start and stop times of the job.
+           The __heartbeat__ file in the job's output directory is read to obtain the start and stop times of the job.
            These are converted into datetime objects and returned to the user.
         """
         j = self.getJobObject()
@@ -133,7 +133,7 @@ class Localhost(IBackend):
             return None
 
         try:
-            p = os.path.join(j.outputdir, '__jobstatus__')
+            p = os.path.join(j.outputdir, '__heartbeat__')
             logger.debug("Opening output file at: %s", p)
             f = open(p)
         except IOError:
@@ -164,7 +164,7 @@ class Localhost(IBackend):
         j = self.getJobObject()
         # check for file. if it's not there don't bother calling getSateTime
         # (twice!)
-        p = os.path.join(j.outputdir, '__jobstatus__')
+        p = os.path.join(j.outputdir, '__heartbeat__')
         if not os.path.isfile(p):
             logger.error('unable to open file %s', p)
             return None
@@ -213,39 +213,42 @@ class Localhost(IBackend):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                        'LocalHostExec.py.template')
+                                                        '../BackendScriptTemplate.py.template')
 
         from GangaCore.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '')
-
-        script = script.replace('###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
 
         from GangaCore.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles, getWNCodeForInputdataListCreation
         from GangaCore.Utility.Config import getConfig
         jobidRepr = repr(job.getFQID('.'))
 
-
-        script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, ''))
-        script = script.replace('###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, ''))
-        script = script.replace('###CREATEINPUTDATALIST###', getWNCodeForInputdataListCreation(job, ''))
-
-        script = script.replace('###APPLICATION_NAME###', repr(getName(job.application)))
-        script = script.replace('###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox + sharedfiles))
-        script = script.replace('###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
-        script = script.replace('###APPSCRIPTPATH###', repr(appscriptpath))
-        script = script.replace('###OUTPUTPATTERNS###', str(outputpatterns))
-        script = script.replace('###JOBID###', jobidRepr)
-        script = script.replace('###ENVIRONMENT###', repr(environment))
-        script = script.replace('###WORKDIR###', repr(workdir))
-        script = script.replace('###INPUT_DIR###', repr(job.getStringInputDir()))
-
         if virtualization:
             script = virtualization.modify_script(script)
 
-        self.workdir = workdir
+        replace_dict = {
+            '###BACKEND###': "'LOCAL'",
+            '###HEARTBEATFREQUENCE###': '0',
+            '###INLINEMODULES###': inspect.getsource(Sandbox.WNSandbox),
+            '###OUTPUTSANDBOXPOSTPROCESSING###': getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__'], jobidRepr),
+            '###OUTPUTUPLOADSPOSTPROCESSING###': getWNCodeForOutputPostprocessing(job, ''),
+            '###DOWNLOADINPUTFILES###': getWNCodeForDownloadingInputFiles(job, ''),
+            '###CREATEINPUTDATALIST###': getWNCodeForInputdataListCreation(job, ''),
+            '###APPLICATION_NAME###': repr(getName(job.application)),
+            '###INPUT_SANDBOX###': repr(subjob_input_sandbox + master_input_sandbox + sharedfiles),
+            '###SHAREDOUTPUTPATH###': repr(sharedoutputpath),
+            '###APPSCRIPTPATH###': repr(appscriptpath),
+            '###OUTPUTPATTERNS###': str(outputpatterns),
+            '###JOBID###': jobidRepr,
+            '###ENVIRONMENT###': repr(environment),
+            '###WORKDIR###': repr(workdir),
+            '###INPUT_DIR###': repr(job.getStringInputDir()),
+            '###GANGADIR###': repr(getConfig('System')['GANGA_PYTHONPATH'])
+        }
 
-        script = script.replace('###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
+        for k, v in replace_dict.items():
+            script = script.replace(k, v)
+
+        self.workdir = workdir
 
         wrkspace = job.getInputWorkspace()
         scriptPath = wrkspace.writefile(FileBuffer('__jobscript__', script), executable=1)
@@ -329,7 +332,7 @@ class Localhost(IBackend):
 
             # try to get the application exit code from the status file
             try:
-                statusfile = os.path.join(outw.getPath(), '__jobstatus__')
+                statusfile = os.path.join(outw.getPath(), '__heartbeat__')
                 if j.status == 'submitted':
                     pid = get_pid(statusfile)
                     if pid:

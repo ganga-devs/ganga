@@ -432,13 +432,13 @@ class Batch(IBackend):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                       'BatchScriptTemplate.py.template')
+                                                       '../BackendScriptTemplate.py.template')
 
         from GangaCore.GPIDev.Lib.File import FileUtils
-        text = FileUtils.loadScript(script_location, '')
+        script = FileUtils.loadScript(script_location, '')
 
         if virtualization:
-            text = virtualization.modify_script(text)
+            script = virtualization.modify_script(script)
         
         import GangaCore.Core.Sandbox as Sandbox
         import GangaCore.Utility as Utility
@@ -447,44 +447,37 @@ class Batch(IBackend):
         jobidRepr = repr(self.getJobObject().getFQID('.'))
 
         replace_dict = {
-
-        '###OUTPUTSANDBOXPOSTPROCESSING###' : getWNCodeForOutputSandbox(job, ['__syslog__'], jobidRepr),
-
-        '###OUTPUTUPLOADSPOSTPROCESSING###' : getWNCodeForOutputPostprocessing(job, ''),
-
-        '###DOWNLOADINPUTFILES###' : getWNCodeForDownloadingInputFiles(job, ''),
-
-        '###INLINEMODULES###' : inspect.getsource(Sandbox.WNSandbox),
-        '###INLINEHOSTNAMEFUNCTION###' : inspect.getsource(Utility.util.hostname),
-        '###APPSCRIPTPATH###' : repr(appscriptpath),
-        #'###SHAREDINPUTPATH###' : repr(sharedinputpath)),
-
-        '###INPUT_SANDBOX###' : repr(subjob_input_sandbox + master_input_sandbox + sharedfiles),
-        '###CREATEINPUTDATALIST###' : getWNCodeForInputdataListCreation(job, ''),
-        '###SHAREDOUTPUTPATH###' : repr(sharedoutputpath),
-
-        '###OUTPUTPATTERNS###' : repr(outputpatterns),
-        '###JOBID###' : jobidRepr,
-        '###ENVIRONMENT###' : repr(environment),
-        '###PREEXECUTE###' : self.config['preexecute'],
-        '###POSTEXECUTE###' : self.config['postexecute'],
-        '###JOBIDNAME###' : self.config['jobid_name'],
-        '###QUEUENAME###' : self.config['queue_name'],
-        '###HEARTBEATFREQUENCE###' : self.config['heartbeat_frequency'],
-        '###INPUT_DIR###' : repr(job.getStringInputDir()),
-
-        '###GANGADIR###' : repr(getConfig('System')['GANGA_PYTHONPATH'])
+            '###BACKEND###' : "'BATCH'",
+            '###WORKDIR###' : "'.'",
+            '###OUTPUTSANDBOXPOSTPROCESSING###' : getWNCodeForOutputSandbox(job, ['__syslog__'], jobidRepr),
+            '###OUTPUTUPLOADSPOSTPROCESSING###' : getWNCodeForOutputPostprocessing(job, ''),
+            '###DOWNLOADINPUTFILES###' : getWNCodeForDownloadingInputFiles(job, ''),
+            '###INLINEMODULES###' : inspect.getsource(Sandbox.WNSandbox),
+            '###INLINEHOSTNAMEFUNCTION###' : inspect.getsource(Utility.util.hostname),
+            '###APPSCRIPTPATH###' : repr(appscriptpath),
+            '###INPUT_SANDBOX###' : repr(subjob_input_sandbox + master_input_sandbox + sharedfiles),
+            '###CREATEINPUTDATALIST###' : getWNCodeForInputdataListCreation(job, ''),
+            '###SHAREDOUTPUTPATH###' : repr(sharedoutputpath),
+            '###OUTPUTPATTERNS###' : repr(outputpatterns),
+            '###JOBID###' : jobidRepr,
+            '###ENVIRONMENT###' : repr(environment),
+            '###PREEXECUTE###' : self.config['preexecute'],
+            '###POSTEXECUTE###' : self.config['postexecute'],
+            '###JOBIDNAME###' : self.config['jobid_name'],
+            '###QUEUENAME###' : self.config['queue_name'],
+            '###INPUT_DIR###' : repr(job.getStringInputDir()),
+            '###GANGADIR###' : repr(getConfig('System')['GANGA_PYTHONPATH'])
         }
 
         for k, v in replace_dict.items():
-            text = text.replace(str(k), str(v))
+            script = script.replace(str(k), str(v))
 
         logger.debug('subjob input sandbox %s ', subjob_input_sandbox)
         logger.debug('master input sandbox %s ', master_input_sandbox)
 
         from GangaCore.GPIDev.Lib.File import FileBuffer
 
-        return job.getInputWorkspace().writefile(FileBuffer('__jobscript__', text), executable=1)
+        return job.getInputWorkspace().writefile(FileBuffer('__jobscript__', script), executable=1)
 
     @staticmethod
     def updateMonitoringInformation(jobs):

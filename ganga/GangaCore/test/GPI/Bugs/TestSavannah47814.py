@@ -17,5 +17,5 @@ class TestSavannah47814(GangaUnitTest):
         self.assertTrue(failed, 'Job with illegal script should fail. Instead it went into the state %s' % j.status)
 
         import os.path
-        f = os.path.join(j.outputdir, '__jobstatus__')
-        self.assertTrue(file_contains(f, 'No such file or directory'), '__jobstatus__ file should contain error')
+        f = os.path.join(j.outputdir, '__heartbeat__')
+        self.assertTrue(file_contains(f, 'No such file or directory'), '__heartbeat__ file should contain error')
