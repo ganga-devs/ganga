@@ -108,8 +108,8 @@ def test_job_copy(gpi):
     assert j2.splitter.values == ['arg 1', 'arg 2', 'arg 3']
 
     # make sure properties are not shared between the copies
-    j2.name == "testname2"
-    j2.application.exe == "echo"
+    j2.name = "testname2"
+    j2.application.exe = "echo"
 
     # test the properties are not shared between copies
     assert j.name == "testname"
@@ -117,6 +117,8 @@ def test_job_copy(gpi):
     assert j.application.exe == "sleep"
     assert j2.application.exe == "echo"
 
+
+   
 def test_job_equality(gpi):
     """Check that copies of Jobs are equal to each other"""
     j = gpi.Job()
