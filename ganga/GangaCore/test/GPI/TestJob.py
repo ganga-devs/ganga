@@ -8,6 +8,27 @@ from GangaCore.testlib.monitoring import run_until_completed
 def test_job_create(gpi):
     j = gpi.Job()
 
+def test_job_kill(gpi):
+
+    j = gpi.Job()
+
+    # assert True if it gives an error while killing the job
+    def cannot_kill(j):
+        try:
+            j.kill()
+            return False,"should raise Error"
+        except:
+            return True
+
+    # cannot kill a job with status "new"
+    assert cannot_kill(j)
+
+    j.submit()
+    run_until_completed(j)
+
+    # cannot kill a job with status "completed"
+    assert cannot_kill(j)
+
 
 def test_job_submit(gpi):
     j = gpi.Job()
