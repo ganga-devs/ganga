@@ -8,6 +8,27 @@ from GangaCore.testlib.monitoring import run_until_completed
 def test_job_create(gpi):
     j = gpi.Job()
 
+def test_job_kill(gpi):
+
+    j = gpi.Job()
+
+    # assert True if it gives an error while killing the job
+    def cannot_kill(j):
+        try:
+            j.kill()
+            return False,"should raise Error"
+        except:
+            return True
+
+    # cannot kill a job with status "new"
+    assert cannot_kill(j)
+
+    j.submit()
+    run_until_completed(j)
+
+    # cannot kill a job with status "completed"
+    assert cannot_kill(j)
+
 
 def test_job_submit(gpi):
     j = gpi.Job()
@@ -107,7 +128,18 @@ def test_job_copy(gpi):
     assert j2.splitter.attribute == "application.args"
     assert j2.splitter.values == ['arg 1', 'arg 2', 'arg 3']
 
+    # make sure properties are not shared between the copies
+    j2.name = "testname2"
+    j2.application.exe = "echo"
 
+    # test the properties are not shared between copies
+    assert j.name == "testname"
+    assert j2.name == "testname2"
+    assert j.application.exe == "sleep"
+    assert j2.application.exe == "echo"
+
+
+   
 def test_job_equality(gpi):
     """Check that copies of Jobs are equal to each other"""
     j = gpi.Job()
