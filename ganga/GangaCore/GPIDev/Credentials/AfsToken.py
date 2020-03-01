@@ -114,9 +114,10 @@ class AfsTokenInfo(ICredentialInfo):
         soonest = None
 
         for expires in all_tokens:
-            expires = datetime.datetime.strptime(expires, '%b %d %H:%M')
             now = datetime.datetime.now()
-            expires = expires.replace(year=now.year)
+            #Add the current year as the token info doesn't include it but we need to know if it is a leap year
+            expires = '%s %s' % (expires, now.year)
+            expires = datetime.datetime.strptime(expires, '%b %d %H:%M %Y')
 
             # If the expiration date is in the past then assume it should be in the future
             if expires < now:
