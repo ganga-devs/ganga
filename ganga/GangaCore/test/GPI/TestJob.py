@@ -16,7 +16,7 @@ def test_job_kill(gpi):
     def cannot_kill(j):
         try:
             j.kill()
-            return False,"should raise Error"
+            return False,"should raise JobError"
         except:
             return True
 
@@ -149,3 +149,36 @@ def test_job_equality(gpi):
     assert j2 == j3
     assert stripProxy(j) == stripProxy(j2)
     assert stripProxy(j2) == stripProxy(j3)
+
+
+def test_job_naming_iteration(gpi):
+    
+    gpi.jobs.remove()
+
+    s1 = gpi.Job(name="SameName")
+    s2 = gpi.Job(name="SameName")
+    d1 = gpi.Job(name="DifferentName")
+
+    for j in gpi.jobs:
+        assert gpi.jobs(j.id)
+
+    # 2 items in slice
+    SameName_jobs = gpi.jobs.select(name="SameName")
+
+    assert s1 in SameName_jobs 
+    assert s2 in SameName_jobs 
+
+    # 1 item in slice
+    assert (d1 in gpi.jobs.select(name="DifferentName"))
+    assert (d1 is gpi.jobs["DifferentName"])
+
+    # delete jobs with SameName
+    SameName_jobs.remove()
+
+    assert len(gpi.jobs) == 1
+    assert gpi.jobs[-1].name == "DifferentName"
+
+    # delete job with DifferentName
+    gpi.jobs.select(name="DifferentName").remove()
+
+    assert len(gpi.jobs) == 0
