@@ -33,6 +33,9 @@ from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Lib.File import File
 from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
 
+from GangaCore.GPIDev.Lib.File.OutputFileManager import getWNCodeForInputdataListCreation
+
+
 logger = GangaCore.Utility.logging.getLogger()
 
 
@@ -408,6 +411,8 @@ class Condor(IBackend):
             "",
             "startTime = time.strftime"
             + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
+            "",
+            getWNCodeForInputdataListCreation(job, ''),
             "",
             "workdir = os.getcwd()",
             "execmd = %s" % repr(exeCmd),
