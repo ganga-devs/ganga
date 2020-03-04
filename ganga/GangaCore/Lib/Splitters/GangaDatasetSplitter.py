@@ -58,7 +58,6 @@ class GangaDatasetSplitter(ISplitter):
         while fid < filesToRun:
             j = self.createSubjob(job)
             j.inputdata = masterType()
-            j.inputdata.treat_as_inputfiles = job.inputdata.treat_as_inputfiles
             for sf in full_list[fid:fid + self.files_per_subjob]:
                 j.inputdata.files.append(sf)
 
