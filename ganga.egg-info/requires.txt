@@ -1,0 +1,4 @@
+ipython>=5.0.0
+httplib2>=0.8
+absl-py>=0.1.2
+google-api-python-client>=1.1
