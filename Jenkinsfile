@@ -16,6 +16,7 @@ pipeline {
           steps {
             withCredentials([file(credentialsId: 'GangaRobotUsercert', variable: 'X509_USER_CERT'),
                              file(credentialsId: 'GangaRobotUserkey', variable: 'X509_USER_KEY')]) {
+              sh label: "Wait to let GancaCore container register", script: "sleep 120"
               sh label: "Docker build", script: "DOCKER_BUILDKIT=1 docker build -t gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} --build-arg VO=gridpp --build-arg BRANCH_NAME=${env.BRANCH_NAME} --build-arg BUILD_ID=${env.BUILD_ID} --secret id=usercert,src=$X509_USER_CERT --secret id=userkey,src=$X509_USER_KEY -f ${env.WORKSPACE}/ganga/GangaDirac/test/Dockerfile ."
             }
           }
