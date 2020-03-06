@@ -526,7 +526,6 @@ j.submit()
         trf1.outputfiles = [LocalFile("*.txt")]
         d = GangaDataset()
         d.files = [LocalFile("*.txt")]
-        d.treat_as_inputfiles = True
         trf1.addInputData(d)
         trf1.files_per_unit = 1
         trf1.submit_with_threads = True

@@ -110,8 +110,6 @@ class CoreTransform(ITransform):
                     unit.name = "Unit %d" % len(self.units)
                     unit.inputdata = GangaDataset(
                         files=filelist[fid:fid + self.files_per_unit])
-                    unit.inputdata.treat_as_inputfiles = self.inputdata[
-                        0].treat_as_inputfiles
 
                     fid += self.files_per_unit
 
@@ -161,6 +159,5 @@ class CoreTransform(ITransform):
         unit = CoreUnit()
         unit.name = "Unit %d" % len(self.units)
         unit.inputdata = GangaDataset(files=flist)
-        unit.inputdata.treat_as_inputfiles = self.chaindata_as_inputfiles
 
         return unit
