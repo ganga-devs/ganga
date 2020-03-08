@@ -8,6 +8,27 @@ from GangaCore.testlib.monitoring import run_until_completed
 def test_job_create(gpi):
     j = gpi.Job()
 
+def test_job_kill(gpi):
+
+    j = gpi.Job()
+
+    # assert True if it gives an error while killing the job
+    def cannot_kill(j):
+        try:
+            j.kill()
+            return False,"should raise JobError"
+        except:
+            return True
+
+    # cannot kill a job with status "new"
+    assert cannot_kill(j)
+
+    j.submit()
+    run_until_completed(j)
+
+    # cannot kill a job with status "completed"
+    assert cannot_kill(j)
+
 
 def test_job_submit(gpi):
     j = gpi.Job()
@@ -107,7 +128,18 @@ def test_job_copy(gpi):
     assert j2.splitter.attribute == "application.args"
     assert j2.splitter.values == ['arg 1', 'arg 2', 'arg 3']
 
+    # make sure properties are not shared between the copies
+    j2.name = "testname2"
+    j2.application.exe = "echo"
 
+    # test the properties are not shared between copies
+    assert j.name == "testname"
+    assert j2.name == "testname2"
+    assert j.application.exe == "sleep"
+    assert j2.application.exe == "echo"
+
+
+   
 def test_job_equality(gpi):
     """Check that copies of Jobs are equal to each other"""
     j = gpi.Job()
@@ -117,3 +149,36 @@ def test_job_equality(gpi):
     assert j2 == j3
     assert stripProxy(j) == stripProxy(j2)
     assert stripProxy(j2) == stripProxy(j3)
+
+
+def test_job_naming_iteration(gpi):
+    
+    gpi.jobs.remove()
+
+    s1 = gpi.Job(name="SameName")
+    s2 = gpi.Job(name="SameName")
+    d1 = gpi.Job(name="DifferentName")
+
+    for j in gpi.jobs:
+        assert gpi.jobs(j.id)
+
+    # 2 items in slice
+    SameName_jobs = gpi.jobs.select(name="SameName")
+
+    assert s1 in SameName_jobs 
+    assert s2 in SameName_jobs 
+
+    # 1 item in slice
+    assert (d1 in gpi.jobs.select(name="DifferentName"))
+    assert (d1 is gpi.jobs["DifferentName"])
+
+    # delete jobs with SameName
+    SameName_jobs.remove()
+
+    assert len(gpi.jobs) == 1
+    assert gpi.jobs[-1].name == "DifferentName"
+
+    # delete job with DifferentName
+    gpi.jobs.select(name="DifferentName").remove()
+
+    assert len(gpi.jobs) == 0
