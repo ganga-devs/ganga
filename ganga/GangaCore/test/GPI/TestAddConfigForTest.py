@@ -1,5 +1,5 @@
 from GangaCore.testlib.decorators import add_config
-from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig, ConfigError
 
 # Case 1: Config Section exists & given option also exists -> Outcome expected: Should change the value of the option.
 @add_config([('Configuration', 'user', 'test')])
@@ -13,8 +13,8 @@ def test_add_config_2(gpi):
     try:
         c = getConfig('Configuration')
         c['TestOption'] == 'TestValue'
-        assert False, "Should throw an Error"
-    except:
+        assert False, "Should throw an ConfigError"
+    except ConfigError:
         assert True
     
 # Case 3: Config Section does NOT exists -> Outcome expected: Should create a config section with (.is_open=True) & add option to it.
