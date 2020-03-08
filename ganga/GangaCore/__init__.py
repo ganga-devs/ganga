@@ -238,6 +238,7 @@ poll_config.addOption('autoCheckCredentials', True, 'Check credentials using the
 # Feedback
 feedback_config = makeConfig('Feedback', 'Settings for the Feedback plugin. Cannot be changed during the interactive Ganga session.')
 feedback_config.addOption('uploadServer', 'http://gangamon.cern.ch/django/errorreports', 'The server to connect to')
+#feedback_config.addOption('uploadServer', 'http://ec2-52-14-218-28.us-east-2.compute.amazonaws.com/server/', 'The server to connect to')
 
 # ------------------------------------------------
 # Associations
