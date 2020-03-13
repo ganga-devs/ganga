@@ -1,6 +1,0 @@
-from GangaTest.Framework.utils import assert_cannot_submit
-
-j = Job()
-j.splitter = TestSplitter()
-j.splitter.fail='exception'
-assert_cannot_submit(j)
