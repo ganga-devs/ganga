@@ -67,7 +67,7 @@ python module which carries out the merge with
     :dedent: 8
 
 
-In ``mymerger.py`` you must define a function called merge(file_list,output_file), e.g:
+In ``mymerger.py`` you must define a function called mergefiles(file_list,output_file), e.g:
 
 .. code-block:: python
 
