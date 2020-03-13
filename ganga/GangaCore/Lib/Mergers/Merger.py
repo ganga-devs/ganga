@@ -243,7 +243,7 @@ class CustomMerger(IMerger):
     Allows a script to be supplied that performs the merge of some custom file type.
     The script must be a python file which defines the following function:
 
-    def merge(file_list, output_file):
+    def mergefiles(file_list, output_file):
 
         #perform the merge
         if not success:
