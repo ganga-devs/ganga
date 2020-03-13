@@ -89,6 +89,7 @@ setup(name='ganga',
           'httplib2>=0.8',
           'absl-py>=0.1.2',
           'google-api-python-client>=1.1',
+          'requests>=2.23.0'
       ],
       extra_require={'profiler' : ['memory_profiler'], 'LHCb' : ['LbDevTools']},
       classifiers=[

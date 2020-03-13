@@ -4,7 +4,7 @@ import GangaCore.Utility.logging
 from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
 import gzip
 logger = GangaCore.Utility.logging.getLogger()
-
+import requests
 
 def _initconfigFeed():
     """Initialize Feedback configuration."""
@@ -23,7 +23,9 @@ def _initconfigFeed():
         pass
 _initconfigFeed()
 
-
+def send_request(url,data,files):
+    response = requests.post(url, data=data, files=files)
+    return response
 def report(job=None):
     """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
     import mimetypes
@@ -35,6 +37,7 @@ def report(job=None):
     import sys
     import os
     import platform
+
 
     import GangaCore.GPIDev.Lib.Config
     from GangaCore.GPIDev.Base.VPrinter import full_print
@@ -88,15 +91,16 @@ def report(job=None):
         logger.debug("Sending Post to %s ,  containing %s" % (url, files))
 
         encoded_data = encode_multipart_formdata(files)
-        import requests
-        response = requests.post(url, data=encoded_data[0], files=encoded_data[1])
         
+        #response = requests.post(url, data=encoded_data[0], files=encoded_data[1])
+        response = send_request(url,encoded_data[0],encoded_data[1])
 
-        logger.debug("httplib POST request response was: %s , because: %s" % (
-            response.status_code, response.text))
+        # logger.debug("httplib POST request response was: %s , because: %s" % (
+        #     response.status_code, response.text))
         
         # considering current response to be HttpResponse
-        responseResult = response.content.decode()
+        responseResult = response.content
+        responseResult = responseResult.decode()
         
         #logger.debug("Responce.read(): --%s--" % responseResult )
         
@@ -339,16 +343,19 @@ def report(job=None):
 
         # import ipython history in a file
         try:
-            ipythonFile = open(
-                os.path.join(os.environ['IPYTHONDIR'], 'history'), 'r')
-
+            import readline
             try:
-                lastIPythonCommands = ipythonFile.readlines()[-20:]
+                lastIPythonCommands = ""
+                if readline.get_current_history_length()%20==0 and readline.get_current_history_length()!=0:
+                    history_len = 20
+                else:
+                    history_len = readline.get_current_history_length()%20
+                for i in range(history_len):
+                     lastIPythonCommands+=readline.get_history_item(i + 1)+'\n'
                 writeStringToFile(os.path.join(
-                    fullLogDirName, ipythonHistoryFileName), '\n'.join(lastIPythonCommands))
-                #writeStringToFile(os.path.join(fullLogDirName, ipythonHistoryFileName), ipythonFile.read())
+                    fullLogDirName, ipythonHistoryFileName), lastIPythonCommands)
             finally:
-                ipythonFile.close()
+                logger.debug("Ipython history recorded")
         # except IOError does not catch the exception ???
         except Exception as err:
             logger.debug("Err: %s" % err)
