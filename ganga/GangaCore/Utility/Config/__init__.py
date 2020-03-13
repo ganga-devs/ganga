@@ -1,5 +1,5 @@
 
-from .Config import getConfig, makeConfig, ConfigError, setSessionValuesFromFiles, allConfigs, setConfigOption, expandConfigPath, config_scope, setSessionValue, setUserValue
+from .Config import getConfig, makeConfig, ConfigError, setSessionValuesFromFiles, allConfigs, setConfigOption, expandConfigPath, config_scope, setSessionValue, setUserValue, setUserValueForTest
 import os.path
 
 ## from Config import getConfigDict

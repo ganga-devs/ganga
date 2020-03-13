@@ -196,6 +196,23 @@ def makeConfig(name, docstring, **kwds):
     c._config_made = True
     return c
 
+def makeConfigForTest(name, docstring, **kwds):
+    """
+    Copy of makeConfig(), but without the bootstrap restrictions as Config Sections created for the Tests
+    can be added after bootstrap and should not contain any critical config.
+    """
+
+    try:
+        c = allConfigs[name]
+        c.docstring = docstring
+        for k in kwds:
+            setattr(c, k, kwds[k])
+    except KeyError:
+        c = allConfigs[name] = PackageConfig(name, docstring, **kwds)
+
+    c._config_made = True
+    return c
+
 
 class ConfigOption(object):
 
@@ -946,6 +963,32 @@ def setUserValue(config_name, option_name, value):
     # put value in the buffer, it will be removed from the buffer when option
     # is added
     unknownUserConfigValues[config_name][option_name] = value
+
+def setUserValueForTest(config_name, option_name, value):
+    """
+    Sets the user value for the given config and option for performing Tests.
+    Used by (GangaCore/testlib/GangaUnitTest)
+    If config_name exists & it's option_name also exists then modifies the option.
+    If config_name exists & it's option_name does not exists but options are allowed to be added to config_name (.is_open=True) then adds the option.
+    If config_name exists & it's option_name does not exists but options are not allowed to be added to config_name (.is_open=False) then doesn't add the option.
+    If config_name does not exists then creates the config_name (with .is_open=True) and add option_name to it. <--- Created for testing purpose
+    """
+
+    if config_name in allConfigs:
+        c = getConfig(config_name)
+        if option_name in c.options:
+            c.setUserValue(option_name, value)
+            return
+        if c.is_open:
+            c._addOpenOption(option_name, value)
+            c.setUserValue(option_name, value)
+            return
+
+    if config_name not in allConfigs:
+        c = makeConfigForTest(config_name, '')
+        c.is_open = True
+        c._addOpenOption(option_name, value)
+        c.setUserValue(option_name, value)
 
 
 def setSessionValue(config_name, option_name, value):

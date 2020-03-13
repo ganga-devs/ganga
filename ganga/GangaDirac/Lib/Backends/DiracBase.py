@@ -1148,7 +1148,7 @@ class DiracBase(IBackend):
                 logger.warning("An error occured finalising job: %s" % job.getFQID('.'))
                 logger.warning("Attemting again (%s of %s) after %s-sec delay" % (str(count), str(limit), str(sleep_length)))
                 if count == limit:
-                    logger.error("Unable to finalise job after %s retries due to error:\n%s" % (job.getFQID('.'), str(err)))
+                    logger.error("Unable to finalise job %s after %s retries due to error:\n%s" % (job.getFQID('.'), str(count), str(err)))
                     job.force_status('failed')
                     raise
 
