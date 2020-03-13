@@ -66,7 +66,7 @@ class TextMerger(IMerger):
     j = Job() 
     j.outputsandbox = ['job.log','results.txt']
     j.splitter = SomeSplitter()
-    j.merger = tm
+    j.postprocessors = [tm]
     j.submit()
 
     The merge object will be used to merge the output of
@@ -159,7 +159,7 @@ class RootMerger(IMerger):
     j = Job() 
     j.outputsandbox = ['hist.root','trees.root']
     j.splitter = SomeSplitter()
-    j.merger = rm
+    j.postprocessors = [rm]
     j.submit()
 
     The merge object will be used to merge the output of
@@ -255,7 +255,19 @@ class CustomMerger(IMerger):
     list of paths to the files to be merged. output_file is a string path for
     the output of the merge. This file must exist by the end of the merge or the
     merge will fail. If the merge cannot proceed, then the function should return a 
-    non-zero integer.
+    non-zero integer. If the merger is in the file mymerger.py, the usage can be
+
+    cm = CustomMerger()
+    cm.module = '~/mymerger.py'
+    cm.files = ['file.txt']
+
+    # This will call the merger once all jobs are finished.
+    j = Job() 
+    j.outputsandbox = ['file.txt']
+    j.splitter = SomeSplitter()
+    j.postprocessors = [cm]
+    j.submit()
+
 
     Clearly this tool is provided for advanced ganga usage only, and should be used with
     this in mind.
@@ -346,7 +358,7 @@ class SmartMerger(IMerger):
     #sm defined above
     j = Job()
     j.splitter = SomeSplitter()
-    j.merger = sm
+    j.postprocessors = [sm]
     j.submit() 
 
     """
