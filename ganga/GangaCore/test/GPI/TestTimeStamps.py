@@ -68,3 +68,30 @@ def test_basic_timestamps_local(gpi):
 
         assert 'final' in sjs.time.timestamps
         assert isinstance(sjs.time.final(), datetime.datetime)
+
+
+def test_duration_local(gpi):
+
+    j = gpi.Job()
+    j.splitter = 'ArgSplitter'
+    j.splitter.args = [[],[],[]]
+
+    assert j.time.submissiontime() == None
+    assert j.time.runtime() == None
+    assert j.time.waittime() == None
+
+    j.submit()
+
+    assert sleep_until_completed(j,300)
+
+    assert isinstance(j.time.submissiontime(), datetime.timedelta)
+    assert isinstance(j.time.waittime(), datetime.timedelta)
+    assert isinstance(j.time.runtime(), datetime.timedelta)
+
+
+    for sjs in j.subjobs:
+        assert isinstance(sjs.time.submissiontime(), datetime.timedelta) # Submitting does not appear in subjobs currently.
+        assert isinstance(sjs.time.waittime(), datetime.timedelta)
+        assert isinstance(sjs.time.runtime(), datetime.timedelta)
+
+
