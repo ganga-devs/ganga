@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import sleep_until_completed
+from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
 import datetime
 
 # Test for checking timestamps for Local backend
@@ -94,6 +94,7 @@ def test_duration_local(gpi):
         assert isinstance(sjs.time.waittime(), datetime.timedelta)
         assert isinstance(sjs.time.runtime(), datetime.timedelta)
 
+
 # Test for checking timestamps for Job Copy in Local Backend
 def test_basic_timestamps_copy_local(gpi):
     
@@ -148,5 +149,120 @@ def test_basic_timestamps_copy_local(gpi):
         for j in range(0,len(j3.subjobs)):
             assert j4.subjobs(i).time.new() > j3.subjobs(j).time.new()
 
+# Test for timestamps of states in Local backend
+def test_statetime_local(gpi):
 
+    # Job 1 of 6 -------
+
+    gpi.config['Configuration']['resubmitOnlyFailedSubjobs']=False
+
+    j = gpi.Job()
+
+    j.submit()
+
+    assert sleep_until_state(j, 30, 'completed')
+
+    assert j.time.submitted() == j.time.timestamps['submitted']
+    assert isinstance(j.time.submitted(), datetime.datetime)
+
+    # Job 2 of 6 -------
+
+    j_comp = gpi.Job()
+    j_comp.application.exe='sleep'
+    j_comp.application.args=[30]
+
+    j_comp.submit()
+    assert sleep_until_state(j_comp, 30, 'running')
+
+    j_comp.kill()
+    assert sleep_until_state(j_comp, 30, 'killed')
+
+    j_comp.resubmit()
+    assert sleep_until_state(j_comp, 45, 'completed')
+
+    assert isinstance(j_comp.time.new(), datetime.datetime)
+    assert isinstance(j_comp.time.submitting(), datetime.datetime)
+    assert isinstance(j_comp.time.timestamps['resubmitted'], datetime.datetime)
+    assert isinstance(j_comp.time.backend_running(), datetime.datetime)
+    assert isinstance(j_comp.time.backend_final(), datetime.datetime)
+    assert isinstance(j_comp.time.final(), datetime.datetime)
+
+    # Job 3 of 6 -------
+            
+    j_fail = gpi.Job()
+    j_fail.application.exe='sleep'
+    j_fail.application.args='300'
+
+    j_fail.submit()
+    assert sleep_until_state(j_fail, 30, 'running')
+
+    j_fail.force_status('failed')
+    assert sleep_until_state(j_fail, 30, 'failed')
+
+    assert isinstance(j_fail.time.new(), datetime.datetime)
+    assert isinstance(j_fail.time.submitting(), datetime.datetime)
+    assert isinstance(j_fail.time.submitted(), datetime.datetime)
+    assert isinstance(j_fail.time.backend_running(), datetime.datetime)
+    assert isinstance(j_fail.time.final(), datetime.datetime)
+
+    # Job 4 of 6 (With subjobs) -------
+
+    j = gpi.Job()
+    j.application.exe='sleep'
+    j.splitter='ArgSplitter'
+    j.splitter.args=[[10],[10],[10]]
+
+    j.submit()
+    assert sleep_until_state(j, 120, 'completed')
+
+    assert j.time.submitted() == j.time.timestamps['submitted']
+    assert isinstance(j.time.submitted(), datetime.datetime)
+
+    # Job 5 of 6 (With subjobs) -------
+
+    j_comp = gpi.Job()
+
+    j_comp.application.exe='sleep'
+    j_comp.splitter='ArgSplitter'
+    j_comp.splitter.args=[[30],[30],[30]]
+
+    j_comp.submit()
+    assert sleep_until_state(j_comp, 120, 'running')
+
+    j_comp.subjobs.kill()
+    assert sleep_until_state(j_comp, 120, 'killed')
+
+    j_comp.resubmit()
+    assert sleep_until_state(j_comp, 120, 'completed')
+
+    assert isinstance(j_comp.time.new(), datetime.datetime)
+    assert isinstance(j_comp.time.submitting(), datetime.datetime), "Job %d" %j_comp.id
+    assert isinstance(j_comp.time.timestamps['resubmitted'], datetime.datetime)
+    assert isinstance(j_comp.time.backend_running(), datetime.datetime)
+    assert isinstance(j_comp.time.backend_final(), datetime.datetime)
+    assert isinstance(j_comp.time.final(), datetime.datetime)
+
+    # Job 6 of 6 (With subjobs) -------
+
+    j_fail = gpi.Job()
+    j_fail.splitter='ArgSplitter'
+    j_fail.splitter.args=[[],[],[]]
+    j_fail.application.exe='sleep'
+    j_fail.application.args='60'
+
+    j_fail.submit()
+
+    j_fail.force_status('failed')
+    assert sleep_until_state(j_fail, 120, 'failed')
+
+    assert isinstance(j_fail.time.new(), datetime.datetime)
+    assert isinstance(j_fail.time.submitting(), datetime.datetime)
+    assert isinstance(j_fail.time.submitted(), datetime.datetime)
+    if 'backend_running' in j_fail.time.timestamps.keys():
+        assert isinstance(j_fail.time.backend_running(), datetime.datetime)
+    else:
+        pass
+    assert isinstance(j_fail.time.final(), datetime.datetime)
+
+    # END -------
 
