@@ -2,9 +2,9 @@
 
 import GangaCore.Utility.logging
 from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
-
+import gzip
 logger = GangaCore.Utility.logging.getLogger()
-
+import requests
 
 def _initconfigFeed():
     """Initialize Feedback configuration."""
@@ -23,7 +23,9 @@ def _initconfigFeed():
         pass
 _initconfigFeed()
 
-
+def send_request(url,data,files):
+    response = requests.post(url, data=data, files=files)
+    return response
 def report(job=None):
     """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
     import mimetypes
@@ -36,10 +38,11 @@ def report(job=None):
     import os
     import platform
 
-    import GangaCore.GPIDev.Lib.Config.config as config
+
+    import GangaCore.GPIDev.Lib.Config
     from GangaCore.GPIDev.Base.VPrinter import full_print
 
-    import Ganga
+    #import Ganga
 
     # global variables that will print sumamry report to the user along with
     # the download link
@@ -51,38 +54,23 @@ def report(job=None):
     PYTHON_PATH = ''
 
     def random_string(length):
-        return ''.join([random.choice(string.letters) for ii in range(length + 1)])
+        return ''.join([random.choice(string.ascii_letters) for ii in range(length + 1)])
 
     def encode_multipart_formdata(files):
         boundary = random_string(30)
-        retnl = '\r\n'
-        lines = []
 
         def get_content_type(filename):
             return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
 
         fields = {'title': 'Ganga Error Report'}
-
+        data = {}
+        file_dict = {}
         for (key, value) in fields.items():
-            lines.append('--' + boundary)
-            lines.append('Content-Disposition: form-data; name="%s"' % key)
-            lines.append('')
-            lines.append(value)
+            data[key] = value
         for field_name, file in files.items():
-            lines.append('--' + boundary)
-            lines.append(
-                'Content-Disposition: form-data; name="file"; filename="%s"' % (file))
-            lines.append('Content-Type: %s' % get_content_type(file))
-            lines.append('')
-            lines.append(open(file, 'rb').read())
-        lines.append('--' + boundary + '--')
-        lines.append('')
-        body = retnl.join(lines)
-
-        headers = {'content-type': 'multipart/form-data; boundary=%s' %
-                   boundary, 'content-length': str(len(body))}
-
-        return body, headers
+            file_dict[field_name]=(file, open(file,'rb'))
+        
+        return data, file_dict
 
     def make_upload_file(server):
 
@@ -95,7 +83,7 @@ def report(job=None):
                     'mode': 'regist'}
             files = {'file': path}
 
-            send_post(server, files)
+            return send_post(server, files)
 
         return upload_file
 
@@ -103,35 +91,24 @@ def report(job=None):
         logger.debug("Sending Post to %s ,  containing %s" % (url, files))
 
         encoded_data = encode_multipart_formdata(files)
+        
+        #response = requests.post(url, data=encoded_data[0], files=encoded_data[1])
+        response = send_request(url,encoded_data[0],encoded_data[1])
 
-        data = urllib.parse.urlencode(encoded_data[1])
-        req = urllib.request.Request(url, data=data)
-        if req.has_data():
-            logger.debug("urllib2: Success!")
-        else:
-            logger.debug("urllib2: Fail!!!")
-
-        connection = http.client.HTTPConnection(req.get_host())
-        # connection.set_debuglevel(1)
-        logger.debug("Requesting: 'POST', %s, %s " % (url, encoded_data[1]))
-#                connection.request( method='POST', url=req.get_selector(), body=encoded_data[0], headers=encoded_data[1] )
-        connection.request(
-            method='POST', url=url, body=encoded_data[0], headers=encoded_data[1])
-        response = connection.getresponse()
-
-        logger.debug("httplib POST request response was: %s , because: %s" % (
-            response.status, response.reason))
-
-        responseResult = response.read()
-
+        # logger.debug("httplib POST request response was: %s , because: %s" % (
+        #     response.status_code, response.text))
+        
+        # considering current response to be HttpResponse
+        responseResult = response.content
+        responseResult = responseResult.decode()
+        
         #logger.debug("Responce.read(): --%s--" % responseResult )
-
+        
         responseResult = responseResult[
-            responseResult.find("<span id=\"download_path\""):]
-        startIndex = responseResult.find("path:") + 5
-        endIndex = responseResult.find("</span>")
-
-        logger.debug("Responce.read(): --%s--" %
+            responseResult.find('<span id=\"download_path\"'):]
+        startIndex = responseResult.find('path:') + 5
+        endIndex = responseResult.find('</span>')
+        logger.debug("Response.read(): --%s--" %
                      responseResult[startIndex:endIndex])
 
         logger.info(
@@ -160,10 +137,12 @@ def report(job=None):
         APPLICATION_NAME = ''
         PYTHON_PATH = ''
 
+        return response
+
     def run_upload(server, path):
 
         upload_file = make_upload_file(server)
-        upload_file(path)
+        return upload_file(path)
 
     def report_inner(job=None, isJob=False, isTask=False):
 
@@ -244,7 +223,7 @@ def report(job=None):
                 #fileName = '~/' + fileName
                 fileToWrite = open(fileName, 'w')
                 try:
-                    fileToWrite.write(stringToWrite)
+                    fileToWrite.write(str(stringToWrite))
                 except Exception as err:
                     logger.debug("Err: %s" % err)
                     raise err
@@ -326,17 +305,17 @@ def report(job=None):
             try:
 
                 print("#GANGA_VERSION = %s" %
-                      config.System.GANGA_VERSION, file=inputFile)
+                      GangaCore.GPIDev.Lib.Config.config.System.GANGA_VERSION, file=inputFile)
 
                 global GANGA_VERSION
-                GANGA_VERSION = config.System.GANGA_VERSION
+                GANGA_VERSION = GangaCore.GPIDev.Lib.Config.config.System.GANGA_VERSION
 
                 # this gets the default values
                 # GangaCore.GPIDev.Lib.Config.Config.print_config_file()
 
                 # this should get the changed values
-                for c in config:
-                    print(config[c], file=inputFile)
+                for c in GangaCore.GPIDev.Lib.Config.config:
+                     print(GangaCore.GPIDev.Lib.Config.config[c], file=inputFile)
 
             finally:
                 inputFile.close()
@@ -364,23 +343,26 @@ def report(job=None):
 
         # import ipython history in a file
         try:
-            ipythonFile = open(
-                os.path.join(os.environ['IPYTHONDIR'], 'history'), 'r')
-
+            import readline
             try:
-                lastIPythonCommands = ipythonFile.readlines()[-20:]
+                lastIPythonCommands = ""
+                if readline.get_current_history_length()%20==0 and readline.get_current_history_length()!=0:
+                    history_len = 20
+                else:
+                    history_len = readline.get_current_history_length()%20
+                for i in range(history_len):
+                     lastIPythonCommands+=readline.get_history_item(i + 1)+'\n'
                 writeStringToFile(os.path.join(
-                    fullLogDirName, ipythonHistoryFileName), '\n'.join(lastIPythonCommands))
-                #writeStringToFile(os.path.join(fullLogDirName, ipythonHistoryFileName), ipythonFile.read())
+                    fullLogDirName, ipythonHistoryFileName), lastIPythonCommands)
             finally:
-                ipythonFile.close()
+                logger.debug("Ipython history recorded")
         # except IOError does not catch the exception ???
         except Exception as err:
             logger.debug("Err: %s" % err)
             writeErrorLog(str(sys.exc_info()[1]))
 
         # import gangalog in a file
-        userLogFileLocation = config["Logging"]._logfile
+        userLogFileLocation = GangaCore.GPIDev.Lib.Config.config["Logging"]._logfile
         userLogFileLocation = os.path.expanduser(userLogFileLocation)
 
         try:
@@ -402,7 +384,7 @@ def report(job=None):
             outputFile = open(jobsListFullFileName, 'w')
             try:
 
-                from GangaCore.Core.GangaRegistry import getRegistryProxy
+                from GangaCore.Core.GangaRepository import getRegistryProxy
                 print(getRegistryProxy('jobs'), file=outputFile)
 
             finally:
@@ -420,7 +402,7 @@ def report(job=None):
             outputFile = open(tasksListFullFileName, 'w')
             try:
 
-                from GangaCore.Core.GangaRegistry import getRegistryProxy
+                from GangaCore.Core.GangaRepository import getRegistryProxy
                 print(getRegistryProxy('tasks'), file=outputFile)
 
             finally:
@@ -527,15 +509,15 @@ def report(job=None):
                     jobid, subjobid = job.fqid.split(
                         '.')[0], job.fqid.split('.')[1]
                     repositoryPath = repositoryPath.replace(
-                        '$thousandsNum', str(int(jobid) / 1000))
+                        '$thousandsNum', str(int(jobid / 1000)))
                     repositoryPath = os.path.join(repositoryPath, jobid)
 
                 else:
                     repositoryPath = repositoryPath.replace(
-                        '$thousandsNum', str(job.id / 1000))
+                        '$thousandsNum', str(int(job.id / 1000)))
 
                 repositoryFullPath = os.path.join(
-                    config.Configuration.gangadir, repositoryPath)
+                    GangaCore.GPIDev.Lib.Config.config.Configuration.gangadir, repositoryPath)
                 indexFileSourcePath = os.path.join(
                     repositoryFullPath, indexFileName)
                 repositoryFullPath = os.path.join(
@@ -623,10 +605,10 @@ def report(job=None):
                 tasksRepositoryPath = tasksRepositoryPath.replace(
                     '$usr', os.getenv("USER"))
                 tasksRepositoryPath = tasksRepositoryPath.replace(
-                    '$thousandsNum', str(task.id / 1000))
+                    '$thousandsNum', str(int(task.id / 1000)))
 
                 repositoryFullPath = os.path.join(
-                    config.Configuration.gangadir, tasksRepositoryPath)
+                    GangaCore.GPIDev.Lib.Config.config.Configuration.gangadir, tasksRepositoryPath)
                 indexFileSourcePath = os.path.join(
                     repositoryFullPath, indexFileName)
                 repositoryFullPath = os.path.join(
@@ -740,7 +722,8 @@ def report(job=None):
             logger.error(
                 'The report is bigger than 100MB and can not be uploaded')
         else:
-            run_upload(server=uploadFileServer, path=resultArchive)
+            response = run_upload(server=uploadFileServer, path=resultArchive)
+            return response,resultArchive
 
     except Exception as err:
         logger.debug("Err: %s" % err)
