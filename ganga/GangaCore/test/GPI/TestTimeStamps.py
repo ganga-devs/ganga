@@ -263,6 +263,3 @@ def test_statetime_local(gpi):
     else:
         pass
     assert isinstance(j_fail.time.final(), datetime.datetime)
-
-    # END -------
-
