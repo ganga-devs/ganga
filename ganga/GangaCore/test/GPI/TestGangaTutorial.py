@@ -1,6 +1,10 @@
 from GangaCore.testlib.decorators import add_config
+from GangaCore.Utility.Config import getConfig, expandvars
 
-@add_config([("Configuration", "RUNTIME_PATH", "GangaTutorial")])
+c = getConfig('Configuration')
+c.setSessionValue('RUNTIME_PATH', "GangaTutorial")
+c.setSessionValue('RUNTIME_PATH', "GangaTest")
+
 def test_ganga_tutorial(gpi):
     j = gpi.Job()
     j.application = gpi.PrimeFactorizer(number=123456)
@@ -8,7 +12,6 @@ def test_ganga_tutorial(gpi):
     j.submit()
     assert j.status in ['submitted','running','completed']
 
-@add_config([("Configuration", "RUNTIME_PATH", "GangaTutorial")])
 def test_ganga_tutorial_subjobs(gpi):
     j = gpi.Job()
     j.splitter = gpi.PrimeFactorizerSplitter(numsubjobs=2)
