@@ -2,8 +2,9 @@
 
 def loadPlugins( config = {} ):
 
-    import Lib.PrimeFactorizer
-    import Lib.PrimeFactorizerSplitter
-    import Lib.PrimeTableDataset
-
+    from .Lib import PrimeFactorizer
+    from .Lib import PrimeFactorizerSplitter
+    from .Lib import PrimeTableDataset
+	
     return None
+    
