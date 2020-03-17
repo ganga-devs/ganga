@@ -9,7 +9,7 @@ from __future__ import print_function
 def check_prime_job(j):
     """ Check the output of job j (or subjobs if exist) and print all calculated prime factors.
     """
-    NUMBER = lj.application.number
+    NUMBER = j.application.number
 
     print('Looking for prime factors of',NUMBER)
     
@@ -23,7 +23,7 @@ def check_prime_job(j):
     factors = []
     for s in rjobs:
         try:
-            fc = eval(file(s.outputdir+'/factors-%d.dat'%NUMBER).read())
+            fc = eval(open(s.outputdir+'/factors-%d.dat'%NUMBER).read())
             if fc:
                 print('job',s.id,': got factors:',fc)
             factors.extend(fc)
@@ -63,5 +63,6 @@ def split_prime_job(j,millions,number=None):
     j.splitter = ArgSplitter()
     args = []
     for m in range(1,millions+1):
-        args.append([str(number),'http://cern.ch/diane/download/primes/primes%d.zip'%m])
+        args.append([str(number),'https://primes.utm.edu/lists/small/millions/primes%d.zip'%m])
     j.splitter.args = args
+    
