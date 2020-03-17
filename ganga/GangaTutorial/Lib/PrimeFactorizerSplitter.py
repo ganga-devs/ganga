@@ -49,12 +49,13 @@ class PrimeFactorizerSplitter(ISplitter):
             if len(primeTables) % self.numsubjobs >= i+1: my_chunksize+=1
 
             ## set lower bound id (inclusive)
-            subjobs[i].inputdata.table_id_lower = offset+1
+            subjobs[i].inputdata.table_id_lower = int(offset+1)
             ## fill subjob with prime tables 
             #for j in range(my_chunksize):
             #    subjobs[i].application.addPrimeTable(primeTables[offset+j])
             offset += my_chunksize
             ## set upper  bound id (inclusive)
-            subjobs[i].inputdata.table_id_upper = offset
+            subjobs[i].inputdata.table_id_upper = int(offset)
 
         return subjobs
+        
