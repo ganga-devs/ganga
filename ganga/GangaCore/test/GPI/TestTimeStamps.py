@@ -263,3 +263,29 @@ def test_statetime_local(gpi):
     else:
         pass
     assert isinstance(j_fail.time.final(), datetime.datetime)
+
+def test_timestamp_details_local(gpi):
+
+    from GangaTest.Framework.utils import sleep_until_completed
+    import datetime
+
+    # Without Subjobs -------
+
+    j = gpi.Job()
+    j.submit()
+
+    assert sleep_until_completed(j,180)
+    assert isinstance(j.time.details(), dict)
+
+    # With Subjobs -------
+
+    j = gpi.Job()
+    j.splitter='ArgSplitter'
+    j.splitter.args=[[],[],[]]
+    j.submit()
+
+    assert sleep_until_completed(j,180)
+    assert not isinstance(j.time.details(), dict)
+    for i in range(0,len(j.subjobs)):
+            assert isinstance(j.time.details(i), dict)
+            
