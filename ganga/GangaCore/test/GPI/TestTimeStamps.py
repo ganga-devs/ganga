@@ -288,4 +288,55 @@ def test_timestamp_details_local(gpi):
     assert not isinstance(j.time.details(), dict)
     for i in range(0,len(j.subjobs)):
             assert isinstance(j.time.details(i), dict)
-            
+
+def test_subjobs_stamporder_local(gpi):
+
+    from GangaTest.Framework.utils import sleep_until_completed
+
+    j = gpi.Job()
+    j.splitter='ArgSplitter'
+    j.splitter.args=[[],[],[]]
+    j.submit()
+
+    assert sleep_until_completed(j,500)
+
+    # timestamp: submitted 
+
+    sj_stamplist = []
+    for sjs in j.subjobs:
+            sj_stamplist.append(sjs.time.timestamps['submitted'])
+
+    sj_stamplist.sort()
+
+    assert j.time.timestamps['submitted'] == sj_stamplist[0]
+
+    # timestamp: backend_running
+
+    sj_stamplist = []
+    for sjs in j.subjobs:
+            sj_stamplist.append(sjs.time.timestamps['backend_running'])
+
+    sj_stamplist.sort()
+
+    assert j.time.timestamps['backend_running'] == sj_stamplist[0]
+
+    # timestamp: backend_final
+
+    sj_stamplist = []
+    for sjs in j.subjobs:
+            sj_stamplist.append(sjs.time.timestamps['backend_final'])
+
+    sj_stamplist.sort()
+
+    assert j.time.timestamps['backend_final'] == sj_stamplist[len(sj_stamplist)-1]
+
+    # timestamp: final
+
+    sj_stamplist = []
+    for sjs in j.subjobs:
+            sj_stamplist.append(sjs.time.timestamps['final'])
+
+    sj_stamplist.sort()
+
+    assert j.time.timestamps['final'] == sj_stamplist[len(sj_stamplist)-1]
+
