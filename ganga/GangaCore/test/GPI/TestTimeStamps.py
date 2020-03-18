@@ -263,3 +263,105 @@ def test_statetime_local(gpi):
     else:
         pass
     assert isinstance(j_fail.time.final(), datetime.datetime)
+
+def test_timestamp_details_local(gpi):
+
+    from GangaTest.Framework.utils import sleep_until_completed
+    import datetime
+
+    # Without Subjobs -------
+
+    j = gpi.Job()
+    j.submit()
+
+    assert sleep_until_completed(j,180)
+    assert isinstance(j.time.details(), dict)
+
+    # With Subjobs -------
+
+    j = gpi.Job()
+    j.splitter='ArgSplitter'
+    j.splitter.args=[[],[],[]]
+    j.submit()
+
+    assert sleep_until_completed(j,180)
+    assert not isinstance(j.time.details(), dict)
+    for i in range(0,len(j.subjobs)):
+            assert isinstance(j.time.details(i), dict)
+
+def test_subjobs_stamporder_local(gpi):
+
+    from GangaTest.Framework.utils import sleep_until_completed
+
+    j = gpi.Job()
+    j.splitter='ArgSplitter'
+    j.splitter.args=[[],[],[]]
+    j.submit()
+
+    assert sleep_until_completed(j,500)
+
+    # timestamp: submitted 
+
+    sj_stamplist = []
+    for sjs in j.subjobs:
+            sj_stamplist.append(sjs.time.timestamps['submitted'])
+
+    sj_stamplist.sort()
+
+    assert j.time.timestamps['submitted'] == sj_stamplist[0]
+
+    # timestamp: backend_running
+
+    sj_stamplist = []
+    for sjs in j.subjobs:
+            sj_stamplist.append(sjs.time.timestamps['backend_running'])
+
+    sj_stamplist.sort()
+
+    assert j.time.timestamps['backend_running'] == sj_stamplist[0]
+
+    # timestamp: backend_final
+
+    sj_stamplist = []
+    for sjs in j.subjobs:
+            sj_stamplist.append(sjs.time.timestamps['backend_final'])
+
+    sj_stamplist.sort()
+
+    assert j.time.timestamps['backend_final'] == sj_stamplist[len(sj_stamplist)-1]
+
+    # timestamp: final
+
+    sj_stamplist = []
+    for sjs in j.subjobs:
+            sj_stamplist.append(sjs.time.timestamps['final'])
+
+    sj_stamplist.sort()
+
+    assert j.time.timestamps['final'] == sj_stamplist[len(sj_stamplist)-1]
+
+def test_new_subjob_not_overwrite_local(gpi):
+
+    from GangaTest.Framework.utils import sleep_until_completed
+    import datetime
+
+    j = gpi.Job()
+
+    t_new_1 = j.time.new()
+    t1 = datetime.datetime.now()
+    t2 = t1
+
+    while (t2-t1)<datetime.timedelta(0, 10, 0):
+            t2 = datetime.datetime.now()
+
+    j.splitter='ArgSplitter'
+    j.splitter.args=[[],[],[]]
+    j.submit()
+
+    assert sleep_until_completed(j, 180)
+
+    for sjs in j.subjobs:
+            assert sjs.time.new() > t_new_1
+
+    assert j.time.new() == t_new_1, "old 'new':%s, new 'new': %s" %(str(t_new_1), str(j.time.new()))
+    
