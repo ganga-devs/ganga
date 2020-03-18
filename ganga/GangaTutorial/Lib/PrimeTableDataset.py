@@ -9,6 +9,7 @@ from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Lib.File import File
 from GangaCore.GPIDev.Lib.Dataset import Dataset
 from GangaCore.Utility.logging import getLogger
+from urllib.parse import urlparse
 
 class PrimeTableDataset(Dataset):
     """Prime number lookup table definition."""
@@ -17,7 +18,7 @@ class PrimeTableDataset(Dataset):
         'table_id_lower': SimpleItem(defvalue=1, doc='The lower bound id of the lookup tables (inclusive).'),
         'table_id_upper': SimpleItem(defvalue=1, doc='The upper bound id of the lookup tables (inclusive).'),
         'table_id_max': SimpleItem(defvalue=15, hidden=1, doc='The upper bound id of the lookup tables (inclusive).'),
-        'table_location': SimpleItem(defvalue='http://cern.ch/diane/download/primes', doc='The location of the lookup tables.')
+        'table_location': SimpleItem(defvalue='https://primes.utm.edu/lists/small/millions', doc='The location of the lookup tables.')
         })
     
     _category = 'datasets'
@@ -28,7 +29,6 @@ class PrimeTableDataset(Dataset):
         super(PrimeTableDataset,self).__init__()
 
     def get_dataset(self):
-        from urlparse import urlparse
         tables = []
 
         ## switching lower and upper if different order is given
