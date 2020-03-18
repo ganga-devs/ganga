@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import print_function
 
@@ -27,23 +27,33 @@ from __future__ import print_function
 # If URL (http address) is given, then file is downloaded and unzipped first.
 #
 
-import sys,os
+import sys, os
+import requests
 
-NUMBER = long(sys.argv[1])
+NUMBER = int(sys.argv[1])
 
 pfns = sys.argv[2:]
 
 factors = []
 
+currDir = os.path.dirname(os.path.abspath(__file__))
+
+def download_url(url, save_path, chunk_size=128):
+    r = requests.get(url, stream=True, verify=False)
+    with open(save_path, 'wb') as fd:
+        for chunk in r.iter_content(chunk_size=chunk_size):
+            fd.write(chunk)
+
 for pfn in pfns:
     # download primes file from the web server, unzip and replace extension from .zip to .txt
-    if pfn.find('http://') != -1:
-        os.system('wget %s'%pfn)
+    # print(pfn)
+    if pfn.find('http://') != -1 or pfn.find('https://') != -1:
+        download_url(pfn, os.path.join(currDir, os.path.basename(pfn)))
         pfn = os.path.basename(pfn)
         os.system('unzip %s'%pfn)
         pfn = os.path.splitext(pfn)[0]+'.txt'
 
-    pf = file(pfn)
+    pf = open(pfn)
 
     # skip two first lines of the file
     pf.readline()
@@ -73,15 +83,15 @@ print('Prime factors:',factors)
 import math
 check = 1
 for f in factors:
-    check *= long(math.pow(f[0],f[1]))
+    check *= int(math.pow(f[0],f[1]))
 
-if long(check) == NUMBER:
+if int(check) == NUMBER:
     print('All prime factors found!')
 else:
     print('Some prime factors are still to be found. Known factors multiply to',check)
 
 # write the factors to a data file
 ofn = 'factors-%d.dat'%NUMBER
-of = file(ofn,'w')
-of.write(factors)
+of = open(ofn,'w')
+of.write(str(factors))
 print('Created data file',ofn)
