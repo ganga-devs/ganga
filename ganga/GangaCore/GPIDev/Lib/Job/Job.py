@@ -2067,6 +2067,7 @@ class Job(GangaObject):
                 #self._stored_subjobs_proxy = _wrap(self._stored_subjobs_proxy)
             else:
                 raise GangaException("This should never arise, cannot understand subjob list")
+
         return self._stored_subjobs_proxy
 
     def _subjobs_summary_print(self, value, verbosity_level, interactive=False):
