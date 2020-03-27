@@ -2046,6 +2046,8 @@ class Job(GangaObject):
     def _subjobs_proxy(self):
 
         from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
+
+        subjob_slice = stripProxy(self._stored_subjobs_proxy)
         if not isType(self._stored_subjobs_proxy, JobRegistrySlice):
             subjob_slice = JobRegistrySlice('jobs(%s).subjobs' % self.id)
             self._stored_subjobs_proxy = _wrap(subjob_slice)
