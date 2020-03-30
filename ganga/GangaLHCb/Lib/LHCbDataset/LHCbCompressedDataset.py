@@ -306,10 +306,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def isEmpty(self):
         '''Does this contain files'''
-        if len(self) > 0:
-            return False
-        else:
-            return True
+        return not len(self)>0
 
     def hasLFNs(self):
         '''Does it contain LFNs'''
