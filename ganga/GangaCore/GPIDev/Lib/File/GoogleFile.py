@@ -16,8 +16,7 @@ import GangaCore.Utility.Config
 
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
-badlogger = getLogger('oauth2client.util')
-badlogger.setLevel(logging.ERROR)
+
 
 class GoogleFile(IGangaFile):
 
@@ -69,63 +68,39 @@ class GoogleFile(IGangaFile):
         super(GoogleFile, self).__init__()
         self.namePattern = namePattern
         self.__initialized = False
-        
-        self.cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
+
+        self.cred_path = os.path.join(getConfig('Configuration')[
+                                      'gangadir'], 'googlecreddata.pkl')
 
     def __initializeCred(self):
         while os.path.isfile(self.cred_path) == False:
-            from oauth2client.client import OAuth2WebServerFlow
+            from google.auth.transport.requests import Request
+            from google_auth_oauthlib.flow import InstalledAppFlow
 
-            # Copy your credentials from the APIs Console
-#            CLIENT_ID = "54459939297.apps.googleusercontent.com"
-#            CLIENT_SECRET = "mAToHx5RpXtwkeYR6nOIe_Yw"
-            CLIENT_ID = '776655306197-dirtoquqsm7cpqgepvamofg5t2b5f637.apps.googleusercontent.com'
-            CLIENT_SECRET = 'GpdEP-OBZZQLB3k-xxOpzFQG'
-            # Check https://developers.google.com/drive/scopes for all
-            # available scopes
-            OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.file'
+            SCOPES = ['https://www.googleapis.com/auth/drive.file']
+            # This will come from reading the json files
+            creds = None
+            # The file token.pickle stores the user's access and refresh tokens, and is
+            # created automatically when the authorization flow completes for the first
+            # time.
+            if os.path.exists(self.cred_path):
+                with open(self.cred_path, 'rb') as token:
+                    creds = pickle.load(token)
+            # If there are no (valid) credentials available, let the user log in.
+            if not creds or not creds.valid:
+                if creds and creds.expired and creds.refresh_token:
+                    creds.refresh(Request())
+                    logger.info(
+                        'Enter you accound details in the browser window that opened')
+                else:
+                        flow = InstalledAppFlow.from_client_secrets_file(
+                        os.path.expanduser('~/gangadir/credentials.json'), SCOPES)
+                    creds = flow.run_local_server(port=0)
 
-            # Redirect URI for installed apps
-            REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob'
+                # Save the credentials for the next run
+                with open(self.cred_path, 'wb') as token:
+                    pickle.dump(creds, token)
 
-            # Run through the OAuth flow and retrieve credentials
-            credentials = ''
-            flow = OAuth2WebServerFlow(
-                CLIENT_ID, CLIENT_SECRET, OAUTH_SCOPE, REDIRECT_URI)
-            authorize_url = flow.step1_get_authorize_url()
-            try:
-                import webbrowser
-                webbrowser.get('macosx').open(authorize_url, 0, True)
-            except:
-                try:
-                    import webbrowser
-                    webbrowser.get(
-                        'windows-default').open(authorize_url, 0, True)
-                except:
-                    try:
-                        import webbrowser
-                        webbrowser.get('firefox').open(authorize_url, 0, True)
-                    except Exception as err:
-                        logger.error("Error: %s" % str(err))
-                        pass
-            logger.info(
-                'Go to the following link in your browser: ' + authorize_url)
-            code = input('Enter verification code: ').strip()
-            try:
-                credentials = flow.step2_exchange(code)
-            except:
-                deny = input(
-                    'An incorrect code was entered. Have you denied Ganga access to your GoogleDrive (y/[n])?')
-                if deny.lower() in ['', 'n']:
-                    pass
-                elif deny[0:1].upper() == 'Y':
-                    return None
-
-            # Pickle credential data
-            if credentials is not '':
-                with open(self.cred_path, "wb") as output:
-                    pickle.dump(credentials, output)
-                
                 os.chmod(self.cred_path, stat.S_IWUSR | stat.S_IRUSR)
                 logger.info('Your GoogleDrive credentials have been stored in the file %s and are only readable by you. '
                             'The file will give permission to modify files in your GoogleDrive. '
@@ -135,7 +110,6 @@ class GoogleFile(IGangaFile):
         self.__initialized = True
 
         self._check_Ganga_folder()
-
     def _attribute_filter__set__(self, n, v):
         if n == 'localDir':
             return os.path.expanduser(os.path.expandvars(v))
@@ -254,7 +228,7 @@ class GoogleFile(IGangaFile):
         Postprocesses (upload) output file to the desired destination from the client
         """
         import hashlib
-        from apiclient.http import MediaFileUpload
+        from googleapiclient.http import MediaFileUpload
 
         service = self._setup_service()
 
@@ -267,70 +241,73 @@ class GoogleFile(IGangaFile):
             dir_path = self.getJobObject().getOutputWorkspace().getPath()
 
         # Wildcard procedure
+        # TODO: WIP
         if regex.search(self.namePattern) is not None:
             for wildfile in glob.glob(os.path.join(dir_path, self.namePattern)):
                 FILENAME = wildfile
                 filename = os.path.basename(wildfile)
+                print(FILENAME, filename)
+        #         file_metadata = {'name': FILENAME}
+        #         media = MediaFileUpload(FILENAME,
+        #                                 mimetype='application/json')
+                
+        #         # Metadata file and md5checksum intergrity check
+        #         file = service.files().create(
+        #             body=file_metadata,
+        #             media_body=media,
+        #             fields='id').execute()
+        #         with open(FILENAME, 'rb') as thefile:
+        #             if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
+        #                 logger.info("File \'%s\' uploaded successfully" % filename)
+        #             else:
+        #                 logger.error(
+        #                     "File \'%s\' uploaded unsuccessfully" % filename)
 
-                # Upload procedure
-                media_body = MediaFileUpload(
-                    FILENAME, mimetype='text/plain', resumable=True)
-                body = {
-                    'title': '%s' % filename,
-                    'description': 'A test document',
-                    'mimeType': 'text/plain',
-                    'parents': [{
-                        "kind": "drive#fileLink",
-                        "id": "%s" % self.GangaFolderId
-                    }]
-                }
-
-                # Metadata file and md5checksum intergrity check
-                file = service.files().insert(
-                    body=body, media_body=media_body).execute()
-                with open(FILENAME, 'rb') as thefile:
-                    if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
-                        logger.info("File \'%s\' uploaded successfully" % filename)
-                    else:
-                        logger.error(
-                            "File \'%s\' uploaded unsuccessfully" % filename)
-
-                # Assign new schema components to each file and append to job
-                # subfiles
-                g = GoogleFile(filename)
-                g.downloadURL = file.get('downloadUrl', '')
-                g.id = file.get('id', '')
-                g.title = file.get('title', '')
-                self.subfiles.append(GPIProxyObjectFactory(g))
+        #         # Assign new schema components to each file and append to job
+        #         # subfiles
+        #         g = GoogleFile(filename)
+        #         g.downloadURL = file.get('downloadUrl', '')
+        #         g.id = file.get('id', '')
+        #         g.title = file.get('title', '')
+        #         self.subfiles.append(GPIProxyObjectFactory(g))
 
         # For non-wildcard upload
         else:
             # Path to the file to upload
             FILENAME = os.path.join(dir_path, self.namePattern)
 
-            # Upload procedure, can edit more of file metadata
-            media_body = MediaFileUpload(
-                FILENAME, mimetype='text/plain', resumable=True)
-            body = {
-                'title': '%s' % self.namePattern,
+            file_metadata = {
+                'name': self.namePattern,
                 'description': 'A test document',
                 'mimeType': 'text/plain',
-                'parents': [{
-                    "kind": "drive#fileLink",
-                    "id": "%s" % self.GangaFolderId
-                }]
+                'parents': [self.GangaFolderId]
             }
+            media = MediaFileUpload(
+                FILENAME,
+                mimetype='application/vnd.google-apps.document'
+            )
+            file = service.files().create(
+                fields='id',
+                media_body=media,
+                body=file_metadata
+            ).execute()
 
-            # Metadata storage and md5checksum integrity check
-            file = service.files().insert(
-                body=body, media_body=media_body).execute()
-
+            # Checking the hash of inserted data
             with open(FILENAME, 'rb') as thefile:
-                if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
-                    logger.info("File \'%s\' uploaded succesfully" %
-                                self.namePattern)
-                else:
-                    logger.error("Upload Unsuccessful")
+                file_results = service.files().list(
+                    q="name='credentials.json'",
+                    fields="nextPageToken, files(id, name, md5Checksum)"
+                ).execute()
+
+                for _file in file_results.get('files', []):
+                    # Found the correct file
+                    if _file['id'] == file['id']:
+                        print("We wil now compare the hashes")
+                        if _file['md5Checksum'] == hashlib.md5(thefile.read()).hexdigest():
+                            logger.info("File \'%s\' uploaded succesfully" %
+                                        self.namePattern)
+                        else:
+                            logger.error("Upload Unsuccessful")
 
             # Assign values to new schema components
             self.downloadURL = file.get('downloadUrl', '')
@@ -360,8 +337,6 @@ class GoogleFile(IGangaFile):
         However, this will make the file unrestorable
         """
         service = self._setup_service()
-
-        from apiclient import errors
 
         # Wildcard procedure
         if regex.search(self.namePattern) is not None:
@@ -412,7 +387,6 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().restore()
         """
-        from apiclient import errors
 
         service = self._setup_service()
 
@@ -443,46 +417,37 @@ class GoogleFile(IGangaFile):
         """
         Creates a Ganga folder on GoogleDrive if one is not already present
         """
-        from apiclient import errors
         service = self._setup_service()
 
-        page_token = None
-        try:
-            param = {}
-            if page_token:
-                param['pageToken'] = page_token
-            files = service.files().list(**param).execute()
-            items = files['items']
-            for i in items:
-                if i['title'] == 'Ganga':
-                    self.GangaFolderId = i['id']
-                    return
-            page_token = files.get('nextPageToken')
-        except errors.HttpError as error:
-            logger.info('Failed to create Ganga folder on GoogleDrive')
-            # print 'An error occurred: %s' % error
+        # grabing all the folders in root folder of gdrive 
+        results = service.files().list(
+            pageSize=10, fields="nextPageToken, files(id, name)"
+        ).execute()
+        items = results.get('files', [])
 
-        body = {
-            'title': 'Ganga',
-            'description': 'A test folder',
-            'mimeType': 'application/vnd.google-apps.folder'
-        }
-        file = service.files().insert(body=body).execute()
-        self.GangaFolderId = file.get('id')
+        for _file in items:
+            if _file['name'] == 'Ganga':
+                self.GangaFolderId = _file['id']
+        if not self.GangaFolderId:
+            body = {
+                'name': 'Ganga',
+                'description': 'A test folder',
+                'mimeType': 'application/vnd.google-apps.folder'
+            }
+            file = service.files().create(body=body).execute()
+            self.GangaFolderId = file.get('id')
 
     def _setup_service(self):
         """
         Sets up the GoogleDrive service for other methods
         """
-        from apiclient.discovery import build
-        import httplib2
-        http = httplib2.Http()
+        from googleapiclient.discovery import build
+
         if self.__initialized == False:
             self.__initializeCred()
         with open(self.cred_path, "rb") as nput:
             credentials = pickle.load(nput)
-        http = credentials.authorize(http)
-        service = build('drive', 'v2', http=http)
+        service = build('drive', 'v3', credentials=credentials)
         return service
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
