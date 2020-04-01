@@ -1180,7 +1180,7 @@ def _parallelCopy(nPara,copyList,timeout,lsCommand,destination,md5sumList,md5sum
         # get thread
         thr = threadPool.get()
         # check if it is alive
-        if thr.isAlive():
+        if thr.is_alive():
             # wait
             thr.join()
     # get result
