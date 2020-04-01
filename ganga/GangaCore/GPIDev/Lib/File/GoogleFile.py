@@ -246,30 +246,47 @@ class GoogleFile(IGangaFile):
             for wildfile in glob.glob(os.path.join(dir_path, self.namePattern)):
                 FILENAME = wildfile
                 filename = os.path.basename(wildfile)
-                print(FILENAME, filename)
-        #         file_metadata = {'name': FILENAME}
-        #         media = MediaFileUpload(FILENAME,
-        #                                 mimetype='application/json')
-                
-        #         # Metadata file and md5checksum intergrity check
-        #         file = service.files().create(
-        #             body=file_metadata,
-        #             media_body=media,
-        #             fields='id').execute()
-        #         with open(FILENAME, 'rb') as thefile:
-        #             if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
-        #                 logger.info("File \'%s\' uploaded successfully" % filename)
-        #             else:
-        #                 logger.error(
-        #                     "File \'%s\' uploaded unsuccessfully" % filename)
 
-        #         # Assign new schema components to each file and append to job
-        #         # subfiles
-        #         g = GoogleFile(filename)
-        #         g.downloadURL = file.get('downloadUrl', '')
-        #         g.id = file.get('id', '')
-        #         g.title = file.get('title', '')
-        #         self.subfiles.append(GPIProxyObjectFactory(g))
+                file_metadata = {
+                    'name': self.namePattern,
+                    'description': 'A test document',
+                    'mimeType': 'text/plain',
+                    'parents': [self.GangaFolderId]
+                }
+                media = MediaFileUpload(
+                    FILENAME,
+                    mimetype='application/vnd.google-apps.document'
+                )
+                file = service.files().create(
+                    fields='id',
+                    media_body=media,
+                    body=file_metadata
+                ).execute()
+
+                # Checking the hash of inserted data
+                with open(FILENAME, 'rb') as thefile:
+                    file_results = service.files().list(
+                        q="name='credentials.json'",
+                        fields="nextPageToken, files(id, name, md5Checksum)"
+                    ).execute()
+
+                    for _file in file_results.get('files', []):
+                        # Found the correct file
+                        if _file['id'] == file['id']:
+                            print("We wil now compare the hashes")
+                            if _file['md5Checksum'] == hashlib.md5(thefile.read()).hexdigest():
+                                logger.info("File \'%s\' uploaded succesfully" %
+                                            self.namePattern)
+                            else:
+                                logger.error("Upload Unsuccessful")
+
+                # Assign new schema components to each file and append to job
+                # subfiles
+                g = GoogleFile(filename)
+                g.downloadURL = file.get('downloadUrl', '')
+                g.id = file.get('id', '')
+                g.title = file.get('title', '')
+                self.subfiles.append(GPIProxyObjectFactory(g))
 
         # For non-wildcard upload
         else:
