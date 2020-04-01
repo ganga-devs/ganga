@@ -580,7 +580,7 @@ class ProxyDataDescriptor(object):
     def __recursive_strip(_val):
         ## Strip the proxies recursively for things like nested lists
         raw_val = stripProxy(_val)
-        if isinstance(_val, collections.Sequence) and not isinstance(_val, str):
+        if isinstance(_val, collections.abc.Sequence) and not isinstance(_val, str):
             val = raw_val.__class__()
             if isinstance(val, dict):
                 for _key, elem in _val.items():
