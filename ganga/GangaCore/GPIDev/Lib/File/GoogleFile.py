@@ -77,7 +77,8 @@ class GoogleFile(IGangaFile):
             from google.auth.transport.requests import Request
             from google_auth_oauthlib.flow import InstalledAppFlow
 
-            SCOPES = ['https://www.googleapis.com/auth/drive.file']
+            # SCOPES = ['https://www.googleapis.com/auth/drive.file']
+            SCOPES = ['https://www.googleapis.com/auth/drive']
             # This will come from reading the json files
             creds = None
             # The file token.pickle stores the user's access and refresh tokens, and is
@@ -94,8 +95,10 @@ class GoogleFile(IGangaFile):
                         'Enter you accound details in the browser window that opened')
                 else:
                         flow = InstalledAppFlow.from_client_secrets_file(
-                        os.path.expanduser('~/gangadir/credentials.json'), SCOPES)
-                    creds = flow.run_local_server(port=0)
+                            os.path.expanduser('~/gangadir/credentials.json'), 
+                            SCOPES
+                        )
+                        creds = flow.run_local_server(port=0)
 
                 # Save the credentials for the next run
                 with open(self.cred_path, 'wb') as token:
@@ -107,9 +110,10 @@ class GoogleFile(IGangaFile):
                             'Permission can be revoked by going to "Manage Apps" in your GoogleDrive '
                             'or by deleting the credentials through the deleteCredentials GoogleFile method.' % self.cred_path)
 
+        print("initializedCRED is now run")
         self.__initialized = True
-
         self._check_Ganga_folder()
+
     def _attribute_filter__set__(self, n, v):
         if n == 'localDir':
             return os.path.expanduser(os.path.expandvars(v))
@@ -193,8 +197,7 @@ class GoogleFile(IGangaFile):
                     if self.localDir == ('' or None):
                         dir_path = os.getcwd()
                     if self._getParent() is not None:
-                        dir_path = self.getJobObject(
-                        ).getOutputWorkspace().getPath()
+                        dir_path = self.getJobObject().getOutputWorkspace().getPath()
                     completeName = os.path.join(dir_path, self.namePattern)
                     with open(completeName, "wb") as gotfile:
                         gotfile.write(content)
@@ -247,9 +250,10 @@ class GoogleFile(IGangaFile):
                 FILENAME = wildfile
                 filename = os.path.basename(wildfile)
 
+                import random
                 file_metadata = {
                     'name': self.namePattern,
-                    'description': 'A test document',
+                    'description': str(random.randint(0, 1000)*69),
                     'mimeType': 'text/plain',
                     'parents': [self.GangaFolderId]
                 }
@@ -273,7 +277,6 @@ class GoogleFile(IGangaFile):
                     for _file in file_results.get('files', []):
                         # Found the correct file
                         if _file['id'] == file['id']:
-                            print("We wil now compare the hashes")
                             if _file['md5Checksum'] == hashlib.md5(thefile.read()).hexdigest():
                                 logger.info("File \'%s\' uploaded succesfully" %
                                             self.namePattern)
@@ -292,6 +295,7 @@ class GoogleFile(IGangaFile):
         else:
             # Path to the file to upload
             FILENAME = os.path.join(dir_path, self.namePattern)
+            print(FILENAME, self.namePattern)
 
             file_metadata = {
                 'name': self.namePattern,
@@ -312,14 +316,13 @@ class GoogleFile(IGangaFile):
             # Checking the hash of inserted data
             with open(FILENAME, 'rb') as thefile:
                 file_results = service.files().list(
-                    q="name='credentials.json'",
+                    q=f"name='{self.namePattern}'",
                     fields="nextPageToken, files(id, name, md5Checksum)"
                 ).execute()
 
                 for _file in file_results.get('files', []):
                     # Found the correct file
                     if _file['id'] == file['id']:
-                        print("We wil now compare the hashes")
                         if _file['md5Checksum'] == hashlib.md5(thefile.read()).hexdigest():
                             logger.info("File \'%s\' uploaded succesfully" %
                                         self.namePattern)
@@ -328,10 +331,12 @@ class GoogleFile(IGangaFile):
 
             # Assign values to new schema components
             self.downloadURL = file.get('downloadUrl', '')
-            self.id = file.get('id', '')
+            # self.id = file.get('id', '')
+            self.id = file['id']
+            print("the og ide: ", file['id'], "  the non-og side: ", self.id)
             self.title = file.get('title', '')
-
-            return
+            print("id of the file is still safe", self.id)
+            
         return GPIProxyObjectFactory(self.subfiles[:])
 
     def remove(self, permanent=False):
@@ -353,8 +358,10 @@ class GoogleFile(IGangaFile):
 
         However, this will make the file unrestorable
         """
+        # DEBUB
+        print("NOW INSIDE THE REMOVE FUNCTION", self.id)
         service = self._setup_service()
-
+        from googleapiclient.errors import HttpError 
         # Wildcard procedure
         if regex.search(self.namePattern) is not None:
             for f in self.subfiles:
@@ -364,7 +371,7 @@ class GoogleFile(IGangaFile):
                         f.downloadURL = ''
                         logger.info(
                             'File \'%s\' permanently deleted from GoogleDrive' % f.title)
-                    except errors.HttpError as error:
+                    except HttpError as error:
                         # print 'An error occurred: %s' % error
                         logger.info(
                             'File \'%s\' deletion failed, or file already deleted' % f.title)
@@ -373,27 +380,32 @@ class GoogleFile(IGangaFile):
                         service.files().trash(fileId=f.id).execute()
                         logger.info(
                             'File \'%s\' removed from GoogleDrive' % f.title)
-                    except errors.HttpError as error:
+                    except HttpError as error:
                         # print 'An error occurred: %s' % error
                         logger.info(
                             'File \'%s\' removal failed, or file already removed' % f.title)
 
         # Non-wildcard request
         else:
+            print('case2', permanent)
             if permanent == True:
+                print("printing the self.id", self.id)
+                open("ratin_temp", "w").write(self.id)
+                service.files().delete(fileId=str(self.id)).execute()
+                # try:
+                #     service.files().delete(fileId=self.id).execute()
+                #     self.downloadURL = ''
+                #     logger.info('File permanently deleted from GoogleDrive')
+                # except HttpError as error:
+                #     # print 'An error occurred: %s' % error
+                #     logger.info(
+                #         'File deletion failed, or file already deleted')
+            else:
+                print("something", self.id)
                 try:
                     service.files().delete(fileId=self.id).execute()
-                    self.downloadURL = ''
-                    logger.info('File permanently deleted from GoogleDrive')
-                except errors.HttpError as error:
-                    # print 'An error occurred: %s' % error
-                    logger.info(
-                        'File deletion failed, or file already deleted')
-            else:
-                try:
-                    service.files().trash(fileId=self.id).execute()
                     logger.info('File removed from GoogleDrive')
-                except errors.HttpError as error:
+                except HttpError as error:
                     # print 'An error occurred: %s' % error
                     logger.info('File removal failed, or file already removed')
                 return None
@@ -445,6 +457,7 @@ class GoogleFile(IGangaFile):
         for _file in items:
             if _file['name'] == 'Ganga':
                 self.GangaFolderId = _file['id']
+                print("GANGA folder already exists and its id is: ",)
         if not self.GangaFolderId:
             body = {
                 'name': 'Ganga',
@@ -452,6 +465,7 @@ class GoogleFile(IGangaFile):
                 'mimeType': 'application/vnd.google-apps.folder'
             }
             file = service.files().create(body=body).execute()
+            print("Just created the new GANGA  folder with id: ", file.get('id'))
             self.GangaFolderId = file.get('id')
 
     def _setup_service(self):
@@ -459,7 +473,7 @@ class GoogleFile(IGangaFile):
         Sets up the GoogleDrive service for other methods
         """
         from googleapiclient.discovery import build
-
+        print("THE STATUS of initialisation is: ", self.__initialized)
         if self.__initialized == False:
             self.__initializeCred()
         with open(self.cred_path, "rb") as nput:
