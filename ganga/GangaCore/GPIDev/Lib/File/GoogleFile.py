@@ -387,26 +387,25 @@ class GoogleFile(IGangaFile):
 
         # Non-wildcard request
         else:
-            print('case2', permanent)
             if permanent == True:
-                print("printing the self.id", self.id)
-                open("ratin_temp", "w").write(self.id)
                 service.files().delete(fileId=str(self.id)).execute()
-                # try:
-                #     service.files().delete(fileId=self.id).execute()
-                #     self.downloadURL = ''
-                #     logger.info('File permanently deleted from GoogleDrive')
-                # except HttpError as error:
-                #     # print 'An error occurred: %s' % error
-                #     logger.info(
-                #         'File deletion failed, or file already deleted')
-            else:
-                print("something", self.id)
                 try:
                     service.files().delete(fileId=self.id).execute()
-                    logger.info('File removed from GoogleDrive')
+                    self.downloadURL = ''
+                    logger.info('File permanently deleted from GoogleDrive')
                 except HttpError as error:
-                    # print 'An error occurred: %s' % error
+                    logger.info(
+                        'File deletion failed, or file already deleted')
+            else:
+                try:
+                    # updating the file metadata to delete it
+                    print(self.id)
+                    service.files().update(
+                        fileId=self.id,
+                        body={"trashed": True}
+                    ).execute()
+                    logger.info('File removed from GoogleDrive, added to the trash')
+                except HttpError as error:
                     logger.info('File removal failed, or file already removed')
                 return None
 
