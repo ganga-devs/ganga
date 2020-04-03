@@ -55,8 +55,8 @@ class GoogleFile(IGangaFile):
                                                 doc='download URL assigned to the file upon upload to GoogleDrive'),
                       'id': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
                                        doc='GoogleFile ID assigned to file  on upload to GoogleDrive'),
-                      'title': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
-                                                   doc='GoogleFile title of the uploaded file'),
+                      'name': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
+                                                   doc='GoogleFile name of the uploaded file'),
                       'GangaFolderId': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
                                                   doc='GoogleDrive Ganga folder  ID')
                       })
@@ -77,27 +77,41 @@ class GoogleFile(IGangaFile):
             from google.auth.transport.requests import Request
             from google_auth_oauthlib.flow import InstalledAppFlow
 
-            # SCOPES = ['https://www.googleapis.com/auth/drive.file']
-            SCOPES = ['https://www.googleapis.com/auth/drive']
-            # This will come from reading the json files
+            SCOPES = ['https://www.googleapis.com/auth/drive.file']
+
             creds = None
-            # The file token.pickle stores the user's access and refresh tokens, and is
-            # created automatically when the authorization flow completes for the first
-            # time.
             if os.path.exists(self.cred_path):
                 with open(self.cred_path, 'rb') as token:
                     creds = pickle.load(token)
+
+            account_details = {
+                "type": "service_account",
+                "project_id": "ganga-uploader",
+                "private_key_id": "6cecc585b46822af214aa26b66735a8cd7e60f8d",
+                "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDkNvDFwvdkBf2w\nkAuNta57ayOpWsbP9xFoD9cKKHUsnE0HE4t3MDx7ZDQm5wmxX+oX/1bc+ij7K7nj\nR+OVY81ZyOQQoA3YQWd0f8NOuL7e42da2ByeVYi/YrqW9P4tmoW286S4K/oGPxU1\nR40RdP6jJ9dXkPl2Dy9ltOIQnOxDX1XZTypDdjlejFWMqDlgzCX8SaKbor+zXg+W\nTTVW8k6zkabXoxbh/a81x8kw1cFmm9ZoybSOXKHkqnFf4CrFvrpNK0qgzwIYzaqP\n/e41mv+E6o59XeVIsn2j9JYz9IVUV0jhvjwYvT+gMkNMUP25wQL3PAd1lriY1Jy4\ncseezsfvAgMBAAECggEAEXrHzE3s8Zin4AstvLKVZQHwHvuYo2XSy9FSxjC9G31J\nRRPRKIA6/F8mGMi0wa+NWD3deFrMzW2Bn7qU4DoJs354lsa7k2ccYRxGvaksLW7m\nLrDDgw5yxT3u+WWrG5vB8XZjP8ar2tNKxjmZwM7g5hGaI9czKZYWKkhwJuzuB7wz\nlCtY9G1EKf9kafOPBmPDkvsuLdCrGMcQjAwLUfqKnLLvCRbBTjRIDO4WBQTj+BUh\n4WMCiZ/V8kuk6MrWRmBYe9bW/q8kuBH0vbpm0uKoW/Ui4PUDL1X2h+FNnY8c/OKw\nVAkR0snlazxjj+b4bURPBWfRqVsyM4p1ZHUcpRh5yQKBgQD0AC3GgLI3eiygC6OF\nrfoSCUqyAJjVAsLudHtIEiZtSTyE30uFeDUI4kYIT75mr4ZF7bOv2nn6/86AccgY\niicdpjm1EOEgY2bqA0VVBRovkLe41SCwCo3YGJIC8N4esXr6I3ZCqdHA1w2vjbt2\nGPrnwczW5R38sAXI7cymMh9QJQKBgQDvcAZAbgKn0E1/i8wyIPBoTFei/Bkv4+uO\nUO4pabFqa+cW60enMSlZPQJXrdvA77SVGGQIyMas1lQEbG63PSzx/6qIlOcyexMb\nEp8JW0Rh7w5t622H+uJnvb83RCNpcPLa/RvvYGqXmUOlZHU/VTBxPgcC8eecvsSL\nu9VZzWQhgwKBgQDbSHXbGboQpZoJU6xn7Uz6fKNGicbQWKT7TG+m+7jRKqpa95qV\nnsx66W/q9E+3VTOlENUVy5EohFD/mkIr26z/tm3SThMk2nCZCst6dxVrffG/CLtR\nuopzlNFUF0hn6TUOLGSR0LCTUDIafZPltNl5AvCmiE6E02S/iQcMrar6iQKBgQC3\naz2exadLHor/lfwKuqjvfOv1cuFoilS8ZMrM9qZuO9J/ACWXslVWgyH0QL8DAZ14\nSYL4J7XqWRVrfhUiUb7Ic24Tyt2BEj8EkjM6W6v6ycJn+d2iOVKO3hBJKe1mrJud\nnh90NIvzLflgDaCzr3K4jSeZ3e3raUfvMyiw7mIyOQKBgQC2LYoEo+xLe3qgLTxx\n/GuVWpyJHLA3T+ABR8/nApeo6xGBqq3/+62OnV9v8iTexgUep42SOuD/r0RZ7wTW\n9pHjESIfmeCd6AWucLmmesxDzSNK3EcUMfHNtTi0ZQxWPZwTxq+0KHN47yAJ9jxY\n/ZfsuyfoM2D75XwPJ8sptSqmkA==\n-----END PRIVATE KEY-----\n",
+                "client_email": "test-651@ganga-uploader.iam.gserviceaccount.com",
+                "client_id": "107366549311169164238",
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/test-651%40ganga-uploader.iam.gserviceaccount.com"
+            }
+
             # If there are no (valid) credentials available, let the user log in.
             if not creds or not creds.valid:
                 if creds and creds.expired and creds.refresh_token:
                     creds.refresh(Request())
                     logger.info(
-                        'Enter you accound details in the browser window that opened')
+                        'Enter you accound details in the browser window prompted')
                 else:
-                        flow = InstalledAppFlow.from_client_secrets_file(
-                            os.path.expanduser('~/gangadir/credentials.json'), 
+                        # flow = InstalledAppFlow.from_client_secrets_file(
+                        #     os.path.expanduser('~/gangadir/credentials.json'), 
+                        #     SCOPES
+                        # )
+                        flow = InstalledAppFlow.from_client_config(
+                            account_details, 
                             SCOPES
-                        )
+                        )                        
                         creds = flow.run_local_server(port=0)
 
                 # Save the credentials for the next run
@@ -110,7 +124,6 @@ class GoogleFile(IGangaFile):
                             'Permission can be revoked by going to "Manage Apps" in your GoogleDrive '
                             'or by deleting the credentials through the deleteCredentials GoogleFile method.' % self.cred_path)
 
-        print("initializedCRED is now run")
         self.__initialized = True
         self._check_Ganga_folder()
 
@@ -145,11 +158,10 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().deleteCredentials()
         """
-        if self.__initilized == True:
-            if os.path.isfile(self.cred_path) == True:
-                os.remove(self.cred_path)
-                logger.info('GoogleDrive credentials deleted')
-                return None
+        if os.path.isfile(self.cred_path) == True:
+            os.remove(self.cred_path)
+            logger.info('GoogleDrive credentials deleted')
+            return None
         else:
             logger.info('There are no credentials to delete')
 
@@ -159,57 +171,52 @@ class GoogleFile(IGangaFile):
         Args:
             targetPath (str): Target path where the file is copied to
         """
+        import io
+        from googleapiclient.http import MediaIoBaseDownload
 
         dir_path = targetPath
-
         service = self._setup_service()
+
+        if not os.path.isdir(dir_path):
+            os.makedirs(dir_path)
 
         # Checks for wildcards and loops through get procedure for each result,
         # saving file to assigned directory
         if regex.search(self.namePattern) is not None:
             for f in self.subfiles:
-                if f.downloadURL:
-                    resp, content = service._http.request(f.downloadURL)
-                    if resp.status == 200:
-                        # print 'Status: %s' % resp
-                        logger.info("File \'%s\' downloaded succesfully" % f.title)
-                        completeName = os.path.join(dir_path, f.title)
-                        with open(completeName, "wb") as gotfile:
-                            gotfile.write(content)
+                if f.id:
+                    completeName = os.path.join(dir_path, f.name)
+                    request = service.files().get_media(fileId=self.id)
+                    fh = io.FileIO(completeName, 'wb')
+                    downloader = MediaIoBaseDownload(fh, request)
+                    done = False
+                    while done is False:
+                        status, done = downloader.next_chunk()
+                        logger.info(f"Downloading file: {f.name} {int(status.progress()*100)}")
+                    logger.info("Download successful")
 
-                    else:
-                        # print 'An error occurred: %s' % resp
-                        logger.info("Download unsuccessful, file \'%s\' may not exist on GoogleDrive" % f.title)
                 else:
-                    # The file doesn't have any content stored on Drive.
-                    logger.info(
-                        "No file \'%s\' exists on GoogleDrive" % f.title)
-                    return None
+                    # print 'An error occurred: %s' % resp
+                    logger.info("Download unsuccessful, file \'%s\' may not exist on GoogleDrive" % f.name)
 
         # Non-wildcard get request procedure
         else:
-            if self.downloadURL:
-                resp, content = service._http.request(self.downloadURL)
-                if resp.status == 200:
-                    # print 'Status: %s' % resp
-                    logger.info("Download successful")
-                    dir_path = self.localDir
-                    if self.localDir == ('' or None):
-                        dir_path = os.getcwd()
-                    if self._getParent() is not None:
-                        dir_path = self.getJobObject().getOutputWorkspace().getPath()
-                    completeName = os.path.join(dir_path, self.namePattern)
-                    with open(completeName, "wb") as gotfile:
-                        gotfile.write(content)
-                else:
-                    # print 'An error occurred: %s' % resp
-                    logger.info(
-                        "Download unsuccessful, the file may not exist on GoogleDrive")
-                    return None
+            if self.id:
+                completeName = os.path.join(dir_path, self.name)
+
+                request = service.files().get_media(fileId=self.id)
+                fh = io.FileIO(completeName, 'wb')
+                downloader = MediaIoBaseDownload(fh, request)
+                done = False
+                while done is False:
+                    status, done = downloader.next_chunk()
+                    logger.info(f"Downloading file: {self.name} {int(status.progress()*100)}")
+                logger.info("Download successful")
             else:
-                # The file doesn't have any content stored on Drive.
-                logger.info("No such file on GoogleDrive")
-                return
+                # print 'An error occurred: %s' % resp
+                logger.info(
+                    "Download unsuccessful, the file may not exist on GoogleDrive")
+                return None
 
     def getWNScriptDownloadCommand(self, indent):
         """
@@ -252,7 +259,7 @@ class GoogleFile(IGangaFile):
 
                 import random
                 file_metadata = {
-                    'name': self.namePattern,
+                    'name': filename,
                     'description': str(random.randint(0, 1000)*69),
                     'mimeType': 'text/plain',
                     'parents': [self.GangaFolderId]
@@ -270,7 +277,7 @@ class GoogleFile(IGangaFile):
                 # Checking the hash of inserted data
                 with open(FILENAME, 'rb') as thefile:
                     file_results = service.files().list(
-                        q="name='credentials.json'",
+                        q=f"name='{filename}'",
                         fields="nextPageToken, files(id, name, md5Checksum)"
                     ).execute()
 
@@ -279,23 +286,21 @@ class GoogleFile(IGangaFile):
                         if _file['id'] == file['id']:
                             if _file['md5Checksum'] == hashlib.md5(thefile.read()).hexdigest():
                                 logger.info("File \'%s\' uploaded succesfully" %
-                                            self.namePattern)
+                                            filename)
                             else:
                                 logger.error("Upload Unsuccessful")
 
                 # Assign new schema components to each file and append to job
                 # subfiles
                 g = GoogleFile(filename)
-                g.downloadURL = file.get('downloadUrl', '')
-                g.id = file.get('id', '')
-                g.title = file.get('title', '')
+                g.downloadURL = f"https://drive.google.com/file/d/{file['id']}"
+                g.id = file['id']
+                g.name = file_metadata['name']
                 self.subfiles.append(GPIProxyObjectFactory(g))
 
         # For non-wildcard upload
         else:
-            # Path to the file to upload
             FILENAME = os.path.join(dir_path, self.namePattern)
-            print(FILENAME, self.namePattern)
 
             file_metadata = {
                 'name': self.namePattern,
@@ -330,12 +335,9 @@ class GoogleFile(IGangaFile):
                             logger.error("Upload Unsuccessful")
 
             # Assign values to new schema components
-            self.downloadURL = file.get('downloadUrl', '')
-            # self.id = file.get('id', '')
+            self.downloadURL = f"https://drive.google.com/file/d/{file['id']}"
             self.id = file['id']
-            print("the og ide: ", file['id'], "  the non-og side: ", self.id)
-            self.title = file.get('title', '')
-            print("id of the file is still safe", self.id)
+            self.name = file_metadata['name']
             
         return GPIProxyObjectFactory(self.subfiles[:])
 
@@ -370,20 +372,23 @@ class GoogleFile(IGangaFile):
                         service.files().delete(fileId=f.id).execute()
                         f.downloadURL = ''
                         logger.info(
-                            'File \'%s\' permanently deleted from GoogleDrive' % f.title)
+                            'File \'%s\' permanently deleted from GoogleDrive' % f.name)
                     except HttpError as error:
                         # print 'An error occurred: %s' % error
                         logger.info(
-                            'File \'%s\' deletion failed, or file already deleted' % f.title)
+                            'File \'%s\' deletion failed, or file already deleted' % f.name)
                 else:
                     try:
-                        service.files().trash(fileId=f.id).execute()
+                        service.files().update(
+                            fileId=f.id,
+                            body={"trashed": True}
+                        ).execute()
                         logger.info(
-                            'File \'%s\' removed from GoogleDrive' % f.title)
+                            'File \'%s\' removed from GoogleDrive' % f.name)
                     except HttpError as error:
                         # print 'An error occurred: %s' % error
                         logger.info(
-                            'File \'%s\' removal failed, or file already removed' % f.title)
+                            'File \'%s\' removal failed, or file already removed' % f.name)
 
         # Non-wildcard request
         else:
@@ -415,6 +420,7 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().restore()
         """
+        from googleapiclient.errors import HttpError 
 
         service = self._setup_service()
 
@@ -422,20 +428,26 @@ class GoogleFile(IGangaFile):
         if regex.search(self.namePattern) is not None:
             for f in self.subfiles:
                 try:
-                    service.files().untrash(fileId=f.id).execute()
+                    service.files().update(
+                        fileId=f.id,
+                        body={"trashed": False}
+                    ).execute()                 
                     logger.info(
-                        'File \'%s\' restored to GoogleDrive' % f.title)
-                except errors.HttpError as error:
+                        'File \'%s\' restored to GoogleDrive' % f.name)
+                except HttpError as error:
                     # print 'An error occurred: %s' % error
                     logger.info(
-                        'File \'%s\' restore failed, or file does not exist on GoogleDrive' % f.title)
+                        'File \'%s\' restore failed, or file does not exist on GoogleDrive' % f.name)
 
         # Non-wildcard request
         else:
             try:
-                service.files().untrash(fileId=self.id).execute()
+                service.files().update(
+                    fileId=self.id,
+                    body={"trashed": False}
+                ).execute()
                 logger.info('File restored to GoogleDrive')
-            except errors.HttpError as error:
+            except HttpError as error:
                 # print 'An error occurred: %s' % error
                 logger.info(
                     'File restore failed, or file does not exist on GoogleDrive')
