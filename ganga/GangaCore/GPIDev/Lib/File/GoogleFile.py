@@ -80,9 +80,7 @@ class GoogleFile(IGangaFile):
             SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
             creds = None
-            if os.path.exists(self.cred_path):
-                with open(self.cred_path, 'rb') as token:
-                    creds = pickle.load(token)
+            # credentials already exist
 
             account_details = {
                 "installed": {
@@ -96,31 +94,34 @@ class GoogleFile(IGangaFile):
             }
 
             # If there are no (valid) credentials available, let the user log in.
-            if not creds or not creds.valid:
-                if creds and creds.expired and creds.refresh_token:
-                    creds.refresh(Request())
-                    logger.info(
-                        'Enter you accound details in the browser window prompted')
-                else:
-                        # flow = InstalledAppFlow.from_client_secrets_file(
-                        #     os.path.expanduser('~/gangadir/credentials.json'), 
-                        #     SCOPES
-                        # )
-                        flow = InstalledAppFlow.from_client_config(
-                            account_details, 
-                            SCOPES
-                        )                        
-                        creds = flow.run_local_server(port=0)
+            if not os.path.exists(self.cred_path):
+                if not creds or not creds.valid:
+                    if creds and creds.expired and creds.refresh_token:
+                        creds.refresh(Request())
+                        logger.info(
+                            'Enter you accound details in the browser window prompted')
+                    else:
+                            # 1. If we want to have `account_details` as a file then we can use the below
+                            # flow = InstalledAppFlow.from_client_secrets_file(
+                            #     os.path.expanduser('~/gangadir/credentials.json'), 
+                            #     SCOPES
+                            # )
+                            # 2. If we want to have a system similar to how it was before
+                            flow = InstalledAppFlow.from_client_config(
+                                account_details, 
+                                SCOPES
+                            )                        
+                            creds = flow.run_local_server(port=0)
 
-                # Save the credentials for the next run
-                with open(self.cred_path, 'wb') as token:
-                    pickle.dump(creds, token)
+                    # Save the credentials for the next run
+                    with open(self.cred_path, 'wb') as token:
+                        pickle.dump(creds, token)
 
-                os.chmod(self.cred_path, stat.S_IWUSR | stat.S_IRUSR)
-                logger.info('Your GoogleDrive credentials have been stored in the file %s and are only readable by you. '
-                            'The file will give permission to modify files in your GoogleDrive. '
-                            'Permission can be revoked by going to "Manage Apps" in your GoogleDrive '
-                            'or by deleting the credentials through the deleteCredentials GoogleFile method.' % self.cred_path)
+                    os.chmod(self.cred_path, stat.S_IWUSR | stat.S_IRUSR)
+                    logger.info('Your GoogleDrive credentials have been stored in the file %s and are only readable by you. '
+                                'The file will give permission to modify files in your GoogleDrive. '
+                                'Permission can be revoked by going to "Manage Apps" in your GoogleDrive '
+                                'or by deleting the credentials through the deleteCredentials GoogleFile method.' % self.cred_path)
 
         self.__initialized = True
         self._check_Ganga_folder()
@@ -249,16 +250,14 @@ class GoogleFile(IGangaFile):
             dir_path = self.getJobObject().getOutputWorkspace().getPath()
 
         # Wildcard procedure
-        # TODO: WIP
         if regex.search(self.namePattern) is not None:
             for wildfile in glob.glob(os.path.join(dir_path, self.namePattern)):
                 FILENAME = wildfile
                 filename = os.path.basename(wildfile)
 
-                import random
                 file_metadata = {
                     'name': filename,
-                    'description': str(random.randint(0, 1000)*69),
+                    'description': 'A test document',
                     'mimeType': 'text/plain',
                     'parents': [self.GangaFolderId]
                 }
@@ -280,7 +279,7 @@ class GoogleFile(IGangaFile):
                     ).execute()
 
                     for _file in file_results.get('files', []):
-                        # Found the correct file
+                        # Found the file's information that was just uploaded
                         if _file['id'] == file['id']:
                             if _file['md5Checksum'] == hashlib.md5(thefile.read()).hexdigest():
                                 logger.info("File \'%s\' uploaded succesfully" %
@@ -324,7 +323,7 @@ class GoogleFile(IGangaFile):
                 ).execute()
 
                 for _file in file_results.get('files', []):
-                    # Found the correct file
+                    # Found the file's information that was just uploaded
                     if _file['id'] == file['id']:
                         if _file['md5Checksum'] == hashlib.md5(thefile.read()).hexdigest():
                             logger.info("File \'%s\' uploaded succesfully" %
@@ -358,10 +357,9 @@ class GoogleFile(IGangaFile):
 
         However, this will make the file unrestorable
         """
-        # DEBUB
-        print("NOW INSIDE THE REMOVE FUNCTION", self.id)
-        service = self._setup_service()
         from googleapiclient.errors import HttpError 
+        service = self._setup_service()
+
         # Wildcard procedure
         if regex.search(self.namePattern) is not None:
             for f in self.subfiles:
@@ -377,12 +375,13 @@ class GoogleFile(IGangaFile):
                             'File \'%s\' deletion failed, or file already deleted' % f.name)
                 else:
                     try:
+                        # updating the file metadata to trash it
                         service.files().update(
                             fileId=f.id,
                             body={"trashed": True}
                         ).execute()
                         logger.info(
-                            'File \'%s\' removed from GoogleDrive' % f.name)
+                            'File \'%s\' removed from GoogleDrive, added to trash' % f.name)
                     except HttpError as error:
                         # print 'An error occurred: %s' % error
                         logger.info(
@@ -391,7 +390,6 @@ class GoogleFile(IGangaFile):
         # Non-wildcard request
         else:
             if permanent == True:
-                service.files().delete(fileId=str(self.id)).execute()
                 try:
                     service.files().delete(fileId=self.id).execute()
                     self.downloadURL = ''
@@ -401,13 +399,12 @@ class GoogleFile(IGangaFile):
                         'File deletion failed, or file already deleted')
             else:
                 try:
-                    # updating the file metadata to delete it
-                    print(self.id)
+                    # updating the file metadata to trash it
                     service.files().update(
                         fileId=self.id,
                         body={"trashed": True}
                     ).execute()
-                    logger.info('File removed from GoogleDrive, added to the trash')
+                    logger.info('File removed from GoogleDrive, added to trash')
                 except HttpError as error:
                     logger.info('File removal failed, or file already removed')
                 return None
@@ -436,7 +433,7 @@ class GoogleFile(IGangaFile):
                     # print 'An error occurred: %s' % error
                     logger.info(
                         'File \'%s\' restore failed, or file does not exist on GoogleDrive' % f.name)
-
+                return None
         # Non-wildcard request
         else:
             try:
@@ -444,11 +441,12 @@ class GoogleFile(IGangaFile):
                     fileId=self.id,
                     body={"trashed": False}
                 ).execute()
-                logger.info('File restored to GoogleDrive')
+                logger.info(
+                        'File \'%s\' restored to GoogleDrive' % self.name)
             except HttpError as error:
                 # print 'An error occurred: %s' % error
                 logger.info(
-                    'File restore failed, or file does not exist on GoogleDrive')
+                        'File \'%s\' restore failed, or file does not exist on GoogleDrive' % self.name)
             return None
 
     def _check_Ganga_folder(self):
@@ -466,7 +464,7 @@ class GoogleFile(IGangaFile):
         for _file in items:
             if _file['name'] == 'Ganga':
                 self.GangaFolderId = _file['id']
-                print("GANGA folder already exists and its id is: ",)
+                
         if not self.GangaFolderId:
             body = {
                 'name': 'Ganga',
@@ -474,7 +472,6 @@ class GoogleFile(IGangaFile):
                 'mimeType': 'application/vnd.google-apps.folder'
             }
             file = service.files().create(body=body).execute()
-            print("Just created the new GANGA  folder with id: ", file.get('id'))
             self.GangaFolderId = file.get('id')
 
     def _setup_service(self):
@@ -482,7 +479,6 @@ class GoogleFile(IGangaFile):
         Sets up the GoogleDrive service for other methods
         """
         from googleapiclient.discovery import build
-        print("THE STATUS of initialisation is: ", self.__initialized)
         if self.__initialized == False:
             self.__initializeCred()
         with open(self.cred_path, "rb") as nput:
