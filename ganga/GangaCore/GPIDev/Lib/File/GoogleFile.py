@@ -85,16 +85,14 @@ class GoogleFile(IGangaFile):
                     creds = pickle.load(token)
 
             account_details = {
-                "type": "service_account",
-                "project_id": "ganga-uploader",
-                "private_key_id": "6cecc585b46822af214aa26b66735a8cd7e60f8d",
-                "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDkNvDFwvdkBf2w\nkAuNta57ayOpWsbP9xFoD9cKKHUsnE0HE4t3MDx7ZDQm5wmxX+oX/1bc+ij7K7nj\nR+OVY81ZyOQQoA3YQWd0f8NOuL7e42da2ByeVYi/YrqW9P4tmoW286S4K/oGPxU1\nR40RdP6jJ9dXkPl2Dy9ltOIQnOxDX1XZTypDdjlejFWMqDlgzCX8SaKbor+zXg+W\nTTVW8k6zkabXoxbh/a81x8kw1cFmm9ZoybSOXKHkqnFf4CrFvrpNK0qgzwIYzaqP\n/e41mv+E6o59XeVIsn2j9JYz9IVUV0jhvjwYvT+gMkNMUP25wQL3PAd1lriY1Jy4\ncseezsfvAgMBAAECggEAEXrHzE3s8Zin4AstvLKVZQHwHvuYo2XSy9FSxjC9G31J\nRRPRKIA6/F8mGMi0wa+NWD3deFrMzW2Bn7qU4DoJs354lsa7k2ccYRxGvaksLW7m\nLrDDgw5yxT3u+WWrG5vB8XZjP8ar2tNKxjmZwM7g5hGaI9czKZYWKkhwJuzuB7wz\nlCtY9G1EKf9kafOPBmPDkvsuLdCrGMcQjAwLUfqKnLLvCRbBTjRIDO4WBQTj+BUh\n4WMCiZ/V8kuk6MrWRmBYe9bW/q8kuBH0vbpm0uKoW/Ui4PUDL1X2h+FNnY8c/OKw\nVAkR0snlazxjj+b4bURPBWfRqVsyM4p1ZHUcpRh5yQKBgQD0AC3GgLI3eiygC6OF\nrfoSCUqyAJjVAsLudHtIEiZtSTyE30uFeDUI4kYIT75mr4ZF7bOv2nn6/86AccgY\niicdpjm1EOEgY2bqA0VVBRovkLe41SCwCo3YGJIC8N4esXr6I3ZCqdHA1w2vjbt2\nGPrnwczW5R38sAXI7cymMh9QJQKBgQDvcAZAbgKn0E1/i8wyIPBoTFei/Bkv4+uO\nUO4pabFqa+cW60enMSlZPQJXrdvA77SVGGQIyMas1lQEbG63PSzx/6qIlOcyexMb\nEp8JW0Rh7w5t622H+uJnvb83RCNpcPLa/RvvYGqXmUOlZHU/VTBxPgcC8eecvsSL\nu9VZzWQhgwKBgQDbSHXbGboQpZoJU6xn7Uz6fKNGicbQWKT7TG+m+7jRKqpa95qV\nnsx66W/q9E+3VTOlENUVy5EohFD/mkIr26z/tm3SThMk2nCZCst6dxVrffG/CLtR\nuopzlNFUF0hn6TUOLGSR0LCTUDIafZPltNl5AvCmiE6E02S/iQcMrar6iQKBgQC3\naz2exadLHor/lfwKuqjvfOv1cuFoilS8ZMrM9qZuO9J/ACWXslVWgyH0QL8DAZ14\nSYL4J7XqWRVrfhUiUb7Ic24Tyt2BEj8EkjM6W6v6ycJn+d2iOVKO3hBJKe1mrJud\nnh90NIvzLflgDaCzr3K4jSeZ3e3raUfvMyiw7mIyOQKBgQC2LYoEo+xLe3qgLTxx\n/GuVWpyJHLA3T+ABR8/nApeo6xGBqq3/+62OnV9v8iTexgUep42SOuD/r0RZ7wTW\n9pHjESIfmeCd6AWucLmmesxDzSNK3EcUMfHNtTi0ZQxWPZwTxq+0KHN47yAJ9jxY\n/ZfsuyfoM2D75XwPJ8sptSqmkA==\n-----END PRIVATE KEY-----\n",
-                "client_email": "test-651@ganga-uploader.iam.gserviceaccount.com",
-                "client_id": "107366549311169164238",
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/test-651%40ganga-uploader.iam.gserviceaccount.com"
+                "installed": {
+                    "project_id": "ganga-uploader", 
+                    "token_uri": "https://oauth2.googleapis.com/token", 
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                    "client_secret": "WE0mhBYuzyB98BuYN5LWD2DX", 
+                    "client_id": "895866686967-k38f1akkq2lrmc8rqqb55ss67khkic1f.apps.googleusercontent.com", 
+                    "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]}
             }
 
             # If there are no (valid) credentials available, let the user log in.
