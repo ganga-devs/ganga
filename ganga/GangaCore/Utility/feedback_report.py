@@ -722,8 +722,15 @@ def report(job=None):
             logger.error(
                 'The report is bigger than 100MB and can not be uploaded')
         else:
-            response = run_upload(server=uploadFileServer, path=resultArchive)
-            return response,resultArchive
+            from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
+            
+            filename = resultArchive.split("/")[-1]
+            localdir = "/".join(resultArchive.split("/")[:-1])
+            
+            g = GoogleFile(filename)
+            g.localDir = localdir 
+            g.put()
+            return resultArchive
 
     except Exception as err:
         logger.debug("Err: %s" % err)
