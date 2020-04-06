@@ -483,7 +483,7 @@ class GoogleFile(IGangaFile):
             self.__initializeCred()
         with open(self.cred_path, "rb") as nput:
             credentials = pickle.load(nput)
-        service = build('drive', 'v3', credentials=credentials)
+        service = build('drive', 'v3', credentials=credentials, cache_discovery=False)
         return service
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
