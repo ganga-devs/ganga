@@ -166,10 +166,6 @@ def report(job=None):
         tasksListFileName = "taskslist.txt"
         thread_trace_file_name = 'thread_trace.html'
         from GangaCore.Utility import Config
-        uploadFileServer = Config.getConfig('Feedback')['uploadServer']
-        #uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
-        #uploadFileServer= "http://ganga-ai-02.cern.ch/django/errorreports/"
-        #uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
         def printDictionary(dictionary, file=sys.stdout):
             for k, v in dictionary.items():
