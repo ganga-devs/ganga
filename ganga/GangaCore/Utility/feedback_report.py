@@ -23,15 +23,9 @@ def _initconfigFeed():
         pass
 _initconfigFeed()
 
-def send_request(url,data,files):
-    response = requests.post(url, data=data, files=files)
-    return response
 def report(job=None):
     """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
     import mimetypes
-    import urllib.request, urllib.parse, urllib.error
-    import urllib.request, urllib.error, urllib.parse
-    import http.client
     import string
     import random
     import sys
@@ -72,57 +66,25 @@ def report(job=None):
         
         return data, file_dict
 
-    def make_upload_file(server):
+    def upload_to_google_drive(filename, localdir):
 
-        def upload_file(path):
+        from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
 
-            # print 'Uploading %r to %r' % (path, server)
-
-            data = {'MAX_FILE_SIZE': '3145728',
-                    'sub': '',
-                    'mode': 'regist'}
-            files = {'file': path}
-
-            return send_post(server, files)
-
-        return upload_file
-
-    def send_post(url, files):
-        logger.debug("Sending Post to %s ,  containing %s" % (url, files))
-
-        encoded_data = encode_multipart_formdata(files)
-        
-        #response = requests.post(url, data=encoded_data[0], files=encoded_data[1])
-        response = send_request(url,encoded_data[0],encoded_data[1])
-
-        # logger.debug("httplib POST request response was: %s , because: %s" % (
-        #     response.status_code, response.text))
-        
-        # considering current response to be HttpResponse
-        responseResult = response.content
-        responseResult = responseResult.decode()
-        
-        #logger.debug("Responce.read(): --%s--" % responseResult )
-        
-        responseResult = responseResult[
-            responseResult.find('<span id=\"download_path\"'):]
-        startIndex = responseResult.find('path:') + 5
-        endIndex = responseResult.find('</span>')
-        logger.debug("Response.read(): --%s--" %
-                     responseResult[startIndex:endIndex])
+        g = GoogleFile(filename)
+        g.localDir = localdir 
+        g.put()
 
         logger.info(
-            'Your error report was uploaded to ganga developers with the following URL. ')
+            f'Your error report was uploaded to ganga developers with the following URL {g.downloadURL}')
         logger.info(
             'You may include this URL and the following summary information in your bug report or in the support email to the developers.')
         logger.info('')
-        logger.info('***' + str(responseResult[startIndex:endIndex]) + '***')
         logger.info('')
         global GANGA_VERSION, JOB_REPORT, APPLICATION_NAME, BACKEND_NAME, PYTHON_PATH
         logger.info('Ganga Version : ' + GANGA_VERSION)
         logger.info('Python Version : ' + "%s.%s.%s" %
                     (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-        logger.info('Operation System Version : ' + platform.platform())
+        logger.info('Operation System Version : ' + platform.platform())        
 
         if JOB_REPORT:
             logger.info('Application Name : ' + APPLICATION_NAME)
@@ -137,12 +99,6 @@ def report(job=None):
         APPLICATION_NAME = ''
         PYTHON_PATH = ''
 
-        return response
-
-    def run_upload(server, path):
-
-        upload_file = make_upload_file(server)
-        return upload_file(path)
 
     def report_inner(job=None, isJob=False, isTask=False):
 
@@ -165,7 +121,6 @@ def report(job=None):
         jobsListFileName = "jobslist.txt"
         tasksListFileName = "taskslist.txt"
         thread_trace_file_name = 'thread_trace.html'
-        from GangaCore.Utility import Config
 
         def printDictionary(dictionary, file=sys.stdout):
             for k, v in dictionary.items():
@@ -718,14 +673,12 @@ def report(job=None):
             logger.error(
                 'The report is bigger than 100MB and can not be uploaded')
         else:
-            from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
             
             filename = resultArchive.split("/")[-1]
             localdir = "/".join(resultArchive.split("/")[:-1])
             
-            g = GoogleFile(filename)
-            g.localDir = localdir 
-            g.put()
+            upload_to_google_drive(filename, localdir)
+
             return resultArchive
 
     except Exception as err:
