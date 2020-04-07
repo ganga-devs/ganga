@@ -2,6 +2,7 @@
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from fnmatch import fnmatch
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.Core.exceptions import GangaFileError
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
 from GangaCore.Utility.Config import getConfig
@@ -211,12 +212,18 @@ class GoogleFile(IGangaFile):
         """
         return "GoogleFile(namePattern='%s', downloadURL='%s')" % (self.namePattern, self.downloadURL)
 
-    def download_file_from_drive(self, service, fileid, completeName):
+    def download_file_from_drive(self, service, fileid, filepath, filename=None):
         import io
         from googleapiclient.http import MediaIoBaseDownload
 
+        # if file name is not known, we first get the file's name
+        if filename == None:
+            name_request = service.files().get(fileId=fileid).execute()
+            fname = name_request['name']
+            filename = os.path.join(filepath, fname)
+
         request = service.files().get_media(fileId=fileid)
-        fh = io.FileIO(completeName, 'wb')
+        fh = io.FileIO(filename, 'wb')
         downloader = MediaIoBaseDownload(fh, request)
         done = False
         while done is False:
@@ -226,7 +233,7 @@ class GoogleFile(IGangaFile):
 
     def get(self):
         """
-        Method to get the Local file from files uploaded to GoogleDrive by ganga cli
+        Method to get the Local file from files uploaded to GoogleDrive by ganga
         """
         service = self._setup_service()
 
@@ -240,32 +247,40 @@ class GoogleFile(IGangaFile):
 
         # Wildcard procedure
         if regex.search(self.namePattern) is not None:
-            for wildfile in glob.glob(os.path.join(dir_path, self.namePattern)):
-                FILENAME = wildfile
-                filename = os.path.basename(wildfile)
+            import fnmatch
 
-                search_result = service.files().list(
-                    q=f"name = '{filename}' and parents in '{self.GangaFolderId}'",
-                    spaces='drive'
-                ).execute() 
-
-                for _file in search_result['files']:
-                    self.download_file_from_drive(
-                        service, _file['id'], FILENAME
-                    )
-        else:
-            FILENAME = os.path.join(dir_path, self.namePattern)
-            filename = self.namePattern
+            files_found = False
+            file_regex = fnmatch.translate(self.namePattern)
 
             search_result = service.files().list(
-                q=f"name = '{filename}' and parents in '{self.GangaFolderId}'",
+                q=f"'{self.GangaFolderId}' in parents",
                 spaces='drive'
             ).execute() 
 
-            for _file in search_result['files']:
-                self.download_file_from_drive(
-                    service, _file['id'], FILENAME
-                )
+            if search_result['files']:
+                for _file in search_result['files']:
+                    if re.match(file_regex, _file['name']) is not None:
+                        files_found = True
+                        self.download_file_from_drive(
+                            service, _file['id'], dir_path, None
+                        )
+                if files_found is False:
+                    raise GangaFileError(f"No files with pattern: {self.namePattern} were found in Ganga Folder of your Google Drive")
+            else:
+                raise GangaFileError(f"Ganga Folder of your Google Drive is empty/non-existent")
+        else:
+            search_result = service.files().list(
+                q=f"name = '{self.namePattern}' and parents in '{self.GangaFolderId}'",
+                spaces='drive'
+            ).execute() 
+
+            if search_result['files']:
+                for _file in search_result['files']:
+                    self.download_file_from_drive(
+                        service, _file['id'], dir_path, self.namePattern
+                    )
+            else:
+                raise GangaFileError(f"File: {self.namePattern} not found in Ganga Folder of your Google Drive")
 
     def put(self):
         """
@@ -289,6 +304,9 @@ class GoogleFile(IGangaFile):
             for wildfile in glob.glob(os.path.join(dir_path, self.namePattern)):
                 FILENAME = wildfile
                 filename = os.path.basename(wildfile)
+                # checking if the to be uploaded exists
+                if not os.path.isfile(FILENAME):
+                    raise GangaFileError(f"File: {FILENAME} not found.")
 
                 file_metadata = {
                     'name': filename,
@@ -333,6 +351,8 @@ class GoogleFile(IGangaFile):
         # For non-wildcard upload
         else:
             FILENAME = os.path.join(dir_path, self.namePattern)
+            if not os.path.isfile(FILENAME):
+                raise GangaFileError(f"File: {FILENAME} not found.")
 
             file_metadata = {
                 'name': self.namePattern,
