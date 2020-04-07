@@ -142,5 +142,30 @@ MassStorageFile
 GoogleFile
 ^^^^^^^^^^
 
+This will store files to the user's Google Drive. This requires the user to authenticate and give restricted access to Google Drive.
+To use a GangaFile, do something similar to:
+
+.. code-block:: python
+
+    j = GangaFile("output.txt")
+    j.localDir = "~/temp"
+    j.put()
+
+This will upload the local file "~/temp/output.txt" to the user's Google Drive. The File object also supports for glob patterns, which can be supplied as `j.namePattern = '*.ROOT'`.
+Upon first usage, the user will be asked to authenticate and allow access to create new files and edit these files only.
+
+Files created by ganga can only be deleted ( or restored after deletion ).
+
+.. code-block:: python
+
+    j = GangaFile("output.txt")
+    j.localDir = "~/temp"
+    j.put()
+
+    # if the file is required to be deleted
+    j.remove() # will send the file to trash, use permanent=True for deletion
+    # to restore the file from trash
+    j.restore()
+
 WebDAVFile
 ^^^^^^^^^^
