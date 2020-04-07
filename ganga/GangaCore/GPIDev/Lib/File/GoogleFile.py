@@ -80,17 +80,17 @@ class GoogleFile(IGangaFile):
             SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
             creds = None
-            # credentials already exist
 
             account_details = {
                 "installed": {
-                    "project_id": "ganga-uploader", 
-                    "token_uri": "https://oauth2.googleapis.com/token", 
+                    "project_id": "ganga-file-uploader",
+                    "token_uri": "https://oauth2.googleapis.com/token",
                     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                    "client_secret": "WE0mhBYuzyB98BuYN5LWD2DX", 
-                    "client_id": "895866686967-k38f1akkq2lrmc8rqqb55ss67khkic1f.apps.googleusercontent.com", 
-                    "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]}
+                    "client_secret": "-hvpFfe29n5jhUxAXZFlqxxw",
+                    "client_id": "893863581947-l7cqdtsa6q9dn8d3cb1lplqsj9odgqia.apps.googleusercontent.com",
+                    "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
+                }
             }
 
             # If there are no (valid) credentials available, let the user log in.
@@ -101,12 +101,6 @@ class GoogleFile(IGangaFile):
                         logger.info(
                             'Enter you accound details in the browser window prompted')
                     else:
-                            # 1. If we want to have `account_details` as a file then we can use the below
-                            # flow = InstalledAppFlow.from_client_secrets_file(
-                            #     os.path.expanduser('~/gangadir/credentials.json'), 
-                            #     SCOPES
-                            # )
-                            # 2. If we want to have a system similar to how it was before
                             flow = InstalledAppFlow.from_client_config(
                                 account_details, 
                                 SCOPES
@@ -335,6 +329,7 @@ class GoogleFile(IGangaFile):
             self.downloadURL = f"https://drive.google.com/file/d/{file['id']}"
             self.id = file['id']
             self.name = file_metadata['name']
+            return
             
         return GPIProxyObjectFactory(self.subfiles[:])
 
