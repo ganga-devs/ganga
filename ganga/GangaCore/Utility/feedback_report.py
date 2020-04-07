@@ -75,9 +75,9 @@ def report(job=None):
         g.put()
 
         logger.info(
-            f'Your error report was uploaded to ganga developers with the following URL {g.downloadURL}')
+            f'Your error report was uploaded as {g.downloadURL}.')
         logger.info(
-            'You may include this URL and the following summary information in your bug report or in the support email to the developers.')
+            'You may include this URL and the following summary information in your bug report or in the support email to the Ganga developers.')
         logger.info('')
         logger.info('')
         global GANGA_VERSION, JOB_REPORT, APPLICATION_NAME, BACKEND_NAME, PYTHON_PATH
