@@ -179,32 +179,17 @@ class GoogleFile(IGangaFile):
             for f in self.subfiles:
                 if f.id:
                     completeName = os.path.join(dir_path, f.name)
-                    request = service.files().get_media(fileId=self.id)
-                    fh = io.FileIO(completeName, 'wb')
-                    downloader = MediaIoBaseDownload(fh, request)
-                    done = False
-                    while done is False:
-                        status, done = downloader.next_chunk()
-                        logger.info(f"Downloading file: {f.name} {int(status.progress()*100)}")
-                    logger.info("Download successful")
+                    self.download_file_from_drive(service, f.id, completeName)
 
                 else:
-                    # print 'An error occurred: %s' % resp
                     logger.info("Download unsuccessful, file \'%s\' may not exist on GoogleDrive" % f.name)
 
         # Non-wildcard get request procedure
         else:
             if self.id:
                 completeName = os.path.join(dir_path, self.name)
+                self.download_file_from_drive(service, self.id, completeName)
 
-                request = service.files().get_media(fileId=self.id)
-                fh = io.FileIO(completeName, 'wb')
-                downloader = MediaIoBaseDownload(fh, request)
-                done = False
-                while done is False:
-                    status, done = downloader.next_chunk()
-                    logger.info(f"Downloading file: {self.name} {int(status.progress()*100)}")
-                logger.info("Download successful")
             else:
                 # print 'An error occurred: %s' % resp
                 logger.info(
@@ -225,6 +210,62 @@ class GoogleFile(IGangaFile):
         Get the representation of the file
         """
         return "GoogleFile(namePattern='%s', downloadURL='%s')" % (self.namePattern, self.downloadURL)
+
+    def download_file_from_drive(self, service, fileid, completeName):
+        import io
+        from googleapiclient.http import MediaIoBaseDownload
+
+        request = service.files().get_media(fileId=fileid)
+        fh = io.FileIO(completeName, 'wb')
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            logger.info(f"Downloading file: {self.name} {int(status.progress()*100)}")
+        logger.info("Download successful")
+
+    def get(self):
+        """
+        Method to get the Local file from files uploaded to GoogleDrive by ganga cli
+        """
+        service = self._setup_service()
+
+        # Sets the target directory
+        dir_path = self.localDir
+        if self.localDir == '':
+            dir_path = os.getcwd()
+
+        if self._getParent() is not None:
+            dir_path = self.getJobObject().getOutputWorkspace().getPath()
+
+        # Wildcard procedure
+        if regex.search(self.namePattern) is not None:
+            for wildfile in glob.glob(os.path.join(dir_path, self.namePattern)):
+                FILENAME = wildfile
+                filename = os.path.basename(wildfile)
+
+                search_result = service.files().list(
+                    q=f"name = '{filename}' and parents in '{self.GangaFolderId}'",
+                    spaces='drive'
+                ).execute() 
+
+                for _file in search_result['files']:
+                    self.download_file_from_drive(
+                        service, _file['id'], FILENAME
+                    )
+        else:
+            FILENAME = os.path.join(dir_path, self.namePattern)
+            filename = self.namePattern
+
+            search_result = service.files().list(
+                q=f"name = '{filename}' and parents in '{self.GangaFolderId}'",
+                spaces='drive'
+            ).execute() 
+
+            for _file in search_result['files']:
+                self.download_file_from_drive(
+                    service, _file['id'], FILENAME
+                )
 
     def put(self):
         """
