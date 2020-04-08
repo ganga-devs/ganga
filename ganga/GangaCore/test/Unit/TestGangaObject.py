@@ -181,7 +181,8 @@ class MultiThreadedTestCase(unittest.TestCase):
             still_running = [t for t in threads if t.is_alive()]
             num_threads = len(still_running)
             names = [t.name for t in still_running]
-            raise RuntimeError('Timeout while waiting for {0} threads to finish: {1}'.format(num_threads, names))
+            raise RuntimeError(
+                'Timeout while waiting for {0} threads to finish: {1}'.format(num_threads, names))
 
 
 class SimpleGangaObject(GangaObject):
@@ -223,7 +224,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
 
         def write_read(thread_number):
             rand = random.Random()
-            rand.seed(time.clock() + thread_number)
+            rand.seed(time.process_time() + thread_number)
             for _ in range(100):
                 with o.const_lock:
                     num = rand.randint(0, 1000)
@@ -254,7 +255,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
 
         def write_read(thread_number):
             rand = random.Random()
-            rand.seed(time.clock() + thread_number)
+            rand.seed(time.process_time() + thread_number)
             for _ in range(100):
                 with child.const_lock:
                     num = rand.randint(0, 1000)
@@ -286,8 +287,9 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
 
         def change(thread_number):
             rand = random.Random()
-            rand.seed(time.clock() + thread_number)
-            for _ in range(10):  # Run this thread many times to keep it running for long enough to see problems.
+            rand.seed(time.process_time() + thread_number)
+            # Run this thread many times to keep it running for long enough to see problems.
+            for _ in range(10):
                 with o.const_lock:
                     num = rand.randint(0, 1000)
                     o.a = num
@@ -295,14 +297,16 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
                     assert o.a == num
 
                 with o.const_lock:
-                    o.b = rand.choice([ThreadedTestGangaObject, SimpleGangaObject])()
+                    o.b = rand.choice(
+                        [ThreadedTestGangaObject, SimpleGangaObject])()
                     child_num = rand.randint(0, 1000)
                     o.b.a = child_num
                     time.sleep(rand.uniform(0, 1E-6))
                     assert o.b.a == child_num
 
                     if isinstance(o.b, ThreadedTestGangaObject):
-                        o.b.b.a = rand.choice([ThreadedTestGangaObject, SimpleGangaObject])()
+                        o.b.b.a = rand.choice(
+                            [ThreadedTestGangaObject, SimpleGangaObject])()
                         num = rand.randint(0, 1000)
                         o.b.b.a = num
                         time.sleep(rand.uniform(0, 1E-6))
