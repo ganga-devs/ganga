@@ -175,7 +175,7 @@ class WorkerThreadPool(object):
                      fallback_func=None, fallback_args=(), fallback_kwargs={},
                      name=None):
 
-        if not isinstance(function, collections.Callable):
+        if not isinstance(function, collections.abc.Callable):
             logger.error('Only a python callable object may be added to the queue using the add_function() method')
             return
         if self.isfrozen() is True:
@@ -213,7 +213,7 @@ class WorkerThreadPool(object):
                                       ))
 
     def map(self, function, *iterables):
-        if not isinstance(function, collections.Callable):
+        if not isinstance(function, collections.abc.Callable):
             raise GangaTypeError('must be a function')
         if self.isfrozen() is True:
             logger.error("Cannot map a Function as Queue is frozen!")

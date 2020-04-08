@@ -2,6 +2,7 @@
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from fnmatch import fnmatch
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.Core.exceptions import GangaFileError
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
 from GangaCore.Utility.Config import getConfig
@@ -16,8 +17,7 @@ import GangaCore.Utility.Config
 
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
-badlogger = getLogger('oauth2client.util')
-badlogger.setLevel(logging.ERROR)
+
 
 class GoogleFile(IGangaFile):
 
@@ -56,8 +56,8 @@ class GoogleFile(IGangaFile):
                                                 doc='download URL assigned to the file upon upload to GoogleDrive'),
                       'id': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
                                        doc='GoogleFile ID assigned to file  on upload to GoogleDrive'),
-                      'title': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
-                                                   doc='GoogleFile title of the uploaded file'),
+                      'name': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
+                                                   doc='GoogleFile name of the uploaded file'),
                       'GangaFolderId': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
                                                   doc='GoogleDrive Ganga folder  ID')
                       })
@@ -69,71 +69,56 @@ class GoogleFile(IGangaFile):
         super(GoogleFile, self).__init__()
         self.namePattern = namePattern
         self.__initialized = False
-        
-        self.cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
+
+        self.cred_path = os.path.join(getConfig('Configuration')[
+                                      'gangadir'], 'googlecreddata.pkl')
 
     def __initializeCred(self):
         while os.path.isfile(self.cred_path) == False:
-            from oauth2client.client import OAuth2WebServerFlow
+            from google.auth.transport.requests import Request
+            from google_auth_oauthlib.flow import InstalledAppFlow
 
-            # Copy your credentials from the APIs Console
-#            CLIENT_ID = "54459939297.apps.googleusercontent.com"
-#            CLIENT_SECRET = "mAToHx5RpXtwkeYR6nOIe_Yw"
-            CLIENT_ID = '776655306197-dirtoquqsm7cpqgepvamofg5t2b5f637.apps.googleusercontent.com'
-            CLIENT_SECRET = 'GpdEP-OBZZQLB3k-xxOpzFQG'
-            # Check https://developers.google.com/drive/scopes for all
-            # available scopes
-            OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.file'
+            SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
-            # Redirect URI for installed apps
-            REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob'
+            creds = None
 
-            # Run through the OAuth flow and retrieve credentials
-            credentials = ''
-            flow = OAuth2WebServerFlow(
-                CLIENT_ID, CLIENT_SECRET, OAUTH_SCOPE, REDIRECT_URI)
-            authorize_url = flow.step1_get_authorize_url()
-            try:
-                import webbrowser
-                webbrowser.get('macosx').open(authorize_url, 0, True)
-            except:
-                try:
-                    import webbrowser
-                    webbrowser.get(
-                        'windows-default').open(authorize_url, 0, True)
-                except:
-                    try:
-                        import webbrowser
-                        webbrowser.get('firefox').open(authorize_url, 0, True)
-                    except Exception as err:
-                        logger.error("Error: %s" % str(err))
-                        pass
-            logger.info(
-                'Go to the following link in your browser: ' + authorize_url)
-            code = input('Enter verification code: ').strip()
-            try:
-                credentials = flow.step2_exchange(code)
-            except:
-                deny = input(
-                    'An incorrect code was entered. Have you denied Ganga access to your GoogleDrive (y/[n])?')
-                if deny.lower() in ['', 'n']:
-                    pass
-                elif deny[0:1].upper() == 'Y':
-                    return None
+            account_details = {
+                "installed": {
+                    "project_id": "ganga-file-uploader",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                    "client_secret": "-hvpFfe29n5jhUxAXZFlqxxw",
+                    "client_id": "893863581947-l7cqdtsa6q9dn8d3cb1lplqsj9odgqia.apps.googleusercontent.com",
+                    "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
+                }
+            }
 
-            # Pickle credential data
-            if credentials is not '':
-                with open(self.cred_path, "wb") as output:
-                    pickle.dump(credentials, output)
-                
-                os.chmod(self.cred_path, stat.S_IWUSR | stat.S_IRUSR)
-                logger.info('Your GoogleDrive credentials have been stored in the file %s and are only readable by you. '
-                            'The file will give permission to modify files in your GoogleDrive. '
-                            'Permission can be revoked by going to "Manage Apps" in your GoogleDrive '
-                            'or by deleting the credentials through the deleteCredentials GoogleFile method.' % self.cred_path)
+            # If there are no (valid) credentials available, let the user log in.
+            if not os.path.exists(self.cred_path):
+                if not creds or not creds.valid:
+                    if creds and creds.expired and creds.refresh_token:
+                        creds.refresh(Request())
+                        logger.info(
+                            'Enter you accound details in the browser window prompted')
+                    else:
+                            flow = InstalledAppFlow.from_client_config(
+                                account_details, 
+                                SCOPES
+                            )                        
+                            creds = flow.run_local_server(port=0)
+
+                    # Save the credentials for the next run
+                    with open(self.cred_path, 'wb') as token:
+                        pickle.dump(creds, token)
+
+                    os.chmod(self.cred_path, stat.S_IWUSR | stat.S_IRUSR)
+                    logger.info('Your GoogleDrive credentials have been stored in the file %s and are only readable by you. '
+                                'The file will give permission to modify files in your GoogleDrive. '
+                                'Permission can be revoked by going to "Manage Apps" in your GoogleDrive '
+                                'or by deleting the credentials through the deleteCredentials GoogleFile method.' % self.cred_path)
 
         self.__initialized = True
-
         self._check_Ganga_folder()
 
     def _attribute_filter__set__(self, n, v):
@@ -167,11 +152,10 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().deleteCredentials()
         """
-        if self.__initilized == True:
-            if os.path.isfile(self.cred_path) == True:
-                os.remove(self.cred_path)
-                logger.info('GoogleDrive credentials deleted')
-                return None
+        if os.path.isfile(self.cred_path) == True:
+            os.remove(self.cred_path)
+            logger.info('GoogleDrive credentials deleted')
+            return None
         else:
             logger.info('There are no credentials to delete')
 
@@ -181,58 +165,37 @@ class GoogleFile(IGangaFile):
         Args:
             targetPath (str): Target path where the file is copied to
         """
+        import io
+        from googleapiclient.http import MediaIoBaseDownload
 
         dir_path = targetPath
-
         service = self._setup_service()
+
+        if not os.path.isdir(dir_path):
+            os.makedirs(dir_path)
 
         # Checks for wildcards and loops through get procedure for each result,
         # saving file to assigned directory
         if regex.search(self.namePattern) is not None:
             for f in self.subfiles:
-                if f.downloadURL:
-                    resp, content = service._http.request(f.downloadURL)
-                    if resp.status == 200:
-                        # print 'Status: %s' % resp
-                        logger.info("File \'%s\' downloaded succesfully" % f.title)
-                        completeName = os.path.join(dir_path, f.title)
-                        with open(completeName, "wb") as gotfile:
-                            gotfile.write(content)
+                if f.id:
+                    completeName = os.path.join(dir_path, f.name)
+                    self.download_file_from_drive(service, f.id, completeName)
 
-                    else:
-                        # print 'An error occurred: %s' % resp
-                        logger.info("Download unsuccessful, file \'%s\' may not exist on GoogleDrive" % f.title)
                 else:
-                    # The file doesn't have any content stored on Drive.
-                    logger.info(
-                        "No file \'%s\' exists on GoogleDrive" % f.title)
-                    return None
+                    logger.info("Download unsuccessful, file \'%s\' may not exist on GoogleDrive" % f.name)
 
         # Non-wildcard get request procedure
         else:
-            if self.downloadURL:
-                resp, content = service._http.request(self.downloadURL)
-                if resp.status == 200:
-                    # print 'Status: %s' % resp
-                    logger.info("Download successful")
-                    dir_path = self.localDir
-                    if self.localDir == ('' or None):
-                        dir_path = os.getcwd()
-                    if self._getParent() is not None:
-                        dir_path = self.getJobObject(
-                        ).getOutputWorkspace().getPath()
-                    completeName = os.path.join(dir_path, self.namePattern)
-                    with open(completeName, "wb") as gotfile:
-                        gotfile.write(content)
-                else:
-                    # print 'An error occurred: %s' % resp
-                    logger.info(
-                        "Download unsuccessful, the file may not exist on GoogleDrive")
-                    return None
+            if self.id:
+                completeName = os.path.join(dir_path, self.name)
+                self.download_file_from_drive(service, self.id, completeName)
+
             else:
-                # The file doesn't have any content stored on Drive.
-                logger.info("No such file on GoogleDrive")
-                return
+                # print 'An error occurred: %s' % resp
+                logger.info(
+                    "Download unsuccessful, the file may not exist on GoogleDrive")
+                return None
 
     def getWNScriptDownloadCommand(self, indent):
         """
@@ -249,12 +212,82 @@ class GoogleFile(IGangaFile):
         """
         return "GoogleFile(namePattern='%s', downloadURL='%s')" % (self.namePattern, self.downloadURL)
 
+    def download_file_from_drive(self, service, fileid, filepath, filename=None):
+        import io
+        from googleapiclient.http import MediaIoBaseDownload
+
+        # if file name is not known, we first get the file's name
+        if filename == None:
+            name_request = service.files().get(fileId=fileid).execute()
+            fname = name_request['name']
+            filename = os.path.join(filepath, fname)
+
+        request = service.files().get_media(fileId=fileid)
+        fh = io.FileIO(filename, 'wb')
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            logger.info(f"Downloading file: {self.name} {int(status.progress()*100)}")
+        logger.info("Download successful")
+
+    def get(self):
+        """
+        Method to get the Local file from files uploaded to GoogleDrive by ganga
+        """
+        service = self._setup_service()
+
+        # Sets the target directory
+        dir_path = self.localDir
+        if self.localDir == '':
+            dir_path = os.getcwd()
+
+        if self._getParent() is not None:
+            dir_path = self.getJobObject().getOutputWorkspace().getPath()
+
+        # Wildcard procedure
+        if regex.search(self.namePattern) is not None:
+            import fnmatch
+
+            files_found = False
+            file_regex = fnmatch.translate(self.namePattern)
+
+            search_result = service.files().list(
+                q=f"'{self.GangaFolderId}' in parents",
+                spaces='drive'
+            ).execute() 
+
+            if search_result['files']:
+                for _file in search_result['files']:
+                    if re.match(file_regex, _file['name']) is not None:
+                        files_found = True
+                        self.download_file_from_drive(
+                            service, _file['id'], dir_path, None
+                        )
+                if files_found is False:
+                    raise GangaFileError(f"No files with pattern: {self.namePattern} were found in Ganga Folder of your Google Drive. Ganga can only see files that was uploded by Ganga itself.")
+            else:
+                raise GangaFileError(f"Ganga Folder of your Google Drive is empty/non-existent")
+        else:
+            search_result = service.files().list(
+                q=f"name = '{self.namePattern}' and parents in '{self.GangaFolderId}'",
+                spaces='drive'
+            ).execute() 
+
+            if search_result['files']:
+                for _file in search_result['files']:
+                    self.download_file_from_drive(
+                        service, _file['id'], dir_path, self.namePattern
+                    )
+            else:
+                raise GangaFileError(f"File: {self.namePattern} not found in Ganga Folder of your Google Drive. Ganga can only see files that was uploded by Ganga itself.")
+
     def put(self):
         """
         Postprocesses (upload) output file to the desired destination from the client
         """
         import hashlib
-        from apiclient.http import MediaFileUpload
+        from googleapiclient.http import MediaFileUpload
 
         service = self._setup_service()
 
@@ -271,73 +304,94 @@ class GoogleFile(IGangaFile):
             for wildfile in glob.glob(os.path.join(dir_path, self.namePattern)):
                 FILENAME = wildfile
                 filename = os.path.basename(wildfile)
+                # checking if the to be uploaded exists
+                if not os.path.isfile(FILENAME):
+                    raise GangaFileError(f"File: {FILENAME} not found.")
 
-                # Upload procedure
-                media_body = MediaFileUpload(
-                    FILENAME, mimetype='text/plain', resumable=True)
-                body = {
-                    'title': '%s' % filename,
+                file_metadata = {
+                    'name': filename,
                     'description': 'A test document',
                     'mimeType': 'text/plain',
-                    'parents': [{
-                        "kind": "drive#fileLink",
-                        "id": "%s" % self.GangaFolderId
-                    }]
+                    'parents': [self.GangaFolderId]
                 }
+                media = MediaFileUpload(
+                    FILENAME,
+                    mimetype='application/vnd.google-apps.document'
+                )
+                file = service.files().create(
+                    fields='id',
+                    media_body=media,
+                    body=file_metadata
+                ).execute()
 
-                # Metadata file and md5checksum intergrity check
-                file = service.files().insert(
-                    body=body, media_body=media_body).execute()
+                # Checking the hash of inserted data
                 with open(FILENAME, 'rb') as thefile:
-                    if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
-                        logger.info("File \'%s\' uploaded successfully" % filename)
-                    else:
-                        logger.error(
-                            "File \'%s\' uploaded unsuccessfully" % filename)
+                    file_results = service.files().list(
+                        q=f"name='{filename}'",
+                        fields="nextPageToken, files(id, name, md5Checksum)"
+                    ).execute()
+
+                    for _file in file_results.get('files', []):
+                        # Found the file's information that was just uploaded
+                        if _file['id'] == file['id']:
+                            if _file['md5Checksum'] == hashlib.md5(thefile.read()).hexdigest():
+                                logger.info("File \'%s\' uploaded succesfully" %
+                                            filename)
+                            else:
+                                raise GangaFileError("Upload of \'%s\' unsuccessful" % filename)
 
                 # Assign new schema components to each file and append to job
                 # subfiles
                 g = GoogleFile(filename)
-                g.downloadURL = file.get('downloadUrl', '')
-                g.id = file.get('id', '')
-                g.title = file.get('title', '')
+                g.downloadURL = f"https://drive.google.com/file/d/{file['id']}"
+                g.id = file['id']
+                g.name = file_metadata['name']
                 self.subfiles.append(GPIProxyObjectFactory(g))
 
         # For non-wildcard upload
         else:
-            # Path to the file to upload
             FILENAME = os.path.join(dir_path, self.namePattern)
+            if not os.path.isfile(FILENAME):
+                raise GangaFileError(f"File: {FILENAME} not found.")
 
-            # Upload procedure, can edit more of file metadata
-            media_body = MediaFileUpload(
-                FILENAME, mimetype='text/plain', resumable=True)
-            body = {
-                'title': '%s' % self.namePattern,
+            file_metadata = {
+                'name': self.namePattern,
                 'description': 'A test document',
                 'mimeType': 'text/plain',
-                'parents': [{
-                    "kind": "drive#fileLink",
-                    "id": "%s" % self.GangaFolderId
-                }]
+                'parents': [self.GangaFolderId]
             }
+            media = MediaFileUpload(
+                FILENAME,
+                mimetype='application/vnd.google-apps.document'
+            )
+            file = service.files().create(
+                fields='id',
+                media_body=media,
+                body=file_metadata
+            ).execute()
 
-            # Metadata storage and md5checksum integrity check
-            file = service.files().insert(
-                body=body, media_body=media_body).execute()
-
+            # Checking the hash of inserted data
             with open(FILENAME, 'rb') as thefile:
-                if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
-                    logger.info("File \'%s\' uploaded succesfully" %
-                                self.namePattern)
-                else:
-                    logger.error("Upload Unsuccessful")
+                file_results = service.files().list(
+                    q=f"name='{self.namePattern}'",
+                    fields="nextPageToken, files(id, name, md5Checksum)"
+                ).execute()
+
+                for _file in file_results.get('files', []):
+                    # Found the file's information that was just uploaded
+                    if _file['id'] == file['id']:
+                        if _file['md5Checksum'] == hashlib.md5(thefile.read()).hexdigest():
+                            logger.info("File \'%s\' uploaded succesfully" %
+                                        self.namePattern)
+                        else:
+                            raise GangaFileError("Upload of \'%s\' unsuccessful" % self.namePattern)
 
             # Assign values to new schema components
-            self.downloadURL = file.get('downloadUrl', '')
-            self.id = file.get('id', '')
-            self.title = file.get('title', '')
-
+            self.downloadURL = f"https://drive.google.com/file/d/{file['id']}"
+            self.id = file['id']
+            self.name = file_metadata['name']
             return
+            
         return GPIProxyObjectFactory(self.subfiles[:])
 
     def remove(self, permanent=False):
@@ -359,9 +413,8 @@ class GoogleFile(IGangaFile):
 
         However, this will make the file unrestorable
         """
+        from googleapiclient.errors import HttpError 
         service = self._setup_service()
-
-        from apiclient import errors
 
         # Wildcard procedure
         if regex.search(self.namePattern) is not None:
@@ -371,20 +424,24 @@ class GoogleFile(IGangaFile):
                         service.files().delete(fileId=f.id).execute()
                         f.downloadURL = ''
                         logger.info(
-                            'File \'%s\' permanently deleted from GoogleDrive' % f.title)
-                    except errors.HttpError as error:
+                            'File \'%s\' permanently deleted from GoogleDrive' % f.name)
+                    except HttpError as error:
                         # print 'An error occurred: %s' % error
                         logger.info(
-                            'File \'%s\' deletion failed, or file already deleted' % f.title)
+                            'File \'%s\' deletion failed, or file already deleted' % f.name)
                 else:
                     try:
-                        service.files().trash(fileId=f.id).execute()
+                        # updating the file metadata to trash it
+                        service.files().update(
+                            fileId=f.id,
+                            body={"trashed": True}
+                        ).execute()
                         logger.info(
-                            'File \'%s\' removed from GoogleDrive' % f.title)
-                    except errors.HttpError as error:
+                            'File \'%s\' removed from GoogleDrive, added to trash' % f.name)
+                    except HttpError as error:
                         # print 'An error occurred: %s' % error
                         logger.info(
-                            'File \'%s\' removal failed, or file already removed' % f.title)
+                            'File \'%s\' removal failed, or file already removed' % f.name)
 
         # Non-wildcard request
         else:
@@ -393,16 +450,18 @@ class GoogleFile(IGangaFile):
                     service.files().delete(fileId=self.id).execute()
                     self.downloadURL = ''
                     logger.info('File permanently deleted from GoogleDrive')
-                except errors.HttpError as error:
-                    # print 'An error occurred: %s' % error
+                except HttpError as error:
                     logger.info(
                         'File deletion failed, or file already deleted')
             else:
                 try:
-                    service.files().trash(fileId=self.id).execute()
-                    logger.info('File removed from GoogleDrive')
-                except errors.HttpError as error:
-                    # print 'An error occurred: %s' % error
+                    # updating the file metadata to trash it
+                    service.files().update(
+                        fileId=self.id,
+                        body={"trashed": True}
+                    ).execute()
+                    logger.info('File removed from GoogleDrive, added to trash')
+                except HttpError as error:
                     logger.info('File removal failed, or file already removed')
                 return None
 
@@ -412,7 +471,7 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().restore()
         """
-        from apiclient import errors
+        from googleapiclient.errors import HttpError 
 
         service = self._setup_service()
 
@@ -420,69 +479,67 @@ class GoogleFile(IGangaFile):
         if regex.search(self.namePattern) is not None:
             for f in self.subfiles:
                 try:
-                    service.files().untrash(fileId=f.id).execute()
+                    service.files().update(
+                        fileId=f.id,
+                        body={"trashed": False}
+                    ).execute()                 
                     logger.info(
-                        'File \'%s\' restored to GoogleDrive' % f.title)
-                except errors.HttpError as error:
+                        'File \'%s\' restored to GoogleDrive' % f.name)
+                except HttpError as error:
                     # print 'An error occurred: %s' % error
                     logger.info(
-                        'File \'%s\' restore failed, or file does not exist on GoogleDrive' % f.title)
-
+                        'File \'%s\' restore failed, or file does not exist on GoogleDrive' % f.name)
+                return None
         # Non-wildcard request
         else:
             try:
-                service.files().untrash(fileId=self.id).execute()
-                logger.info('File restored to GoogleDrive')
-            except errors.HttpError as error:
+                service.files().update(
+                    fileId=self.id,
+                    body={"trashed": False}
+                ).execute()
+                logger.info(
+                        'File \'%s\' restored to GoogleDrive' % self.name)
+            except HttpError as error:
                 # print 'An error occurred: %s' % error
                 logger.info(
-                    'File restore failed, or file does not exist on GoogleDrive')
+                        'File \'%s\' restore failed, or file does not exist on GoogleDrive' % self.name)
             return None
 
     def _check_Ganga_folder(self):
         """
         Creates a Ganga folder on GoogleDrive if one is not already present
         """
-        from apiclient import errors
         service = self._setup_service()
 
-        page_token = None
-        try:
-            param = {}
-            if page_token:
-                param['pageToken'] = page_token
-            files = service.files().list(**param).execute()
-            items = files['items']
-            for i in items:
-                if i['title'] == 'Ganga':
-                    self.GangaFolderId = i['id']
-                    return
-            page_token = files.get('nextPageToken')
-        except errors.HttpError as error:
-            logger.info('Failed to create Ganga folder on GoogleDrive')
-            # print 'An error occurred: %s' % error
+        # grabing all the folders in root folder of gdrive 
+        results = service.files().list(
+            pageSize=10, fields="nextPageToken, files(id, name)"
+        ).execute()
+        items = results.get('files', [])
 
-        body = {
-            'title': 'Ganga',
-            'description': 'A test folder',
-            'mimeType': 'application/vnd.google-apps.folder'
-        }
-        file = service.files().insert(body=body).execute()
-        self.GangaFolderId = file.get('id')
+        for _file in items:
+            if _file['name'] == 'Ganga':
+                self.GangaFolderId = _file['id']
+                
+        if not self.GangaFolderId:
+            body = {
+                'name': 'Ganga',
+                'description': 'A test folder',
+                'mimeType': 'application/vnd.google-apps.folder'
+            }
+            file = service.files().create(body=body).execute()
+            self.GangaFolderId = file.get('id')
 
     def _setup_service(self):
         """
         Sets up the GoogleDrive service for other methods
         """
-        from apiclient.discovery import build
-        import httplib2
-        http = httplib2.Http()
+        from googleapiclient.discovery import build
         if self.__initialized == False:
             self.__initializeCred()
         with open(self.cred_path, "rb") as nput:
             credentials = pickle.load(nput)
-        http = credentials.authorize(http)
-        service = build('drive', 'v2', http=http)
+        service = build('drive', 'v3', credentials=credentials, cache_discovery=False)
         return service
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
