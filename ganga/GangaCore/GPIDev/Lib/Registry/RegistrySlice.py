@@ -188,7 +188,7 @@ class RegistrySlice(object):
 
         ids = None
 
-        if isinstance(minid, collections.Container):
+        if isinstance(minid, collections.abc.Container):
             ids = minid
             select = select_by_list
         else:

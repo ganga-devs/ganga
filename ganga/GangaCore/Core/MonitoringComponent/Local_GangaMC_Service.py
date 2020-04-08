@@ -77,7 +77,7 @@ def checkHeartBeat(global_count):
         dead_time = config['HeartBeatTimeOut']
         max_warnings = 5
 
-        if (latest_timeNow - last_time) > dead_time and this_thread.isAlive()\
+        if (latest_timeNow - last_time) > dead_time and this_thread.is_alive()\
                 and this_thread._currently_running_command is True\
                 and global_count < max_warnings:
 
@@ -203,7 +203,7 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
 
     def join_worker_threads(threads, timeout=3):
         for t in threads:
-            if t.isAlive():
+            if t.is_alive():
                 t.join(timeout)
             t.stop()
 
@@ -216,7 +216,7 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
     while True:
         if not fail_cb or max_retries <= 0:
             break
-        stalled = [t for t in ThreadPool if t.isAlive()]
+        stalled = [t for t in ThreadPool if t.is_alive()]
         if not stalled:
             break
         if fail_cb():  # continue?
