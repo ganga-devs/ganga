@@ -265,7 +265,7 @@ class GoogleFile(IGangaFile):
                             service, _file['id'], dir_path, None
                         )
                 if files_found is False:
-                    raise GangaFileError(f"No files with pattern: {self.namePattern} were found in Ganga Folder of your Google Drive")
+                    raise GangaFileError(f"No files with pattern: {self.namePattern} were found in Ganga Folder of your Google Drive. Ganga can only see files that was uploded by Ganga itself.")
             else:
                 raise GangaFileError(f"Ganga Folder of your Google Drive is empty/non-existent")
         else:
@@ -280,7 +280,7 @@ class GoogleFile(IGangaFile):
                         service, _file['id'], dir_path, self.namePattern
                     )
             else:
-                raise GangaFileError(f"File: {self.namePattern} not found in Ganga Folder of your Google Drive")
+                raise GangaFileError(f"File: {self.namePattern} not found in Ganga Folder of your Google Drive. Ganga can only see files that was uploded by Ganga itself.")
 
     def put(self):
         """
@@ -338,7 +338,7 @@ class GoogleFile(IGangaFile):
                                 logger.info("File \'%s\' uploaded succesfully" %
                                             filename)
                             else:
-                                logger.error("Upload Unsuccessful")
+                                raise GangaFileError("Upload of \'%s\' unsuccessful" % filename)
 
                 # Assign new schema components to each file and append to job
                 # subfiles
@@ -384,7 +384,7 @@ class GoogleFile(IGangaFile):
                             logger.info("File \'%s\' uploaded succesfully" %
                                         self.namePattern)
                         else:
-                            logger.error("Upload Unsuccessful")
+                            raise GangaFileError("Upload of \'%s\' unsuccessful" % self.namePattern)
 
             # Assign values to new schema components
             self.downloadURL = f"https://drive.google.com/file/d/{file['id']}"
