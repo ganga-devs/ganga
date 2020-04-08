@@ -204,7 +204,7 @@ class testRepository(object):
         self.thread.start()
 
     def isReadyForCheck(self):
-        return self.thread.done or not self.thread.isAlive()
+        return self.thread.done or not self.thread.is_alive()
 
     def checkTest(self):
         self.thread.join()

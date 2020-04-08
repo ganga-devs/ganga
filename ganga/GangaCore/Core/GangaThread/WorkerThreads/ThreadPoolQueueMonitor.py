@@ -205,7 +205,7 @@ class ThreadPoolQueueMonitor(object):
                                  queue with lower number = higher priority.
                                  This then should be an int normally 0-9
         """
-        if not isinstance(worker_code, collections.Callable):
+        if not isinstance(worker_code, collections.abc.Callable):
             logger.error('Only python callable objects can be added to the queue using queues.add()')
             logger.error('Did you perhaps try to add the return value of the function/method rather than the function/method itself')
             logger.error('e.g. Incorrect:     queues.add(myfunc()) *NOTE the brackets*')
@@ -218,7 +218,7 @@ class ThreadPoolQueueMonitor(object):
 
     def _addSystem(self, worker_code, args=(), kwargs={}, priority=5, name=None):
 
-        if not isinstance(worker_code, collections.Callable):
+        if not isinstance(worker_code, collections.abc.Callable):
             logger.error("Error Adding internal task!! please report this to the Ganga developers!")
             return
 

@@ -7,7 +7,6 @@ from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
 from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
 from GangaCore.GPIDev.Lib.File.LCGSEFile import LCGSEFile
-from GangaCore.GPIDev.Lib.File.SandboxFile import SandboxFile
 from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
 
 import GangaCore.Utility.logging

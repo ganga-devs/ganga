@@ -17,7 +17,7 @@ sys.path.insert( 0, '###GANGA_PYTHONPATH###' )
 statfileName = os.path.join( '###OUTPUTDIR###', '__jobstatus__' )
 try:
    statfile = open( statfileName, 'w' )
-except IOError, x:
+except IOError as x:
    print('ERROR: Unable to write status file: %s' % statfileName)
    print('ERROR: ',x)
    raise
@@ -25,7 +25,7 @@ except IOError, x:
 idfileName = os.path.join( '###OUTPUTDIR###', '__id__' )
 try:
    idfile = open( idfileName, 'w' )
-except IOError, x:
+except IOError as x:
    print('ERROR: Unable to write id file: %s' % idfileName)
    print('ERROR: ',x)
    raise
