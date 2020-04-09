@@ -1,7 +1,9 @@
 
 
 import GangaCore.Utility.logging
-from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
+from GangaCore.GPIDev.Base.Proxy import stripProxy, addProxy, getName
+from GangaCore.Core.exceptions import GangaFileError
+
 import gzip
 logger = GangaCore.Utility.logging.getLogger()
 import requests
@@ -23,8 +25,11 @@ def _initconfigFeed():
         pass
 _initconfigFeed()
 
-def report(job=None):
+def report(job=None, filetype=None):
     """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
+    if filetype is None:
+        raise GangaFileError(f"filetype {filetype} is not supported.")
+
     import mimetypes
     import string
     import random
@@ -66,18 +71,40 @@ def report(job=None):
         
         return data, file_dict
 
-    def upload_to_google_drive(filename, localdir):
+    def upload(filetype, filename, localdir):
+        try:
+                from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+                from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
+                from GangaCore.GPIDev.Lib.File.LCGSEFile import LCGSEFile
+                from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
+                from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
+                
+                filetype = stripProxy(filetype)
+                assert(issubclass(filetype, IGangaFile))
+                print(filename, localdir)
+                if issubclass(filetype, LocalFile):
+                    feedback = filetype(namePattern = filename)
+                    feedback.localDir = localdir 
 
-        from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
+                else:
+                    feedback = filetype(filename)
+                    feedback.localDir = localdir 
+                    feedback.put()
 
-        g = GoogleFile(filename)
-        g.localDir = localdir 
-        g.put()
+        except Exception as e:
+                raise GangaFileError(f"filetype {filetype} is not supported")
+        
+        if issubclass(filetype, GoogleFile):
+            logger.info(
+                f'Your error report was uploaded as {feedback.downloadURL}.')  
+            logger.info(
+                'You may include this URL and the following summary information in your bug report or in the support email to the Ganga developers.')
+        else:
+            logger.info(
+                f'Your error report was saved as {filetype.location}.')
+            logger.info(
+                'You may include this file and the following summary information in your bug report or in the support email to the Ganga developers.')
 
-        logger.info(
-            f'Your error report was uploaded as {g.downloadURL}.')
-        logger.info(
-            'You may include this URL and the following summary information in your bug report or in the support email to the Ganga developers.')
         logger.info('')
         logger.info('')
         global GANGA_VERSION, JOB_REPORT, APPLICATION_NAME, BACKEND_NAME, PYTHON_PATH
@@ -98,6 +125,8 @@ def report(job=None):
         BACKEND_NAME = ''
         APPLICATION_NAME = ''
         PYTHON_PATH = ''
+
+        return addProxy(feedback)
 
 
     def report_inner(job=None, isJob=False, isTask=False):
@@ -629,7 +658,7 @@ def report(job=None):
             os.remove(errorLogPath)
 
         # return the path to the archive and the path to the upload server
-        return (resultArchive, uploadFileServer, tempDir)
+        return (resultArchive, tempDir)
 
     def removeTempFiles(tempDir):
         import shutil
@@ -664,7 +693,7 @@ def report(job=None):
                 logger.error("report() function argument should be reference to a job or task object")
                 return
 
-        resultArchive, uploadFileServer, tempDir = report_inner(
+        resultArchive, tempDir = report_inner(
             job, isJob, isTask)
 
         report_bytes = os.path.getsize(resultArchive)
@@ -676,10 +705,7 @@ def report(job=None):
             
             filename = resultArchive.split("/")[-1]
             localdir = "/".join(resultArchive.split("/")[:-1])
-            
-            upload_to_google_drive(filename, localdir)
-
-            return resultArchive
+            return upload(filetype, filename, localdir)
 
     except Exception as err:
         logger.debug("Err: %s" % err)
