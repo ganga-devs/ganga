@@ -1,12 +1,12 @@
 
 
 import GangaCore.Utility.logging
-from GangaCore.GPIDev.Base.Proxy import stripProxy, addProxy, getName
 from GangaCore.Core.exceptions import GangaFileError
+from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
+from GangaCore.GPIDev.Base.Proxy import stripProxy, addProxy, getName
 
 import gzip
 logger = GangaCore.Utility.logging.getLogger()
-import requests
 
 def _initconfigFeed():
     """Initialize Feedback configuration."""
@@ -25,11 +25,8 @@ def _initconfigFeed():
         pass
 _initconfigFeed()
 
-def report(job=None, filetype=None):
+def report(job=None, filetype=GoogleFile):
     """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
-    if filetype is None:
-        raise GangaFileError(f"filetype {filetype} is not supported.")
-
     import mimetypes
     import string
     import random
@@ -74,36 +71,22 @@ def report(job=None, filetype=None):
     def upload(filetype, filename, localdir):
         try:
                 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-                from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
-                from GangaCore.GPIDev.Lib.File.LCGSEFile import LCGSEFile
-                from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
-                from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
                 
                 filetype = stripProxy(filetype)
                 assert(issubclass(filetype, IGangaFile))
-                print(filename, localdir)
-                if issubclass(filetype, LocalFile):
-                    feedback = filetype(namePattern = filename)
-                    feedback.localDir = localdir 
 
-                else:
-                    feedback = filetype(filename)
-                    feedback.localDir = localdir 
-                    feedback.put()
+                feedback = filetype(filename)
+                feedback.localDir = localdir 
+                feedback.put()
 
-        except Exception as e:
-                raise GangaFileError(f"filetype {filetype} is not supported")
+        except AssertionError as err:
+            logger.debug("Err: %s" % err)
+            raise GangaFileError(f"filetype {filetype} is not supported")
         
-        if issubclass(filetype, GoogleFile):
-            logger.info(
-                f'Your error report was uploaded as {feedback.downloadURL}.')  
-            logger.info(
-                'You may include this URL and the following summary information in your bug report or in the support email to the Ganga developers.')
-        else:
-            logger.info(
-                f'Your error report was saved as {filetype.location}.')
-            logger.info(
-                'You may include this file and the following summary information in your bug report or in the support email to the Ganga developers.')
+        logger.info(
+            f'Your error report was saved as {feedback.accessURL()}.')
+        logger.info(
+            'You may include this file and the following summary information in your bug report or in the support email to the Ganga developers.')
 
         logger.info('')
         logger.info('')
@@ -684,7 +667,6 @@ def report(job=None, filetype=None):
         # make typecheck of the param passed
         if job is not None:
             from GangaCore.GPIDev.Lib.Job.Job import Job
-            from GangaCore.GPIDev.Base.Proxy import stripProxy
             isJob = isinstance(stripProxy(job), Job)
             if hasattr(stripProxy(job), '_category') and (stripProxy(job)._category == 'tasks'):
                 isTask = True
