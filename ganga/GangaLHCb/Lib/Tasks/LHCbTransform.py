@@ -199,13 +199,13 @@ class LHCbTransform(ITransform):
                             for pat in excl_pat_list:
                                 if re.search(pat, f.lfn) and "LFN:" + f.lfn in flist:
                                     flist.remove("LFN:" + f.lfn)
-                    elif isType(f, LocalFile):
+                    elif isType(f, LocalFile) or isType(f, MassStorageFile):
                         if len(incl_pat_list) > 0:
                             for pat in incl_pat_list:
                                 if re.search(pat, f.namePattern):
-                                    flist_local.extend(f.location())
+                                    flist_local.append(f)
                         else:
-                            flist_local.extend(f.location)
+                            flist_local.append(f)
 
                         if len(excl_pat_list) > 0:
                             for pat in excl_pat_list:
@@ -222,7 +222,7 @@ class LHCbTransform(ITransform):
             logger.warning("Found both DiracFile and LocalFile to copy job input. Only taking DiracFile")
             unit.inputdata = LHCbDataset(files=[DiracFile(lfn=f) for f in flist])
         else:
-            unit.inputdata = LHCbDataset(files = [LocalFile(f) for f in flist_local])
+            unit.inputdata = LHCbDataset(files = [f for f in flist_local])
 
         return unit
 
