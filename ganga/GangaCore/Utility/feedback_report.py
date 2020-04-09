@@ -1,7 +1,7 @@
 
-
 import GangaCore.Utility.logging
 from GangaCore.Core.exceptions import GangaFileError
+from GangaCore.Utility.Config import getConfig, ConfigError
 from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
 from GangaCore.GPIDev.Base.Proxy import stripProxy, addProxy, getName
 
@@ -11,7 +11,6 @@ logger = GangaCore.Utility.logging.getLogger()
 def _initconfigFeed():
     """Initialize Feedback configuration."""
     try:
-        from GangaCore.Utility.Config import getConfig, ConfigError
         config = getConfig("Feedback")
 
         def deny_modification(name, x):
@@ -26,7 +25,10 @@ def _initconfigFeed():
 _initconfigFeed()
 
 def report(job=None, filetype=GoogleFile):
-    """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
+    """
+    Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. 
+    Reports can be provided as the file type indicated by filetype argument which defaults to GoogleFile
+    """
     import mimetypes
     import string
     import random
@@ -70,14 +72,14 @@ def report(job=None, filetype=GoogleFile):
 
     def upload(filetype, filename, localdir):
         try:
-                from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-                
-                filetype = stripProxy(filetype)
-                assert(issubclass(filetype, IGangaFile))
+            from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+            
+            filetype = stripProxy(filetype)
+            assert(issubclass(filetype, IGangaFile))
 
-                feedback = filetype(filename)
-                feedback.localDir = localdir 
-                feedback.put()
+            feedback = filetype(filename)
+            feedback.localDir = localdir 
+            feedback.put()
 
         except AssertionError as err:
             logger.debug("Err: %s" % err)
@@ -440,7 +442,6 @@ def report(job=None, filetype=GoogleFile):
                 if hasattr(job.application, 'is_prepared'):
                     if job.application.is_prepared is not None and job.application.is_prepared is not True:
                         import os
-                        from GangaCore.Utility.Config import getConfig
                         from GangaCore.Utility.files import expandfilename
                         shared_path = os.path.join(expandfilename(getConfig(
                             'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
@@ -545,7 +546,6 @@ def report(job=None, filetype=GoogleFile):
                     if hasattr(task.transforms[0], 'application') and hasattr(task.transforms[0].application, 'is_prepared'):
                         if task.transforms[0].application.is_prepared is not None and task.transforms[0].application.is_prepared is not True:
                             import os
-                            from GangaCore.Utility.Config import getConfig
                             from GangaCore.Utility.files import expandfilename
                             shared_path = os.path.join(expandfilename(getConfig(
                                 'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
