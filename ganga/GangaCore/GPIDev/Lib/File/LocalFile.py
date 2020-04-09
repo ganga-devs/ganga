@@ -245,7 +245,7 @@ class LocalFile(IGangaFile):
 
     def put(self):
         """
-        Copy the file to the detination (in the case of LocalFile the localDir)
+        Copy the file to the destination (in the case of LocalFile the localDir)
         """
         # This is useful for placing the LocalFile in a subdir at the end of a job
 
