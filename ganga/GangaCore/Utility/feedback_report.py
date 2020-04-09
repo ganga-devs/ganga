@@ -28,6 +28,16 @@ def report(job=None, filetype=GoogleFile):
     """
     Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. 
     Reports can be provided as the file type indicated by filetype argument which defaults to GoogleFile
+
+    example of particular job details submission to GoogleDrive:
+        j = Job() # a job defined, which results in an error
+        report(job=j, filetype=GoogleFile) # filetype can take other arguments like LocalFile, DiracFile 
+
+
+    example of standalone submission:
+
+        report()
+
     """
     import mimetypes
     import string
