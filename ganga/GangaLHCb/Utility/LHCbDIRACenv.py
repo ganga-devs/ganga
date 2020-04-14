@@ -46,9 +46,7 @@ def store_dirac_environment():
     fdir = join(expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = join(fdir, diracversion)
 
-    # FIXME: for v9r3+ lb-run works in compatibility mode
-    # (sourcing the environment is what should be done for v9r3+)
-    cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &>/dev/null && lb-run LHCBDIRAC/{version} python -c "import os; print(os.environ)"'.format(version=diracversion)
+    cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &>/dev/null && lb-dirac {version} python -c "import os; print(os.environ)"'.format(version=diracversion)
     env = execute(cmd, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
 
     if isinstance(env, str):
