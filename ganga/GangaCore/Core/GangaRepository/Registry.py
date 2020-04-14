@@ -95,7 +95,7 @@ def makeRepository(registry):
     if registry.type in ["gangadb"]:
         from GangaCore.Core.GangaRepository.GangaRepositoryDatabase import GangaRepositoryDb
         return GangaRepositoryDb(registry)
-    if registry.type in ["LocalXML", "LocalPickle"]:
+    elif registry.type in ["LocalXML", "LocalPickle"]:
         from GangaCore.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal
         return GangaRepositoryLocal(registry)
     elif registry.type in ["SQLite"]:
