@@ -188,7 +188,7 @@ class MTRunner(object):
 
         num_alive_threads = 0
         for t in self._agents:
-            if t.isAlive():
+            if t.is_alive():
                 num_alive_threads += 1
 
         return num_alive_threads

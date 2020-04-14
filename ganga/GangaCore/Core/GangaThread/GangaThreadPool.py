@@ -103,13 +103,13 @@ class GangaThreadPool(object):
         def __cnt_alive_threads__(_all_threads):
             num_alive_threads = 0
             for t in _all_threads:
-                if t.isAlive():
+                if t.is_alive():
                     num_alive_threads += 1
             return num_alive_threads
 
         # wait for the background shutdown thread to finish
         config = getConfig('PollThread')
-        while shutdown_thread.isAlive():
+        while shutdown_thread.is_alive():
             logger.debug('Waiting for max %d seconds for threads to finish' % self.SHUTDOWN_TIMEOUT)
             logger.debug('There are %d alive background threads' % __cnt_alive_threads__(self.__threads))
             logger.debug('%s' % self.__alive_critical_thread_ids())
@@ -117,7 +117,7 @@ class GangaThreadPool(object):
             shutdown_thread.join(self.SHUTDOWN_TIMEOUT)
 
             # Have all the threads finished?
-            if not shutdown_thread.isAlive():
+            if not shutdown_thread.is_alive():
                 logger.debug('GangaThreadPool shutdown properly')
                 break
 
@@ -182,11 +182,11 @@ class GangaThreadPool(object):
 
     def __alive_critical_thread_ids(self):
         """Return a list of alive critical thread names."""
-        return [t.gangaName for t in self.__threads if t.isAlive() and t.isCritical()]
+        return [t.gangaName for t in self.__threads if t.is_alive() and t.isCritical()]
 
     def __alive_non_critical_thread_ids(self):
         """Return a list of alive non-critical thread names."""
-        return [t.gangaName for t in self.__threads if t.isAlive() and not t.isCritical()]
+        return [t.gangaName for t in self.__threads if t.is_alive() and not t.isCritical()]
 
     @staticmethod
     def __do_shutdown__(_all_threads):
@@ -245,7 +245,7 @@ class GangaThreadPool(object):
         def __cnt_alive_threads__(_all_threads):
             num_alive_threads = 0
             for t in _all_threads:
-                if t.isAlive():
+                if t.is_alive():
                     num_alive_threads += 1
             return num_alive_threads
 

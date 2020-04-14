@@ -17,7 +17,7 @@ from GangaCore.Utility.Config import getConfig
 logger = GangaCore.Utility.logging.getLogger()
 
 
-class CredentialStore(GangaObject, collections.Mapping):
+class CredentialStore(GangaObject, collections.abc.Mapping):
     """
     The central management for all credentials
 
