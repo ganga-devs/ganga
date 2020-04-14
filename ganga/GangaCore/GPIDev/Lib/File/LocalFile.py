@@ -40,7 +40,8 @@ class LocalFile(IGangaFile):
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
-    _exportmethods = ["location", "remove", "accessURL"]
+    _exportmethods = ["get", "put", "location", "remove", "accessURL"]
+
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
@@ -244,7 +245,7 @@ class LocalFile(IGangaFile):
 
     def put(self):
         """
-        Copy the file to the detination (in the case of LocalFile the localDir)
+        Copy the file to the destination (in the case of LocalFile the localDir)
         """
         # This is useful for placing the LocalFile in a subdir at the end of a job
 
