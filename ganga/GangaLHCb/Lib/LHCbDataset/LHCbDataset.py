@@ -379,13 +379,55 @@ class LHCbDataset(GangaDataset):
             raise GangaException("Unknown type for difference")
         return other_files
 
+    def _pathAndFileDict(self):
+        '''
+        Returns a dict with keys the full file name and the values the file itself. For comparisons
+        '''
+        returnDict = {}
+        for _f in self.files:
+            if hasattr(_f, 'lfn'):               
+                returnDict[_f.lfn] = _f
+            else:
+                returnDict[_f.namePattern] = _f
+        return returnDict
+
+    def _pathAndFileDictOther(self, other):
+        '''
+        Returns a dict with keys the full file name and the values the file itself. For comparisons
+        '''
+        returnDict = {}
+        if isType(other, [LHCbDataset, GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset]):
+            for _f in other.files:
+                if hasattr(_f, 'lfn'):               
+                    returnDict[_f.lfn] = _f
+                else:
+                    returnDict[_f.namePattern] = _f
+        elif isType(other, [GangaList, []]):
+            for _f in other:
+                if isinstance(_f, DiracFile):
+                    returnDict[_f.lfn] = _f
+                elif isinstance(_f, LocalFile, MassStorageFile):
+                    returnDict[_f.namePattern] = _f
+                elif isinstance(_f, str):
+                    returnDict[_f] = string_datafile_shortcut_lhcb(_f, None)
+                else:
+                    raise GangaException("Unknown type for difference")
+        else:
+            raise GangaException("Unkown type for difference")
+
+        return returnDict
+
+
     def difference(self, other):
         '''Returns a new data set w/ files in this that are not in other.'''
-        other_files = self._checkOtherFiles(other)
-        files = set(self.getFileNames()).difference(other_files)
+        other_files = self._pathAndFileDictOther(other)
+        self_files = self._pathAndFileDict()
+        files = set(self_files.keys()).difference(other_files.keys())
+        print('files: ', files)
         data = LHCbDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        self_files.update(other_files)
+        for _f in files:
+            data.extend(self_files[_f])
         return data
 
     def isSubset(self, other):
@@ -401,29 +443,35 @@ class LHCbDataset(GangaDataset):
     def symmetricDifference(self, other):
         '''Returns a new data set w/ files in either this or other but not
         both.'''
-        other_files = other._checkOtherFiles(other)
-        files = set(self.getFileNames()).symmetric_difference(other_files)
+        other_files = self._pathAndFileDictOther(other)
+        self_files = self._pathAndFileDict()
+        files = set(self_files.keys()).symmetric_difference(other_files.keys())
         data = LHCbDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        self_files.update(other_files)
+        for _f in files:
+            data.extend(self_files[_f])
         return data
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
-        other_files = other._checkOtherFiles(other)
-        files = set(self.getFileNames()).intersection(other_files)
+        other_files = self._pathAndFileDictOther(other)
+        self_files = self._pathAndFileDict()
+        files = set(self_files.keys()).intersection(other_files.keys())
         data = LHCbDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        self_files.update(other_files)
+        for _f in files:
+            data.extend(self_files[_f])
         return data
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
-        other_files = self._checkOtherFiles(other)
-        files = set(self.getFileNames()).union(other_files)
+        other_files = self._pathAndFileDictOther(other)
+        self_files = self._pathAndFileDict()
+        files = set(self_files.keys()).union(other_files.keys())
         data = LHCbDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        self_files.update(other_files)
+        for _f in files:
+            data.extend(self_files[_f])
         return data
 
     def bkMetadata(self):
@@ -440,7 +488,7 @@ from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
 def string_datafile_shortcut_lhcb(name, item):
 
-    # Overload the LHCb instance if the Core beet us to it
+    # Overload the LHCb instance if the Core beat us to it
     mainFileOutput = None
     try:
         mainFileOutput = GangaCore.GPIDev.Lib.File.string_file_shortcut(name, item)
