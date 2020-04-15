@@ -38,6 +38,15 @@ class TestDatasets(GangaUnitTest):
         assert ds.getLFNs() == ['a', 'c']
         assert ds.getPFNs() == ['b']
 
+        # check the file types are preserved
+        assert isinstance(ds.difference(ds2)[0], LocalFile)
+        assert isinstance(ds.symmetricDifference(ds2)[0], LocalFile)
+        assert isinstance(ds2.difference(ds)[0], DiracFile)
+        assert isinstance(ds2.symmetricDifference(ds)[0], LocalFile)
+        assert isinstance(ds2.union(ds)[0], DiracFile)
+        assert isinstance(ds2.union(ds)[1], LocalFile)
+        assert isinstance(ds2.intersection(ds)[0], DiracFile)
+
         ds2 = LHCbDataset(['lfn:a', 'lfn:d'])
         ds.extend(ds2, True)
         assert len(ds) == 4

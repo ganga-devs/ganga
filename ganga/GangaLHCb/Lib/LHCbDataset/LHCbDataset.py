@@ -15,6 +15,10 @@ from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
+from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
+
 import GangaLHCb.Lib.LHCbDataset
 logger = GangaCore.Utility.logging.getLogger()
 
@@ -156,7 +160,6 @@ class LHCbDataset(GangaDataset):
         ds.replicate().'''
 
         if not destSE:
-            from GangaDirac.Lib.Files.DiracFile import DiracFile
             DiracFile().replicate('')
             return
         if not self.hasLFNs():
