@@ -426,7 +426,6 @@ class LHCbDataset(GangaDataset):
         other_files = self._pathAndFileDictOther(other)
         self_files = self._pathAndFileDict()
         files = set(self_files.keys()).difference(other_files.keys())
-        print('files: ', files)
         data = LHCbDataset()
         self_files.update(other_files)
         for _f in files:

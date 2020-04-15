@@ -40,14 +40,6 @@ class TestDatasets(GangaUnitTest):
 
         ds2 = LHCbDataset(['lfn:a', 'lfn:d'])
 
-        # check the file types are preserved
-        assert isinstance(ds.difference(ds2)[0], LocalFile)
-        assert isinstance(ds.symmetricDifference(ds2)[0], LocalFile)
-        assert isinstance(ds2.difference(ds)[0], DiracFile)
-        assert isinstance(ds2.symmetricDifference(ds)[0], LocalFile)
-        assert isinstance(ds2.union(ds)[0], DiracFile)
-        assert isinstance(ds2.union(ds)[1], LocalFile)
-        assert isinstance(ds2.intersection(ds)[0], DiracFile)
 
         ds.extend(ds2, True)
         assert len(ds) == 4
@@ -57,6 +49,13 @@ class TestDatasets(GangaUnitTest):
         assert sorted(ds.symmetricDifference(ds2).getFileNames()) == ['b', 'c']
         assert sorted(ds.intersection(ds2).getFileNames()) == ['a', 'd']
         assert sorted(ds.union(ds2).getFileNames()) == ['a', 'b', 'c', 'd']
+
+        # check the file types are preserved
+
+        ds3 = LHCbDataset(['lfn:a'])
+        ds4 = LHCbDataset(['pfn:b'])
+        assert isinstance(ds3.difference(ds4)[0], DiracFile)
+        assert isinstance(ds4.difference(ds3)[0], LocalFile)
 
     @external
     def testDatasets(self):
