@@ -1,3 +1,4 @@
+import json
 import os
 import os.path
 import re
@@ -22,13 +23,12 @@ logger = getLogger()
 
 def guessPlatform():
     defaultPlatform = 'x86_64-centos7-gcc8-opt'
-    cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &> /dev/null && python -c "import os; print(os.environ)"'
+    cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &> /dev/null && python -c "import json, os; print(json.dumps(dict(os.environ)))"'
     env = execute(cmd)
     if isinstance(env, str):
         try:
-            env_temp = eval(env)
-            env = env_temp
-        except SyntaxError:
+            env = json.loads(env)
+        except Exception:
             logger.debug("Unable to extract platform - using default platform: %s" % defaultPlatform)
             return defaultPlatform
     if 'CMTCONFIG' in env.keys():

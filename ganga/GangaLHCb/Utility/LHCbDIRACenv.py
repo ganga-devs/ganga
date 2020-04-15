@@ -1,3 +1,4 @@
+import json
 import os
 from os.path import join, expanduser
 from optparse import OptionValueError
@@ -46,15 +47,16 @@ def store_dirac_environment():
     fdir = join(expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = join(fdir, diracversion)
 
-    cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &>/dev/null && lb-dirac {version} python -c "import os; print(os.environ)"'.format(version=diracversion)
+    cmd = (
+        '. /cvmfs/lhcb.cern.ch/lib/LbEnv &>/dev/null && '
+        f'lb-dirac {diracversion} python -c "import json, os; print(json.dumps(dict(os.environ)))"'
+    )
     env = execute(cmd, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
 
     if isinstance(env, str):
         try:
-            env_temp = eval(env)
-            env = env_temp
-
-        except SyntaxError:
+            env = json.loads(env)
+        except Exception:
             logger.error("LHCbDirac version %s does not exist", diracversion)
             raise OptionValueError("LHCbDirac version {version} does not exist".format(version=diracversion))
     try:
