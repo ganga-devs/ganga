@@ -93,7 +93,7 @@ setup(name='ganga',
           'google-auth-oauthlib',
           'requests>=2.23.0'
       ],
-      extra_require={'profiler' : ['memory_profiler'], 'LHCb' : ['LbDevTools']},
+      extras_require={'profiler' : ['memory_profiler'], 'LHCb' : ['LbDevTools']},
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
           'Programming Language :: Python :: 3.6',
