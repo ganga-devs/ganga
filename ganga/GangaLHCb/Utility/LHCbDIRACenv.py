@@ -51,7 +51,7 @@ def store_dirac_environment():
         '. /cvmfs/lhcb.cern.ch/lib/LbEnv &>/dev/null && '
         f'lb-dirac {diracversion} python -c "import json, os; print(json.dumps(dict(os.environ)))"'
     )
-    env = execute(cmd, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
+    env = execute(cmd, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME"), "OVERRIDE_LBENVROOT": "/cvmfs/lhcb.cern.ch/lib/var/lib/LbEnv/761/stable/x86_64-centos7"})
 
     if isinstance(env, str):
         try:
