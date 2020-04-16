@@ -11,6 +11,8 @@ from GangaCore.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
+from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Base.Proxy import stripProxy
 
@@ -173,6 +175,7 @@ class LHCbTransform(ITransform):
         # go over the output files and copy the appropriates over as input
         # files
         flist = []
+        flist_local = []
         import re
         for parent in parent_units:
             job = getJobByID(parent.active_job_ids[0])
@@ -197,11 +200,30 @@ class LHCbTransform(ITransform):
                             for pat in excl_pat_list:
                                 if re.search(pat, f.lfn) and "LFN:" + f.lfn in flist:
                                     flist.remove("LFN:" + f.lfn)
+                    elif isType(f, LocalFile) or isType(f, MassStorageFile):
+                        if len(incl_pat_list) > 0:
+                            for pat in incl_pat_list:
+                                if re.search(pat, f.namePattern):
+                                    flist_local.append(f)
+                        else:
+                            flist_local.append(f)
+
+                        if len(excl_pat_list) > 0:
+                            for pat in excl_pat_list:
+                                if re.search(pat, f.namePattern) and f.location[0] in flist_local:
+                                    flist_local.remove(f.location[0])
+
 
         # just do one unit that uses all data
         unit = LHCbUnit()
         unit.name = "Unit %d" % len(self.units)
-        unit.inputdata = LHCbDataset(files=[DiracFile(lfn=f) for f in flist])
+        if len(flist_local)==0:
+            unit.inputdata = LHCbDataset(files=[DiracFile(lfn=f) for f in flist])
+        elif len(flist_local)!=0 and len(flist)!=0:
+            logger.warning("Found both DiracFile and LocalFile to copy job input. Only taking DiracFile")
+            unit.inputdata = LHCbDataset(files=[DiracFile(lfn=f) for f in flist])
+        else:
+            unit.inputdata = LHCbDataset(files = [f for f in flist_local])
 
         return unit
 
