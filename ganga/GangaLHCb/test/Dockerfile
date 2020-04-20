@@ -5,8 +5,6 @@ USER root
 
 WORKDIR /root
 
-RUN yum install -y python-virtualenv python3
-
 COPY . ganga
 
 ENTRYPOINT /bin/bash
