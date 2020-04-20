@@ -23,7 +23,7 @@ logger = getLogger()
 
 def guessPlatform():
     defaultPlatform = 'x86_64-centos7-gcc8-opt'
-    cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &> /dev/null && python -c "import json, os; print(json.dumps(dict(os.environ)))"'
+    cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &> /dev/null && python3 -c "import json, os; print(json.dumps(dict(os.environ.copy())))"'
     env = execute(cmd)
     if isinstance(env, str):
         try:
