@@ -146,7 +146,7 @@ class LCGSandboxCache(GridSandboxCache):
                 if rc != 0:
                     return False
                 else:
-                    match = re.search('(guid:\S+)', output)
+                    match = re.search(r'(guid:\S+)', output)
                     if match:
                         guid = match.group(1)
 

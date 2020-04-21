@@ -16,7 +16,7 @@ import logging
 import GangaCore.Utility.Config
 
 logger = getLogger()
-regex = re.compile('[*?\[\]]')
+regex = re.compile(r'[*?\[\]]')
 
 
 class GoogleFile(IGangaFile):

@@ -160,7 +160,7 @@ def report(job=None, filetype=GoogleFile):
                 try:
                     fileText = fileToRead.read()
                     import re
-                    pattern = "File\(name=\'(.+?)\'"
+                    pattern = r"File\(name=\'(.+?)\'"
                     matches = re.findall(pattern, fileText)
 
                     for fileName in matches:
