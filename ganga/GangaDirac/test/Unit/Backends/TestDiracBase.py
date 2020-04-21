@@ -46,7 +46,7 @@ j.setSystemConfig('###PLATFORM###')
 ###DIRAC_OPTS###
 
 # submit the job to dirac
-result = dirac.submit(j)
+result = dirac.submitJob(j)
 
 output(result)
 """

@@ -204,7 +204,7 @@ j.setCPUTime(172800)
 
 
 # submit the job to dirac
-result = dirac.submit(j)
+result = dirac.submitJob(j)
 output(result)"""
             self.assertEqual(jobsubconfig.exe,
                              script.replace(
