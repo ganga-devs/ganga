@@ -261,7 +261,7 @@ def finished_job(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDi
 def finaliseJobs(inputDict, statusmapping, downloadSandbox=True, oversized=True, noJobDir=True):
     ''' A function to get the necessaries to finalise a whole bunch of jobs. Returns a dict of job information and a dict of stati.'''
     returnDict = {}
-    statusList = dirac.status(inputDict.keys())
+    statusList = dirac.getJobStatus(inputDict.keys())
     for diracID in inputDict.keys():
         returnDict[diracID] = {}
         returnDict[diracID]['cpuTime'] = normCPUTime(diracID, pipe_out=False)
@@ -281,7 +281,7 @@ def status(job_ids, statusmapping, pipe_out=True):
 
     #return {'OK':True, 'Value':[['WIP', 'WIP', 'WIP', 'WIP', 'WIP']]}
 
-    result = dirac.status(job_ids)
+    result = dirac.getJobStatus(job_ids)
     if not result['OK']:
         return result
     status_list = []

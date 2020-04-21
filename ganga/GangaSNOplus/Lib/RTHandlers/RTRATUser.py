@@ -274,7 +274,7 @@ ${DIRAC_OPTS}
 
 # submit the job to dirac
 j.setPlatform( 'ANY' )
-result = dirac.submit(j)
+result = dirac.submitJob(j)
 output(result)
 ''')
 
