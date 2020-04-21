@@ -1,15 +1,16 @@
 
-
 import GangaCore.Utility.logging
-from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
+from GangaCore.Core.exceptions import GangaFileError
+from GangaCore.Utility.Config import getConfig, ConfigError
+from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
+from GangaCore.GPIDev.Base.Proxy import stripProxy, addProxy, getName
+
 import gzip
 logger = GangaCore.Utility.logging.getLogger()
-import requests
 
 def _initconfigFeed():
     """Initialize Feedback configuration."""
     try:
-        from GangaCore.Utility.Config import getConfig, ConfigError
         config = getConfig("Feedback")
 
         def deny_modification(name, x):
@@ -23,15 +24,22 @@ def _initconfigFeed():
         pass
 _initconfigFeed()
 
-def send_request(url,data,files):
-    response = requests.post(url, data=data, files=files)
-    return response
-def report(job=None):
-    """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
+def report(job=None, filetype=GoogleFile):
+    """
+    Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. 
+    Reports can be provided as the file type indicated by filetype argument which defaults to GoogleFile
+
+    example of particular job details submission to GoogleDrive:
+        j = Job() # a job defined, which results in an error
+        report(job=j, filetype=GoogleFile) # filetype can take other arguments like LocalFile, DiracFile 
+
+
+    example of standalone submission:
+
+        report()
+
+    """
     import mimetypes
-    import urllib.request, urllib.parse, urllib.error
-    import urllib.request, urllib.error, urllib.parse
-    import http.client
     import string
     import random
     import sys
@@ -72,57 +80,33 @@ def report(job=None):
         
         return data, file_dict
 
-    def make_upload_file(server):
+    def upload(filetype, filename, localdir):
+        try:
+            from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+            
+            filetype = stripProxy(filetype)
+            assert(issubclass(filetype, IGangaFile))
 
-        def upload_file(path):
+            feedback = filetype(filename)
+            feedback.localDir = localdir 
+            feedback.put()
 
-            # print 'Uploading %r to %r' % (path, server)
-
-            data = {'MAX_FILE_SIZE': '3145728',
-                    'sub': '',
-                    'mode': 'regist'}
-            files = {'file': path}
-
-            return send_post(server, files)
-
-        return upload_file
-
-    def send_post(url, files):
-        logger.debug("Sending Post to %s ,  containing %s" % (url, files))
-
-        encoded_data = encode_multipart_formdata(files)
+        except AssertionError as err:
+            logger.debug("Err: %s" % err)
+            raise GangaFileError(f"filetype {filetype} is not supported")
         
-        #response = requests.post(url, data=encoded_data[0], files=encoded_data[1])
-        response = send_request(url,encoded_data[0],encoded_data[1])
-
-        # logger.debug("httplib POST request response was: %s , because: %s" % (
-        #     response.status_code, response.text))
-        
-        # considering current response to be HttpResponse
-        responseResult = response.content
-        responseResult = responseResult.decode()
-        
-        #logger.debug("Responce.read(): --%s--" % responseResult )
-        
-        responseResult = responseResult[
-            responseResult.find('<span id=\"download_path\"'):]
-        startIndex = responseResult.find('path:') + 5
-        endIndex = responseResult.find('</span>')
-        logger.debug("Response.read(): --%s--" %
-                     responseResult[startIndex:endIndex])
-
         logger.info(
-            'Your error report was uploaded to ganga developers with the following URL. ')
+            f'Your error report was saved as {feedback.accessURL()}.')
         logger.info(
-            'You may include this URL and the following summary information in your bug report or in the support email to the developers.')
+            'You may include this file and the following summary information in your bug report or in the support email to the Ganga developers.')
+
         logger.info('')
-        logger.info('***' + str(responseResult[startIndex:endIndex]) + '***')
         logger.info('')
         global GANGA_VERSION, JOB_REPORT, APPLICATION_NAME, BACKEND_NAME, PYTHON_PATH
         logger.info('Ganga Version : ' + GANGA_VERSION)
         logger.info('Python Version : ' + "%s.%s.%s" %
                     (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-        logger.info('Operation System Version : ' + platform.platform())
+        logger.info('Operation System Version : ' + platform.platform())        
 
         if JOB_REPORT:
             logger.info('Application Name : ' + APPLICATION_NAME)
@@ -137,12 +121,8 @@ def report(job=None):
         APPLICATION_NAME = ''
         PYTHON_PATH = ''
 
-        return response
+        return addProxy(feedback)
 
-    def run_upload(server, path):
-
-        upload_file = make_upload_file(server)
-        return upload_file(path)
 
     def report_inner(job=None, isJob=False, isTask=False):
 
@@ -165,11 +145,6 @@ def report(job=None):
         jobsListFileName = "jobslist.txt"
         tasksListFileName = "taskslist.txt"
         thread_trace_file_name = 'thread_trace.html'
-        from GangaCore.Utility import Config
-        uploadFileServer = Config.getConfig('Feedback')['uploadServer']
-        #uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
-        #uploadFileServer= "http://ganga-ai-02.cern.ch/django/errorreports/"
-        #uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
         def printDictionary(dictionary, file=sys.stdout):
             for k, v in dictionary.items():
@@ -477,7 +452,6 @@ def report(job=None):
                 if hasattr(job.application, 'is_prepared'):
                     if job.application.is_prepared is not None and job.application.is_prepared is not True:
                         import os
-                        from GangaCore.Utility.Config import getConfig
                         from GangaCore.Utility.files import expandfilename
                         shared_path = os.path.join(expandfilename(getConfig(
                             'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
@@ -582,7 +556,6 @@ def report(job=None):
                     if hasattr(task.transforms[0], 'application') and hasattr(task.transforms[0].application, 'is_prepared'):
                         if task.transforms[0].application.is_prepared is not None and task.transforms[0].application.is_prepared is not True:
                             import os
-                            from GangaCore.Utility.Config import getConfig
                             from GangaCore.Utility.files import expandfilename
                             shared_path = os.path.join(expandfilename(getConfig(
                                 'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
@@ -678,7 +651,7 @@ def report(job=None):
             os.remove(errorLogPath)
 
         # return the path to the archive and the path to the upload server
-        return (resultArchive, uploadFileServer, tempDir)
+        return (resultArchive, tempDir)
 
     def removeTempFiles(tempDir):
         import shutil
@@ -704,7 +677,6 @@ def report(job=None):
         # make typecheck of the param passed
         if job is not None:
             from GangaCore.GPIDev.Lib.Job.Job import Job
-            from GangaCore.GPIDev.Base.Proxy import stripProxy
             isJob = isinstance(stripProxy(job), Job)
             if hasattr(stripProxy(job), '_category') and (stripProxy(job)._category == 'tasks'):
                 isTask = True
@@ -713,7 +685,7 @@ def report(job=None):
                 logger.error("report() function argument should be reference to a job or task object")
                 return
 
-        resultArchive, uploadFileServer, tempDir = report_inner(
+        resultArchive, tempDir = report_inner(
             job, isJob, isTask)
 
         report_bytes = os.path.getsize(resultArchive)
@@ -722,8 +694,10 @@ def report(job=None):
             logger.error(
                 'The report is bigger than 100MB and can not be uploaded')
         else:
-            response = run_upload(server=uploadFileServer, path=resultArchive)
-            return response,resultArchive
+            
+            filename = resultArchive.split("/")[-1]
+            localdir = "/".join(resultArchive.split("/")[:-1])
+            return upload(filetype, filename, localdir)
 
     except Exception as err:
         logger.debug("Err: %s" % err)

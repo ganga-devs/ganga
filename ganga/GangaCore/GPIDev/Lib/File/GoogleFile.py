@@ -63,7 +63,7 @@ class GoogleFile(IGangaFile):
                       })
     _category = 'gangafiles'
     _name = 'GoogleFile'
-    _exportmethods = ["get", "put", "remove", "restore", "deleteCredentials"]
+    _exportmethods = ["get", "put", "remove", "restore", "deleteCredentials", "accessURL"]
 
     def __init__(self, namePattern=''):
         super(GoogleFile, self).__init__()
@@ -211,6 +211,15 @@ class GoogleFile(IGangaFile):
         Get the representation of the file
         """
         return "GoogleFile(namePattern='%s', downloadURL='%s')" % (self.namePattern, self.downloadURL)
+
+    def accessURL(self):
+        if self.subfiles:
+            URLs = []
+            for f in self.subfiles:
+                URLs.append(f.downloadURL)
+        elif self.id:
+            URLs = self.downloadURL
+        return URLs
 
     def download_file_from_drive(self, service, fileid, filepath, filename=None):
         import io
