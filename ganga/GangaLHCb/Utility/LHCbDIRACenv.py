@@ -49,7 +49,7 @@ def store_dirac_environment():
 
     cmd = (
         '. /cvmfs/lhcb.cern.ch/lib/LbEnv &>/dev/null && '
-        f'lb-dirac {diracversion} python3 -c "import json, os; print(json.dumps(dict(os.environ.copy())))"'
+        f'lb-dirac {diracversion} python -c "import json, os; print(json.dumps(dict(os.environ)))"'
     )
     env = execute(cmd, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
 
