@@ -245,7 +245,7 @@ class LCGSEFile(IGangaFile):
 
             if exitcode == 0:
 
-                match = re.search('(guid:\S+)', output)
+                match = re.search(r'(guid:\S+)', output)
                 if match:
                     self.locations = output.strip()
 
