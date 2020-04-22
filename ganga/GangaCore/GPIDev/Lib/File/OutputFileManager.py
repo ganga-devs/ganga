@@ -318,7 +318,7 @@ postprocesslocations = open(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFI
 
 import re
 
-wildcardregex = re.compile('[*?\[\]]')
+wildcardregex = re.compile(r'[*?\[\]]')
 
 
 def iexpandWildCards(filelist):

@@ -49,7 +49,7 @@ class Notebook(IPrepareApp):
         'version': SimpleItem(preparable=1, defvalue=None, typelist=[None, int], doc="Version of the notebook. If None, it will be assumed that it is the latest one."),
         'timeout': SimpleItem(preparable=1, defvalue=None, typelist=[None, int], doc="Timeout in seconds for executing a notebook. If None, the default value will be taken."),
         'kernel': SimpleItem(preparable=1, defvalue='python2', doc="The kernel to use for the notebook execution. Depending on configuration, python3, Root and R might be available."),
-        'regexp': SimpleItem(preparable=1, defvalue=['.+\.ipynb$'], typelist=["str"], sequence=1, strict_sequence=0, doc="Regular expression for the inputfiles to match for executing."),
+        'regexp': SimpleItem(preparable=1, defvalue=[r'.+\.ipynb$'], typelist=["str"], sequence=1, strict_sequence=0, doc="Regular expression for the inputfiles to match for executing."),
        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes')
     })

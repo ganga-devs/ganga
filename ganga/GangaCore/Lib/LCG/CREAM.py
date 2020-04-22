@@ -34,7 +34,7 @@ def __cream_resolveOSBList__(job, jdl):
 
     osbURIList = []
 
-    re_osb = re.compile('^.*OutputSandbox\s+\=\s+\{(.*)\}\s?\]?$')
+    re_osb = re.compile(r'^.*OutputSandbox\s+\=\s+\{(.*)\}\s?\]?$')
 
     for l in jdl.split(';'):
         m = re_osb.match(l)
