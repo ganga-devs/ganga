@@ -375,7 +375,7 @@ class Loader(object):
                 try:
                     # unescape the special characters
                     s = unescape(self.value_construct)
-                    s = re.sub('(\d)L(\})', r'\1\2', s)
+                    s = re.sub(r'(\d)L(\})', r'\1\2', s)
                     if s not in _cached_eval_strings:
                         # This is ugly and classes which use this are bad, but this needs to be fixed in another PR
                         # TODO Make the scope of objects a lot better than whatever is in the config
