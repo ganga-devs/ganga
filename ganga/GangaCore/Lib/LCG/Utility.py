@@ -36,7 +36,7 @@ def urisplit(uri):
 
     """
     # regex straight from STD 66 section B
-    regex = '^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'
+    regex = r'^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'
     p = re.match(regex, uri).groups()
     scheme, authority, path, query, fragment = p[1], p[3], p[4], p[6], p[8]
     #if not path: path = None

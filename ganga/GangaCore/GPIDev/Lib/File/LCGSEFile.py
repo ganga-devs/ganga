@@ -22,7 +22,7 @@ import re
 import os
 import copy
 
-regex = re.compile('[*?\[\]]')
+regex = re.compile(r'[*?\[\]]')
 
 
 def getLCGConfig():
@@ -205,7 +205,7 @@ class LCGSEFile(IGangaFile):
 
                 if exitcode == 0:
 
-                    match = re.search('(guid:\S+)', output)
+                    match = re.search(r'(guid:\S+)', output)
                     if match:
                         d.locations = output.strip()
 
@@ -245,7 +245,7 @@ class LCGSEFile(IGangaFile):
 
             if exitcode == 0:
 
-                match = re.search('(guid:\S+)', output)
+                match = re.search(r'(guid:\S+)', output)
                 if match:
                     self.locations = output.strip()
 
