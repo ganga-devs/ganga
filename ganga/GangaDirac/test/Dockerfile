@@ -5,7 +5,7 @@ ARG BUILD_ID
 FROM gangacoretest:${BRANCH_NAME}-${BUILD_ID}
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 ARG VO
-ARG DIRAC_VERSION=v7r1
+ARG DIRAC_VERSION=v6r22p15
 # Make directory for the incoming secrets (robot cert/key)
 WORKDIR /
 RUN mkdir -p /root/.globus
