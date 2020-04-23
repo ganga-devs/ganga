@@ -1,12 +1,11 @@
 # syntax = docker/dockerfile:1.0-experimental
 ARG BRANCH_NAME
 ARG BUILD_ID
-ARG DIRAC_VERSION
 
 FROM gangacoretest:${BRANCH_NAME}-${BUILD_ID}
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 ARG VO
-
+ARG DIRAC_VERSION=v7r1
 # Make directory for the incoming secrets (robot cert/key)
 WORKDIR /
 RUN mkdir -p /root/.globus
