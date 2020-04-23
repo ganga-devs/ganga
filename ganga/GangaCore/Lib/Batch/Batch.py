@@ -151,6 +151,7 @@ class Batch(IBackend):
             jobnameopt = False
 
         if self.extraopts:
+            global re
             for opt in re.compile(r'(-\w+)').findall(self.extraopts):
                 if opt in ('-o', '-e', '-oo', '-eo'):
                     logger.warning("option %s is forbidden", opt)
@@ -248,6 +249,7 @@ class Batch(IBackend):
             jobnameopt = False
 
         if self.extraopts:
+            global re
             for opt in re.compile(r'(-\w+)').findall(self.extraopts):
                 if opt in ('-o', '-e', '-oo', '-eo'):
                     logger.warning("option %s is forbidden", opt)
