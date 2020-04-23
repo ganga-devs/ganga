@@ -1,6 +1,7 @@
 # syntax = docker/dockerfile:1.0-experimental
 ARG BRANCH_NAME
 ARG BUILD_ID
+ENV DIRAC_DEPRECATED_FAIL True
 FROM gangacoretest:${BRANCH_NAME}-${BUILD_ID}
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 ARG VO
