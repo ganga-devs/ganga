@@ -2,7 +2,7 @@
 ARG BRANCH_NAME
 ARG BUILD_ID
 ARG DIRAC_VERSION
-ENV DIRAC_DEPRECATED_FAIL True
+
 FROM gangacoretest:${BRANCH_NAME}-${BUILD_ID}
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 ARG VO
@@ -40,6 +40,6 @@ RUN echo -e "[defaults_DiracProxy]\ngroup=${VO}_user" >> /root/.gangarc
 #RUN . /ganga/venv/bin/activate && yes | ganga -g
 ENV GANGA_CONFIG_FILE /root/.gangarc
 ENV GANGA_CONFIG_PATH GangaDirac/Dirac.ini
-
+ENV DIRAC_DEPRECATED_FAIL True
 
 CMD /ganga/venv/bin/pytest ganga/GangaDirac/test --cov-report term --cov-report xml:cov-GangaDirac.xml --cov ganga/GangaDirac --junitxml tests-GangaDirac.xml
