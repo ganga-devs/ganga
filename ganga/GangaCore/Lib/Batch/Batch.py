@@ -290,7 +290,7 @@ class Batch(IBackend):
         if rc == 0:
             with open(soutfile) as sout_file:
                 sout = sout_file.read()
-            import re
+            global re
             m = re.compile(
                 self.config['submit_res_pattern'], re.M).search(sout)
             if m is None:
@@ -331,7 +331,7 @@ class Batch(IBackend):
         if rc == 0:
             return True
         else:
-            import re
+            global re
             m = re.compile(self.config['kill_res_pattern'], re.M).search(sout)
             logger.warning('while killing job %s: %s', self.getJobObject().getFQID('.'), sout)
 
