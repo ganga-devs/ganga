@@ -1,9 +1,5 @@
 # File: GangaND280/__init__.py
 
-#Bail out when loading this module as it is not python3 compliant
-from GangaCore.Core.exceptions import PluginError
-raise PluginError("The GangaND280 module has not been upgraded for python 3. The last python 2 Ganga version is 7.1.15 . Please contact the ganga devs to discuss updating this module.")
-
 from GangaCore.Utility.Config import makeConfig
 from GangaCore.Utility.Config.Config import _after_bootstrap
 
@@ -18,15 +14,14 @@ if not _after_bootstrap:
 
 def loadPlugins( config = {} ):
 
-   import ND280Dataset
-   import ND280Splitter
-   import ND280Control
-   import ND280Executable
-   import ND280RecoValidation
-   import ND280Skimmer
-   import Highland
-   import Tasks
-   import ND280TPCGasInteractions
-   import ND280Checkers
+   import GangaND280.ND280Dataset
+   import GangaND280.ND280Control
+   import GangaND280.ND280Executable
+   import GangaND280.ND280RecoValidation
+   import GangaND280.ND280Skimmer
+   import GangaND280.Highland
+   import GangaND280.Tasks
+   import GangaND280.ND280TPCGasInteractions
+   import GangaND280.ND280Checkers
 
    return None
