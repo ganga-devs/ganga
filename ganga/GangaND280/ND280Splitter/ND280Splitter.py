@@ -26,7 +26,7 @@ def splitCSVFile(csvfile, nbevents):
         line = line.rstrip('\r\n')
         row = line.split(",")
         if not len(row) == 3:
-            print "Ignoring badly-formatted line:", ",".join(row)
+            print("Ignoring badly-formatted line: {}".format(",".join(row)) )
             continue
         allLines.append(line)
     csvfilebuf.close()
@@ -39,7 +39,7 @@ def splitCSVFile(csvfile, nbevents):
     if len(allLines) < nbevents:
       subsets.append(allLines)
     else:
-      nbfulljobs = len(allLines) / nbevents
+      nbfulljobs = int(len(allLines) / nbevents)
       for nb in range(nbfulljobs):
         Low = nb * nbevents
         High = (nb+1) * nbevents
@@ -63,7 +63,7 @@ def splitNbInputFile(infiles, nbfiles):
       for f in infiles:
         subsets.append([f])
     else:
-      nbfulljobs = len(infiles) / nbfiles
+      nbfulljobs = int(len(infiles) / nbfiles)
       for nb in range(nbfulljobs):
         Low = nb*nbfiles
         High = (nb+1)*nbfiles
@@ -128,7 +128,7 @@ class ND280SplitNbJobs(ISplitter):
             # except the last subjob which has less
             nbfulljobs = self.nbjobs - 1
 
-          persub = len(filenames) / nbfulljobs
+          persub = int(len(filenames) / nbfulljobs)
           for nb in range(nbfulljobs):
             Low = nb*persub
             High = (nb+1)*persub
