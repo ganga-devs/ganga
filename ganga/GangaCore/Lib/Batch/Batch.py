@@ -120,7 +120,7 @@ class Batch(IBackend):
     command = classmethod(command)
 
     def submit(self, jobconfig, master_input_sandbox):
-
+        global re
         job = self.getJobObject()
 
         inw = job.getInputWorkspace()
@@ -151,7 +151,6 @@ class Batch(IBackend):
             jobnameopt = False
 
         if self.extraopts:
-            global re
             for opt in re.compile(r'(-\w+)').findall(self.extraopts):
                 if opt in ('-o', '-e', '-oo', '-eo'):
                     logger.warning("option %s is forbidden", opt)
@@ -214,6 +213,7 @@ class Batch(IBackend):
         return rc == 0
 
     def resubmit(self):
+        global re
 
         job = self.getJobObject()
 
@@ -249,7 +249,6 @@ class Batch(IBackend):
             jobnameopt = False
 
         if self.extraopts:
-            global re
             for opt in re.compile(r'(-\w+)').findall(self.extraopts):
                 if opt in ('-o', '-e', '-oo', '-eo'):
                     logger.warning("option %s is forbidden", opt)
@@ -290,7 +289,6 @@ class Batch(IBackend):
         if rc == 0:
             with open(soutfile) as sout_file:
                 sout = sout_file.read()
-            global re
             m = re.compile(
                 self.config['submit_res_pattern'], re.M).search(sout)
             if m is None:
@@ -490,7 +488,7 @@ class Batch(IBackend):
 
     @staticmethod
     def updateMonitoringInformation(jobs):
-
+        global re
         repid = re.compile(r'^PID: (?P<pid>\d+)', re.M)
         requeue = re.compile(r'^QUEUE: (?P<queue>\S+)', re.M)
         reactualCE = re.compile(r'^ACTUALCE: (?P<actualCE>\S+)', re.M)
@@ -513,7 +511,7 @@ class Batch(IBackend):
 
             pid, queue, actualCE, exitcode = None, None, None, None
 
-            import re
+            global re
             statusfile = None
             try:
                 statusfile = open(f)
