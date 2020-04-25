@@ -7,7 +7,7 @@ import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
-_gangaVersion = '8.2.3'
+_gangaVersion = '8.2.4'
 
 def version():
     return _gangaVersion
@@ -93,7 +93,7 @@ setup(name='ganga',
           'google-auth-oauthlib',
           'requests>=2.23.0'
       ],
-      extra_require={'profiler' : ['memory_profiler'], 'LHCb' : ['LbDevTools']},
+      extras_require={'profiler' : ['memory_profiler'], 'LHCb' : ['LbDevTools']},
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
           'Programming Language :: Python :: 3.6',

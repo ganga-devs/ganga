@@ -92,7 +92,7 @@ echo '%s' > removeFile.dst
     j.setOutputData(['getFile.dst', 'removeFile.dst'], outputSE=uk_ses)
     #submit the job to dirac
     dirac=Dirac()
-    result = dirac.submit(j)
+    result = dirac.submitJob(j)
     output(result)
     """
     api_script = dedent(api_script)
