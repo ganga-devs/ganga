@@ -310,7 +310,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def hasLFNs(self):
         '''Does it contain LFNs'''
-        return self.isEmpty()
+        return not self.isEmpty()
 
     def getPFNs(self):
         'Returns a list of all PFNs (by name) stored in the dataset.'
