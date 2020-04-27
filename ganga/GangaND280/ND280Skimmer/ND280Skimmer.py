@@ -21,7 +21,6 @@ from GangaCore.Core.exceptions import ApplicationConfigurationError
 
 logger = getLogger()
 
-
 from os.path import isfile
 
 import os, shutil, re, time
