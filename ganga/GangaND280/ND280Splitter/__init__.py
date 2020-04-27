@@ -1,1 +1,1 @@
-from ND280Splitter import *
+from .ND280Splitter import *

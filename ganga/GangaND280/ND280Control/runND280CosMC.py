@@ -18,11 +18,11 @@ from GangaCore.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from GangaCore.GPIDev.Base.Proxy import isType
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 
-import os, shutil, commands, re
+import os, shutil, re
 from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
-import ND280Configs
+from . import ND280Configs
 
 class runND280CosMC(IPrepareApp):
     """

@@ -1,1 +1,1 @@
-from ND280Dataset import *
+from .ND280Dataset import ND280Dataset
