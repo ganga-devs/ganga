@@ -39,7 +39,7 @@ def splitCSVFile(csvfile, nbevents):
     if len(allLines) < nbevents:
       subsets.append(allLines)
     else:
-      nbfulljobs = int(len(allLines) / nbevents)
+      nbfulljobs = len(allLines) // nbevents
       for nb in range(nbfulljobs):
         Low = nb * nbevents
         High = (nb+1) * nbevents
@@ -63,7 +63,7 @@ def splitNbInputFile(infiles, nbfiles):
       for f in infiles:
         subsets.append([f])
     else:
-      nbfulljobs = int(len(infiles) / nbfiles)
+      nbfulljobs = len(infiles) // nbfiles
       for nb in range(nbfulljobs):
         Low = nb*nbfiles
         High = (nb+1)*nbfiles
