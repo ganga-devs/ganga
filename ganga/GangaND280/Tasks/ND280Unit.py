@@ -14,8 +14,7 @@ from copy import deepcopy
 logger = getLogger()
 
 class ND280Unit(IUnit):
-   _schema = Schema(Version(1,0), dict(list(IUnit._schema.datadict.items()) + list({
-    }.items())))
+   _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items()))
 
    _category = 'units'
    _name = 'ND280Unit'
