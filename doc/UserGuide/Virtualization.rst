@@ -43,9 +43,9 @@ If the image is a private image, the username and password of the deploy token c
   j.virtualization.tokenuser = 'gitlab+deploy-token-123'
   j.virtualization.tokenpassword = 'gftrh84dgel-245^ghHH'
 
-Directories can be mounted from the host to the container using key-value pairs to the mount option. If the directory is not vailable on the host, a warning will be written to stderr of the job and no mount will be attempted.
+Directories can be mounted from the host to the container using key-value pairs to the mounts option. If the directory is not vailable on the host, a warning will be written to stderr of the job and no mount will be attempted.
 ::
-  j.virtualization.mount = {'/cvmfs':'/cvmfs'}
+  j.virtualization.mounts = {'/cvmfs':'/cvmfs'}
 
 By default the container is started in singularity with the `--nohome` option. Extra options can be provided through the `options` attribute. See the Singularity documentation for what is possible.
 
