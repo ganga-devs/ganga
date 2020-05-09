@@ -28,7 +28,7 @@ class Docker(IVirtualization):
     Note that images stored in a docker repository hosted by Github at present doesn't work with uDocker 
     as uDocker is not updated to the latest version of the API.
 
-    Directories can be mounted from the host to the container using key-value pairs to the mount option.
+    Directories can be mounted from the host to the container using key-value pairs to the mounts option.
 
     j.virtualization.mounts = {'/cvmfs':'/cvmfs'}
     """
