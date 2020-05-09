@@ -30,7 +30,7 @@ class Docker(IVirtualization):
 
     Directories can be mounted from the host to the container using key-value pairs to the mount option.
 
-    j.virtualization.mount = {'/cvmfs':'/cvmfs'}
+    j.virtualization.mounts = {'/cvmfs':'/cvmfs'}
     """
     _name = 'Docker'
     _schema = IVirtualization._schema.inherit_copy()
