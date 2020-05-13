@@ -91,7 +91,8 @@ setup(name='ganga',
           'google-api-python-client',
           'google-auth-httplib2',
           'google-auth-oauthlib',
-          'requests>=2.23.0'
+          'requests>=2.23.0',
+          'Flask~=1.1.2'
       ],
       extras_require={'profiler' : ['memory_profiler'], 'LHCb' : ['LbDevTools']},
       classifiers=[
