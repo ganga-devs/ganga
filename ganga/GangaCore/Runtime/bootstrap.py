@@ -1011,8 +1011,8 @@ under certain conditions; type license() for details.
         logger.debug("Entering run")
 
         if self.options.webgui == True:
-            from GangaCore.Runtime.http_server import start_server
-            start_server()
+            from GangaGUI.start import start_gui
+            start_gui()
 
         if local_ns is None:
             import __main__
