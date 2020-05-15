@@ -69,7 +69,10 @@ class Singularity(IVirtualization):
     _schema.datadict['image'] = SimpleItem(defvalue="",
                                            typelist=[str,'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile'],
                                            doc='Link to the container image. This can either be a singularity URL or a GangaFile object')
-
+    _schema.datadict['binary'] = SimpleItem(defvalue="singularity",
+                                            typelist=[str],
+                                            doc='The virtualization binary itself. Can be an absolute path if required.')
+    
     def modify_script(self, script, sandbox=False):
         """Overides parent's modify_script function
                     Arguments other than self:
@@ -85,6 +88,7 @@ class Singularity(IVirtualization):
         extra = extra + 'virtualization_password = ' + repr(self.tokenpassword) + '\n'
         extra = extra + 'virtualization_mounts = ' + repr(self.mounts) + '\n'
         extra = extra + 'virtualization_options = ' + repr(self.options) + '\n'
+        extra = extra + 'virtualization_binary = ' + repr(self.binary) + '\n'
 
         extra = extra + """
 print("Using singularity")
@@ -107,19 +111,19 @@ if execmd[0].startswith('./'):
 runenv['SINGULARITY_CACHEDIR']=path.join(getcwd(),'.singularity','cache')
 for i in range(3):
     try:
-        buildcommand = ['singularity', 'build', '--sandbox', 'singularity_sandbox' , virtualization_image]
+        buildcommand = [virtualization_binary, 'build', '--sandbox', 'singularity_sandbox' , virtualization_image]
         rc = subprocess.call(buildcommand, env=runenv, shell=False)
         if rc==0:
             break
     except Exception as x:
         print('Exception occured in downloading Singularity image: ' + str(buildcommand))
         print('Err was: ' + str(x))
-execmd = ['singularity', '-q', 'exec', '--bind', 
+execmd = [virtualization_binary, '-q', 'exec', '--bind', 
           workdir+":"+"/work_dir", "--no-home"] + options + ['singularity_sandbox'] + execmd   
 """
         else:
             extra = extra + """
-execmd = ['singularity', '-q', 'exec', '--bind',
+execmd = [virtualization_binary, '-q', 'exec', '--bind',
           workdir+":"+"/work_dir", "--no-home"] + options + [virtualization_image] + execmd   
 
 """
