@@ -14,7 +14,7 @@ pipeline {
       parallel {
         stage('GangaDirac') {
           environment {
-            DIRAC_VERSION=sh(script: 'curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv.*r.*[^\\]]" | grep -m1 -v -e "pre"', , returnStdout: true).trim()
+            DIRAC_VERSION=sh(script: 'curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[6]r.*[^\\]]" | grep -m1 -v -e "pre"', , returnStdout: true).trim()
           }
           steps {
             withCredentials([file(credentialsId: 'GangaRobotUsercert', variable: 'X509_USER_CERT'),
