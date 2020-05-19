@@ -145,7 +145,7 @@ class ShareRef(GangaObject):
                 self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
-        elif not os.path.isdir(shareddirname) and force is True and basedir is not '':
+        elif not os.path.isdir(shareddirname) and force == True and basedir != '':
             if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 1
@@ -180,7 +180,7 @@ class ShareRef(GangaObject):
                 else:
                     self.__getName()[basedir] -= 1
 
-                if self.__getName()[basedir] is 0:
+                if self.__getName()[basedir] == 0:
 #                    shutil.rmtree(shareddir, ignore_errors=True)
                     shareddir.remove()
                     logger.info("Removed: %s" % shareddir.name)
