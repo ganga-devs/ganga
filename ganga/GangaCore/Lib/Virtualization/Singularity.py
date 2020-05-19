@@ -66,7 +66,7 @@ class Singularity(IVirtualization):
     If the singularity binary is not available in the PATH on the remote node - or has a different name, 
     it is possible to give the name of it like
 
-      j.virtualization.binary='/cvmfs/atlas.cern.ch/repo/containers/sw/singularity/x86_64-el7/current/bin/singularity'
+      j.virtualization.binary='/cvmfs/oasis.opensciencegrid.org/mis/singularity/current/bin/singularity'
 
     """
     _name = 'Singularity'
