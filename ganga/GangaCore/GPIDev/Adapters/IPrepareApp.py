@@ -120,7 +120,7 @@ class IPrepareApp(IApplication):
                 for subitem in prepitem:
                     if isType(subitem, str):
                         logger.debug('found a string')
-                    elif isType(subitem, File) and subitem.name is not '':
+                    elif isType(subitem, File) and subitem.name != '':
                         logger.debug('found a file')
                         logger.debug('Sending file object %s to shared directory' % subitem.name)
                         try:
@@ -130,7 +130,7 @@ class IPrepareApp(IApplication):
                             return 0
             elif isinstance(prepitem, str):
                 logger.debug('found a string')
-            elif isType(prepitem, File) and prepitem.name is not '':
+            elif isType(prepitem, File) and prepitem.name != '':
                 logger.debug('found a file')
                 logger.debug('Sending "File" object %s to shared directory' % prepitem.name)
                 try:
