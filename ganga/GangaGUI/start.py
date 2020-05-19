@@ -10,7 +10,7 @@ gui_server = None
 # GangaThread for Flask Server
 class GUIServerThread(GangaThread):
 
-    def __init__(self, name: str, host: str = "localhost", port: int = 5000):
+    def __init__(self, name: str, host, port):
         GangaThread.__init__(self, name=name)
         self.host = host
         self.port = port
@@ -27,10 +27,10 @@ class GUIServerThread(GangaThread):
         logger.info("{} - {}".format(res.status_code, res.text))
 
 
-def start_gui():
+def start_gui(host: str = "localhost", port: int = 5000):
     """Start GUI Flask App on a GangaThread"""
     global gui_server
-    gui_server = GUIServerThread("GangaGUI")
+    gui_server = GUIServerThread("GangaGUI", host, port)
     gui_server.start()
 
 
