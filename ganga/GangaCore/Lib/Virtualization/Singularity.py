@@ -97,6 +97,12 @@ class Singularity(IVirtualization):
 
         extra = extra + """
 print("Using singularity")
+
+import stat
+if not ( ('XDG_RUNTIME_DIR' in runenv) and os.path.isdir(runenv['XDG_RUNTIME_DIR']) and (stat.S_IMODE(os.stat(runenv['XDG_RUNTIME_DIR']).st_mode) == 0o700) ):
+    os.mkdir('.xdg', 0o700)
+    runenv['XDG_RUNTIME_DIR'] = os.path.join(os.getcwd(), '.xdg')
+           
 options = []
 if virtualization_user:
     runenv["SINGULARITY_DOCKER_USERNAME"] = virtualization_user
@@ -113,7 +119,7 @@ if execmd[0].startswith('./'):
 
         if sandbox:
             extra = extra + """
-runenv['SINGULARITY_CACHEDIR']=path.join(getcwd(),'.singularity','cache')
+runenv['SINGULARITY_CACHEDIR']=os.path.join(os.getcwd(),'.singularity','cache')
 for i in range(3):
     try:
         buildcommand = [virtualization_binary, 'build', '--sandbox', 'singularity_sandbox' , virtualization_image]
