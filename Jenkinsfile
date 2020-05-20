@@ -81,7 +81,7 @@ pipeline {
           post {
             always {
               sh label: "Force remove container", script: "docker rm --force GangaGUI${env.BRANCH_NAME}-${env.BUILD_ID} || true"
-              junit "**/tests-GangaLHCb.xml"
+              junit "**/tests-GangaGUI.xml"
             }
           }
         }
