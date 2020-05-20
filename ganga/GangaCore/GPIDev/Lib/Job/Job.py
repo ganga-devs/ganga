@@ -1078,7 +1078,7 @@ class Job(GangaObject):
         config = getConfig("File_Associations")
 
         if not os.path.exists(path):
-            if len(glob.glob(path)) is 1:
+            if len(glob.glob(path)) == 1:
                 path = glob.glob(path)[0]
 
         if os.path.exists(path):
