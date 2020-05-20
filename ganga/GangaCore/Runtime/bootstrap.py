@@ -1007,6 +1007,10 @@ under certain conditions; type license() for details.
         logger = getLogger("run")
         logger.debug("Entering run")
 
+        if self.options.webgui == True:
+            from GangaGUI.start import start_gui
+            start_gui()
+
         if local_ns is None:
             import __main__
             local_ns = __main__.__dict__
