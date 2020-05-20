@@ -192,6 +192,12 @@ print("files on WN: " + str(listdir('.')))
 
 ###OUTPUTFILESINJECTEDCODE###
 
+try:
+    subprocess.call('chmod -R u+rwX  * .*', env=runenv, shell=True)
+except Exception as x:
+    print('Problems fixing permissions on output files to allow for clean-up.')
+    print('Err was: ' + str(x))
+
 sys.exit(rc)
 """
     return script_template

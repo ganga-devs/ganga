@@ -99,7 +99,10 @@ class Singularity(IVirtualization):
 print("Using singularity")
 
 import stat
-if not ( ('XDG_RUNTIME_DIR' in runenv) and os.path.isdir(runenv['XDG_RUNTIME_DIR']) and (stat.S_IMODE(os.stat(runenv['XDG_RUNTIME_DIR']).st_mode) == 0o700) ):
+if not ( ('XDG_RUNTIME_DIR' in runenv) and
+         os.path.isdir(runenv['XDG_RUNTIME_DIR']) and
+         (stat.S_IMODE(os.stat(runenv['XDG_RUNTIME_DIR']).st_mode) == 0o700) and
+         os.access(runenv['XDG_RUNTIME_DIR'], os.W_OK) ):
     os.mkdir('.xdg', 0o700)
     runenv['XDG_RUNTIME_DIR'] = os.path.join(os.getcwd(), '.xdg')
            
