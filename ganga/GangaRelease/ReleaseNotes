@@ -6,8 +6,10 @@
 ganga/ganga/GangaCore
 --------------------------------------------------------------------------------------------------------------
 * Option to specify location of virutalisation binary, i.e. j.virtualization.binary='/cvmfs/atlas.cern.ch/repo/containers/sw/singularity/x86_64-el7/current/bin/singularity' . #1670
+* Bugfix for container permissions #1678
 * Syntax warning fixes #1674
 * Fix deprecation warnings #1646
+* Remove old webgui code #1677
 
 --------------------------------------------------------------------------------------------------------------
 ganga/ganga/GangaLHCb
