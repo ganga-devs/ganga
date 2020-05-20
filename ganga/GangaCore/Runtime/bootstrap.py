@@ -266,6 +266,9 @@ under certain conditions; type license() for details.
         parser.add_option("-i", dest="force_interactive", action="store_true",
                           help='enter interactive mode after running script')
 
+        parser.add_option("--webgui", dest="webgui",  action="store_true", default='False',
+                          help='starts web GUI monitoring server')
+
         parser.add_option("--config", dest="config_file", action="store", metavar="FILE", default=None,
                           help='read user configuration from FILE, overrides the GANGA_CONFIG_FILE environment variable. Default: ~/.gangarc')
 
