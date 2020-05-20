@@ -116,11 +116,11 @@ class JobRegistry(Registry):
         num_loaded = 0
         num_checked = 0
         for k in reverse_job_list:
-            if (num_loaded is 5) and (num_checked is 5):
+            if (num_loaded == 5) and (num_checked == 5):
                 break
             v = self._objects[k]
             if _shouldAutoKill(v):
-                if num_loaded is 5:
+                if num_loaded == 5:
                     continue
                 try:
                     num_loaded+=1
@@ -143,7 +143,7 @@ class JobRegistry(Registry):
                 else:
                     _killJob(v)
             elif _shouldAutoCheck(v):
-                if num_checked is 5:
+                if num_checked == 5:
                     continue
                 try:
                     num_checked+=1

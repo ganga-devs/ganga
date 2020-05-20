@@ -164,7 +164,7 @@ def _exec_cmd(cmd, cwdir):
             cmd (str): This is the full command which is to be executed
             cwdir (str): The folder the command is to be run in
     """
-    pipe = subprocess.Popen(cmd, shell=True, env=None, cwd=cwdir,
+    pipe = subprocess.Popen(cmd, shell=True, env={}, cwd=cwdir,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
     stdout, stderr = pipe.communicate()
     while pipe.poll() is None:

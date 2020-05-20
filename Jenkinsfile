@@ -13,11 +13,14 @@ pipeline {
     stage('Build Package Images') {
       parallel {
         stage('GangaDirac') {
+          environment {
+            DIRAC_VERSION=sh(script: 'curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[6]r.*[^\\]]" | grep -m1 -v -e "pre"', , returnStdout: true).trim()
+          }
           steps {
             withCredentials([file(credentialsId: 'GangaRobotUsercert', variable: 'X509_USER_CERT'),
                              file(credentialsId: 'GangaRobotUserkey', variable: 'X509_USER_KEY')]) {
               sh label: "Wait to let GancaCore container register", script: "sleep 120"
-              sh label: "Docker build", script: "DOCKER_BUILDKIT=1 docker build -t gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} --build-arg VO=gridpp --build-arg BRANCH_NAME=${env.BRANCH_NAME} --build-arg BUILD_ID=${env.BUILD_ID} --secret id=usercert,src=$X509_USER_CERT --secret id=userkey,src=$X509_USER_KEY -f ${env.WORKSPACE}/ganga/GangaDirac/test/Dockerfile ."
+              sh label: "Docker build", script: "DOCKER_BUILDKIT=1 docker build -t gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} --build-arg VO=gridpp --build-arg BRANCH_NAME=${env.BRANCH_NAME} --build-arg BUILD_ID=${env.BUILD_ID} --build-arg DIRAC_VERSION=${env.DIRAC_VERSION} --secret id=usercert,src=$X509_USER_CERT --secret id=userkey,src=$X509_USER_KEY -f ${env.WORKSPACE}/ganga/GangaDirac/test/Dockerfile ."
             }
           }
         }
