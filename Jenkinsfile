@@ -75,8 +75,8 @@ pipeline {
         stage('GangaGUI') {
           steps {
             sh label: "Docker run", script: "docker run --name GangaGUI${env.BRANCH_NAME}-${env.BUILD_ID} gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID} /ganga/venv/bin/pytest --cov-report term --cov-report xml:cov-GangaGUI.xml --cov ganga/GangaGUI/test --junitxml tests-GangaGUI.xml /ganga/ganga/GangaGUI/test  || true"
-            sh label: "Extract test results", script: "docker cp GangaGUI${env.BRANCH_NAME}-${env.BUILD_ID}:/root/tests-GangaGUI.xml ."
-            sh label: "Extract coverage results", script: "docker cp GangaGUI${env.BRANCH_NAME}-${env.BUILD_ID}:/root/cov-GangaGUI.xml ."
+            sh label: "Extract test results", script: "docker cp GangaGUI${env.BRANCH_NAME}-${env.BUILD_ID}:/ganga/tests-GangaGUI.xml ."
+            sh label: "Extract coverage results", script: "docker cp GangaGUI${env.BRANCH_NAME}-${env.BUILD_ID}:/ganga/cov-GangaGUI.xml . || true"
           }
           post {
             always {
