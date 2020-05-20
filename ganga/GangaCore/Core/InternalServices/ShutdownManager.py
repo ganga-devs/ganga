@@ -57,6 +57,13 @@ def _unprotected_ganga_exitfuncs():
     # Set the disk timeout to 1 sec, sacrifice stability for quicker exit
     setConfigOption('Configuration', 'DiskIOTimeout', 1)
 
+    # Stop GUIServerThread
+    from GangaGUI.start import stop_gui
+    try:
+        stop_gui()
+    except Exception as err:
+        logger.exception("Exception raised while stopping GUI: {}".format(err))
+
     # Stop the monitoring loop from iterating further
     if monitoring_component is not None:
         try:
