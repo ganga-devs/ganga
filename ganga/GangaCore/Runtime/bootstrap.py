@@ -266,9 +266,6 @@ under certain conditions; type license() for details.
         parser.add_option("-i", dest="force_interactive", action="store_true",
                           help='enter interactive mode after running script')
 
-        parser.add_option("--webgui", dest="webgui",  action="store_true", default='False',
-                          help='starts web GUI monitoring server')
-
         parser.add_option("--config", dest="config_file", action="store", metavar="FILE", default=None,
                           help='read user configuration from FILE, overrides the GANGA_CONFIG_FILE environment variable. Default: ~/.gangarc')
 
@@ -1009,10 +1006,6 @@ under certain conditions; type license() for details.
         from GangaCore.Utility.logging import getLogger
         logger = getLogger("run")
         logger.debug("Entering run")
-
-        if self.options.webgui == True:
-            from GangaCore.Runtime.http_server import start_server
-            start_server()
 
         if local_ns is None:
             import __main__
