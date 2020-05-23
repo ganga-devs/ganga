@@ -30,7 +30,7 @@ import copy
 
 logger = getLogger()
 
-
+# TODO: Add error handling and logging for the recursion operations 
 class JsonDumper:
     """Will dump the Job in a JSON file
     """
@@ -70,7 +70,6 @@ class JsonDumper:
             # saving on disk, in the xml implementation it was saved natively as a datetime.datetime object                
             elif isinstance(value, dict) and attr_name == "timestamps":
                 for time_stamp, dtime in value.items():
-                    print(time_stamp, dtime)
                     # value[time_stamp] = dtime.strftime("%Y-%m-%d %H:%M:%S")
                 node_info[attr_name] = value
             else:
@@ -124,9 +123,7 @@ class JsonLoader:
 
         # FIXME: Use something better than the below
         for key in (set(self.json_content.keys()) - set(['category', 'type', 'version'])):
-            # if the attribute is complex attribute, which itself is a object
             if isinstance(self.json_content[key], dict):
-                print(key)
                 self.load_complex_object(key, self.json_content[key])
             else:
                 self.load_simple_object(key, self.json_content[key])

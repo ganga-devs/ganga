@@ -1,3 +1,7 @@
+"""
+NOTE: These files in this folder are temporary and are only meant as driver or observing scripts 
+"""
+
 # Importing the proxy strippers
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Utility.logging import getLogger
@@ -28,40 +32,3 @@ from GangaCore.Core.GangaRepository.JStreamer import JsonDumper
 json = JsonDumper()
 json.parse(item)
 temp = json.job_json
-
-
-
-
-from GangaCore.Core.GangaRepository.VStreamer import to_file, compositeAttribute
-# from GangaCore.Core.Lib.Job import Job
-from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy, isType, getName
-to_file(stripProxy(j), open("/home/dumbmachine/work/gsoc/ganga/ganga/ratin's files/temp.xml", "w"))
-
-
-item = stripProxy(j)
-
-
-this_object = item
-
-
-temp = compositeAttribute("job", item)
-
-if isinstance(item, list):
-    objectList = [stripProxy(element) for element in item]
-elif isinstance(item, tuple):
-    objectList = [stripProxy(element) for element in item]
-elif isType(item, RegistrySliceProxy) or isType(item, RegistrySlice):
-    objectList = [stripProxy(element) for element in item]
-elif isType(item, GangaList):
-    objectList = [stripProxy(element) for element in item]
-else:
-    objectList = [item]
-
-nObject = 0
-
-node = item
-
-# def value_from_node(node):
-#     """Will return a dict of values for the node
-#     """
-
