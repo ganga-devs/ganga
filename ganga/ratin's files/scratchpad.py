@@ -22,6 +22,15 @@ from GangaCore.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy
 Creating the a job
 """
 j = jobs[-1]
+from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy, isType, getName
+item = stripProxy(j)
+from GangaCore.Core.GangaRepository.JStreamer import JsonDumper
+json = JsonDumper()
+json.parse(item)
+temp = json.job_json
+
+
+
 
 from GangaCore.Core.GangaRepository.VStreamer import to_file, compositeAttribute
 # from GangaCore.Core.Lib.Job import Job

@@ -268,7 +268,6 @@ class VStreamer(object):
 def compositeAttribute(name, node):
     """Will return the attribute information of the item in a dict format
     """
-    from GangaCore.GPIDev.Schema.Schema import SimpleItem, ComponentItem
 
     node_info = {
         "name": node._schema.name,

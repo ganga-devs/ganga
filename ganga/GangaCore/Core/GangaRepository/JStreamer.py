@@ -31,24 +31,61 @@ import copy
 logger = getLogger()
 
 
-class EmptyGangaObject(GangaObject):
-
-    """Empty Ganga Object. Is used to construct incomplete jobs"""
-    _schema = Schema(Version(0, 0), {})
-    _name = "EmptyGangaObject"
-    _category = "internal"
-    _hidden = 1
-
-    def __init__(self):
-        super(EmptyGangaObject, self).__init__()
-
-
 class JsonDumper:
     """Will dump the Job in a JSON file
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, dump_location=None):
+        self.errors = []
+        self.dump_location = dump_location
 
+    def parse(self, item):
+        """WIll parse and return the job json
+
+        The received item is a job object with proxy
+        """
+        starting_name, starting_node = "job", item
+        self.job_json = JsonDumper.object_to_json(starting_name, starting_node)
+        
+
+    @staticmethod
+    def object_to_json(name, node):
+        """Will give the attribute information of the provided `node` object as a python dict
+        """
+        node_info = {
+            "name": node._schema.name,
+            "version": node._schema.version.minor,
+            "category": node._schema.category
+        }
+        for attr_name, attr_object in node._schema.allItems():
+            value = getattr(node, attr_name)
+            # if attr_name == "time":
+                # node_info[attr_name] = JsonDumper.handleDatetime(attr_name, getattr(node, attr_name))
+            if isType(value, (list, tuple, GangaList)):
+                node_info[attr_name] = list(value)        
+            elif isinstance(value, GangaObject):
+                node_info[attr_name] = JsonDumper.object_to_json(attr_name, getattr(node, attr_name))
+
+            # ForReview : We could use pickle to save the datetime
+            # Reasoning: This method was added to convert the datetime to string before 
+            # saving on disk, in the xml implementation it was saved natively as a datetime.datetime object                
+            elif isinstance(value, dict) and attr_name == "timestamps":
+                for time_stamp, dtime in value.items():
+                    print(time_stamp, dtime)
+                    # value[time_stamp] = dtime.strftime("%Y-%m-%d %H:%M:%S")
+                node_info[attr_name] = value
+            else:
+                node_info[attr_name] = getattr(node, attr_name)
+        return node_info
+
+
+    def dump_json(self):
+        """Dump the json file
+        """
+        if self.dump_location is None:
+            print(self.job_json)
+        else:
+            with open(self.dump_location, "w") as file:
+                json.dump(self.job_json, file)
 
 class JsonLoader:
     """Loads the Ganga Object from json

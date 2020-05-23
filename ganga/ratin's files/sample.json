@@ -1,0 +1,93 @@
+{
+    "name": "",
+    "version": 6,
+    "category": "jobs",
+    "inputsandbox": [],
+    "outputsandbox": [],
+    "info": {
+        "name": "JobInfo",
+        "version": 1,
+        "category": "jobinfos",
+        "submit_counter": 1,
+        "monitor": null,
+        "uuid": "",
+        "monitoring_links": []
+    },
+    "comment": "",
+    "time": {
+        "name": "JobTime",
+        "version": 0,
+        "category": "jobtime",
+        "timestamps": {
+            "new": "2020-05-19 08:09:31",
+            "submitting": "2020-05-19 08:09:33",
+            "submitted": "2020-05-19 08:09:34",
+            "backend_running": "2020-05-19 08:09:34",
+            "running": "2020-05-19 08:09:35",
+            "backend_final": "2020-05-19 08:09:34",
+            "final": "2020-05-19 08:09:35"
+        }
+    },
+    "application": {
+        "name": "Executable",
+        "version": 0,
+        "category": "applications",
+        "exe": "echo",
+        "args": [
+            "Hello World"
+        ],
+        "env": {},
+        "platform": "ANY",
+        "is_prepared": {
+            "name": "conf-cfde9a33-74e1-402d-9659-bd0470685da9",
+            "version": 0,
+            "category": "shareddirs",
+            "subdir": ".",
+            "associated_files": []
+        },
+        "hash": "cfa689697ba25ae38f7a47b232ea3e7c"
+    },
+    "backend": {
+        "name": "Local",
+        "version": 2,
+        "category": "backends",
+        "id": 8905,
+        "status": null,
+        "exitcode": 0,
+        "workdir": "/tmp/tmpm9xg2al8",
+        "actualCE": "slowpoke",
+        "wrapper_pid": 8904,
+        "nice": 0,
+        "force_parallel": false
+    },
+    "inputfiles": [],
+    "outputfiles": [],
+    "non_copyable_outputfiles": [],
+    "id": 11,
+    "status": "completed",
+    "inputdir": "/home/dumbmachine/gangadir/workspace/dumbmachine/LocalXML/11/input/",
+    "outputdir": "/home/dumbmachine/gangadir/workspace/dumbmachine/LocalXML/11/output/",
+    "inputdata": null,
+    "outputdata": null,
+    "splitter": null,
+    "subjobs": [],
+    "master": null,
+    "postprocessors": {
+        "name": "MultiPostProcessor",
+        "version": 0,
+        "category": "postprocessor",
+        "process_objects": []
+    },
+    "virtualization": null,
+    "merger": null,
+    "do_auto_resubmit": false,
+    "metadata": {
+        "name": "MetadataDict",
+        "version": 0,
+        "category": "metadata",
+        "data": {}
+    },
+    "fqid": "11",
+    "been_queued": false,
+    "parallel_submit": true
+}
