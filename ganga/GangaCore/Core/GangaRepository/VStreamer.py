@@ -177,20 +177,25 @@ class VStreamer(object):
     def nodeBegin(self, node):
         self.level += 1
         s = node._schema
+        print("Beginning the node: ", node, s)
         print(self.indent(), '<class name="%s" version="%d.%d" category="%s">' % (s.name, s.version.major, s.version.minor, s.category), file=self.out)
+        print("exiting the beginning function")
 
     def nodeEnd(self, node):
+        print("Ending the node: ", node, "\n")
         print(self.indent(), '</class>', file=self.out)
         self.level -= 1
         return
 
     def print_value(self, x):
+        print("print value was used on: ", x)
         print('\n', self.indent(), '<value>%s</value>' % escape(repr(x)), file=self.out)
 
     def showAttribute(self, node, name):
         return (self.level > 1 or name not in self.selection) and not node._schema.getItem(name)['transient']
 
     def simpleAttribute(self, node, name, value, sequence):
+        print(f"THe note that I am working on is: {name}-{value}-{sequence}")
         if self.showAttribute(node, name):
             self.level += 1
             print(self.indent(), end=' ', file=self.out)
@@ -258,6 +263,27 @@ class VStreamer(object):
 # XML Parser.
 
 # Empty Ganga Object
+
+
+def compositeAttribute(name, node):
+    """Will return the attribute information of the item in a dict format
+    """
+    from GangaCore.GPIDev.Schema.Schema import SimpleItem, ComponentItem
+
+    node_info = {
+        "name": node._schema.name,
+        "version": node._schema.version.minor,
+        "category": node._schema.category
+    }
+    for attr_name, attr_object in node._schema.allItems():
+        value = getattr(node, attr_name)
+        if isType(value, (list, tuple, GangaList)):
+            node_info[attr_name] = getattr(node, attr_name)
+        elif isinstance(value, GangaObject):
+            node_info[attr_name] = compositeAttribute(attr_name, getattr(node, attr_name))
+        else:
+            node_info[attr_name] = getattr(node, attr_name)
+    return node_info
 
 
 class EmptyGangaObject(GangaObject):

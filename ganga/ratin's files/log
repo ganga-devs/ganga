@@ -1,0 +1,22 @@
+Beginning the node:  <GangaCore.GPIDev.Lib.Job.Job.Job object at 0x7f44e876dbf0>
+THe note that I am working on is: outputsandbox-[]-1
+THe note that I am working on is: comment--0
+print value was used on:  
+THe note that I am working on is: id-11-0
+print value was used on:  11
+THe note that I am working on is: status-completed-0
+print value was used on:  completed
+THe note that I am working on is: name--0
+print value was used on:  
+THe note that I am working on is: inputdir-/home/dumbmachine/gangadir/workspace/dumbmachine/LocalXML/11/input/-0
+THe note that I am working on is: outputdir-/home/dumbmachine/gangadir/workspace/dumbmachine/LocalXML/11/output/-0
+THe note that I am working on is: do_auto_resubmit-False-0
+print value was used on:  False
+THe note that I am working on is: parallel_submit-True-0
+Beginning the node:  <GangaCore.GPIDev.Lib.Job.Job.JobInfo object at 0x7f44e82e4710>
+THe note that I am working on is: submit_counter-1-0
+print value was used on:  1
+THe note that I am working on is: uuid--0
+print value was used on:  
+THe note that I am working on is: monitoring_links-[]-1
+Ending the node:  <GangaCore.GPIDev.Lib.Job.Job.JobInfo object at 0x7f44e82e4710> 

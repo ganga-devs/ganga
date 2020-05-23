@@ -1,0 +1,38 @@
+#Ganga# File created by Ganga - Sat May 23 12:01:35 2020
+#Ganga#
+#Ganga# Object properties may be freely edited before reloading into Ganga
+#Ganga#
+#Ganga# Lines beginning #Ganga# are used to divide object definitions,
+#Ganga# and must not be deleted
+
+#Ganga# Job object (category: jobs)
+ Job (
+   comment = '',
+   name = '',
+   do_auto_resubmit = False,
+   parallel_submit = True,
+   inputsandbox =[],
+   info =   JobInfo (
+     monitor =None
+   ),
+   application =   Executable (
+     exe = 'echo',
+     args = ['Hello World'],
+     env = {},
+     platform = 'ANY',
+     is_prepared = ShareDir(name='conf-cfde9a33-74e1-402d-9659-bd0470685da9',subdir='.'),
+     hash = 'cfa689697ba25ae38f7a47b232ea3e7c'
+   ),
+   backend =   Local (
+     nice = 0,
+     force_parallel = False
+   ),
+   inputfiles =[],
+   outputfiles =[],
+   inputdata =None,
+   splitter =None,
+   postprocessors =   MultiPostProcessor (
+   ),
+   virtualization =None
+ )
+
