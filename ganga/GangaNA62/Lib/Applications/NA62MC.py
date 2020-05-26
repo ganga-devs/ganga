@@ -12,7 +12,6 @@ from GangaCore.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from GangaCore.GPIDev.Base.Proxy import isType
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 
-from GangaCore.GPIDev.Lib.File.SandboxFile import SandboxFile
 from commands import getstatusoutput
 
 import os, shutil
@@ -242,8 +241,11 @@ class LCGRTHandler(IRuntimeHandler):
         args = [app.getMACFileName(), "%s/r%d/%s" % (app.job_type, app.getRevision(), app.getDecayString())]
 
         # add the output files
-        app._getParent().outputfiles = [SandboxFile('na62run%d.out' % app.run_number), SandboxFile('na62run%d.err' % app.run_number),
-                                        SandboxFile('__jdlfile__'), SandboxFile(app.getMACFileName()) ]
+        
+        # Note:Need to be updated as SandboxFile is removed
+        
+        # app._getParent().outputfiles = [SandboxFile('na62run%d.out' % app.run_number), SandboxFile('na62run%d.err' % app.run_number),
+        #                                 SandboxFile('__jdlfile__'), SandboxFile(app.getMACFileName()) ]
         
         return LCGJobConfig(prepared_exe,inputbox,args,outputbox,env)
 

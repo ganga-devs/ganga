@@ -1,16 +1,17 @@
 import datetime
 import time
+import os
+import re
+import os.path
+
+import GangaCore.Utility.logging
+import GangaCore.Utility.Config
+import GangaCore.Utility.Virtualization
+
 from GangaCore.GPIDev.Adapters.IBackend import IBackend
 from GangaCore.GPIDev.Base.Proxy import isType, getName, stripProxy
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaCore.Core.exceptions import BackendError
-import os.path
-
-import GangaCore.Utility.logging
-
-import GangaCore.Utility.Config
-
-import os
 
 logger = GangaCore.Utility.logging.getLogger()
 
@@ -44,7 +45,6 @@ def shell_cmd(cmd, soutfile=None, allowed_exit=[0]):
 
     if rc != 0:
         logger.debug('non-zero [%d] exit status of command %s ', rc, cmd)
-        import re
         with open(soutfile) as sout_file:
             m = re.compile(r"command not found$", re.M).search(sout_file.read())
 
@@ -120,7 +120,7 @@ class Batch(IBackend):
     command = classmethod(command)
 
     def submit(self, jobconfig, master_input_sandbox):
-
+        global re
         job = self.getJobObject()
 
         inw = job.getInputWorkspace()
@@ -151,7 +151,6 @@ class Batch(IBackend):
             jobnameopt = False
 
         if self.extraopts:
-            import re
             for opt in re.compile(r'(-\w+)').findall(self.extraopts):
                 if opt in ('-o', '-e', '-oo', '-eo'):
                     logger.warning("option %s is forbidden", opt)
@@ -189,7 +188,6 @@ class Batch(IBackend):
         rc, soutfile = self.command(command_str)
         with open(soutfile) as sout_file:
             sout = sout_file.read()
-        import re
         m = re.compile(self.config['submit_res_pattern'], re.M).search(sout)
         if m is None:
             logger.warning('could not match the output and extract the Batch job identifier!')
@@ -215,6 +213,7 @@ class Batch(IBackend):
         return rc == 0
 
     def resubmit(self):
+        global re
 
         job = self.getJobObject()
 
@@ -250,7 +249,6 @@ class Batch(IBackend):
             jobnameopt = False
 
         if self.extraopts:
-            import re
             for opt in re.compile(r'(-\w+)').findall(self.extraopts):
                 if opt in ('-o', '-e', '-oo', '-eo'):
                     logger.warning("option %s is forbidden", opt)
@@ -291,7 +289,6 @@ class Batch(IBackend):
         if rc == 0:
             with open(soutfile) as sout_file:
                 sout = sout_file.read()
-            import re
             m = re.compile(
                 self.config['submit_res_pattern'], re.M).search(sout)
             if m is None:
@@ -332,7 +329,7 @@ class Batch(IBackend):
         if rc == 0:
             return True
         else:
-            import re
+            global re
             m = re.compile(self.config['kill_res_pattern'], re.M).search(sout)
             logger.warning('while killing job %s: %s', self.getJobObject().getFQID('.'), sout)
 
@@ -412,11 +409,19 @@ class Batch(IBackend):
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
+        virtualization = job.virtualization
 
+        utilFiles= []
+        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
+        utilFiles.append(fileutils)
+        if virtualization:
+            virtualizationutils = File( inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
+            utilFiles.append(virtualizationutils)
+
+        
         sharedfiles = jobconfig.getSharedFiles()
 
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + utilFiles )
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath = job.getOutputWorkspace().getPath()
@@ -432,6 +437,9 @@ class Batch(IBackend):
         from GangaCore.GPIDev.Lib.File import FileUtils
         text = FileUtils.loadScript(script_location, '')
 
+        if virtualization:
+            text = virtualization.modify_script(text)
+        
         import GangaCore.Core.Sandbox as Sandbox
         import GangaCore.Utility as Utility
         from GangaCore.Utility.Config import getConfig
@@ -480,8 +488,7 @@ class Batch(IBackend):
 
     @staticmethod
     def updateMonitoringInformation(jobs):
-
-        import re
+        global re
         repid = re.compile(r'^PID: (?P<pid>\d+)', re.M)
         requeue = re.compile(r'^QUEUE: (?P<queue>\S+)', re.M)
         reactualCE = re.compile(r'^ACTUALCE: (?P<actualCE>\S+)', re.M)
@@ -504,7 +511,7 @@ class Batch(IBackend):
 
             pid, queue, actualCE, exitcode = None, None, None, None
 
-            import re
+            global re
             statusfile = None
             try:
                 statusfile = open(f)

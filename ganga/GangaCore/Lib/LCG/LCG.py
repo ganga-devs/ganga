@@ -1969,7 +1969,7 @@ sys.exit(0)
 
                 with open(jdlpath, 'a') as jdlFileAppend:
                     linesToAppend.append("Requirements = \n")
-                    excludedCEs = re.split('\s+', configexcludedCEs)
+                    excludedCEs = re.split(r'\s+', configexcludedCEs)
                     index = 1
 
                     for excludedCE in excludedCEs:
@@ -2028,7 +2028,7 @@ sys.exit(0)
                     break
 
             if configexcludedCEs != '':
-                excludedCEs = re.split('\s+', configexcludedCEs)
+                excludedCEs = re.split(r'\s+', configexcludedCEs)
                 innerIndex = 1
                 for excludedCE in excludedCEs:
                     if innerIndex != len(excludedCEs):

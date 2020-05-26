@@ -35,7 +35,7 @@ Job Trees
 ---------
 
 As you submit more jobs of different types, it can become quite difficult to keep track of them. Ganga supports a
-'directory tree' like structure for jobs so you can easily keep track of which jobs are associated with different
+`directory tree` like structure for jobs so you can easily keep track of which jobs are associated with different
 calibrations, analyses, etc. Jobs are stored by `id` and can be thought of as soft links to the main Ganga Job
 Repository.
 

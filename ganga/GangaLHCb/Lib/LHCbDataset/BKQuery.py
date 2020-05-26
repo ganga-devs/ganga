@@ -1,4 +1,5 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+import os
 import datetime
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
@@ -8,10 +9,11 @@ from GangaCore.GPIDev.Credentials import require_credential
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaCore.Utility.logging import getLogger
+from GangaLHCb.Lib.LHCbDataset import LHCbDataset, LHCbCompressedDataset
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
 
 class BKQuery(GangaObject):
 
@@ -142,7 +144,7 @@ RecoToDST-07/90000000/DST" ,
         return {'OK': False, 'Value': metadata}
 
     @require_credential
-    def getDataset(self):
+    def getDataset(self, compressed = True):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
             return None
@@ -165,41 +167,29 @@ RecoToDST-07/90000000/DST" ,
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate,
                                                                self.endDate, self.selection)
         result = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
-
         logger.debug("Finished Running Command")
-
         files = []
         value = result
         if 'LFNs' in value:
             files = value['LFNs']
-        if not type(files) is list:  # i.e. a dict of LFN:Metadata
-            # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
+        if not type(files) is list:
             files = list(files.keys())
 
-        logger.debug("Creating DiracFile objects")
+        logger.debug("Creating dataset")
 
-        ## Doesn't work not clear why
-        from GangaDirac.Lib.Files.DiracFile import DiracFile
-        #new_files = []
-        #def _createDiracLFN(this_file):
-        #    return DiracFile(lfn = this_file)
-        #GangaObject.__createNewList(new_files, files, _createDiracLFN)
+        if compressed:
+            ds = LHCbCompressedDataset(files)
 
-        logger.debug("Creating new list")
-        new_files = [DiracFile(lfn=f) for f in files]
+        else:
+            logger.debug("Creating new list")
+            new_files = [DiracFile(lfn=f) for f in files]
 
-        #new_files = [DiracFile(lfn=_file) for _file in files]
-        #for f in files:
-        #    new_files.append(DiracFile(lfn=f))
-            #ds.extend([DiracFile(lfn = f)])
+            logger.info("Constructing LHCbDataset")
 
-        logger.info("Constructing LHCbDataset")
+            logger.debug("Imported LHCbDataset")
+            ds = LHCbDataset(files=new_files, fromRef=True)
 
-        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-        logger.debug("Imported LHCbDataset")
-        ds = LHCbDataset(files=new_files, fromRef=True)
-
-        logger.debug("Returning Dataset")
+            logger.debug("Returning Dataset")
 
         return addProxy(ds)
 
@@ -287,10 +277,8 @@ class BKQueryDict(GangaObject):
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
                 files = list(files['LFNs'].keys())
 
-        from GangaDirac.Lib.Files.DiracFile import DiracFile
         this_list = [DiracFile(lfn=f) for f in files]
 
-        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
         ds = LHCbDataset(files=this_list, fromRef=True)
 
         return addProxy(ds)

@@ -26,6 +26,6 @@ j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
 ###DIRAC_OPTS###
 
 # submit the job to dirac
-j.setPlatform( 'ANY' )
-result = dirac.submit(j)
+j.setPlatform( '###PLATFORM###' )
+result = dirac.submitJob(j)
 output(result)

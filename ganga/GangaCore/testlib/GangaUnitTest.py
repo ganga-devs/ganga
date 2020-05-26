@@ -132,12 +132,12 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     GangaCore.Runtime._prog.parseOptions()
 
     # For all the default and extra options, we set the session value
-    from GangaCore.Utility.Config import setUserValue
+    from GangaCore.Utility.Config import setUserValue, setUserValueForTest
 
     for opts in default_opts, extra_opts:
         for opt in opts:
             try:
-                setUserValue(*opt)
+                setUserValueForTest(*opt)
             except Exception as err:
                 print("Error Setting: %s" % str(opt))
                 print("Err: %s" % err)
@@ -183,7 +183,7 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     for opts in default_opts, extra_opts:
         for opt in opts:
             try:
-                setUserValue(*opt)
+                setUserValueForTest(*opt)
             except Exception as err:
                 print("Error Setting: %s" % str(opt))
                 print("Err: %s" % err)

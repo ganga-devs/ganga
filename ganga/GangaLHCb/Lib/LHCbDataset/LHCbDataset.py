@@ -15,6 +15,11 @@ from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
+from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
+
+import GangaLHCb.Lib.LHCbDataset
 logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -45,7 +50,6 @@ class LHCbDataset(GangaDataset):
     docstr = 'Specify the dataset persistency technology'
     schema['persistency'] = SimpleItem(
         defvalue=None, typelist=['str', 'type(None)'], doc=docstr)
-    schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
 
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
@@ -75,6 +79,9 @@ class LHCbDataset(GangaDataset):
                 process_files = False
         elif isinstance(files, LHCbDataset):
             self.files._list.extend(files.files._list)
+            process_files = False
+        elif isinstance(files, GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset):
+            self.files._list.extend(files.getFullDataset().files._list)
             process_files = False
 
         if process_files:
@@ -153,7 +160,6 @@ class LHCbDataset(GangaDataset):
         ds.replicate().'''
 
         if not destSE:
-            from GangaDirac.Lib.Files.DiracFile import DiracFile
             DiracFile().replicate('')
             return
         if not self.hasLFNs():
@@ -184,7 +190,6 @@ class LHCbDataset(GangaDataset):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
         from GangaCore.GPIDev.Base import ReadOnlyObjectError
-
         if self._parent is not None and self._parent._readonly():
             raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, getName(self)))
 
@@ -196,6 +201,8 @@ class LHCbDataset(GangaDataset):
             _external_files = files
         elif isType(files, LHCbDataset):
             _external_files = files.files
+        elif isType(files, GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset):
+            _external_files = files.getFullDataset().files
         else:
             if not hasattr(files, "__getitem__") or not hasattr(files, '__iter__'):
                 _external_files = [files]
@@ -368,20 +375,61 @@ class LHCbDataset(GangaDataset):
 
     def _checkOtherFiles(self, other ):
         if isType(other, GangaList) or isType(other, []):
-            other_files = LHCbDataset(other).getFullFileNames()
-        elif isType(other, LHCbDataset):
-            other_files = other.getFullFileNames()
+            other_files = LHCbDataset(other).getFileNames()
+        elif isType(other, [LHCbDataset, GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset]):
+            other_files = other.getFileNames()
         else:
             raise GangaException("Unknown type for difference")
         return other_files
 
+    def _pathAndFileDict(self):
+        '''
+        Returns a dict with keys the full file name and the values the file itself. For comparisons
+        '''
+        returnDict = {}
+        for _f in self.files:
+            if hasattr(_f, 'lfn'):               
+                returnDict[_f.lfn] = _f
+            else:
+                returnDict[_f.namePattern] = _f
+        return returnDict
+
+    def _pathAndFileDictOther(self, other):
+        '''
+        Returns a dict with keys the full file name and the values the file itself. For comparisons
+        '''
+        returnDict = {}
+        if isType(other, [LHCbDataset, GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset]):
+            for _f in other.files:
+                if hasattr(_f, 'lfn'):               
+                    returnDict[_f.lfn] = _f
+                else:
+                    returnDict[_f.namePattern] = _f
+        elif isType(other, [GangaList, []]):
+            for _f in other:
+                if isinstance(_f, DiracFile):
+                    returnDict[_f.lfn] = _f
+                elif isinstance(_f, LocalFile, MassStorageFile):
+                    returnDict[_f.namePattern] = _f
+                elif isinstance(_f, str):
+                    returnDict[_f] = string_datafile_shortcut_lhcb(_f, None)
+                else:
+                    raise GangaException("Unknown type for difference")
+        else:
+            raise GangaException("Unkown type for difference")
+
+        return returnDict
+
+
     def difference(self, other):
         '''Returns a new data set w/ files in this that are not in other.'''
-        other_files = self._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).difference(other_files)
+        other_files = self._pathAndFileDictOther(other)
+        self_files = self._pathAndFileDict()
+        files = set(self_files.keys()).difference(other_files.keys())
         data = LHCbDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        self_files.update(other_files)
+        for _f in files:
+            data.extend(self_files[_f])
         return data
 
     def isSubset(self, other):
@@ -397,59 +445,43 @@ class LHCbDataset(GangaDataset):
     def symmetricDifference(self, other):
         '''Returns a new data set w/ files in either this or other but not
         both.'''
-        other_files = other._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).symmetric_difference(other_files)
+        other_files = self._pathAndFileDictOther(other)
+        self_files = self._pathAndFileDict()
+        files = set(self_files.keys()).symmetric_difference(other_files.keys())
         data = LHCbDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        self_files.update(other_files)
+        for _f in files:
+            data.extend(self_files[_f])
         return data
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
-        other_files = other._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).intersection(other_files)
+        other_files = self._pathAndFileDictOther(other)
+        self_files = self._pathAndFileDict()
+        files = set(self_files.keys()).intersection(other_files.keys())
         data = LHCbDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        self_files.update(other_files)
+        for _f in files:
+            data.extend(self_files[_f])
         return data
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
-        other_files = self._checkOtherFiles(other)
-        files = set(self.getFullFileNames()).union(other_files)
+        other_files = self._pathAndFileDictOther(other)
+        self_files = self._pathAndFileDict()
+        files = set(self_files.keys()).union(other_files.keys())
         data = LHCbDataset()
-        data.extend(list(files))
-        data.depth = self.depth
+        self_files.update(other_files)
+        for _f in files:
+            data.extend(self_files[_f])
         return data
 
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
-        b = get_result(cmd, 'Error removing replica. Replica rm error.')
+        b = get_result(cmd, 'Error getting metadata.')
         return b
-
-    # def pop(self,file):
-    #    if type(file) is str: file = strToDataFile(file,False)
-    #    try: job = self.getJobObject()
-    #    except: job = None
-    #    if job:
-    #        if job.status != 'new' and job.status != 'failed':
-    #            msg = 'Cannot pop file b/c the job status is "%s". '\
-    #                  'Job must be either "new" or "failed".' % job.status
-    #            raise GangaException(msg)
-    #        master = job.master
-    #        if job.subjobs:
-    #            self.removeFile(file)
-    #            for sj in job.subjobs:
-    #                try: sj.inputdata.removeFile(file)
-    #                except: pass
-    #        elif master:
-    #            master.inputdata.removeFile(file)
-    #            self.removeFile(file)
-    #        else: self.removeFile(file)
-    #    else:
-    #        self.removeFile(file)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -458,7 +490,7 @@ from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
 def string_datafile_shortcut_lhcb(name, item):
 
-    # Overload the LHCb instance if the Core beet us to it
+    # Overload the LHCb instance if the Core beat us to it
     mainFileOutput = None
     try:
         mainFileOutput = GangaCore.GPIDev.Lib.File.string_file_shortcut(name, item)

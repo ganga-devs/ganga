@@ -11,15 +11,15 @@ from GangaCore.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem,
 from GangaCore.Utility.Plugin import allPlugins
 from GangaCore.Utility.logging import getLogger
 
-import commands
+import subprocess
 import copy
 import os
 import string
 import shutil
 
 # Simon's post_status - communicates to processing DB
-import post_status
-import urllib2
+from . import post_status
+import urllib.request, urllib.error, urllib.parse
 
 logger = getLogger()
 
@@ -51,7 +51,7 @@ class FileCheckeR(IFileChecker):
             raise PostProcessException('None of the files to check exist, FileCheckeR will do nothing!') 
         for filepath in filepaths:
             for searchString in self.searchStrings:
-                grepoutput = commands.getoutput('grep "%s" %s' % (searchString,filepath))
+                grepoutput = subprocess.getoutput('grep "%s" %s' % (searchString,filepath))
                 if len(grepoutput) and self.failIfFound is True:            
                     logger.info('The string %s has been found in file %s, FileCheckeR will fail job(%s)',searchString,filepath,job.fqid)
                     return self.failure
@@ -108,7 +108,7 @@ class ND280Kin_Checker(IFileChecker):
         if not ok:
             task = {'*.kin':'errors','*.root':'errors','*.txt':'errors','*.conf':'errors','stdout':'errors'}
             
-        for p in task.keys():
+        for p in list(task.keys()):
             odir = os.path.join(dest,task[p])
 
             self.files = [p]
@@ -191,11 +191,9 @@ class ND280RDP_Checker(IFileChecker):
                       'time':int(self.Time), 'read':self.EventsIn, 'written':self.EventsOut }
 
         try:
-            #print mondir, job, attributes
             logger.info("%s %s %s",str(mondir), str(job), str(attributes))
             post_status.record(mondir, job, attributes)
-        except urllib2.HTTPError, e:
-            #print "Error: The HTTP request failed. (%s)" % (str(e), )
+        except urllib.error.HTTPError as e:
             logger.error("Error: The HTTP request failed. (%s)" % (str(e), ))
             return 4
 
@@ -217,13 +215,11 @@ class ND280RDP_Checker(IFileChecker):
             self.TRIGTYPE = 'all'
             IsMC = 1
         else:
-            #print "Unknown type of data: "+self.trig
             #self.move_outs(job,ok=False)
             #return False
             raise PostProcessException("Unknown type of data: "+self.trig)
 
         if not self.site:
-            #print 'Site is not given'
             #self.move_outs(job,ok=False)
             #return False
             raise PostProcessException('Site is not given')
@@ -232,7 +228,6 @@ class ND280RDP_Checker(IFileChecker):
         self.files = ['*.log']
         filepaths = self.findFiles(job)
         if len(filepaths) != 1:
-            #print 'Something wrong with logfile(s) '+filepaths+'. CANNOT CONTINUE'
             logger.error('Something wrong with logfile(s) '+filepaths+'. CANNOT CONTINUE')
             self.move_output(job,ok=False)
             return False
@@ -245,7 +240,6 @@ class ND280RDP_Checker(IFileChecker):
         self.SUBRUN = chunks[1]
 
         if not os.path.exists(self.logf):
-            #print "Log file "+filename+" not found. Exit on error"
             logger.error("Log file "+filename+" not found. Exit on error")
             self.move_output(job,ok=False)
             return False
@@ -253,11 +247,9 @@ class ND280RDP_Checker(IFileChecker):
         # Check generator if this is a beam MC
         if IsMC == 1:
             if filename.find('oa_nt_')>=0:
-                #print "This is a NEUT MC log file"
                 logger.info("This is a NEUT MC log file")
                 IsNeut = 1
             elif filename.find('oa_gn_')>=0:
-                #print "This is a GENIE MC log file"
                 logger.info("This is a GENIE MC log file")
                 IsGenie = 1
 
@@ -265,8 +257,6 @@ class ND280RDP_Checker(IFileChecker):
             self.range = 0 # no range added to paths
 
 
-        #print "Starting to scan file "+filename
-        #print "for run %s, subrun %s, type %s" % (self.RUN,self.SUBRUN,self.trig)
         logger.info("Starting to scan file "+filename)
         logger.info("for run %s, subrun %s, type %s" % (self.RUN,self.SUBRUN,self.trig))
         
@@ -274,8 +264,6 @@ class ND280RDP_Checker(IFileChecker):
         for self.line in inlogf:
             self.line = self.line.strip('\n')
             if self.find('Midas File') and self.find('has been truncated'):
-                #print self.line
-                #print "Midas file probably missing"
                 logger.error('%s\n%s',self.line,"Midas file probably missing")
                 self.ReturnCode = -1
                 self.STAGE = "cali"
@@ -295,55 +283,45 @@ class ND280RDP_Checker(IFileChecker):
             elif self.find('Starting job for nd280MC'):
                 self.InStage = 1
                 self.STAGE = "nd280MC"
-                #print self.line
                 logger.info(self.line)
 
             elif self.find('Starting job for elecSim'):
                 self.InStage = 1
                 self.STAGE = "elecSim"
-                #print self.line
                 logger.info(self.line)
 
             elif self.find('Starting job for oaCosmicTrigger'):
                 self.InStage = 1
                 self.STAGE = "COSMICTRIG"
-                #print self.line
                 logger.info(self.line)
 
             elif self.find('Starting job for oaCalib'):
                 self.InStage = 1
                 self.STAGE = "cali"
-                #print self.line
                 logger.info(self.line)
 
             elif self.find('Starting job for oaRecon'):
                 self.InStage = 1
                 self.STAGE = "reco"
-                #print self.line
                 logger.info(self.line)
  
             elif self.find('Starting job for oaAnalysis'):
                 self.InStage = 1
                 self.STAGE = "anal"
-                #print self.line
                 logger.info(self.line)
 
             elif self.find('Starting job for '):
-                #print self.line
                 logger.info(self.line)
 
             elif self.find('Found Command event_select '):
-                #print self.line
                 logger.info(self.line)
                 chunks = self.line.split()
                 self.TRIGTYPE = chunks[5]
 
             elif self.InStage == 1:
                 if   self.find('Segmentation fault'):
-                    #print self.line
                     logger.error(self.line)
                     if self.line == '"oaCherryPicker-geo_v5mr.bat: line 7"':
-                        #print "This is an acceptable error - ignore it"
                         logger.warning("This is an acceptable error - ignore it")
                     else:
                         self.ReturnCode = -2
@@ -352,7 +330,6 @@ class ND280RDP_Checker(IFileChecker):
                         break
 
                 elif self.find('Disk quota exceeded'):
-                    #print self.line
                     logger.error(self.line)
                     self.ReturnCode = -3
                     self.InStage = 0
@@ -360,7 +337,6 @@ class ND280RDP_Checker(IFileChecker):
                     break
 
                 elif self.find(' ERROR: No database for spillnum'):
-                    #print self.line
                     logger.error(self.line)
                     self.ReturnCode = -8
                     self.InStage = 0
@@ -368,7 +344,6 @@ class ND280RDP_Checker(IFileChecker):
                     break
 
                 elif self.find(' No BSD data available'):
-                    #print self.line
                     logger.error(self.line)
                     self.ReturnCode = -8
                     self.InStage = 0
@@ -376,27 +351,22 @@ class ND280RDP_Checker(IFileChecker):
                     break
 
                 elif self.find('Disabling module '):
-                    #print "IsMC = "+str(IsMC)
                     logger.info("IsMC = "+str(IsMC))
                     if IsMC == 1:
-                        #print "After testing IsMC = "+str(IsMC)
                         logger.info("After testing IsMC = "+str(IsMC))
                         if self.find('Disabling module GRooTrackerVtx') and IsGenie:
-                            #print "Atest "+self.line
                             logger.error("Atest "+self.line)
                             self.ReturnCode = -4
                             self.InStage = 0
                             self.send_status()
                             break
                         elif self.find('Disabling module GRooTrackerVtx') and IsNeut:
-                            #print "Btest "+self.line
                             logger.error("Btest "+self.line)
                             self.ReturnCode = -4
                             self.InStage = 0
                             self.send_status()
                             break
                         elif not self.find('RooTracker'):
-                            #print "Ctest "+self.line
                             logger.error("Ctest "+self.line)
                             self.ReturnCode = -4
                             self.InStage = 0
@@ -404,7 +374,6 @@ class ND280RDP_Checker(IFileChecker):
                             break
 
                 elif self.find('probably not closed, trying to recover'):
-                    #print self.line
                     logger.error(self.line)
                     self.ReturnCode = -6
                     self.InStage = 0
@@ -412,7 +381,6 @@ class ND280RDP_Checker(IFileChecker):
                     break
 
                 elif self.find('St9bad_alloc'):
-                    #print self.line
                     logger.error(self.line)
                     self.ReturnCode = -7
                     self.InStage = 0
@@ -420,7 +388,6 @@ class ND280RDP_Checker(IFileChecker):
                     break
 
                 elif self.find('No luck connecting to GSC MySQL server'):
-                    #print self.line
                     logger.error(self.line)
                     self.ReturnCode = -9
                     self.InStage = 0
@@ -428,7 +395,6 @@ class ND280RDP_Checker(IFileChecker):
                     break
 
                 elif self.find('EProductionException'):
-                    #print self.line
                     logger.error(self.line)
                     self.ReturnCode = -11
                     self.InStage = 0
@@ -453,9 +419,8 @@ class ND280RDP_Checker(IFileChecker):
                     self.EventsOut = chunks[9]
 
                 elif self.find('Job Completed Successfully'):
-                    #print self.line
                     logger.info(self.line)
-                    nextline = inlogf.next()
+                    nextline = next(inlogf)
                     if nextline.find('Run time')>=0:
                         chunks = nextline.split()
                         Time = chunks[6]
@@ -463,7 +428,6 @@ class ND280RDP_Checker(IFileChecker):
                         self.Time = chunks[0]
                     self.ReturnCode = 1
                     if self.STAGE == 'COSMICTRIG':
-                        #print "Not sure what this stage is yet - no call to post_status"
                         logger.warning("Not sure what this stage is yet - no call to post_status")
                     else:
                         self.send_status()
@@ -471,13 +435,11 @@ class ND280RDP_Checker(IFileChecker):
                     self.InStage = 0
 
         if self.InStage == 1:
-            #print "The stage "+self.STAGE+" has not completed succesfully, Error is unknown"
             logger.error("The stage "+self.STAGE+" has not completed succesfully, Error is unknown")
             self.ReturnCode = 0
             self.send_status()
             
         inlogf.close()
-        #print "\nFinished scanning the log file. Last check return code posted is "+str(self.ReturnCode)
         logger.info("Finished scanning the log file. Last check return code posted is "+str(self.ReturnCode))
 
         self.move_output(job)
@@ -500,7 +462,7 @@ class ND280RDP_Checker(IFileChecker):
                 '*.log':'logf','*catalogue.dat':'cata','stdout':'jobOutput'}
         if self.ReturnCode != 1 or not ok:
             task = {'*.log':'errors','*.root':'errors','*catalogue.dat':'errors','stdout':'errors'}
-        for p in task.keys():
+        for p in list(task.keys()):
             odir = os.path.join(dest,task[p])
 
             self.files = [p]

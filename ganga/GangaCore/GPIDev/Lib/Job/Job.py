@@ -1078,7 +1078,7 @@ class Job(GangaObject):
         config = getConfig("File_Associations")
 
         if not os.path.exists(path):
-            if len(glob.glob(path)) is 1:
+            if len(glob.glob(path)) == 1:
                 path = glob.glob(path)[0]
 
         if os.path.exists(path):
@@ -1257,7 +1257,8 @@ class Job(GangaObject):
                 logger.debug("Job %s Calling rtHandler.prepare %s times" % (self.getFQID('.'), len(self.subjobs)))
                 logger.info("Preparing subjobs")
 
-                jobsubconfig = []
+                #Make an empty list
+                jobsubconfig = [None]*len(subjobs)
 
                 if self.parallel_submit is False:
                     jobsubconfig = [rtHandler.prepare(sub_job.application, sub_conf, appmasterconfig, jobmasterconfig) for (sub_job, sub_conf) in zip(subjobs, appsubconfig)]
@@ -1266,7 +1267,7 @@ class Job(GangaObject):
                     finished = {}
 
                     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
-                    index=0
+                    index = 0
                     for sub_j, sub_conf in zip(subjobs, appsubconfig):
                         getQueues()._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, sub_j.application, sub_conf, appmasterconfig, jobmasterconfig, finished))
                         index += 1
@@ -1275,7 +1276,7 @@ class Job(GangaObject):
                         time.sleep(0.25)
 
                     for index in finished.keys():
-                        jobsubconfig.insert(index, finished[index])
+                        jobsubconfig[index] = finished[index]
 
         else:
             #   I am a sub-job, lets calculate my config
@@ -2045,6 +2046,8 @@ class Job(GangaObject):
     def _subjobs_proxy(self):
 
         from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
+
+        subjob_slice = stripProxy(self._stored_subjobs_proxy)
         if not isType(self._stored_subjobs_proxy, JobRegistrySlice):
             subjob_slice = JobRegistrySlice('jobs(%s).subjobs' % self.id)
             self._stored_subjobs_proxy = _wrap(subjob_slice)

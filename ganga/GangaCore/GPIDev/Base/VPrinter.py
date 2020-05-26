@@ -113,7 +113,7 @@ class VPrinter(object):
                 if not node._schema.getItem(name)['hidden']:
                     visible = True
         elif self.selection == 'preparable':
-            # the following relies on the assumption that we only ever call printPrepTree on
+            # the following relies on the assumption that we only ever call printTree on
             # a preparable application.
             if node._schema.getItem(name)['preparable']:
                 if not node._schema.getItem(name)['hidden']:

@@ -105,7 +105,7 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
         makedirs(full_path)
 
     #First guess a suitable platform for checking out the application
-    verStat, verOut, verErr = _exec_cmd('lb-sdb-query listPlatforms %s %s' % (myApp, myVer), full_path)
+    verStat, verOut, verErr = _exec_cmd('source /cvmfs/lhcb.cern.ch/lib/LbEnv && lb-sdb-query listPlatforms %s %s' % (myApp, myVer), full_path)
     if verStat != 0 or len(verOut.decode().split('\n'))==0:
         logger.error("lb-sdb-query listPlatforms %s %s failed!" % (myApp, myVer))
         raise ApplicationPrepareError(verErr)
@@ -113,7 +113,7 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
     platformToUse = verOut.decode().split('\n')[-2]
 
     if not path.exists(full_path + '/' + myApp + 'Dev_' +myVer):
-        devStat, devOut, devErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && lb-dev %s/%s' % (platformToUse, platformToUse, myApp, myVer), full_path)
+        devStat, devOut, devErr = _exec_cmd('source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && lb-dev %s/%s' % (platformToUse, myApp, myVer), full_path)
         logger.info("Running lb-dev %s %s with platform %s" % (myApp, myVer, platformToUse))
         if devStat != 0:
             logger.error("lb-dev %s %s failed!" % (myApp, myVer))
@@ -123,13 +123,13 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
     dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
     logger.info("Set up App Env at: %s" % dev_dir)
     if myUse:
-        lbUse, lbUseOut, lbUseErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && git lb-use %s' % (platformToUse, platformToUse, myUse), dev_dir)
+        lbUse, lbUseOut, lbUseErr = _exec_cmd('source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && git lb-use %s' % (platformToUse, myUse), dev_dir)
         logger.info("Running git lb-use %s" % myUse)
         if lbUse != 0:
             logger.error("git lb-use %s failed!" % myUse)
             raise ApplicationPrepareError(lbUseErr)
         if myFolder:
-            chk, chkOut, chkErr = _exec_cmd('export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && git lb-checkout %s/%s %s' % (platformToUse, platformToUse, myUse, myBranch, myFolder), dev_dir)
+            chk, chkOut, chkErr = _exec_cmd('source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && git lb-checkout %s/%s %s' % (platformToUse, myUse, myBranch, myFolder), dev_dir)
             logger.info("Running git lb-checkout %s/%s %s" % (myUse,myBranch, myFolder))
             if chk != 0:
                 logger.error("git lb-checkout %s/%s %s failed!" % (myUse, myBranch, myFolder))
@@ -164,8 +164,8 @@ def _exec_cmd(cmd, cwdir):
             cmd (str): This is the full command which is to be executed
             cwdir (str): The folder the command is to be run in
     """
-    pipe = subprocess.Popen(cmd, shell=True, env=None, cwd=cwdir,
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    pipe = subprocess.Popen(cmd, shell=True, env={}, cwd=cwdir,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
     stdout, stderr = pipe.communicate()
     while pipe.poll() is None:
         time.sleep(0.5)

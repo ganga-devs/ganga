@@ -28,25 +28,25 @@ class PythonOptsCmakeParser(object):
 
         logger.info("Started parsing input Data file")
 
-        tmp_pkl = tempfile.NamedTemporaryFile(suffix='.pkl')
-        tmp_py = tempfile.NamedTemporaryFile(suffix='.py')
-        py_opts = tempfile.NamedTemporaryFile(suffix='.py')
+        tmp_pkl = tempfile.NamedTemporaryFile(suffix='.pkl', mode = "rb+")
+        tmp_py = tempfile.NamedTemporaryFile(suffix='.py', mode = "rb+")
+        py_opts = tempfile.NamedTemporaryFile(suffix='.py', mode = "w")
         py_opts.write(self._join_opts_files())
         py_opts.flush()
-
-        gaudirun = 'gaudirun.py -n -v -o %s %s' % (tmp_py.name, py_opts.name)
+        gaudirun = './run gaudirun.py -n -v -o %s %s' % (tmp_py.name, py_opts.name)
         opts_str = ''
         err_msg = ''
         options = {}
 
         rc, stdout, m = self.app.execCmd(gaudirun)
 
-        if stdout.find('Gaudi.py') >= 0:
+    
+        if stdout.decode().find('Gaudi.py') >= 0:
             msg = 'The version of gaudirun.py required for your application is not supported.'
             raise ValueError(None, msg)
 
-        elif stdout.find('no such option: -o') >= 0:
-            gaudirun = 'gaudirun.py -n -v -p %s %s' % (tmp_pkl.name, py_opts.name)
+        elif stdout.decode().find('no such option: -o') >= 0:
+            gaudirun = './run gaudirun.py -n -v -p %s %s' % (tmp_pkl.name, py_opts.name)
             rc, stdout, m = self.app.execCmd(gaudirun)
             rc = 0
 
@@ -56,7 +56,7 @@ class PythonOptsCmakeParser(object):
                 err_msg += ' returns valid python syntax'
 
         else:
-            cmd = 'gaudirun.py -n -p %s %s' % (tmp_pkl.name, py_opts.name)
+            cmd = './run gaudirun.py -n -p %s %s' % (tmp_pkl.name, py_opts.name)
             rc, stdout, m = self.app.execCmd(cmd)
             if rc == 0 and stdout:
                 opts_str = tmp_py.read()

@@ -12,6 +12,9 @@ from GangaCore.GPIDev.Base.Proxy import getName
 
 from collections import namedtuple
 
+timeout = getConfig('Queues')['ShutDownTimeout']
+timeout = 0.1 if timeout==None else timeout
+
 logger = getLogger()
 QueueElement = namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
 CommandInput = namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
@@ -82,9 +85,9 @@ class WorkerThreadPool(object):
         # easier to unit test this way though with a dummy thread.
         while not thread.should_stop():
             try:
-                item = self.__queue.get(True, 0.05)
+                item = self.__queue.get(True,timeout)
             except queue.Empty:
-                # wait 0.05 sec then loop again to give shutdown a chance
+                # wait 'timeout' sec then loop again to give shutdown a chance
                 continue
 
             # regster as a working thread
@@ -172,7 +175,7 @@ class WorkerThreadPool(object):
                      fallback_func=None, fallback_args=(), fallback_kwargs={},
                      name=None):
 
-        if not isinstance(function, collections.Callable):
+        if not isinstance(function, collections.abc.Callable):
             logger.error('Only a python callable object may be added to the queue using the add_function() method')
             return
         if self.isfrozen() is True:
@@ -210,7 +213,7 @@ class WorkerThreadPool(object):
                                       ))
 
     def map(self, function, *iterables):
-        if not isinstance(function, collections.Callable):
+        if not isinstance(function, collections.abc.Callable):
             raise GangaTypeError('must be a function')
         if self.isfrozen() is True:
             logger.error("Cannot map a Function as Queue is frozen!")

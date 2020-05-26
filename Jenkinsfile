@@ -13,10 +13,14 @@ pipeline {
     stage('Build Package Images') {
       parallel {
         stage('GangaDirac') {
+          environment {
+            DIRAC_VERSION=sh(script: 'curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[6]r.*[^\\]]" | grep -m1 -v -e "pre"', , returnStdout: true).trim()
+          }
           steps {
             withCredentials([file(credentialsId: 'GangaRobotUsercert', variable: 'X509_USER_CERT'),
                              file(credentialsId: 'GangaRobotUserkey', variable: 'X509_USER_KEY')]) {
-              sh label: "Docker build", script: "DOCKER_BUILDKIT=1 docker build -t gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} --build-arg VO=gridpp --build-arg BRANCH_NAME=${env.BRANCH_NAME} --build-arg BUILD_ID=${env.BUILD_ID} --secret id=usercert,src=$X509_USER_CERT --secret id=userkey,src=$X509_USER_KEY -f ${env.WORKSPACE}/ganga/GangaDirac/test/Dockerfile ."
+              sh label: "Wait to let GancaCore container register", script: "sleep 120"
+              sh label: "Docker build", script: "DOCKER_BUILDKIT=1 docker build -t gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} --build-arg VO=gridpp --build-arg BRANCH_NAME=${env.BRANCH_NAME} --build-arg BUILD_ID=${env.BUILD_ID} --build-arg DIRAC_VERSION=${env.DIRAC_VERSION} --secret id=usercert,src=$X509_USER_CERT --secret id=userkey,src=$X509_USER_KEY -f ${env.WORKSPACE}/ganga/GangaDirac/test/Dockerfile ."
             }
           }
         }
@@ -71,6 +75,20 @@ pipeline {
             }
           }
         }
+        stage('GangaGUI') {
+          steps {
+            sh label: "Docker run", script: "docker run --name GangaGUI${env.BRANCH_NAME}-${env.BUILD_ID} gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID} /ganga/venv/bin/pytest --cov-report term --cov-report xml:cov-GangaGUI.xml --cov ganga/GangaGUI/test --junitxml tests-GangaGUI.xml /ganga/ganga/GangaGUI/test  || true"
+            sh label: "Extract test results", script: "docker cp GangaGUI${env.BRANCH_NAME}-${env.BUILD_ID}:/ganga/tests-GangaGUI.xml ."
+            sh label: "Extract coverage results", script: "docker cp GangaGUI${env.BRANCH_NAME}-${env.BUILD_ID}:/ganga/cov-GangaGUI.xml . || true"
+          }
+          post {
+            always {
+              sh label: "Force remove container", script: "docker rm --force GangaGUI${env.BRANCH_NAME}-${env.BUILD_ID} || true"
+              junit "**/tests-GangaGUI.xml"
+            }
+          }
+        }
+
       } // end parallel
     }
   }

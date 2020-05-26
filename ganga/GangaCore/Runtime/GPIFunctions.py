@@ -1,3 +1,6 @@
+import runpy
+from GangaCore.GPI import *
+
 
 def license():
     'Print the full license (GPL)'
@@ -93,3 +96,20 @@ def convert_merger_to_postprocessor(j):
         mp.process_objects.append(stripProxy(j).merger)
         stripProxy(j).postprocessors = mp
 
+def runfile(path_to_file):
+    """
+    A wrapper for the runpy.run_path() function.
+    Usage:
+    Ganga In[]: runfile('myfile.py')
+    Note: If you want to run a file which includes something like:
+
+    j = Job()
+    j.submit()
+
+    then you have to run the function with init_globals=globals() in the Ganga interpreter like this
+
+     Ganga In[]: runfile('myfile.py')
+    """
+    if not isinstance(path_to_file, str):
+        raise ValueError("path_to_file must be a string containing the path to the file to be executed. ")
+    runpy.run_path(path_to_file, init_globals=globals())

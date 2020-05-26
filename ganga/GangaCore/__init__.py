@@ -28,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '8.0.1'
+_gangaVersion = '8.3.1'
 _development = True
 
 # store a path to Ganga libraries
@@ -169,6 +169,7 @@ makeConfig("Shell", "configuration parameters for internal Shell utility.")
 # Queues
 queues_config = makeConfig("Queues", "configuration section for the queues")
 queues_config.addOption('Timeout', None, 'default timeout for queue generated processes')
+queues_config.addOption('ShutDownTimeout', 0.1, 'timeout before looping again over queue to give shutdown a chance')
 queues_config.addOption('NumWorkerThreads', 5, 'default number of worker threads in the queues system')
 
 # ------------------------------------------------
@@ -237,6 +238,7 @@ poll_config.addOption('autoCheckCredentials', True, 'Check credentials using the
 # Feedback
 feedback_config = makeConfig('Feedback', 'Settings for the Feedback plugin. Cannot be changed during the interactive Ganga session.')
 feedback_config.addOption('uploadServer', 'http://gangamon.cern.ch/django/errorreports', 'The server to connect to')
+#feedback_config.addOption('uploadServer', 'http://ec2-52-14-218-28.us-east-2.compute.amazonaws.com/server/', 'The server to connect to')
 
 # ------------------------------------------------
 # Associations
@@ -837,7 +839,7 @@ sharedFileBackendPost = {'LSF': 'WN',
 output_config.addOption('SharedFile',
                        {'fileExtensions': [''],
                         'backendPostprocess': sharedFileBackendPost,
-                        'uploadOptions': {'path': None, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
+                        'uploadOptions': {'path': '~', 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
                         'defaultProtocol': 'file://'},
                         docstr_Ext % ('Shared Storage', 'SharedFS'))
 

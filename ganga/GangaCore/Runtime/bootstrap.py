@@ -154,9 +154,10 @@ def manualExportToGPI(my_interface=None):
     exportToInterface(my_interface, 'ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
     exportToInterface(my_interface, 'JobError', JobError, 'Exceptions')
 
-    from GangaCore.Runtime.GPIFunctions import license, typename, categoryname, plugins, convert_merger_to_postprocessor
+    from GangaCore.Runtime.GPIFunctions import license, typename, categoryname, plugins, convert_merger_to_postprocessor, runfile
 
     exportToInterface(my_interface, 'license', license, 'Functions')
+    exportToInterface(my_interface, 'runfile', runfile, 'Functions')
     # FIXME:
     #from GangaCore.Runtime.GPIFunctions import applications, backends, list_plugins
     #exportToInterface(my_interface, 'applications', applications, 'Functions)
@@ -728,7 +729,7 @@ under certain conditions; type license() for details.
                 gangaver = _versionsort(new_version_format_to_old(_gangaVersion).lstrip('Ganga-'))  # Site config system expects x-y-z version encoding
                 for d in dirlist:
                     vsort = _versionsort(d)
-                    if vsort and ((vsort <= gangaver) or (gangaver is 'SVN')):
+                    if vsort and ((vsort <= gangaver) or (gangaver == 'SVN')):
                         select = os.path.join(this_dir, d)
                         config_files.append(_createpath(select))
                         break
@@ -1010,8 +1011,8 @@ under certain conditions; type license() for details.
         logger.debug("Entering run")
 
         if self.options.webgui == True:
-            from GangaCore.Runtime.http_server import start_server
-            start_server()
+            from GangaGUI.start import start_gui
+            start_gui()
 
         if local_ns is None:
             import __main__
@@ -1039,9 +1040,8 @@ under certain conditions; type license() for details.
             # so we have only one possibility to insert python code :
             # using explicitly '\n' and '\t' chars
 #FIXME: Waiting for new site config to update print to python3
-#            code = config['StartupGPI'].replace(
-#                '\\t', '\t').replace('\\n', '\n')
-            code = r"print('\n === Welcome to Ganga on CVMFS. In case of problems contact lhcb-distributed-analysis@cern.ch === ')"
+            code = config['StartupGPI'].replace(
+                '\\t', '\t').replace('\\n', '\n')
             exec(code, local_ns)
 
         logger.debug("loaded .ganga.py")

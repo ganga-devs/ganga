@@ -1,3 +1,4 @@
+import json
 import os
 import os.path
 import re
@@ -5,7 +6,6 @@ import datetime
 from os.path import exists, isdir, realpath, isfile, islink
 from os import pathsep, listdir, environ, fdopen
 import subprocess
-import tempfile
 import GangaCore.Utility.logging
 import GangaCore.Utility.Config
 from optparse import OptionParser, OptionValueError
@@ -14,12 +14,31 @@ from GangaCore.Utility.Config.Config import _after_bootstrap
 from GangaCore.Utility.logging import getLogger
 
 from GangaCore.Runtime.GPIexport import exportToGPI
-
+from GangaCore.Utility.execute import execute
 from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
 
 logger = getLogger()
+
+def guessPlatform():
+    defaultPlatform = 'x86_64-centos7-gcc8-opt'
+    cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &> /dev/null && python3 -c "import json, os; print(json.dumps(dict(os.environ.copy())))"'
+    env = execute(cmd)
+    if isinstance(env, str):
+        try:
+            env = json.loads(env)
+        except Exception:
+            logger.debug("Unable to extract platform - using default platform: %s" % defaultPlatform)
+            return defaultPlatform
+    if 'CMTCONFIG' in env.keys():
+        defaultPlatform = env['CMTCONFIG']
+        logger.debug("Setting the default application platform to %s" % defaultPlatform)
+    else:
+        logger.debug("Unable to extract platform - using default platform: %s" % defaultPlatform)
+
+    return defaultPlatform
+
 
 if not _after_bootstrap:
     configLHCb = GangaCore.Utility.Config.makeConfig('LHCb', 'Parameters for LHCb')
@@ -55,6 +74,8 @@ if not _after_bootstrap:
     defaultLHCbDirac = 'prod'
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
 
+    defaultPlatform = guessPlatform()
+    configLHCb.addOption('defaultPlatform', defaultPlatform, 'The default platform for applications to use')
 
 def _store_root_version():
     if 'ROOTSYS' in os.environ:
@@ -115,7 +136,7 @@ def postBootstrapHook():
     configDirac.setSessionValue('noInputDataBannedSites', [])
     configDirac.setSessionValue('RequireDefaultSE', False)
     configDirac.setSessionValue('proxyInitCmd', 'lhcb-proxy-init')
-    configDirac.setSessionValue('proxyInfoCmd', 'lhcb-proxy-info')
+    configDirac.setSessionValue('proxyInfoCmd', 'dirac-proxy-info')
 
     configOutput.setSessionValue('FailJobIfNoOutputMatched', 'False')
 
@@ -148,6 +169,7 @@ def updateCreds():
             credential_store[DiracProxy(group=group)]
     except KeyError:
         pass
+
 
 class gridProxy(object):
     """

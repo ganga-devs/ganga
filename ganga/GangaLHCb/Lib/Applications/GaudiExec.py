@@ -23,13 +23,15 @@ from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.files import expandfilename, fullpath
-
+from GangaCore.Utility.Config import getConfig
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 
 from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampContent, gaudiPythonWrapper
 
 logger = getLogger()
+
+configLHCb = getConfig('LHCb')
 
 def gaudiExecBuildLock(f):
     """ Method used to lock the build methods in GaudiExec so we don't run multiple builds in parallel.
@@ -152,7 +154,7 @@ class GaudiExec(IPrepareApp):
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
-        'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc62-opt', typelist=[str], doc='Platform the application was built for'),
+        'platform' :    SimpleItem(defvalue=configLHCb['defaultPlatform'], typelist=[str], doc='Platform the application was built for'),
         'autoDBtags' :  SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
@@ -244,14 +246,20 @@ class GaudiExec(IPrepareApp):
             all_opts_files = self.getOptsFiles()
             for opts_file in all_opts_files:
                 if isinstance(opts_file, LocalFile):
+                    if opts_file.namePattern == 'data.py':
+                        raise ApplicationConfigurationError("Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
                     self.copyIntoPrepDir(path.join( opts_file.localDir, path.basename(opts_file.namePattern) ))
                 elif isinstance(opts_file, DiracFile):
+                    if opts_file.namePattern == 'data.py':
+                        raise ApplicationConfigurationError("Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
                     # NB safe to put it here as should have expressly setup a path for this job by now.
                     # We cannot _not_ place this here based upon the backend.
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
                     opts_file.localDir=self.getSharedPath()
                     opts_file.get()
                 elif isinstance(opts_file, str):
+                    if 'data.py' in opts_file:
+                        raise ApplicationConfigurationError("Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
                     new_file = LocalFile(opts_file)
                     self.copyIntoPrepDir(path.join( new_file.localDir, path.basename(new_file.namePattern) ))
                     opts_file = new_file
@@ -367,51 +375,80 @@ class GaudiExec(IPrepareApp):
         Args:
             masterappconfig (unknown): This is the output from the master_configure from the parent app
         """
-        # Lets test the inputs
-        opt_file = self.getOptsFiles()
-        dir_name = self.directory
         return (None, None)
 
-    def getOptsFiles(self):
+    def getOptsFiles(self, isPrepared = False):
         """
-        This function returns a sanitized absolute path to the self.options file from user input
+        This function returns a sanitized absolute path to the self.options file from user input.
+        If the app has previously been prepared as denoted by isPrepared then point to the sharedir
         """
-        for this_opt in self.options:
-            
-            if isinstance(this_opt, str):
-                #If it is a string then assume it is a local file.
-                if not path.exists(this_opt):
-                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % this_opt)
-                new_opt = LocalFile(this_opt)
-                this_opt = new_opt
-            if isinstance(this_opt, LocalFile):
-                ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
-                full_path = path.join(this_opt.localDir, this_opt.namePattern)
-                if not path.exists(full_path):
-                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
-            elif isinstance(this_opt, DiracFile):
-                pass
+
+        if isPrepared:
+            new_opts = []
+            share_path = self.is_prepared.path()
+            for this_opt in self.options:
+                if isinstance(this_opt, str):
+                    loc = path.join(share_path, path.basename(this_opt))
+                    if not path.exists(loc):
+                        raise ApplicationConfigurationError("Application previously configure but option file %s not found in the sharedir. Unprepare and resubmit." % path.basename(this_opt))
+                    new_opts.append(LocalFile(loc))
+                elif isinstance(this_opt, LocalFile):
+                    loc = path.join(share_path, this_opt.namePattern)
+                    if not path.exists(loc):
+                        raise ApplicationConfigurationError("Application previously configure but option file %s not found in the sharedir. Unprepare and resubmit." % this_opt.namePattern)
+                    new_opts.append(LocalFile(loc))
+                elif isinstance(this_opt, DiracFile):
+                    new_opts.append(this_opt)
+                else:
+                    logger.error("opts: %s" % self.options)
+                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+            if new_opts or self.extraOpts:
+                return new_opts
             else:
-                logger.error("opts: %s" % self.options)
-                raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
-
-        if self.options or self.extraOpts:
-            return self.options
+                raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
         else:
-            raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
+            for this_opt in self.options:        
+                if isinstance(this_opt, str):
+                    #If it is a string then assume it is a local file.
+                    if not path.exists(this_opt):
+                        raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % this_opt)
+                    new_opt = LocalFile(this_opt)
+                    this_opt = new_opt
+                if isinstance(this_opt, LocalFile):
+                    ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
+                    full_path = path.join(this_opt.localDir, this_opt.namePattern)
+                    if not path.exists(full_path):
+                        raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
+                elif isinstance(this_opt, DiracFile):
+                    pass
+                else:
+                    logger.error("opts: %s" % self.options)
+                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
 
-    def getEnvScript(self):
+            if self.options or self.extraOpts:
+                return self.options
+            else:
+                raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
+
+    def getEnvScript(self, isLbEnv):
         """
         Return the script which wraps the running command in a correct environment
         """
-        return 'export CMTCONFIG=%s; source LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+        if isLbEnv:
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
+        else:
+            return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
 
-    def getWNEnvScript(self):
+    def getWNEnvScript(self, isLbEnv):
         """
         Return the script to setup the correct env on a WN
         """
-        return 'export CMTCONFIG=%s; source $LHCb_release_area/LBSCRIPTS/prod/InstallArea/scripts/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+        if isLbEnv:
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
+        else:
+            return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+
 
     def execCmd(self, cmd):
         """
@@ -431,13 +468,17 @@ class GaudiExec(IPrepareApp):
         if not path.isdir(self.directory):
             raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
+        #Check if this was checked out with LbEnv or not
+        isLbEnv = False
+        with open(self.directory+'/Makefile', "r") as makefile:
+            if 'LbEnv' in makefile.read():
+                isLbEnv = True
+
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False, mode = "w")
-        if not cmd.startswith('./run '):
-            cmd = './run ' + cmd
 
         cmd_file.write("#!/bin/bash")
         cmd_file.write("\n")
-        cmd_file.write(self.getEnvScript())
+        cmd_file.write(self.getEnvScript(isLbEnv))
         cmd_file.write(cmd)
         cmd_file.flush()
         cmd_file.close()
@@ -450,7 +491,9 @@ class GaudiExec(IPrepareApp):
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
         if not path.isfile(path.join(self.directory, 'build.%s' %self.platform, 'run')):
-            initialCommand = 'export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
+            initialCommand = 'export CMTCONFIG=%s && source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
+            if isLbEnv:
+                initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && make' % (self.platform)
             rc, stdout, stderr = _exec_cmd(initialCommand, self.directory)
             if rc != 0:
                 logger.error("Failed to perform initial make on a Cmake based project")
@@ -461,11 +504,11 @@ class GaudiExec(IPrepareApp):
                 rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
         else:
             rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
-
         if rc != 0:
             logger.error("Failed to execute command: %s" % cmd_file.name)
             logger.error("Tried to execute command in: %s" % self.directory)
-            logger.error("StdErr: %s" % str(stdout))
+            logger.error("StdErr: %s" % str(stderr.decode()))
+            logger.error("StdOut: %s" % str(stdout.decode()))
             raise GangaException("Failed to Execute command")
 
         unlink(cmd_file.name)

@@ -35,8 +35,8 @@ def diracAPI(cmd, timeout=60, cred_req=None):
 
     # this will return the status of job 66
     # note a Dirac() object is already provided set up as \'dirac\'
-    diracAPI(\'print Dirac().status([66])\')
-    diracAPI(\'print dirac.status([66])\')
+    diracAPI(\'print(Dirac().getJobStatus([66]))\')
+    diracAPI(\'print(dirac.getJobStatus([66]))\')
 
     # or can achieve the same using command defined and included from
     # getConfig('DIRAC')['DiracCommandFiles']

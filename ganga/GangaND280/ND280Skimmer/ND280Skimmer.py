@@ -12,15 +12,18 @@ from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
 from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
 
 from GangaCore.GPIDev.Lib.File import *
 from GangaCore.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from GangaCore.GPIDev.Base.Proxy import isType
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 
+logger = getLogger()
+
 from os.path import isfile
 
-import os, shutil, commands, re, time
+import os, shutil, re, time
 from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
@@ -102,7 +105,7 @@ class ND280RecoSkimmer(IPrepareApp):
               continue
             row = line.split(",")
             if len(row) < 3:
-              print "Ignoring badly-formatted line:", ",".join(row)
+              logger.info("Ignoring badly-formatted line:", ",".join(row))
               continue
 
             r_sr = "%(run)08d-%(subrun)04d" % { "run" : int(row[0]), "subrun" : int(row[1]) }

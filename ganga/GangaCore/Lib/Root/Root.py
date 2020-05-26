@@ -500,7 +500,7 @@ def downloadWrapper(app):
                 arglist.append('\\\'' + arg + '\\\'')
             else:
                 arglist.append(arg)
-        rootarg = '\(\"' + string.join([str(s) for s in arglist], ',') + '\"\)'
+        rootarg = r'\(\"' + ','.join([str(s) for s in arglist]) + r'\"\)'
 
         # use root
         commandline = 'root.exe -b -q ' + scriptPath + rootarg + ''

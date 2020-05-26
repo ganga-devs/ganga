@@ -13,10 +13,10 @@ import os
 logger = getLogger()
 
 class ND280Unit_CSVEvtList(IUnit):
-   _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
+   _schema = Schema(Version(1,0), dict(list(IUnit._schema.datadict.items()) + list({
       'subpartid' : SimpleItem(defvalue=-1,typelist=['int'],doc='Index of this unit which is important when the original CSV file was split by the transform. Otherwise leave it at -1'),
       'eventswanted' : SimpleItem(defvalue='',typelist=['str','list'],doc='CSV list of run, subrun, and event numbers wanted.'),
-    }.items()))
+    }.items())))
 
    _category = 'units'
    _name = 'ND280Unit_CSVEvtList'

@@ -259,13 +259,9 @@ class IBackend(GangaObject):
                 map(lambda f: f.name, sharedir_files))
             return inputsandbox
 
-        tmpDir = None
-        files = []
-        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and\
-                isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
-            (fileNames, tmpDir) = getInputFilesPatterns(job)
-            files = map(lambda f: File(f), fileNames)
-        else:
+        (fileNames, tmpDir) = getInputFilesPatterns(job)
+        files = map(lambda f: File(f), fileNames)
+        if not fileNames:
             # RTHandler is not required to produce masterjobconfig, in that
             # case just use the inputsandbox
             files = job.inputsandbox
