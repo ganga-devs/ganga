@@ -13,6 +13,30 @@ from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 logger = getLogger()
 
 
+def to_file(j, fobj=None):
+    """Convert JobObject and write to fileobject
+    """
+    try:
+        json_content = JsonDumper().parse(j)
+        json.dump(json_content, fobj)
+    except Exception as err:
+        logger.error("Json to-file error for file:\n%s" % (err))
+        raise JsonFileError(err, "to-file error")
+
+
+def from_file(f):
+    """Load JobObject from a json filestream
+    """
+    try:
+        json_content = json.load(f)
+        loader = JsonLoader()
+        obj, error = loader.parse_static(json_content)
+        return obj, error
+    except Exception as err:
+        logger.error("Json from-file error for file:\n%s" % err)
+        raise JsonFileError(err, "from-file error")        
+
+
 class EmptyGangaObject(GangaObject):
 
     """Empty Ganga Object. Is used to construct incomplete jobs"""
@@ -41,32 +65,6 @@ class JsonFileError(GangaException):
         return "JsonFileError: %s %s" % (self.message, err)
 
 
-def to_file(j, fobj=None):
-    """Convert JobObject and write to fileobject
-    """
-    try:
-        json_content = JsonDumper().parse(j)
-        json.dump(json_content, fobj)
-    except Exception as err:
-        logger.error("Json to-file error for file:\n%s" % (err))
-        raise JsonFileError(err, "to-file error")
-
-
-
-def from_file(f):
-    """Load JobObject from a json filestream
-    """
-    try:
-        json_content = json.load(f)
-        loader = JsonLoader()
-        obj, error = loader.parse_static(json_content)
-        return obj, error
-    except Exception as err:
-        logger.error("Json from-file error for file:\n%s" % err)
-        raise JsonFileError(err, "from-file error")        
-
-
-# TODO: Add error handling and logging for the recursion operations 
 class JsonDumper:
     """Will dump the Job in a JSON file
     """
@@ -101,9 +99,6 @@ class JsonDumper:
                 node_info[attr_name] = list(value)        
             elif isinstance(value, GangaObject):
                 node_info[attr_name] = JsonDumper.object_to_json(attr_name, getattr(node, attr_name))
-            # ForReview : We could use pickle to save the datetime
-            # Reasoning: This method was added to convert the datetime to string before 
-            # saving on disk, in the xml implementation it was saved natively as a datetime.datetime object                
             elif isinstance(value, dict) and attr_name == "timestamps":
                 for time_stamp, dtime in value.items():
                     value[time_stamp] = dtime.strftime("%Y-%m-%d %H:%M:%S")
@@ -156,17 +151,16 @@ class JsonLoader:
             self.json_content['category'], self.json_content['name']
         ).getNew()
 
-        # FIXME: Use something better than the below
+        # FIXME: Use a better approach to filter the metadata keys
         for key in (set(self.json_content.keys()) - set(['category', 'name', 'version'])):
             if isinstance(self.json_content[key], dict):
-                self.obj = self.load_complex_object(self.obj, key, self.json_content[key])
+                self.obj = self.load_component_object(self.obj, key, self.json_content[key])
             else:
                 self.obj = self.load_simple_object(self.obj, key, self.json_content[key])
 
         return self.obj, self.errors
 
     @staticmethod
-    # TODO: 
     def parse_static(json_content):
         """This implementation is backwards compatible to the way things are currently in VStreamre
         """
@@ -180,7 +174,7 @@ class JsonLoader:
         # FIXME: Use a better approach to filter the metadata keys
         for key in (set(json_content.keys()) - set(['category', 'name', 'version'])):
             if isinstance(json_content[key], dict):
-                obj = JsonLoader.load_complex_object(obj, key, json_content[key])
+                obj = JsonLoader.load_component_object(obj, key, json_content[key])
             else:
                 obj = JsonLoader.load_simple_object(obj, key, json_content[key])
 
@@ -189,8 +183,8 @@ class JsonLoader:
 
 
     @staticmethod
-    def load_complex_object(master_obj, name, part_attr):
-        """Loading Complex objects that will be attached to the main object
+    def load_component_object(master_obj, name, part_attr):
+        """Loading component objects that will be attached to the main object
         """
         # The "category" field is required by the function and thus is still in use
         # MaybeTODO:
@@ -200,7 +194,7 @@ class JsonLoader:
             print(e)
             component_obj = EmptyGangaObject()
 
-        # Assigning the complex object its attributes
+        # Assigning the component object its attributes
         for attr, item in component_obj._schema.allItems():
             # if value is in `part_attr` assign, else it already has the default value
             if attr in part_attr:
@@ -217,9 +211,7 @@ class JsonLoader:
         """Attaching a simple attribute to the ganga object
         """
         try:
-            master_obj.setSchemaAttribute(
-                name, value
-            )
+            master_obj.setSchemaAttribute(name, value)
         except:
             raise GangaException(
                 "ERROR in loading XML, failed to set attribute %s for class %s" % (name, type(master_obj)))
