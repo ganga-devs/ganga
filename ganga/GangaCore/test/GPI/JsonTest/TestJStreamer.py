@@ -50,6 +50,10 @@ class TestJobToFile(GangaUnitTest):
                     print("Skipping the component object")
 
 
+        # removing the file after use
+        os.remove(filename)
+
+
     # This test assumes the file created by the above test still exists
     # FIXME: Add a cleaner function to remove created files like: "test_job.job"
     def test_job_from_file(self):
@@ -57,9 +61,16 @@ class TestJobToFile(GangaUnitTest):
         import json
         from GangaCore.GPI import Job
         from GangaCore.GPIDev.Base import GangaObject
-        from GangaCore.Core.GangaRepository.JStreamer import from_file
+        from GangaCore.Core.GangaRepository.JStreamer import from_file, to_file
         from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 
+        j = Job()
+        stripped_j = stripProxy(j)
+        filename = "test_job.json"
+        fobj = open(filename, "w")
+        to_file(j=stripped_j, fobj=fobj)
+
+        # creating the job_json for testing the loading 
 
         # Check if the created file by to_file exists
         filename = "test_job.json"
@@ -70,6 +81,8 @@ class TestJobToFile(GangaUnitTest):
 
         proxy_j = addProxy(j)
 
-        # Assert post-submission job information
-        self.assertIn(j.status, ['new'])  
-        self.assertEqual(len(j.subjobs), 0)
+        # Assert if loaded job is the same as the job used to create the json
+        self.assertEqual(proxy_j, stripped_j)
+
+        # removing the file
+        os.remove(filename)
