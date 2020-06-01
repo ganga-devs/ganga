@@ -54,4 +54,6 @@ class TestGangaGUITokenAuthentication(GangaUnitTest):
 
     def tearDown(self):
         super(TestGangaGUITokenAuthentication, self).tearDown()
+        db.session.remove()
+        db.drop_all()
         os.remove(os.path.join(currentdir, "gui_test.sqlite"))
