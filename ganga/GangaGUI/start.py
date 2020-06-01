@@ -104,5 +104,12 @@ def stop_gui():
 
 
 # Use this for starting the server for development purposes
+# Development user="GangaGUIAdmin" password="GangaGUIAdmin"
 if __name__ == "__main__":
+    db.create_all()
+    user = User(public_id=str(uuid.uuid4()), user="GangaGUIAdmin", role="Admin")
+    user.store_password_hash("GangaGUIAdmin")
+    db.session.add(user)
+    db.session.commit()
+    app.logger.warning("Development server running with debugger active. user='GangaGUIAdmin' password='GangaGUIAdmin'")
     app.run(debug=True)
