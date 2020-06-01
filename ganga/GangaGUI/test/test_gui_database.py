@@ -35,4 +35,6 @@ class TestGangaGUIDatabase(GangaUnitTest):
 
     def tearDown(self):
         super(TestGangaGUIDatabase, self).tearDown()
+        db.session.remove()
+        db.drop_all()
         os.remove(os.path.join(currentdir, "gui_test.sqlite"))
