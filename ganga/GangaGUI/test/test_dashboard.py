@@ -13,8 +13,3 @@ class TestGangaGUIDashboard(GangaUnitTest):
     def test_dashboard(self):
         res = self.app.get("/")
         assert b"Hello GangaGUI" in res.data
-
-
-
-        
-
