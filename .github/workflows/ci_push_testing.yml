@@ -3,7 +3,7 @@ name: CI Push Testing
 on: [push]
 
 jobs:
-  unit tests:
+  unit:
 
     runs-on: ubuntu-latest
     strategy:
