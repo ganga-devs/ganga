@@ -23,7 +23,9 @@ class GUIServerThread(GangaThread):
 
     def run(self):
         try:
-            logger.info("Starting GUI Server on {}:{}".format(self.host, self.port))
+            logger.info("You can now access the GUI at http://{}:{}".format(self.host, self.port))
+            logger.info("If on a remote system you may need to set up port forwarding to reach the web server. This "
+                        "can be done with 'ssh -D {} <remote-ip>' from a terminal.".format(self.port)) 
             app.run(host=self.host, port=self.port)
         except Exception as err:
             logger.error("Failed to start GUI Server: {}".format(err))
@@ -91,7 +93,7 @@ def start_gui(host: str = "localhost", port: int = 5000, password: str = None) -
     # Start server
     global gui_server
     gui_server = GUIServerThread("GangaGUI", host, port)
-    logger.info("GUI LOGIN: user='{}', password='{}'".format(user.user, password))
+    logger.info("GUI Login Details: user='{}', password='{}'".format(user.user, password))
     gui_server.start()
     return host, port, user.user, password
 
