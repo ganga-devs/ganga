@@ -21,16 +21,19 @@ jobs:
 #        python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        python3 -m pip install --user --upgrade pip setuptools wheel
-        python3 -m pip install --user --upgrade -r requirements.txt
+        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install --upgrade -r requirements.txt
     - name: Lint with flake8
       run: |
-        python3 -m pip install --user flake8
+        yum install -y python3-flake8
+        # python3 -m pip install flake8
         # stop the build if there are Python syntax errors or undefined names
         # disable for now
         flake8 . --count --exit-zero --exclude doc --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
-      run: pytest --cov-report term --cov ganga/GangaCore/test /ganga/ganga/GangaCore/test
+      run: |
+        python3 -m pip install coverage pytest pytest-cov
+        pytest --cov-report term --cov ganga/GangaCore/test /ganga/ganga/GangaCore/test
 
