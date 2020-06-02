@@ -92,7 +92,10 @@ def makeRepository(registry):
     Args:
         registry (Registry): This maps the Registry type to the correct Repository
     """
-    if registry.type in ["LocalXML", "LocalPickle"]:
+    if registry.type in ["LocalJson"]:
+        from GangaCore.Core.GangaRepository.GangaRepositoryJson import GangaRepositoryLocal
+        return GangaRepositoryLocal(registry)
+    elif registry.type in ["LocalXML", "LocalPickle"]:
         from GangaCore.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal
         return GangaRepositoryLocal(registry)
     elif registry.type in ["SQLite"]:

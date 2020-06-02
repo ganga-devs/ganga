@@ -13,7 +13,8 @@ from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 logger = getLogger()
 
 
-def to_file(j, fobj=None):
+# ignore_subs was added for backwards compatibilty
+def to_file(j, fobj=None, ignore_subs=None):
     """Convert JobObject and write to fileobject
     """
     try:
@@ -87,7 +88,7 @@ class JsonDumper:
         """
         print(name, node._schema.name)
         node_info = {
-            "name": node._schema.name,
+            "type": node._schema.name,
             "version": node._schema.version.minor,
             "category": node._schema.category
         }
@@ -101,7 +102,8 @@ class JsonDumper:
                 node_info[attr_name] = JsonDumper.object_to_json(attr_name, getattr(node, attr_name))
             elif isinstance(value, dict) and attr_name == "timestamps":
                 for time_stamp, dtime in value.items():
-                    value[time_stamp] = dtime.strftime("%Y-%m-%d %H:%M:%S")
+                    # value[time_stamp] = dtime.strftime("%Y-%m-%d %H:%M:%S")
+                    value[time_stamp] = dtime
                     node_info[attr_name] = value
             else:
                 node_info[attr_name] = getattr(node, attr_name)
@@ -148,11 +150,11 @@ class JsonLoader:
             self._read_json()
 
         self.obj = allPlugins.find(
-            self.json_content['category'], self.json_content['name']
+            self.json_content['category'], self.json_content['type']
         ).getNew()
 
         # FIXME: Use a better approach to filter the metadata keys
-        for key in (set(self.json_content.keys()) - set(['category', 'name', 'version'])):
+        for key in (set(self.json_content.keys()) - set(['category', 'type', 'version'])):
             if isinstance(self.json_content[key], dict):
                 self.obj = self.load_component_object(self.obj, key, self.json_content[key])
             else:
@@ -168,11 +170,11 @@ class JsonLoader:
         # Creating the job objects
 
         obj = allPlugins.find(
-            json_content['category'], json_content['name']
+            json_content['category'], json_content['type']
         ).getNew()
 
         # FIXME: Use a better approach to filter the metadata keys
-        for key in (set(json_content.keys()) - set(['category', 'name', 'version'])):
+        for key in (set(json_content.keys()) - set(['category', 'type', 'version'])):
             if isinstance(json_content[key], dict):
                 obj = JsonLoader.load_component_object(obj, key, json_content[key])
             else:
@@ -189,18 +191,21 @@ class JsonLoader:
         # The "category" field is required by the function and thus is still in use
         # MaybeTODO:
         try:
-            component_obj = allPlugins.find(part_attr['category'], part_attr['name']).getNew()
+            component_obj = allPlugins.find(part_attr['category'], part_attr['type']).getNew()
         except PluginManagerError as e:
             print(e)
             component_obj = EmptyGangaObject()
 
+
         # Assigning the component object its attributes
         for attr, item in component_obj._schema.allItems():
-            # if value is in `part_attr` assign, else it already has the default value
             if attr in part_attr:
-                component_obj.setSchemaAttribute(attr, part_attr[attr])
-            else:
-                component_obj.setSchemaAttribute(attr, item)
+                try:
+                    component_obj.setSchemaAttribute(attr, part_attr[attr])
+                except:
+                    raise GangaException(
+                        "ERROR in loading Json, failed to set attribute %s for class %s" % (attr, type(component_obj)))
+
 
         # Assigning the component object to the master object
         master_obj.setSchemaAttribute(name, component_obj)
@@ -214,6 +219,44 @@ class JsonLoader:
             master_obj.setSchemaAttribute(name, value)
         except:
             raise GangaException(
-                "ERROR in loading XML, failed to set attribute %s for class %s" % (name, type(master_obj)))
+                "ERROR in loading Json, failed to set attribute %s for class %s" % (name, type(master_obj)))
 
         return master_obj
+
+
+# TODO: Add more functions here
+class XmlToJsonConverter:
+    """This will ensure full backwards compatibilty. Functions for creating LocalJson repo from LocalXML and vice versa.
+    """
+    # FIXME: Better approach for conversion is to read and parse the xml, instead of calling the VStreamer functions
+    @staticmethod
+    def xml_to_json(fobj, location):
+        """Converts the xml job representation to json representation
+        """
+        from GangaCore.GPIDev.Base.Proxy import stripProxy
+        from GangaCore.Core.GangaRepository.JStreamer import to_file as json_to_file
+        from GangaCore.Core.GangaRepository.VStreamer import from_file as xml_from_file
+        
+        # loading the job from xml rep
+        job, error = xml_from_file(fobj)
+        stripped_j = stripProxy(job)
+
+        # saving the job as a json now
+        with open(location, "r") as fout:
+            json_to_file(stripped_j, fobj=fout)
+
+    @staticmethod
+    def json_to_xml(fobj, location):
+        """Converts the json job representation to xml one
+        """
+        from GangaCore.GPIDev.Base.Proxy import stripProxy
+        from GangaCore.Core.GangaRepository.VStreamer import to_file as xml_to_file
+        from GangaCore.Core.GangaRepository.JStreamer import from_file as json_from_file
+
+        # loading the job from json rep
+        job, error = json_from_file(fobj)
+        stripped_j = stripProxy(job)
+
+        # saving the job as a xml now
+        with open(location, "r") as fout:
+            xml_to_file(stripped_j, fobj=fout)

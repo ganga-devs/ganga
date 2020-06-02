@@ -23,14 +23,14 @@ def requiresAfsToken():
 
 def getLocalRoot():
     # Get the local top level directory for the Repo
-    if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
+    if config['repositorytype'] in ['LocalXML', 'LocalJson', 'LocalAMGA', 'LocalPickle', 'SQLite']:
         return os.path.join(expandfilename(config['gangadir'], True), 'repository', config['user'], config['repositorytype'])
     else:
         return ''
 
 def getLocalWorkspace():
     # Get the local top level dirtectory for the Workspace
-    if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
+    if config['repositorytype'] in ['LocalXML', 'LocalJson', 'LocalAMGA', 'LocalPickle', 'SQLite']:
         return os.path.join(expandfilename(config['gangadir'], True), 'workspace', config['user'], config['repositorytype'])
     else:
         return ''
