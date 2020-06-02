@@ -44,7 +44,7 @@ def stop_gui():
         if gui_server.shutdown():
             gui_server = None
         else:
-            raise Exception("Error in shutting down the server.")
+            raise Exception("Error in shutting down the GUI server.")
 
 
 # Use this for starting the server for development purposes
