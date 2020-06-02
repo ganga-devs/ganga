@@ -22,11 +22,10 @@ jobs:
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install --upgrade -r requirements.txt
+        python3 -m pip install -e .
     - name: Lint with flake8
       run: |
-        yum install -y python3-flake8
-        # python3 -m pip install flake8
+        python3 -m pip install flake8
         # stop the build if there are Python syntax errors or undefined names
         # disable for now
         flake8 . --count --exit-zero --exclude doc --select=E9,F63,F7,F82 --show-source --statistics
@@ -34,6 +33,6 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        python3 -m pip install coverage pytest pytest-cov
+        python3 -m pip install coverage pytest pytest-cov pytest-pylint
         pytest --cov-report term --cov ganga/GangaCore/test /ganga/ganga/GangaCore/test
 
