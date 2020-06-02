@@ -85,9 +85,8 @@ class JsonDumper:
     def object_to_json(name, node):
         """Will give the attribute information of the provided `node` object as a python dict
         """
-        print(name, node._schema.name)
         node_info = {
-            "name": node._schema.name,
+            "type": node._schema.name,
             "version": node._schema.version.minor,
             "category": node._schema.category
         }
@@ -148,11 +147,11 @@ class JsonLoader:
             self._read_json()
 
         self.obj = allPlugins.find(
-            self.json_content['category'], self.json_content['name']
+            self.json_content['category'], self.json_content['type']
         ).getNew()
 
         # FIXME: Use a better approach to filter the metadata keys
-        for key in (set(self.json_content.keys()) - set(['category', 'name', 'version'])):
+        for key in (set(self.json_content.keys()) - set(['category', 'type', 'version'])):
             if isinstance(self.json_content[key], dict):
                 self.obj = self.load_component_object(self.obj, key, self.json_content[key])
             else:
@@ -168,11 +167,11 @@ class JsonLoader:
         # Creating the job objects
 
         obj = allPlugins.find(
-            json_content['category'], json_content['name']
+            json_content['category'], json_content['type']
         ).getNew()
 
         # FIXME: Use a better approach to filter the metadata keys
-        for key in (set(json_content.keys()) - set(['category', 'name', 'version'])):
+        for key in (set(json_content.keys()) - set(['category', 'type', 'version'])):
             if isinstance(json_content[key], dict):
                 obj = JsonLoader.load_component_object(obj, key, json_content[key])
             else:
@@ -189,7 +188,7 @@ class JsonLoader:
         # The "category" field is required by the function and thus is still in use
         # MaybeTODO:
         try:
-            component_obj = allPlugins.find(part_attr['category'], part_attr['name']).getNew()
+            component_obj = allPlugins.find(part_attr['category'], part_attr['type']).getNew()
         except PluginManagerError as e:
             print(e)
             component_obj = EmptyGangaObject()
