@@ -11,7 +11,7 @@ jobs:
       matrix:
         python-version: [3.6]
 
-    container: contos:7
+    container: centos:7
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python ${{ matrix.python-version }}
