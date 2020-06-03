@@ -45,12 +45,11 @@ jobs:
         python3 -m pip install -e .
         python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
     - name: Test with pytest
-      #env: # Or as an environment variable
-      #  ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
-      #  ROBOT_KEY: ${{ secrets.GangaRobot_UserKey }}
-      run: |
-        mkdir -p ~/.globus
-        echo $ROBOT_CERT > ~/.globus/usercert.pem
-        echo $ROBOT_KEY > ~/.globus/userkey.pem
-        python3 -m pytest --cov-report term --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
-
+      env: # Or as an environment variable
+        ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
+        ROBOT_KEY: ${{ secrets.GangaRobot_UserKey }}
+      run: echo Hello
+#        mkdir -p ~/.globus
+#        echo $ROBOT_CERT > ~/.globus/usercert.pem
+#        echo $ROBOT_KEY > ~/.globus/userkey.pem
+#        python3 -m pytest --cov-report term --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
