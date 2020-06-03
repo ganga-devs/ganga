@@ -29,19 +29,11 @@ jobs:
     name: GangaCore Unit
     needs: lint
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.6]
-
     container: centos:7
     steps:
     - uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3
       run: yum install -y python3
-#      uses: actions/setup-python@v1
-#      with:
-#        python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
@@ -54,34 +46,7 @@ jobs:
     name: GangaCore Integration
     needs: core-unit
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.6]
-
     container: centos:7
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python ${{ matrix.python-version }}
-      run: yum install -y python3
-    - name: Install dependencies
-      run: |
-        python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install -e .
-        python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
-    - name: Test with pytest
-      run: python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/GPI
-
-  dirac-unit:
-    name: GangaDirac unit
-    needs: lint
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        container: ["centos:7"]
-
-    container: ${{ matrix.container }}
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python 3
@@ -92,11 +57,41 @@ jobs:
         python3 -m pip install -e .
         python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
     - name: Test with pytest
+      run: python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/GPI
+
+  dirac-unit:
+    name: GangaDirac Unit
+    needs: lint
+    runs-on: ubuntu-latest
+    container: centos:7
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3
+      run: yum install -y python3
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install -e .
+        python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
+    - name: Install Robot certificate
       env: # Or as an environment variable
         ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
         ROBOT_KEY: ${{ secrets.GangaRobot_UserKey }}
       run: |
-        mkdir -p ~/.globus
+        mkdir ~/.globus
         echo $ROBOT_CERT > ~/.globus/usercert.pem
         echo $ROBOT_KEY > ~/.globus/userkey.pem
-        python3 -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
+    - name: Install DIRAC UI
+      run: |
+        mkdir ~/dirac_ui
+        cd ~/dirac_ui
+        wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
+        # add --no-check-certificate to wget if needed
+        chmod u+x dirac-install
+        ./dirac-install -r v6r22p26 -i 27 -g v14r1
+        . bashrc
+        dirac-proxy-init -x
+        dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
+        dirac-proxy-init -g gridpp_user -M
+    - name: Test with pytest
+      run: python3 -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
