@@ -1,4 +1,4 @@
-name: CI Push Testing
+name: GangaCore Testing
 
 on: [push]
 
@@ -35,4 +35,3 @@ jobs:
       run: |
         python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
         python3 -m pytest --cov-report term --cov ganga/GangaCore/test ganga/GangaCore/test
-
