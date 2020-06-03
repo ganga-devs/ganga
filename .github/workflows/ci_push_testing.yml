@@ -83,6 +83,7 @@ jobs:
         echo $ROBOT_KEY > ~/.globus/userkey.pem
     - name: Install DIRAC UI
       run: |
+        yum install -y wget
         mkdir ~/dirac_ui
         cd ~/dirac_ui
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
