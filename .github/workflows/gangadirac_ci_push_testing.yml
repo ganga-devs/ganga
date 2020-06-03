@@ -29,7 +29,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        container: [centos:7]
+        container: ["centos:7"]
 
     container: ${{ matrix.container }}
     steps:
