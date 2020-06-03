@@ -33,7 +33,10 @@ class GUIServerThread(GangaThread):
     def shutdown(self):
         res = requests.post("http://localhost:{port}/shutdown".format(port=self.port))
         logger.info("{} - Success {}, {}".format(res.status_code, res.json()["success"], res.json()["message"]))
-
+        if res.status_code == 200:
+            return True
+        return False
+        
 
 def start_gui(host: str = "localhost", port: int = 5000, password: str = None) -> tuple:
     """
@@ -102,7 +105,10 @@ def stop_gui():
     """Stop GUI Flask App on a GangaThread"""
     global gui_server
     if gui_server is not None:
-        gui_server.shutdown()
+        if gui_server.shutdown():
+            gui_server = None
+        else:
+            raise Exception("Error in shutting down the GUI server.")
 
 
 # Use this for starting the server for development purposes
