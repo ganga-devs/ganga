@@ -89,7 +89,8 @@ jobs:
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
         # add --no-check-certificate to wget if needed
         chmod u+x dirac-install
-        ./dirac-install -r v6r22p26 -i 27 -g v14r1
+        DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[6]r.*[^\\]]" | grep -m1 -v -e "pre"`
+        ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
         . bashrc
         dirac-proxy-init -x
         dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
