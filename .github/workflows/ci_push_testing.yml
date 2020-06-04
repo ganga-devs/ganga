@@ -79,8 +79,8 @@ jobs:
         ROBOT_KEY: ${{ secrets.GangaRobot_UserKey }}
       run: |
         mkdir ~/.globus
-        echo $ROBOT_CERT > ~/.globus/usercert.pem
-        echo $ROBOT_KEY > ~/.globus/userkey.pem
+        echo "$ROBOT_CERT" > ~/.globus/usercert.pem
+        echo "$ROBOT_KEY" > ~/.globus/userkey.pem
         chmod 644 ~/.globus/usercert.pem
         chmod 400 ~/.globus/userkey.pem
         ls -l ~/.globus
