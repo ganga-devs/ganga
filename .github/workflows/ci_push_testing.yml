@@ -81,6 +81,7 @@ jobs:
         mkdir ~/.globus
         echo $ROBOT_CERT > ~/.globus/usercert.pem
         echo $ROBOT_KEY > ~/.globus/userkey.pem
+        ls -l ~/.globus
     - name: Install DIRAC UI
       run: |
         yum install -y wget
@@ -91,6 +92,7 @@ jobs:
         chmod u+x dirac-install
         DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[6]r.*[^\\]]" | grep -m1 -v -e "pre"`
         ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
+        ls -l ~/.globus
         source ~/dirac_ui/bashrc
         dirac-proxy-init -x
         dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
