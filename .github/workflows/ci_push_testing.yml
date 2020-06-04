@@ -84,6 +84,7 @@ jobs:
         chmod 644 ~/.globus/usercert.pem
         chmod 400 ~/.globus/userkey.pem
         ls -l ~/.globus
+        cat ~/.globus/usercert.pem
     - name: Install DIRAC UI
       run: |
         yum install -y wget
