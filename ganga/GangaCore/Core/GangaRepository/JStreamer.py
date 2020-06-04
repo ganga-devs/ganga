@@ -86,7 +86,6 @@ class JsonDumper:
     def object_to_json(name, node):
         """Will give the attribute information of the provided `node` object as a python dict
         """
-        print(name, node._schema.name)
         node_info = {
             "type": node._schema.name,
             "version": node._schema.version.minor,
