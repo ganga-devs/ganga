@@ -195,13 +195,14 @@ class JsonLoader:
 
         # FIXME: Use a better approach to filter the metadata keys
         for key in (set(json_content.keys()) - set(['category', 'type', 'version'])):
-            if isinstance(json_content[key], dict):
+            # the candidate is a component object if it is a dict and has component identifier attributes ['category', 'type', 'version']
+            if isinstance(json_content[key], dict) and set(json_content[key].keys()).issuperset(set(['category', 'type', 'version'])):
                 obj = JsonLoader.load_component_object(obj, key, json_content[key])
             else:
                 obj = JsonLoader.load_simple_object(obj, key, json_content[key])
 
-        # return obj, errors
-        return obj, None
+        # FIXME: add error handling here, do not simply return the empty list []
+        return obj, []
 
 
     @staticmethod

@@ -8,6 +8,7 @@ from GangaCore.Utility.Plugin import PluginManagerError
 import os
 import os.path
 import time
+import json
 import errno
 import copy
 import threading
@@ -924,7 +925,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         b4=time.time()
         tmpobj, errs = self.from_file(fobj)
-        logger.debug(f"The erros found while loading {fobj} are  {errs}")
+        logger.debug(f"The erros found while loading {fobj} are  {errs} and the object is {tmpobj}")
         a4=time.time()
         logger.debug("Loading XML file for ID: %s took %s sec" % (this_id, a4-b4))
 
@@ -958,6 +959,55 @@ class GangaRepositoryLocal(GangaRepository):
         This loads the XML for the job "this_id" in self.objects using the file "fn" and knowing whether we want the file or the backup by _copy_backup
         Args:
             fn (str): This is the full XML filename for the given id
+            this_id (int): This is the key for the object in the objects dict
+            _copy_backup (bool): Should we use the backup file 'data~' (True) or the 'data' file (False)
+        """
+        fobj = None
+
+        has_loaded_backup = False
+
+        try:
+            if not os.path.isfile(fn) and _copy_backup:
+                if os.path.isfile(fn + '~'):
+                    logger.warning("XML File: %s missing, recovering from backup, recent changes may have been lost!" % fn)
+                    has_loaded_backup = True
+                    try:
+                        from shutil import copyfile
+                        copyfile(fn+'~', fn)
+                    except:
+                        logger.warning("Error Recovering the backup file! loading of Job may Fail!")
+            fobj = open(fn, "r")
+        except IOError as x:
+            if x.errno == errno.ENOENT:
+                # remove index so we do not continue working with wrong information
+                try:
+                    # remove internal representation
+                    self._internal_del__(this_id)
+                    rmrf(os.path.dirname(fn) + ".index")
+                except OSError as err:
+                    logger.debug("load unlink Error: %s" % err)
+                    pass
+                raise KeyError(this_id)
+            else:
+                raise RepositoryError(self, "IOError: %s" % x)
+        finally:
+            try:
+                if os.path.isdir(os.path.dirname(fn)):
+                    ld = os.listdir(os.path.dirname(fn))
+                    if len(ld) == 0:
+                        os.rmdir(os.path.dirname(fn))
+                        logger.warning("No job index or data found, removing empty directory: %s" % os.path.dirname(fn))
+            except Exception as err:
+                logger.debug("load error %s" % err)
+                pass
+
+        return fobj, has_loaded_backup
+
+    def _open_json_file(self, fn, this_id, _copy_backup=False):
+        """
+        This loads the json for the job "this_id" in self.objects using the file "fn" and knowing whether we want the file or the backup by _copy_backup
+        Args:
+            fn (str): This is the full json filename for the given id
             this_id (int): This is the key for the object in the objects dict
             _copy_backup (bool): Should we use the backup file 'data~' (True) or the 'data' file (False)
         """
@@ -1031,7 +1081,7 @@ class GangaRepositoryLocal(GangaRepository):
                 has_loaded_backup = False
 
             try:
-                fobj, has_loaded_backup2 = self._open_xml_file(fn, this_id, True)
+                fobj, has_loaded_backup2 = self._open_json_file(fn, this_id, True)
                 if has_loaded_backup2:
                     has_loaded_backup = has_loaded_backup2
             except Exception as err:
