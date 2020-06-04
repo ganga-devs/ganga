@@ -23,8 +23,8 @@ import GangaCore.Utility.logging
 from GangaCore.Core.GangaRepository.PickleStreamer import to_file as pickle_to_file
 from GangaCore.Core.GangaRepository.PickleStreamer import from_file as pickle_from_file
 
-from GangaCore.Core.GangaRepository.JStreamer import to_file as xml_to_file
-from GangaCore.Core.GangaRepository.JStreamer import from_file as xml_from_file
+from GangaCore.Core.GangaRepository.JStreamer import to_file as json_to_file
+from GangaCore.Core.GangaRepository.JStreamer import from_file as json_from_file
 from GangaCore.Core.GangaRepository.JStreamer import JsonFileError
 
 from GangaCore.GPIDev.Base.Objects import Node
@@ -80,7 +80,7 @@ def check_app_hash(obj):
             logger.warning('https://github.com/ganga-devs/ganga/issues/')
 
 def safe_save(fn, _obj, to_file, ignore_subs=''):
-    """Try to save the XML for this object in as safe a way as possible
+    """Try to save the Json for this object in as safe a way as possible
     Args:
         fn (str): This is the name of the file we are to save the object to
         _obj (GangaObject): This is the object which we want to save to the file
@@ -229,8 +229,8 @@ class GangaRepositoryLocal(GangaRepository):
 
         self.known_bad_ids = []
         if "Json" in self.registry.type:
-            self.to_file = xml_to_file
-            self.from_file = xml_from_file
+            self.to_file = json_to_file
+            self.from_file = json_from_file
         elif "Pickle" in self.registry.type:
             self.to_file = pickle_to_file
             self.from_file = pickle_from_file
@@ -280,7 +280,7 @@ class GangaRepositoryLocal(GangaRepository):
     def get_fn(self, this_id):
         """ Returns the file name where the data for this object id is saved
         Args:
-            this_id (int): This is the object id we want the XML filename for
+            this_id (int): This is the object id we want the Json filename for
         """
         if this_id not in self.saved_paths:
             self.saved_paths[this_id] = os.path.join(self.root, "%ixxx" % int(this_id * 0.001), "%i" % this_id, self.dataFileName)
@@ -595,7 +595,7 @@ class GangaRepositoryLocal(GangaRepository):
                     # Write out a new index if the file can be locked
                     if len(self.lock([this_id])) != 0:
                         if this_id not in self.incomplete_objects:
-                            # If object is loaded mark it dirty so next flush will regenerate XML,
+                            # If object is loaded mark it dirty so next flush will regenerate Json,
                             # otherwise just go about fixing it
                             if not self.isObjectLoaded(self.objects[this_id]):
                                 self.index_write(this_id)
@@ -693,9 +693,9 @@ class GangaRepositoryLocal(GangaRepository):
 
         return ids
 
-    def _safe_flush_xml(self, this_id):
+    def _safe_flush_json(self, this_id):
         """
-        Flush XML to disk whilst checking for relavent SubJobXMLList which handles subjobs now
+        Flush Json to disk whilst checking for relavent SubJobXMLList which handles subjobs now
         flush for "this_id" in the self.objects list
         Args:
             this_id (int): This is the id of the object we want to flush to disk
@@ -767,7 +767,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def flush(self, ids):
         """
-        flush the set of "ids" to disk and write the XML representing said objects in self.objects
+        flush the set of "ids" to disk and write the Json representing said objects in self.objects
         NB: This adds the given objects corresponding to ids to the _fully_loaded dict
         Args:
             ids (list): List of integers, used as keys to objects in the self.objects dict
@@ -782,7 +782,7 @@ class GangaRepositoryLocal(GangaRepository):
                 continue
             try:
                 logger.debug("safe_flush: %s" % this_id)
-                self._safe_flush_xml(this_id)
+                self._safe_flush_json(this_id)
 
                 self._cache_load_timestamp[this_id] = time.time()
                 self._cached_cls[this_id] = getName(self.objects[this_id])
@@ -851,21 +851,21 @@ class GangaRepositoryLocal(GangaRepository):
                 # most likely the result of another ganga
                 # process modifying the repo
 
-    def _parse_xml(self, fn, this_id, load_backup, has_children, tmpobj):
+    def _parse_json(self, fn, this_id, load_backup, has_children, tmpobj):
         """
         If we must actually load the object from disk then we end up here.
         This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
         If there are children then a SubJobXMLList is created to manage them.
         The fn of the job is passed to the SubbJobXMLList and there is some knowledge of if we should be loading the backup passed as well
         Args:
-            fn (str): This is the path to the data file for this object in the XML
+            fn (str): This is the path to the data file for this object in the Json
             this_id (int): This is the integer key of the object in the self.objects dict
-            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
+            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' Json file
             has_children (bool): This contains the result of the decision as to whether this object actually has children
             tmpobj (GangaObject): This contains the object which has been read in from the fn file
         """
 
-        # If this_id is not in the objects add the object we got from reading the XML
+        # If this_id is not in the objects add the object we got from reading the Json
         need_to_copy = True
         if this_id not in self.objects:
             self.objects[this_id] = tmpobj
@@ -912,22 +912,22 @@ class GangaRepositoryLocal(GangaRepository):
         if this_id not in self._fully_loaded:
             self._fully_loaded[this_id] = obj
 
-    def _load_xml_from_obj(self, fobj, fn, this_id, load_backup):
+    def _load_json_from_obj(self, fobj, fn, this_id, load_backup):
         """
-        This is the method which will load the job from fn using the fobj using the self.from_file method and _parse_xml is called to replace the
+        This is the method which will load the job from fn using the fobj using the self.from_file method and _parse_json is called to replace the
         self.objects[this_id] with the correct attributes. We also preseve knowledge of if we're being asked to load a backup or not
         Args:
             fobj (file handler): This is the file handler for the fn
-            fn (str): fn This is the name of the file which contains the XML data
+            fn (str): fn This is the name of the file which contains the JSon data
             this_id (int): This is the key of the object in the objects dict where the output will be stored
-            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
+            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' JSon file
         """
 
         b4=time.time()
         tmpobj, errs = self.from_file(fobj)
         logger.debug(f"The erros found while loading {fobj} are  {errs} and the object is {tmpobj}")
         a4=time.time()
-        logger.debug("Loading XML file for ID: %s took %s sec" % (this_id, a4-b4))
+        logger.debug("Loading Json file for ID: %s took %s sec" % (this_id, a4-b4))
 
         if len(errs) > 0:
             logger.error("#%s Error(s) Loading File: %s" % (len(errs), fobj.name))
@@ -943,7 +943,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         logger.debug("Found children: %s" % str(has_children))
 
-        self._parse_xml(fn, this_id, load_backup, has_children, tmpobj)
+        self._parse_json(fn, this_id, load_backup, has_children, tmpobj)
 
         if hasattr(self.objects[this_id], self.sub_split):
             sub_attr = getattr(self.objects[this_id], self.sub_split)
@@ -952,56 +952,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
 
-        logger.debug("Finished Loading XML")
-
-    def _open_xml_file(self, fn, this_id, _copy_backup=False):
-        """
-        This loads the XML for the job "this_id" in self.objects using the file "fn" and knowing whether we want the file or the backup by _copy_backup
-        Args:
-            fn (str): This is the full XML filename for the given id
-            this_id (int): This is the key for the object in the objects dict
-            _copy_backup (bool): Should we use the backup file 'data~' (True) or the 'data' file (False)
-        """
-        fobj = None
-
-        has_loaded_backup = False
-
-        try:
-            if not os.path.isfile(fn) and _copy_backup:
-                if os.path.isfile(fn + '~'):
-                    logger.warning("XML File: %s missing, recovering from backup, recent changes may have been lost!" % fn)
-                    has_loaded_backup = True
-                    try:
-                        from shutil import copyfile
-                        copyfile(fn+'~', fn)
-                    except:
-                        logger.warning("Error Recovering the backup file! loading of Job may Fail!")
-            fobj = open(fn, "r")
-        except IOError as x:
-            if x.errno == errno.ENOENT:
-                # remove index so we do not continue working with wrong information
-                try:
-                    # remove internal representation
-                    self._internal_del__(this_id)
-                    rmrf(os.path.dirname(fn) + ".index")
-                except OSError as err:
-                    logger.debug("load unlink Error: %s" % err)
-                    pass
-                raise KeyError(this_id)
-            else:
-                raise RepositoryError(self, "IOError: %s" % x)
-        finally:
-            try:
-                if os.path.isdir(os.path.dirname(fn)):
-                    ld = os.listdir(os.path.dirname(fn))
-                    if len(ld) == 0:
-                        os.rmdir(os.path.dirname(fn))
-                        logger.warning("No job index or data found, removing empty directory: %s" % os.path.dirname(fn))
-            except Exception as err:
-                logger.debug("load error %s" % err)
-                pass
-
-        return fobj, has_loaded_backup
+        logger.debug("Finished Loading Json")
 
     def _open_json_file(self, fn, this_id, _copy_backup=False):
         """
@@ -1059,7 +1010,7 @@ class GangaRepositoryLocal(GangaRepository):
         Correctly loaded objects are dirty, Objects loaded from backups for whatever reason are marked dirty
         Args:
             ids (list): The object keys which we want to iterate over from the objects dict
-            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
+            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' Json file
         """
         #print("load: %s " % ids)
         #import traceback
@@ -1085,14 +1036,14 @@ class GangaRepositoryLocal(GangaRepository):
                 if has_loaded_backup2:
                     has_loaded_backup = has_loaded_backup2
             except Exception as err:
-                logger.debug("json load: Failed to load XML file: %s" % fn)
+                logger.debug("json load: Failed to load Json file: %s" % fn)
                 logger.debug("Error was:\n%s" % err)
                 logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
                 self.incomplete_objects.append(this_id)
                 raise
 
             try:
-                self._load_xml_from_obj(fobj, fn, this_id, load_backup)
+                self._load_json_from_obj(fobj, fn, this_id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % err)
                 logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
@@ -1133,10 +1084,10 @@ class GangaRepositoryLocal(GangaRepository):
         This method does a lot of the handling of an exception thrown from the load method
         We will return True/False here, True if the error can be correctly caught and False if this is terminal and we couldn't load the object
         Args:
-            err (exception): This is the original exception loading the XML data from disk
+            err (exception): This is the original exception loading the Json data from disk
             fn (str): This is the filename which was used to load the file from disk
             this_id (int): This is the key of the object in the objects dict
-            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
+            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' Json file
         """
         if isType(err, JsonFileError):
             logger.error("json File failed to load for Job id: %s" % this_id)

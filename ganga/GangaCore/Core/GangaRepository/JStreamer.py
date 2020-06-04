@@ -3,9 +3,6 @@ import copy
 import json
 import datetime
 
-# for debugging purposes
-import sys
-
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Schema import Schema, Version
 from GangaCore.Core.exceptions import GangaException
@@ -14,6 +11,7 @@ from GangaCore.GPIDev.Base.Objects import GangaObject, ObjectMetaclass
 from GangaCore.GPIDev.Base.Proxy import addProxy, isType, stripProxy
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 
+# TODO: Use the logger often, instead of print [next-commit] 
 logger = getLogger()
 
 
@@ -21,8 +19,6 @@ logger = getLogger()
 def to_file(j, fobj=None, ignore_subs=None):
     """Convert JobObject and write to fileobject
     """
-    print("save_safe The callers information is ", sys._getframe().f_back.f_code.co_name)
-    print(type(j))
     try:
         # None implying to print the jobs information
         json_content = JsonDumper().parse(j)
@@ -38,7 +34,6 @@ def to_file(j, fobj=None, ignore_subs=None):
 def from_file(f):
     """Load JobObject from a json filestream
     """
-    print(sys._getframe(1).f_code.co_name, f)
     try:
         json_content = json.load(f)
         loader = JsonLoader()
@@ -104,41 +99,19 @@ class JsonDumper:
         }
         for attr_name, attr_object in node._schema.allItems():
             value = getattr(node, attr_name)
-            # if attr_name == "time":
-                # node_info[attr_name] = JsonDumper.handleDatetime(attr_name, getattr(node, attr_name))
             if isType(value, (list, tuple, GangaList)):
                 node_info[attr_name] = list(value)        
             elif isinstance(value, GangaObject):
                 node_info[attr_name] = JsonDumper.object_to_json(attr_name, getattr(node, attr_name))
             elif isinstance(value, dict) and attr_name == "timestamps":
                 for time_stamp, dtime in value.items():
-                    # strftim to be used only when dumping the json
-                    # when the repository is initializing the job
-                    # the datetime is stored as a str
-                    # if flush is True:
-                        # print(flush, "is true and thus changing the thing tp string")
-                    print(type(dtime), dtime)
                     if isinstance(dtime, datetime.datetime):
                         value[time_stamp] = dtime.strftime("%Y/%m/%d %H:%M:%S")
-                    # value[time_stamp] = dtime.__repr__ ()
-                    # else:
-                        # value[time_stamp] = dtime
                     node_info[attr_name] = value
             else:
                 node_info[attr_name] = getattr(node, attr_name)
         return node_info
 
-
-    # @staticmethod
-    # def dump_json(j, location=None):
-    #     """Dump the json file
-    #     """
-    #     job_json = 
-    #     if location is None:
-    #         print(job_json)
-    #     else:
-    #         with open(location, "w") as file:
-    #             json.dump(job_json, file)
 
 class JsonLoader:
     """Loads the Ganga Object from json
@@ -188,7 +161,7 @@ class JsonLoader:
         """
         # creation process starts with the creation of the JoB
         # Creating the job objects
-
+        errors = []
         obj = allPlugins.find(
             json_content['category'], json_content['type']
         ).getNew()
@@ -197,73 +170,54 @@ class JsonLoader:
         for key in (set(json_content.keys()) - set(['category', 'type', 'version'])):
             # the candidate is a component object if it is a dict and has component identifier attributes ['category', 'type', 'version']
             if isinstance(json_content[key], dict) and set(json_content[key].keys()).issuperset(set(['category', 'type', 'version'])):
-                obj = JsonLoader.load_component_object(obj, key, json_content[key])
+                obj, local_errors = JsonLoader.load_component_object(obj, key, json_content[key])
             else:
-                obj = JsonLoader.load_simple_object(obj, key, json_content[key])
+                obj, local_errors  = JsonLoader.load_simple_object(obj, key, json_content[key])
+            errors.extend(local_errors)
 
-        # FIXME: add error handling here, do not simply return the empty list []
-        return obj, []
-
+        return obj, errors
 
     @staticmethod
     def load_component_object(master_obj, name, part_attr):
         """Loading component objects that will be attached to the main object
         """
-        # The "category" field is required by the function and thus is still in use
-        # MaybeTODO:
-        dt_handler = "datetime.datetime(%Y, %m, %d, %H, %M, %S)"
-        dt_handler_sec = "datetime.datetime(%Y, %m, %d, %H, %M, %S, %f)"
+        errors = []        
         try:
             component_obj = allPlugins.find(part_attr['category'], part_attr['type']).getNew()
-        except PluginManagerError as e:
+        except PluginManagerError as e:\
+            # TODO: Maybe move this to the logger
             print(e)
+            errors.append(e)
             component_obj = EmptyGangaObject()
-
-
-        # # loading the dtime approriately
-        # if name == "time":
-        #     # replacing the datetime string with datetime object
-        #     for key, value in part_attr['timestamps'].items():
-        #         try:
-        #             part_attr['timestamps'][key] = datetime.datetime.strptime(value, dt_handler_sec)
-        #         except ValueError:
-        #             part_attr['timestamps'][key] = datetime.datetime.strptime(value, dt_handler)
-
-        #     for attr, item in component_obj._schema.allItems():
-        #         if attr in part_attr:
-        #             try:
-        #                 component_obj.setSchemaAttribute(attr, part_attr[attr])
-        #             except:
-        #                 raise GangaException(
-        #                     "ERROR in loading Json, failed to set attribute %s for class %s" % (attr, type(component_obj)))
-
-        # else:
 
         # Assigning the component object its attributes
         for attr, item in component_obj._schema.allItems():
             if attr in part_attr:
                 try:
                     component_obj.setSchemaAttribute(attr, part_attr[attr])
-                except:
+                except Exception as e:
+                    errors.append(e)
                     raise GangaException(
                         "ERROR in loading Json, failed to set attribute %s for class %s" % (attr, type(component_obj)))
 
 
         # Assigning the component object to the master object
         master_obj.setSchemaAttribute(name, component_obj)
-        return master_obj
+        return master_obj, errors
 
     @staticmethod
     def load_simple_object(master_obj, name, value):
         """Attaching a simple attribute to the ganga object
         """
+        errors = []
         try:
             master_obj.setSchemaAttribute(name, value)
-        except:
+        except Exception as e:
+            errors.append(e)
             raise GangaException(
                 "ERROR in loading Json, failed to set attribute %s for class %s" % (name, type(master_obj)))
 
-        return master_obj
+        return master_obj, errors
 
 
 # TODO: Add more functions here
