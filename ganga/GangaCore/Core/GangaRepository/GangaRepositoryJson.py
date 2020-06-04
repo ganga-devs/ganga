@@ -89,6 +89,10 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 
     # Add a global lock to make absolutely sure we don't have multiple threads writing files
     # See Github Issue 185
+    #debug 
+    import sys
+    print("save_safe The callers information is ", sys._getframe().f_back.f_code.co_name)
+
     with safe_save.lock:
 
         obj = stripProxy(_obj)
@@ -102,7 +106,8 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         # Prepare new data file
         new_name = fn + '.new'
         with open(new_name, "w") as tmpfile:
-            to_file(obj, tmpfile, ignore_subs)
+            # flush, is used as the indicator of converting the datetime to string, which otherwise is not required
+            to_file(j=obj, fobj=tmpfile, ignore_subs=ignore_subs, flush=True)
 
         # everything ready so create new data file and backup old one
         if os.path.exists(new_name):

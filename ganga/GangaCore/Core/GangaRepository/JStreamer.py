@@ -2,24 +2,33 @@ import os
 import json
 import copy
 
+# for debugging purposes
+import sys
+
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Schema import Schema, Version
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Utility.Plugin import PluginManagerError, allPlugins
 from GangaCore.GPIDev.Base.Objects import GangaObject, ObjectMetaclass
-from GangaCore.GPIDev.Base.Proxy import addProxy, getName, isType, stripProxy
+from GangaCore.GPIDev.Base.Proxy import addProxy, isType, stripProxy
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 
 logger = getLogger()
 
 
 # ignore_subs was added for backwards compatibilty
-def to_file(j, fobj=None, ignore_subs=None):
+def to_file(j, fobj=None, ignore_subs=None, flush=False):
     """Convert JobObject and write to fileobject
     """
+    print("save_safe The callers information is ", sys._getframe().f_back.f_code.co_name, flush)
+    print(type(j))
     try:
-        json_content = JsonDumper().parse(j)
-        json.dump(json_content, fobj)
+        # None implying to print the jobs information
+        json_content = JsonDumper(flush=flush).parse(j)
+        if fobj is None:
+            print(json_content)
+        else:
+            json.dump(json_content, fobj)
     except Exception as err:
         logger.error("Json to-file error for file:\n%s" % (err))
         raise JsonFileError(err, "to-file error")
@@ -70,8 +79,9 @@ class JsonDumper:
     """Will dump the Job in a JSON file
     """
 
-    def __init__(self, location=None):
+    def __init__(self, flush, location=None):
         self.errors = []
+        self.flush = flush
         self.location = location
 
     def parse(self, j):
@@ -79,11 +89,11 @@ class JsonDumper:
         The received item is a job object with proxy
         """
         starting_name, starting_node = "Job", j
-        job_json = JsonDumper.object_to_json(starting_name, starting_node)
+        job_json = JsonDumper.object_to_json(starting_name, starting_node, flush=self.flush)
         return job_json
         
     @staticmethod
-    def object_to_json(name, node):
+    def object_to_json(name, node, flush):
         """Will give the attribute information of the provided `node` object as a python dict
         """
         node_info = {
@@ -98,15 +108,23 @@ class JsonDumper:
             if isType(value, (list, tuple, GangaList)):
                 node_info[attr_name] = list(value)        
             elif isinstance(value, GangaObject):
-                node_info[attr_name] = JsonDumper.object_to_json(attr_name, getattr(node, attr_name))
+                node_info[attr_name] = JsonDumper.object_to_json(attr_name, getattr(node, attr_name), flush=flush)
             elif isinstance(value, dict) and attr_name == "timestamps":
                 for time_stamp, dtime in value.items():
-                    # value[time_stamp] = dtime.strftime("%Y-%m-%d %H:%M:%S")
-                    value[time_stamp] = dtime
+                    # strftim to be used only when dumping the json
+                    # when the repository is initializing the job
+                    # the datetime is stored as a str
+                    # if flush is True:
+                        # print(flush, "is true and thus changing the thing tp string")
+                        # value[time_stamp] = dtime.strftime("%Y-%m-%d %H:%M:%S")
+                    value[time_stamp] = dtime.__repr__ ()
+                    # else:
+                        # value[time_stamp] = dtime
                     node_info[attr_name] = value
             else:
                 node_info[attr_name] = getattr(node, attr_name)
         return node_info
+
 
     # @staticmethod
     # def dump_json(j, location=None):
