@@ -107,7 +107,7 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         new_name = fn + '.new'
         with open(new_name, "w") as tmpfile:
             # flush, is used as the indicator of converting the datetime to string, which otherwise is not required
-            to_file(j=obj, fobj=tmpfile, ignore_subs=ignore_subs, flush=True)
+            to_file(j=obj, fobj=tmpfile, ignore_subs=ignore_subs)
 
         # everything ready so create new data file and backup old one
         if os.path.exists(new_name):
@@ -924,6 +924,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         b4=time.time()
         tmpobj, errs = self.from_file(fobj)
+        logger.debug(f"The erros found while loading {fobj} are  {errs}")
         a4=time.time()
         logger.debug("Loading XML file for ID: %s took %s sec" % (this_id, a4-b4))
 

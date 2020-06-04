@@ -1,6 +1,7 @@
 import os
-import json
 import copy
+import json
+import datetime
 
 # for debugging purposes
 import sys
@@ -17,14 +18,14 @@ logger = getLogger()
 
 
 # ignore_subs was added for backwards compatibilty
-def to_file(j, fobj=None, ignore_subs=None, flush=False):
+def to_file(j, fobj=None, ignore_subs=None):
     """Convert JobObject and write to fileobject
     """
-    print("save_safe The callers information is ", sys._getframe().f_back.f_code.co_name, flush)
+    print("save_safe The callers information is ", sys._getframe().f_back.f_code.co_name)
     print(type(j))
     try:
         # None implying to print the jobs information
-        json_content = JsonDumper(flush=flush).parse(j)
+        json_content = JsonDumper().parse(j)
         if fobj is None:
             print(json_content)
         else:
@@ -37,6 +38,7 @@ def to_file(j, fobj=None, ignore_subs=None, flush=False):
 def from_file(f):
     """Load JobObject from a json filestream
     """
+    print(sys._getframe(1).f_code.co_name, f)
     try:
         json_content = json.load(f)
         loader = JsonLoader()
@@ -79,9 +81,8 @@ class JsonDumper:
     """Will dump the Job in a JSON file
     """
 
-    def __init__(self, flush, location=None):
+    def __init__(self, location=None):
         self.errors = []
-        self.flush = flush
         self.location = location
 
     def parse(self, j):
@@ -89,11 +90,11 @@ class JsonDumper:
         The received item is a job object with proxy
         """
         starting_name, starting_node = "Job", j
-        job_json = JsonDumper.object_to_json(starting_name, starting_node, flush=self.flush)
+        job_json = JsonDumper.object_to_json(starting_name, starting_node)
         return job_json
         
     @staticmethod
-    def object_to_json(name, node, flush):
+    def object_to_json(name, node):
         """Will give the attribute information of the provided `node` object as a python dict
         """
         node_info = {
@@ -108,7 +109,7 @@ class JsonDumper:
             if isType(value, (list, tuple, GangaList)):
                 node_info[attr_name] = list(value)        
             elif isinstance(value, GangaObject):
-                node_info[attr_name] = JsonDumper.object_to_json(attr_name, getattr(node, attr_name), flush=flush)
+                node_info[attr_name] = JsonDumper.object_to_json(attr_name, getattr(node, attr_name))
             elif isinstance(value, dict) and attr_name == "timestamps":
                 for time_stamp, dtime in value.items():
                     # strftim to be used only when dumping the json
@@ -116,8 +117,10 @@ class JsonDumper:
                     # the datetime is stored as a str
                     # if flush is True:
                         # print(flush, "is true and thus changing the thing tp string")
-                        # value[time_stamp] = dtime.strftime("%Y-%m-%d %H:%M:%S")
-                    value[time_stamp] = dtime.__repr__ ()
+                    print(type(dtime), dtime)
+                    if isinstance(dtime, datetime.datetime):
+                        value[time_stamp] = dtime.strftime("%Y/%m/%d %H:%M:%S")
+                    # value[time_stamp] = dtime.__repr__ ()
                     # else:
                         # value[time_stamp] = dtime
                     node_info[attr_name] = value
@@ -207,12 +210,33 @@ class JsonLoader:
         """
         # The "category" field is required by the function and thus is still in use
         # MaybeTODO:
+        dt_handler = "datetime.datetime(%Y, %m, %d, %H, %M, %S)"
+        dt_handler_sec = "datetime.datetime(%Y, %m, %d, %H, %M, %S, %f)"
         try:
             component_obj = allPlugins.find(part_attr['category'], part_attr['type']).getNew()
         except PluginManagerError as e:
             print(e)
             component_obj = EmptyGangaObject()
 
+
+        # # loading the dtime approriately
+        # if name == "time":
+        #     # replacing the datetime string with datetime object
+        #     for key, value in part_attr['timestamps'].items():
+        #         try:
+        #             part_attr['timestamps'][key] = datetime.datetime.strptime(value, dt_handler_sec)
+        #         except ValueError:
+        #             part_attr['timestamps'][key] = datetime.datetime.strptime(value, dt_handler)
+
+        #     for attr, item in component_obj._schema.allItems():
+        #         if attr in part_attr:
+        #             try:
+        #                 component_obj.setSchemaAttribute(attr, part_attr[attr])
+        #             except:
+        #                 raise GangaException(
+        #                     "ERROR in loading Json, failed to set attribute %s for class %s" % (attr, type(component_obj)))
+
+        # else:
 
         # Assigning the component object its attributes
         for attr, item in component_obj._schema.allItems():
