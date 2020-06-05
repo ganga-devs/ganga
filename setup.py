@@ -92,7 +92,9 @@ setup(name='ganga',
           'google-auth-httplib2',
           'google-auth-oauthlib',
           'requests>=2.23.0',
-          'Flask~=1.1.2'
+          'Flask~=1.1.2',
+          'PyJWT~=1.7.1',
+          'Flask-SQLAlchemy~=2.4.3',
       ],
       extras_require={'profiler' : ['memory_profiler'], 'LHCb' : ['LbDevTools']},
       classifiers=[
