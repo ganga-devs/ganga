@@ -59,6 +59,23 @@ jobs:
     - name: Test with pytest
       run: python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/GPI
 
+  gui:
+    name: GangaGUI tests
+    needs: lint
+    runs-on: ubuntu-latest
+    container: centos:7
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3
+      run: yum install -y python3
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install -e .
+        python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
+    - name: Test with pytest
+      run: python3 -m pytest --cov-report term-missing --cov ganga/GangaGUI ganga/GangaGUI/test
+
   dirac-unit:
     name: GangaDirac Unit
     needs: lint
