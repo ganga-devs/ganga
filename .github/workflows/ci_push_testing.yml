@@ -172,12 +172,17 @@ jobs:
     container: gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v3
     steps:
     - uses: actions/checkout@v1
-    - name: Set up Python 3
-      run: yum install -y python3
+    - name: Install virtualenv
+      run: |
+        source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh
+        /cvmfs/sft.cern.ch/lcg/releases/LCG_97python3/Python/3.7.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
     - name: Install dependencies
       run: |
+        . ~/venv/bin/activate
         python3 -m pip install --upgrade pip setuptools wheel
         python3 -m pip install -e .[LHCb]
         python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
     - name: Test with pytest
-      run: python3 -m pytest --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/Unit
+      run: |
+        . ~/venv/bin/activate
+        python3 -m pytest --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/Unit
