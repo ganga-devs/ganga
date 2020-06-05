@@ -3,6 +3,7 @@ try:
 except ImportError:
     from mock import patch
 import unittest
+
 from GangaCore.Utility.Virtualization import checkUDocker
 
 
