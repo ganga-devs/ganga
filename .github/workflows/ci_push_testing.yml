@@ -153,5 +153,14 @@ jobs:
         dirac-proxy-init -x
         dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
         dirac-proxy-init -g gridpp_user -M
+    - name: Install gangarc file
+      run: |
+        echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc
+        echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ~/.gangarc
+        echo -e "[defaults_DiracProxy]\ngroup=gridpp_user" >> ~/.gangarc
     - name: Test with pytest
+      env:
+        GANGA_CONFIG_FILE: ~/.gangarc
+        GANGA_CONFIG_PATH: GangaDirac/Dirac.ini
+        DIRAC_DEPRECATED_FAIL: True
       run: python3 -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/GPI
