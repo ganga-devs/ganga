@@ -164,3 +164,20 @@ jobs:
         GANGA_CONFIG_PATH: GangaDirac/Dirac.ini
         DIRAC_DEPRECATED_FAIL: True
       run: python3 -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/GPI
+
+  lhcb-unit:
+    name: GangaLHCb Unit
+    needs: lint
+    runs-on: ubuntu-latest
+    container: gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v3
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3
+      run: yum install -y python3
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install -e .[LHCb]
+        python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
+    - name: Test with pytest
+      run: python3 -m pytest --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/Unit
