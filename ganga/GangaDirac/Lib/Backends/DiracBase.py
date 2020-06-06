@@ -10,11 +10,12 @@ import datetime
 import shutil
 import tempfile
 import math
+from functools import wraps
 from collections import defaultdict
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaCore.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
 from GangaCore.GPIDev.Lib.Job.Job import Job
-from GangaCore.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError
+from GangaCore.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError, GangaDiskSpaceError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
@@ -26,15 +27,31 @@ from GangaCore.GPIDev.Credentials import require_credential, credential_store, n
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.Core import monitoring_component
+from GangaCore.Runtime.Repository_runtime import checkDiskQuota
 from GangaCore.Runtime.GPIexport import exportToGPI
 from subprocess import check_output, CalledProcessError
-from GangaDirac import require_disk_space
 configDirac = getConfig('DIRAC')
 default_finaliseOnMaster = configDirac['default_finaliseOnMaster']
 default_downloadOutputSandbox = configDirac['default_downloadOutputSandbox']
 default_unpackOutputSandbox = configDirac['default_unpackOutputSandbox']
 logger = getLogger()
 regex = re.compile(r'[*?\[\]]')
+
+def require_disk_space(method):
+    """
+    A decorator that checks if disk space is available before executing a command
+    If no disk space is available then a GangaDiracError is raised
+    """
+    @wraps(method)
+    def ds_wrapped_method(self, *args, **kwargs):
+        try:
+            checkDiskQuota()
+        except GangaDiskSpaceError as disk_err:
+            raise GangaDiskSpaceError("No Disk space available! If finalising a job, clear some space and then do j.backend.reset() to put it back in the monitoring queue.")
+
+        return method(self, *args, **kwargs)
+
+    return ds_wrapped_method
 
 class DiracBase(IBackend):
 

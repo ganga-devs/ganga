@@ -20,6 +20,10 @@ class GangaFileError(GangaException):
     This is intended to be thrown as an IGangaFile Error during Runtime
     """
 
+class GangaDiskSpaceError(GangaException):
+    """
+    Specific for issues with running out of disk space
+    """
 
 class PluginError(GangaException):
     """
