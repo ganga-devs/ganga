@@ -28,6 +28,7 @@ from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.Core import monitoring_component
 from GangaCore.Runtime.GPIexport import exportToGPI
 from subprocess import check_output, CalledProcessError
+from GangaDirac import require_disk_space
 configDirac = getConfig('DIRAC')
 default_finaliseOnMaster = configDirac['default_finaliseOnMaster']
 default_downloadOutputSandbox = configDirac['default_downloadOutputSandbox']
@@ -711,6 +712,7 @@ class DiracBase(IBackend):
             logger.error("No peeking available for Dirac job '%i'.", self.id)
 
     @require_credential
+    @require_disk_space
     def getOutputSandbox(self, outputDir=None, unpack=True):
         """Get the outputsandbox for the job object controlling this backend
         Args:
@@ -763,6 +765,7 @@ class DiracBase(IBackend):
         else:
             outputfiles_foreach(j, DiracFile, lambda x: clearFileInfo(x))
 
+    @require_disk_space
     def getOutputData(self, outputDir=None, names=None, force=False):
         """Retrieve data stored on SE to dir (default=job output workspace).
         If names=None, then all outputdata is downloaded otherwise names should
@@ -860,6 +863,7 @@ class DiracBase(IBackend):
         except GangaDiracError as err:
             logger.error("%s" % err)
 
+    @require_disk_space
     def finaliseCompletingJobs(self, downloadSandbox=True):
         """
          A function to finalise all the subjobs in the completing state, so they are ready, before all the subjobs complete.
@@ -969,6 +973,7 @@ class DiracBase(IBackend):
         # malformed job output?
 
     @staticmethod
+    @require_disk_space
     def _internal_job_finalisation(job, updated_dirac_status):
         """
         This method performs the main job finalisation
@@ -1187,6 +1192,7 @@ class DiracBase(IBackend):
             getQueues()._monitoring_threadpool.add_function(DiracBase.finalise_jobs_thread_func, (jobSlice, downloadSandbox))
 
     @staticmethod
+    @require_disk_space
     def finalise_jobs_thread_func(jobSlice, downloadSandbox = True):
         """
         Finalise the jobs given. This downloads the output sandboxes, gets the final Dirac statuses, completion times etc.

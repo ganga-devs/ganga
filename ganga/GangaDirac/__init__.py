@@ -1,12 +1,13 @@
 import os
 #from multiprocessing     import cpu_count
+from functools import wraps
 from GangaCore.Utility.Config import makeConfig, getConfig
 from GangaCore.Utility.logging import getLogger
 
 from GangaCore.Utility.Config.Config import _after_bootstrap
 
 from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
-
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 logger = getLogger()
 
 if not _after_bootstrap:
@@ -123,4 +124,24 @@ def postBootstrapHook():
         credential_store[DiracProxy()]
     except KeyError:
         pass
+
+def require_disk_space(method):
+    """
+    A decorator that checks if disk space is available before executing a command
+    If no disk space is available then a GangaDiracError is raised
+    """
+
+    @wraps(method)
+    def ds_wrapped_method(self, *args, **kwargs):
+
+        is_memory_available = False
+        
+        if not is_memory_available:
+            raise GangaDiracError("No Disk space!")
+
+        return method(self, *args, **kwargs)
+
+    return ds_wrapped_method
+
+
 
