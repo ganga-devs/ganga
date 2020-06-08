@@ -20,6 +20,7 @@ from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_par
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+from GangaCore.Utility.util import require_disk_space
 from GangaCore.Utility.ColourText import getColour
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger, log_user_exception
@@ -27,7 +28,6 @@ from GangaCore.GPIDev.Credentials import require_credential, credential_store, n
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.Core import monitoring_component
-from GangaCore.Runtime.Repository_runtime import checkDiskQuota
 from GangaCore.Runtime.GPIexport import exportToGPI
 from subprocess import check_output, CalledProcessError
 configDirac = getConfig('DIRAC')
@@ -36,22 +36,6 @@ default_downloadOutputSandbox = configDirac['default_downloadOutputSandbox']
 default_unpackOutputSandbox = configDirac['default_unpackOutputSandbox']
 logger = getLogger()
 regex = re.compile(r'[*?\[\]]')
-
-def require_disk_space(method):
-    """
-    A decorator that checks if disk space is available before executing a command
-    If no disk space is available then a GangaDiracError is raised
-    """
-    @wraps(method)
-    def ds_wrapped_method(self, *args, **kwargs):
-        try:
-            checkDiskQuota()
-        except GangaDiskSpaceError as disk_err:
-            raise GangaDiskSpaceError("No Disk space available! If finalising a job, clear some space and then do j.backend.reset() to put it back in the monitoring queue.")
-
-        return method(self, *args, **kwargs)
-
-    return ds_wrapped_method
 
 class DiracBase(IBackend):
 
@@ -880,7 +864,6 @@ class DiracBase(IBackend):
         except GangaDiracError as err:
             logger.error("%s" % err)
 
-    @require_disk_space
     def finaliseCompletingJobs(self, downloadSandbox=True):
         """
          A function to finalise all the subjobs in the completing state, so they are ready, before all the subjobs complete.
@@ -1165,6 +1148,12 @@ class DiracBase(IBackend):
                     break
                 DiracBase._internal_job_finalisation(job, updated_dirac_status)
                 break
+
+            except GangaDiskSpaceError as err:
+                #If the user runs out of disk space for the job to completing so its not monitored any more. Print a helpful message.
+                job.force_status('failed')
+                raise GangaDiskSpaceError("Cannot finalise job %s. No disk space available! Clear some space and the do j.backend.reset() to try again." % job.getFQID('.'))
+
             except Exception as err:
 
                 logger.warning("An error occured finalising job: %s" % job.getFQID('.'))
