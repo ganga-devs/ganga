@@ -267,8 +267,6 @@ def require_disk_space(method):
     from GangaCore.Runtime.Repository_runtime import checkDiskQuota
     @wraps(method)
     def ds_wrapped_method(self, *args, **kwargs):
-        raise GangaDiskSpaceError("Function cannot be run - no Disk space available!")
-
         try:
             checkDiskQuota()
         except GangaDiskSpaceError as disk_err:
