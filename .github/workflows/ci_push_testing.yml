@@ -169,7 +169,9 @@ jobs:
     name: GangaLHCb Unit
     needs: lint
     runs-on: ubuntu-latest
-    container: gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v4
+    container: 
+      image: gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v4
+      options: --privileged
     steps:
     - uses: actions/checkout@v1
     - name: Install virtualenv
