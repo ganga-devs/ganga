@@ -169,11 +169,12 @@ jobs:
     name: GangaLHCb Unit
     needs: lint
     runs-on: ubuntu-latest
-    container: gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v3
+    container: gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v4
     steps:
     - uses: actions/checkout@v1
     - name: Install virtualenv
       run: |
+        ls -l /cvmfs/lhcb.cern.ch
         source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh
         /cvmfs/sft.cern.ch/lcg/releases/LCG_97python3/Python/3.7.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
     - name: Install dependencies
