@@ -171,7 +171,7 @@ jobs:
     runs-on: ubuntu-latest
     container: 
       image: gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v4
-      options: --privileged
+      options: --security-opt seccomp=unconfined
     steps:
     - uses: actions/checkout@v1
     - name: Install virtualenv
