@@ -196,3 +196,7 @@ jobs:
     steps:
     - name: Install FUSE
       run: modprobe fuse
+    - name: Test LHCb image
+      uses: gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v4
+      with:
+        args: --device /dev/fuse --security-opt seccomp=unconfined
