@@ -192,7 +192,7 @@ jobs:
   
   fuse-test:
     name: Fuse Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-16.04
     steps:
     - name: Install FUSE
       run: modprobe fuse
