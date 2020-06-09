@@ -192,11 +192,19 @@ jobs:
   
   fuse-test:
     name: Fuse Test
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
+    container: 
+      image: centos:7
+      options: --privileged
     steps:
-    - name: Install FUSE
-      run: modprobe fuse
-    - name: Test LHCb image
-      uses: docker://gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v4
-      with:
-        args: --device /dev/fuse --security-opt seccomp=unconfined
+    - name: Install CVM-FS
+      run: |
+        yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
+        yum install -y cvmfs cvmfs-config-default
+        cvmfs_config setup
+        echo "CVMFS_REPOSITORIES=lhcb.cern.ch" > /etc/cvmfs/default.local
+        scho "CVMFS_HTTP_PROXY=DIRECT" >> /etc/cvmfs/default.local
+        mkdir -p /cvmfs/lhcb.cern.ch
+        mount -t cvmfs lhcb.cern.ch /cvmfs/lhcb.cern.ch
+    - name: Test CVM-FS
+      run: ls /cvmfs/lhcb.cern.ch
