@@ -208,3 +208,6 @@ jobs:
         mount -t cvmfs lhcb.cern.ch /cvmfs/lhcb.cern.ch
     - name: Test CVM-FS
       run: ls /cvmfs/lhcb.cern.ch
+    - name: Load LHCb environment
+      run: source /cvmfs/lhcb.cern.ch/lib/LbEnv
+
