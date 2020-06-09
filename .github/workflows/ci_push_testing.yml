@@ -203,7 +203,7 @@ jobs:
         yum install -y cvmfs cvmfs-config-default
         cvmfs_config setup
         echo "CVMFS_REPOSITORIES=lhcb.cern.ch" > /etc/cvmfs/default.local
-        scho "CVMFS_HTTP_PROXY=DIRECT" >> /etc/cvmfs/default.local
+        echo "CVMFS_HTTP_PROXY=DIRECT" >> /etc/cvmfs/default.local
         mkdir -p /cvmfs/lhcb.cern.ch
         mount -t cvmfs lhcb.cern.ch /cvmfs/lhcb.cern.ch
     - name: Test CVM-FS
