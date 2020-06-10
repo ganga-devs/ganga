@@ -200,8 +200,9 @@ jobs:
         . ~/venv/bin/activate
         python3 -m pytest --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/Unit
   
-  fuse-test:
-    name: Fuse Test
+  lhcb-integration:
+    name: GangaLHCb Integration
+    needs: lhcb-unit
     runs-on: ubuntu-latest
     container: 
       image: centos:7
@@ -212,12 +213,28 @@ jobs:
         yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
         yum install -y cvmfs cvmfs-config-default
         cvmfs_config setup
-        echo "CVMFS_REPOSITORIES=lhcb.cern.ch" > /etc/cvmfs/default.local
+        echo "CVMFS_REPOSITORIES=lhcb.cern.ch,sft.cern.ch" > /etc/cvmfs/default.local
         echo "CVMFS_HTTP_PROXY=DIRECT" >> /etc/cvmfs/default.local
         mkdir -p /cvmfs/lhcb.cern.ch
+        mkdir -p /cvmfs/sft.cern.ch
         mount -t cvmfs lhcb.cern.ch /cvmfs/lhcb.cern.ch
-    - name: Test CVM-FS
-      run: ls /cvmfs/lhcb.cern.ch
-    - name: Load LHCb environment
-      run: source /cvmfs/lhcb.cern.ch/lib/LbEnv
+        mount -t cvmfs sft.cern.ch /cvmfs/sft.cern.ch
+    - uses: actions/checkout@v1
+    - name: Install virtualenv
+      run: |
+        source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh
+        /cvmfs/sft.cern.ch/lcg/releases/LCG_97python3/Python/3.7.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
+    - name: Install dependencies
+      run: |
+        . ~/venv/bin/activate
+        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install -e .[LHCb]
+        python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
+    - name: Test with pytest
+      env:
+        GANGA_CONFIG_PATH: GangaLHCb/LHCb.ini
+      run: |
+        . ~/venv/bin/activate
+        lhcb-proxy-init
+        python3 -m pytest --testLHCb --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/GPI
 
