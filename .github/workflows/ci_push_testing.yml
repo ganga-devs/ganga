@@ -221,9 +221,7 @@ jobs:
         mount -t cvmfs sft.cern.ch /cvmfs/sft.cern.ch
     - uses: actions/checkout@v1
     - name: Install virtualenv
-      run: |
-        source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh
-        /cvmfs/sft.cern.ch/lcg/releases/LCG_97python3/Python/3.7.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
+      run: /cvmfs/sft.cern.ch/lcg/releases/LCG_97python3/Python/3.7.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
     - name: Install dependencies
       run: |
         . ~/venv/bin/activate
@@ -234,6 +232,7 @@ jobs:
       env:
         GANGA_CONFIG_PATH: GangaLHCb/LHCb.ini
       run: |
+        source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh
         . ~/venv/bin/activate
         lhcb-proxy-init
         python3 -m pytest --testLHCb --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/GPI
