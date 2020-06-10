@@ -3,7 +3,7 @@
 #
 # $Id: util.py,v 1.1 2008-07-17 16:41:01 moscicki Exp $
 ##########################################################################
-
+from functools import wraps
 """
  This file contains general-purpose utilities, mainly Python Cookbook recipes.
 """
@@ -256,6 +256,25 @@ def proxy(obj, *specials):
             setattr(cls, name, make_binder(unbounded_method))
         known_proxy_classes[key] = cls
     return cls(obj)
+
+#Decorator to check for disk space
+def require_disk_space(method):
+    """
+    A decorator that checks if disk space is available before executing a command
+    If no disk space is available then a GangaDiskSpaceError is raised
+    """
+    from GangaCore.Core.exceptions import GangaDiskSpaceError
+    from GangaCore.Runtime.Repository_runtime import checkDiskQuota
+    @wraps(method)
+    def ds_wrapped_method(self, *args, **kwargs):
+        try:
+            checkDiskQuota()
+        except GangaDiskSpaceError as disk_err:
+            raise GangaDiskSpaceError("Function cannot be run - no Disk space available!")
+
+        return method(self, *args, **kwargs)
+
+    return ds_wrapped_method
 
 # ------------------------
 # cookbook recipe
