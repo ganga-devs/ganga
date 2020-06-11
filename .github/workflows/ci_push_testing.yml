@@ -236,6 +236,7 @@ jobs:
         python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
     - name: Test with pytest
       env:
+        GANGA_CONFIG_FILE: ~/.gangarc
         GANGA_CONFIG_PATH: GangaLHCb/LHCb.ini
       run: |
         source /cvmfs/lhcb.cern.ch/lib/LbEnv 2>&1
