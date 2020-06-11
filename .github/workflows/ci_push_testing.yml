@@ -232,10 +232,8 @@ jobs:
       env:
         GANGA_CONFIG_PATH: GangaLHCb/LHCb.ini
       run: |
-        echo $PATH
         source /cvmfs/lhcb.cern.ch/lib/LbEnv 2>&1
-        echo $PATH
         . ~/venv/bin/activate
-        lhcb-proxy-init
+        /cvmfs/lhcb.cern.ch/lib/var/lib/LbEnv/796/stable/x86_64-centos7/bin/lhcb-proxy-init
         python3 -m pytest --testLHCb --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/GPI
 
