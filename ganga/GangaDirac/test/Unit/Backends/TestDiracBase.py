@@ -1,7 +1,7 @@
 import tempfile
 import os
 import pytest
-
+from functools import wraps
 try:
     from unittest.mock import patch, Mock
 except ImportError:
@@ -14,6 +14,7 @@ from GangaCore.Lib.Splitters import ArgSplitter
 from GangaCore.Lib.Executable import Executable
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from GangaCore.testlib.GangaUnitTest import load_config_files, clear_config
+from GangaCore.Core.exceptions import GangaDiskSpaceError
 
 script_template = """
 # dirac job created by ganga
@@ -58,6 +59,24 @@ def db():
     load_config_files()
     from GangaDirac.Lib.Backends.DiracBase import DiracBase
     yield DiracBase()
+    clear_config()
+
+@pytest.yield_fixture(scope='function')
+def db_full():
+    def mock_disk_space_full_decorator(f):
+        @wraps(f)
+        def decorated_function(self, *args, **kwargs):
+            raise GangaDiskSpaceError("Mock no disk space!")
+        
+            return f(self, *args, **kwargs)
+        return decorated_function
+    import GangaCore.Utility.util
+    GangaCore.Utility.util.require_disk_space = mock_disk_space_full_decorator
+    load_config_files()
+    from GangaDirac.Lib.Backends import DiracBase
+    import importlib
+    importlib.reload(DiracBase)
+    yield DiracBase.DiracBase()
     clear_config()
 
 
@@ -287,7 +306,6 @@ def test_getOutputSandbox(db, mocker):
         assert not db.getOutputSandbox(test_dir), 'didn\'t fail gracefully'
         execute.assert_called_once()
 
-
 def test_removeOutputData(db):
     from GangaDirac.Lib.Files.DiracFile import DiracFile
 
@@ -434,3 +452,64 @@ def test_getOutputDataLFNs(db):
 
         subjob = True
         assert db.getOutputDataLFNs() == ['a', 'b', 'c'] * 3
+
+def test_getOutputSandbox_diskFull(db_full, mocker):
+    mocker.patch('GangaCore.GPIDev.Credentials.credential_store')
+
+    j = Job()
+    j.id = 0
+    j.backend = db_full
+    db_full._parent = j
+    db_full.id = 1234
+
+    temp_dir = j.getOutputWorkspace().getPath()
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
+        with pytest.raises(GangaDiskSpaceError) as execinfo:
+            assert not  db_full.getOutputSandbox(), 'didn\'t run'
+            assert str(execinfo.value)=='Mock no disk space!'
+
+def test_getOutputData_diskFull(db_full, tmpdir):
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
+
+    j = Job()
+    j.id = 0
+    j.backend = db_full
+    db_full._parent = j
+
+    with pytest.raises(GangaDiskSpaceError) as execinfo:
+        assert not db_full.getOutputData('/false/dir')
+        assert str(execinfo.value)=='Mock no disk space!'
+
+    #######################
+    class TestFile(object):
+        def __init__(self, lfn, namePattern):
+            self.lfn = lfn
+            self.namePattern = namePattern
+
+        def get(self):
+            self.check = 42
+
+    test_files = [TestFile('a', 'alpha'), TestFile('', 'delta'),
+                  TestFile('b', 'beta'), TestFile('', 'bravo'),
+                  TestFile('c', 'charlie'), TestFile('', 'foxtrot')]
+
+    #######################
+
+    def fake_outputfiles_iterator(job, file_type):
+        assert isinstance(job, Job)
+        if subjob:
+            assert job.master is not None
+        else:
+            assert job.master is None
+            assert file_type == DiracFile
+        return test_files
+
+    with patch('GangaDirac.Lib.Backends.DiracBase.outputfiles_iterator', fake_outputfiles_iterator):
+
+        # master jobs
+        #######################
+        subjob = False
+        with pytest.raises(GangaDiskSpaceError) as execinfo:
+            assert not db_full.getOutputData() == ['a', 'b', 'c']
+            assert str(execinfo.value)=='Mock no disk space!'
+
