@@ -234,6 +234,8 @@ jobs:
         python3 -m pip install --upgrade pip setuptools wheel
         python3 -m pip install -e .[LHCb]
         python3 -m pip install coverage pytest pytest-cov pytest-pylint pytest-mock
+    - name: Install gangarc file
+      run: echo -e "[Configuration]\nRUNTIME_PATH=GangaLHCb" > ~/.gangarc
     - name: Test with pytest
       env:
         GANGA_CONFIG_FILE: ~/.gangarc
