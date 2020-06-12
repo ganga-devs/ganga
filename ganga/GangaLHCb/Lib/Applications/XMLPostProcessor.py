@@ -28,7 +28,7 @@ def postprocess(self, logger):
     if os.path.exists(parsedXML):
         #Get rid of the long representation
         xml_string = open(parsedXML).read()
-        xml_string = re.sub('(\d)L([\,\}])', r'\1\2', xml_string)
+        xml_string = re.sub(r'(\d)L([\,\}])', r'\1\2', xml_string)
         exec(compile(xml_string, parsedXML, 'exec'), {}, metadataItems)
 
     # Combining subjobs XMLSummaries.
