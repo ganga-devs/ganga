@@ -1,6 +1,6 @@
 name: CI Push Testing
 
-on: [push]
+on: [pull_request]
 
 jobs:
 
