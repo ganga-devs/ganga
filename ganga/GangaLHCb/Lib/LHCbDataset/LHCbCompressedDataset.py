@@ -33,6 +33,7 @@ class LHCbCompressedFileSet(GangaObject):
     schema['lfn_prefix'] = SimpleItem(defvalue = None, typelist = ['str', None], doc = 'The common starting path of the LFN')
     schema['suffixes'] = SimpleItem(defvalue = [], typelist = [GangaList, 'str'], sequence=1, doc = 'The individual end of each LFN')
     _schema = Schema(Version(3, 0), schema)
+    _category = 'gangafiles'
     _exportmethods = ['__len__', 'getLFNs', 'getLFN']
     def __init__(self, files=None, lfn_prefix=None):
         super(LHCbCompressedFileSet, self).__init__()

@@ -1,5 +1,8 @@
 
-from mock import patch
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 from os import path
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
