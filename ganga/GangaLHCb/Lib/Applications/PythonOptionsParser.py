@@ -75,8 +75,8 @@ class PythonOptionsParser(object):
                           'valid python file.'
 
         #We have to remove the defunct long representation for python 3
-        opts_str = re.sub('(\d)L(\})', r'\1\2', opts_str)
-        opts_str = re.sub('(\d)L(\,)', r'\1\2', opts_str)
+        opts_str = re.sub(r'(\d)L(\})', r'\1\2', opts_str)
+        opts_str = re.sub(r'(\d)L(\,)', r'\1\2', opts_str)
 
         if stdout and rc == 0:
             try:

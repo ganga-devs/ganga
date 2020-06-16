@@ -43,7 +43,7 @@ class JobRegistry(Registry):
 
     def getIndexCache(self, obj):
 
-        cached_values = ['status', 'id', 'name']
+        cached_values = ['status', 'id', 'name', 'comment']
         cache = {}
         for cv in cached_values:
             #print("cv: %s" % str(cv))
