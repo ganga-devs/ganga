@@ -325,13 +325,17 @@ class JsonLoader:
             json_content['category'], json_content['type']
         ).getNew()
 
+        things = []
         # FIXME: Use a better approach to filter the metadata keys
         for key in (set(json_content.keys()) - set(['category', 'type', 'version'])):
-            print(key)
+            print(key, type(json_content[key]))
+            things.append(obj.__dict__)
             if isinstance(json_content[key], dict):
+                print("\t", key, 1)
                 obj, local_error = JsonLoader.load_component_object(obj, key, json_content[key])
                 errors.append(local_error)
-            if isinstance(json_content[key], list):
+            elif isinstance(json_content[key], list):
+                print("\t", key, 2)
                 temp_val = []
                 for val in json_content[key]:
                     if isinstance(val, dict):
@@ -344,6 +348,7 @@ class JsonLoader:
                 obj, local_error = JsonLoader.load_simple_object(obj, key, temp_val)
                 errors.append(local_error)
             else:
+                print("\t", key, 3)
                 obj, local_error = JsonLoader.load_simple_object(obj, key, json_content[key])
                 errors.append(local_error)
 
@@ -373,7 +378,8 @@ class JsonLoader:
                     raise GangaException(
                         "ERROR in loading Json, failed to set attribute %s for class %s" % (attr, type(component_obj)))
 
-
+        if errors == []:
+            errors = None
         return component_obj, errors
 
 
@@ -394,6 +400,12 @@ class JsonLoader:
         # Assigning the component object its attributes
         for attr, item in component_obj._schema.allItems():
             if attr in part_attr:
+                # loader component attribute fo this component attribute
+                if isinstance(part_attr[attr], dict) and "category" in part_attr[attr].keys():
+                    component_attribute_obj = JsonLoader.load_component_object(
+                        component_obj, attr, part_attr[attr]
+                    )
+            else:
                 try:
                     component_obj.setSchemaAttribute(attr, part_attr[attr])
                 except Exception as e:
@@ -404,6 +416,8 @@ class JsonLoader:
 
         # Assigning the component object to the master object
         master_obj.setSchemaAttribute(name, component_obj)
+        if errors == []:
+            errors = None        
         return master_obj, errors
 
     @staticmethod
@@ -417,7 +431,8 @@ class JsonLoader:
             errors.append(e)
             raise GangaException(
                 "ERROR in loading Json, failed to set attribute %s for class %s" % (name, type(master_obj)))
-
+        if errors == []:
+            errors = None
         return master_obj, errors
 
 
