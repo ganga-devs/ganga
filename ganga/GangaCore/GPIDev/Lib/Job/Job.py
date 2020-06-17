@@ -18,7 +18,7 @@ from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from GangaCore.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 from GangaCore.GPIDev.Base import GangaObject
-from GangaCore.GPIDev.Base.Objects import Node
+from GangaCore.GPIDev.Base.Objects import Node, synchronised
 from GangaCore.GPIDev.Base.Proxy import addProxy, getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
 from GangaCore.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
@@ -491,6 +491,38 @@ class Job(GangaObject):
         # if frame[0].f_code.co_filename.find('/Ganga/GPIDev/')==-1 and frame[0].f_code.co_filename.find('/Ganga/Core/')==-1:
         #    raise AttributeError('cannot modify job.status directly, use job.updateStatus() method instead...')
         #del frame
+
+    @synchronised
+    def to_json(self):
+        """Special Implementation of to_json for Job object
+        """
+        import datetime
+        from GangaCore.GPIDev.Base.Proxy import isType
+        from GangaCore.Core.GangaRepository.JStreamer import JsonDumper
+
+        node_info = {
+            "type": self._schema.name,
+            "version": f"{self._schema.version.major}.{self._schema.version.minor}",
+            "category": self._schema.category
+        }
+        if self._schema is None:
+            return node_info
+
+
+        """Rules:
+        - A simple attribute: will not have the to_json function and thus we have to manually assign the value
+        - A componenet attribute: will have the to_json function and thus we can automatically generate the json dict for that and then assin it 
+        """
+
+        for name, item in self._schema.allItems():
+            value = getattr(self, name)
+            if item['visitable']:
+                if hasattr(value, "to_json"):
+                    node_info[name] = (value.to_json())
+                else:
+                    node_info[name] = (value)
+        return node_info         
+    
 
     class State(object):
 

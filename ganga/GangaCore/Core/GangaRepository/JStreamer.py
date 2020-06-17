@@ -24,7 +24,10 @@ def to_file(j, fobj=None, ignore_subs=[]):
     """
     try:
         # None implying to print the jobs information
-        json_content = JsonDumper().parse(j, ignore_subs=ignore_subs)
+        # json_content = JsonDumper().parse(j, ignore_subs=ignore_subs)
+        json_content = j.to_json()
+        for sub in ignore_subs:
+            json_content.pop(sub, None)
         if fobj is None:
             print(json_content)
         else:
@@ -325,34 +328,68 @@ class JsonLoader:
             json_content['category'], json_content['type']
         ).getNew()
 
-        things = []
         # FIXME: Use a better approach to filter the metadata keys
         for key in (set(json_content.keys()) - set(['category', 'type', 'version'])):
             print(key, type(json_content[key]))
-            things.append(obj.__dict__)
-            if isinstance(json_content[key], dict):
-                print("\t", key, 1)
+            if isinstance(json_content[key], dict) or isinstance(json_content[key], list):
                 obj, local_error = JsonLoader.load_component_object(obj, key, json_content[key])
                 errors.append(local_error)
-            elif isinstance(json_content[key], list):
-                print("\t", key, 2)
-                temp_val = []
-                for val in json_content[key]:
-                    if isinstance(val, dict):
-                        itr_obj, err = JsonLoader.load_list_object(val)
-                        temp_val.append(itr_obj)
-                    else:
-                        itr_obj, err = JsonLoader.load_simple_object(obj, key, val)
-                        temp_val.append(itr_obj)
-
-                obj, local_error = JsonLoader.load_simple_object(obj, key, temp_val)
-                errors.append(local_error)
+            
             else:
                 print("\t", key, 3)
                 obj, local_error = JsonLoader.load_simple_object(obj, key, json_content[key])
                 errors.append(local_error)
 
         return obj, errors
+
+    @staticmethod
+    def load_component_object(master_obj, name, part_attr):
+        """Loading component objects that will be attached to the main object
+        """
+        errors = []        
+        try:
+            component_obj = allPlugins.find(part_attr['category'], part_attr['type']).getNew()
+        except PluginManagerError as e:
+            # TODO: Maybe move this to the logger
+            print(e)
+            errors.append(e)
+            component_obj = EmptyGangaObject()
+
+        # Assigning the component object its attributes
+        for attr, item in component_obj._schema.allItems():
+            print(attr)
+            if attr in part_attr:
+                # loader component attribute fo this component attribute
+                if isinstance(part_attr[attr], list):
+                    temp_val = []
+                    for val in part_attr[attr]:
+                        if isinstance(val, dict):
+                            itr_obj, err = JsonLoader.load_list_object(val)
+                            temp_val.append(itr_obj)
+                        else:
+                            # itr_obj, err = JsonLoader.load_simple_object(component_obj, attr, val)
+                            temp_val.append(val)
+
+                    component_obj, local_error = JsonLoader.load_simple_object(component_obj, attr, temp_val)
+                    errors.append(local_error)                    
+                elif isinstance(part_attr[attr], dict) and "category" in part_attr[attr]:
+                    component_obj, error = JsonLoader.load_component_object(
+                        component_obj, attr, part_attr[attr])
+                else:
+                    try:
+                        component_obj.setSchemaAttribute(attr, part_attr[attr])
+                    except Exception as e:
+                        errors.append(e)
+                        raise GangaException(
+                            "ERROR in loading Json, failed to set attribute %s for class %s" % (attr, type(component_obj)))
+
+
+        # Assigning the component object to the master object
+        master_obj.setSchemaAttribute(name, component_obj)
+        if errors == []:
+            errors = None        
+        return master_obj, errors
+
 
 
     @staticmethod
@@ -384,41 +421,6 @@ class JsonLoader:
 
 
 
-    @staticmethod
-    def load_component_object(master_obj, name, part_attr):
-        """Loading component objects that will be attached to the main object
-        """
-        errors = []        
-        try:
-            component_obj = allPlugins.find(part_attr['category'], part_attr['type']).getNew()
-        except PluginManagerError as e:\
-            # TODO: Maybe move this to the logger
-            print(e)
-            errors.append(e)
-            component_obj = EmptyGangaObject()
-
-        # Assigning the component object its attributes
-        for attr, item in component_obj._schema.allItems():
-            if attr in part_attr:
-                # loader component attribute fo this component attribute
-                if isinstance(part_attr[attr], dict) and "category" in part_attr[attr].keys():
-                    component_attribute_obj = JsonLoader.load_component_object(
-                        component_obj, attr, part_attr[attr]
-                    )
-            else:
-                try:
-                    component_obj.setSchemaAttribute(attr, part_attr[attr])
-                except Exception as e:
-                    errors.append(e)
-                    raise GangaException(
-                        "ERROR in loading Json, failed to set attribute %s for class %s" % (attr, type(component_obj)))
-
-
-        # Assigning the component object to the master object
-        master_obj.setSchemaAttribute(name, component_obj)
-        if errors == []:
-            errors = None        
-        return master_obj, errors
 
     @staticmethod
     def load_simple_object(master_obj, name, value):
