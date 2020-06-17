@@ -44,8 +44,10 @@ def update_project_path(self, user_release_area, env=os.environ):
 def get_user_dlls(self, appname, version, user_release_area, platform, env):
 
     if not self.newStyleApp is True:
+        print('going to CMTUtiles')
         return CMTUtils.get_user_dlls(appname, version, user_release_area, platform, env)
     else:
+        print('going to cmakeUtils')
         return cmakeUtils.get_user_dlls(appname, version, user_release_area, platform, env)
 
 def pyFileCollector(dir, file_list, subdir_dict, depth_cut, depth=0, zerodepth_pathlength=0):
@@ -193,10 +195,9 @@ def fillPackedSandbox(sandbox_files, destination):
     for f in sandbox_files:
         try:
             contents = f.getContents()   # is it FileBuffer?
-
         except AttributeError:         # File
             try:
-                fileobj = open(f.name, 'wb')
+                fileobj = open(f.name, 'rb')
             except Exception as err:
                 raise GangaException("File %s does not exist." % f.name)
             tinfo = tf.gettarinfo(
