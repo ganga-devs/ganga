@@ -212,7 +212,7 @@ class AppName(Gaudi):
             extraopts += "\nLHCbApp().XMLSummary='summary.xml'"
 
         try:
-            parser = PythonOptionsParser(optsfiles, extraopts, self.getenv(True))
+            parser = PythonOptionsParser(optsfiles, extraopts, self.getenv(False))
         except ApplicationConfigurationError as err:
             logger.error("PythonOptionsParserError:\n%s" % str(err))
             # fix this when preparing not attached to job
