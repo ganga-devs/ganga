@@ -493,7 +493,7 @@ class Job(GangaObject):
         #del frame
 
     @synchronised
-    def to_json(self):
+    def to_json(self, ignore_subs=[]):
         """Special Implementation of to_json for Job object
         """
         import datetime
@@ -516,7 +516,7 @@ class Job(GangaObject):
 
         for name, item in self._schema.allItems():
             value = getattr(self, name)
-            if item['visitable']:
+            if item['visitable'] and name not in ignore_subs:
                 if hasattr(value, "to_json"):
                     node_info[name] = (value.to_json())
                 else:

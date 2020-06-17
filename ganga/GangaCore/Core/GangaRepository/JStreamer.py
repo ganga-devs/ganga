@@ -265,7 +265,6 @@ class JsonDumper:
             ret_val = JsonDumper.object_to_json(attr_name, getattr(node, attr_name), ignore_subs)
         return ret_val
 
-
 class JsonLoader:
     """Loads the Ganga Object from json
     """
@@ -331,14 +330,16 @@ class JsonLoader:
         # FIXME: Use a better approach to filter the metadata keys
         for key in (set(json_content.keys()) - set(['category', 'type', 'version'])):
             print(key, type(json_content[key]))
-            if isinstance(json_content[key], dict) or isinstance(json_content[key], list):
+            if (isinstance(json_content[key], dict) or isinstance(json_content[key], list)) and "category" in json_content[key]:
                 obj, local_error = JsonLoader.load_component_object(obj, key, json_content[key])
-                errors.append(local_error)
+                if local_error:
+                    errors.append(local_error)
             
             else:
                 print("\t", key, 3)
                 obj, local_error = JsonLoader.load_simple_object(obj, key, json_content[key])
-                errors.append(local_error)
+                if local_error:
+                    errors.append(local_error)
 
         return obj, errors
 
@@ -346,7 +347,7 @@ class JsonLoader:
     def load_component_object(master_obj, name, part_attr):
         """Loading component objects that will be attached to the main object
         """
-        errors = []        
+        errors = []
         try:
             component_obj = allPlugins.find(part_attr['category'], part_attr['type']).getNew()
         except PluginManagerError as e:
@@ -363,7 +364,7 @@ class JsonLoader:
                 if isinstance(part_attr[attr], list):
                     temp_val = []
                     for val in part_attr[attr]:
-                        if isinstance(val, dict):
+                        if isinstance(val, dict) and "category" in part_attr[attr]:
                             itr_obj, err = JsonLoader.load_list_object(val)
                             temp_val.append(itr_obj)
                         else:
@@ -371,9 +372,10 @@ class JsonLoader:
                             temp_val.append(val)
 
                     component_obj, local_error = JsonLoader.load_simple_object(component_obj, attr, temp_val)
-                    errors.append(local_error)                    
+                    if local_error:
+                        errors.append(local_error)
                 elif isinstance(part_attr[attr], dict) and "category" in part_attr[attr]:
-                    component_obj, error = JsonLoader.load_component_object(
+                    component_obj, local_error = JsonLoader.load_component_object(
                         component_obj, attr, part_attr[attr])
                 else:
                     try:
@@ -386,8 +388,7 @@ class JsonLoader:
 
         # Assigning the component object to the master object
         master_obj.setSchemaAttribute(name, component_obj)
-        if errors == []:
-            errors = None        
+        # I do not think we should return error, as it is already raised before
         return master_obj, errors
 
 
@@ -415,8 +416,6 @@ class JsonLoader:
                     raise GangaException(
                         "ERROR in loading Json, failed to set attribute %s for class %s" % (attr, type(component_obj)))
 
-        if errors == []:
-            errors = None
         return component_obj, errors
 
 
@@ -433,8 +432,6 @@ class JsonLoader:
             errors.append(e)
             raise GangaException(
                 "ERROR in loading Json, failed to set attribute %s for class %s" % (name, type(master_obj)))
-        if errors == []:
-            errors = None
         return master_obj, errors
 
 
