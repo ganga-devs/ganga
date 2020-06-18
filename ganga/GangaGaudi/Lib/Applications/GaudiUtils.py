@@ -196,7 +196,7 @@ def fillPackedSandbox(sandbox_files, destination):
 
         except AttributeError:         # File
             try:
-                fileobj = open(f.name, 'wb')
+                fileobj = open(f.name, 'rb')
             except Exception as err:
                 raise GangaException("File %s does not exist." % f.name)
             tinfo = tf.gettarinfo(
