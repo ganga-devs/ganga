@@ -1,3 +1,4 @@
+# MARKTOREMOVE: This file should be removed in the future as we will not use xml files anymore
 #XML differencer - reads the XML files for two test versions
 # and looks for differences between test case success failures
 from GangaCore.Utility.Config import getConfig
