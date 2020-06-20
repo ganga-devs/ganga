@@ -1,3 +1,5 @@
+# ******************** Imports ******************** #
+
 import jwt
 from GangaGUI.gui import app
 from flask import request, jsonify
@@ -5,18 +7,28 @@ from functools import wraps
 from GangaGUI.gui.models import User
 
 
+# ******************** View Routes ******************** #
+
+# Dashboard route
 @app.route("/")
 def dashboard():
-    return "Hello GangaGUI"
+    return "GangaGUI"
 
+
+# ******************** Token Based Authentication ******************** #
 
 # Generate token for API authentication - token validity 5 days
 @app.route("/token", methods=["POST"])
 def generate_token():
-    # Store request data
+    """
+    Using the 'user' and 'password' data from the form body, validates the user and returns a JSON Web Token (JWT).
+    """
+
+    # Request form data
     request_user = request.form.get("user")
     request_password = request.form.get("password")
 
+    # Handle no user or no password case
     if not request_user or not request_password:
         response_data = {"success": False, "message": "Could not verify user."}
         return jsonify(response_data), 401
@@ -28,12 +40,19 @@ def generate_token():
         response_data = {"token": token}
         return jsonify(response_data)
 
+    # If authentication fails, return 401 HTTP code
     response_data = {"success": False, "message": "Could not verify user."}
     return jsonify(response_data), 401
 
 
+# ******************** Token Authentication Decorator ******************** #
+
 # Decorator for token protected routes
 def token_required(f):
+    """
+    Decorator which validates the request header token in 'X-Acess-Token' field, and returns the user.
+    """
+
     @wraps(f)
     def decorated(*args, **kwargs):
 
@@ -64,13 +83,101 @@ def token_required(f):
     return decorated
 
 
-# TODO resource route for development purpose - REMOVE LATER
-# Protected resource
-@app.route("/resource", methods=["POST"])
-@token_required
-def resource(current_user):
-    return jsonify({"success": True, "message": "Token is valid"})
+# ******************** Jobs API ******************** #
 
+# Jobs API - GET Method
+@app.route("/jobs", methods=["GET"])
+@token_required
+def jobs_endpoint(current_user):
+    """
+    Returns a list of jobs with general information in JSON format.
+    """
+
+    # Imports
+    from GangaCore.GPI import jobs
+
+    # Store job information in a list
+    job_data_list = []
+    for j in jobs:
+        job_data_list.append(get_job_data(j.id))
+
+    return jsonify(job_data_list)
+
+
+# Job IDs API - GET Method
+@app.route("/jobs/ids", methods=["GET"])
+@token_required
+def jobs_ids_endpoint(current_user):
+    """
+    Returns a list of job ids present in job repository.
+    """
+
+    # Imports
+    from GangaCore.GPI import jobs
+
+    # ID list
+    try:
+        id_list = list(jobs.ids())
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(id_list)
+
+
+# Job Incomplete IDs API - GET Method
+@app.route("/jobs/incomplete_ids", methods=["GET"])
+@token_required
+def jobs_incomplete_ids_endpoint(current_user):
+    """
+    Returns a list of incomplete job ids in JSON format.
+    """
+
+    # Imports
+    from GangaCore.GPI import jobs
+
+    # Incomplete ID list
+    try:
+        incomplete_id_list = list(jobs.incomplete_ids())
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(incomplete_id_list)
+
+
+# ******************** Helper Functions ******************** #
+
+def get_job_data(job_id: int) -> dict:
+    """
+    Given the job_id, return a dict containing
+    [id, fqid, status, name, subjobs, application, backend, backend.actualCE, comments, subjob_statuses] as dict keys and their values.
+    :param job_id: int
+    :return: dict
+    """
+    from GangaCore.GPI import jobs
+    # Get job from the job list
+    try:
+        j = jobs[int(job_id)]
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)})
+
+    # Store job info in a dict
+    job_data = {}
+    job_data["id"] = str(j.id)
+    job_data["fqid"] = str(j.fqid)
+    job_data["status"] = str(j.status)
+    job_data["name"] = str(j.name)
+    job_data["subjobs"] = len(j.subjobs)
+    job_data["application"] = str(type(j.application))
+    job_data["backend"] = str(type(j.backend))
+    job_data["backend.actualCE"] = str(j.backend.actualCE)
+    job_data["comment"] = str(j.comment)
+    job_data["subjob_statuses"] = str(j.returnSubjobStatuses())
+
+    return job_data
+
+
+
+# ******************** Shutdown Function ******************** #
 
 # Route used to shutdown the flask server
 @app.route("/shutdown", methods=["POST"])
@@ -79,3 +186,5 @@ def shutdown():
     func()
     response_data = {"success": True, "message": "Shutting down the server..."}
     return jsonify(response_data)
+
+# ******************** EOF ******************** #
