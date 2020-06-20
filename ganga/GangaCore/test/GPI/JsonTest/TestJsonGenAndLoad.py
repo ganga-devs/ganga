@@ -190,7 +190,9 @@ class TestJSONGenAndLoad(GangaUnitTest):
         with open(getIndexFile(j), 'rb') as handler:
             obj, errs = from_file(handler)
 
-            assert isinstance(obj, tuple)
+            # assert isinstance(obj, tuple)
+            # using json implies the datastruct tuple ->> list
+            assert isinstance(obj, list)
 
             from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
             raw_j = stripProxy(j)
@@ -199,7 +201,7 @@ class TestJSONGenAndLoad(GangaUnitTest):
 
             index_cls = getName(raw_j)
             index_cat = raw_j._category
-            this_index_cache = (index_cat, index_cls, index_cache)
+            this_index_cache = [index_cat, index_cls, index_cache]
 
             assert this_index_cache == obj
 
