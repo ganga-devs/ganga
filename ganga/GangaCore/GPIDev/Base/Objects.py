@@ -804,7 +804,7 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
     @synchronised
     def to_json(self):
         """
-        This will convert a 
+        Returns the json representation of the job
         """
         import datetime
         from GangaCore.GPIDev.Base.Proxy import isType
@@ -822,6 +822,7 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
             value = getattr(self, attr_name)
             if isType(value, (list, tuple)):
                 node_info[attr_name] = list(value)
+            # GangaList has its own custom to_json() and thus that is called instead of JD.object_to_json
             elif isType(value, GangaList):
                 node_info[attr_name] = value.to_json()
             elif isinstance(value, GangaObject):

@@ -11,9 +11,6 @@ from GangaCore.GPIDev.Base.Objects import GangaObject, ObjectMetaclass
 from GangaCore.GPIDev.Base.Proxy import addProxy, isType, stripProxy
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 
-# debug
-from GangaCore.GPIDev.Lib.Registry.PrepRegistry import ShareRef
-
 # TODO: Use the logger often, instead of print [next-commit] 
 logger = getLogger()
 
@@ -78,7 +75,6 @@ class JsonFileError(GangaException):
             err = ''
         return "JsonFileError: %s %s" % (self.message, err)
 
-# skips the subjobs node
 class JsonDumper:
     """Will dump the Job in a JSON file
     """
@@ -129,6 +125,7 @@ class JsonDumper:
             else:
                 return glist
 
+        # instead it could be: node._schemae.name not in ignore_subs
         if name not in ignore_subs:
             if not hasattr(node, '_schema'):
                 return 
@@ -142,8 +139,8 @@ class JsonDumper:
             if node._schema is None:
                 return node_info
             
-            # debug
-            print(f"<object_to_json name='{name}'>")
+            # # debug
+            # print(f"<object_to_json name='{name}'>")
             
             for attr_name, attr_object in node._schema.allItems():
                 value = getattr(node, attr_name)
@@ -160,7 +157,7 @@ class JsonDumper:
                     if isType(value, list) or isType(value, tuple):
                         # The GangaList can be a list of objects or list of lists
                         node_info[attr_name] = acceptOptional(value)
-                        print("\t", attr_name, type(value))
+                        # print("\t", attr_name, type(value))
                         # node_info[attr_name] = list(value)
                     elif isinstance(value, GangaObject):
                         node_info[attr_name] = JsonDumper.object_to_json(attr_name, value, ignore_subs)
@@ -172,7 +169,7 @@ class JsonDumper:
                     else:
                         node_info[attr_name] = value
                 
-                print("</object_to_json>")
+                # print("</object_to_json>")
                 return node_info
             # for attr_name, attr_object in node._schme
             # for (attr_name, attr_object) in node._schema.simpleItems():
@@ -199,71 +196,68 @@ class JsonDumper:
             #     except Exception as e:
             #         print(f"[ERROR] {name} - {attr_name} - {attr_object}", e)
 
+        # else:
+            # print("THIS WAS THE CASE WHEN THERE WAS X IN IGNORE_SUBS")
 
 
 
-        else:
-            print("THIS WAS THE CASE WHEN THERE WAS X IN IGNORE_SUBS")
+    # def simpleAttribute(self, attr_name, value, sequence):
+    #     """
+    #     Adding simple attribute's information to the master node
+    #     """
+    #     if sequence:
+    #         for v in value:
+    #             self.optional()
+    #     else:
+    #         # This case means that the value is another component object
+    #         if isinstance(value, GangaObject):
+    #             self.optional()
+    #         else:
+    #             return value
 
+    # def componentAttribute(self):
+    #     """
+    #     Adding component attributes's information to the master node
+    #     """
+    #     pass
 
+    # def optional(self, node):
+    #     """
 
-    def simpleAttribute(self, attr_name, value, sequence):
-        """
-        Adding simple attribute's information to the master node
-        """
-        if sequence:
-            for v in value:
-                self.optional()
-        else:
-            # This case means that the value is another component object
-            if isinstance(value, GangaObject):
-                self.optional()
-            else:
-                return value
+    #     """
+    #     if node is None:
+    #         return None
+    #     else:
+    #         if hasattr(node, 'accept'):
+    #             return node.to_json(self)
+    #         elif isType(node, (list, tuple, GangaList)):
+    #             temp_val = []
+    #             for sub_s in node:
+    #                 temp_val.append(self.optional(node))
 
-    def componentAttribute(self):
-        """
-        Adding component attributes's information to the master node
-        """
-        pass
-
-    def optional(self, node):
-        """
-
-        """
-        if node is None:
-            return None
-        else:
-            if hasattr(node, 'accept'):
-                return node.to_json(self)
-            elif isType(node, (list, tuple, GangaList)):
-                temp_val = []
-                for sub_s in node:
-                    temp_val.append(self.optional(node))
-
-                print(self.indent(), '</sequence>', file=self.out)
-            else:
-                self.print_value(s)
-        self.level -= 1            
+    #             print(self.indent(), '</sequence>', file=self.out)
+    #         else:
+    #             self.print_value(s)
+    #     self.level -= 1            
 
     
-    def sharedAttribute(self, attr_name, value, sequence):
-        """
-        Adding a shared attribute's information to the master node
-        Uses simpleAttribute's implemenation under the hood
-        """
-        self.simpleAttribute(attr_name, value, sequence)
+    # def sharedAttribute(self, attr_name, value, sequence):
+    #     """
+    #     Adding a shared attribute's information to the master node
+    #     Uses simpleAttribute's implemenation under the hood
+    #     """
+    #     self.simpleAttribute(attr_name, value, sequence)
 
 
-    @staticmethod
-    def componentAttribute(self, attr_name, value, ignore_subs):
-        """
-        """
-        if isType(value, (list, tuple, GangaList)):
-            ret_val = list(value)
-        else:        
-            ret_val = JsonDumper.object_to_json(attr_name, getattr(node, attr_name), ignore_subs)
-        return ret_val
+    # @staticmethod
+    # def componentAttribute(self, attr_name, value, ignore_subs):
+    #     """
+    #     """
+    #     if isType(value, (list, tuple, GangaList)):
+    #         ret_val = list(value)
+    #     else:        
+    #         ret_val = JsonDumper.object_to_json(attr_name, getattr(node, attr_name), ignore_subs)
+    #     return ret_val
 
 class JsonLoader:
     """Loads the Ganga Object from json
@@ -329,14 +323,14 @@ class JsonLoader:
 
         # FIXME: Use a better approach to filter the metadata keys
         for key in (set(json_content.keys()) - set(['category', 'type', 'version'])):
-            print(key, type(json_content[key]))
+            # print(key, type(json_content[key]))
             if (isinstance(json_content[key], dict) or isinstance(json_content[key], list)) and "category" in json_content[key]:
                 obj, local_error = JsonLoader.load_component_object(obj, key, json_content[key])
                 if local_error:
                     errors.append(local_error)
             
             else:
-                print("\t", key, 3)
+                # print("\t", key, 3)
                 obj, local_error = JsonLoader.load_simple_object(obj, key, json_content[key])
                 if local_error:
                     errors.append(local_error)
@@ -358,7 +352,7 @@ class JsonLoader:
 
         # Assigning the component object its attributes
         for attr, item in component_obj._schema.allItems():
-            print(attr)
+            # print(attr)
             if attr in part_attr:
                 # loader component attribute fo this component attribute
                 if isinstance(part_attr[attr], list):

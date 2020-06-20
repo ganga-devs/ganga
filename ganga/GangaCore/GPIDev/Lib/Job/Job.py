@@ -495,11 +495,10 @@ class Job(GangaObject):
     @synchronised
     def to_json(self, ignore_subs=[]):
         """Special Implementation of to_json for Job object
-        """
-        import datetime
-        from GangaCore.GPIDev.Base.Proxy import isType
-        from GangaCore.Core.GangaRepository.JStreamer import JsonDumper
+        - A simple attribute: will not have the to_json function and thus we have to manually assign the value
+        - A componenet attribute: will have the to_json function and thus we can automatically generate the json dict for that and then assin it 
 
+        """
         node_info = {
             "type": self._schema.name,
             "version": f"{self._schema.version.major}.{self._schema.version.minor}",
@@ -507,12 +506,6 @@ class Job(GangaObject):
         }
         if self._schema is None:
             return node_info
-
-
-        """Rules:
-        - A simple attribute: will not have the to_json function and thus we have to manually assign the value
-        - A componenet attribute: will have the to_json function and thus we can automatically generate the json dict for that and then assin it 
-        """
 
         for name, item in self._schema.allItems():
             value = getattr(self, name)
@@ -522,7 +515,6 @@ class Job(GangaObject):
                 else:
                     node_info[name] = (value)
         return node_info         
-    
 
     class State(object):
 

@@ -90,10 +90,6 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 
     # Add a global lock to make absolutely sure we don't have multiple threads writing files
     # See Github Issue 185
-    #debug 
-    import sys
-    print("save_safe The callers information is ", sys._getframe().f_back.f_code.co_name)
-
     with safe_save.lock:
 
         obj = stripProxy(_obj)

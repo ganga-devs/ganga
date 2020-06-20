@@ -673,8 +673,10 @@ class GangaList(GangaObject):
     @synchronised
     def to_json(self):
         """
-        
+        - A simple attribute: will not have the to_json function and thus we have to manually assign the value
+        - A componenet attribute: will have the to_json function and thus we can automatically generate the json dict for that and then assin it 
         """
+
         import datetime
         from GangaCore.GPIDev.Base.Proxy import isType
         from GangaCore.Core.GangaRepository.JStreamer import JsonDumper
@@ -688,18 +690,14 @@ class GangaList(GangaObject):
             return node_info
 
 
-        """Rules:
-        - A simple attribute: will not have the to_json function and thus we have to manually assign the value
-        - A componenet attribute: will have the to_json function and thus we can automatically generate the json dict for that and then assin it 
-        """
 
         for name, item in self._schema.allItems():
             value = getattr(self, name)
-            print(name)
+            # print(name)
             if name == "_list":
                 temp_val = []
                 for val in value:
-                    print("\t", val, type(val))
+                    # print("\t", val, type(val))
                     if hasattr(val, "to_json"):
                         temp_val.append(val.to_json())
                     else:
