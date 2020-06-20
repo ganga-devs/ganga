@@ -309,7 +309,9 @@ class GangaRepositoryLocal(GangaRepository):
         if cache_time != fn_ctime:
             logger.debug("%s != %s" % (cache_time, fn_ctime))
             try:
-                with open(fn, 'rb') as fobj:
+                # with open(fn, 'rb') as fobj:
+                # When using the json based index file reader
+                with open(fn, 'r') as fobj:
                     cat, cls, cache = pickle_from_file(fobj)[0]
             except EOFError:
                 pass
@@ -360,7 +362,9 @@ class GangaRepositoryLocal(GangaRepository):
             new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
             if not os.path.exists(ifn) or shutdown:
                 new_cache = new_idx_cache
-                with open(ifn, "wb") as this_file:
+                # with open(ifn, "wb") as this_file:
+                # When using the json based index file reader
+                with open(ifn, "w") as this_file:
                     new_index = (obj._category, getName(obj), new_cache)
                     logger.debug("Writing: %s" % str(new_index))
                     pickle_to_file(new_index, this_file)
@@ -411,7 +415,9 @@ class GangaRepositoryLocal(GangaRepository):
             if os.path.isfile(_master_idx):
                 logger.debug("Reading Master index")
                 self._master_index_timestamp = os.stat(_master_idx).st_ctime
-                with open(_master_idx, 'rb') as input_f:
+                # with open(_master_idx, 'rb') as input_f:
+                # When using the json based index file reader
+                with open(_master_idx, 'r') as input_f:
                     this_master_cache = pickle_from_file(input_f)[0]
                 for this_cache in this_master_cache:
                     if this_cache[1] >= 0:
@@ -509,7 +515,10 @@ class GangaRepositoryLocal(GangaRepository):
                     this_master_cache.append(cached_list)
 
             try:
-                with open(_master_idx, 'wb') as of:
+                # with open(_master_idx, 'wb') as of:
+                # modificatiojn for the json implementation
+                with open(_master_idx, 'w') as of:                    
+
                     pickle_to_file(this_master_cache, of)
             except IOError as err:
                 logger.debug("write_master: %s" % err)

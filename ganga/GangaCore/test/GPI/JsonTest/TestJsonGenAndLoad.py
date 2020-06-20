@@ -183,7 +183,7 @@ class TestJSONGenAndLoad(GangaUnitTest):
 
         from GangaCore.GPI import jobs
 
-        j = jobs[-1]
+        j = jobs[-1 ]
 
         assert path.isfile(getIndexFile(j))
 
