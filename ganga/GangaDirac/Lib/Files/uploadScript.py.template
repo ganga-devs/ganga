@@ -35,7 +35,7 @@ with closing(open('###LOCATIONSFILE_NAME###','ab')) as locationsfile:
             sys.stdout.write('Exception running dirac.addFile command: %s' % str(x))
             break
         if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:
-            guid = dirac.getMetadata(lfn)['Value']['Successful'][lfn]['GUID']
+            guid = dirac.getLfnMetadata(lfn)['Value']['Successful'][lfn]['GUID']
             locationsfile.write("DiracFile:::%s&&%s->%s:::['%s']:::%s\\n" % (wildcard, file_label, lfn, se, guid))
             locationsfile.flush()
             locationsfile.close()

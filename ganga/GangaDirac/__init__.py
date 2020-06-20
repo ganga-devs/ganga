@@ -115,12 +115,35 @@ def loadPlugins(config=None):
     from .Lib import Files
 
 def postBootstrapHook():
+    from GangaCore.GPIDev.Lib.Config.Config import getConfig
+    from GangaCore.Runtime.bootstrap import GangaProgram
+    regenerate = False
+
     dirac_conf = getConfig('DIRAC')
     if not dirac_conf['DiracEnvSource'] and not dirac_conf['DiracEnvJSON']:
-        return
+        logger.warning("The DIRAC UI bashrc file location is missing from your config [DIRAC]/DiracEnvSource section")
+        source = input("Enter it now, [DIRAC]/DiracEnvSource: ")
+        if not source:
+            logger.fatal("No location specified, Dirac plugin will likely not work! Please fix your config file manually")
+            raise ImportError("GangaDirac plugin incorrectly configured")
+        dirac_conf.setGangarcValue("DiracEnvSource", source)
+        regenerate = True
+
+    dirac_proxy = getConfig("defaults_DiracProxy")
+    if not dirac_proxy["group"] or dirac_proxy["group"] == "None":
+        logger.warning("The DIRAC group for generating your proxy is missing from your config [defaults_DiracProxy]/group section")
+        group = input("Enter it now (e.g. <VO>_user), [defaults_DiracProxy]/group: ")
+        if not group:
+            logger.fatal("No group specified, executing dirac commands will likely not work! Please fix your config file manually")
+            raise ImportError("GangaDirac plugin incorrectly configured")
+        dirac_proxy.setGangarcValue("group", group)
+        regenerate=True
+    if regenerate:
+        GangaProgram.generate_config_file(getConfig("System")["GANGA_CONFIG_FILE"],
+                                          interactive=False)
+
     from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
     try:
         credential_store[DiracProxy()]
     except KeyError:
         pass
-

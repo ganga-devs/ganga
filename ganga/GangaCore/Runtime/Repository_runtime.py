@@ -9,7 +9,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.files import expandfilename, fullpath
 from GangaCore.Core.GangaRepository import getRegistries
 from GangaCore.Core.GangaRepository import getRegistry
-from GangaCore.Core.exceptions import GangaException
+from GangaCore.Core.exceptions import GangaException, GangaDiskSpaceError
 
 config = getConfig('Configuration')
 logger = getLogger()
@@ -86,7 +86,7 @@ def checkDiskQuota():
                 logger.error("To prevent repository corruption and data loss we won't start GangaCore.")
                 logger.error("Either set your config variable 'force_start' in .gangarc to enable starting and ignore this check.")
                 logger.error("Or, make sure you have more than %s percent free disk space on: %s" %(100-partition_critical, data_partition))
-                raise GangaException("Not Enough Disk Space!!!")
+                raise GangaDiskSpaceError("Not Enough Disk Space!!!")
         except GangaException as err:
             raise
         except Exception as err:

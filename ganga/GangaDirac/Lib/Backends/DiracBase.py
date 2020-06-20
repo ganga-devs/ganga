@@ -10,15 +10,17 @@ import datetime
 import shutil
 import tempfile
 import math
+from functools import wraps
 from collections import defaultdict
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaCore.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
 from GangaCore.GPIDev.Lib.Job.Job import Job
-from GangaCore.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError
+from GangaCore.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError, GangaDiskSpaceError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+from GangaCore.Utility.util import require_disk_space
 from GangaCore.Utility.ColourText import getColour
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger, log_user_exception
@@ -711,6 +713,7 @@ class DiracBase(IBackend):
             logger.error("No peeking available for Dirac job '%i'.", self.id)
 
     @require_credential
+    @require_disk_space
     def getOutputSandbox(self, outputDir=None, unpack=True):
         """Get the outputsandbox for the job object controlling this backend
         Args:
@@ -763,6 +766,7 @@ class DiracBase(IBackend):
         else:
             outputfiles_foreach(j, DiracFile, lambda x: clearFileInfo(x))
 
+    @require_disk_space
     def getOutputData(self, outputDir=None, names=None, force=False):
         """Retrieve data stored on SE to dir (default=job output workspace).
         If names=None, then all outputdata is downloaded otherwise names should
@@ -969,6 +973,7 @@ class DiracBase(IBackend):
         # malformed job output?
 
     @staticmethod
+    @require_disk_space
     def _internal_job_finalisation(job, updated_dirac_status):
         """
         This method performs the main job finalisation
@@ -1143,6 +1148,12 @@ class DiracBase(IBackend):
                     break
                 DiracBase._internal_job_finalisation(job, updated_dirac_status)
                 break
+
+            except GangaDiskSpaceError as err:
+                #If the user runs out of disk space for the job to completing so its not monitored any more. Print a helpful message.
+                job.force_status('failed')
+                raise GangaDiskSpaceError("Cannot finalise job %s. No disk space available! Clear some space and the do j.backend.reset() to try again." % job.getFQID('.'))
+
             except Exception as err:
 
                 logger.warning("An error occured finalising job: %s" % job.getFQID('.'))
@@ -1187,6 +1198,7 @@ class DiracBase(IBackend):
             getQueues()._monitoring_threadpool.add_function(DiracBase.finalise_jobs_thread_func, (jobSlice, downloadSandbox))
 
     @staticmethod
+    @require_disk_space
     def finalise_jobs_thread_func(jobSlice, downloadSandbox = True):
         """
         Finalise the jobs given. This downloads the output sandboxes, gets the final Dirac statuses, completion times etc.
