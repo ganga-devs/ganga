@@ -1,5 +1,3 @@
-
-
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 from os import path, stat, unlink
@@ -11,23 +9,29 @@ from .utilFunctions import getJobsPath, getJSONDir, getJSONFile, getIndexFile
 
 testStr = "testFooString"
 
-class TestJSONGenAndLoad(GangaUnitTest):
 
+class TestJSONGenAndLoad(GangaUnitTest):
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts = [('Registry', 'AutoFlusherWaitTime', 5), ('TestingFramework', 'AutoCleanup', 'False'), ('Configuration', 'repositorytype', 'LocalJson')]
+        extra_opts = [
+            ("Registry", "AutoFlusherWaitTime", 5),
+            ("TestingFramework", "AutoCleanup", "False"),
+            ("Configuration", "repositorytype", "LocalJson"),
+        ]
         super(TestJSONGenAndLoad, self).setUp(extra_opts=extra_opts)
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
         from GangaCore.Utility.Config import getConfig
+
         ### I get AssertionError: 'False' is not false for some reason. My config does not have [TestingFramework] options I guess
         # self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
 
         from GangaCore.GPI import Job, jobs
-        j=Job()
+
+        j = Job()
         assert len(jobs) == 1
-        j.name = 'modified_name'
+        j.name = "modified_name"
 
     def test_b_JobJSONExists(self):
         # Check things exist
@@ -37,13 +41,13 @@ class TestJSONGenAndLoad(GangaUnitTest):
 
         print(("len: %s" % str(len(jobs))))
 
-        j=jobs(0)
+        j = jobs(0)
 
         # j = Job()
 
         assert path.isdir(getJobsPath())
 
-        assert path.isfile(path.join(getJobsPath(), 'cnt'))
+        assert path.isfile(path.join(getJobsPath(), "cnt"))
 
         assert path.isdir(getJSONDir(j))
 
@@ -51,18 +55,18 @@ class TestJSONGenAndLoad(GangaUnitTest):
 
         # TODO:
         # checking if the backup file is created. This fails as the backup file is not generated currently. Do not know the reason for this.
-        assert path.isfile(getJSONFile(j) + '~')
+        assert path.isfile(getJSONFile(j) + "~")
 
         assert path.isfile(getIndexFile(j))
 
-        #import filecmp
-        #assert not filecmp.cmp(getJSONFile(j), getJSONFile(j)+'~')
+        # import filecmp
+        # assert not filecmp.cmp(getJSONFile(j), getJSONFile(j)+'~')
 
     def test_c_JSONAutoUpdated(self):
         # Check they get updated
         from GangaCore.GPI import jobs
 
-        j=jobs[-1]
+        j = jobs[-1]
         # j = Job()
 
         JSONFileName = getJSONFile(j)
@@ -71,27 +75,28 @@ class TestJSONGenAndLoad(GangaUnitTest):
 
         j.name = testStr
 
-        # FIXME: test passes if we wait. 
+        # FIXME: test passes if we wait.
         time.sleep(5)
 
         from GangaCore.Utility.Config import getConfig
+
         flush_timeout = 1
-        total_time=0.
+        total_time = 0.0
         new_update = 0
         lst_update = last_update.st_mtime
-        while total_time < 2.*flush_timeout and new_update <= lst_update:
-            total_time+=1.
-            time.sleep(1.)
+        while total_time < 2.0 * flush_timeout and new_update <= lst_update:
+            total_time += 1.0
+            time.sleep(1.0)
             try:
                 new_update = stat(JSONFileName).st_mtime
             except:
-                new_update = 0.
+                new_update = 0.0
 
         newest_update = stat(JSONFileName)
 
         assert newest_update.st_mtime > last_update.st_mtime
 
-# --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def test_d_JSONUpdated(self):
         # check they get updated elsewhere
@@ -99,11 +104,11 @@ class TestJSONGenAndLoad(GangaUnitTest):
 
         disableMonitoring()
 
-        j=jobs(0)
+        j = jobs(0)
 
         JSONFileName = getJSONFile(j)
 
-        last_update = stat(JSONFileName) 
+        last_update = stat(JSONFileName)
 
         j.submit()
 
@@ -114,7 +119,7 @@ class TestJSONGenAndLoad(GangaUnitTest):
         enableMonitoring()
 
         can_assert = False
-        if j.status in ['submitted', 'running']:
+        if j.status in ["submitted", "running"]:
             can_assert = True
             sleep_until_completed(j, 60)
 
@@ -123,78 +128,87 @@ class TestJSONGenAndLoad(GangaUnitTest):
         assert newest_update.st_mtime > last_update.st_mtime
 
         # Apparently this requirement is a bad idea. This isn't implemented in 6.1.17 but should probably be in 6.1.18
-        #if can_assert:
+        # if can_assert:
         #    assert final_update.st_mtime > newest_update.st_mtime
-        #else:
+        # else:
         #    assert final_update.st_mtime == newest_update.st_mtime
 
-    # FIXME: What is the use of this test?
-    # def test_e_testJSONContent(self):
-    #     # Check content of JSON is as expected
-    #     from GangaCore.Core.GangaRepository.JStreamer import to_file, from_file
+    def test_e_testJSONContent(self):
+        # Check content of JSON is as expected
+        from GangaCore.Core.GangaRepository.JStreamer import to_file, from_file
 
-    #     from GangaCore.GPI import jobs, Job
-    #     from GangaCore.GPIDev.Base.Proxy import stripProxy
+        from GangaCore.GPI import jobs, Job
+        from GangaCore.GPIDev.Base.Proxy import stripProxy
 
-    #     from tempfile import NamedTemporaryFile
+        from tempfile import NamedTemporaryFile
 
-    #     j = jobs(0)
-    #     assert path.isfile(getJSONFile(j))
-    #     with open(getJSONFile(j)) as handler:
-    #         tmpobj, errs = from_file(handler)
+        j = jobs(0)
+        assert path.isfile(getJSONFile(j))
+        with open(getJSONFile(j)) as handler:
+            tmpobj, errs = from_file(handler)
 
-    #         assert hasattr(tmpobj, 'name')
+            assert hasattr(tmpobj, 'name')
 
-    #         assert tmpobj.name == testStr
+            assert tmpobj.name == testStr
 
-    #         ignore_subs = ['time', 'subjobs', 'info', 'application', 'backend', 'id']
+            ignore_subs = ['time', 'subjobs', 'info', 'application', 'backend', 'id', 'outputdir', 'inputdir']
 
-    #         with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file:
-    #             temp_name = new_temp_file.name
+            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file:
+                temp_name = new_temp_file.name
 
-    #             to_file(stripProxy(j), new_temp_file, ignore_subs)
-    #             new_temp_file.flush()
+                to_file(stripProxy(j), new_temp_file, ignore_subs)
+                new_temp_file.flush()
 
-    #         with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file2:
-    #             temp_name2 = new_temp_file2.name
+            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file2:
+                temp_name2 = new_temp_file2.name
 
-    #             j2 = Job()
-    #             j2.name = testStr
-    #             j2.submit()
-    #             from GangaTest.Framework.utils import sleep_until_completed
-    #             sleep_until_completed(j2)
+                j2 = Job()
+                j2.name = testStr
+                j2.submit()
+                from GangaTest.Framework.utils import sleep_until_completed
+                sleep_until_completed(j2)
 
-    #             to_file(stripProxy(j2), new_temp_file2, ignore_subs)
-    #             new_temp_file2.flush()
+                to_file(stripProxy(j2), new_temp_file2, ignore_subs)
+                new_temp_file2.flush()
 
-    #         #import filecmp
-    #         #assert filecmp.cmp(handler.name, new_temp_file.name)
-    #         #assert not filecmp.cmp(new_temp_file.name, new_temp_file2.name)
+            #import filecmp
+            #assert filecmp.cmp(handler.name, new_temp_file.name)
+            #assert not filecmp.cmp(new_temp_file.name, new_temp_file2.name)
 
-    #         #assert open(getJSONFile(j)).read() == open(temp_name).read()
-    #         assert json.load(open(temp_name)) == json.load(open(temp_name2))
+            #assert open(getJSONFile(j)).read() == open(temp_name).read()
+            # comparing the attributes
+            fj1 = json.load(open(temp_name))
+            fj2 = json.load(open(temp_name2))
+            for attr in fj1:
+                if attr not in ignore_subs:
+                    assert fj1[attr] == fj2[attr]
+            # assert json.load(open(temp_name)) == json.load(open(temp_name2))
 
-    #         unlink(temp_name)
-    #         unlink(temp_name2)
+            unlink(temp_name)
+            unlink(temp_name2)
 
     def test_f_testJSONIndex(self):
         # Check JSON Index content
-        from GangaCore.Core.GangaRepository.PickleStreamer import to_file, from_file
+        from GangaCore.Core.GangaRepository.PickleStreamer import (
+            json_pickle_to_file,
+            json_pickle_from_file,
+        )
 
         from GangaCore.GPI import jobs
 
-        j = jobs[-1 ]
+        j = jobs[-1]
 
         assert path.isfile(getIndexFile(j))
 
-        with open(getIndexFile(j), 'rb') as handler:
-            obj, errs = from_file(handler)
+        with open(getIndexFile(j), "rb") as handler:
+            obj, errs = json_pickle_from_file(handler)
 
             # assert isinstance(obj, tuple)
             # using json implies the datastruct tuple ->> list
             assert isinstance(obj, list)
 
             from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
+
             raw_j = stripProxy(j)
             index_cache = raw_j._getRegistry().getIndexCache(raw_j)
             assert isinstance(index_cache, dict)
@@ -204,5 +218,3 @@ class TestJSONGenAndLoad(GangaUnitTest):
             this_index_cache = [index_cat, index_cls, index_cache]
 
             assert this_index_cache == obj
-
-

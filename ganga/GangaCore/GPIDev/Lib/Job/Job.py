@@ -13,7 +13,8 @@ from GangaCore.GPIDev.MonitoringServices import getMonitoringObject
 from GangaCore.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError, TypeMismatchError, SplitterError
 from GangaCore.Core import Sandbox
 from GangaCore.Core.GangaRepository import getRegistry
-from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+# from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from GangaCore.GPIDev.Adapters.IPostProcessor import MultiPostProcessor

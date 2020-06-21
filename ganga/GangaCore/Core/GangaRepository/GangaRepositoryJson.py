@@ -20,15 +20,16 @@ from GangaCore.Core.GangaRepository.FixedLock import FixedLockManager
 
 import GangaCore.Utility.logging
 
-from GangaCore.Core.GangaRepository.PickleStreamer import to_file as pickle_to_file
-from GangaCore.Core.GangaRepository.PickleStreamer import from_file as pickle_from_file
+from GangaCore.Core.GangaRepository.PickleStreamer import json_pickle_to_file as pickle_to_file
+from GangaCore.Core.GangaRepository.PickleStreamer import json_pickle_from_file as pickle_from_file
 
 from GangaCore.Core.GangaRepository.JStreamer import to_file as json_to_file
 from GangaCore.Core.GangaRepository.JStreamer import from_file as json_from_file
 from GangaCore.Core.GangaRepository.JStreamer import JsonFileError
 
 from GangaCore.GPIDev.Base.Objects import Node
-from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+# from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
 
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 
@@ -516,7 +517,6 @@ class GangaRepositoryLocal(GangaRepository):
 
             try:
                 # with open(_master_idx, 'wb') as of:
-                # modificatiojn for the json implementation
                 with open(_master_idx, 'w') as of:                    
 
                     pickle_to_file(this_master_cache, of)

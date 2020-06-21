@@ -5,7 +5,8 @@
 ##########################################################################
 
 from GangaCore.Core.exceptions import GangaKeyError, IncompleteJobSubmissionError
-from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+# from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
 from GangaCore.GPIDev.Lib.Dataset import GangaDataset
