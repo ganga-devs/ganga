@@ -230,10 +230,27 @@ def getWNCodeForDownloadingInputFiles(job, indent):
 
     if job.inputdata:
         if job.inputdata and isType(job.inputdata, GangaDataset):
-            inputfiles_list += job.inputdata.files
+            for _f in job.inputdata:
+                try:
+                    _url = _f.accessURL()
+                    if _url:
+                        continue
+                    else:
+                        inputfiles_list.append(_f)
+                except NotImplementedError:
+                    inputfiles_list.append(_f)
+
     elif job.master is not None:
         if job.master.inputdata and isType(job.master.inputdata, GangaDataset):
-            inputfiles_list += job.master.inputdata.files
+            for _f in job.master.inputdata:
+                try:
+                    _url = _f.accessURL()
+                    if _url:
+                        continue
+                    else:
+                        inputfiles_list.append(_f)
+                except NotImplementedError:
+                    inputfiles_list.append(_f)
 
     if job.virtualization and isinstance(job.virtualization.image, IGangaFile):
         inputfiles_list.append(job.virtualization.image)
@@ -241,7 +258,6 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     for inputFile in inputfiles_list:
 
         inputfileClassName = getName(inputFile)
-
         if outputFilePostProcessingOnWN(job, inputfileClassName):
             inputFile.processWildcardMatches()
             if inputFile.subfiles:
