@@ -11,7 +11,7 @@ from GangaCore.GPIDev.Base.Objects import GangaObject, ObjectMetaclass
 from GangaCore.GPIDev.Base.Proxy import addProxy, isType, stripProxy
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 
-# TODO: Use the logger often, instead of print [next-commit] 
+# TODO: Use the logger often, instead of print [next-commit]
 logger = getLogger()
 
 
@@ -20,11 +20,9 @@ def to_file(j, fobj=None, ignore_subs=[]):
     """Convert JobObject and write to fileobject
     """
     try:
-        # None implying to print the jobs information
-        # json_content = JsonDumper().parse(j, ignore_subs=ignore_subs)
-        json_content = j.to_json()
-        for sub in ignore_subs:
-            json_content.pop(sub, None)
+        json_content = j.to_json(ignore_subs=ignore_subs)
+        # for sub in ignore_subs:
+        #     json_content.pop(sub, None)
         if fobj is None:
             print(json_content)
         else:
@@ -44,14 +42,15 @@ def from_file(f):
         return obj, error
     except Exception as err:
         logger.error("Json from-file error for file:\n%s" % err)
-        # raise JsonFileError(err, "from-file error")        
+        # raise JsonFileError(err, "from-file error")
         raise JsonFileError(err, f"from-file error :: {f}")
 
 
+# TODO: Remove the versioning from this
 class EmptyGangaObject(GangaObject):
 
     """Empty Ganga Object. Is used to construct incomplete jobs"""
-    # TODO: Remove the versioning from this
+
     _schema = Schema(Version(0, 0), {})
     _name = "EmptyGangaObject"
     _category = "internal"
@@ -62,7 +61,6 @@ class EmptyGangaObject(GangaObject):
 
 
 class JsonFileError(GangaException):
-
     def __init__(self, excpt, message):
         GangaException.__init__(self, excpt, message)
         self.message = message
@@ -70,13 +68,14 @@ class JsonFileError(GangaException):
 
     def __str__(self):
         if self.excpt:
-            err = '(%s:%s)' % (type(self.excpt), self.excpt)
+            err = "(%s:%s)" % (type(self.excpt), self.excpt)
         else:
-            err = ''
+            err = ""
         return "JsonFileError: %s %s" % (self.message, err)
 
+
 class JsonDumper:
-    """Will dump the Job in a JSON file
+    """Used by Ganga Objects to convert themselves into a json representation of their components
     """
 
     def __init__(self, location=None):
@@ -87,11 +86,10 @@ class JsonDumper:
         """Will parse and return the job json
         The received item is a job object with proxy
         """
-        # FIXME: assign a proper job.name to ""
-        starting_name, starting_node = "", j
+        starting_name, starting_node = "Job", j
         job_json = JsonDumper.object_to_json(starting_name, starting_node, ignore_subs)
         return job_json
-        
+
     @staticmethod
     def object_to_json(name, node, ignore_subs):
         """Will give the attribute information of the provided `node` object as a python dict
@@ -105,14 +103,13 @@ class JsonDumper:
             elif isType(s, GangaList) or isType(s, list) or isType(s, tuple):
                 for sub_s in s:
                     sub_val = acceptOptional(sub_s)
-            elif hasattr(s, 'accept'):
+            elif hasattr(s, "accept"):
                 return JsonDumper.componentAttribute(None, s, node, ignore_subs)
             else:
                 return repr(s)
 
-
         def handle_gangalist(glist):
-            if hasattr(glist, 'accept'):
+            if hasattr(glist, "accept"):
                 for (name, item) in glist._schema.allItems():
                     if name == "_list":
                         values = getattr(glist, name)
@@ -120,47 +117,40 @@ class JsonDumper:
                         ret_values = []
                         for val in values:
                             values.append(handle_gangalist(val))
-                    elif item['visitable']:
-                        return 
+                    elif item["visitable"]:
+                        return
             else:
                 return glist
 
         # instead it could be: node._schemae.name not in ignore_subs
         if name not in ignore_subs:
-            if not hasattr(node, '_schema'):
-                return 
-            
+            if not hasattr(node, "_schema"):
+                return
+
             node_info = {
                 "type": node._schema.name,
                 "version": f"{node._schema.version.major}.{node._schema.version.minor}",
-                "category": node._schema.category
+                "category": node._schema.category,
             }
 
             if node._schema is None:
                 return node_info
-            
-            # # debug
-            # print(f"<object_to_json name='{name}'>")
-            
+
             for attr_name, attr_object in node._schema.allItems():
                 value = getattr(node, attr_name)
-                if attr_name == "_list": 
+                if attr_name == "_list":
                     temp_val = []
                     for val in value:
                         temp_val.append(val)
                     node_info[attr_name] = temp_val
 
-                if attr_object['visitable']:
-                    # print("\t", attr_name)
-                    # if isType(value, (list, tuple, GangaList)):
-                    # if isType(value, GangaList) or isType(value, list) or isType(value, tuple):
+                if attr_object["visitable"]:
                     if isType(value, list) or isType(value, tuple):
-                        # The GangaList can be a list of objects or list of lists
                         node_info[attr_name] = acceptOptional(value)
-                        # print("\t", attr_name, type(value))
-                        # node_info[attr_name] = list(value)
                     elif isinstance(value, GangaObject):
-                        node_info[attr_name] = JsonDumper.object_to_json(attr_name, value, ignore_subs)
+                        node_info[attr_name] = JsonDumper.object_to_json(
+                            attr_name, value, ignore_subs
+                        )
                     elif isinstance(value, dict) and attr_name == "timestamps":
                         for time_stamp, dtime in value.items():
                             if isinstance(dtime, datetime.datetime):
@@ -168,38 +158,8 @@ class JsonDumper:
                             node_info[attr_name] = value
                     else:
                         node_info[attr_name] = value
-                
-                # print("</object_to_json>")
+
                 return node_info
-            # for attr_name, attr_object in node._schme
-            # for (attr_name, attr_object) in node._schema.simpleItems():
-            #     try:
-            #         if attr_object['visitable']:
-            #             value = getattr(node, attr_name)
-            #             node_info[attr_name] = JsonDumper.simpleAttribute(attr_name, value, node, ignore_subs)
-            #     except Exception as e:
-            #         print(f"[ERROR] {name} - {attr_name} - {attr_object}")
-
-            # for (attr_name, attr_object) in node._schema.sharedItems():
-            #     try:
-            #         if attr_object['visitable']:
-            #             value = getattr(node, attr_name)
-            #             node_info[attr_name] = JsonDumper.simpleAttribute(attr_name, value, node, ignore_subs)
-            #     except Exception as e:
-            #         print(f"[ERROR] {name} - {attr_name} - {attr_object}")
-
-            # for (attr_name, attr_object) in node._schema.componentItems():
-            #     try:
-            #         value = getattr(node, attr_name)
-            #         if attr_object['visitable']:
-            #             node_info[attr_name] = JsonDumper.componentAttribute(attr_name, value, node, ignore_subs)
-            #     except Exception as e:
-            #         print(f"[ERROR] {name} - {attr_name} - {attr_object}", e)
-
-        # else:
-            # print("THIS WAS THE CASE WHEN THERE WAS X IN IGNORE_SUBS")
-
-
 
     # def simpleAttribute(self, attr_name, value, sequence):
     #     """
@@ -221,26 +181,6 @@ class JsonDumper:
     #     """
     #     pass
 
-    # def optional(self, node):
-    #     """
-
-    #     """
-    #     if node is None:
-    #         return None
-    #     else:
-    #         if hasattr(node, 'accept'):
-    #             return node.to_json(self)
-    #         elif isType(node, (list, tuple, GangaList)):
-    #             temp_val = []
-    #             for sub_s in node:
-    #                 temp_val.append(self.optional(node))
-
-    #             print(self.indent(), '</sequence>', file=self.out)
-    #         else:
-    #             self.print_value(s)
-    #     self.level -= 1            
-
-    
     # def sharedAttribute(self, attr_name, value, sequence):
     #     """
     #     Adding a shared attribute's information to the master node
@@ -248,16 +188,16 @@ class JsonDumper:
     #     """
     #     self.simpleAttribute(attr_name, value, sequence)
 
-
     # @staticmethod
     # def componentAttribute(self, attr_name, value, ignore_subs):
     #     """
     #     """
     #     if isType(value, (list, tuple, GangaList)):
     #         ret_val = list(value)
-    #     else:        
+    #     else:
     #         ret_val = JsonDumper.object_to_json(attr_name, getattr(node, attr_name), ignore_subs)
     #     return ret_val
+
 
 class JsonLoader:
     """Loads the Ganga Object from json
@@ -277,8 +217,7 @@ class JsonLoader:
         if os.path.isfile(self.location):
             self.json_content = json.load(open(self.location, "r"))
         else:
-            raise FileNotFoundError(
-                f"The file {self.location} could not be found")
+            raise FileNotFoundError(f"The file {self.location} could not be found")
 
     def parse(self):
         """Parse and load the oppropriate things
@@ -289,13 +228,21 @@ class JsonLoader:
             self._read_json()
 
         self.obj = allPlugins.find(
-            self.json_content['category'], self.json_content['type']
+            self.json_content["category"], self.json_content["type"]
         ).getNew()
 
         # FIXME: Use a better approach to filter the metadata keys
-        for key in (set(self.json_content.keys()) - set(['category', 'type', 'version'])):
+        for key in set(self.json_content.keys()) - set(["category", "type", "version"]):
+
+            # dict implies that the object to be loaded will be a component object (or say a GangaObject itself)
             if isinstance(self.json_content[key], dict):
-                self.obj = self.load_component_object(self.obj, key, self.json_content[key])
+                self.obj = self.load_component_object(
+                    self.obj, key, self.json_content[key]
+                )
+
+            # list implies that we are trying to load either 
+            # a list of simples values (we handle it like a list) or 
+            # a GangaList list (we will try to load the nested objects of this list as if they are component objects)
             if isinstance(self.json_content[key], list):
                 temp_val = []
                 for val in json_content[key]:
@@ -303,10 +250,14 @@ class JsonLoader:
                         temp_val.append(self.load_component_object(self.obj, key, val))
                     else:
                         temp_val.append(self.load_simple_object(self.obj, key, val))
+
+                # once the nested objects from the list have been loaded, the list can simply be attached to its parent object
                 self.obj = self.load_simple_object(self.obj, key, temp_val)
 
             else:
-                self.obj = self.load_simple_object(self.obj, key, self.json_content[key])
+                self.obj = self.load_simple_object(
+                    self.obj, key, self.json_content[key]
+                )
 
         return self.obj, self.errors
 
@@ -314,36 +265,39 @@ class JsonLoader:
     def parse_static(json_content):
         """This implementation is backwards compatible to the way things are currently in VStreamre
         """
-        # creation process starts with the creation of the JoB
-        # Creating the job objects
         errors = []
-        obj = allPlugins.find(
-            json_content['category'], json_content['type']
-        ).getNew()
+        obj = allPlugins.find(json_content["category"], json_content["type"]).getNew()
 
         # FIXME: Use a better approach to filter the metadata keys
-        for key in (set(json_content.keys()) - set(['category', 'type', 'version'])):
-            # print(key, type(json_content[key]))
-            if (isinstance(json_content[key], dict) or isinstance(json_content[key], list)) and "category" in json_content[key]:
-                obj, local_error = JsonLoader.load_component_object(obj, key, json_content[key])
+        for key in set(json_content.keys()) - set(["category", "type", "version"]):
+            if (
+                isinstance(json_content[key], dict)
+                or isinstance(json_content[key], list)
+            ) and "category" in json_content[key]:
+                obj, local_error = JsonLoader.load_component_object(
+                    obj, key, json_content[key]
+                )
                 if local_error:
                     errors.append(local_error)
-            
+
             else:
-                # print("\t", key, 3)
-                obj, local_error = JsonLoader.load_simple_object(obj, key, json_content[key])
+                obj, local_error = JsonLoader.load_simple_object(
+                    obj, key, json_content[key]
+                )
                 if local_error:
                     errors.append(local_error)
 
         return obj, errors
 
     @staticmethod
-    def load_component_object(master_obj, name, part_attr):
+    def load_component_object(parent_obj, name, part_attr):
         """Loading component objects that will be attached to the main object
         """
         errors = []
         try:
-            component_obj = allPlugins.find(part_attr['category'], part_attr['type']).getNew()
+            component_obj = allPlugins.find(
+                part_attr["category"], part_attr["type"]
+            ).getNew()
         except PluginManagerError as e:
             # TODO: Maybe move this to the logger
             print(e)
@@ -352,7 +306,6 @@ class JsonLoader:
 
         # Assigning the component object its attributes
         for attr, item in component_obj._schema.allItems():
-            # print(attr)
             if attr in part_attr:
                 # loader component attribute fo this component attribute
                 if isinstance(part_attr[attr], list):
@@ -365,37 +318,42 @@ class JsonLoader:
                             # itr_obj, err = JsonLoader.load_simple_object(component_obj, attr, val)
                             temp_val.append(val)
 
-                    component_obj, local_error = JsonLoader.load_simple_object(component_obj, attr, temp_val)
+                    component_obj, local_error = JsonLoader.load_simple_object(
+                        component_obj, attr, temp_val
+                    )
                     if local_error:
                         errors.append(local_error)
-                elif isinstance(part_attr[attr], dict) and "category" in part_attr[attr]:
+                elif (
+                    isinstance(part_attr[attr], dict) and "category" in part_attr[attr]
+                ):
                     component_obj, local_error = JsonLoader.load_component_object(
-                        component_obj, attr, part_attr[attr])
+                        component_obj, attr, part_attr[attr]
+                    )
                 else:
                     try:
                         component_obj.setSchemaAttribute(attr, part_attr[attr])
                     except Exception as e:
                         errors.append(e)
                         raise GangaException(
-                            "ERROR in loading Json, failed to set attribute %s for class %s" % (attr, type(component_obj)))
-
+                            "ERROR in loading Json, failed to set attribute %s for class %s"
+                            % (attr, type(component_obj))
+                        )
 
         # Assigning the component object to the master object
-        master_obj.setSchemaAttribute(name, component_obj)
+        parent_obj.setSchemaAttribute(name, component_obj)
         # I do not think we should return error, as it is already raised before
-        return master_obj, errors
-
-
+        return parent_obj, errors
 
     @staticmethod
     def load_list_object(part_attr):
         """Loading component objects that will be attached to a list object
         """
-        errors = []        
+        errors = []
         try:
-            component_obj = allPlugins.find(part_attr['category'], part_attr['type']).getNew()
-        except PluginManagerError as e:\
-            # TODO: Maybe move this to the logger
+            component_obj = allPlugins.find(
+                part_attr["category"], part_attr["type"]
+            ).getNew()
+        except PluginManagerError as e:  # TODO: Maybe move this to the logger
             print(e)
             errors.append(e)
             component_obj = EmptyGangaObject()
@@ -408,31 +366,33 @@ class JsonLoader:
                 except Exception as e:
                     errors.append(e)
                     raise GangaException(
-                        "ERROR in loading Json, failed to set attribute %s for class %s" % (attr, type(component_obj)))
+                        "ERROR in loading Json, failed to set attribute %s for class %s"
+                        % (attr, type(component_obj))
+                    )
 
         return component_obj, errors
 
-
-
-
     @staticmethod
-    def load_simple_object(master_obj, name, value):
+    def load_simple_object(parent_obj, name, value):
         """Attaching a simple attribute to the ganga object
         """
         errors = []
         try:
-            master_obj.setSchemaAttribute(name, value)
+            parent_obj.setSchemaAttribute(name, value)
         except Exception as e:
             errors.append(e)
             raise GangaException(
-                "ERROR in loading Json, failed to set attribute %s for class %s" % (name, type(master_obj)))
-        return master_obj, errors
+                "ERROR in loading Json, failed to set attribute %s for class %s"
+                % (name, type(parent_obj))
+            )
+        return parent_obj, errors
 
 
 # TODO: Add more functions here
 class XmlToJsonConverter:
     """This will ensure full backwards compatibilty. Functions for creating LocalJson repo from LocalXML and vice versa.
     """
+
     # FIXME: Better approach for conversion is to read and parse the xml, instead of calling the VStreamer functions
     @staticmethod
     def xml_to_json(fobj, location):
@@ -441,7 +401,7 @@ class XmlToJsonConverter:
         from GangaCore.GPIDev.Base.Proxy import stripProxy
         from GangaCore.Core.GangaRepository.JStreamer import to_file as json_to_file
         from GangaCore.Core.GangaRepository.VStreamer import from_file as xml_from_file
-        
+
         # loading the job from xml rep
         job, error = xml_from_file(fobj)
         stripped_j = stripProxy(job)

@@ -13,7 +13,7 @@ from os import listdir, path, stat
 
 logger = getLogger()
 
-print("================================SUBJOBS================================")
+print("Subjobs are using json backend")
 
 ##FIXME There has to be a better way of doing this?
 class SJXLIterator(object):
