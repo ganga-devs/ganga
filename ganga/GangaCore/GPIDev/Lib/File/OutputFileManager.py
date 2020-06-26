@@ -232,10 +232,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
         if job.inputdata and isType(job.inputdata, GangaDataset):
             for _f in job.inputdata:
                 try:
-                    _url = _f.accessURL()
-                    if _url:
-                        continue
-                    else:
+                    if not _f.accessURL()
                         inputfiles_list.append(_f)
                 except NotImplementedError:
                     inputfiles_list.append(_f)
@@ -244,10 +241,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
         if job.master.inputdata and isType(job.master.inputdata, GangaDataset):
             for _f in job.master.inputdata:
                 try:
-                    _url = _f.accessURL()
-                    if _url:
-                        continue
-                    else:
+                    if not _f.accessURL()
                         inputfiles_list.append(_f)
                 except NotImplementedError:
                     inputfiles_list.append(_f)
