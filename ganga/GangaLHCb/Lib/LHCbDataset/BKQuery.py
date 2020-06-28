@@ -145,7 +145,7 @@ RecoToDST-07/90000000/DST" ,
         return {'OK': False, 'Value': metadata}
 
     @require_credential
-    def getDataset(self, compressed = True, site = None):
+    def getDataset(self, compressed = True, SE = None):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
             return None
@@ -176,8 +176,8 @@ RecoToDST-07/90000000/DST" ,
         if not type(files) is list:
             files = list(files.keys())
 
-        if site:
-            tempFiles = filterLFNsBySE(files, site)
+        if SE:
+            tempFiles = filterLFNsBySE(files, SE)
             files = tempFiles
 
         logger.debug("Creating dataset")
