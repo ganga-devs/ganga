@@ -493,8 +493,9 @@ class Job(GangaObject):
         #    raise AttributeError('cannot modify job.status directly, use job.updateStatus() method instead...')
         #del frame
 
+    # TODO: Make sure that if a component is in ignore_subs it is not visited at all
     @synchronised
-    def to_json(self, ignore_subs=[]):
+    def to_json(self):
         """Special Implementation of to_json for Job object
         - A simple attribute: will not have the to_json function and thus we have to manually assign the value
         - A componenet attribute: will have the to_json function and thus we can automatically generate the json dict for that and then assin it 
@@ -510,7 +511,7 @@ class Job(GangaObject):
 
         for name, item in self._schema.allItems():
             value = getattr(self, name)
-            if item['visitable'] and name not in ignore_subs:
+            if item['visitable']:
                 if hasattr(value, "to_json"):
                     node_info[name] = (value.to_json())
                 else:

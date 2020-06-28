@@ -20,9 +20,9 @@ def to_file(j, fobj=None, ignore_subs=[]):
     """Convert JobObject and write to fileobject
     """
     try:
-        json_content = j.to_json(ignore_subs=ignore_subs)
-        # for sub in ignore_subs:
-        #     json_content.pop(sub, None)
+        json_content = j.to_json()
+        for sub in ignore_subs:
+            json_content.pop(sub, None)
         if fobj is None:
             print(json_content)
         else:

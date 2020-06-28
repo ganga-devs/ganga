@@ -13,8 +13,7 @@ from os import listdir, path, stat
 
 logger = getLogger()
 
-print("================================SUBxMLS================================")
-
+print("Subjobs are using xml backend")
 
 ##FIXME There has to be a better way of doing this?
 class SJXLIterator(object):
