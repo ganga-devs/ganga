@@ -15,7 +15,7 @@ from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 logger = getLogger()
 
 
-# ignore_subs was added for backwards compatibilty
+# ignore_subs was added for backwards compatibility
 def to_file(j, fobj=None, ignore_subs=[]):
     """Convert JobObject and write to fileobject
     """
@@ -33,6 +33,61 @@ def to_file(j, fobj=None, ignore_subs=[]):
 
 
 def from_file(f):
+    """Load JobObject from a json filestream
+    """
+    try:
+        json_content = json.load(f)
+        loader = JsonLoader()
+        obj, error = loader.parse_static(json_content)
+        return obj, error
+    except Exception as err:
+        logger.error("Json from-file error for file:\n%s" % err)
+        # raise JsonFileError(err, "from-file error")
+        raise JsonFileError(err, f"from-file error :: {f}")
+
+
+# ignore_subs was added for backwards compatibilty
+# TODO: Add assertions to make sure that Jobs are stored in the job document and other objects are stored in their respective documents in the database
+# TODO: Update only those attributes in the DB that changed since last insert
+def to_database(j, connection=None, ignore_subs=[], dry_connection=True):
+    """Convert JobObject and write to file object
+    """
+    try:
+        json_content = j.to_json()
+        for sub in ignore_subs:
+            json_content.pop(sub, None)
+        # adding _id as a copy of id as `mongodb` uses that as the indexee
+        json_content["_id"] = json_content["id"]
+
+        if dry_connection is True:
+            print(json_content)
+        else:
+            # creating a new connection
+            if connection is None:
+                import pymongo
+
+                _ = pymongo.MongoClient()
+                connection = _.pymongo_test.jobs
+
+            result = connection.find_one_and_update(
+                filter={"_id": json_content["_id"]},
+                update={"$set": json_content},
+                upsert=True,
+            )
+            # try:
+            #     result = connection.insert_one(json_content)
+            # except pymongo.errors.DuplicateKeyError:
+            #     result = connection.find_one_and_update(
+            #         filter={"_id": json_content["_id"]},
+            #         update={"$set": json_content}
+            #     )
+
+    except Exception as err:
+        logger.error("Json to-file error for file:\n%s" % (err))
+        raise JsonFileError(err, "to-file error")
+
+
+def from_database(connection, location):
     """Load JobObject from a json filestream
     """
     try:
@@ -240,8 +295,8 @@ class JsonLoader:
                     self.obj, key, self.json_content[key]
                 )
 
-            # list implies that we are trying to load either 
-            # a list of simples values (we handle it like a list) or 
+            # list implies that we are trying to load either
+            # a list of simples values (we handle it like a list) or
             # a GangaList list (we will try to load the nested objects of this list as if they are component objects)
             if isinstance(self.json_content[key], list):
                 temp_val = []
