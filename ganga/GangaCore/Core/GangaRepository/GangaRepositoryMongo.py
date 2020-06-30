@@ -47,13 +47,13 @@ client = docker.from_env()
 def start_mongo_db(client=client):
     """Starting a simple mongo db instance in a docker container
     """
-
-    # check if the docker container already exists
     try:
         container = client.containers.get("ganga_mongomon")
-        container.restart()
+        if container.status != "running":
+            logger.info("The Docker container has been restarted")
+            container.restart()
     except docker.errors.NotFound:
-        print("pulling a container")
+        logger.info("Pulling a copy of container")
         # lets always pull the latest image, for now
         container = client.containers.run(
             detach=True,

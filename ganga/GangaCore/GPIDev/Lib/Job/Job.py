@@ -208,7 +208,7 @@ class Job(GangaObject):
                                      'backend': ComponentItem('backends', defvalue=Localhost(), doc='specification of the resources to be used (e.g. batch system)'),
                                      'inputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will act as input files for a job"),
                                      'outputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects decorating what have to be done with the output files after job is completed "),
-                                     'non_copyable_outputfiles': GangaFileItem(defvalue=[], hidden=1, sequence=1, doc="list of file objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
+                                     'non_copyable_outputfiles': GangaFileItem(defvalue=[], hidden=1, sequence=1, doc="list of file objects that are not to be copied accessed via proxy    through outputfiles", copyable=0),
                                      'id': SimpleItem('', protected=1, comparable=0, doc='unique Ganga job identifier generated automatically'),
                                      'status': SimpleItem('new', protected=1, checkset='_checkset_status', doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"', copyable=False),
                                      'name': SimpleItem('', doc='optional label which may be any combination of ASCII characters', typelist=[str]),

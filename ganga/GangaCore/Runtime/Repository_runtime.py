@@ -23,7 +23,7 @@ def requiresAfsToken():
 
 def getLocalRoot():
     # Get the local top level directory for the Repo
-    if config['repositorytype'] in ['LocalXML', 'LocalJson', 'LocalAMGA', 'LocalPickle', 'SQLite']:
+    if config['repositorytype'] in ['Database', 'CentralDatabase','LocalXML', 'LocalJson', 'LocalAMGA', 'LocalPickle', 'SQLite']:
         return os.path.join(expandfilename(config['gangadir'], True), 'repository', config['user'], config['repositorytype'])
     else:
         return ''

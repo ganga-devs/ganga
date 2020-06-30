@@ -94,6 +94,10 @@ def makeRepository(registry):
     """
     if registry.type in ["LocalJson"]:
         from GangaCore.Core.GangaRepository.GangaRepositoryJson import GangaRepositoryLocal
+    elif registry.type in ["Database"]:
+        from GangaCore.Core.GangaRepository.GangaRepositoryDatabase import GangaRepositoryLocal
+    elif registry.type in ["CentralDatabase"]:
+        from GangaCore.Core.GangaRepository.GangaRepositoryCentral import GangaRepositoryLocal        
         return GangaRepositoryLocal(registry)
     elif registry.type in ["LocalXML", "LocalPickle"]:
         from GangaCore.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal

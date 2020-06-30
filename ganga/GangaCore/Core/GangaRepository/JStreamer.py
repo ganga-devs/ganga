@@ -3,7 +3,10 @@ import copy
 import json
 import datetime
 
+import pymongo
+
 from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Schema import Schema, Version
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Utility.Plugin import PluginManagerError, allPlugins
@@ -49,7 +52,7 @@ def from_file(f):
 # ignore_subs was added for backwards compatibilty
 # TODO: Add assertions to make sure that Jobs are stored in the job document and other objects are stored in their respective documents in the database
 # TODO: Update only those attributes in the DB that changed since last insert
-def to_database(j, connection=None, ignore_subs=[], dry_connection=True):
+def to_database(j, connection=None, ignore_subs=[]):
     """Convert JobObject and write to file object
     """
     try:
@@ -59,46 +62,64 @@ def to_database(j, connection=None, ignore_subs=[], dry_connection=True):
         # adding _id as a copy of id as `mongodb` uses that as the indexee
         json_content["_id"] = json_content["id"]
 
-        if dry_connection is True:
+
+        if connection is None:
             print(json_content)
         else:
-            # creating a new connection
-            if connection is None:
-                import pymongo
-
-                _ = pymongo.MongoClient()
-                connection = _.pymongo_test.jobs
-
             result = connection.find_one_and_update(
                 filter={"_id": json_content["_id"]},
                 update={"$set": json_content},
                 upsert=True,
             )
-            # try:
-            #     result = connection.insert_one(json_content)
-            # except pymongo.errors.DuplicateKeyError:
-            #     result = connection.find_one_and_update(
-            #         filter={"_id": json_content["_id"]},
-            #         update={"$set": json_content}
-            #     )
-
     except Exception as err:
         logger.error("Json to-file error for file:\n%s" % (err))
         raise JsonFileError(err, "to-file error")
 
 
-def from_database(connection, location):
+def from_database(connection=None, identifier=None):
     """Load JobObject from a json filestream
+
+    Will connect to the document indicated by connection and then search for the appropriate 
+    object using the identifier
     """
+    # getting the options from the config
+    c = getConfig("DatabaseConfigurations")
+
+    if c["database"] == "default":
+        path = getConfig("Configuration")["gangadir"]
+        conn = "sqlite:///" + path + "/ganga.db"
+    else:
+        raise NotImplementedError("Other databases are not supported")
+
+        import urllib
+
+        dialect = c["database"]
+        driver = c["driver"]
+        username = urllib.parse.quote_plus(c["username"])
+        password = urllib.parse.quote_plus(c["password"])
+        host = c["host"]
+        port = c["port"]
+        database = c["dbname"]
+
+    mongouri = f"mongodb://{username}:{password}@{host}:{port}/"
+    client = pymongo.MongoClient(mongouri)
     try:
-        json_content = json.load(f)
+        if connection is None:
+            import pymongo
+
+            _ = pymongo.MongoClient()
+            connection = _.pymongo_test.jobs
+
+        # get the correct jobs from the connections
+        content = connection.find_one({"_id": 101})
+
         loader = JsonLoader()
-        obj, error = loader.parse_static(json_content)
+        obj, error = loader.parse_static(content)
         return obj, error
     except Exception as err:
-        logger.error("Json from-file error for file:\n%s" % err)
-        # raise JsonFileError(err, "from-file error")
-        raise JsonFileError(err, f"from-file error :: {f}")
+        logger.error("Json from-database error for database:\n%s" % err)
+        # raise JsonFileError(err, "from-database error")
+        raise JsonFileError(err, f"from-database error :: {connection}")
 
 
 # TODO: Remove the versioning from this
