@@ -17,6 +17,9 @@ from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 # TODO: Use the logger often, instead of print [next-commit]
 logger = getLogger()
 
+# creating a connection for testing purposes
+_ = pymongo.MongoClient()
+connection = _.dumbmachine.objects
 
 # ignore_subs was added for backwards compatibility
 def to_file(j, fobj=None, ignore_subs=[]):
@@ -32,7 +35,7 @@ def to_file(j, fobj=None, ignore_subs=[]):
             json.dump(json_content, fobj)
     except Exception as err:
         logger.error("Json to-file error for file:\n%s" % (err))
-        raise JsonFileError(err, "to-file error")
+        raise DatabaseError(err, "to-file error")
 
 
 def from_file(f):
@@ -45,81 +48,72 @@ def from_file(f):
         return obj, error
     except Exception as err:
         logger.error("Json from-file error for file:\n%s" % err)
-        # raise JsonFileError(err, "from-file error")
-        raise JsonFileError(err, f"from-file error :: {f}")
+        # raise DatabaseError(err, "from-file error")
+        raise DatabaseError(err, f"from-file error :: {f}")
 
 
 # ignore_subs was added for backwards compatibilty
 # TODO: Add assertions to make sure that Jobs are stored in the job document and other objects are stored in their respective documents in the database
 # TODO: Update only those attributes in the DB that changed since last insert
-def to_database(j, connection=None, ignore_subs=[]):
+def to_database(j, connection, ignore_subs=[]):
     """Convert JobObject and write to file object
     """
     try:
         json_content = j.to_json()
         for sub in ignore_subs:
             json_content.pop(sub, None)
-        # adding _id as a copy of id as `mongodb` uses that as the indexee
+
+        # Mongo uses _id as indexing identifier
         json_content["_id"] = json_content["id"]
-
-
-        if connection is None:
-            print(json_content)
-        else:
-            result = connection.find_one_and_update(
-                filter={"_id": json_content["_id"]},
-                update={"$set": json_content},
-                upsert=True,
-            )
+        result = connection.find_one_and_update(
+            filter={"_id": json_content["_id"]},
+            update={"$set": json_content},
+            upsert=True,
+        )
     except Exception as err:
-        logger.error("Json to-file error for file:\n%s" % (err))
-        raise JsonFileError(err, "to-file error")
+        logger.error("Database to-file error for file:\n%s" % (err))
+        raise DatabaseError(err, "to-file error")
 
 
-def from_database(connection=None, identifier=None):
+def from_database(connection, attribute, value):
     """Load JobObject from a json filestream
 
     Will connect to the document indicated by connection and then search for the appropriate 
     object using the identifier
     """
-    # getting the options from the config
-    c = getConfig("DatabaseConfigurations")
-
-    if c["database"] == "default":
-        path = getConfig("Configuration")["gangadir"]
-        conn = "sqlite:///" + path + "/ganga.db"
-    else:
-        raise NotImplementedError("Other databases are not supported")
-
-        import urllib
-
-        dialect = c["database"]
-        driver = c["driver"]
-        username = urllib.parse.quote_plus(c["username"])
-        password = urllib.parse.quote_plus(c["password"])
-        host = c["host"]
-        port = c["port"]
-        database = c["dbname"]
-
-    mongouri = f"mongodb://{username}:{password}@{host}:{port}/"
-    client = pymongo.MongoClient(mongouri)
     try:
-        if connection is None:
-            import pymongo
-
-            _ = pymongo.MongoClient()
-            connection = _.pymongo_test.jobs
-
         # get the correct jobs from the connections
-        content = connection.find_one({"_id": 101})
+        content = connection.find_one({attribute: value})
 
         loader = JsonLoader()
         obj, error = loader.parse_static(content)
         return obj, error
     except Exception as err:
-        logger.error("Json from-database error for database:\n%s" % err)
-        # raise JsonFileError(err, "from-database error")
-        raise JsonFileError(err, f"from-database error :: {connection}")
+        logger.error("from-database error for database:\n%s" % err)
+        # raise DatabaseError(err, "from-database error")
+        raise DatabaseError(err, f"from-database error :: {connection}")
+
+    # # getting the options from the config
+    # c = getConfig("DatabaseConfigurations")
+
+    # if c["database"] == "default":
+    #     path = getConfig("Configuration")["gangadir"]
+    #     conn = "sqlite:///" + path + "/ganga.db"
+    # else:
+    #     raise NotImplementedError("Other databases are not supported")
+
+    #     import urllib
+
+    #     dialect = c["database"]
+    #     driver = c["driver"]
+    #     username = urllib.parse.quote_plus(c["username"])
+    #     password = urllib.parse.quote_plus(c["password"])
+    #     host = c["host"]
+    #     port = c["port"]
+    #     database = c["dbname"]
+
+    # mongouri = f"mongodb://{username}:{password}@{host}:{port}/"
+    # client = pymongo.MongoClient(mongouri)
 
 
 # TODO: Remove the versioning from this
@@ -136,6 +130,7 @@ class EmptyGangaObject(GangaObject):
         super(EmptyGangaObject, self).__init__()
 
 
+# Kept for backwards compatibility purposes
 class JsonFileError(GangaException):
     def __init__(self, excpt, message):
         GangaException.__init__(self, excpt, message)
@@ -147,7 +142,22 @@ class JsonFileError(GangaException):
             err = "(%s:%s)" % (type(self.excpt), self.excpt)
         else:
             err = ""
-        return "JsonFileError: %s %s" % (self.message, err)
+        return "DatabaseError: %s %s" % (self.message, err)
+
+
+
+class DatabaseError(GangaException):
+    def __init__(self, excpt, message):
+        GangaException.__init__(self, excpt, message)
+        self.message = message
+        self.excpt = excpt
+
+    def __str__(self):
+        if self.excpt:
+            err = "(%s:%s)" % (type(self.excpt), self.excpt)
+        else:
+            err = ""
+        return "DatabaseError: %s %s" % (self.message, err)
 
 
 class JsonDumper:

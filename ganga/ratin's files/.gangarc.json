@@ -151,7 +151,7 @@
 #    LocalXML
 #    Database
 #    LocalJson
-repositorytype = Database
+repositorytype = LocalJson
 
 #  If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs.
 #  Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.
