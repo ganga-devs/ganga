@@ -102,7 +102,7 @@ def templates_GET_endpoint(current_user):
         for t in templates:
             templates_data_list.append(get_template_data(t.id))
     except Exception as err:
-        return jsonify({"success": False, "message": err}), 400
+        return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(templates_data_list)
 
