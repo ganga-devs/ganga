@@ -88,7 +88,7 @@ def token_required(f):
 # Templates API - GET Method
 @app.route("/templates", methods=["GET"])
 @token_required
-def templates_endpoint(current_user):
+def templates_GET_endpoint(current_user):
     """
     Returns a list of objects where each object is template data in JSON format.
     """
@@ -98,16 +98,19 @@ def templates_endpoint(current_user):
 
     # Store templates information in a list
     templates_data_list = []
-    for t in templates:
-        templates_data_list.append(get_template_data(t.id))
+    try:
+        for t in templates:
+            templates_data_list.append(get_template_data(t.id))
+    except Exception as err:
+        return jsonify({"success": False, "message": err}), 400
 
     return jsonify(templates_data_list)
 
 
-# Template Delete API - DELETE Method
-@app.route("/template/<int:template_id>/delete", methods=["DELETE"])
+# Template API - DELETE Method
+@app.route("/template/<int:template_id>", methods=["DELETE"])
 @token_required
-def template_delete_endpoint(current_user, template_id: int):
+def template_DELETE_endpoint(current_user, template_id: int):
     """
 
     Given the templates id, delete it from the template repository.
@@ -118,10 +121,6 @@ def template_delete_endpoint(current_user, template_id: int):
     # Imports
     from GangaCore.GPI import templates
 
-    # Template existence check
-    if template_id not in list(templates.ids()):
-        return jsonify({"success": False, "message": "Job with ID {} does not exist".format(template_id)}), 400
-
     # Remove template
     try:
         t = templates[template_id]
@@ -129,7 +128,7 @@ def template_delete_endpoint(current_user, template_id: int):
     except Exception as err:
         return jsonify({"success": False, "message": str(err)})
 
-    return jsonify({"success": True, "message": "Template with ID {} successfully removed".format(template_id)})
+    return jsonify({"success": True, "message": "Template with ID {} removed successfully".format(template_id)})
 
 
 # ******************** Helper Functions ******************** #
@@ -146,23 +145,11 @@ def get_template_data(template_id: int) -> dict:
     from GangaCore.GPI import templates
 
     # Get template from the templates list
-    try:
-        t = templates[int(template_id)]
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)})
+    t = templates[int(template_id)]
 
-    # Store template info in a dict
     template_data = {}
-    template_data["id"] = str(t.id)
-    template_data["fqid"] = str(t.fqid)
-    template_data["status"] = str(t.status)
-    template_data["name"] = str(t.name)
-    template_data["subjobs"] = len(t.subjobs)
-    template_data["application"] = str(type(t.application))
-    template_data["backend"] = str(type(t.backend))
-    template_data["backend.actualCE"] = str(t.backend.actualCE)
-    template_data["comment"] = str(t.comment)
-    template_data["subjob_statuses"] = str(t.returnSubjobStatuses())
+    for attr in ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]:
+        template_data[attr] = str(getattr(t, attr))
 
     return template_data
 
