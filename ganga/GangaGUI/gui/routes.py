@@ -88,7 +88,7 @@ def token_required(f):
 # Jobs API - GET Method
 @app.route("/jobs", methods=["GET"])
 @token_required
-def jobs_endpoint(current_user):
+def jobs_GET_endpoint(current_user):
     """
     Returns a list of jobs with general information in JSON format.
     """
@@ -98,8 +98,11 @@ def jobs_endpoint(current_user):
 
     # Store job information in a list
     job_data_list = []
-    for j in jobs:
-        job_data_list.append(get_job_data(j.id))
+    try:
+        for j in jobs:
+            job_data_list.append(get_job_data(j.id))
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(job_data_list)
 
@@ -154,27 +157,18 @@ def get_job_data(job_id: int) -> dict:
     :return: dict
     """
     from GangaCore.GPI import jobs
+
     # Get job from the job list
-    try:
-        j = jobs[int(job_id)]
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)})
+    j = jobs[int(job_id)]
 
     # Store job info in a dict
     job_data = {}
-    job_data["id"] = str(j.id)
-    job_data["fqid"] = str(j.fqid)
-    job_data["status"] = str(j.status)
-    job_data["name"] = str(j.name)
-    job_data["subjobs"] = len(j.subjobs)
-    job_data["application"] = str(type(j.application))
-    job_data["backend"] = str(type(j.backend))
+    for attr in ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]:
+         job_data[attr] = str(getattr(j, attr))
     job_data["backend.actualCE"] = str(j.backend.actualCE)
-    job_data["comment"] = str(j.comment)
     job_data["subjob_statuses"] = str(j.returnSubjobStatuses())
 
     return job_data
-
 
 
 # ******************** Shutdown Function ******************** #
