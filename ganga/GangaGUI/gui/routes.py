@@ -97,15 +97,11 @@ def job_endpoint(current_user, job_id: int):
     :param job_id: int
     """
 
-    # Imports
-    from GangaCore.GPI import jobs
-
-    # Job existence check
-    if job_id not in list(jobs.ids()):
-        return jsonify({"success": False, "message": "Job with ID {} does not exist".format(job_id)}), 400
-
     # Get the general job info
-    job_data = get_job_data(job_id)
+    try:
+        job_data = get_job_data(job_id)
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(job_data)
 
@@ -125,18 +121,10 @@ def job_attribute_endpoint(current_user, job_id: int, attribute: str):
 
     # Imports
     from GangaCore.GPI import jobs
-
-    # Job existence check
-    if job_id not in list(jobs.ids()):
-        return jsonify({"success": False, "message": "Job with ID {} does not exist".format(job_id)}), 400
-
-    supported_attributes = ["application", "backend", "do_auto_resubmit", "fqid", "id", "info", "inputdir", "inputdata",
-                            "inputfiles",
-                            "master", "name", "outputdir", "outputdata",
-                            "outputfiles", "parallel_submit", "splitter", "status", "subjobs", "time"]
+    from GangaCore.GPIDev.Lib.Job import Job
 
     # Supported attribute check
-    if attribute not in supported_attributes:
+    if attribute not in Job._schema.allItemNames():
         return jsonify({"success": False,
                         "message": "Job Attribute {} is not currently supported or does not exist".format(
                             attribute)}), 400
@@ -144,12 +132,9 @@ def job_attribute_endpoint(current_user, job_id: int, attribute: str):
     # Get job from jobs repository
     try:
         j = jobs[job_id]
+        response_data = {attribute: str(getattr(j, attribute))}
     except Exception as err:
-        return jsonify({"success": False, "message": str(err)})
-
-    # Create response data with job attribute information
-    response_data = {}
-    response_data[attribute] = str(getattr(j, attribute))
+        return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(response_data)
 
@@ -176,25 +161,13 @@ def job_create_endpoint(current_user):
         return jsonify({"success": False,
                         "message": "Template ID not provided in the request data"}), 400
 
-    # Integer check
-    try:
-        template_id = int(template_id)
-    except ValueError:
-        return jsonify({"success": False,
-                        "message": "Template ID provided in not an Integer"}), 400
-
-    # Template existence check
-    if int(template_id) not in templates.ids():
-        return jsonify({"success": False,
-                        "message": "Template with ID {} does not exist".format(template_id)}), 400
-
     # Create job using template
     try:
         j = Job(templates[int(template_id)])
         if job_name is not None:
             j.name = job_name
     except Exception as err:
-        return jsonify({"success": False, "message": str(err)})
+        return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify({"success": True,
                     "message": "Job with ID {} created successfully using the template ID {}".format(j.id,
@@ -203,8 +176,8 @@ def job_create_endpoint(current_user):
 
 # Perform certain action on the Job - PUT Method
 @app.route("/job/<int:job_id>/<action>", methods=["PUT"])
-@token_required
-def job_action_endpoint(current_user, job_id: int, action: str):
+# @token_required
+def job_action_endpoint(job_id: int, action: str):
     """
     Given the job_id and action in the endpoint, perform the action on the job.
 
@@ -223,162 +196,25 @@ def job_action_endpoint(current_user, job_id: int, action: str):
 
     # Imports
     from GangaCore.GPI import jobs
-
-    # Job existence check
-    if job_id not in list(jobs.ids()):
-        return jsonify({"success": False, "message": "Job with ID {} does not exist".format(job_id)}), 400
-
-    supported_actions = ["do_auto_resubmit", "name", "parallel_submit", "copy", "kill", "force_status", "resubmit",
-                         "runPostProcessors", "submit"]
+    from GangaCore.GPIDev.Lib.Job import Job
 
     # Action support check
-    if action not in supported_actions:
+    if action not in Job._exportmethods:
         return jsonify({"success": False,
                         "message": "Job action {} is not currently supported or does not exist".format(action)}), 400
 
-    # Function for action: do_auto_resubmit
-    if action == "do_auto_resubmit":
+    request_data = request.form.to_dict()
 
-        # Get value detail from the request data
-        value = request.form.get("do_auto_resubmit")
-
-        # Value check
-        if value is None:
-            return jsonify({"success": False,
-                            "message": "Please provide do_auto_submit value in the request body."}), 400
-
-        # Value validator
-        if value in ["True", "False", "true", "false"]:
-            value = False if value == "False" or value == "false" else True
+    try:
+        j = jobs(job_id)
+        if action in request_data.keys():
+            getattr(j, action)(request_data[action])
         else:
-            return jsonify({"success": False,
-                            "message": "Please provide do_auto_submit value as True or False."}), 400
+            getattr(j, action)()
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
 
-        # Change the attribute value of the Job
-        try:
-            j = jobs(job_id)
-            setattr(j, action, bool(value))
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    # Function for action: name
-    if action == "name":
-
-        # Get value detail from the request data
-        value = request.form.get("name")
-
-        # Value check
-        if value is None:
-            return jsonify({"success": False,
-                            "message": "Please provide name value in the request body."}), 400
-
-        # Change the attribute value of the Job
-        try:
-            j = jobs(job_id)
-            setattr(j, action, str(value))
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    # Function for action: parallel_submit
-    if action == "parallel_submit":
-
-        # Get value detail from the request data
-        value = request.form.get("parallel_submit")
-
-        # Value check
-        if value is None:
-            return jsonify({"success": False,
-                            "message": "Please provide parallel_submit value in the request body."}), 400
-
-        # Value validator
-        if value in ["True", "False", "true", "false"]:
-            value = False if value == "False" or value == "false" else True
-        else:
-            return jsonify({"success": False,
-                            "message": "Please provide parallel_submit value as True or False."}), 400
-
-        # Change the attribute value of the Job
-        try:
-            j = jobs(job_id)
-            setattr(j, action, bool(value))
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    # Function for action: copy
-    if action == "copy":
-
-        # Copy the job
-        try:
-            j = jobs(job_id)
-            j.copy()
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    # Function for action: kill
-    if action == "kill":
-
-        # Kill the job
-        try:
-            j = jobs(job_id)
-            j.kill()
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    # Function for action: force_status
-    if action == "force_status":
-
-        # Get value detail from the request data
-        value = request.form.get("force_status")
-
-        # Value check
-        if value is None:
-            return jsonify({"success": False,
-                            "message": "Please provide force_status value in the request body"}), 400
-
-        # Value validator
-        if value not in ["completed", "failed"]:
-            return jsonify({"success": False,
-                            "message": "Job may to forced to 'completed' or 'failed' state only"}), 400
-
-        # Force status of the job
-        try:
-            j = jobs(job_id)
-            j.force_status(str(value))
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    # Function for action: resubmit
-    if action == "resubmit":
-
-        # resubmit the job
-        try:
-            j = jobs(job_id)
-            j.resubmit()
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    # Function for action: runPostProcessors
-    if action == "runPostProcessors":
-
-        # runPostProcessors of the job
-        try:
-            j = jobs(job_id)
-            j.runPostProcessors()
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    # Function for action: submit
-    if action == "submit":
-
-        # submit the job
-        try:
-            j = jobs(job_id)
-            j.submit()
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    return jsonify(
-        {"success": True, "message": "Successfully completed the action {} on the Job ID {}".format(action, job_id)})
+    return jsonify({"success": True, "message": "Successfully completed the action {} on the Job ID {}".format(action, job_id)})
 
 
 # Delete Job API - DELETE Method
@@ -393,10 +229,6 @@ def job_delete_endpoint(current_user, job_id: int):
 
     # Imports
     from GangaCore.GPI import jobs
-
-    # Job existence check
-    if job_id not in list(jobs.ids()):
-        return jsonify({"success": False, "message": "Job with ID {} does not exist".format(job_id)}), 400
 
     # Remove job
     try:
@@ -418,24 +250,17 @@ def get_job_data(job_id: int) -> dict:
     :param job_id: int
     :return: dict
     """
+
     from GangaCore.GPI import jobs
+
     # Get job from the job list
-    try:
-        j = jobs[int(job_id)]
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)})
+    j = jobs[int(job_id)]
 
     # Store job info in a dict
     job_data = {}
-    job_data["id"] = str(j.id)
-    job_data["fqid"] = str(j.fqid)
-    job_data["status"] = str(j.status)
-    job_data["name"] = str(j.name)
-    job_data["subjobs"] = len(j.subjobs)
-    job_data["application"] = str(type(j.application))
-    job_data["backend"] = str(type(j.backend))
+    for attr in ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]:
+        job_data[attr] = str(getattr(j, attr))
     job_data["backend.actualCE"] = str(j.backend.actualCE)
-    job_data["comment"] = str(j.comment)
     job_data["subjob_statuses"] = str(j.returnSubjobStatuses())
 
     return job_data
