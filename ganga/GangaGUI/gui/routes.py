@@ -163,8 +163,9 @@ def job_create_endpoint(current_user):
 
 # Perform Certain Action on the Job - PUT Method
 @app.route("/job/<int:job_id>/<action>", methods=["PUT"])
-@token_required
-def job_action_endpoint(current_user, job_id: int, action: str):
+# @token_required
+# current_user,
+def job_action_endpoint(job_id: int, action: str):
     """
     Given the job_id and action in the endpoint, perform the action on the job.
 
@@ -178,7 +179,7 @@ def job_action_endpoint(current_user, job_id: int, action: str):
 
     2)
         PUT http://localhost:5000/job/13/force_status
-        force_status="killed"
+        force_status="failed"
 
         The above request will force status of the job with ID 13 to killed. If unsuccessful will return back the error.
 
