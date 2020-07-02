@@ -91,9 +91,10 @@ def token_required(f):
 def config_endpoint(current_user):
     """
     Returns a list of all the section of the configuration and their options as well as the values in JSON format.
+
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import config
     from GangaCore.Utility.Config import getConfig
 
