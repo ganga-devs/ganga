@@ -1,5 +1,3 @@
-# ******************** Imports ******************** #
-
 import jwt
 from GangaGUI.gui import app
 from flask import request, jsonify
@@ -88,23 +86,24 @@ def token_required(f):
 # Jobs API - GET Method
 @app.route("/jobs", methods=["GET"])
 @token_required
-def jobs_GET_endpoint(current_user):
+def jobs_endpoint(current_user):
     """
     Returns a list of jobs with general information in JSON format.
+
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import jobs
 
     # Store job information in a list
-    job_data_list = []
+    job_info_list = []
     try:
         for j in jobs:
-            job_data_list.append(get_job_data(j.id))
+            job_info_list.append(get_job_info(j.id))
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(job_data_list)
+    return jsonify(job_info_list)
 
 
 # Job IDs API - GET Method
@@ -113,18 +112,19 @@ def jobs_GET_endpoint(current_user):
 def jobs_ids_endpoint(current_user):
     """
     Returns a list of job ids present in job repository.
+
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import jobs
 
-    # ID list
+    # IDs list
     try:
-        id_list = list(jobs.ids())
+        ids_list = list(jobs.ids())
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(id_list)
+    return jsonify(ids_list)
 
 
 # Job Incomplete IDs API - GET Method
@@ -135,40 +135,40 @@ def jobs_incomplete_ids_endpoint(current_user):
     Returns a list of incomplete job ids in JSON format.
     """
 
-    # Imports
     from GangaCore.GPI import jobs
 
-    # Incomplete ID list
+    # Incomplete IDs list
     try:
-        incomplete_id_list = list(jobs.incomplete_ids())
+        incomplete_ids_list = list(jobs.incomplete_ids())
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(incomplete_id_list)
+    return jsonify(incomplete_ids_list)
 
 
 # ******************** Helper Functions ******************** #
 
-def get_job_data(job_id: int) -> dict:
+def get_job_info(job_id: int) -> dict:
     """
     Given the job_id, return a dict containing
-    [id, fqid, status, name, subjobs, application, backend, backend.actualCE, comments, subjob_statuses] as dict keys and their values.
+    [id, fqid, status, name, subjobs, application, backend, backend.actualCE, comments, subjob_statuses] info of the job.
+
     :param job_id: int
     :return: dict
     """
+
     from GangaCore.GPI import jobs
 
-    # Get job from the job list
     j = jobs[int(job_id)]
 
     # Store job info in a dict
-    job_data = {}
+    job_info = {}
     for attr in ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]:
-         job_data[attr] = str(getattr(j, attr))
-    job_data["backend.actualCE"] = str(j.backend.actualCE)
-    job_data["subjob_statuses"] = str(j.returnSubjobStatuses())
+        job_info[attr] = str(getattr(j, attr))
+    job_info["backend.actualCE"] = str(j.backend.actualCE)
+    job_info["subjob_statuses"] = str(j.returnSubjobStatuses())
 
-    return job_data
+    return job_info
 
 
 # ******************** Shutdown Function ******************** #
