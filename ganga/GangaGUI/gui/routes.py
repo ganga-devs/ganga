@@ -1,9 +1,9 @@
-# ******************** Imports ******************** #
-
 import jwt
-from GangaGUI.gui import app
-from flask import request, jsonify
+import json
 from functools import wraps
+from itertools import chain
+from flask import request, jsonify
+from GangaGUI.gui import app
 from GangaGUI.gui.models import User
 
 
@@ -85,25 +85,26 @@ def token_required(f):
 
 # ******************** Job API ******************** #
 
-# Single Job Info API - GET Method
+# Single Job Information API - GET Method
 @app.route("/job/<int:job_id>", methods=["GET"])
 @token_required
 def job_endpoint(current_user, job_id: int):
     """
-    Given the job id returns the general information related to the job in JSON format.
+    Given the job_id, returns the general information related to the job in JSON format.
 
     Returned job information: fqid, status, name, number of subjobs, application, backend, backend.actualCE, comments, subjobs statuses.
 
     :param job_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Get the general job info
     try:
-        job_data = get_job_data(job_id)
+        # Get the general info of the job
+        job_info = get_job_info(job_id)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(job_data)
+    return jsonify(job_info)
 
 
 # Single Job Attribute Info API - GET Method
@@ -111,25 +112,15 @@ def job_endpoint(current_user, job_id: int):
 @token_required
 def job_attribute_endpoint(current_user, job_id: int, attribute: str):
     """
-    Given the job id and attribute, return the attribute information in the string format via JSON.
-
-    Supported attributes: application, backend, do_auto_resubmit, fqid, id, info, inputdir, inputfile, master, name, outputdir, outputfiles, parallel_submit, splitter, status, subjobs, time
+    Given the job_id and attribute, returns the attribute information in the JSON string format.
 
     :param job_id: int
     :param attribute: str
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import jobs
-    from GangaCore.GPIDev.Lib.Job import Job
 
-    # Supported attribute check
-    if attribute not in Job._schema.allItemNames():
-        return jsonify({"success": False,
-                        "message": "Job Attribute {} is not currently supported or does not exist".format(
-                            attribute)}), 400
-
-    # Get job from jobs repository
     try:
         j = jobs[job_id]
         response_data = {attribute: str(getattr(j, attribute))}
@@ -139,30 +130,26 @@ def job_attribute_endpoint(current_user, job_id: int, attribute: str):
     return jsonify(response_data)
 
 
-# Create job using existing template API - POST Method
+# Create Job Using Template API - POST Method
 @app.route("/job/create", methods=["POST"])
 @token_required
 def job_create_endpoint(current_user):
     """
-    API to create a job using the existing template.
+    Create a new job using the existing template.
 
-    IMPORTANT: template_id NEEDS to be provided in the request body. job_name can also be provided in the request body.
+    IMPORTANT: template_id NEEDS to be provided in the request body. job_name can optionally be provided in the request body.
+
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import templates, Job
 
     # Store request data
     template_id: int = request.form.get("template_id")
     job_name: str = request.form.get("job_name")
 
-    # template_id existence check
-    if template_id is None:
-        return jsonify({"success": False,
-                        "message": "Template ID not provided in the request data"}), 400
-
-    # Create job using template
     try:
+        # Create job using template
         j = Job(templates[int(template_id)])
         if job_name is not None:
             j.name = job_name
@@ -170,82 +157,121 @@ def job_create_endpoint(current_user):
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify({"success": True,
-                    "message": "Job with ID {} created successfully using the template ID {}".format(j.id,
-                                                                                                     template_id)})
+                    "message": "Job with ID {} created successfully using the template with ID {}".format(j.id,
+                                                                                                          template_id)})
 
 
-# Perform certain action on the Job - PUT Method
+# Perform Certain Action on the Job - PUT Method
 @app.route("/job/<int:job_id>/<action>", methods=["PUT"])
-# @token_required
-def job_action_endpoint(job_id: int, action: str):
+@token_required
+def job_action_endpoint(current_user, job_id: int, action: str):
     """
     Given the job_id and action in the endpoint, perform the action on the job.
 
-    Supported actions: do_auto_resubmit, name, parallel_submit, copy, kill, force_status, resubmit, runPostProcessors, submit
+    The action can be any method or attribute change that can be called on the Job object.
 
-    Important Info:
-    1) do_auto_resubmit: User needs to provide 'do_auto_resubmit' field and it's value in the request body.
-    2) name: User needs to provide 'name' field and it's value in the request body.
-    3) parallel_submit: User needs to provide 'parallel_submit' field and it's value in the request body.
-    4) force_status: User needs to provide 'force_status' field and it's value in the request body.
+    Example:
+    1)
+        PUT http://localhost:5000/job/13/resubmit
+
+        The above request will resubmit the job with ID 13.
+
+    2)
+        PUT http://localhost:5000/job/13/force_status
+        force_status="killed"
+
+        The above request will force status of the job with ID 13 to killed. If unsuccessful will return back the error.
+
+    3)
+        PUT http://localhost:5000/job/13/name
+        name="New Name"
+
+        The above request will change the name of the job with ID 13 to "New Name". Notice how the required values
+        are passed in the request body with the same name as action.
+
+    NOTE: It is NECESSARY to wrap a String value in double quotes ("") when provide a value in the request body.
+    Whereas DON'T wrap Integer or Boolean value in double quotes (""). Because values in double quotes are parsed as
+    String, numerical values without double quotes as Integer/Float and True/False without double quotes as Boolean.
+    You can also pass array of arguments. Eg. ["Test", 13, True] will be parsed as is in Python.
 
     :param job_id: int
     :param action: str
-    :param attribute: str
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import jobs
     from GangaCore.GPIDev.Lib.Job import Job
 
-    # Action support check
-    if action not in Job._exportmethods:
-        return jsonify({"success": False,
-                        "message": "Job action {} is not currently supported or does not exist".format(action)}), 400
-
+    # Store request data in a dictionary
     request_data = request.form.to_dict()
 
-    try:
-        j = jobs(job_id)
-        if action in request_data.keys():
-            getattr(j, action)(request_data[action])
-        else:
-            getattr(j, action)()
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)}), 400
+    # Action validity check
+    if action not in chain(Job._exportmethods, Job._schema.allItemNames()):
+        return jsonify({"success": False, "message": f"{action} not supported or does not exist"}), 400
 
-    return jsonify({"success": True, "message": "Successfully completed the action {} on the Job ID {}".format(action, job_id)})
+    # Action on Job Methods
+    if action in Job._exportmethods:
+        try:
+            j = jobs(job_id)
+
+            # Check for arguments in the request body for passing in the method
+            if action in request_data.keys():
+                args = json.loads(request_data[action])
+                if isinstance(args, type([])):
+                    getattr(j, action)(*args)
+                else:
+                    getattr(j, action)(args)
+            else:
+                getattr(j, action)()
+        except Exception as err:
+            return jsonify({"success": False, "message": str(err)}), 400
+
+    if action in Job._schema.allItemNames():
+        try:
+            j = jobs(job_id)
+
+            # Check for the value to set in the request body
+            if action in request_data.keys():
+                arg = json.loads(request_data[action])
+                setattr(j, action, arg)
+            else:
+                return jsonify(
+                    {"success": False, "message": f"Please provide the value for {action} in the request body"}), 400
+        except Exception as err:
+            return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(
+        {"success": True, "message": f"Successfully completed the action {action} on the Job with ID {job_id}"})
 
 
 # Delete Job API - DELETE Method
 @app.route("/job/<int:job_id>", methods=["DELETE"])
 @token_required
-def job_delete_endpoint(current_user, job_id: int):
+def delete_job_endpoint(current_user, job_id: int):
     """
     Given the job id, removes the job from the job repository.
 
     :param job_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import jobs
 
-    # Remove job
     try:
         j = jobs[job_id]
         j.remove()
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify({"success": True, "message": "Job with ID {} successfully removed".format(job_id)})
+    return jsonify({"success": True, "message": "Job with ID {} removed successfully".format(job_id)})
 
 
 # ******************** Helper Functions ******************** #
 
-def get_job_data(job_id: int) -> dict:
+def get_job_info(job_id: int) -> dict:
     """
     Given the job_id, return a dict containing
-    [id, fqid, status, name, subjobs, application, backend, backend.actualCE, comments, subjob_statuses] as dict keys and their values.
+    [id, fqid, status, name, subjobs, application, backend, backend.actualCE, comments, subjob_statuses] info of the job.
 
     :param job_id: int
     :return: dict
@@ -253,17 +279,16 @@ def get_job_data(job_id: int) -> dict:
 
     from GangaCore.GPI import jobs
 
-    # Get job from the job list
     j = jobs[int(job_id)]
 
     # Store job info in a dict
-    job_data = {}
+    job_info = {}
     for attr in ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]:
-        job_data[attr] = str(getattr(j, attr))
-    job_data["backend.actualCE"] = str(j.backend.actualCE)
-    job_data["subjob_statuses"] = str(j.returnSubjobStatuses())
+        job_info[attr] = str(getattr(j, attr))
+    job_info["backend.actualCE"] = str(j.backend.actualCE)
+    job_info["subjob_statuses"] = str(j.returnSubjobStatuses())
 
-    return job_data
+    return job_info
 
 
 # ******************** Shutdown Function ******************** #
