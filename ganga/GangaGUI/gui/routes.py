@@ -1,5 +1,3 @@
-# ******************** Imports ******************** #
-
 import jwt
 from GangaGUI.gui import app
 from flask import request, jsonify
@@ -90,34 +88,28 @@ def token_required(f):
 @token_required
 def subjobs_endpoint(current_user, job_id: int):
     """
-    Returns a list subjobs of a job in a similar way as jobs API.
+    Returns a list subjobs of a particular job in a similar way as Jobs API.
 
     :param job_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import jobs
 
-    # Job existence check
-    if job_id not in list(jobs.ids()):
-        return jsonify({"success": False, "message": "Job with ID {} does not exist".format(job_id)}), 400
-
-    # Using the job id get the job
     try:
         j = jobs(int(job_id))
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    # Handle no subjob case
-    if len(j.subjobs) == 0:
-        return jsonify({"success": True, "message": "No subjobs for the Job ID {}".format(job_id)}), 400
-
     # Store subjobs information in a list
-    subjobs_data_list = []
-    for sj in j.subjobs:
-        subjobs_data_list.append(get_subjob_data(job_id=j.id, subjob_id=sj.id))
+    subjobs_info_list = []
+    try:
+        for sj in j.subjobs:
+            subjobs_info_list.append(get_subjob_info(job_id=j.id, subjob_id=sj.id))
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(subjobs_data_list)
+    return jsonify(subjobs_info_list)
 
 
 # Single Subjob Info API - GET Method
@@ -125,39 +117,24 @@ def subjobs_endpoint(current_user, job_id: int):
 @token_required
 def subjob_endpoint(current_user, job_id: int, subjob_id: int):
     """
-    Returns information of a single subjob related to a job
+    Returns information of a single subjob related to a particular job
 
-    Returned information: fqid, status, name, application, backend, backend.actualCE, comment
+    Returned information: id, fqid, status, name, application, backend, backend.actualCE, comment
 
     :param job_id: int
     :param subjob_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import jobs
 
-    # Job existence check
-    if job_id not in list(jobs.ids()):
-        return jsonify({"success": False, "message": "Job with ID {} does not exist".format(job_id)}), 400
-
-    # Using the job id and subjob id get the subjob
+    # Using the job id and subjob id get the subjob info
     try:
         j = jobs(int(job_id))
-
-        # Handle no subjob case
-        if len(j.subjobs) == 0:
-            return jsonify({"success": False, "message": "No subjobs for the Job ID {}".format(job_id)}), 400
-
-        # Handle subjob_id out of subjob index case
-        if subjob_id not in j.subjobs.ids():
-            return jsonify({"success": False, "message": "Subjob ID {} out of Index for the Job ID {}".format(subjob_id, job_id)}), 400
-
         sj = j.subjobs[int(subjob_id)]
+        response_data = get_subjob_data(job_id=j.id, subjob_id=sj.id)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
-
-    # Store subjob data
-    response_data = get_subjob_data(job_id=j.id, subjob_id=sj.id)
 
     return jsonify(response_data)
 
@@ -169,50 +146,21 @@ def subjob_attribute_endpoint(current_user, job_id: int, subjob_id: int, attribu
     """
     Given the job id, subjob id and attribute; return the attribute information in the string format via JSON.
 
-    Supported attributes: application, backend, do_auto_resubmit, fqid, id, info, inputdir, inputfile, master, name, outputdir, outputfiles, parallel_submit, status, time
-
     :param job_id: int
     :param subjob_id: int
     :param attribute: str
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import jobs
 
-    # Job existence check
-    if job_id not in list(jobs.ids()):
-        return jsonify({"success": False, "message": "Job with ID {} does not exist".format(job_id)}), 400
-
-    supported_attributes = ["application", "backend", "do_auto_resubmit", "fqid", "id", "info", "inputdir", "inputfiles",
-                            "master", "name", "outputdir",
-                            "outputfiles", "parallel_submit", "status", "time"]
-
-    if attribute not in supported_attributes:
-        return jsonify({"success": False,
-                        "message": "Subjob attribute {} is not currently supported or does not exist".format(
-                            attribute)}), 400
-
-    # Get subjob of the job
+    # Get subjob attribute info
     try:
         j = jobs[int(job_id)]
-
-        # Handle no subjob case
-        if len(j.subjobs) == 0:
-            return jsonify({"success": False, "message": "No subjobs for the Job ID {}".format(job_id)}), 400
-
-        # Handle subjob_id out of subjob index case
-        if subjob_id not in j.subjobs.ids():
-            return jsonify({"success": False,
-                            "message": "Subjob ID {} out of Index for the Job ID {}".format(subjob_id,
-                                                                                            job_id)}), 400
-
         sj = j.subjobs[int(subjob_id)]
+        response_data = {attribute: str(getattr(sj, attribute))}
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
-
-    # Create response data with subjob attribute information
-    response_data = {}
-    response_data[attribute] = str(getattr(sj, attribute))
 
     return jsonify(response_data)
 
@@ -228,28 +176,18 @@ def get_subjob_data(job_id: int, subjob_id: int) -> dict:
     :return: dict
     """
 
-    # Imports
     from GangaCore.GPI import jobs
 
-    # Using subjob_id get subjob of the job
-    try:
-        j = jobs(int(job_id))
-        sj = j.subjobs[int(subjob_id)]
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)})
+    j = jobs(int(job_id))
+    sj = j.subjobs[int(subjob_id)]
 
     # Store subjob info in a dict
-    subjob_data = {}
-    subjob_data["id"] = str(sj.id)
-    subjob_data["fqid"] = str(sj.fqid)
-    subjob_data["status"] = str(sj.status)
-    subjob_data["name"] = str(sj.name)
-    subjob_data["application"] = str(type(sj.application))
-    subjob_data["backend"] = str(type(sj.backend))
-    subjob_data["backend.actualCE"] = str(sj.backend.actualCE)
-    subjob_data["comment"] = str(sj.comment)
+    subjob_info = {}
+    for attr in ["id", "fqid", "status", "name", "application", "backend", "comment"]:
+        subjob_info[attr] = str(getattr(j, attr))
+    subjob_info["backend.actualCE"] = str(sj.backend.actualCE)
 
-    return subjob_data
+    return subjob_info
 
 
 # ******************** Shutdown Function ******************** #
@@ -261,6 +199,5 @@ def shutdown():
     func()
     response_data = {"success": True, "message": "Shutting down the server..."}
     return jsonify(response_data)
-
 
 # ******************** EOF ******************** #
