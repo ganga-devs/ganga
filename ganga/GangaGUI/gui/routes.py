@@ -1,5 +1,3 @@
-# ******************** Imports ******************** #
-
 import jwt
 from GangaGUI.gui import app
 from flask import request, jsonify
@@ -88,37 +86,38 @@ def token_required(f):
 # Templates API - GET Method
 @app.route("/templates", methods=["GET"])
 @token_required
-def templates_GET_endpoint(current_user):
+def templates_endpoint(current_user):
     """
-    Returns a list of objects where each object is template data in JSON format.
+    Returns a list of objects containing template info in JSON format.
+
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import templates
 
-    # Store templates information in a list
-    templates_data_list = []
+    # Store templates info in a list
+    templates_info_list = []
     try:
         for t in templates:
-            templates_data_list.append(get_template_data(t.id))
+            templates_info_list.append(get_template_info(t.id))
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(templates_data_list)
+    return jsonify(templates_info_list)
 
 
 # Template API - DELETE Method
 @app.route("/template/<int:template_id>", methods=["DELETE"])
 @token_required
-def template_DELETE_endpoint(current_user, template_id: int):
+def delete_template_endpoint(current_user, template_id: int):
     """
 
     Given the templates id, delete it from the template repository.
 
     :param template_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import templates
 
     # Remove template
@@ -126,14 +125,14 @@ def template_DELETE_endpoint(current_user, template_id: int):
         t = templates[template_id]
         t.remove()
     except Exception as err:
-        return jsonify({"success": False, "message": str(err)})
+        return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify({"success": True, "message": "Template with ID {} removed successfully".format(template_id)})
 
 
 # ******************** Helper Functions ******************** #
 
-def get_template_data(template_id: int) -> dict:
+def get_template_info(template_id: int) -> dict:
     """
     Given the template_id, return a dict containing general info of the template.
 
@@ -141,12 +140,11 @@ def get_template_data(template_id: int) -> dict:
     :return: dict
     """
 
-    # Imports
     from GangaCore.GPI import templates
 
-    # Get template from the templates list
     t = templates[int(template_id)]
 
+    # Store template info in a dict
     template_data = {}
     for attr in ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]:
         template_data[attr] = str(getattr(t, attr))
