@@ -89,15 +89,17 @@ def token_required(f):
 # Credential Store API - GET Method - Get list of all credentials
 @app.route("/credential_store", methods=["GET"])
 @token_required
-def get_credential_store_data(current_user):
+def credential_store_endpoint(current_user):
     """
     Return a list of credentials and their information in JSON format.
+
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import credential_store
 
-    credential_data_list = []
+    # Store credential store info in a list
+    credential_info_list = []
     try:
         for c in credential_store:
             credential_info = {}
@@ -106,22 +108,21 @@ def get_credential_store_data(current_user):
             credential_info["expiry_time"] = str(c.expiry_time())
             credential_info["is_valid"] = str(c.is_valid())
             credential_info["exists"] = str(c.exists())
-            credential_data_list.append(credential_info)
+            credential_info_list.append(credential_info)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(credential_data_list)
+    return jsonify(credential_info_list)
 
 
 # Credential Store API - PUT Method - Renew all credentials
 @app.route("/credential_store/renew", methods=["PUT"])
 @token_required
-def renew_credential_store_credentials(current_user):
+def renew_credentials_endpoint(current_user):
     """
     Renew all the credentials in the credential store.
     """
 
-    # Imports
     from GangaCore.GPI import credential_store
 
     try:
