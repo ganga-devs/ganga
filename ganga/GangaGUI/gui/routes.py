@@ -88,13 +88,14 @@ def token_required(f):
 
 # Job Tree API - GET Method
 @app.route("/jobtree", methods=["GET"])
-# @token_required
-def get_jobtree_info():
+@token_required
+def jobtree_endpoint(current_user):
     """
     Return the job tree folder structure as the json format of python dict.
+
+    :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    # Imports
     from GangaCore.GPI import jobtree
 
     try:
