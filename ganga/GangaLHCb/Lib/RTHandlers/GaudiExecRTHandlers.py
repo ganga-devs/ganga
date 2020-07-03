@@ -571,16 +571,28 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         job = app.getJobObject()
 
         # We can support inputfiles and opts_file here. Locally should be submitted once, remotely can be referenced.
-
+        #If remote we must check that they have replicas
         all_opts_files = app.getOptsFiles(True)
 
         for opts_file in all_opts_files:
             if isinstance(opts_file, DiracFile):
-                inputsandbox += ['LFN:'+opts_file.lfn]
+                try:
+                    if opts_file.getReplicas():
+                        inputsandbox += ['LFN:'+opts_file.lfn]
+                    else:
+                        raise ApplicationConfigurationError("DiracFile options file with LFN %s has no replicas" % opts_file.lfn)
+                except GangaFileError:
+                    raise ApplicationConfigurationError("DiracFile options file has no LFN!")
         # Sort out inputfiles we support
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
-                inputsandbox += ['LFN:'+file_.lfn]
+                try:
+                    if opts_file.getReplicas():
+                        inputsandbox += ['LFN:'+file_.lfn]
+                    else:
+                        raise ApplicationConfigurationError("DiracFile inputfile with LFN %s has no replicas" % opts_file.lfn)
+                except GangaFileError:
+                    raise ApplicationConfigurationError("DiracFile inputfile has no LFN!")
             elif isinstance(file_, LocalFile):
                 if job.master is not None and file_ not in job.master.inputfiles:
                     shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())
