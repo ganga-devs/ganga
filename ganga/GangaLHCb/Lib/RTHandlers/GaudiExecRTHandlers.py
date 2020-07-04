@@ -592,8 +592,8 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         job = app.getJobObject()
 
         # We can support inputfiles and opts_file here. Locally should be submitted once, remotely can be referenced.
-        #If remote we must check that they have replicas
         all_opts_files = app.getOptsFiles(True)
+
         for opts_file in all_opts_files:
             if isinstance(opts_file, DiracFile):
                 inputsandbox += ['LFN:'+opts_file.lfn]
