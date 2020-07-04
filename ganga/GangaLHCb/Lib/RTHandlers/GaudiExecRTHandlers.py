@@ -626,13 +626,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         #Now add in the missing DiracFiles from the master job
         for file_ in master_job.inputfiles:
             if isinstance(file_, DiracFile) and 'LFN:'+file_.lfn not in inputsandbox:
-                try:
-                    if file_.getReplicas():
-                        inputsandbox += ['LFN:'+file_.lfn]
-                    else:
-                        raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % file_.lfn)
-                except GangaFileError as err:
-                    raise err
+                inputsandbox += ['LFN:'+file_.lfn]
 
         logger.debug("Input Sand: %s" % inputsandbox)
 
