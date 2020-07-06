@@ -84,7 +84,7 @@ def token_required(f):
 # ******************** Subjobs API ******************** #
 
 # Subjobs API - GET Method
-@app.route("/job/<int:job_id>/subjobs", methods=["GET"])
+@app.route("/api/job/<int:job_id>/subjobs", methods=["GET"])
 @token_required
 def subjobs_endpoint(current_user, job_id: int):
     """
@@ -113,7 +113,7 @@ def subjobs_endpoint(current_user, job_id: int):
 
 
 # Single Subjob Info API - GET Method
-@app.route("/job/<int:job_id>/subjob/<int:subjob_id>", methods=["GET"])
+@app.route("/api/job/<int:job_id>/subjob/<int:subjob_id>", methods=["GET"])
 @token_required
 def subjob_endpoint(current_user, job_id: int, subjob_id: int):
     """
@@ -140,7 +140,7 @@ def subjob_endpoint(current_user, job_id: int, subjob_id: int):
 
 
 # Single Subjob Attribute Info API - GET Method
-@app.route("/job/<int:job_id>/subjob/<int:subjob_id>/<attribute>", methods=["GET"])
+@app.route("/api/job/<int:job_id>/subjob/<int:subjob_id>/<attribute>", methods=["GET"])
 @token_required
 def subjob_attribute_endpoint(current_user, job_id: int, subjob_id: int, attribute: str):
     """
