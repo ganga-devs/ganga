@@ -53,7 +53,7 @@ class TestGangaGUIJobTreeAPI(GangaUnitTest):
             jobtree.cd()
 
         # GET reqeust
-        res = self.app.get(f"/jobtree", headers={"X-Access-Token": token})
+        res = self.app.get(f"/api/jobtree", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 200)
 
         # Assert presence of the created dirs in the response
