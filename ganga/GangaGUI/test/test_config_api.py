@@ -69,7 +69,7 @@ class TestGangaGUIConfigAPI(GangaUnitTest):
                 "options": options_list,
             })
 
-        res = self.app.get(f"/config", headers={"X-Access-Token": token})
+        res = self.app.get(f"/api/config", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(res.json) == len(list_of_sections))
 

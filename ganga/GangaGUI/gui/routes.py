@@ -86,7 +86,7 @@ def token_required(f):
 # ******************** Config API ******************** #
 
 # Config API - GET Method
-@app.route("/config", methods=["GET"])
+@app.route("/api/config", methods=["GET"])
 @token_required
 def config_endpoint(current_user):
     """
