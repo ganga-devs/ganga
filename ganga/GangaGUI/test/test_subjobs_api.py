@@ -65,7 +65,8 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
 
         # GET request
         res = self.app.get(f"/job/{j.id}/subjobs", headers={"X-Access-Token": token})
-        self.assertTrue(res.status_code == 400)
+        self.assertTrue(res.status_code == 200)
+        self.assertTrue(len(res.json) == 0)
 
     # Subjob API - GET Method, Subjobs List
     def test_GET_method_job_id(self):
@@ -153,6 +154,7 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
 
         # GET request
         res = self.app.get(f"/job/{j.id}/subjob/{j.subjobs[2].id}", headers={"X-Access-Token": token})
+        print(res.json)
         self.assertTrue(res.status_code == 200)
 
         # Attributes in the API response body

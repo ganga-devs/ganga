@@ -132,7 +132,7 @@ def subjob_endpoint(current_user, job_id: int, subjob_id: int):
     try:
         j = jobs(int(job_id))
         sj = j.subjobs[int(subjob_id)]
-        response_data = get_subjob_data(job_id=j.id, subjob_id=sj.id)
+        response_data = get_subjob_info(job_id=j.id, subjob_id=sj.id)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
@@ -167,7 +167,7 @@ def subjob_attribute_endpoint(current_user, job_id: int, subjob_id: int, attribu
 
 # ******************** Helper Functions ******************** #
 
-def get_subjob_data(job_id: int, subjob_id: int) -> dict:
+def get_subjob_info(job_id: int, subjob_id: int) -> dict:
     """
     Given job_id and subjob_id, return a dict container general information about the subjob.
 
