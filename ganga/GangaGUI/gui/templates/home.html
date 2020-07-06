@@ -67,7 +67,7 @@
                                  aria-labelledby="headingOne"
                                  data-parent="#recentjobs">
                                 <div class="card-body">
-                                    <p class="m-0 p-0">fqid: {{ j.id }}</p>
+                                    <p class="m-0 p-0">fqid: {{ j.id|string }}</p>
                                     <p class="m-0 p-0">Subjobs: {{ j.subjobs|length }}</p>
                                     <p class="m-0 p-0">Application: {{ (j.application|string).split('(')[0] }}</p>
                                     <p class="m-0 p-0">Backend: {{ (j.backend|string).split('(')[0] }}</p>
