@@ -86,7 +86,7 @@ def token_required(f):
 # ******************** Job API ******************** #
 
 # Single Job Information API - GET Method
-@app.route("/job/<int:job_id>", methods=["GET"])
+@app.route("/api/job/<int:job_id>", methods=["GET"])
 @token_required
 def job_endpoint(current_user, job_id: int):
     """
@@ -108,7 +108,7 @@ def job_endpoint(current_user, job_id: int):
 
 
 # Single Job Attribute Info API - GET Method
-@app.route("/job/<int:job_id>/<attribute>", methods=["GET"])
+@app.route("/api/job/<int:job_id>/<attribute>", methods=["GET"])
 @token_required
 def job_attribute_endpoint(current_user, job_id: int, attribute: str):
     """
@@ -131,7 +131,7 @@ def job_attribute_endpoint(current_user, job_id: int, attribute: str):
 
 
 # Create Job Using Template API - POST Method
-@app.route("/job/create", methods=["POST"])
+@app.route("/api/job/create", methods=["POST"])
 @token_required
 def job_create_endpoint(current_user):
     """
@@ -162,7 +162,7 @@ def job_create_endpoint(current_user):
 
 
 # Perform Certain Action on the Job - PUT Method
-@app.route("/job/<int:job_id>/<action>", methods=["PUT"])
+@app.route("/api/job/<int:job_id>/<action>", methods=["PUT"])
 # @token_required
 # current_user,
 def job_action_endpoint(job_id: int, action: str):
@@ -246,7 +246,7 @@ def job_action_endpoint(job_id: int, action: str):
 
 
 # Delete Job API - DELETE Method
-@app.route("/job/<int:job_id>", methods=["DELETE"])
+@app.route("/api/job/<int:job_id>", methods=["DELETE"])
 @token_required
 def delete_job_endpoint(current_user, job_id: int):
     """
