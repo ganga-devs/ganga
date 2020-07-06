@@ -56,12 +56,12 @@ class TestGangaGUITemplatesAPI(GangaUnitTest):
             t.backend = Local()
 
         # GET request
-        res = self.app.get(f"/templates", headers={"X-Access-Token": token})
+        res = self.app.get(f"/api/templates", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(res.json) == 20)
 
         # Response data assertions
-        supported_attributes = ["id", "fqid", "status", "name", "subjobs", "application", "backend", "backend.actualCE", "comment", "subjob_statuses"]
+        supported_attributes = ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]
         for i in range(0, 20):
             for attribute in supported_attributes:
                 self.assertTrue(attribute in res.json[i])
@@ -69,21 +69,21 @@ class TestGangaGUITemplatesAPI(GangaUnitTest):
 
     # Templates API - DELETE Method, ID Out of Index
     def test_DELETE_method_id_out_of_range(self):
-        res = self.app.delete(f"/template/1/delete", headers={"X-Access-Token": token})
+        res = self.app.delete(f"/api/template/1", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 400)
 
     # Templates API - DELETE Method, ID is Negative
     def test_DELETE_method_id_negative(self):
-        res = self.app.delete(f"/template/-1/delete", headers={"X-Access-Token": token})
+        res = self.app.delete(f"/api/template/-1", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 404)
 
     # Templates API - DELETE Method, ID is String
     def test_DELETE_method_id_string(self):
-        res = self.app.delete(f"/template/test/delete", headers={"X-Access-Token": token})
+        res = self.app.delete(f"/api/template/test", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 404)
 
     # Templates API - DELETE Method
-    def test_DELETE_method_jobs_list(self):
+    def test_DELETE_method_templates_list(self):
         from GangaCore.GPI import templates, JobTemplate, GenericSplitter, Local
 
         # Clean template repository check
@@ -102,7 +102,7 @@ class TestGangaGUITemplatesAPI(GangaUnitTest):
         # Delete one template every request and assert the deletion
         for i in range(0,20):
             self.assertTrue(created_template_ids[i] in templates.ids())
-            res = self.app.delete(f"/template/{created_template_ids[i]}/delete", headers={"X-Access-Token": token})
+            res = self.app.delete(f"/api/template/{created_template_ids[i]}", headers={"X-Access-Token": token})
             self.assertTrue(res.status_code == 200)
             self.assertTrue(len(templates) == (20-(i+1)))
             self.assertTrue(created_template_ids[i] not in templates.ids())

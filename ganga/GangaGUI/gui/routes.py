@@ -84,7 +84,7 @@ def token_required(f):
 # ******************** Templates API ******************** #
 
 # Templates API - GET Method
-@app.route("/templates", methods=["GET"])
+@app.route("/api/templates", methods=["GET"])
 @token_required
 def templates_endpoint(current_user):
     """
@@ -107,7 +107,7 @@ def templates_endpoint(current_user):
 
 
 # Template API - DELETE Method
-@app.route("/template/<int:template_id>", methods=["DELETE"])
+@app.route("/api/template/<int:template_id>", methods=["DELETE"])
 @token_required
 def delete_template_endpoint(current_user, template_id: int):
     """
