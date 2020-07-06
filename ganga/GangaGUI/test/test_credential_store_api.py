@@ -123,7 +123,7 @@ class TestGangaGUICredentialStoreAPI(GangaUnitTest):
         assert len(credential_store) == 2
 
         # GET request
-        res = self.app.get(f"/credential_store", headers={"X-Access-Token": token})
+        res = self.app.get(f"/api/credential_store", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(res.json) == len(credential_store))
 
@@ -140,7 +140,7 @@ class TestGangaGUICredentialStoreAPI(GangaUnitTest):
         assert len(credential_store) == 2
 
         # PUT request
-        res = self.app.put(f"/credential_store/renew", headers={"X-Access-Token": token})
+        res = self.app.put(f"/api/credential_store/renew", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 200)
 
     # Tear down

@@ -87,7 +87,7 @@ def token_required(f):
 
 
 # Credential Store API - GET Method - Get list of all credentials
-@app.route("/credential_store", methods=["GET"])
+@app.route("/api/credential_store", methods=["GET"])
 @token_required
 def credential_store_endpoint(current_user):
     """
@@ -116,7 +116,7 @@ def credential_store_endpoint(current_user):
 
 
 # Credential Store API - PUT Method - Renew all credentials
-@app.route("/credential_store/renew", methods=["PUT"])
+@app.route("/api/credential_store/renew", methods=["PUT"])
 @token_required
 def renew_credentials_endpoint(current_user):
     """
