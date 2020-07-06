@@ -87,7 +87,7 @@ def token_required(f):
 
 
 # Job Tree API - GET Method
-@app.route("/jobtree", methods=["GET"])
+@app.route("/api/jobtree", methods=["GET"])
 @token_required
 def jobtree_endpoint(current_user):
     """
