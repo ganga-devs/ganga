@@ -6,7 +6,6 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaGUI.gui import app, db
 from GangaGUI.gui.models import User
 
-
 # ******************** Global Variables ******************** #
 
 currentdir = os.path.dirname(os.path.abspath(__file__))
@@ -159,7 +158,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         t.name = "Test Template Name"
 
         # POST request
-        res = self.app.post(f"/api/job/create", headers={"X-Access-Token": token}, data={"template_id": t.id, "job_name": "Custom Test Name"})
+        res = self.app.post(f"/api/job/create", headers={"X-Access-Token": token},
+                            data={"template_id": t.id, "job_name": "Custom Test Name"})
         self.assertTrue(res.status_code == 200)
 
         job_created = False
@@ -234,7 +234,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(res.status_code == 400)
 
         # PUT request with bad form data
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token}, data={"do_auto_resubmit": '"Bad Value"'})
+        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
+                           data={"do_auto_resubmit": '"Bad Value"'})
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - PUT Method, Action on Single Job - do_auto_resubmit action - correct form data
@@ -252,7 +253,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j.backend = Local()
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token}, data={"do_auto_resubmit": 'true'})
+        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
+                           data={"do_auto_resubmit": 'true'})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.do_auto_resubmit == True)
 
@@ -374,7 +376,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(res.status_code == 400)
 
         # PUT reqeust with bad data
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token}, data={"parallel_submit": '"Bad Value"'})
+        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
+                           data={"parallel_submit": '"Bad Value"'})
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - PUT Method, Action on Single Job - parallel_submit action - good form data
@@ -393,7 +396,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "new")
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/parallel_submit", headers={"X-Access-Token": token}, data={"parallel_submit": "false"})
+        res = self.app.put(f"/api/job/{j.id}/parallel_submit", headers={"X-Access-Token": token},
+                           data={"parallel_submit": "false"})
         print(res.json)
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.do_auto_resubmit == False)
@@ -503,7 +507,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(res.status_code == 400)
 
         # Reuqest with a bad value in the body - Bad values are other than (completed, failed)
-        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token}, data={"force_status": '"BadValue"'})
+        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token},
+                           data={"force_status": '"BadValue"'})
         self.assertTrue(res.status_code == 400)
 
     # Job API - PUT Method, force_status action - good request body
@@ -524,7 +529,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "new")
 
         # Cannot change job status from new to completed
-        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token}, data={"force_status": '"completed"'})
+        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token},
+                           data={"force_status": '"completed"'})
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.status == "new")
 
@@ -534,7 +540,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "running")
 
         # Change job status from running to failed
-        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token}, data={"force_status": '"failed"'})
+        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token},
+                           data={"force_status": '"failed"'})
         print(res.json)
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "failed")
@@ -607,15 +614,6 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         res = self.app.put(f"/api/job/{j2.id}/resubmit", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j2.status != "failed")
-
-        # Kill the job
-        j2.kill()
-        self.assertTrue(j2.status == "killed")
-
-        # Resubmit job with status killed
-        res = self.app.put(f"/api/job/{j2.id}/resubmit", headers={"X-Access-Token": token})
-        self.assertTrue(res.status_code == 200)
-        self.assertTrue(j2.status != "killed")
 
     # Job API - PUT Method, submit action
     def test_PUT_submit_action(self):
