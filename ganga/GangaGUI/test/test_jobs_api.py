@@ -1,5 +1,3 @@
-# ******************** Imports ******************** #
-
 import os
 import uuid
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
@@ -57,7 +55,7 @@ class TestGangaGUIJobsAPI(GangaUnitTest):
             j.submit()
 
         # GET reqeust
-        res = self.app.get(f"/jobs", headers={"X-Access-Token": token})
+        res = self.app.get(f"/api/jobs", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(res.json) == 20)
 
@@ -88,7 +86,7 @@ class TestGangaGUIJobsAPI(GangaUnitTest):
             stored_ids.append(j.id)
 
         # GET request
-        res = self.app.get(f"/jobs/ids", headers={"X-Access-Token": token})
+        res = self.app.get(f"/api/jobs/ids", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(res.json) == 20)
 
@@ -98,7 +96,7 @@ class TestGangaGUIJobsAPI(GangaUnitTest):
 
     # Jobs API - GET Method, Incomplete IDs list
     def test_GET_method_jobs_incomplete_ids_list(self):
-        res = self.app.get(f"/jobs/incomplete_ids", headers={"X-Access-Token": token})
+        res = self.app.get(f"/api/jobs/incomplete_ids", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 200)
 
     # Tear down

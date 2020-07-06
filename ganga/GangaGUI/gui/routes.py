@@ -84,7 +84,7 @@ def token_required(f):
 # ******************** Jobs API ******************** #
 
 # Jobs API - GET Method
-@app.route("/jobs", methods=["GET"])
+@app.route("/api/jobs", methods=["GET"])
 @token_required
 def jobs_endpoint(current_user):
     """
@@ -107,7 +107,7 @@ def jobs_endpoint(current_user):
 
 
 # Job IDs API - GET Method
-@app.route("/jobs/ids", methods=["GET"])
+@app.route("/api/jobs/ids", methods=["GET"])
 @token_required
 def jobs_ids_endpoint(current_user):
     """
@@ -128,7 +128,7 @@ def jobs_ids_endpoint(current_user):
 
 
 # Job Incomplete IDs API - GET Method
-@app.route("/jobs/incomplete_ids", methods=["GET"])
+@app.route("/api/jobs/incomplete_ids", methods=["GET"])
 @token_required
 def jobs_incomplete_ids_endpoint(current_user):
     """
