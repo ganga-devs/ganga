@@ -83,7 +83,7 @@ class GaussSplitter(ISplitter):
                 opts += 'from Configurables import LHCbApp \n'
                 opts += 'LHCbApp().EvtMax = %d\n' % self.eventsPerJob
             opts += 'GenInit("GaussGen").FirstEventNumber = %d\n' % first
-            spillOver = ["GaussGenPrev", "GaussGenPrevPrev", "GaussGenNext"]
+            spillOver = ["GaussGenPrev", "GaussGenPrevPrev", "GaussGenNext", "GaussGenNextNext"]
             for s in spillOver:
                 opts += 'GenInit("%s").FirstEventNumber = %d\n' % (s, first)
             #j.application.extra.input_buffers['data.py'] += opts

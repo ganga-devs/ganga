@@ -486,6 +486,28 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
 
+        #First check the remote options or inputfiles exist
+        j = app.getJobObject()
+        for file_ in j.inputfiles:
+            if isinstance(file_, DiracFile):
+                try:
+                    if file_.getReplicas():
+                        continue
+                    else:
+                        raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % file_.lfn)
+                except GangaFileError as err:
+                    raise err
+        all_opts_files = app.getOptsFiles(True)
+        for opts_file in all_opts_files:
+            if isinstance(opts_file, DiracFile):
+                try:
+                    if opts_file.getReplicas():
+                        continue
+                    else:
+                        raise GangaFileError("DiracFile options file with LFN %s has no replicas" % opts_file.lfn)
+                except GangaFileError as err:
+                    raise  err
+
         if app.autoDBtags and not app.getJobObject().inputdata[0].lfn.startswith('/lhcb/MC/'):
             logger.warning("This doesn't look like MC! Not automatically adding db tags.")
             app.autoDBtags = False
@@ -559,7 +581,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         """
         cred_req = app.getJobObject().backend.credential_requirements
         check_creds(cred_req)
-
         # NB this needs to be removed safely
         # Get the inputdata and input/output sandbox in a sorted way
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
@@ -571,7 +592,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         job = app.getJobObject()
 
         # We can support inputfiles and opts_file here. Locally should be submitted once, remotely can be referenced.
-
         all_opts_files = app.getOptsFiles(True)
 
         for opts_file in all_opts_files:
