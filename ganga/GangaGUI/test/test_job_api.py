@@ -564,7 +564,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j = Job()
         j.name = "Resubmit Test"
         j.application.exe = "sleep"
-        j.application.args = ["60"]
+        j.application.args = ["5"]
         j.backend = Local()
 
         self.assertTrue(j.status == "new")
@@ -576,44 +576,13 @@ class TestGangaGUIJobAPI(GangaUnitTest):
 
         # Submit the job
         j.submit()
-        sleep_until_state(j, state="running")
-        self.assertTrue(j.status == "running")
+        sleep_until_state(j)
+        self.assertTrue(j.status == "completed")
 
         # Cannot resubmit job with status running
         res = self.app.put(f"/api/job/{j.id}/resubmit", headers={"X-Access-Token": token})
-        self.assertTrue(res.status_code == 400)
-        self.assertTrue(j.status == "running")
-
-        # Force job status to failed
-        j.force_status("failed")
-        self.assertTrue(j.status == "failed")
-
-        # Test job 2
-        j2 = Job()
-        j2.name = "Resubmit Test 2"
-        j2.application.exe = "sleep"
-        j2.application.args = ["5"]
-        j2.backend = Local()
-
-        self.assertTrue(j2.status == "new")
-
-        # Submit test job 2 and wait until status completed
-        j2.submit()
-        sleep_until_state(j2)
-
-        # Resubmit job with status completed
-        res = self.app.put(f"/api/job/{j2.id}/resubmit", headers={"X-Access-Token": token})
         self.assertTrue(res.status_code == 200)
-        self.assertTrue(j2.status != "completed")
-
-        # Change job status to failed
-        j2.force_status("failed")
-        self.assertTrue(j2.status == "failed")
-
-        # Resubmit job with status failed
-        res = self.app.put(f"/api/job/{j2.id}/resubmit", headers={"X-Access-Token": token})
-        self.assertTrue(res.status_code == 200)
-        self.assertTrue(j2.status != "failed")
+        self.assertTrue(j.status != "completed")
 
     # Job API - PUT Method, submit action
     def test_PUT_submit_action(self):
