@@ -14,7 +14,6 @@ from GangaGUI.gui.models import User
 # Dashboard route
 @app.route("/")
 def dashboard():
-
     from GangaCore.GPI import jobs
 
     # Get last 10 jobs slice
@@ -23,7 +22,8 @@ def dashboard():
     status_color = {"new": "info", "completed": "success", "failed": "danger", "running": "primary",
                     "submitted": "secondary"}
 
-    return render_template("home.html", title="Dashboard", status_color=status_color, recent_jobs=recent_jobs, jobs=jobs)
+    return render_template("home.html", title="Dashboard", status_color=status_color, recent_jobs=recent_jobs,
+                           jobs=jobs)
 
 
 # ******************** Token Based Authentication ******************** #
@@ -93,7 +93,7 @@ def token_required(f):
 
     return decorated
 
-  
+
 # ******************** Job API ******************** #
 
 
@@ -290,7 +290,7 @@ def subjobs_endpoint(current_user, job_id: int):
     :param job_id: int
     :param current_user: Information of the current_user based on the request's JWT token
     """
-    
+
     from GangaCore.GPI import jobs
 
     try:
@@ -360,8 +360,8 @@ def subjob_attribute_endpoint(current_user, job_id: int, subjob_id: int, attribu
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(response_data)
-  
-  
+
+
 # ******************** Jobs API ******************** #
 
 # Jobs API - GET Method
@@ -405,7 +405,7 @@ def jobs_ids_endpoint(current_user):
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(ids_list)
-  
+
 
 # Job Incomplete IDs API - GET Method
 @app.route("/api/jobs/incomplete_ids", methods=["GET"])
@@ -424,8 +424,8 @@ def jobs_incomplete_ids_endpoint(current_user):
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(incomplete_ids_list)
-  
-  
+
+
 # ******************** Config API ******************** #
 
 # Config API - GET Method
@@ -467,7 +467,7 @@ def config_endpoint(current_user):
 
     return jsonify(list_of_sections)
 
-  
+
 # ******************** Templates API ******************** #
 
 # Templates API - GET Method
@@ -516,7 +516,7 @@ def delete_template_endpoint(current_user, template_id: int):
 
     return jsonify({"success": True, "message": "Template with ID {} removed successfully".format(template_id)})
 
-  
+
 # ******************** Credential Store API ******************** #
 
 # Credential Store API - GET Method - Get list of all credentials
@@ -564,8 +564,8 @@ def renew_credentials_endpoint(current_user):
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify({"success": True, "message": "Credentials store credentials renewed"})
-  
-  
+
+
 # ******************** Job Tree API ******************** #
 
 # Job Tree API - GET Method
@@ -602,7 +602,7 @@ def get_job_info(job_id: int) -> dict:
     """
 
     from GangaCore.GPI import jobs
-    
+
     j = jobs[int(job_id)]
 
     # Store job info in a dict
@@ -613,27 +613,29 @@ def get_job_info(job_id: int) -> dict:
     job_info["subjob_statuses"] = str(j.returnSubjobStatuses())
 
     return job_info
-  
+
+
 def get_subjob_info(job_id: int, subjob_id: int) -> dict:
-  """
-  Given job_id and subjob_id, return a dict container general information about the subjob.
+    """
+    Given job_id and subjob_id, return a dict container general information about the subjob.
 
-  :param job_id: int
-  :param subjob_id: int
-  :return: dict
-  """
+    :param job_id: int
+    :param subjob_id: int
+    :return: dict
+    """
 
-  from GangaCore.GPI import jobs
-  j = jobs(int(job_id))
-  sj = j.subjobs[int(subjob_id)]
+    from GangaCore.GPI import jobs
+    j = jobs(int(job_id))
+    sj = j.subjobs[int(subjob_id)]
 
-  # Store subjob info in a dict
-  subjob_info = {}
-  for attr in ["id", "fqid", "status", "name", "application", "backend", "comment"]:
-      subjob_info[attr] = str(getattr(j, attr))
-  subjob_info["backend.actualCE"] = str(sj.backend.actualCE)
+    # Store subjob info in a dict
+    subjob_info = {}
+    for attr in ["id", "fqid", "status", "name", "application", "backend", "comment"]:
+        subjob_info[attr] = str(getattr(j, attr))
+    subjob_info["backend.actualCE"] = str(sj.backend.actualCE)
 
-  return subjob_info
+    return subjob_info
+
 
 def get_template_info(template_id: int) -> dict:
     """
@@ -653,8 +655,8 @@ def get_template_info(template_id: int) -> dict:
         template_data[attr] = str(getattr(t, attr))
 
     return template_data
-  
-  
+
+
 # ******************** Shutdown Function ******************** #
 
 # Job Incomplete IDs API - GET Method
@@ -675,5 +677,4 @@ def jobs_incomplete_ids_endpoint(current_user):
 
     return jsonify(incomplete_ids_list)
 
-  
 # ******************** EOF ******************** #
