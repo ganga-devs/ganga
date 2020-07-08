@@ -14,5 +14,4 @@ rm udocker.tmp
 chmod u+rx ./udocker
 ./udocker install
 
-mkdir bin
 wget --quiet -O bin/singularity https://cernbox.cern.ch/index.php/s/eGrWrDOz09PJ4T0/download
