@@ -6,10 +6,13 @@ from GangaCore.Core.exceptions import GangaException, BackendError
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
+from GangaDirac.Lib.Splitters.OfflineGangaDiracSplitter import getLFNReplicas, LFN_parallel_limit 
 import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger()
 from GangaCore.GPIDev.Credentials              import require_credential
-
+from GangaCore.Core.GangaThread.WorkerThreads import getQueues
+import math
+import time
 
 class Dirac(DiracBase):
     _schema = DiracBase._schema.inherit_copy()
@@ -89,5 +92,33 @@ def getLFNMetadata(lfns, credential_requirements=None):
 
     return returnDict
 
+def filterLFNsBySE(lfns, site):
+    '''Filter the given list of LFNs to those with a replica at the given SE'''
+    #First get all the replicas
+    logger.info('Selecting LFNs with replicas at %s. Note missing LFNs are ignored!' % site)
+    reps = {}
+    # Request the replicas for all LFN 'LFN_parallel_limit' at a time to not overload the
+    # server and give some feedback as this is going on
+    for i in range(int(math.ceil(float(len(lfns)) / LFN_parallel_limit))):
+
+        getQueues()._monitoring_threadpool.add_function(getLFNReplicas, (lfns, i, reps))
+
+    while len(reps) != int(math.ceil(float(len(lfns)) / LFN_parallel_limit)):
+        time.sleep(1.)
+        # This can take a while so lets protect any repo locks
+        import GangaCore.Runtime.Repository_runtime
+        GangaCore.Runtime.Repository_runtime.updateLocksNow()
+    outLFNs = []
+    #reps is a dict of dicts of dicts with keys the index from the thread, 'Successful', LFN, then the SEs, then the values are the PFNs. Pick out the LFNs we want
+    for _index in reps.keys():
+        for _lfn, _replicas in reps[_index]['Successful'].items():
+            if site in _replicas.keys():
+                outLFNs.append(_lfn)
+
+    return outLFNs
+
+
+
 from GangaCore.Runtime.GPIexport import exportToGPI
 exportToGPI('getLFNMetadata', getLFNMetadata, 'Functions')
+exportToGPI('filterLFNsBySE', filterLFNsBySE, 'Functions')
