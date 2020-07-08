@@ -12,6 +12,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaCore.Utility.logging import getLogger
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset, LHCbCompressedDataset
+from GangaLHCb.Lib.Backends.Dirac import filterLFNsBySE
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -144,7 +145,7 @@ RecoToDST-07/90000000/DST" ,
         return {'OK': False, 'Value': metadata}
 
     @require_credential
-    def getDataset(self, compressed = True):
+    def getDataset(self, compressed = True, SE = None):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
             return None
@@ -174,6 +175,10 @@ RecoToDST-07/90000000/DST" ,
             files = value['LFNs']
         if not type(files) is list:
             files = list(files.keys())
+
+        if SE:
+            tempFiles = filterLFNsBySE(files, SE)
+            files = tempFiles
 
         logger.debug("Creating dataset")
 

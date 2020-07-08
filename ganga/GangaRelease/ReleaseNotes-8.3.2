@@ -1,0 +1,28 @@
+**************************************************************************************************************
+8.3.2 (2020/06/30)
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaCore
+--------------------------------------------------------------------------------------------------------------
+* Bugfix to Local and Interactive jobs, don't download inputdata #1701
+* Add comment field to index cache #1691
+* Added disk checker decorator to make sure disk space is available before a function is carried out #1686
+* Conditionally run stop_gui on shutdown #1685
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Prompt used for necessary configs #1684
+* Update deprecated getMetadata in Dirac template #1693
+* Wrapped download functions with disk checker decorator #1686
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Added filterLFNsBySE to GPI to filter a list of LFNs to those with a replica at a given SE #1711
+* Added SE keyword option to BKQuery().getDataset() to filter by SE #1711
+* Bugfix for GaussSplitter, add GenNextNext seed #1709
+* Bugfix for old CMT applications #1696
+* Bugfix for copying LHCbCompressedDataset, add category to CompressedFileSet #1694
+
+**************************************************************************************************************
