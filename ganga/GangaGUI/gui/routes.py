@@ -163,9 +163,8 @@ def job_create_endpoint(current_user):
 
 # Perform Certain Action on the Job - PUT Method
 @app.route("/api/job/<int:job_id>/<action>", methods=["PUT"])
-# @token_required
-# current_user,
-def job_action_endpoint(job_id: int, action: str):
+@token_required
+def job_action_endpoint(current_user, job_id: int, action: str):
     """
     Given the job_id and action in the endpoint, perform the action on the job.
 
@@ -349,6 +348,70 @@ def subjob_attribute_endpoint(current_user, job_id: int, subjob_id: int, attribu
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(response_data)
+  
+  
+# ******************** Jobs API ******************** #
+
+# Jobs API - GET Method
+@app.route("/api/jobs", methods=["GET"])
+@token_required
+def jobs_endpoint(current_user):
+    """
+    Returns a list of jobs with general information in JSON format.
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import jobs
+
+    # Store job information in a list
+    job_info_list = []
+    try:
+        for j in jobs:
+            job_info_list.append(get_job_info(j.id))
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(job_info_list)
+
+
+# Job IDs API - GET Method
+@app.route("/api/jobs/ids", methods=["GET"])
+@token_required
+def jobs_ids_endpoint(current_user):
+    """
+    Returns a list of job ids present in job repository.
+
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import jobs
+
+    # IDs list
+    try:
+        ids_list = list(jobs.ids())
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(ids_list)
+  
+
+# Job Incomplete IDs API - GET Method
+@app.route("/api/jobs/incomplete_ids", methods=["GET"])
+@token_required
+def jobs_incomplete_ids_endpoint(current_user):
+    """
+    Returns a list of incomplete job ids in JSON format.
+    """
+
+    from GangaCore.GPI import jobs
+
+    # Incomplete IDs list
+    try:
+        incomplete_ids_list = list(jobs.incomplete_ids())
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(incomplete_ids_list)
 
 
 # ******************** Helper Functions ******************** #
@@ -399,12 +462,23 @@ def get_subjob_info(job_id: int, subjob_id: int) -> dict:
 
 # ******************** Shutdown Function ******************** #
 
-# Route used to shutdown the flask server
-@app.route("/shutdown", methods=["POST"])
-def shutdown():
-    func = request.environ.get("werkzeug.server.shutdown")
-    func()
-    response_data = {"success": True, "message": "Shutting down the server..."}
-    return jsonify(response_data)
+# Job Incomplete IDs API - GET Method
+@app.route("/api/jobs/incomplete_ids", methods=["GET"])
+@token_required
+def jobs_incomplete_ids_endpoint(current_user):
+    """
+    Returns a list of incomplete job ids in JSON format.
+    """
+
+    from GangaCore.GPI import jobs
+
+    # Incomplete IDs list
+    try:
+        incomplete_ids_list = list(jobs.incomplete_ids())
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(incomplete_ids_list)
+
 
 # ******************** EOF ******************** #
