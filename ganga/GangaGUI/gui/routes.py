@@ -1,7 +1,9 @@
 import jwt
-from GangaGUI.gui import app
-from flask import request, jsonify
+import json
 from functools import wraps
+from itertools import chain
+from flask import request, jsonify
+from GangaGUI.gui import app
 from GangaGUI.gui.models import User
 
 
@@ -81,6 +83,273 @@ def token_required(f):
     return decorated
 
 
+# ******************** Job API ******************** #
+
+# Single Job Information API - GET Method
+@app.route("/api/job/<int:job_id>", methods=["GET"])
+@token_required
+def job_endpoint(current_user, job_id: int):
+    """
+    Given the job_id, returns the general information related to the job in JSON format.
+
+    Returned job information: fqid, status, name, number of subjobs, application, backend, backend.actualCE, comments, subjobs statuses.
+
+    :param job_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    try:
+        # Get the general info of the job
+        job_info = get_job_info(job_id)
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(job_info)
+
+
+# Single Job Attribute Info API - GET Method
+@app.route("/api/job/<int:job_id>/<attribute>", methods=["GET"])
+@token_required
+def job_attribute_endpoint(current_user, job_id: int, attribute: str):
+    """
+    Given the job_id and attribute, returns the attribute information in the JSON string format.
+
+    :param job_id: int
+    :param attribute: str
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import jobs
+
+    try:
+        j = jobs[job_id]
+        response_data = {attribute: str(getattr(j, attribute))}
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(response_data)
+
+
+# Create Job Using Template API - POST Method
+@app.route("/api/job/create", methods=["POST"])
+@token_required
+def job_create_endpoint(current_user):
+    """
+    Create a new job using the existing template.
+
+    IMPORTANT: template_id NEEDS to be provided in the request body. job_name can optionally be provided in the request body.
+
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import templates, Job
+
+    # Store request data
+    template_id: int = request.form.get("template_id")
+    job_name: str = request.form.get("job_name")
+
+    try:
+        # Create job using template
+        j = Job(templates[int(template_id)])
+        if job_name is not None:
+            j.name = job_name
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify({"success": True,
+                    "message": "Job with ID {} created successfully using the template with ID {}".format(j.id,
+                                                                                                          template_id)})
+
+
+# Perform Certain Action on the Job - PUT Method
+@app.route("/api/job/<int:job_id>/<action>", methods=["PUT"])
+@token_required
+def job_action_endpoint(current_user, job_id: int, action: str):
+    """
+    Given the job_id and action in the endpoint, perform the action on the job.
+
+    The action can be any method or attribute change that can be called on the Job object.
+
+    Example:
+    1)
+        PUT http://localhost:5000/job/13/resubmit
+
+        The above request will resubmit the job with ID 13.
+
+    2)
+        PUT http://localhost:5000/job/13/force_status
+        force_status="failed"
+
+        The above request will force status of the job with ID 13 to killed. If unsuccessful will return back the error.
+
+    3)
+        PUT http://localhost:5000/job/13/name
+        name="New Name"
+
+        The above request will change the name of the job with ID 13 to "New Name". Notice how the required values
+        are passed in the request body with the same name as action.
+
+    NOTE: It is NECESSARY to wrap a String value in double quotes ("") when provide a value in the request body.
+    Whereas DON'T wrap Integer or Boolean value in double quotes (""). Because values in double quotes are parsed as
+    String, numerical values without double quotes as Integer/Float and True/False without double quotes as Boolean.
+    You can also pass array of arguments. Eg. ["Test", 13, True] will be parsed as is in Python.
+
+    :param job_id: int
+    :param action: str
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import jobs
+    from GangaCore.GPIDev.Lib.Job import Job
+
+    # Store request data in a dictionary
+    request_data = request.form.to_dict()
+
+    # Action validity check
+    if action not in chain(Job._exportmethods, Job._schema.allItemNames()):
+        return jsonify({"success": False, "message": f"{action} not supported or does not exist"}), 400
+
+    # Action on Job Methods
+    if action in Job._exportmethods:
+        try:
+            j = jobs(job_id)
+
+            # Check for arguments in the request body for passing in the method
+            if action in request_data.keys():
+                args = json.loads(request_data[action])
+                if isinstance(args, type([])):
+                    getattr(j, action)(*args)
+                else:
+                    getattr(j, action)(args)
+            else:
+                getattr(j, action)()
+        except Exception as err:
+            return jsonify({"success": False, "message": str(err)}), 400
+
+    if action in Job._schema.allItemNames():
+        try:
+            j = jobs(job_id)
+
+            # Check for the value to set in the request body
+            if action in request_data.keys():
+                arg = json.loads(request_data[action])
+                setattr(j, action, arg)
+            else:
+                return jsonify(
+                    {"success": False, "message": f"Please provide the value for {action} in the request body"}), 400
+        except Exception as err:
+            return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(
+        {"success": True, "message": f"Successfully completed the action {action} on the Job with ID {job_id}"})
+
+
+# Delete Job API - DELETE Method
+@app.route("/api/job/<int:job_id>", methods=["DELETE"])
+@token_required
+def delete_job_endpoint(current_user, job_id: int):
+    """
+    Given the job id, removes the job from the job repository.
+
+    :param job_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import jobs
+
+    try:
+        j = jobs[job_id]
+        j.remove()
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify({"success": True, "message": "Job with ID {} removed successfully".format(job_id)})
+
+
+# ******************** Subjobs API ******************** #
+
+# Subjobs API - GET Method
+@app.route("/api/job/<int:job_id>/subjobs", methods=["GET"])
+@token_required
+def subjobs_endpoint(current_user, job_id: int):
+    """
+    Returns a list subjobs of a particular job in a similar way as Jobs API.
+    
+    :param job_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+    
+    from GangaCore.GPI import jobs
+
+    try:
+        j = jobs(int(job_id))
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    # Store subjobs information in a list
+    subjobs_info_list = []
+    try:
+        for sj in j.subjobs:
+            subjobs_info_list.append(get_subjob_info(job_id=j.id, subjob_id=sj.id))
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(subjobs_info_list)
+
+
+# Single Subjob Info API - GET Method
+@app.route("/api/job/<int:job_id>/subjob/<int:subjob_id>", methods=["GET"])
+@token_required
+def subjob_endpoint(current_user, job_id: int, subjob_id: int):
+    """
+    Returns information of a single subjob related to a particular job
+
+    Returned information: id, fqid, status, name, application, backend, backend.actualCE, comment
+
+    :param job_id: int
+    :param subjob_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import jobs
+
+    # Using the job id and subjob id get the subjob info
+    try:
+        j = jobs(int(job_id))
+        sj = j.subjobs[int(subjob_id)]
+        response_data = get_subjob_info(job_id=j.id, subjob_id=sj.id)
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(response_data)
+
+
+# Single Subjob Attribute Info API - GET Method
+@app.route("/api/job/<int:job_id>/subjob/<int:subjob_id>/<attribute>", methods=["GET"])
+@token_required
+def subjob_attribute_endpoint(current_user, job_id: int, subjob_id: int, attribute: str):
+    """
+    Given the job id, subjob id and attribute; return the attribute information in the string format via JSON.
+
+    :param job_id: int
+    :param subjob_id: int
+    :param attribute: str
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import jobs
+
+    # Get subjob attribute info
+    try:
+        j = jobs[int(job_id)]
+        sj = j.subjobs[int(subjob_id)]
+        response_data = {attribute: str(getattr(sj, attribute))}
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(response_data)
+  
+  
 # ******************** Jobs API ******************** #
 
 # Jobs API - GET Method
@@ -89,7 +358,6 @@ def token_required(f):
 def jobs_endpoint(current_user):
     """
     Returns a list of jobs with general information in JSON format.
-
     :param current_user: Information of the current_user based on the request's JWT token
     """
 
@@ -125,7 +393,7 @@ def jobs_ids_endpoint(current_user):
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(ids_list)
-
+  
 
 # Job Incomplete IDs API - GET Method
 @app.route("/api/jobs/incomplete_ids", methods=["GET"])
@@ -158,7 +426,7 @@ def get_job_info(job_id: int) -> dict:
     """
 
     from GangaCore.GPI import jobs
-
+    
     j = jobs[int(job_id)]
 
     # Store job info in a dict
@@ -170,15 +438,47 @@ def get_job_info(job_id: int) -> dict:
 
     return job_info
 
+def get_subjob_info(job_id: int, subjob_id: int) -> dict:
+  """
+  Given job_id and subjob_id, return a dict container general information about the subjob.
+
+  :param job_id: int
+  :param subjob_id: int
+  :return: dict
+  """
+
+  from GangaCore.GPI import jobs
+  j = jobs(int(job_id))
+  sj = j.subjobs[int(subjob_id)]
+
+  # Store subjob info in a dict
+  subjob_info = {}
+  for attr in ["id", "fqid", "status", "name", "application", "backend", "comment"]:
+      subjob_info[attr] = str(getattr(j, attr))
+  subjob_info["backend.actualCE"] = str(sj.backend.actualCE)
+
+  return subjob_info
+
 
 # ******************** Shutdown Function ******************** #
 
-# Route used to shutdown the flask server
-@app.route("/shutdown", methods=["POST"])
-def shutdown():
-    func = request.environ.get("werkzeug.server.shutdown")
-    func()
-    response_data = {"success": True, "message": "Shutting down the server..."}
-    return jsonify(response_data)
+# Job Incomplete IDs API - GET Method
+@app.route("/api/jobs/incomplete_ids", methods=["GET"])
+@token_required
+def jobs_incomplete_ids_endpoint(current_user):
+    """
+    Returns a list of incomplete job ids in JSON format.
+    """
+
+    from GangaCore.GPI import jobs
+
+    # Incomplete IDs list
+    try:
+        incomplete_ids_list = list(jobs.incomplete_ids())
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(incomplete_ids_list)
+
 
 # ******************** EOF ******************** #
