@@ -87,6 +87,7 @@ def token_required(f):
   
 # ******************** Job API ******************** #
 
+
 # Single Job Information API - GET Method
 @app.route("/api/job/<int:job_id>", methods=["GET"])
 @token_required
@@ -554,6 +555,30 @@ def renew_credentials_endpoint(current_user):
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify({"success": True, "message": "Credentials store credentials renewed"})
+  
+  
+# ******************** Job Tree API ******************** #
+
+# Job Tree API - GET Method
+@app.route("/api/jobtree", methods=["GET"])
+@token_required
+def jobtree_endpoint(current_user):
+    """
+    Return the job tree folder structure as the json format of python dict.
+
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import jobtree
+
+    try:
+        # Reset job tree to root of job repository
+        jobtree.cd()
+
+        # Return the jobtree folder structure
+        return jsonify(jobtree.folders)
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
 
 
 # ******************** Helper Functions ******************** #
