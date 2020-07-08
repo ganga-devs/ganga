@@ -1,3 +1,5 @@
+# ******************** Imports ******************** #
+
 import jwt
 import json
 from functools import wraps
@@ -82,7 +84,7 @@ def token_required(f):
 
     return decorated
 
-
+  
 # ******************** Job API ******************** #
 
 # Single Job Information API - GET Method
@@ -412,6 +414,48 @@ def jobs_incomplete_ids_endpoint(current_user):
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(incomplete_ids_list)
+  
+  
+# ******************** Config API ******************** #
+
+# Config API - GET Method
+@app.route("/api/config", methods=["GET"])
+@token_required
+def config_endpoint(current_user):
+    """
+    Returns a list of all the section of the configuration and their options as well as the values in JSON format.
+
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import config
+    from GangaCore.Utility.Config import getConfig
+
+    # To store sections of config
+    list_of_sections = []
+
+    # Get each section information and append to the list
+    for section in config:
+
+        config_section = getConfig(section)
+        options_list = []
+
+        # Get options information for the particular config section
+        for o in config_section.options.keys():
+            options_list.append({
+                "name": str(config_section.options[o].name),
+                "value": str(config_section.options[o].value),
+                "docstring": str(config_section.options[o].docstring),
+            })
+
+        # Append config section data to the list
+        list_of_sections.append({
+            "name": str(config_section.name),
+            "docstring": str(config_section.docstring),
+            "options": options_list,
+        })
+
+    return jsonify(list_of_sections)
 
 
 # ******************** Helper Functions ******************** #
