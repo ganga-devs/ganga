@@ -659,22 +659,12 @@ def get_template_info(template_id: int) -> dict:
 
 # ******************** Shutdown Function ******************** #
 
-# Job Incomplete IDs API - GET Method
-@app.route("/api/jobs/incomplete_ids", methods=["GET"])
-@token_required
-def jobs_incomplete_ids_endpoint(current_user):
-    """
-    Returns a list of incomplete job ids in JSON format.
-    """
-
-    from GangaCore.GPI import jobs
-
-    # Incomplete IDs list
-    try:
-        incomplete_ids_list = list(jobs.incomplete_ids())
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)}), 400
-
-    return jsonify(incomplete_ids_list)
+# Route used to shutdown the flask server
+@app.route("/shutdown", methods=["POST"])
+def shutdown():
+    func = request.environ.get("werkzeug.server.shutdown")
+    func()
+    response_data = {"success": True, "message": "Shutting down the server..."}
+    return jsonify(response_data)
 
 # ******************** EOF ******************** #
