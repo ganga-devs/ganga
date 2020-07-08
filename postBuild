@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+wget -O dirac_ui.tgz  https://cernbox.cern.ch/index.php/s/MDFe8MvVL9Y1GpQ/download
+tar xvzf dirac_ui.tgz
+rm dirac_ui.tgz
+echo -e "[DIRAC]\nDiracEnvSource = ${HOME}/dirac_ui/bashrc" > ${HOME}/.gangarc
+echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ${HOME}/.gangarc
+echo -e "[defaults_DiracProxy]\ngroup=gridpp_user" >> ${HOME}/.gangarc
+yes | ganga -g
