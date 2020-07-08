@@ -267,6 +267,90 @@ def delete_job_endpoint(current_user, job_id: int):
     return jsonify({"success": True, "message": "Job with ID {} removed successfully".format(job_id)})
 
 
+# ******************** Subjobs API ******************** #
+
+# Subjobs API - GET Method
+@app.route("/api/job/<int:job_id>/subjobs", methods=["GET"])
+@token_required
+def subjobs_endpoint(current_user, job_id: int):
+    """
+    Returns a list subjobs of a particular job in a similar way as Jobs API.
+    
+    :param job_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+    
+    from GangaCore.GPI import jobs
+
+    try:
+        j = jobs(int(job_id))
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    # Store subjobs information in a list
+    subjobs_info_list = []
+    try:
+        for sj in j.subjobs:
+            subjobs_info_list.append(get_subjob_info(job_id=j.id, subjob_id=sj.id))
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(subjobs_info_list)
+
+
+# Single Subjob Info API - GET Method
+@app.route("/api/job/<int:job_id>/subjob/<int:subjob_id>", methods=["GET"])
+@token_required
+def subjob_endpoint(current_user, job_id: int, subjob_id: int):
+    """
+    Returns information of a single subjob related to a particular job
+
+    Returned information: id, fqid, status, name, application, backend, backend.actualCE, comment
+
+    :param job_id: int
+    :param subjob_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import jobs
+
+    # Using the job id and subjob id get the subjob info
+    try:
+        j = jobs(int(job_id))
+        sj = j.subjobs[int(subjob_id)]
+        response_data = get_subjob_info(job_id=j.id, subjob_id=sj.id)
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(response_data)
+
+
+# Single Subjob Attribute Info API - GET Method
+@app.route("/api/job/<int:job_id>/subjob/<int:subjob_id>/<attribute>", methods=["GET"])
+@token_required
+def subjob_attribute_endpoint(current_user, job_id: int, subjob_id: int, attribute: str):
+    """
+    Given the job id, subjob id and attribute; return the attribute information in the string format via JSON.
+
+    :param job_id: int
+    :param subjob_id: int
+    :param attribute: str
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import jobs
+
+    # Get subjob attribute info
+    try:
+        j = jobs[int(job_id)]
+        sj = j.subjobs[int(subjob_id)]
+        response_data = {attribute: str(getattr(sj, attribute))}
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(response_data)
+
+
 # ******************** Helper Functions ******************** #
 
 def get_job_info(job_id: int) -> dict:
@@ -279,7 +363,7 @@ def get_job_info(job_id: int) -> dict:
     """
 
     from GangaCore.GPI import jobs
-
+    
     j = jobs[int(job_id)]
 
     # Store job info in a dict
@@ -290,6 +374,27 @@ def get_job_info(job_id: int) -> dict:
     job_info["subjob_statuses"] = str(j.returnSubjobStatuses())
 
     return job_info
+
+def get_subjob_info(job_id: int, subjob_id: int) -> dict:
+  """
+  Given job_id and subjob_id, return a dict container general information about the subjob.
+
+  :param job_id: int
+  :param subjob_id: int
+  :return: dict
+  """
+
+  from GangaCore.GPI import jobs
+  j = jobs(int(job_id))
+  sj = j.subjobs[int(subjob_id)]
+
+  # Store subjob info in a dict
+  subjob_info = {}
+  for attr in ["id", "fqid", "status", "name", "application", "backend", "comment"]:
+      subjob_info[attr] = str(getattr(j, attr))
+  subjob_info["backend.actualCE"] = str(sj.backend.actualCE)
+
+  return subjob_info
 
 
 # ******************** Shutdown Function ******************** #
