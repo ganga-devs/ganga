@@ -98,7 +98,7 @@ logger = getLogger()
 
 global_random = random
 
-LFN_parallel_limit = 250.
+LFN_parallel_limit = 2500.
 def wrapped_execute(command, expected_type, new_subprocess = False):
     """
     A wrapper around execute to protect us from commands which had errors

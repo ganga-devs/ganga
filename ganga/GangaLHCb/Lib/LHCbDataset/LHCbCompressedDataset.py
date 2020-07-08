@@ -169,7 +169,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def __len__(self):
         '''Redefine the __len__ function'''
-        return self.total
+        return self._totalNFiles()
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''

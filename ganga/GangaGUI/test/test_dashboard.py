@@ -13,3 +13,4 @@ class TestGangaGUIDashboard(GangaUnitTest):
     def test_dashboard(self):
         res = self.app.get("/")
         assert res.status_code == 200
+        
