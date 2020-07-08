@@ -457,6 +457,55 @@ def config_endpoint(current_user):
 
     return jsonify(list_of_sections)
 
+  
+# ******************** Templates API ******************** #
+
+# Templates API - GET Method
+@app.route("/api/templates", methods=["GET"])
+@token_required
+def templates_endpoint(current_user):
+    """
+    Returns a list of objects containing template info in JSON format.
+
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import templates
+
+    # Store templates info in a list
+    templates_info_list = []
+    try:
+        for t in templates:
+            templates_info_list.append(get_template_info(t.id))
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(templates_info_list)
+
+
+# Template API - DELETE Method
+@app.route("/api/template/<int:template_id>", methods=["DELETE"])
+@token_required
+def delete_template_endpoint(current_user, template_id: int):
+    """
+
+    Given the templates id, delete it from the template repository.
+
+    :param template_id: int
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import templates
+
+    # Remove template
+    try:
+        t = templates[template_id]
+        t.remove()
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify({"success": True, "message": "Template with ID {} removed successfully".format(template_id)})
+
 
 # ******************** Helper Functions ******************** #
 
@@ -481,7 +530,7 @@ def get_job_info(job_id: int) -> dict:
     job_info["subjob_statuses"] = str(j.returnSubjobStatuses())
 
     return job_info
-
+  
 def get_subjob_info(job_id: int, subjob_id: int) -> dict:
   """
   Given job_id and subjob_id, return a dict container general information about the subjob.
@@ -503,7 +552,26 @@ def get_subjob_info(job_id: int, subjob_id: int) -> dict:
 
   return subjob_info
 
+def get_template_info(template_id: int) -> dict:
+    """
+    Given the template_id, return a dict containing general info of the template.
 
+    :param template_id: int
+    :return: dict
+    """
+
+    from GangaCore.GPI import templates
+
+    t = templates[int(template_id)]
+
+    # Store template info in a dict
+    template_data = {}
+    for attr in ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]:
+        template_data[attr] = str(getattr(t, attr))
+
+    return template_data
+  
+  
 # ******************** Shutdown Function ******************** #
 
 # Job Incomplete IDs API - GET Method
@@ -524,5 +592,5 @@ def jobs_incomplete_ids_endpoint(current_user):
 
     return jsonify(incomplete_ids_list)
 
-
+  
 # ******************** EOF ******************** #
