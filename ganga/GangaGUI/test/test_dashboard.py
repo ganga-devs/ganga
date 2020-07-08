@@ -12,4 +12,5 @@ class TestGangaGUIDashboard(GangaUnitTest):
     # TODO trivial test, remove later
     def test_dashboard(self):
         res = self.app.get("/")
-        assert b"GangaGUI" in res.data
+        assert res.status_code == 200
+        

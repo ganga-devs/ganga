@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container mt-4">
+        <h3 class="font-weight-light">Quick Statistics</h3>
+        <div class="row">
+            <div class="col-lg">
+                <div class="card mx-auto">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">NEW</h5>
+                        <hr class="my-1">
+                        <h2 class="text-center mb-n2" id="new">{{ jobs.select(status="new")|length }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg">
+                <div class="card mx-auto">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">RUNNING</h5>
+                        <hr class="my-1">
+                        <h2 class="text-center mb-n2" id="running">{{ jobs.select(status="running")|length }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg">
+                <div class="card mx-auto">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">COMPLETED</h5>
+                        <hr class="my-1">
+                        <h2 class="text-center mb-n2" id="completed">{{ jobs.select(status="completed")|length }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg">
+                <div class="card mx-auto">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">FAILED</h5>
+                        <hr class="my-1">
+                        <h2 class="text-center mb-n2" id="failed">{{ jobs.select(status="failed")|length }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg">
+                <div class="card mx-auto">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">KILLED</h5>
+                        <hr class="my-1">
+                        <h2 class="text-center mb-n2" id="killed">{{ jobs.select(status="killed")|length }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <h3 class="font-weight-light">Recent Jobs</h3>
+                <div class="accordion" id="recentjobs">
+                    <div class="list-group">
+                        {% for j in recent_jobs|reverse %}
+                            <a href="#" id="jobid{{ j.id }}"
+                               class="list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action"
+                               data-id="{{ j.id }}" data-status="{{ j.status }}" data-toggle="collapse"
+                               data-target="#collapsejobid{{ j.id }}" aria-expanded="true"
+                               aria-controls="collapsejobid{{ j.id }}">
+                                {% if j.name == '' %} No Name Ganga Job {% else %} {{ j.name }} {% endif %}
+                                <span class="badge badge-{{ status_color[j.status] }} badge-pill">{{ j.status }}</span>
+                            </a>
+                            <div id="collapsejobid{{ j.id }}" class="collapse border-left border-right"
+                                 aria-labelledby="headingOne"
+                                 data-parent="#recentjobs">
+                                <div class="card-body">
+                                    <p class="m-0 p-0">fqid: {{ j.id|string }}</p>
+                                    <p class="m-0 p-0">Subjobs: {{ j.subjobs|length }}</p>
+                                    <p class="m-0 p-0">Application: {{ (j.application|string).split('(')[0] }}</p>
+                                    <p class="m-0 p-0">Backend: {{ (j.backend|string).split('(')[0] }}</p>
+                                    <p class="m-0 p-0">backend.actualCE: {{ j.backend.actualCE|string }}</p>
+                                    <p class="m-0 p-0">Comment: {{ j.comment|string }}</p>
+                                    <p class="m-0 p-0">Subjobs Statuses: {{ j.returnSubjobStatuses() }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mt-3 mt-md-0">
+                <canvas id="myChart" width="50" height="50"></canvas>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block footer %}
+    <script defer src="{{ url_for('static', filename='js/home.js') }}"></script>
+{% endblock footer %}
