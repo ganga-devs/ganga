@@ -506,6 +506,55 @@ def delete_template_endpoint(current_user, template_id: int):
 
     return jsonify({"success": True, "message": "Template with ID {} removed successfully".format(template_id)})
 
+  
+# ******************** Credential Store API ******************** #
+
+# Credential Store API - GET Method - Get list of all credentials
+@app.route("/api/credential_store", methods=["GET"])
+@token_required
+def credential_store_endpoint(current_user):
+    """
+    Return a list of credentials and their information in JSON format.
+
+    :param current_user: Information of the current_user based on the request's JWT token
+    """
+
+    from GangaCore.GPI import credential_store
+
+    # Store credential store info in a list
+    credential_info_list = []
+    try:
+        for c in credential_store:
+            credential_info = {}
+            credential_info["location"] = str(c.location)
+            credential_info["time_left"] = str(c.time_left())
+            credential_info["expiry_time"] = str(c.expiry_time())
+            credential_info["is_valid"] = str(c.is_valid())
+            credential_info["exists"] = str(c.exists())
+            credential_info_list.append(credential_info)
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(credential_info_list)
+
+
+# Credential Store API - PUT Method - Renew all credentials
+@app.route("/api/credential_store/renew", methods=["PUT"])
+@token_required
+def renew_credentials_endpoint(current_user):
+    """
+    Renew all the credentials in the credential store.
+    """
+
+    from GangaCore.GPI import credential_store
+
+    try:
+        credential_store.renew()
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify({"success": True, "message": "Credentials store credentials renewed"})
+
 
 # ******************** Helper Functions ******************** #
 
