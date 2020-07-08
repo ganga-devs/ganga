@@ -4,7 +4,7 @@ import jwt
 import json
 from functools import wraps
 from itertools import chain
-from flask import request, jsonify
+from flask import request, jsonify, render_template
 from GangaGUI.gui import app
 from GangaGUI.gui.models import User
 
@@ -14,7 +14,16 @@ from GangaGUI.gui.models import User
 # Dashboard route
 @app.route("/")
 def dashboard():
-    return "GangaGUI"
+
+    from GangaCore.GPI import jobs
+
+    # Get last 10 jobs slice
+    recent_jobs = list(jobs[-10:])
+
+    status_color = {"new": "info", "completed": "success", "failed": "danger", "running": "primary",
+                    "submitted": "secondary"}
+
+    return render_template("home.html", title="Dashboard", status_color=status_color, recent_jobs=recent_jobs, jobs=jobs)
 
 
 # ******************** Token Based Authentication ******************** #
