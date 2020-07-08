@@ -1,9 +1,4 @@
 #!/bin/bash
 set -e
-wget -O cert.tgz https://cernbox.cern.ch/index.php/s/Mo9ruKMtZF72LGZ/download
-tar xvzf cert.tgz
-rm cert.tgz
-chmod go-rwx cert
-cp cert /tmp/x509up_u1000\:gridpp_user
-rm cert
+export PATH=$PATH:`pwd`/bin
 exec "$@"
