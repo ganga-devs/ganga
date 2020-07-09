@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 echo -e "[Display]\njobs_columns_width = {'fqid': 4, 'status': 10, 'name': 10, 'subjobs': 10, 'application': 12, 'backend': 11, 'actualCE': 20, 'comment': 10, 'subjob status': 9}" > ${HOME}/.gangarc
-echo -e "[File_Associations]\nfallback_command = less" >> ${HOME}/.gangarc
+echo -e "[File_Associations]\nfallback_command = cat" >> ${HOME}/.gangarc
 echo -e "[defaults_Docker]\nmounts = {}" >> ${HOME}/.gangarc
 echo -e "[TextShell_IPython]\ncolourscheme = Linux" >> ${HOME}/.gangarc
 echo -e "[Configuration]\nRUNTIME_PATH = GangaTutorial" >> ${HOME}/.gangarc
@@ -12,7 +12,7 @@ cat <<EOF >> templates.py
 j = JobTemplate(name='Fedora', application=Executable(exe='cat', args=['/etc/redhat-release']), virtualization=Docker(image='fedora:latest'))
 j = JobTemplate(name='Primes', application=PrimeFactorizer(), inputdata = PrimeTableDataset(table_id_lower=1, table_id_upper=1))
 EOF
-ganga templates.py
+# ganga templates.py
 
 wget --quiet -O udocker.tmp https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py
 sed -e "s/split('-')/split('+')/" udocker.tmp > udocker
