@@ -6,8 +6,8 @@ Ganga provides. To follow it properly, you should go through each stage in turn.
 you encounter any problems!
 
 .. toctree::
+    WhatIsGanga
     InstallAndBasicUsage
-    Configuration
     JobManipulation
     RunningExecutables
     UsingDifferentBackends
@@ -15,6 +15,7 @@ you encounter any problems!
     Splitters
     PostProcessors
     Virtualization
+    Configuration
     MiscellaneousFunctionality
     Queues
     Tasks

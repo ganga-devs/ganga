@@ -156,34 +156,12 @@ to run ``echo 'Hello World'`` on the machine you're currently running on:
 
 If all goes well, you should see the job submit:
 
-.. code-block:: python
-
-    Ganga In [6]: j.submit()
-
-    Ganga.GPIDev.Lib.Job               : INFO     submitting job 0
-    Ganga.GPIDev.Lib.Job               : INFO     job 0 status changed to "submitting"
-    Ganga.Lib.Executable               : INFO     Preparing Executable application.
-    Ganga.Lib.Executable               : INFO     Created shared directory: conf-5bdd5d5a-07ce-4332-acbc-f0ab23ca7012
-    Ganga.GPIDev.Lib.Job               : INFO     Preparing subjobs
-    Ganga.GPIDev.Adapters              : INFO     submitting job 0 to Local backend
-    Ganga.GPIDev.Lib.Job               : INFO     job 0 status changed to "submitted"
-
-    Ganga Out [6]: 1
-
-
-If you wait a few seconds and then press ``Enter`` you should then see that the job has already transitioned
-through ``running`` and to ``completed``:
+.. image:: first_job.gif
+  :width: 1139
+  :alt: Creation and submission of Hellow World job
 
 .. code-block:: python
 
-    Ganga In [7]:
-
-    Ganga.GPIDev.Lib.Job               : INFO     job 0 status changed to "running"
-    Ganga.GPIDev.Lib.Job               : INFO     Job 0 Running PostProcessor hook
-    Ganga.GPIDev.Lib.Job               : INFO     job 0 status changed to "completed"
-
-    [13:34:10]
-    Ganga In [7]:
 
 You can view the job in your repository using the ``jobs`` command which lists all job objects that Ganga knows about:
 
@@ -216,13 +194,12 @@ You can also select specific info about the job object, e.g. the application tha
     :end-before: # -- INSTALLANDBASICUSAGE JOBSAPP STOP
     :dedent: 8
 
-To check the ``stdout/stderr`` of a job, you can use a couple of methods:
+To check the ``stdout/stderr`` of a job, you can use the peek method
 
 .. code-block:: python
 
-    jobs(0).peek('stdout', 'more')
     j = jobs(0)
-    !more $j.outputdir/stdout
+    j.peek('stdout')
 
 
 Job Monitoring
@@ -232,25 +209,25 @@ While Ganga is running in interactive mode, a background thread goes through all
 to see what state they are in. Generally, jobs will transition from new -> submitted -> running -> completed/failed.
 As described above, the `jobs` command will show you the state of your jobs in the Ganga repository.
 
-In addition to this monitoring, there is also a web GUI provided that can be started using the ``--webgui``
-option which gives a graphical representation of your repository. [NOTE THIS NEEDS TESTING AND MAY NOT WORK AT PRESENT!]
-
-
 Scripting and Batch Mode
 ------------------------
 
 You can put your ganga commands into a python script and then execute it from the Ganga prompt like this:
 
-.. literalinclude:: ../../ganga/GangaCore/test/GPI/TutorialTests.py
-    :start-after: # -- INSTALLANDBASICUSAGE EXECFILE START
-    :end-before: # -- INSTALLANDBASICUSAGE EXECFILE STOP
-    :dedent: 8
+.. code-block:: bash
+
+    [centos7] ~ % cat >> myfile.py
+    j = Job()
+    j.submit()
+
+.. code-block:: python
+
+    runfile('myfile.py')
 
 In addition, Ganga can be run in batch mode by just providing a script as the last argument:
 
 .. code-block:: bash
 
-    ganga submit.py
-    /cvmfs/ganga.cern.ch/runGanga.sh submit.py
+    [centos7] ~ % ganga myfile.py
 
 Note that by default, the monitoring is turned off while in batch mode.
