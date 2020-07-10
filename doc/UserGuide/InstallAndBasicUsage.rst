@@ -10,6 +10,10 @@ There are several ways to install and run Ganga:
 
 **NOTE -** Currently Ganga is only available for python3 releases and supported on Linux distributions.
 
+Binder
+^^^^^^
+
+For testing, you can run Ganga within the Binder service. Simply follow the link https://mybinder.org/v2/gh/ganga-devs/ganga/BinderTutorial and in a terminal start Ganga. The parts of Ganga that connects to remote services will be limited due to the restricted connectivity of the Binder containers.
 
 CVMFS
 ^^^^^
@@ -78,28 +82,29 @@ well as provide you with a Ganga IPython prompt that gives you access to the Gan
 top of the usual IPython functionality:
 
 .. code-block::
-
     *** Welcome to Ganga ***
-    Version: 6.1.16
+    Version: 8.3.3
     Documentation and support: http://cern.ch/ganga
     Type help() or help('index') for online help.
-
+    
     This is free software (GPL), and you are welcome to redistribute it
     under certain conditions; type license() for details.
-
-
-    Ganga.Utility.Config               : INFO     reading config file /home/mws/Ganga/install/6.1.14-pre/ganga/GangaAtlas/Atlas.ini
-    Ganga.Utility.Config               : INFO     reading config file /home/mws/.gangarc
-
-    For help visit the ATLAS Distributed Analysis Help eGroup:
-      https://groups.cern.ch/group/hn-atlas-dist-analysis-help/
-
-    [13:15:51]
-    Ganga In [1]:
-
+    
+    
+    INFO     reading config file /home/egede/.gangarc
+    INFO     reading config file     /cvmfs/ganga.cern.ch/Ganga/install/8.3.3/lib/python3.6/site-packages/ganga/GangaLHCb/LHCb.ini
+    INFO     reading config file /cvmfs/lhcb.cern.ch/lib/GangaConfig/config/8-0-0/GangaLHCb.ini
+    INFO     Using LHCbDirac version prod
+     === Welcome to Ganga on CVMFS. In case of problems contact lhcb-distributed-analysis@cern.ch === 
 
 Note that the first time you run Ganga it will ask you to create a default ``.gangarc`` file which you should
 probably do. In the future, if you want to recreate this default config file, add the option ``-g`` to the command line.
+
+In Binder you start ganga in a terminal as illustrated in the image below
+
+.. image:: start_terminal.gif
+  :width: 792
+  :alt: Startup prompt when typing ganga in terminal
 
 Getting Help
 ------------
@@ -113,14 +118,12 @@ The documentation for all objects and functions in Ganga can be accessed using t
     ************************************
 
     *** Welcome to Ganga ***
-    Version: 6.1.16
+    Version: 8.3.3
     Documentation and support: http://cern.ch/ganga
     Type help() or help('index') for online help.
 
     This is free software (GPL), and you are welcome to redistribute it
     under certain conditions; type license() for details.
-
-
 
     This is an interactive help based on standard pydoc help.
 
@@ -130,9 +133,6 @@ The documentation for all objects and functions in Ganga can be accessed using t
     Type 'quit'   to return to Ganga.
     ************************************
 
-    help>
-
-
 Now typing ``index`` at the prompt will list all the objects, etc. available. You can also directly access the
 documentation for an object using ``help`` directly:
 
@@ -141,7 +141,7 @@ documentation for an object using ``help`` directly:
     :end-before: # -- INSTALLANDBASICUSAGE HELP STOP
     :dedent: 8
 
-You also have IPython's tab-complete service available to help identify members of an object.
+You can also use IPython's tab-complete to help identify members of an object.
 
 Hello World with Ganga
 ----------------------
