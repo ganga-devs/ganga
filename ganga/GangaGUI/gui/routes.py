@@ -28,7 +28,6 @@ def dashboard():
 
 @app.route("/config", methods=["GET", "POST"])
 def config():
-
     from GangaCore.GPI import config
     from GangaCore import getConfig
 
@@ -52,6 +51,38 @@ def config():
         sections.append(section)
 
     return render_template("config.html", title="Config", sections=sections, configList=config_list)
+
+
+@app.route("/create")
+def create():
+    try:
+        from GangaCore.GPI import jobs, templates
+    except ImportError:
+        import ganga
+        import ganga.ganga
+        from ganga import jobs, templates
+
+    # Store templates in a list
+    templates_list = []
+    try:
+        for t in templates:
+            templates_list.append(get_template_info(t.id))
+    except Exception as err:
+        return flash(str(err), "danger")
+
+    return render_template("create.html", title="Create", templates_list=templates_list)
+
+
+@app.route("/jobs")
+def jobs():
+    try:
+        from GangaCore.GPI import jobs
+    except ImportError:
+        import ganga
+        import ganga.ganga
+        from ganga import jobs
+
+    return render_template("jobs.html", title="Jobs", jobs=jobs)
 
 
 # ******************** Token Based Authentication ******************** #

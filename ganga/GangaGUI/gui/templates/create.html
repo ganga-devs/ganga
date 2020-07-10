@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container mt-4">
+        <h3 class="font-weight-light mb-2">From Templates:</h3>
+        <div class="row">
+            {% for t in templates_list %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">{% if t.name %} {{ t.name }} {% else %} Unnamed Template{% endif %}</h6>
+                            <hr class="my-1">
+                            <p class="m-0 p-0">fqid: {{ t.id|string }}</p>
+                            <p class="m-0 p-0">Subjobs: {{ t.subjobs|length }}</p>
+                            <p class="m-0 p-0">Application: {{ (t.application|string).split('(')[0] }}</p>
+                            <p class="m-0 p-0">Backend: {{ (t.backend|string).split('(')[0] }}</p>
+                            <p class="m-0 p-0">backend.actualCE: {{ t.backend.actualCE|string }}</p>
+                            <p class="m-0 p-0">Comment: {{ t.comment|string }}</p>
+                            <a href="#" class="btn btn-sm btn-block btn-primary mt-2">Create</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock content %}
