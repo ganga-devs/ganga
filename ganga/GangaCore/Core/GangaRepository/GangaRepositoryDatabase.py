@@ -119,95 +119,22 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 
             os.rename(new_name, fn)
 
-# Global lock for above function - See issue #185
-
-# def rmrf(name, count=0):
-#     """
-#     Safely recursively remove a file/folder from disk by first moving it then removing it
-#     calls self and will only attempt to move/remove a file 3 times before giving up
-#     Args:
-#         count (int): This function calls itself recursively 3 times then gives up, this increments on each call
-#     """
-
-#     if count != 0:
-#         logger.debug("Trying again to remove: %s" % name)
-#         if count == 3:
-#             logger.error("Tried 3 times to remove file/folder: %s" % name)
-#             from GangaCore.Core.exceptions import GangaException
-#             raise GangaException("Failed to remove file/folder: %s" % name)
-
-#     if os.path.isdir(name):
-
-#         try:
-#             remove_name = name
-#             if not remove_name.endswith('__to_be_deleted'):
-#                 remove_name += '_%s__to_be_deleted_' % time.time()
-#                 os.rename(name, remove_name)
-#                 #logger.debug("Move completed")
-#         except OSError as err:
-#             if err.errno != errno.ENOENT:
-#                 logger.debug("rmrf Err: %s" % err)
-#                 logger.debug("name: %s" % name)
-#                 raise
-#             return
-
-#         for sfn in os.listdir(remove_name):
-#             try:
-#                 rmrf(os.path.join(remove_name, sfn), count)
-#             except OSError as err:
-#                 if err.errno == errno.EBUSY:
-#                     logger.debug("rmrf Remove err: %s" % err)
-#                     logger.debug("name: %s" % remove_name)
-#                     ## Sleep 2 sec and try again
-#                     time.sleep(2.)
-#                     rmrf(os.path.join(remove_name, sfn), count+1)
-#         try:
-#             os.removedirs(remove_name)
-#         except OSError as err:
-#             if err.errno == errno.ENOTEMPTY:
-#                 rmrf(remove_name, count+1)
-#             elif err.errno != errno.ENOENT:
-#                 logger.debug("%s" % err)
-#                 raise
-#             return
-#     else:
-#         try:
-#             remove_name = name + "_" + str(time.time()) + '__to_be_deleted_'
-#             os.rename(name, remove_name)
-#         except OSError as err:
-#             if err.errno not in [errno.ENOENT, errno.EBUSY]:
-#                 raise
-#             logger.debug("rmrf Move err: %s" % err)
-#             logger.debug("name: %s" % name)
-#             if err.errno == errno.EBUSY:
-#                 rmrf(name, count+1)
-#             return
-
-#         try:
-#             os.remove(remove_name)
-#         except OSError as err:
-#             if err.errno != errno.ENOENT:
-#                 logger.debug("%s" % err)
-#                 logger.debug("name: %s" % remove_name)
-#                 raise
-#             return
-
-
 class GangaRepositoryLocal(GangaRepository):
 
     """GangaRepository Local"""
 
-    def __init__(self, registry):
+    def __init__(self):
         """
         Initialize a Repository from within a Registry and keep a reference to the Registry which 'owns' it
         Args:
             Registry (Registry): This is the registry which manages this Repo
         """
-        super(GangaRepositoryLocal, self).__init__(registry)
+        #! The registry has a reference to its repository, why does repository need registry ref?
+        # super(GangaRepositoryLocal, self).__init__(registry)
         self.dataFileName = "data"
         self.sub_split = "subjobs"
-        self.root = os.path.join(self.registry.location, "6.0", self.registry.name)
-        self.lockroot = os.path.join(self.registry.location, "6.0")
+        # self.root_document = self.registry.name
+        self.root_document = "GangaDatabase"
         self.saved_paths = {}
         self.saved_idxpaths = {}
         self._cache_load_timestamp = {}
@@ -218,6 +145,8 @@ class GangaRepositoryLocal(GangaRepository):
     def startup(self):
         """ Starts a repository and reads in a directory structure.
         Raise RepositoryError"""
+        from GangaCore.Utility.Config import getConfig
+
         self._load_timestamp = {}
 
         # databased based initialization
@@ -232,17 +161,11 @@ class GangaRepositoryLocal(GangaRepository):
         self._master_index_timestamp = 0
 
         self.known_bad_ids = []
-        if "Json" in self.registry.type:
-            self.to_file = json_to_file
-            self.from_file = json_from_file
-        elif "Pickle" in self.registry.type:
-            self.to_file = pickle_to_file
-            self.from_file = pickle_from_file
-        else:
-            raise RepositoryError(self, "Unknown Repository type: %s" % self.registry.type)
 
-        
-        if getconfig('DatabaseConfigurations')['database']  == "MONGODB":
+        self.to_file = json_to_file
+        self.from_file = json_from_file
+
+        if getConfig('DatabaseConfigurations')['database'] == "MONGODB":
             try:
                 # check_database_responsive(self.connection)
                 # start the database instance
@@ -252,7 +175,8 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.error("Error: %s" % err)
                 msg="\n\nUnable to reach the database server."
                 msg+="Please contanct the developers" # I dont think this should happen
-                raise RepositoryError(self, msg)
+                # raise RepositoryError(self, msg)
+                raise Exception(err, msg)
 
         logger.debug("GangaRepositoryDatabase Finished Startup")
 
@@ -290,7 +214,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         # Will not need a container client if the database is natively installed
         self.container_client = docker.from_env()
-        database_name = getConfig('Configuration')['containerName']
+        database_name = getConfig('DatabaseConfigurations')['containerName']
         try:
             container = self.container_client.containers.get(database_name)
             if container.status != "running":
@@ -329,7 +253,6 @@ class GangaRepositoryLocal(GangaRepository):
         #     self._write_master_cache(True)
         # except Exception as err:
         #     logger.warning("Warning: Failed to write master index due to: %s" % err)
-        
         # self.sessionlock.shutdown()
 
 
@@ -739,35 +662,32 @@ class GangaRepositoryLocal(GangaRepository):
 
         if force_ids not in [None, []]:  # assume the ids are already locked by Registry
             if not len(objs) == len(force_ids):
-                raise RepositoryError(self, "Internal Error: add with different number of objects and force_ids!")
+                raise RepositoryError(
+                    self, "Internal Error: add with different number of objects and force_ids!")
             ids = force_ids
         else:
-            ids = self.sessionlock.make_new_ids(len(objs))
+            # TODO: Implement these 
+            # ids = self.sessionlock.make_new_ids(len(objs))
 
         logger.debug("made ids")
 
-        for i in range(0, len(objs)):
-            fn = self.get_fn(ids[i])
-            try:
-                os.makedirs(os.path.dirname(fn))
-            except OSError as e:
-                if e.errno != errno.EEXIST:
-                    raise RepositoryError( self, "OSError on mkdir: %s" % (e))
-            self._internal_setitem__(ids[i], objs[i])
+        for obj_id, obj in zip(ids, ojbs):
+            self._internal_setitem__(ids[obj_id], obj)
 
             # Set subjobs dirty - they will not be flushed if they are not.
-            if self.sub_split and hasattr(objs[i], self.sub_split):
+            if self.sub_split and hasattr(obj, self.sub_split):
                 try:
-                    sj_len = len(getattr(objs[i], self.sub_split))
+                    sj_len = len(getattr(obj, self.sub_split))
                     if sj_len > 0:
                         for j in range(sj_len):
-                            getattr(objs[i], self.sub_split)[j]._dirty = True
+                            getattr(obj, self.sub_split)[j]._dirty = True
                 except AttributeError as err:
                     logger.debug("RepoXML add Exception: %s" % err)
 
         logger.debug("Added")
 
         return ids
+
 
     def _safe_flush_json(self, this_id):
         """
@@ -777,9 +697,8 @@ class GangaRepositoryLocal(GangaRepository):
             this_id (int): This is the id of the object we want to flush to disk
         """
 
-        fn = self.get_fn(this_id)
         obj = self.objects[this_id]
-        from GangaCore.Core.GangaRepository.VStreamer import EmptyGangaObject
+        from GangaCore.Core.GangaRepository.Jstreamer import EmptyGangaObject
         if not isType(obj, EmptyGangaObject):
             split_cache = None
 
@@ -843,7 +762,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def flush(self, ids):
         """
-        flush the set of "ids" to disk and write the Json representing said objects in self.objects
+        flush the set of "ids" to database and write the json representing said objects in self.objects
         NB: This adds the given objects corresponding to ids to the _fully_loaded dict
         Args:
             ids (list): List of integers, used as keys to objects in the self.objects dict

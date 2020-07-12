@@ -48,7 +48,7 @@ def checkDiskQuota():
 
 def bootstrap_getreg():
     # Get the list of registries sorted in the bootstrap way
-    
+
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
     # or even named templated registries as the _auto__init from job will require the prep registry to
     # already be ready. This showed up when adding the named templates.
@@ -56,7 +56,6 @@ def bootstrap_getreg():
         if x.name == 'prep':
             return -1
         return 1
-
     return [registry for registry in sorted(getRegistries(), key=prep_filter)]
 
 def bootstrap_reg_names():
@@ -82,6 +81,8 @@ def bootstrap():
             registry.type = config["repositorytype"]
         if not hasattr(registry, 'location'):
             registry.location = getLocalRoot()
+        logger.debug("Type: %s" % registry.type)
+        logger.debug("Tpye of the registry ion use: %s" % type(registry))
         logger.debug("Registry: %s" % registry.name)
         logger.debug("Loc: %s" % registry.location)
         registry.startup()
