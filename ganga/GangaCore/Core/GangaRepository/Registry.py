@@ -421,7 +421,7 @@ class Registry(object):
     # all accesses to the repository must also be locked!
 
     def _add(self, obj, force_index=None):
-        """ Add an object to the registry and assigns an ID to it. 
+        """ Add an object to the registry and assigns an ID to it.
         use force_index to set the index (for example for metadata). This overwrites existing objects!
         Raises RepositoryError
         Args:
@@ -471,12 +471,11 @@ class Registry(object):
             obj.remove()
         else:
             this_id = self.find(obj)
-            self._acquire_session_lock(obj)
+            # self._acquire_session_lock(obj)
 
             logger.debug('deleting the object %d from the registry %s', this_id, self.name)
             self.repository.delete([this_id])
 
-    @synchronised_flush_lock
     def _flush(self, objs):
         """
         Flush a set of objects to the persistency layer immediately
@@ -550,55 +549,13 @@ class Registry(object):
                 self._objects[obj_id]._setFlushed(auto_load_deps=False)
             raise
 
-    def _acquire_session_lock(self, obj):
-        """Obtain write access on a given object.
-        Raise RepositoryError
-        Raise RegistryAccessError
-        Raise RegistryLockError
-        Raise ObjectNotInRegistryError (via self.find())
-        Args:
-            _obj (GangaObject): This is the object we want to get write access to and lock on disk
-        """
-        if self.hasStarted() is not True:
-            raise RegistryAccessError("Cannot get write access to a disconnected repository!")
-
-        if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
-            this_id = self.find(obj)
-            if len(self.repository.lock([this_id])) == 0:
-                errstr = "Could not lock '%s' object #%i!" % (self.name, this_id)
-                errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(this_id)
-                raise RegistryLockError(errstr)
-
-            obj._registry_locked = True
-
-    def _release_session_lock_and_flush(self, obj):
-        """Release the lock on a given object.
-        Raise RepositoryError
-        Raise RegistryAccessError
-        Raise ObjectNotInRegistryError
-        Args:
-            obj (GangaObject): This is the object we want to release the file lock for
-        """
-        if self.hasStarted() is not True:
-            raise RegistryAccessError("Cannot manipulate locks of a disconnected repository!")
-        logger.debug("Reg: %s _release_lock(%s)" % (self.name, self.find(obj)))
-        if hasattr(obj, '_registry_locked') and obj._registry_locked:
-            oid = self.find(obj)
-            self.repository.flush([oid])
-            obj._registry_locked = False
-            self.repository.unlock([oid])
-
-    def getIndexCache(self, obj):
-        """Returns a dictionary to be put into obj._index_cache (is this valid)
-        This can and should be overwritten by derived Registries to provide more index values."""
-        return {}
-
     def startup(self):
         """Connect the repository to the registry. Called from Repository_runtime.py"""
         try:
             self._hasStarted = True
             t0 = time.time()
-            self.repository = makeRepository(self)
+            self.repository = makeRepository(self) # database repository doesn't really need registry information
+            # self.repository = makeRepository(self)
             self._objects = self.repository.objects
             self._incomplete_objects = self.repository.incomplete_objects
 

@@ -25,8 +25,7 @@ from GangaCore.Core.GangaRepository import (GangaRepository,
                                             RepositoryError,
                                             InaccessibleObjectError)
 from GangaCore.Core.GangaRepository.JStreamer import (
-                                    to_database as json_to_file,
-                                    from_database as json_from_file)
+                        to_database, from_database)
 # TODO: Handle here
 from GangaCore.Core.GangaRepository.PickleStreamer import (
                                     json_pickle_to_file as pickle_to_file,
@@ -83,41 +82,25 @@ def check_app_hash(obj):
             logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
             logger.warning('https://github.com/ganga-devs/ganga/issues/')
 
-def safe_save(fn, _obj, to_file, ignore_subs=''):
+def safe_save(_obj, connection, ignore_subs=[]):
     """Try to save the Json for this object in as safe a way as possible
     Args:
         fn (str): This is the name of the file we are to save the object to
         _obj (GangaObject): This is the object which we want to save to the file
         to_file (str): This is the method we want to use to save the to the file
-        ignore_subs (str): This is the name(s) of the attribute of _obj we want to ignore in writing to disk
+        ignore_subs (list): This is the names of the attribute of _obj we want to ignore in writing to the database
     """
+    obj = stripProxy(_obj)
+    check_app_hash(obj)
+    to_database(j=obj, connection=connection, ignore_subs=ignore_subs)
 
-    # Add a global lock to make absolutely sure we don't have multiple threads writing files
-    # See Github Issue 185
-    with safe_save.lock:
 
-        obj = stripProxy(_obj)
-        check_app_hash(obj)
-
-        # Create the dirs
-        dirname = os.path.dirname(fn)
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
-
-        # Prepare new data file
-        new_name = fn + '.new'
-        with open(new_name, "w") as tmpfile:
-            # flush, is used as the indicator of converting the datetime to string, which otherwise is not required
-            to_file(j=obj, fobj=tmpfile, ignore_subs=ignore_subs)
-
-        # everything ready so create new data file and backup old one
-        if os.path.exists(new_name):
-
-            # Do we have an old one to backup?
-            if os.path.exists(fn):
-                os.rename(fn, fn + "~")
-
-            os.rename(new_name, fn)
+def search_database(filter_keys, connection, document):
+    """Search the database for objects with the given keys
+    keys (list of tuples): List of (key, value) pairs that are to be searched
+    """
+    result = connection[document].find_one(filter=filter_keys)
+    return result
 
 class GangaRepositoryLocal(GangaRepository):
 
@@ -141,6 +124,9 @@ class GangaRepositoryLocal(GangaRepository):
         self.printed_explanation = False
         self._fully_loaded = {}
 
+        # filters for searching objects in the database
+        self.job_search = [("_id", None)]
+        self.index_search = [("_id", None)]
 
     def startup(self):
         """ Starts a repository and reads in a directory structure.
@@ -151,7 +137,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         # databased based initialization
         _ = pymongo.MongoClient()
-        self.connection = _.dumbmachine.objects
+        self.connection = _.dumbmachine
 
         # New Master index to speed up loading of many, MANY files
         self._cache_load_timestamp = {}
@@ -162,8 +148,8 @@ class GangaRepositoryLocal(GangaRepository):
 
         self.known_bad_ids = []
 
-        self.to_file = json_to_file
-        self.from_file = json_from_file
+        self.to_database = to_database
+        self.from_database = from_database
 
         if getConfig('DatabaseConfigurations')['database'] == "MONGODB":
             try:
@@ -268,29 +254,21 @@ class GangaRepositoryLocal(GangaRepository):
             logger.info("mongo stopped")
 
 
-    def get_fn(self, this_id):
-        """ Returns the file name where the data for this object id is saved
+    def get_fn(self, this_id, document="jobs"):
+        """ Returns the object from database where the data for this object id is saved
         Args:
             this_id (int): This is the object id we want the Json filename for
+            document (str): Name of the document inside the database where the object resides
         """
-        if this_id not in self.saved_paths:
-            self.saved_paths[this_id] = os.path.join(self.root, "%ixxx" % int(this_id * 0.001), "%i" % this_id, self.dataFileName)
+        index = search_database(filter_keys={"_id": this_id}, connection=self.connection, document=document)
         return self.saved_paths[this_id]
 
-    def get_idxfn(self, this_id):
-        """ Returns the file name where the data for this object id is saved
-        Args:
-            this_id (int): This is the object id we want the index filename for
-        """
-        if this_id not in self.saved_idxpaths:
-            self.saved_idxpaths[this_id] = os.path.join(self.root, "%ixxx" % int(this_id * 0.001), "%i.index" % this_id)
-        return self.saved_idxpaths[this_id]
-
+    # dumbmachineComment: index_load: index file inside of the jobs folder for each distinct job
     def index_load(self, this_id):
-        """ load the index file for this object if necessary
+        """ load the index for this object if necessary
             Loads if never loaded or timestamp changed. Creates object if necessary
             Returns True if this object has been changed, False if not
-            Raise IOError on access or unpickling error 
+            Raise IOError on access or unpickling error
             Raise OSError on stat error
             Raise PluginManagerError if the class name is not found
         Args:
@@ -299,11 +277,12 @@ class GangaRepositoryLocal(GangaRepository):
         #logger.debug("Loading index %s" % this_id)
         fn = self.get_idxfn(this_id)
         # index timestamp changed
-        fn_ctime = os.stat(fn).st_ctime
+        fn_ctime = fn['st_ctime']
         cache_time = self._cache_load_timestamp.get(this_id, 0)
         if cache_time != fn_ctime:
             logger.debug("%s != %s" % (cache_time, fn_ctime))
             try:
+
                 # with open(fn, 'rb') as fobj:
                 # When using the json based index file reader
                 with open(fn, 'r') as fobj:
@@ -452,6 +431,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         try:
             _master_idx = os.path.join(self.root, 'master.idx')
+            _master_idx = self.connection['objects']
             this_master_cache = []
             if os.path.isfile(_master_idx) and not shutdown:
                 if abs(self._master_index_timestamp - os.stat(_master_idx).st_ctime) < 300:
@@ -511,7 +491,7 @@ class GangaRepositoryLocal(GangaRepository):
 
             try:
                 # with open(_master_idx, 'wb') as of:
-                with open(_master_idx, 'w') as of:                    
+                with open(_master_idx, 'w') as of:
 
                     pickle_to_file(this_master_cache, of)
             except IOError as err:
@@ -526,12 +506,12 @@ class GangaRepositoryLocal(GangaRepository):
 
         return
 
-    def updateLocksNow(self):
-        """
-        Trigger the session locks to all be updated now
-        This is useful when the SessionLock is updating either too slowly or has gone to sleep when there are multiple sessions
-        """
-        self.sessionlock.updateNow()
+    # def updateLocksNow(self):
+    #     """
+    #     Trigger the session locks to all be updated now
+    #     This is useful when the SessionLock is updating either too slowly or has gone to sleep when there are multiple sessions
+    #     """
+    #     self.sessionlock.updateNow()
 
     def update_index(self, this_id=None, verbose=False, firstRun=False):
         """ Update the list of available objects
@@ -666,8 +646,9 @@ class GangaRepositoryLocal(GangaRepository):
                     self, "Internal Error: add with different number of objects and force_ids!")
             ids = force_ids
         else:
-            # TODO: Implement these 
+            # TODO: Implement these
             # ids = self.sessionlock.make_new_ids(len(objs))
+            raise NotImplementedError
 
         logger.debug("made ids")
 
@@ -696,16 +677,15 @@ class GangaRepositoryLocal(GangaRepository):
         Args:
             this_id (int): This is the id of the object we want to flush to disk
         """
-
         obj = self.objects[this_id]
         from GangaCore.Core.GangaRepository.Jstreamer import EmptyGangaObject
         if not isType(obj, EmptyGangaObject):
             split_cache = None
 
             has_children = getattr(obj, self.sub_split, False)
-
+            # FIXME: Check the files implementation for objects with children
             if has_children:
-
+                raise NotImplementedError("Childrens feature is not implemented yet")
                 logger.debug("has_children")
 
                 if hasattr(getattr(obj, self.sub_split), 'flush'):
@@ -748,10 +728,7 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("not has_children")
 
                 safe_save(fn, obj, self.to_file, "")
-                # clean files leftover from sub_split
-                for idn in os.listdir(os.path.dirname(fn)):
-                    if idn.isdigit():
-                        rmrf(os.path.join(os.path.dirname(fn), idn))
+
             if this_id not in self.incomplete_objects:
                 self.index_write(this_id)
         else:
@@ -784,6 +761,7 @@ class GangaRepositoryLocal(GangaRepository):
                 self._cached_cat[this_id] = self.objects[this_id]._category
                 self._cached_obj[this_id] = self.objects[this_id]._index_cache
 
+                # Should remove try inside of try instead, have the index raise a error
                 try:
                     self.index_write(this_id)
                 except:
@@ -848,7 +826,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def _parse_json(self, fn, this_id, load_backup, has_children, tmpobj):
         """
-        If we must actually load the object from disk then we end up here.
+        If we must actually load the object from database then we end up here.
         This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
         If there are children then a SubJobXMLList is created to manage them.
         The fn of the job is passed to the SubbJobXMLList and there is some knowledge of if we should be loading the backup passed as well
@@ -881,7 +859,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         if has_children:
             logger.debug("Adding children")
-            # NB Keep be a SetSchemaAttribute to bypass the list manipulation which will put this into a list in some cases 
+            # NB Keep be a SetSchemaAttribute to bypass the list manipulation which will put this into a list in some cases
             obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, obj))
         else:
             if obj._schema.hasAttribute(self.sub_split):
