@@ -3,84 +3,44 @@
 # * lazy loading
 # * locking
 
-from GangaCore.Core.GangaRepository import GangaRepository, RepositoryError, InaccessibleObjectError
-from GangaCore.Utility.Plugin import PluginManagerError
 import os
-import os.path
-import time
-import json
-import errno
 import copy
+import json
+import time
+import errno
 import docker
-import threading
-
-from GangaCore import GANGA_SWAN_INTEGRATION
-
-from GangaCore.Core.GangaRepository.SessionLock import SessionLockManager, dry_run_unix_locks
-from GangaCore.Core.GangaRepository.FixedLock import FixedLockManager
-
+import pymongo
 import GangaCore.Utility.logging
 
-from GangaCore.Core.GangaRepository.PickleStreamer import database_pickle_to_file as pickle_to_file
-from GangaCore.Core.GangaRepository.PickleStreamer import database_pickle_from_file as pickle_from_file
-
-from GangaCore.Core.GangaRepository.JStreamer import database_to_file as json_to_file
-from GangaCore.Core.GangaRepository.JStreamer import database_from_file as json_from_file
-from GangaCore.Core.GangaRepository.JStreamer import JsonFileError
-
+from GangaCore import GANGA_SWAN_INTEGRATION
 from GangaCore.GPIDev.Base.Objects import Node
-# from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
-from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
-
-from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
-
 from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.Plugin import PluginManagerError
+from GangaCore.Core.GangaRepository.JStreamer import JsonFileError
+from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
+from GangaCore.Core.GangaRepository.FixedLock import FixedLockManager
+
+
+from GangaCore.Core.GangaRepository import (GangaRepository,
+                                            RepositoryError,
+                                            InaccessibleObjectError)
+from GangaCore.Core.GangaRepository.JStreamer import (
+                                    to_database as json_to_file,
+                                    from_database as json_from_file)
+# TODO: Handle here
+from GangaCore.Core.GangaRepository.PickleStreamer import (
+                                    json_pickle_to_file as pickle_to_file,
+                                    json_pickle_from_file as pickle_from_file)
+
+from GangaCore.Core.GangaRepository.SessionLock import (SessionLockManager,
+                                                        dry_run_unix_locks)
+
+# from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+from GangaCore.Core.GangaRepository.SubJobJSONList import (SubJobJsonList as SubJobXMLList)
 
 logger = GangaCore.Utility.logging.getLogger()
 
 save_all_history = False
-
-
-client = docker.from_env()
-
-
-def start_mongo_db(client=client):
-    """Starting a simple mongo db instance in a docker container
-    """
-    try:
-        container = client.containers.get("ganga_mongomon")
-        if container.status != "running":
-            logger.info("The Docker container has been restarted")
-            container.restart()
-    except docker.errors.NotFound:
-        logger.info("Pulling a copy of container")
-        # lets always pull the latest image, for now
-        container = client.containers.run(
-            detach=True,
-            image="mongo:latest",
-            name="ganga_mongomon",
-            ports={"27017/tcp": 27017},
-            volumes={"/data/db": {"bind": "/mongomon_data", "mode": "rw"}},
-        )
-    except Exception as e:
-        logger.error(e)
-        logger.info("Quiting ganga as the mongo backend could not start")
-        # TODO: Handle gracefull quiting of ganga
-
-    logger.info("mongo container started")
-    return container
-
-
-def kill_mongo_db():
-    """Kill the mongo db instance in a docker container
-    """
-    # check if the docker container already exists
-    try:
-        container = client.containers.get("ganga_mongomon")
-        container.kill()
-    except docker.errors.NotFound:
-        logger.info("mongo stopped")
-
 
 def check_app_hash(obj):
     """Writes a file safely, raises IOError on error
@@ -160,78 +120,77 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
             os.rename(new_name, fn)
 
 # Global lock for above function - See issue #185
-safe_save.lock = threading.Lock()
 
-def rmrf(name, count=0):
-    """
-    Safely recursively remove a file/folder from disk by first moving it then removing it
-    calls self and will only attempt to move/remove a file 3 times before giving up
-    Args:
-        count (int): This function calls itself recursively 3 times then gives up, this increments on each call
-    """
+# def rmrf(name, count=0):
+#     """
+#     Safely recursively remove a file/folder from disk by first moving it then removing it
+#     calls self and will only attempt to move/remove a file 3 times before giving up
+#     Args:
+#         count (int): This function calls itself recursively 3 times then gives up, this increments on each call
+#     """
 
-    if count != 0:
-        logger.debug("Trying again to remove: %s" % name)
-        if count == 3:
-            logger.error("Tried 3 times to remove file/folder: %s" % name)
-            from GangaCore.Core.exceptions import GangaException
-            raise GangaException("Failed to remove file/folder: %s" % name)
+#     if count != 0:
+#         logger.debug("Trying again to remove: %s" % name)
+#         if count == 3:
+#             logger.error("Tried 3 times to remove file/folder: %s" % name)
+#             from GangaCore.Core.exceptions import GangaException
+#             raise GangaException("Failed to remove file/folder: %s" % name)
 
-    if os.path.isdir(name):
+#     if os.path.isdir(name):
 
-        try:
-            remove_name = name
-            if not remove_name.endswith('__to_be_deleted'):
-                remove_name += '_%s__to_be_deleted_' % time.time()
-                os.rename(name, remove_name)
-                #logger.debug("Move completed")
-        except OSError as err:
-            if err.errno != errno.ENOENT:
-                logger.debug("rmrf Err: %s" % err)
-                logger.debug("name: %s" % name)
-                raise
-            return
+#         try:
+#             remove_name = name
+#             if not remove_name.endswith('__to_be_deleted'):
+#                 remove_name += '_%s__to_be_deleted_' % time.time()
+#                 os.rename(name, remove_name)
+#                 #logger.debug("Move completed")
+#         except OSError as err:
+#             if err.errno != errno.ENOENT:
+#                 logger.debug("rmrf Err: %s" % err)
+#                 logger.debug("name: %s" % name)
+#                 raise
+#             return
 
-        for sfn in os.listdir(remove_name):
-            try:
-                rmrf(os.path.join(remove_name, sfn), count)
-            except OSError as err:
-                if err.errno == errno.EBUSY:
-                    logger.debug("rmrf Remove err: %s" % err)
-                    logger.debug("name: %s" % remove_name)
-                    ## Sleep 2 sec and try again
-                    time.sleep(2.)
-                    rmrf(os.path.join(remove_name, sfn), count+1)
-        try:
-            os.removedirs(remove_name)
-        except OSError as err:
-            if err.errno == errno.ENOTEMPTY:
-                rmrf(remove_name, count+1)
-            elif err.errno != errno.ENOENT:
-                logger.debug("%s" % err)
-                raise
-            return
-    else:
-        try:
-            remove_name = name + "_" + str(time.time()) + '__to_be_deleted_'
-            os.rename(name, remove_name)
-        except OSError as err:
-            if err.errno not in [errno.ENOENT, errno.EBUSY]:
-                raise
-            logger.debug("rmrf Move err: %s" % err)
-            logger.debug("name: %s" % name)
-            if err.errno == errno.EBUSY:
-                rmrf(name, count+1)
-            return
+#         for sfn in os.listdir(remove_name):
+#             try:
+#                 rmrf(os.path.join(remove_name, sfn), count)
+#             except OSError as err:
+#                 if err.errno == errno.EBUSY:
+#                     logger.debug("rmrf Remove err: %s" % err)
+#                     logger.debug("name: %s" % remove_name)
+#                     ## Sleep 2 sec and try again
+#                     time.sleep(2.)
+#                     rmrf(os.path.join(remove_name, sfn), count+1)
+#         try:
+#             os.removedirs(remove_name)
+#         except OSError as err:
+#             if err.errno == errno.ENOTEMPTY:
+#                 rmrf(remove_name, count+1)
+#             elif err.errno != errno.ENOENT:
+#                 logger.debug("%s" % err)
+#                 raise
+#             return
+#     else:
+#         try:
+#             remove_name = name + "_" + str(time.time()) + '__to_be_deleted_'
+#             os.rename(name, remove_name)
+#         except OSError as err:
+#             if err.errno not in [errno.ENOENT, errno.EBUSY]:
+#                 raise
+#             logger.debug("rmrf Move err: %s" % err)
+#             logger.debug("name: %s" % name)
+#             if err.errno == errno.EBUSY:
+#                 rmrf(name, count+1)
+#             return
 
-        try:
-            os.remove(remove_name)
-        except OSError as err:
-            if err.errno != errno.ENOENT:
-                logger.debug("%s" % err)
-                logger.debug("name: %s" % remove_name)
-                raise
-            return
+#         try:
+#             os.remove(remove_name)
+#         except OSError as err:
+#             if err.errno != errno.ENOENT:
+#                 logger.debug("%s" % err)
+#                 logger.debug("name: %s" % remove_name)
+#                 raise
+#             return
 
 
 class GangaRepositoryLocal(GangaRepository):
@@ -255,10 +214,15 @@ class GangaRepositoryLocal(GangaRepository):
         self.printed_explanation = False
         self._fully_loaded = {}
 
+
     def startup(self):
         """ Starts a repository and reads in a directory structure.
         Raise RepositoryError"""
         self._load_timestamp = {}
+
+        # databased based initialization
+        _ = pymongo.MongoClient()
+        self.connection = _.dumbmachine.objects
 
         # New Master index to speed up loading of many, MANY files
         self._cache_load_timestamp = {}
@@ -276,46 +240,110 @@ class GangaRepositoryLocal(GangaRepository):
             self.from_file = pickle_from_file
         else:
             raise RepositoryError(self, "Unknown Repository type: %s" % self.registry.type)
-        if getConfig('Configuration')['lockingStrategy'] == "UNIX":
-            # First test the UNIX locks are working as expected
+
+        
+        if getconfig('DatabaseConfigurations')['database']  == "MONGODB":
             try:
-                dry_run_unix_locks(self.lockroot)
+                # check_database_responsive(self.connection)
+                # start the database instance
+                self.start_mongomon()
             except Exception as err:
-                # Locking has not worked, lets raise an error
+                # database is not responsive, lets raise an error
                 logger.error("Error: %s" % err)
-                msg="\n\nUnable to launch due to underlying filesystem not working with unix locks."
-                msg+="Please try launching again with [Configuration]lockingStrategy=FIXED to start Ganga without multiple session support."
+                msg="\n\nUnable to reach the database server."
+                msg+="Please contanct the developers" # I dont think this should happen
                 raise RepositoryError(self, msg)
 
-            # Locks passed test so lets continue
-            self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
-        elif getConfig('Configuration')['lockingStrategy'] == "FIXED":
-            self.sessionlock = FixedLockManager(self, self.lockroot, self.registry.name)
-        else:
-            raise RepositoryError(self, "Unable to launch due to unknown file-locking Strategy: \"%s\"" % getConfig('Configuration')['lockingStrategy'])
-        self.sessionlock.startup()
-        # Load the list of files, this time be verbose and print out a summary
-        # of errors
-        self.update_index(True, True)
-        logger.debug("GangaRepositoryLocal Finished Startup")
+        logger.debug("GangaRepositoryDatabase Finished Startup")
+
+        # if getConfig('Configuration')['lockingStrategy'] == "UNIX":
+        #     # First test the UNIX locks are working as expected
+        #     try:
+        #         dry_run_unix_locks(self.lockroot)
+        #     except Exception as err:
+        #         # Locking has not worked, lets raise an error
+        #         logger.error("Error: %s" % err)
+        #         msg="\n\nUnable to launch due to underlying filesystem not working with unix locks."
+        #         msg+="Please try launching again with [Configuration]lockingStrategy=FIXED to start Ganga without multiple session support."
+        #         raise RepositoryError(self, msg)
+
+        #     # Locks passed test so lets continue
+        #     self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
+        # elif getConfig('Configuration')['lockingStrategy'] == "FIXED":
+        #     self.sessionlock = FixedLockManager(self, self.lockroot, self.registry.name)
+        # else:
+        #     raise RepositoryError(self, "Unable to launch due to unknown file-locking Strategy: \"%s\"" % getConfig('Configuration')['lockingStrategy'])
+        # self.sessionlock.startup()
+        # # Load the list of files, this time be verbose and print out a summary
+        # # of errors
+        # self.update_index(True, True)
+        # logger.debug("GangaRepositoryLocal Finished Startup")
+
+
+    # TODO: Add options to add custom option information for the database
+    def start_mongomon(self, options=None, backend="docker"):
+        """Start the mongodb with the prefered back_end
+        """
+
+        if backend is not "docker":
+            raise NotImplementedError("This feature has not been implemented yet.")
+
+        # Will not need a container client if the database is natively installed
+        self.container_client = docker.from_env()
+        database_name = getConfig('Configuration')['containerName']
+        try:
+            container = self.container_client.containers.get(database_name)
+            if container.status != "running":
+                container.restart()
+
+        except docker.errors.NotFound:
+            logger.info("Pulling a copy of container")
+            container = self.container_client.containers.run(
+                detach=True,
+                image="mongo:latest",
+                name=database_name,
+                ports={"27017/tcp": 27017},
+                volumes={"/data/db": {"bind": "/mongomon_data", "mode": "rw"}},
+            )
+        except Exception as e:
+            logger.error(e)
+            logger.info("Quiting ganga as the mongo backend could not start")
+            # TODO: Handle gracefull quiting of ganga
+
+        logger.info("mongomon has started")
+
 
     def shutdown(self):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError
         Write an index file for all new objects in memory and master index file of indexes"""
-        from GangaCore.Utility.logging import getLogger
-        logger = getLogger()
-        logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
-        for k in self._fully_loaded:
-            try:
-                self.index_write(k, True)
-            except Exception as err:
-                logger.error("Warning: problem writing index object with id %s" % k)
+        logger.debug("Shutting Down GangaRepositoryDatabase: %s" % self.registry.name)
+        self.kill_mongomon()
+
+        # for k in self._fully_loaded:
+        #     try:
+        #         self.index_write(k, True)
+        #     except Exception as err:
+        #         logger.error("Warning: problem writing index object with id %s" % k)
+        # try:
+        #     self._write_master_cache(True)
+        # except Exception as err:
+        #     logger.warning("Warning: Failed to write master index due to: %s" % err)
+        
+        # self.sessionlock.shutdown()
+
+
+    def kill_mongomon(self):
+        """Kill the mongo db instance in a docker container
+        """
+        # check if the docker container already exists
+        database_name = getConfig('Configuration')['containerName']
         try:
-            self._write_master_cache(True)
-        except Exception as err:
-            logger.warning("Warning: Failed to write master index due to: %s" % err)
-        self.sessionlock.shutdown()
+            container = self.container_client.containers.get(database_name)
+            container.kill()
+        except docker.errors.NotFound:
+            logger.info("mongo stopped")
+
 
     def get_fn(self, this_id):
         """ Returns the file name where the data for this object id is saved
@@ -1252,4 +1280,3 @@ class GangaRepositoryLocal(GangaRepository):
             return True
         except StopIteration:
             return False
-

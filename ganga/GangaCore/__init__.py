@@ -965,7 +965,7 @@ cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on 
 # ------------------------------------------------
 # Database
 db_config = makeConfig("DatabaseConfigurations", "Selection of database for ganga")
-db_config.addOption('database', 'default', 'sqlite postgresql oracle mysql mssql')
+db_config.addOption('database', 'MONGODB', 'others have not been implemented yet')
 db_config.addOption('containerName', 'ganga_mongomon', 'the identifier used to tag the docker container')
 db_config.addOption('username', 'default', 'username')
 db_config.addOption('password', 'default', 'password')

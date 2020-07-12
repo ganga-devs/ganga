@@ -27,8 +27,7 @@ from GangaCore.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from GangaCore.Core.GangaRepository.VStreamer import XMLFileError
 
 from GangaCore.GPIDev.Base.Objects import Node
-# from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
-from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
+from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 
@@ -308,9 +307,7 @@ class GangaRepositoryLocal(GangaRepository):
         if cache_time != fn_ctime:
             logger.debug("%s != %s" % (cache_time, fn_ctime))
             try:
-                # with open(fn, 'rb') as fobj:
-                # When using the json based index file reader
-                with open(fn, 'r') as fobj:
+                with open(fn, 'rb') as fobj:
                     cat, cls, cache = pickle_from_file(fobj)[0]
             except EOFError:
                 pass
@@ -412,9 +409,7 @@ class GangaRepositoryLocal(GangaRepository):
             if os.path.isfile(_master_idx):
                 logger.debug("Reading Master index")
                 self._master_index_timestamp = os.stat(_master_idx).st_ctime
-                # with open(_master_idx, 'rb') as input_f:
-                # when using the json based index file reader
-                with open(_master_idx, 'r') as input_f:
+                with open(_master_idx, 'rb') as input_f:
                     this_master_cache = pickle_from_file(input_f)[0]
                 for this_cache in this_master_cache:
                     if this_cache[1] >= 0:
@@ -1202,4 +1197,3 @@ class GangaRepositoryLocal(GangaRepository):
             return True
         except StopIteration:
             return False
-

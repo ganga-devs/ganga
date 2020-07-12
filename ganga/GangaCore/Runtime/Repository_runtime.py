@@ -41,58 +41,10 @@ started_registries = []
 partition_warning = 95
 partition_critical = 99
 
+# TODO: Maybe Convert this to a docker file mount check
 def checkDiskQuota():
-    # Throw an error atthe user if their AFS area is (extremely close to) full to avoid repo corruption
-    import subprocess
-
-    repo_partition = getLocalRoot()
-    repo_partition = os.path.realpath(repo_partition)
-
-    work_partition = getLocalWorkspace()
-    work_partition = os.path.realpath(work_partition)
-
-    folders_to_check = [repo_partition, work_partition]
-
-    home_dir = os.environ['HOME']
-    to_remove = []
-    for partition in folders_to_check:
-        if not os.path.exists(partition):
-            if home_dir not in folders_to_check:
-                folders_to_check.append(home_dir)
-            to_remove.append(partition)
-
-    for folder in to_remove:
-        folders_to_check.remove(folder)
-
-    for data_partition in folders_to_check:
-
-        if fullpath(data_partition, True).find('/afs') == 0:
-            quota = subprocess.Popen(" ".join(['fs', 'quota', '%s' % quote(data_partition)]), shell=True, stdout=subprocess.PIPE, stdin=subprocess.DEVNULL)
-            output = quota.communicate()[0]
-            logger.debug("fs quota %s:\t%s" % (quote(data_partition), output))
-        else:
-            df = subprocess.Popen(["df", '-Pk', '%s' % data_partition], stdout=subprocess.PIPE, stdin=subprocess.DEVNULL)
-            output = df.communicate()[0]
-
-        try:
-            global partition_warning
-            global partition_critical
-            quota_percent = output.split('%')[0]
-            if int(quota_percent) >= partition_warning:
-                logger.warning("WARNING: You're running low on disk space, Ganga may stall on launch or fail to download job output")
-                logger.warning("WARNING: Please free some disk space on: %s" % data_partition)
-            if int(quota_percent) >= partition_critical and config['force_start'] is False:
-                logger.error("You are crtitically low on disk space!")
-                logger.error("To prevent repository corruption and data loss we won't start GangaCore.")
-                logger.error("Either set your config variable 'force_start' in .gangarc to enable starting and ignore this check.")
-                logger.error("Or, make sure you have more than %s percent free disk space on: %s" %(100-partition_critical, data_partition))
-                raise GangaDiskSpaceError("Not Enough Disk Space!!!")
-        except GangaException as err:
-            raise
-        except Exception as err:
-            logger.debug("Error checking disk partition: %s" % err)
-
-    return
+    pass
+    raise NotImplemented
 
 def bootstrap_getreg():
     # Get the list of registries sorted in the bootstrap way
@@ -116,12 +68,12 @@ def bootstrap():
     # Bootstrap for startup and setting of parameters for the Registries
     retval = []
 
-    try:
-        checkDiskQuota()
-    except GangaException as err:
-        raise
-    except Exception as err:
-        logger.error("Disk quota check failed due to: %s" % err)
+    # try:
+    #     checkDiskQuota()
+    # except GangaException as err:
+    #     raise
+    # except Exception as err:
+    #     logger.error("Disk quota check failed due to: %s" % err)
 
     for registry in bootstrap_getreg():
         if registry.name in started_registries:
