@@ -12,9 +12,9 @@ you encounter any problems!
     TutorialPlugin
     UsingDifferentApplications
     UsingDifferentBackends
+    Virtualization
     Splitters
     PostProcessors
-    Virtualization
     InputAndOutputData
     JobManipulation
     Configuration

@@ -40,7 +40,7 @@ run using a ``virtualenv``:
 .. code-block:: bash
 
     # Create a virtualenv
-    virtualenv -ppython3 gangaenv
+    python3 -m venv gangaenv
     cd gangaenv/
     . bin/activate
     # Install Ganga 
@@ -48,7 +48,15 @@ run using a ``virtualenv``:
 
 To install pip locally if it's not on your system and you don't have admin access please consult: https://pip.pypa.io/en/stable/installing/
 
-Alternatively if you want you can install it using pip to your local user environment (not recommended if you have many python projects/libraries around)
+Now each time you want to use Ganga in a new shell, you have to activate the virtual environment:
+
+.. code-block:: bash
+
+    cd gangaenv/
+    . bin/activate
+    ganga
+
+Alternatively if you want you can install Ganga using pip to your local user environment (not recommended if you have many python projects/libraries around)
 
 ``pip install ganga --user``
 
@@ -66,7 +74,7 @@ run using a ``virtualenv``:
 .. code-block:: bash
 
     # Create a virtualenv
-    virtualenv -ppython3 gangaenv
+    python3 -m venv gangaenv
     cd gangaenv/
     . bin/activate
     # Install Ganga 
