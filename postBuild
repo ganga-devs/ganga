@@ -11,6 +11,7 @@ yes | ganga -g
 cat <<EOF >> templates.py
 j = JobTemplate(name='Fedora', application=Executable(exe='cat', args=['/etc/redhat-release']), virtualization=Docker(image='fedora:latest'))
 j = JobTemplate(name='Primes', application=PrimeFactorizer(), inputdata = PrimeTableDataset(table_id_lower=1, table_id_upper=1))
+j = JobTemplate(name='Weather', application=Executable(exe='weather', args=['MEL']), virtualization=Docker(image='uegede/weather:1.2'))
 EOF
 yes | ganga templates.py
 

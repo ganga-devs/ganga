@@ -44,6 +44,8 @@ def download_url(url, save_path, chunk_size=128):
         for chunk in r.iter_content(chunk_size=chunk_size):
             fd.write(chunk)
 
+n = NUMBER
+
 for pfn in pfns:
     # download primes file from the web server, unzip and replace extension from .zip to .txt
     # print(pfn)
@@ -67,10 +69,9 @@ for pfn in pfns:
 
         for p in primes:
             k = 0
-            n = NUMBER
             while n%p == 0:
                 k += 1
-                n /= p
+                n //= p
 
             if k>0:
                 factors.append((p,k))
@@ -83,15 +84,16 @@ print('Prime factors:',factors)
 import math
 check = 1
 for f in factors:
-    check *= int(math.pow(f[0],f[1]))
+    for k in range(f[1]):
+        check *= f[0]
 
-if int(check) == NUMBER:
+if check == NUMBER:
     print('All prime factors found!')
 else:
     print('Some prime factors are still to be found. Known factors multiply to',check)
 
 # write the factors to a data file
-ofn = 'factors-%d.dat'%NUMBER
+ofn = 'factors.dat'
 of = open(ofn,'w')
 of.write(str(factors))
 print('Created data file',ofn)
