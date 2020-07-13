@@ -10,8 +10,8 @@ For executing some complicated computation, of ten more than just a simple execu
 
 Large Particle Physics collaborations, such as LHCb and T2K have specific applications written and it is quite easy to write your own. 
 
-Prime Factorization
--------------------
+Try it out
+----------
 The ``PrimeFactorizer`` application is part of the Tutorial plugin (:doc:`TutorialPlugin`). It illustrates how a specific application can be used instead of the default `Executable` application. You can try and create a job like
 
 .. code-block:: python
