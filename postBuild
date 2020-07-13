@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 echo -e "[Display]\njobs_columns_width = {'fqid': 4, 'status': 10, 'name': 10, 'subjobs': 10, 'application': 12, 'backend': 11, 'actualCE': 20, 'comment': 10, 'subjob status': 9}" > ${HOME}/.gangarc
 echo -e "[File_Associations]\nfallback_command = cat" >> ${HOME}/.gangarc
