@@ -718,12 +718,12 @@ class Condor(IBackend):
             splitLine = l.split()
             if checkstr == splitLine[0]:
                 year = datetime.datetime.now().year
-                if datetime.datetime.strptime(str(datetime.datetime.now().year)+'/'+splitLine[2]+' '+splitLine[3], "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
+                if datetime.datetime.strptime(splitLine[2]+' '+splitLine[3], "%Y-%m-%d %H:%M:%S") > datetime.datetime.now():
                     year = year - 1
-                timestr = str(year)+'/'+splitLine[2]+' '+splitLine[3]
+                timestr = splitLine[2]+' '+splitLine[3]
                 try:
                     t = datetime.datetime(
-                        *(time.strptime(timestr, "%Y/%m/%d %H:%M:%S")[0:6]))
+                        *(time.strptime(timestr, "%Y-%m-%d %H:%M:%S")[0:6]))
                 except ValueError:
                     logger.debug(
                         "Value Error in file: '%s': string does not match required format.", p)
