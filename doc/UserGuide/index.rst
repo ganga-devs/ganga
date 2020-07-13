@@ -8,13 +8,15 @@ you encounter any problems!
 .. toctree::
     WhatIsGanga
     InstallAndBasicUsage
-    JobManipulation
     RunningExecutables
+    TutorialPlugin
+    UsingDifferentApplications
     UsingDifferentBackends
     InputAndOutputData
     Splitters
     PostProcessors
     Virtualization
+    JobManipulation
     Configuration
     MiscellaneousFunctionality
     Queues

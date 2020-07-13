@@ -3,7 +3,7 @@ Running Executables
 
 You can run any executable or script through Ganga using the ``Executable`` application. This accepts either a full
 path to an already installed exe (e.g. on CVMFS) or a Ganga ``File`` object that will be sent with your job. You
-can also supply arguments  and environment settings with the options in the ``Executable`` object.
+can also supply arguments and environment settings with the options in the ``Executable`` object.
 
 As an example:
 

@@ -167,8 +167,8 @@ You can view the job in your repository using the ``jobs`` command which lists a
 
 .. code-block:: python
 
-    Ganga In [7]: jobs
-    Ganga Out [7]:
+    Ganga In [1]: jobs
+    Ganga Out [1]:
 
     Registry Slice: jobs (1 objects)
     --------------
@@ -178,7 +178,7 @@ You can view the job in your repository using the ``jobs`` command which lists a
 
 
     [13:34:37]
-    Ganga In [8]:
+    Ganga In [2]:
 
 You can get more info about your job by selecting it from the repository:
 
@@ -202,6 +202,18 @@ To check the ``stdout/stderr`` of a job, you can use the peek method
     j.peek('stdout')
 
 
+Copy a job
+----------
+You can copy and old job, modify its attributes anbd then submit it as a new one
+
+.. code-block:: python
+
+    j = jobs(0).copy()
+    j.application.args = ['Hello from a copy']
+    j.name = 'Copy'
+    j.submit()
+
+    
 Job Monitoring
 --------------
 
@@ -212,14 +224,17 @@ As described above, the `jobs` command will show you the state of your jobs in t
 Scripting and Batch Mode
 ------------------------
 
-You can put your ganga commands into a python script and then execute it from the Ganga prompt like this:
+You can put your ganga commands into a python script
 
 .. code-block:: bash
 
     [centos7] ~ % cat >> myfile.py
     j = Job()
     j.submit()
+    ^D
 
+and then execute it from the Ganga prompt like this
+    
 .. code-block:: python
 
     runfile('myfile.py')
