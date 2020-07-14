@@ -34,6 +34,7 @@
         {% block head %}{% endblock head %}
     </head>
     <body>
+    <div class="d-flex flex-column min-vh-100">
         <!-- Navbar -->
         <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
             <a class="navbar-brand text-uppercase" href="#"><b>GANGA</b><small class="text-muted pl-1">GRAPHICAL USER INTERFACE</small></a>
@@ -73,18 +74,19 @@
         {% endwith %}
 
         <!-- Content Block -->
-        <div class="pb-5 mb-5">
+        <div class="flex-grow-1">
             {% block content %}{% endblock content %}
         </div>
 
         <!-- Footer -->
-        <nav class="navbar navbar-light fixed-bottom bg-light border-top">
+        <nav class="mt-5 navbar navbar-light bg-light border-top">
             <ul class="navbar-nav ml-auto">
                 <span class="navbar-text">
                     Ganga GUI GSoC Project
                 </span>
             </ul>
         </nav>
+    </div>
 
         <!-- Optional JavaScript -->
         <!-- jQuery first, then Popper.js, then Bootstrap JS -->

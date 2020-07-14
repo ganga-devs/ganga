@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container pt-5">
+        <div class="row d-flex justify-content-center align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="text-uppercase">
+                            {{ j.name }}
+                            <small class="text-muted">
+                                <span class="badge badge-{{ status_color[j.status] }} badge-pill">{{ j.status }}</span>
+                            </small>
+                        </h5>
+                        <hr class="my-2">
+                        <p class="m-0 p-0">fqid: {{ j.id|string }}</p>
+                        <p class="m-0 p-0">Subjobs: {{ j.subjobs|length }}</p>
+                        <p class="m-0 p-0">Application: {{ (j.application|string).split('(')[0] }}</p>
+                        <p class="m-0 p-0">Backend: {{ (j.backend|string).split('(')[0] }}</p>
+                        <p class="m-0 p-0">backend.actualCE: {{ j.backend.actualCE|string }}</p>
+                        <p class="m-0 p-0">Comment: {{ j.comment|string }}</p>
+                        <p class="m-0 p-0">Subjobs Statuses: {{ j.returnSubjobStatuses()|string }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex my-2">
+                    <a href="#" class="btn btn-primary mr-1 w-100" data-toggle="modal" data-target="#exampleModal2">Peek (stdout)</a>
+                    <a href="#" class="btn btn-warning ml-1 w-100" data-toggle="modal" data-target="#exampleModal3">Peek (stderr)</a>
+                </div>
+                <a href="#" class="btn btn-block btn-success">Browse Files</a>
+                <a href="" class="btn btn-block btn-info" data-toggle="modal" data-target="#exampleModal">Full Job Info</a>
+                <a href="" class="btn btn-block btn-danger">Kill Job</a>
+            </div>
+            <div class="container-fluid mt-4">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h4>Job Attributes:</h4>
+                        <div class="card">
+                            <div class="card-body pb-1">
+                                <form>
+                                    <div class="form-group">
+                                        <label for="attributeSelect">Select Attribute</label>
+                                        <select class="custom-select" id="attributeSelect">
+                                            {% for attr in attrs %}
+                                                <option>{{ attr }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </form>
+                                <hr class="my-1">
+                                <pre class="pt-3">{{ j.info|string }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h4>Job Actions:</h4>
+                        <div class="card">
+                            <div class="card-body pb-1">
+                                <form>
+                                    <div class="form-group">
+                                        <label for="actionSelect">Select Action</label>
+                                        <select class="custom-select" id="actionSelect">
+                                            {% for action in actions %}
+                                                <option>{{ action }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="actionArgument">Arguments (if any)</label>
+                                        <input type="text" class="form-control" id="actionArgument">
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        <h4>Subjobs:</h4>
+                        <div class="accordion" id="subjobs">
+                            <div class="list-group">
+                                {% for sj in recent_subjobs %}
+                                    <a href="#" id="jobid{{ sj.id }}"
+                                       class="list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action"
+                                       data-id="{{ sj.id }}" data-status="{{ sj.status }}" data-toggle="collapse"
+                                       data-target="#collapsejobid{{ sj.id }}" aria-expanded="true"
+                                       aria-controls="collapsejobid{{ sj.id }}">
+                                        {% if sj.name == '' %} No Name Ganga Job {% else %} {{ sj.name }} {% endif %}
+                                        <span class="badge badge-{{ status_color[sj.status] }} badge-pill">{{ sj.status }}</span>
+                                    </a>
+                                    <div id="collapsejobid{{ sj.id }}" class="collapse border-left border-right"
+                                         aria-labelledby="headingOne"
+                                         data-parent="#subjobs">
+                                        <div class="card-body">
+                                            <p class="m-0 p-0">fqid: {{ sj.id|string }}</p>
+                                            <p class="m-0 p-0">
+                                                Application: {{ (sj.application|string).split('(')[0] }}</p>
+                                            <p class="m-0 p-0">Backend: {{ (sj.backend|string).split('(')[0] }}</p>
+                                            <p class="m-0 p-0">backend.actualCE: {{ sj.backend.actualCE|string }}</p>
+                                            <p class="m-0 p-0">Comment: {{ sj.comment|string }}</p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Job #{{ j.id }} Info</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre>{{ j|string }}</pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal2" tabindex="-1" role="dialog" aria-labelledby="exampleModal2Label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModal2Label">Job #{{ j.id }} stdout</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ stdout }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal3" tabindex="-1" role="dialog" aria-labelledby="exampleModal3Label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModal3Label">Job #{{ j.id }} stderr</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ stdout }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

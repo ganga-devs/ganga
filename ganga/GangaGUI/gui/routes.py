@@ -4,7 +4,7 @@ import jwt
 import json
 from functools import wraps
 from itertools import chain
-from flask import request, jsonify, render_template, flash
+from flask import request, jsonify, render_template, flash, redirect, url_for
 from GangaGUI.gui import app
 from GangaGUI.gui.models import User
 
@@ -14,7 +14,12 @@ from GangaGUI.gui.models import User
 # Dashboard route
 @app.route("/")
 def dashboard():
-    from GangaCore.GPI import jobs
+    try:
+        from GangaCore.GPI import jobs
+    except ImportError:
+        import ganga
+        import ganga.ganga
+        from ganga import jobs
 
     # Get last 10 jobs slice
     recent_jobs = list(jobs[-10:])
@@ -57,7 +62,7 @@ def config():
 def create():
     try:
         from GangaCore.GPI import jobs, templates
-    except ImportError:
+    except:
         import ganga
         import ganga.ganga
         from ganga import jobs, templates
@@ -68,13 +73,14 @@ def create():
         for t in templates:
             templates_list.append(get_template_info(t.id))
     except Exception as err:
-        return flash(str(err), "danger")
+        flash(str(err), "danger")
+        return redirect(url_for("dashboard"))
 
     return render_template("create.html", title="Create", templates_list=templates_list)
 
 
 @app.route("/jobs")
-def jobs():
+def jobs_page():
     try:
         from GangaCore.GPI import jobs
     except ImportError:
@@ -82,7 +88,57 @@ def jobs():
         import ganga.ganga
         from ganga import jobs
 
-    return render_template("jobs.html", title="Jobs", jobs=jobs)
+
+
+    status_color = {"new": "info", "completed": "success", "failed": "danger", "running": "primary",
+                    "submitted": "secondary"}
+
+    return render_template("jobs.html", title="Jobs", jobs=jobs, status_color=status_color)
+
+
+@app.route('/job/<int:job_id>')
+def job_page(job_id: int):
+    try:
+        from GangaCore.GPI import jobs
+    except ImportError:
+        import ganga
+        import ganga.ganga
+        from ganga import jobs
+
+    from GangaCore.GPIDev.Lib.Job import Job
+    import os
+
+    status_color = {"new": "info", "completed": "success", "failed": "danger", "running": "primary",
+                    "submitted": "secondary"}
+
+    attrs = Job._schema.allItemNames()
+    actions = Job._exportmethods
+
+    j = None
+    stdout = "[GANGA GUI ERROR: FILE DOES NOT EXIST]"
+    stderr = "[GANGA GUI ERROR: FILE DOES NOT EXIST]"
+    try:
+        j = jobs[int(job_id)]
+        recent_subjobs = j.subjobs[-10:]
+        stdout_path = os.path.join(j.outputdir, "stdout")
+        stderr_path = os.path.join(j.outputdir, "stderr")
+        if os.path.exists(stdout_path):
+            with open(stdout_path) as f:
+                stdout = f.read()
+
+        if os.path.exists(stderr_path):
+            with open(stderr_path) as f:
+                stderr = f.read()
+
+    except Exception as err:
+        flash(str(err), "danger")
+
+    if j is not None:
+        return render_template("job.html", title=f"Job {job_id}", j=j, status_color=status_color, attrs=attrs, actions=actions, recent_subjobs=recent_subjobs, stdout=stdout, stderr=stderr)
+
+
+
+    return redirect(url_for("jobs_page"))
 
 
 # ******************** Token Based Authentication ******************** #
