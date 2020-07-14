@@ -17,7 +17,7 @@ class PrimeTableDataset(Dataset):
     _schema = Schema(Version(1,0), {
         'table_id_lower': SimpleItem(defvalue=1, doc='The lower bound id of the lookup tables (inclusive).'),
         'table_id_upper': SimpleItem(defvalue=1, doc='The upper bound id of the lookup tables (inclusive).'),
-        'table_id_max': SimpleItem(defvalue=15, hidden=1, doc='The upper bound id of the lookup tables (inclusive).'),
+        'table_id_max': SimpleItem(defvalue=50, hidden=1, doc='The upper bound id of the lookup tables (inclusive).'),
         'table_location': SimpleItem(defvalue='https://primes.utm.edu/lists/small/millions', doc='The location of the lookup tables.')
         })
     
