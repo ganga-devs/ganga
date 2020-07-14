@@ -4,7 +4,7 @@ import jwt
 import json
 from functools import wraps
 from itertools import chain
-from flask import request, jsonify, render_template
+from flask import request, jsonify, render_template, flash
 from GangaGUI.gui import app
 from GangaGUI.gui.models import User
 
@@ -24,6 +24,34 @@ def dashboard():
 
     return render_template("home.html", title="Dashboard", status_color=status_color, recent_jobs=recent_jobs,
                            jobs=jobs)
+
+
+@app.route("/config", methods=["GET", "POST"])
+def config():
+
+    from GangaCore.GPI import config
+    from GangaCore import getConfig
+
+    sections = []
+    config_list = []
+
+    for c in config:
+        config_list.append(c)
+
+    if request.method == "POST":
+        sectionName = request.form.get("section")
+        if sectionName is not None:
+            section = getConfig(str(sectionName))
+            sections.append(section)
+            return render_template("config.html", title="Config", sections=sections, configList=config_list)
+        else:
+            flash("Please select a config section to view.", "warning")
+
+    for c in config_list:
+        section = getConfig(c)
+        sections.append(section)
+
+    return render_template("config.html", title="Config", sections=sections, configList=config_list)
 
 
 # ******************** Token Based Authentication ******************** #

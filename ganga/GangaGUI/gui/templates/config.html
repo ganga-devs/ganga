@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container mt-4 pt-2">
+        <form action="{{ url_for('config') }}" method="POST">
+            <div class="form-row">
+                <div class="form-group col-md-9">
+                    <select class="form-control custom-select" name="section">
+                        <option selected disabled>Select Config</option>
+                    {% for c in configList %}
+                        <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <button type="submit" class="btn btn-block btn-primary">Show Config</button>
+                </div>
+            </div>
+        </form>
+        <hr class="my-1 mb-3 mt-3">
+        {% for section in sections %}
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <h3 class="font-weight-normal mb-n2 pb-2">{{ section.name }}</h3>
+                <small class="text-muted">{{ section.docstring }}</small>
+                <table class="table table-striped table-bordered text-center mt-2 table-responsive-sm">
+                    <thead>
+                        <tr>
+                            <th class="align-middle" scope="col">ID</th>
+                            <th class="align-middle" style="width: 70%;" scope="col">Option Name</th>
+                            <th class="align-middle" style="width: 25%;" scope="col">Effective Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for option in section.options %}
+                            <tr>
+                                <th class="align-middle" scope="row">{{ loop.index }}</th>
+                                <td class="align-middle text-left">{{ section.options[option].name }}<br><small class="text-muted">{{ section.options[option].docstring }}</small></td>
+                                <td class="align-middle text-break">{{ section.options[option].value }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                  </table>
+            </div>
+        </div>
+        <hr class="my-1 mt-3 mb-3">
+        {% endfor %}
+    </div>
+{% endblock content %}
