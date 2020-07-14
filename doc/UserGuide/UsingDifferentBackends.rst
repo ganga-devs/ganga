@@ -25,7 +25,7 @@ There are no editable options for the object itself but there are two config opt
 Batch Backends
 --------------
 
-Ganga supplies backend objects for most of the major batch systems around - Condor, Slurm, SGE, LSF, PBS and  Condor. You should obviously use the one that is relevant to the system you are running on. Typical usage is detailed below though as with all these, you can get more help using ``help(<backend>)`` and ``config.<backend>``. Sometimes a local installation requires that small changes are made to the configuration. Look in the relevant section of the ``~/.gangarc`` file.
+Ganga supplies backend objects for most of the major batch systems around - Condor, Slurm, SGE, LSF and PBS. You should obviously use the one that is relevant to the system you are running on. Typical usage is detailed below though as with all these, you can get more help using ``help(<backend>)`` and ``config.<backend>``. Sometimes a local installation requires that small changes are made to the configuration. Look in the relevant section of the ``~/.gangarc`` file.
 
 LSF
 ^^^^
