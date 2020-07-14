@@ -10,7 +10,7 @@ Try it out
 .. code-block:: python
 
     j1 = Job(name='Weather', \
-             virtualization=Docker(image='uegede/weather:1.2'), \
+             virtualization=Docker(image='uegede/weather'), \
              application=Executable(exe='weather', args=['MEL']))
     j2 = Job(name='Fedora', \
              virtualization=Docker(image='fedora:latest'), \
