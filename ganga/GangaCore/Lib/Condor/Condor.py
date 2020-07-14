@@ -695,9 +695,9 @@ class Condor(IBackend):
         numberOfDateElements = len(dateBreakdown)+1
         if numberOfDateElements > 0:
             self._condorDateFormat=(numberOfDateElements,dateBreakdown[0][-1])
-            if numberOfDateElements > 3:
+            if numberOfDateElements > 3 or numberOfDateElements == 1:
                 logger.warning(
-                    "setCondorDateFormat too many date elements: '%s'", dateString)
+                    "setCondorDateFormat number of date elements does not match: '%s'", dateString)
         else:
             logger.warning(
                     "setCondorDateFormat cannot determine date format: '%s'", dateString)
