@@ -10,8 +10,16 @@ from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
 import GangaCore.Utility.Config
 from GangaCore.GPIDev.Lib.File import getSharedPath
+from GangaCore.Utility.Config import getConfig
+
+
 logger = GangaCore.Utility.logging.getLogger()
 
+if getConfig("Configuration")["repositorytype"] == "Database":
+    logger.info("from GangaCore.Core.GangaRepository.Registry import DatabaseRegistry as Registry")
+    from GangaCore.Core.GangaRepository.Registry import DatabaseRegistry as Registry
+else:
+    from GangaCore.Core.GangaRepository.Registry import Registry as Registry
 
 class PrepRegistry(Registry):
 
@@ -47,9 +55,9 @@ class PrepRegistry(Registry):
 class ShareRef(GangaObject):
 
     """The shareref table (shared directory reference counter table) provides a mechanism
-    for storing metadata associated with Shared Directories (see help(ShareDir)), which 
+    for storing metadata associated with Shared Directories (see help(ShareDir)), which
     may be referenced by other Ganga objects, such as prepared applications.
-    When a Shared Directory is associated with a persisted Ganga object (e.g. Job, Box) its 
+    When a Shared Directory is associated with a persisted Ganga object (e.g. Job, Box) its
     reference counter is incremented by 1. Shared Directories with a reference counter of 0 will
     be removed (i.e. the directory deleted) the next time Ganga exits.
     """
@@ -196,8 +204,8 @@ class ShareRef(GangaObject):
 
     def lookup(self, sharedir, unprepare=False):
         """
-        Report Job, Box and Task repository items which reference a given ShareDir object. 
-        The optional parameter 'unprepare=True' can be set to call the unprepare method 
+        Report Job, Box and Task repository items which reference a given ShareDir object.
+        The optional parameter 'unprepare=True' can be set to call the unprepare method
         on the returned objects.
         """
         from GangaCore.Core.GangaRepository import getRegistryProxy
@@ -282,18 +290,18 @@ class ShareRef(GangaObject):
                lookup_input.append(os.path.basename(this_object))
 
     def rebuild(self, unprepare=True, rmdir=False):
-        """Rebuild the shareref table. 
-        Clears the shareref table and then rebuilds it by iterating over all Ganga Objects 
-        in the Job, Box and Task repositories. If an object has a ShareDir associated with it, 
-        that ShareDir is added into the shareref table (the reference counter being incremented 
+        """Rebuild the shareref table.
+        Clears the shareref table and then rebuilds it by iterating over all Ganga Objects
+        in the Job, Box and Task repositories. If an object has a ShareDir associated with it,
+        that ShareDir is added into the shareref table (the reference counter being incremented
         accordingly). If called with the optional parameter 'unprepare=False', objects whose
         ShareDirs are not present on disk will not be unprepared. Note that the default behaviour
         is unprepare=True, i.e. the job/application would be unprepared.
-        After all Job/Box/Task objects have been checked, the inverse operation is performed, 
-        i.e., for each directory in the ShareDir repository, a check is done to ensure there 
-        is a matching entry in the shareref table. If not, and the optional parameter 
-        'rmdir=True' is set, then the (orphaned) ShareDir will removed from the filesystem. 
-        Otherwise, it will be added to the shareref table with a reference count of zero; 
+        After all Job/Box/Task objects have been checked, the inverse operation is performed,
+        i.e., for each directory in the ShareDir repository, a check is done to ensure there
+        is a matching entry in the shareref table. If not, and the optional parameter
+        'rmdir=True' is set, then the (orphaned) ShareDir will removed from the filesystem.
+        Otherwise, it will be added to the shareref table with a reference count of zero;
         this results in the directory being deleted upon Ganga exit.
         """
         self._getSessionLock()

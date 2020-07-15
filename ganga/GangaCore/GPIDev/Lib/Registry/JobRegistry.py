@@ -9,7 +9,7 @@
 from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
 
 from GangaCore.Core.exceptions import GangaException
-from GangaCore.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher
+from GangaCore.Core.GangaRepository.Registry import RegistryKeyError, RegistryAccessError, RegistryFlusher
 
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType
 
@@ -26,6 +26,13 @@ from .RegistrySlice import config
 
 logger = GangaCore.Utility.logging.getLogger()
 
+from GangaCore.Utility.Config import getConfig
+
+if getConfig("Configuration")["repositorytype"] == "Database":
+    logger.info("from GangaCore.Core.GangaRepository.Registry import DatabaseRegistry as Registry")
+    from GangaCore.Core.GangaRepository.Registry import DatabaseRegistry as Registry
+else:
+    from GangaCore.Core.GangaRepository.Registry import Registry as Registry
 
 class JobRegistry(Registry):
 

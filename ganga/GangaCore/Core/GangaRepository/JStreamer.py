@@ -1,10 +1,13 @@
+# TODO: Remove unrequired imports
 import os
 import copy
 import json
+import time
+import pymongo
 import datetime
 
-import pymongo
 
+from pymongo import ReturnDocument
 from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Schema import Schema, Version
@@ -53,67 +56,62 @@ def from_file(f):
 
 
 # ignore_subs was added for backwards compatibilty
-# TODO: Add assertions to make sure that Jobs are stored in the job document and other objects are stored in their respective documents in the database
-# TODO: Update only those attributes in the DB that changed since last insert
-def to_database(j, connection, ignore_subs=[]):
+def to_database(j, document, ignore_subs=[]):
     """Convert JobObject and write to file object
     """
-    try:
-        json_content = j.to_json()
-        for sub in ignore_subs:
-            json_content.pop(sub, None)
+    json_content = j.to_json()
+    for sub in ignore_subs:
+        json_content.pop(sub, None)
 
-        # Mongo uses _id as indexing identifier
+    json_content["modified_time"] = time.time()
+    # Mongo uses _id as indexing identifier
+    # TODO: We dont really need that _id
+    logger.info(json_content["type"])
+    if json_content["type"] == "Job":
         json_content["_id"] = json_content["id"]
-        result = connection.find_one_and_update(
+        result = document.find_one_and_update(
             filter={"_id": json_content["_id"]},
             update={"$set": json_content},
             upsert=True,
+            projection="name",
+            return_document=ReturnDocument.AFTER
         )
-    except Exception as err:
-        logger.error("Database to-file error for file:\n%s" % (err))
-        raise DatabaseError(err, "to-file error")
+        # result = document.find_one_and_update(
+        #     filter={"id": json_content["id"]},
+        #     replacement=json_content,
+        #     upsert=True,
+        #     projection="id"
+        # )
+        logger.info(f"updated gave this {result}")
+    else:
+        result = document.insert(json_content)
+        logger.info(f"insertion gave this {result}")
 
+    if result is None:
+        # log the error
+        # logger.error("Database to-file error for file:\n%s" % (err))
+        raise DatabaseError(
+            Exception,
+            f"{j} could not be inserted in the document linked by {document.name}. Inserted resulted in: {result}",
+        )
+    return result
 
-def from_database(connection, attribute, value):
+def from_database(document, attribute, value):
     """Load JobObject from a json filestream
 
-    Will connect to the document indicated by connection and then search for the appropriate 
+    Will connect to the document indicated by document and then search for the appropriate
     object using the identifier
     """
-    try:
-        # get the correct jobs from the connections
-        content = connection.find_one({attribute: value})
-
-        loader = JsonLoader()
-        obj, error = loader.parse_static(content)
-        return obj, error
-    except Exception as err:
-        logger.error("from-database error for database:\n%s" % err)
-        # raise DatabaseError(err, "from-database error")
-        raise DatabaseError(err, f"from-database error :: {connection}")
-
-    # # getting the options from the config
-    # c = getConfig("DatabaseConfigurations")
-
-    # if c["database"] == "default":
-    #     path = getConfig("Configuration")["gangadir"]
-    #     conn = "sqlite:///" + path + "/ganga.db"
-    # else:
-    #     raise NotImplementedError("Other databases are not supported")
-
-    #     import urllib
-
-    #     dialect = c["database"]
-    #     driver = c["driver"]
-    #     username = urllib.parse.quote_plus(c["username"])
-    #     password = urllib.parse.quote_plus(c["password"])
-    #     host = c["host"]
-    #     port = c["port"]
-    #     database = c["dbname"]
-
-    # mongouri = f"mongodb://{username}:{password}@{host}:{port}/"
-    # client = pymongo.MongoClient(mongouri)
+    content = document.find_one({attribute: value})
+    if content is None:
+        logger.error("from-database error for database")
+        raise DatabaseError(
+            Exception,
+            f"({attribute}, {value}) pair was not found in the document linked by {document.name}",
+        )
+    loader = JsonLoader()
+    obj, error = loader.parse_static(content)
+    return obj, error
 
 
 # TODO: Remove the versioning from this
@@ -130,6 +128,11 @@ class EmptyGangaObject(GangaObject):
         super(EmptyGangaObject, self).__init__()
 
 
+class DockerIncessableError(GangaException):
+    message = "raise this error, when the database timeout passes"
+    pass
+    # raise NotImplemented
+
 # Kept for backwards compatibility purposes
 class JsonFileError(GangaException):
     def __init__(self, excpt, message):
@@ -143,7 +146,6 @@ class JsonFileError(GangaException):
         else:
             err = ""
         return "DatabaseError: %s %s" % (self.message, err)
-
 
 
 class DatabaseError(GangaException):
@@ -190,7 +192,7 @@ class JsonDumper:
                 for sub_s in s:
                     sub_val = acceptOptional(sub_s)
             elif hasattr(s, "accept"):
-                return JsonDumper.componentAttribute(None, s, node, ignore_subs)
+                return self.componentAttribute(None, s, node, ignore_subs)
             else:
                 return repr(s)
 
@@ -199,8 +201,7 @@ class JsonDumper:
                 for (name, item) in glist._schema.allItems():
                     if name == "_list":
                         values = getattr(glist, name)
-
-                        ret_values = []
+                        # ret_values = []
                         for val in values:
                             values.append(handle_gangalist(val))
                     elif item["visitable"]:
@@ -247,42 +248,42 @@ class JsonDumper:
 
                 return node_info
 
-    # def simpleAttribute(self, attr_name, value, sequence):
-    #     """
-    #     Adding simple attribute's information to the master node
-    #     """
-    #     if sequence:
-    #         for v in value:
-    #             self.optional()
-    #     else:
-    #         # This case means that the value is another component object
-    #         if isinstance(value, GangaObject):
-    #             self.optional()
-    #         else:
-    #             return value
+    def simpleAttribute(self, attr_name, value, sequence):
+        """
+        Adding simple attribute's information to the master node
+        """
+        if sequence:
+            for v in value:
+                self.optional()
+        else:
+            # This case means that the value is another component object
+            if isinstance(value, GangaObject):
+                self.optional()
+            else:
+                return value
 
-    # def componentAttribute(self):
-    #     """
-    #     Adding component attributes's information to the master node
-    #     """
-    #     pass
+    def componentAttribute(self):
+        """
+        Adding component attributes's information to the master node
+        """
+        pass
 
-    # def sharedAttribute(self, attr_name, value, sequence):
-    #     """
-    #     Adding a shared attribute's information to the master node
-    #     Uses simpleAttribute's implemenation under the hood
-    #     """
-    #     self.simpleAttribute(attr_name, value, sequence)
+    def sharedAttribute(self, attr_name, value, sequence):
+        """
+        Adding a shared attribute's information to the master node
+        Uses simpleAttribute's implemenation under the hood
+        """
+        self.simpleAttribute(attr_name, value, sequence)
 
-    # @staticmethod
-    # def componentAttribute(self, attr_name, value, ignore_subs):
-    #     """
-    #     """
-    #     if isType(value, (list, tuple, GangaList)):
-    #         ret_val = list(value)
-    #     else:
-    #         ret_val = JsonDumper.object_to_json(attr_name, getattr(node, attr_name), ignore_subs)
-    #     return ret_val
+    @staticmethod
+    def componentAttribute(self, attr_name, value, ignore_subs):
+        """
+        """
+        if isType(value, (list, tuple, GangaList)):
+            ret_val = list(value)
+        else:
+            ret_val = JsonDumper.object_to_json(attr_name, getattr(node, attr_name), ignore_subs)
+        return ret_val
 
 
 class JsonLoader:
@@ -511,3 +512,29 @@ class XmlToJsonConverter:
         # saving the job as a xml now
         with open(location, "r") as fout:
             xml_to_file(stripped_j, fobj=fout)
+
+
+"""
+Will be used later on
+    # # getting the options from the config
+    # c = getConfig("DatabaseConfigurations")
+
+    # if c["database"] == "default":
+    #     path = getConfig("Configuration")["gangadir"]
+    #     conn = "sqlite:///" + path + "/ganga.db"
+    # else:
+    #     raise NotImplementedError("Other databases are not supported")
+
+    #     import urllib
+
+    #     dialect = c["database"]
+    #     driver = c["driver"]
+    #     username = urllib.parse.quote_plus(c["username"])
+    #     password = urllib.parse.quote_plus(c["password"])
+    #     host = c["host"]
+    #     port = c["port"]
+    #     database = c["dbname"]
+
+    # mongouri = f"mongodb://{username}:{password}@{host}:{port}/"
+    # client = pymongo.MongoClient(mongouri)
+"""

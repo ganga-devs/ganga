@@ -257,7 +257,6 @@ class GangaRepositoryLocal(GangaRepository):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError
         Write an index file for all new objects in memory and master index file of indexes"""
-        from GangaCore.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         for k in self._fully_loaded:
@@ -301,6 +300,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         #logger.debug("Loading index %s" % this_id)
         fn = self.get_idxfn(this_id)
+        logger.debug(str(fn), str(this_id))
         # index timestamp changed
         fn_ctime = os.stat(fn).st_ctime
         cache_time = self._cache_load_timestamp.get(this_id, 0)
@@ -355,6 +355,7 @@ class GangaRepositoryLocal(GangaRepository):
         obj = self.objects[this_id]
         try:
             ifn = self.get_idxfn(this_id)
+            logger.debug(str(ifn))
             new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
             if not os.path.exists(ifn) or shutdown:
                 new_cache = new_idx_cache
@@ -376,6 +377,7 @@ class GangaRepositoryLocal(GangaRepository):
             if not os.path.exists(self.root):
                 os.makedirs(self.root)
             obj_chunks = [d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
+            logger.debug(str(obj_chunks))
         except OSError as err:
             logger.debug("get_index_listing Exception: %s" % err)
             raise RepositoryError(self, "Could not list repository '%s'!" % (self.root))
@@ -441,6 +443,12 @@ class GangaRepositoryLocal(GangaRepository):
         for k, v in self._cached_obj.items():
             self._cached_obj.pop(k)
 
+    """
+    Used in saving the master.idx file for each of:
+    1. jobs/ jobs.metdata
+    2. box/ box.metdata
+    and so on for all the first folders in 6.0
+    """
     def _write_master_cache(self, shutdown=False):
         """
         write a master index cache once per 300sec
@@ -539,6 +547,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         # First locate and load the index files
         logger.debug("updating index...")
+        logger.debug(f"{str(this_id)}-{str(firstRun)}")
         objs = self.get_index_listing()
         changed_ids = []
         deleted_ids = set(self.objects.keys())
@@ -663,8 +672,10 @@ class GangaRepositoryLocal(GangaRepository):
             ids = self.sessionlock.make_new_ids(len(objs))
 
         logger.debug("made ids")
+        logger.info(f"This is how we roll: {ids}")
 
         for i in range(0, len(objs)):
+            logger.info(f"obj_id: {i}, current thing {ids[i]}")
             fn = self.get_fn(ids[i])
             try:
                 os.makedirs(os.path.dirname(fn))
@@ -672,6 +683,7 @@ class GangaRepositoryLocal(GangaRepository):
                 if e.errno != errno.EEXIST:
                     raise RepositoryError( self, "OSError on mkdir: %s" % (e))
             self._internal_setitem__(ids[i], objs[i])
+
 
             # Set subjobs dirty - they will not be flushed if they are not.
             if self.sub_split and hasattr(objs[i], self.sub_split):
