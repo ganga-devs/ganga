@@ -1,15 +1,16 @@
-from GangaCore.GPIDev.Schema.Schema import Schema, SimpleItem, Version
-from GangaCore.GPIDev.Base.Objects import GangaObject
-from GangaCore.Utility.logging import getLogger
-from GangaCore.Core.GangaRepository.GangaRepository import RepositoryError
-from GangaCore.Core.exceptions import GangaException
-from GangaCore.GPIDev.Base.Proxy import stripProxy
-from GangaCore.Core.GangaRepository.JStreamer import JsonFileError
-import errno
 import copy
-import threading
+import errno
 import shutil
 from os import listdir, path, stat
+
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.Core.GangaRepository.GangaRepository import RepositoryError
+from GangaCore.Core.GangaRepository.GangaRepositoryJson import safe_save
+from GangaCore.Core.GangaRepository.JStreamer import JsonFileError
+from GangaCore.GPIDev.Base.Objects import GangaObject
+from GangaCore.GPIDev.Base.Proxy import stripProxy
+from GangaCore.GPIDev.Schema.Schema import Schema, SimpleItem, Version
+from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 
@@ -19,7 +20,7 @@ print("Subjobs are using json backend")
 class SJXLIterator(object):
     """Class for iterating over SJJsonList, potentially very unstable, dangerous and only supports looping forwards ever"""
 
-    __slots__ = ('_myCount', '_mySubJobs')
+    __slots__ = ("_myCount", "_mySubJobs")
 
     def __init__(self, theseSubJobs):
         """ Iterator constructor
@@ -44,14 +45,20 @@ class SubJobJsonList(GangaObject):
         SUBJOBJsonLIST class for managing the subjobs so they're loaded only when needed
     """
 
-    _category = 'internal'
-    _exportmethods = ['__getitem__', '__len__', '__iter__', 'getAllCachedData', 'values']
+    _category = "internal"
+    _exportmethods = [
+        "__getitem__",
+        "__len__",
+        "__iter__",
+        "getAllCachedData",
+        "values",
+    ]
     _hidden = True
-    _name = 'SubJobJsonList'
+    _name = "SubJobJsonList"
 
     _schema = Schema(Version(1, 0), {})
 
-    def __init__(self, jobDirectory='', registry=None, dataFileName='data', load_backup=False, parent=None):
+    def __init__(self, registry=None, parent=None):
         """ Constructor for SubjobJsonList
         Args:
             jobDirectory (str): dir on disk which contains subjob folders
@@ -62,32 +69,26 @@ class SubJobJsonList(GangaObject):
         """
         super(SubJobJsonList, self).__init__()
 
-        self._jobDirectory = jobDirectory
         self._registry = registry
         self._cachedJobs = {}
 
-        self._dataFileName = dataFileName
-        self._load_backup = load_backup
-
         self._definedParent = None
 
-        self._subjob_master_index_name = "subjobs.idx"
+        # FIXME: We do not handle indexes yet
+        # self._subjob_master_index_name = "subjobs.idx"
 
-        if jobDirectory == '' and registry is None:
+        if registry is None:
             return
 
-        self._subjobIndexData = {}
+        # self._subjobIndexData = {}
         if parent:
             self._setParent(parent)
-        self.load_subJobIndex()
+        # self.load_subJobIndex()
 
         self._cached_filenames = {}
         self._stored_len = []
         # For caching a large list of integers, the key is the length of the list
         self._storedKeys = {}
-
-        # Lock to ensure only one load at a time
-        self._load_lock = threading.Lock()
 
 
     ## THIS CLASS MAKES USE OF THE INTERNAL CLASS DICTIONARY ONLY!!!
@@ -123,162 +124,24 @@ class SubJobJsonList(GangaObject):
         """
         return subjob_id in self._cachedJobs
 
-    def load_subJobIndex(self):
-        """Load the index from all sujobs ynto _subjobIndexData or empty it is an error occurs"""
-        index_file = path.join(self._jobDirectory, self._subjob_master_index_name )
-        if path.isfile( index_file ):
-            index_file_obj = None
-            try:
-                from GangaCore.Core.GangaRepository.PickleStreamer import json_pickle_from_file
-
-                try:
-                    # index_file_obj = open(index_file, "rb" )
-                    index_file_obj = open(index_file, "r" )
-                    self._subjobIndexData = json_pickle_from_file( index_file_obj )[0]
-                except IOError as err:
-                    self._subjobIndexData = None
-                    self._setDirty()
-
-                if self._subjobIndexData is None:
-                    self._subjobIndexData = {}
-                else:
-                    for subjob_id in self._subjobIndexData:
-                        index_data = self._subjobIndexData.get(subjob_id)
-                        ## CANNOT PERFORM REASONABLE DISK CHECKING ON AFS
-                        ## SLOW FILE ACCESS WRITE AND METADATA MEANS FILE DATA DOES NOT MATCH MOD TIME
-                        #if index_data is not None and 'modified' in index_data:
-                        #    mod_time = index_data['modified']
-                        #    disk_location = self.__get_dataFile(str(subjob_id))
-                        #    disk_time = stat(disk_location).st_ctime
-                        #    diff = disk_time - mod_time
-                        #    if disk_time > mod_time and (diff*diff < 9.):
-                        #        logger.warning("objs: %s" % self._cachedJobs.keys())
-                        #        logger.warning("%s != %s" % (mod_time, disk_time))
-                        #        logger.warning("SubJob: %s has been modified, re-loading" % (subjob_id))
-                        #        new_data = self._registry.getIndexCache( self.__getitem__(subjob_id) )
-                        #        self._subjobIndexData[subjob_id] = new_data
-                        #        break
-                        #else:
-                        if index_data is None:
-                            logger.warning("Cannot find subjob index %s, rebuilding" % subjob_id)
-                            new_data = self._registry.getIndexCache( self.__getitem__(subjob_id) )
-                            self._subjobIndexData[subjob_id] = new_data
-                            continue
-                        #self._subjobIndexData = {}
-            except Exception as err:
-                logger.debug( "Subjob Index file open, error: %s" % err )
-                self._subjobIndexData = {}
-                self._setDirty()
-            finally:
-                if index_file_obj is not None:
-                    index_file_obj.close()
-                if self._subjobIndexData is None:
-                    self._subjobIndexData = {}
-        else:
-            self._setDirty()
-        return
-
-    def write_subJobIndex(self, ignore_disk=False):
-        """interface for writing the index which captures errors and alerts the user vs throwing uncaught exception
-        Args:
-            ignore_disk (bool): Optional flag to force the class to ignore all on-disk data when flushing
-        """
-        try:
-            self.__really_writeIndex(ignore_disk)
-        ## Once It's known what te likely exceptions here are they'll be added
-        except (IOError,) as err:
-            logger.debug("Can't write Index. Moving on as this is not essential to functioning it's a performance bug")
-            logger.debug("Error: %s" % err)
-
-    def __really_writeIndex(self, ignore_disk=False):
-        """Do the actual work of writing the index for all subjobs
-        Args:
-            ignore_disk (bool): Optional flag to force the class to ignore all on-disk data when flushing
-        """
-
-        all_caches = {}
-        if ignore_disk:
-            range_limit = list(self._cachedJobs.keys())
-        else:
-            range_limit = list(range(len(self)))
-
-        for sj_id in range_limit:
-            if sj_id in self._cachedJobs:
-                this_cache = self._registry.getIndexCache(self.__getitem__(sj_id))
-                all_caches[sj_id] = this_cache
-                disk_location = self.__get_dataFile(sj_id)
-                all_caches[sj_id]['modified'] = stat(disk_location).st_ctime
-            else:
-                if sj_id in self._subjobIndexData:
-                    all_caches[sj_id] = self._subjobIndexData[sj_id]
-                else:
-                    this_cache = self._registry.getIndexCache(self.__getitem__(sj_id))
-                    all_caches[sj_id] = this_cache
-                    disk_location = self.__get_dataFile(sj_id)
-                    all_caches[sj_id]['modified'] = stat(disk_location).st_ctime
-
-        try:
-            from GangaCore.Core.GangaRepository.PickleStreamer import json_pickle_to_file
-            index_file = path.join(self._jobDirectory, self._subjob_master_index_name)
-            # index_file_obj = open(index_file, "wb")
-            index_file_obj = open(index_file, "w")
-            json_pickle_to_file(all_caches, index_file_obj)
-            index_file_obj.close()
-        ## Once I work out what the other exceptions here are I'll add them
-        except (IOError,) as err:
-            logger.debug("cache write error: %s" % err)
-
     def __iter__(self):
         """Return iterator for this class"""
         return SJXLIterator(self)
 
-    def __get_dataFile(self, index, force_backup=False):
+    def __data(self, index, force_backup=False):
         """Get the filename for this file (with out without backup '~'. Store already determine combinations in _cached_filenames for speed
         Args:
             index (int): This is the index of the subjob we're interested in
             force_backup (bool): Should we force the loading from the backup Json
         """
-
-        backup_decision = self._load_backup is True or force_backup is True
-
-        index_str = str(index)+"_"+str(backup_decision)
-
-        if index_str in self._cached_filenames:
-            return self._cached_filenames[index_str]
-
-        subjob_data = path.join(self._jobDirectory, str(index), self._dataFileName)
-        if backup_decision is True:
-            subjob_data = subjob_data + '~'
-
-        self._cached_filenames[index_str] = subjob_data
-        return subjob_data
+        """
+        Search for the subjob and return information
+        """
+        raise NotImplementedError
 
     def __len__(self):
         """ return length or lookup the last modified time compare against self._stored_len[0] and if nothings changed return self._stored_len[1]"""
-        try:
-            this_time = stat(self._jobDirectory).st_ctime
-        except OSError:
-            return 0
-
-        if len(self._stored_len) == 2:
-            last_time = self._stored_len[0]
-            if this_time == last_time:
-                return self._stored_len[1]
-
-        if not path.isdir( self._jobDirectory ):
-            return 0
-
-        subjob_count = SubJobJsonList.countSubJobDirs(self._jobDirectory, self._dataFileName, False)
-
-        if len(self._stored_len) != 2:
-            self._stored_len = []
-            self._stored_len.append(this_time)
-            self._stored_len.append(subjob_count)
-        else:
-            self._stored_len[0] = this_time
-            self._stored_len[1] = subjob_count
-
-        return subjob_count
+        return len(self._definedParent.subjobs)
 
     def keys(self):
         """Return keys to access subjobs"""
@@ -308,7 +171,7 @@ class SubJobJsonList(GangaObject):
         job_obj = self.getSafeJob()
         if job_obj is not None:
             try:
-                fqid = job_obj.getFQID('.')
+                fqid = job_obj.getFQID(".")
             except Exception as err:
                 try:
                     fqid = job_obj.id
@@ -324,18 +187,18 @@ class SubJobJsonList(GangaObject):
             subjob_data (str): filename for the subjob 'data' file we're interested in
         """
         # For debugging where this was called from to try and push it to as high a level as possible at runtime
-        #print("SJJson Load")
-        #import traceback
-        #traceback.print_stack()
-        #print("\n\n\n")
-        #import sys
-        #sys.exit(-1)
+        # print("SJJson Load")
+        # import traceback
+        # traceback.print_stack()
+        # print("\n\n\n")
+        # import sys
+        # sys.exit(-1)
         job_obj = self.getSafeJob()
         if job_obj is not None:
             fqid = self.getMasterID()
-            logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
+            logger.debug("Loading subjob at: %s for job %s" % (subjob_data, fqid))
         else:
-            logger.debug( "Loading subjob at: %s" % subjob_data )
+            logger.debug("Loading subjob at: %s" % subjob_data)
         sj_file = open(subjob_data, "r")
         return sj_file
 
@@ -367,7 +230,7 @@ class SubJobJsonList(GangaObject):
 
         if index not in self._cachedJobs:
 
-            logger.debug("Attempting to load subjob: #%s from disk" % index)
+            logger.debug("Attempting to load subjob: #%s from database" % index)
 
             # obtain a lock to make sure multiple loads of the same object don't happen
             with self._load_lock:
@@ -387,7 +250,10 @@ class SubJobJsonList(GangaObject):
                 except (JsonFileError, IOError) as x:
                     logger.warning("Error loading Json file: %s" % x)
                     try:
-                        logger.debug("Loading subjob #%s for job #%s from disk, recent changes may be lost" % (index, self.getMasterID()))
+                        logger.debug(
+                            "Loading subjob #%s for job #%s from disk, recent changes may be lost"
+                            % (index, self.getMasterID())
+                        )
                         subjob_data = self.__get_dataFile(str(index), True)
                         sj_file = self._loadSubJobFromDisk(subjob_data)
                         has_loaded_backup = True
@@ -397,7 +263,9 @@ class SubJobJsonList(GangaObject):
                         if isinstance(x, IOError) and x.errno == errno.ENOENT:
                             raise IOError("Subobject %s not found: %s" % (index, x))
                         else:
-                            raise RepositoryError(self,"IOError on loading subobject %s: %s" % (index, x))
+                            raise RepositoryError(
+                                self, "IOError on loading subobject %s: %s" % (index, x)
+                            )
 
                 from GangaCore.Core.GangaRepository.JStreamer import from_file
 
@@ -407,17 +275,23 @@ class SubJobJsonList(GangaObject):
                 except (IOError, JsonFileError) as err:
 
                     try:
-                        logger.warning("Loading subjob #%s for job #%s from backup, recent changes may be lost" % (index, self.getMasterID()))
+                        logger.warning(
+                            "Loading subjob #%s for job #%s from backup, recent changes may be lost"
+                            % (index, self.getMasterID())
+                        )
                         subjob_data = self.__get_dataFile(str(index), True)
                         sj_file = self._loadSubJobFromDisk(subjob_data)
                         loaded_sj = from_file(sj_file)[0]
                         has_loaded_backup = True
                     except (IOError, JsonFileError) as err:
-                        logger.debug("Failed to Load Json for job: %s using: %s" % (index, subjob_data))
+                        logger.debug(
+                            "Failed to Load Json for job: %s using: %s"
+                            % (index, subjob_data)
+                        )
                         logger.debug("Err:\n%s" % err)
                         raise
 
-                loaded_sj._setParent( self._definedParent )
+                loaded_sj._setParent(self._definedParent)
                 if has_loaded_backup:
                     loaded_sj._setDirty()
                 else:
@@ -432,58 +306,24 @@ class SubJobJsonList(GangaObject):
             parentObj (Job): This is the master job we're hanging these children off in the tree
         """
 
-        if parentObj is not None and hasattr(parentObj, 'getFQID'):
-            parent_name = "Job: %s" % parentObj.getFQID('.')
-        elif parentObj is not None and hasattr(parentObj, 'id'):
+        if parentObj is not None and hasattr(parentObj, "getFQID"):
+            parent_name = "Job: %s" % parentObj.getFQID(".")
+        elif parentObj is not None and hasattr(parentObj, "id"):
             parent_name = "Job: %s" % parentObj.id
         else:
             parent_name = "None"
-        logger.debug('Setting Parent: %s' % parent_name)
+        logger.debug("Setting Parent: %s" % parent_name)
 
         super(SubJobJsonList, self)._setParent(parentObj)
 
         if self._definedParent is not parentObj:
             self._definedParent = parentObj
 
-        if not hasattr(self, '_cachedJobs'):
+        if not hasattr(self, "_cachedJobs"):
             return
         for k in self._cachedJobs:
             if self._cachedJobs[k]._getParent() is not self._definedParent:
-                self._cachedJobs[k]._setParent( parentObj )
-
-    def getCachedData(self, index):
-        """Get the cached data from the index for one of the subjobs
-        Args:
-            index (int): index for the subjob we're interested in
-        """
-        if index > len(self) or index < 0:
-            return None
-
-        if index in self._subjobIndexData:
-            if self.isLoaded(index):
-                return self._registry.getIndexCache( self.__getitem__(index) )
-            else:
-                return self._subjobIndexData[index]
-        else:
-            return self._registry.getIndexCache( self.__getitem__(index) )
-
-        return None
-
-    def getAllCachedData(self):
-        """Get the cached data from the index for all subjobs"""
-        cached_data = []
-        #logger.debug("Cache: %s" % self._subjobIndexData)
-        if len(self._subjobIndexData) == len(self):
-            for i in range(len(self)):
-                if self.isLoaded(i):
-                    cached_data.append( self._registry.getIndexCache( self.__getitem__(i) ) )
-                else:
-                    cached_data.append( self._subjobIndexData[i] )
-        else:
-            for i in range(len(self)):
-                cached_data.append(self._registry.getIndexCache( self.__getitem__(i) ) )
-
-        return cached_data
+                self._cachedJobs[k]._setParent(parentObj)
 
     def getAllSJStatus(self):
         """
@@ -495,25 +335,17 @@ class SubJobJsonList(GangaObject):
                 if self.isLoaded(i):
                     sj_statuses.append(self.__getitem__(i).status)
                 else:
-                    sj_statuses.append(self._subjobIndexData[i]['status'])
+                    sj_statuses.append(self._subjobIndexData[i]["status"])
         else:
             for i in range(len(self)):
                 sj_statuses.append(self.__getitem__(i).status)
         return sj_statuses
 
     def flush(self, ignore_disk=False):
-        """Flush all subjobs to disk using Json methods
-        Args:
-            ignore_disk (bool): Optional flag to force the class to ignore all on-disk data when flushing
         """
-        from GangaCore.Core.GangaRepository.GangaRepositoryJson import safe_save
-
-        from GangaCore.Core.GangaRepository.JStreamer import to_file
-
-        if ignore_disk:
-            range_limit = list(self._cachedJobs.keys())
-        else:
-            range_limit = list(range(len(self)))
+        Flush all subjobs to disk using Json methods
+        """
+        range_limit = list(range(len(self)))
 
         for index in range_limit:
             if index in self._cachedJobs:
@@ -525,11 +357,13 @@ class SubJobJsonList(GangaObject):
                 subjob_obj = self._cachedJobs[index]
 
                 if subjob_obj is subjob_obj._getRoot():
-                    raise GangaException(self, "Subjob parent not set correctly in flush.")
+                    raise GangaException(
+                        self, "Subjob parent not set correctly in flush."
+                    )
 
-                safe_save( subjob_data, subjob_obj, to_file )
+                safe_save(subjob_data, subjob_obj, to_file)
 
-        self.write_subJobIndex(ignore_disk)
+        # self.write_subJobIndex(ignore_disk)
 
     def _setFlushed(self):
         """ Like Node only descend into objects which aren't in the Schema"""
@@ -537,8 +371,46 @@ class SubJobJsonList(GangaObject):
             self._cachedJobs[index]._setFlushed()
         super(SubJobJsonList, self)._setFlushed()
 
+
+    def getCachedData(self, index):
+        """Get the cached data from the index for one of the subjobs
+        Args:
+            index (int): index for the subjob we're interested in
+        """
+        if index > len(self) or index < 0:
+            return None
+
+        if index in self._subjobIndexData:
+            if self.isLoaded(index):
+                return self._registry.getIndexCache(self.__getitem__(index))
+            else:
+                return self._subjobIndexData[index]
+        else:
+            return self._registry.getIndexCache(self.__getitem__(index))
+
+        return None
+
+    def getAllCachedData(self):
+        """Get the cached data from the index for all subjobs"""
+        cached_data = []
+        # logger.debug("Cache: %s" % self._subjobIndexData)
+        if len(self._subjobIndexData) == len(self):
+            for i in range(len(self)):
+                if self.isLoaded(i):
+                    cached_data.append(
+                        self._registry.getIndexCache(self.__getitem__(i))
+                    )
+                else:
+                    cached_data.append(self._subjobIndexData[i])
+        else:
+            for i in range(len(self)):
+                cached_data.append(self._registry.getIndexCache(self.__getitem__(i)))
+
+        return cached_data
+
+
     def _private_display(self, reg_slice, this_format, default_width, markup):
-        """ This is a private display method which makes use of the display slice as well as knowlede of the wanted format, default_width and markup to be used
+        """ This is a private display method which makes use of the display slice as well as knowlegde of the wanted format, default_width and markup to be used
         Given it's  display method this returns a displayable string. Given it's tied into the RegistrySlice it's similar to that
         Args:
             reg_slice (RegistrySlice): This is the registry slice which is the context in which this is called
@@ -546,7 +418,7 @@ class SubJobJsonList(GangaObject):
             defult_width (int): default width for a colum as defined in registry slice
             markup (str): This is the markup function used to format the text in the table from registry slice
         """
-        ds=""
+        ds = ""
         for obj_i in self.keys():
 
             cached_data = self.getCachedData(obj_i)
@@ -555,10 +427,10 @@ class SubJobJsonList(GangaObject):
             vals = []
             for item in reg_slice._display_columns:
                 display_str = "display:" + str(item)
-                #logger.debug("Looking for : %s" % display_str)
+                # logger.debug("Looking for : %s" % display_str)
                 width = reg_slice._display_columns_width.get(item, default_width)
                 try:
-                    if item == 'fqid':
+                    if item == "fqid":
                         vals.append(str(cached_data[display_str]))
                     else:
                         vals.append(str(cached_data[display_str])[0:width])
@@ -570,52 +442,11 @@ class SubJobJsonList(GangaObject):
 
         return ds
 
-    @staticmethod
-    def checkJobHasChildren(jobDirectory, datafileName):
-        """ Return True/False if given (job?) object has children associated with it
-        This function will test for the presence of all of the subjob Json in the appropriate folders and will trigger an exception
-        if/when some of the Json files are missing. This is subtly different to the default countSubJobDirs behaviour.
-        Args:
-            jobDirectory (str): name of folder to be examined
-            datafileName (str): name of the files containing the Json, i.e. 'data' by convention
-        """
+    def load_subJobIndex(self):
+        pass
 
-        if not path.isdir(jobDirectory):
-            return False
-        else:
-            return bool(SubJobJsonList.countSubJobDirs(jobDirectory, datafileName, True))
+    def write_subJobIndex(self, ignore_disk=False):
+        pass
 
-    @staticmethod
-    def countSubJobDirs(jobDirectory, datafileName, checkDataFiles):
-        """ I'm a function which returns a number, my number corresponds to the amount of sequentially listed numerically named folders exiting within 'jobDirectory'
-            This (optionally) checks for the existance of all of the Json files. This is useful during a call to 'jobHasChildrenTest' but not when calling __len__ repeatedly
-        Args:
-            jobDirectory (str): name of folder to be examined
-            datafileName (str): name of the files containing the Json, i.e. 'data' by convention
-            checkDataFiles (bool): if True check for the existance of all of the data files and check this against the numerically named folders
-        """
-
-        jobDirectoryList = listdir(jobDirectory)
-
-        subjob_count=0
-        for dir_entry in jobDirectoryList:
-            if dir_entry.isdigit():
-                sj_dir = path.join(jobDirectory, dir_entry)
-                if path.isdir(sj_dir):
-                    if checkDataFiles:
-                        data_file_path = path.join(sj_dir, datafileName)
-                        if path.isfile(data_file_path):
-                            subjob_count+=1
-                        elif path.isfile(data_file_path+'~'):
-                            logger.warning("Reverting to backup due to missing Json: %s" % data_file_path)
-                            subjob_count+=1
-                    else:
-                        subjob_count+=1
-
-        logger.debug("count: %s len: %s" % (subjob_count, len([_folder for _folder in jobDirectoryList if _folder.isdigit()])))
-
-        if subjob_count == len([_folder for _folder in jobDirectoryList if _folder.isdigit()]):
-            return subjob_count
-        else:
-            raise GangaException("Missing subjobs data file in %s" % jobDirectory)
-
+    def __really_writeIndex(self, ignore_disk=False):
+        pass

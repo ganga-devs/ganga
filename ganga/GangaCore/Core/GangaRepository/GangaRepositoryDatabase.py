@@ -102,6 +102,27 @@ def check_app_hash(obj):
             logger.warning("https://github.com/ganga-devs/ganga/issues/")
 
 
+# RatPass: Find a better alternative for this, seems unnecessary
+def safe_save(_object, connection, master=None, ignore_subs=[]):
+    """Try to save the Json for this object in as safe a way as possible
+    Args:
+        _object (GangaObject): This is the object which we want to save to the file
+        connection (pymongo): Connection to the document/table where the object will be stored
+        master (int): Index Id of parent/master of _object
+        ignore_subs (list): This is the names of the attribute of _obj we want to ignore in writing to the database
+    """
+    obj = stripProxy(_object)
+    check_app_hash(obj)
+    confirmation = to_database(
+        j=obj, document=connection, master=master, ignore_subs=ignore_subs
+    )
+    if confirmation is None:
+        raise RepositoryError(
+            "The object with obj_id {id} could not be saved into the database".format(
+                id=str(obj.id)
+            )
+        )
+
 # similar to getting the filename for the objects and indexes
 def search_database(filter_keys, connection, document):
     """Search the database for objects with the given keys
@@ -239,7 +260,9 @@ class GangaRepositoryLocal(GangaRepository):
             container.kill()
         except docker.errors.APIError as e:
             if e.response.status_code == 409:
-                logger.debug("database container was already killed by another registry")
+                logger.debug(
+                    "database container was already killed by another registry"
+                )
             else:
                 raise e
             logger.info("mongo stopped")
@@ -300,28 +323,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         return ids
 
-    # RatPass: Find a better alternative for this, seems unnecessary
-    @staticmethod
-    def safe_save(_obj, connection, ignore_subs=[]):
-        """Try to save the Json for this object in as safe a way as possible
-        Args:
-            fn (str): This is the name of the file we are to save the object to
-            _obj (GangaObject): This is the object which we want to save to the file
-            to_file (str): This is the method we want to use to save the to the file
-            ignore_subs (list): This is the names of the attribute of _obj we want to ignore in writing to the database
-        """
-        obj = stripProxy(_obj)
-        check_app_hash(obj)
-        confirmation = to_database(
-            j=obj, document=connection, ignore_subs=ignore_subs
-        )
-        if confirmation is None:
-            raise RepositoryError(
-                "The object with obj_id {id} could not be saved into the database".format(
-                    id=str(obj.id)
-                )
-            )
-
+    # FIXME: Force override of `ignore_subs` to include `master` information for subjobs
     def _flush(self, this_id):
         """
         Flush Json to disk whilst checking for relavent SubJobXMLList which handles subjobs now
@@ -350,17 +352,12 @@ class GangaRepositoryLocal(GangaRepository):
                         for i in range(len(split_cache)):
                             if not split_cache[i]._dirty:
                                 continue
-                            sfn = os.path.join(
-                                os.path.dirname(fn), str(i), self.dataFileName
+                            safe_save(
+                                master=None,
+                                ignore_subs=[],
+                                _object=split_cache[i],
+                                connection=self.connection[self.registry.name],
                             )
-                            if not os.path.exists(os.path.dirname(sfn)):
-                                logger.debug(
-                                    "Constructing Folder: %s" % os.path.dirname(sfn)
-                                )
-                                os.makedirs(os.path.dirname(sfn))
-                            else:
-                                logger.debug("Using Folder: %s" % os.path.dirname(sfn))
-                            safe_save(sfn, split_cache[i], self.to_file)
                             split_cache[i]._setFlushed()
                     # Now generate an index file to take advantage of future non-loading goodness
                     tempSubJList = SubJobXMLList(
@@ -388,8 +385,11 @@ class GangaRepositoryLocal(GangaRepository):
             else:
 
                 logger.debug("not has_children")
-                self.safe_save(
-                    obj, connection=self.connection[self.registry.name], ignore_subs=[]
+                safe_save(
+                    _object=obj,
+                    connection=self.connection[self.registry.name],
+                    ignore_subs=[],
+                    master=None,
                 )
 
             # if this_id not in self.incomplete_objects:

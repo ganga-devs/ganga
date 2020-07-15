@@ -5,8 +5,6 @@
 ##########################################################################
 
 from GangaCore.Core.exceptions import GangaKeyError, IncompleteJobSubmissionError
-# from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
-from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
 from GangaCore.GPIDev.Lib.Dataset import GangaDataset
@@ -28,6 +26,13 @@ from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.Utility.Config import getConfig
 
 logger = GangaCore.Utility.logging.getLogger()
+
+config = GangaCore.Utility.Config.getConfig('Configuration')
+
+if config["repositorytype"] != "Database":
+    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+else:
+    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
 
 class IBackend(GangaObject):
 

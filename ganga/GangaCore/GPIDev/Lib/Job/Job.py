@@ -13,8 +13,7 @@ from GangaCore.GPIDev.MonitoringServices import getMonitoringObject
 from GangaCore.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError, TypeMismatchError, SplitterError
 from GangaCore.Core import Sandbox
 from GangaCore.Core.GangaRepository import getRegistry
-# from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
-from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
+
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from GangaCore.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
@@ -35,6 +34,10 @@ from GangaCore.Lib.Executable import Executable
 logger = getLogger()
 config = GangaCore.Utility.Config.getConfig('Configuration')
 
+if config["repositorytype"] != "Database":
+    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+else:
+    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
 
 def lazyLoadJobFQID(this_job):
     return lazyLoadJobObject(this_job, 'fqid')

@@ -56,8 +56,13 @@ def from_file(f):
 
 
 # ignore_subs was added for backwards compatibilty
-def to_database(j, document, ignore_subs=[]):
+def to_database(j, document, master=None, ignore_subs=[]):
     """Convert JobObject and write to file object
+
+    Arguments:
+    j (GangaObject): The job to be converted
+    documnent (pymongo): The document of database where the job json will be stored
+    master (int): Index id of the master Job of `j`, if `j` is a subjob
     """
     json_content = j.to_json()
     for sub in ignore_subs:
@@ -69,12 +74,13 @@ def to_database(j, document, ignore_subs=[]):
     logger.info(json_content["type"])
     if json_content["type"] == "Job":
         json_content["_id"] = json_content["id"]
+
         result = document.find_one_and_update(
             filter={"_id": json_content["_id"]},
             update={"$set": json_content},
             upsert=True,
             projection="name",
-            return_document=ReturnDocument.AFTER
+            return_document=ReturnDocument.AFTER,  # updation, sometimes (during upsert) does not return any flag confirmation of the update, this forces that
         )
         # result = document.find_one_and_update(
         #     filter={"id": json_content["id"]},
@@ -95,6 +101,7 @@ def to_database(j, document, ignore_subs=[]):
             f"{j} could not be inserted in the document linked by {document.name}. Inserted resulted in: {result}",
         )
     return result
+
 
 def from_database(document, attribute, value):
     """Load JobObject from a json filestream
@@ -132,6 +139,7 @@ class DockerIncessableError(GangaException):
     message = "raise this error, when the database timeout passes"
     pass
     # raise NotImplemented
+
 
 # Kept for backwards compatibility purposes
 class JsonFileError(GangaException):
@@ -282,7 +290,9 @@ class JsonDumper:
         if isType(value, (list, tuple, GangaList)):
             ret_val = list(value)
         else:
-            ret_val = JsonDumper.object_to_json(attr_name, getattr(node, attr_name), ignore_subs)
+            ret_val = JsonDumper.object_to_json(
+                attr_name, getattr(node, attr_name), ignore_subs
+            )
         return ret_val
 
 
