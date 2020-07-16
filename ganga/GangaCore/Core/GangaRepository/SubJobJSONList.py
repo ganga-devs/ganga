@@ -5,7 +5,7 @@ from os import listdir, path, stat
 
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Core.GangaRepository.GangaRepository import RepositoryError
-from GangaCore.Core.GangaRepository.GangaRepositoryJson import safe_save
+from GangaCore.Core.GangaRepository.GangaRepositoryXML import safe_save
 from GangaCore.Core.GangaRepository.JStreamer import JsonFileError
 from GangaCore.GPIDev.Base.Objects import GangaObject
 from GangaCore.GPIDev.Base.Proxy import stripProxy

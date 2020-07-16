@@ -20,40 +20,6 @@ from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 # TODO: Use the logger often, instead of print [next-commit]
 logger = getLogger()
 
-# creating a connection for testing purposes
-_ = pymongo.MongoClient()
-connection = _.dumbmachine.objects
-
-# ignore_subs was added for backwards compatibility
-def to_file(j, fobj=None, ignore_subs=[]):
-    """Convert JobObject and write to fileobject
-    """
-    try:
-        json_content = j.to_json()
-        for sub in ignore_subs:
-            json_content.pop(sub, None)
-        if fobj is None:
-            print(json_content)
-        else:
-            json.dump(json_content, fobj)
-    except Exception as err:
-        logger.error("Json to-file error for file:\n%s" % (err))
-        raise DatabaseError(err, "to-file error")
-
-
-def from_file(f):
-    """Load JobObject from a json filestream
-    """
-    try:
-        json_content = json.load(f)
-        loader = JsonLoader()
-        obj, error = loader.parse_static(json_content)
-        return obj, error
-    except Exception as err:
-        logger.error("Json from-file error for file:\n%s" % err)
-        # raise DatabaseError(err, "from-file error")
-        raise DatabaseError(err, f"from-file error :: {f}")
-
 
 # ignore_subs was added for backwards compatibilty
 def to_database(j, document, master=None, ignore_subs=[]):
@@ -75,12 +41,10 @@ def to_database(j, document, master=None, ignore_subs=[]):
     if json_content["type"] == "Job":
         json_content["_id"] = json_content["id"]
 
-        result = document.find_one_and_update(
+        result = document.replace_one(
             filter={"_id": json_content["_id"]},
-            update={"$set": json_content},
+            replacement=json_content,
             upsert=True,
-            projection="name",
-            return_document=ReturnDocument.AFTER,  # updation, sometimes (during upsert) does not return any flag confirmation of the update, this forces that
         )
         # result = document.find_one_and_update(
         #     filter={"id": json_content["id"]},
@@ -100,6 +64,52 @@ def to_database(j, document, master=None, ignore_subs=[]):
             Exception,
             f"{j} could not be inserted in the document linked by {document.name}. Inserted resulted in: {result}",
         )
+    return result
+
+def index_to_database(data, document):
+    """Save the index information into the `index` document of the database
+
+    Args:
+        index ([type]): [description]
+        document ([type]): [description]
+    """
+    if data:
+        logger.info("index_to_database {data}".format(data=data))
+        if "id" in data:
+            data["_id"] = data["id"]
+            result = document.replace_one(
+                filter={"_id": data["_id"]},
+                replacement=data,
+                upsert=True,
+            )
+        else:
+            result = document.insert_one(data)
+
+        if result is None:
+            raise DatabaseError(
+                    Exception,
+                    f"index could not be inserted in the document linked by {document.name}. Insertion resulted in: {result}",
+                )
+    else:
+        # empty case
+        return True
+
+    return result
+
+def index_from_database(filter, document):
+    """Save the index information into the `index` document of the database
+
+    Args:
+        index ([type]): [description]
+        document ([type]): [description]
+    """
+    result = document.find_one(filter=filter)
+
+    if result is None:
+        raise DatabaseError(
+                Exception,
+                f"index could not be inserted in the document linked by {document.name}. Insertion resulted in: {result}",
+            )
     return result
 
 

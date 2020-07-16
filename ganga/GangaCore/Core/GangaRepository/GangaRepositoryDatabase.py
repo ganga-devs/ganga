@@ -18,7 +18,6 @@ from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Plugin import PluginManagerError
 from GangaCore.Core.GangaRepository.JStreamer import JsonFileError
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
-from GangaCore.Core.GangaRepository.FixedLock import FixedLockManager
 from GangaCore.Core.GangaRepository.JStreamer import EmptyGangaObject
 
 
@@ -27,17 +26,11 @@ from GangaCore.Core.GangaRepository import (
     RepositoryError,
     InaccessibleObjectError,
 )
-from GangaCore.Core.GangaRepository.JStreamer import to_database, from_database
-
-# TODO: Handle here
-from GangaCore.Core.GangaRepository.PickleStreamer import (
-    json_pickle_to_file as pickle_to_file,
-    json_pickle_from_file as pickle_from_file,
-)
-
-from GangaCore.Core.GangaRepository.SessionLock import (
-    SessionLockManager,
-    dry_run_unix_locks,
+from GangaCore.Core.GangaRepository.JStreamer import (
+    to_database,
+    from_database,
+    index_to_database,
+    index_from_database
 )
 
 # from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
@@ -123,6 +116,7 @@ def safe_save(_object, connection, master=None, ignore_subs=[]):
             )
         )
 
+
 # similar to getting the filename for the objects and indexes
 def search_database(filter_keys, connection, document):
     """Search the database for objects with the given keys
@@ -154,9 +148,6 @@ class GangaRepositoryLocal(GangaRepository):
         self.printed_explanation = False
         self._fully_loaded = {}
 
-        # filters for searching objects in the database
-        self.job_search = [("_id", None)]
-        self.index_search = [("_id", None)]
 
     def startup(self):
         """ Starts a repository and reads in a directory structure.
@@ -169,9 +160,10 @@ class GangaRepositoryLocal(GangaRepository):
 
         # New Master index to speed up loading of many, MANY files
         self._cache_load_timestamp = {}
-        self._cached_cat = {}
-        self._cached_cls = {}
+        # self._cached_cat = {}
+        # self._cached_cls = {}
         self._cached_obj = {}
+        self._cached_obj_timestamps = {} #track time for updating values in the object cache
         self._master_index_timestamp = 0
 
         self.known_bad_ids = []
@@ -218,8 +210,8 @@ class GangaRepositoryLocal(GangaRepository):
             logger.info("Pulling a copy of container")
             container = self.container_client.containers.run(
                 detach=True,
-                image="mongo:latest",
                 name=database_name,
+                image="mongo:latest",
                 ports={"27017/tcp": 27017},
                 volumes={"/data/db": {"bind": "/mongomon_data", "mode": "rw"}},
             )
@@ -266,17 +258,6 @@ class GangaRepositoryLocal(GangaRepository):
             else:
                 raise e
             logger.info("mongo stopped")
-
-    def get_fn(self, this_id, document="jobs"):
-        """ Returns the object from database where the data for this object id is saved
-        Args:
-            this_id (int): This is the object id we want the Json filename for
-            document (str): Name of the document inside the database where the object resides
-        """
-        index = search_database(
-            filter_keys={"_id": this_id}, connection=self.connection, document=document
-        )
-        return self.saved_paths[this_id]
 
     def add(self, objs, force_ids=None):
         """ Add the given objects to the repository, forcing the IDs if told to.
@@ -392,8 +373,8 @@ class GangaRepositoryLocal(GangaRepository):
                     master=None,
                 )
 
-            # if this_id not in self.incomplete_objects:
-            #     self.index_write(this_id)
+            if this_id not in self.incomplete_objects:
+                self._index_write(this_id)
         else:
             raise RepositoryError(
                 self, "Cannot flush an Empty object for ID: %s" % this_id
@@ -424,9 +405,8 @@ class GangaRepositoryLocal(GangaRepository):
                 self._flush(this_id)
 
                 self._cache_load_timestamp[this_id] = time.time()
-                self._cached_cls[this_id] = getName(self.objects[this_id])
-                self._cached_cat[this_id] = self.objects[this_id]._category
-                # self._cached_obj[this_id] = self.objects[this_id]._index_cache
+                self._cached_obj[this_id] = self.objects[this_id]._index_cache
+                # self._cached_cls[this_id] = getName(self.objects[this_id])
 
                 # Should remove try inside of try instead, have the index raise a error
                 # try:
@@ -451,6 +431,80 @@ class GangaRepositoryLocal(GangaRepository):
                     self,
                     "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x),
                 )
+
+    def _index_write(self, this_id=None, shutdown=False):
+        """
+        Save index information of this_id's object into the master index
+        Args:
+            this_id (int): This is the index for which we want to write the index to disk
+            shutdown (bool): True causes this to always be written regardless of any checks
+        """
+        logger.debug("Adding index of {id}".format(id=this_id))
+
+        obj = self.objects[this_id]
+        temp = self.registry.getIndexCache(stripProxy(obj))
+        self._cached_obj[this_id] = temp
+        self._cache_load_timestamp[this_id] = time.time()
+        if temp:
+            temp["category"] = obj._category
+            temp["classname"] = getName(obj)
+
+        index_to_database(
+            data=temp,
+            document=self.connection.index
+        )
+        # TODO: Instead of replacing everything, replace only the changed
+        # if the repository is shutting down, save everything again
+        if shutdown:
+            raise NotImplementedError("Call function to save master index here.")
+
+
+    def _index_load(self, this_id, force=False):
+        """
+        raise NotImplementedError("Load all the information at once")
+
+        """
+        item = index_from_database(
+            filter={"_id": this_id},
+            document=self.connection.index
+        )
+        if item and item["modified_time"] != self._cache_load_timestamp.get(this_id, 0):
+            if this_id in self.objects:
+                obj = self.objects[this_id]
+                setattr(obj, "_registry_refresh", True)
+            else:
+                try:
+                    obj = self._make_empty_object(this_id, item["category"], item["classname"])
+                except Exception as e:
+                    raise Exception("{e} Failed to create empty ganga object for {this_id}".format(e=e,this_id=this_id))
+            obj._index_cache = item
+            self._cached_cat[this_id] = item["category"]
+            self._cached_cls[this_id] = item["classname"]
+            self._cached_obj[this_id] = item
+            self._cache_load_timestamp[this_id] = item["modified_time"]
+            return True
+
+        elif this_id not in self.objects:
+            self.objects[this_id] = self._make_empty_object_(this_id, self._cached_cat[this_id], self._cached_cls[this_id])
+            self.objects[this_id]._index_cache = self._cached_obj[this_id]
+            setattr(self.objects[this_id], '_registry_refresh', True)
+            return True
+
+        else:
+            logger.debug("Doubly loading of object with ID: %s" % this_id)
+            logger.debug("Just silently continuing")
+        return False
+
+    def save_index(self):
+        """Save the index information of this registry into the database
+        """
+        # all the indexes are saved in the same files
+        confirmation = index_to_database(
+            document=self.connection.index,
+            index={"name": self.regitry.name, "items": self._cached_obj},
+        )
+        if not confirmation:
+            raise NotImplementedError("Should the repository close now?")
 
     def _parse_json(self, this_id, has_children, tmpobj):
         """
