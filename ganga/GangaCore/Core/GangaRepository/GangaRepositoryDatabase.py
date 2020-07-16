@@ -116,7 +116,6 @@ def safe_save(_object, connection, master=None, ignore_subs=[]):
             )
         )
 
-
 # similar to getting the filename for the objects and indexes
 def search_database(filter_keys, connection, document):
     """Search the database for objects with the given keys
@@ -494,6 +493,19 @@ class GangaRepositoryLocal(GangaRepository):
             logger.debug("Doubly loading of object with ID: %s" % this_id)
             logger.debug("Just silently continuing")
         return False
+
+    def update_index(self, this_id=None, verbose=False, firstRun=False):
+        """ Update the list of available objects
+        Raise RepositoryError
+        TODO avoid updating objects which haven't changed as this causes un-needed I/O
+        Args:
+            this_id (int): This is the id we want to explicitly check the index on disk for
+            verbose (bool): Should we be verbose
+            firstRun (bool): If this is the call from the Repo startup then load the master index for perfomance boost
+        """
+        logger.debug("updating index...")
+        logger.debug(f"{str(this_id)}-{str(firstRun)}")
+
 
     def save_index(self):
         """Save the index information of this registry into the database
