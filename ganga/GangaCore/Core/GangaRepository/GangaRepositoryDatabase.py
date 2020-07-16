@@ -155,7 +155,8 @@ class GangaRepositoryLocal(GangaRepository):
 
         # databased based initialization
         _ = pymongo.MongoClient()
-        self.connection = _.dumbmachine
+        self.db_name = "dumbmachine"
+        self.connection = _[self.db_name]
 
         # New Master index to speed up loading of many, MANY files
         self._cache_load_timestamp = {}
@@ -730,7 +731,7 @@ class GangaRepositoryLocal(GangaRepository):
         Args:
             ids (list): The object keys which we want to iterate over from the objects dict
         """
-        return self.sessionlock.lock_ids(ids)
+        pass
 
     def unlock(self, ids):
         """
@@ -754,6 +755,9 @@ class GangaRepositoryLocal(GangaRepository):
         self.shutdown()
         try:
             # rmrf(self.root)
+            _ = pymongo.MongoClient()
+            _.drop_database(self.db_name)
+
             raise NotImplementedError(
                 "Cleaning of the database document is not implemented yet"
             )
