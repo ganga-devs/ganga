@@ -113,18 +113,18 @@ def index_from_database(filter, document):
     return result
 
 
-def from_database(document, attribute, value):
+def from_database(_filter, document):
     """Load JobObject from a json filestream
 
     Will connect to the document indicated by document and then search for the appropriate
     object using the identifier
     """
-    content = document.find_one({attribute: value})
+    content = document.find_one(filter=_filter)
     if content is None:
         logger.error("from-database error for database")
         raise DatabaseError(
             Exception,
-            f"({attribute}, {value}) pair was not found in the document linked by {document.name}",
+            f"{_filter} pair was not found in the document linked by {document.name}",
         )
     loader = JsonLoader()
     obj, error = loader.parse_static(content)

@@ -29,7 +29,6 @@ logger = GangaCore.Utility.logging.getLogger()
 from GangaCore.Utility.Config import getConfig
 
 if getConfig("Configuration")["repositorytype"] == "Database":
-    logger.info("from GangaCore.Core.GangaRepository.Registry import DatabaseRegistry as Registry")
     from GangaCore.Core.GangaRepository.Registry import DatabaseRegistry as Registry
 else:
     from GangaCore.Core.GangaRepository.Registry import Registry as Registry

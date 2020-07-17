@@ -160,9 +160,9 @@ class GangaRepositoryLocal(GangaRepository):
 
         # New Master index to speed up loading of many, MANY files
         self._cache_load_timestamp = {}
+        self._cached_obj = {}
         # self._cached_cat = {}
         # self._cached_cls = {}
-        self._cached_obj = {}
         self._cached_obj_timestamps = {} #track time for updating values in the object cache
         self._master_index_timestamp = 0
 
@@ -187,7 +187,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise Exception(err, msg)
 
         # FIXME: Add index updating here
-
+        self.read_master_cache()
         logger.debug("GangaRepositoryLocal Finished Startup")
 
     # TODO: Add options to add custom option information for the database
@@ -281,13 +281,10 @@ class GangaRepositoryLocal(GangaRepository):
             # ids = self.sessionlock.make_new_ids(len(objs))
             # raise NotImplementedError
             ids = [i + len(self.objects) for i in range(len(objs))]
-            logger.info(f"made custom ids : {ids}")
 
         logger.debug("made ids")
 
-        logger.info(f"This is how we roll: {ids}")
         for obj_id, obj in zip(ids, objs):
-            logger.info(f"obj_id: {obj_id}")
             self._internal_setitem__(obj_id, obj)
 
             # Set subjobs dirty - they will not be flushed if they are not.
@@ -374,7 +371,7 @@ class GangaRepositoryLocal(GangaRepository):
                 )
 
             if this_id not in self.incomplete_objects:
-                self._index_write(this_id)
+                self.index_write(this_id)
         else:
             raise RepositoryError(
                 self, "Cannot flush an Empty object for ID: %s" % this_id
@@ -406,11 +403,11 @@ class GangaRepositoryLocal(GangaRepository):
 
                 self._cache_load_timestamp[this_id] = time.time()
                 self._cached_obj[this_id] = self.objects[this_id]._index_cache
-                # self._cached_cls[this_id] = getName(self.objects[this_id])
+                self.index_write(this_id)
+
 
                 # Should remove try inside of try instead, have the index raise a error
                 # try:
-                #     self.index_write(this_id)
                 # except:
                 #     logger.debug("Index write failed")
                 #     pass
@@ -432,7 +429,7 @@ class GangaRepositoryLocal(GangaRepository):
                     "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x),
                 )
 
-    def _index_write(self, this_id=None, shutdown=False):
+    def index_write(self, this_id=None, shutdown=False):
         """
         Save index information of this_id's object into the master index
         Args:
@@ -459,11 +456,42 @@ class GangaRepositoryLocal(GangaRepository):
             raise NotImplementedError("Call function to save master index here.")
 
 
-    def _index_load(self, this_id, force=False):
+    def read_master_cache(self):
+        """Reads the index document from the database
         """
+        master_cache = self.connection.index.find(filter={"category": self.registry.name})
+        if master_cache:
+            for this_cache in master_cache:
+                logger.info(f"found something {this_cache['id']}")
+                this_id = this_cache["id"]
+                self._cached_obj[this_id] = this_cache
+                self.load([this_id])
+        else:
+            logger.debug("No master index information exists, new/blank repository startup is assumed")
+
+        logger.info(f"cache is {self._cached_obj}")
+        logger.info(f"cache is {self.objects}")
+
+    def _clear_stored_cache(self):
+        """
+        clear the master cache(s) which have been stored in memory
+        """
+        for k in self._cache_load_timestamp.keys():
+            self._cache_load_timestamp.pop(k)
+        for k in self._cached_obj.keys():
+            self._cached_obj.pop(k)
+
+
+    def index_load(self, this_id, startup=False):
+        """
+        Will load index file from the database, so we know what objects exist in the database
         raise NotImplementedError("Load all the information at once")
 
         """
+        if startup:
+            self.read_master_cache()
+            return True
+
         item = index_from_database(
             filter={"_id": this_id},
             document=self.connection.index
@@ -478,14 +506,12 @@ class GangaRepositoryLocal(GangaRepository):
                 except Exception as e:
                     raise Exception("{e} Failed to create empty ganga object for {this_id}".format(e=e,this_id=this_id))
             obj._index_cache = item
-            self._cached_cat[this_id] = item["category"]
-            self._cached_cls[this_id] = item["classname"]
             self._cached_obj[this_id] = item
             self._cache_load_timestamp[this_id] = item["modified_time"]
             return True
 
         elif this_id not in self.objects:
-            self.objects[this_id] = self._make_empty_object_(this_id, self._cached_cat[this_id], self._cached_cls[this_id])
+            self.objects[this_id] = self._make_empty_object_(this_id, self._cached_obj[this_id]["category"], self._cached_obj[this_id]["classname"])
             self.objects[this_id]._index_cache = self._cached_obj[this_id]
             setattr(self.objects[this_id], '_registry_refresh', True)
             return True
@@ -495,17 +521,17 @@ class GangaRepositoryLocal(GangaRepository):
             logger.debug("Just silently continuing")
         return False
 
-    def update_index(self, this_id=None, verbose=False, firstRun=False):
-        """ Update the list of available objects
-        Raise RepositoryError
-        TODO avoid updating objects which haven't changed as this causes un-needed I/O
-        Args:
-            this_id (int): This is the id we want to explicitly check the index on disk for
-            verbose (bool): Should we be verbose
-            firstRun (bool): If this is the call from the Repo startup then load the master index for perfomance boost
-        """
-        logger.debug("updating index...")
-        logger.debug(f"{str(this_id)}-{str(firstRun)}")
+    # def update_index(self, this_id=None, verbose=False, firstRun=False):
+    #     """ Update the list of available objects
+    #     Raise RepositoryError
+    #     TODO avoid updating objects which haven't changed as this causes un-needed I/O
+    #     Args:
+    #         this_id (int): This is the id we want to explicitly check the index on disk for
+    #         verbose (bool): Should we be verbose
+    #         firstRun (bool): If this is the call from the Repo startup then load the master index for perfomance boost
+    #     """
+    #     logger.debug("updating index...")
+    #     logger.debug(f"{str(this_id)}-{str(firstRun)}")
 
 
     def save_index(self):
@@ -575,15 +601,15 @@ class GangaRepositoryLocal(GangaRepository):
                     node_val._setParent(obj)
 
         # Check if index cache; if loaded; was valid:
-        if obj._index_cache not in [{}]:
-            self._check_index_cache(obj, this_id)
+        # if obj._index_cache not in [{}]:
+        #     self._check_index_cache(obj, this_id)
 
         obj._index_cache = {}
 
         if this_id not in self._fully_loaded:
             self._fully_loaded[this_id] = obj
 
-    def _load_json_from_obj(self, document, this_id, load_backup):
+    def _load_json_from_obj(self, document, this_id):
         """
         This is the method which will load the job from fn using the fobj using the self.from_file method and _parse_json is called to replace the
         self.objects[this_id] with the correct attributes. We also preseve knowledge of if we're being asked to load a backup or not
@@ -595,10 +621,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         b4 = time.time()
         tmpobj, errs = self.from_database(
-            document=document, attribute="_id", value=this_id
-        )
-        logger.debug(
-            f"The erros found while loading object from {document.name} are {errs} and the object is {tmpobj}"
+            _filter={"_id": this_id}, document=document
         )
         a4 = time.time()
         logger.debug("Loading Json file for ID: %s took %s sec" % (this_id, a4 - b4))
@@ -626,11 +649,12 @@ class GangaRepositoryLocal(GangaRepository):
                 sub_attr._setParent(self.objects[this_id])
 
         # implement the time reader
-        self._load_timestamp[this_id] = tmpobj["modified_time"]
+        # self._load_timestamp[this_id] = self._cached_obj[this_id]["modified_time"]
         # self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
 
         logger.debug("Finished Loading Json")
 
+    # FIXME: Allow bulk_reads when many ids are read
     def load(self, ids, load_backup=False):
         """
         Load the following "ids" from disk
@@ -646,67 +670,32 @@ class GangaRepositoryLocal(GangaRepository):
 
             if this_id in self.incomplete_objects:
                 raise RepositoryError(
-                    self, "Trying to re-load a corrupt repository id: %s" % this_id
+                    self, "Trying to re-load a corrupt repository id: {this_id}".format(this_id=this_id)
                 )
 
-            fn = self.get_fn(this_id)
             try:
-                fobj, has_loaded_backup2 = self._open_json_file(fn, this_id, True)
-                if has_loaded_backup2:
-                    has_loaded_backup = has_loaded_backup2
-            except Exception as err:
-                logger.debug("json load: Failed to load Json file: %s" % fn)
-                logger.debug("Error was:\n%s" % err)
-                logger.error(
-                    "Adding id: %s to Corrupt IDs will not attempt to re-load this session"
-                    % this_id
+                self._load_json_from_obj(
+                    this_id=this_id,
+                    document=self.connection[self.registry.name]
                 )
-                self.incomplete_objects.append(this_id)
-                raise
-
-            try:
-                self._load_json_from_obj(fobj, fn, this_id, load_backup)
             except RepositoryError as err:
-                logger.debug("Repo Exception: %s" % err)
+                logger.debug(f"Repo Exception: {err}")
                 logger.error(
-                    "Adding id: %s to Corrupt IDs will not attempt to re-load this session"
-                    % this_id
+                    f"Adding id: {this_id} to Corrupt IDs will not attempt to re-load this session"
                 )
                 self.incomplete_objects.append(this_id)
                 raise
 
-            except Exception as err:
-
-                should_continue = self._handle_load_exception(
-                    err, fn, this_id, load_backup
-                )
-
-                if should_continue is True:
-                    has_loaded_backup = True
-                    continue
-                else:
-                    logger.error(
-                        "Adding id: %s to Corrupt IDs will not attempt to re-load this session"
-                        % this_id
-                    )
-                    self.incomplete_objects.append(this_id)
-                    raise
-
-            finally:
-                fobj.close()
 
             subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
             sub_attr_dirty = getattr(subobj_attr, "_dirty", False)
 
-            if has_loaded_backup:
-                self.objects[this_id]._setDirty()
-            else:
-                self.objects[this_id]._setFlushed()
+            self.objects[this_id]._setFlushed()
 
             if sub_attr_dirty:
                 getattr(self.objects[this_id], self.sub_split)._setDirty()
 
-        logger.debug("Finished 'load'-ing of: %s" % ids)
+        logger.debug(f"Finished 'load'-ing of: {ids}")
 
     def delete(self, ids):
         """
@@ -715,9 +704,6 @@ class GangaRepositoryLocal(GangaRepository):
             ids (list): The object keys which we want to iterate over from the objects dict
         """
         for this_id in ids:
-            # First remove the index, so that it is gone if we later have a
-            # KeyError
-            # fn = self.get_fn(this_id)
             self.connection.jobs.remove({"_id": this_id})
             self._internal_del__(this_id)
             if this_id in self._fully_loaded:
@@ -725,6 +711,7 @@ class GangaRepositoryLocal(GangaRepository):
             if this_id in self.objects:
                 del self.objects[this_id]
 
+    # RatPass: This will be not implemented, kept for compatibility
     def lock(self, ids):
         """
         Request a session lock for the following ids
@@ -733,6 +720,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         pass
 
+    # RatPass: This will be not implemented, kept for compatibility
     def unlock(self, ids):
         """
         Unlock (release file locks of) the following ids
@@ -741,6 +729,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         pass
 
+    # RatPass: This will be implemented latter
     def get_other_sessions(self):
         """get_session_list()
         Tries to determine the other sessions that are active and returns an informative string for each of them.
@@ -782,13 +771,6 @@ class GangaRepositoryLocal(GangaRepository):
     def _handle_load_exception(self, err, fn, this_id, load_backup):
         raise NotImplementedError
 
-    # dumbmachineComment: index_load: index file inside of the jobs folder for each distinct job
-    def index_load(self, this_id):
-        raise NotImplementedError
-
-    def index_write(self, this_id, shutdown=False):
-        raise NotImplementedError
-
     def get_index_listing(self):
         raise NotImplementedError
 
@@ -801,8 +783,8 @@ class GangaRepositoryLocal(GangaRepository):
     def _write_master_cache(self, shutdown=False):
         raise NotImplementedError
 
-    def update_index(self, this_id=None, verbose=False, firstRun=False):
-        raise NotImplementedError
+    # def update_index(self, this_id=None, verbose=False, firstRun=False):
+    #     raise NotImplementedError
 
     def _check_index_cache(self, obj, this_id):
         raise NotImplementedError
