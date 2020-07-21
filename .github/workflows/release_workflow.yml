@@ -1,33 +1,26 @@
 name: Release Workflow
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Release Version'     
-        required: true
-      notes:
-        description: 'Release Notes' 
+  release:
+    types:
+      - published
 
 jobs:
-
-  lint:
-    name: Linting
+  retag:
+    name: Update version number
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.6
-    - name: Install dependencies
+    - name: testing
       run: |
-        python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install flake8
-    - name: Lint with flake8
+        echo ${GITHUB_REF}
+        echo ${GITHUB_API_URL}
+    - name: Replace version number
+      env:
+        VERSION: 8.3.4
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        # disable for now
-        flake8 --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics ganga
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics ganga
+        #Setting version number and turn off DEV flag
+        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ganga/GangaCore/__init__.py
+        sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
+        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
+
