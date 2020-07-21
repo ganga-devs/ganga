@@ -15,6 +15,7 @@ jobs:
       run: |
         echo ${GITHUB_REF}
         echo ${GITHUB_API_URL}
+        git status
     - name: Replace version number
       env:
         VERSION: 8.3.4
