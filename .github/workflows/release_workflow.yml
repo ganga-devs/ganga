@@ -25,4 +25,4 @@ jobs:
         sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ganga/GangaCore/__init__.py
         sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
         sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
-
+        grep _gangaVersion ./setup.py
