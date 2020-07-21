@@ -1,0 +1,52 @@
+name: Release Workflow
+
+on:
+  pull_request:
+  release:
+    types:
+      - published
+
+jobs:
+  retag:
+    name: Update version number
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: testing
+      run: |
+        echo ${GITHUB_REF}
+        echo ${GITHUB_API_URL}
+        git status
+
+    #- name: Remove placeholder tags
+    #  env:
+    #    VERSION: 8.3.4
+    #  run: git push origin :refs/tags/${VERSION}
+    #- name: Hardcode version number and development flag
+    #  env:
+    #    VERSION: 8.3.4
+    #  run: |
+    #    # remove old tag
+    #    # git push origin :refs/tags/${VERSION}
+
+
+#        #Setting version number and turn off DEV flag
+#        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
+#        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ganga/GangaCore/__init__.py
+#        sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
+#        git add ./setup.py ganga/GangaCore/__init__.py
+#        git commit -m "Setting version number constants"
+#
+#    - name: Commit release notes
+#      env:
+#        VERSION: 8.3.4
+#      run: |
+#        curl --request GET --url https://api.github.com/repos/ganga-devs/ganga/releases/tags/$VERSION | jq -r '.body' > ganga/GangaRelease/ReleaseNotes-${VERSION}
+#        git add ./setup.py ganga/GangaCore/__init__.py ganga/GangaRelease/ReleaseNotes-${VERSION}
+#        git commit -m "Creating release notes for version ${VERSION}"
+#    - name: Re-tag
+#      env:
+#        VERSION: 8.3.4
+#      run: |
+#        git tag -fa $VERSION -m "Release ${VERSION}"
+#        git push --tags
