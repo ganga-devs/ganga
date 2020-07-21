@@ -6,15 +6,18 @@ Ganga provides. To follow it properly, you should go through each stage in turn.
 you encounter any problems!
 
 .. toctree::
+    WhatIsGanga
     InstallAndBasicUsage
-    Configuration
-    JobManipulation
     RunningExecutables
+    TutorialPlugin
+    UsingDifferentApplications
     UsingDifferentBackends
-    InputAndOutputData
+    Virtualization
     Splitters
     PostProcessors
-    Virtualization
+    InputAndOutputData
+    JobManipulation
+    Configuration
     MiscellaneousFunctionality
     Queues
     Tasks

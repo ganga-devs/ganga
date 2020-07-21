@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+wget --quiet -O ~/gangadir/googlecreddata.pkl https://cernbox.cern.ch/index.php/s/odv2X6txHM2zTTa/download
+exec "$@"
