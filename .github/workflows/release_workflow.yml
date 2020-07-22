@@ -1,7 +1,6 @@
 name: Release Workflow
 
 on:
-  pull_request:
   release:
     types:
       - published
@@ -12,42 +11,45 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: testing
+    - name: Determine new release information
       run: |
-        echo "::set-env name=VERSION::$(basename ${GITHUB_REF})"
-        echo ${GITHUB_API_URL}
-        git status
-    - name: testing2
-      run: echo $VERSION
-    #- name: Remove placeholder tags
-    #  env:
-    #    VERSION: 8.3.4
-    #  run: git push origin :refs/tags/${VERSION}
-    #- name: Hardcode version number and development flag
-    #  env:
-    #    VERSION: 8.3.4
-    #  run: |
-    #    # remove old tag
-    #    # git push origin :refs/tags/${VERSION}
-
-
-#        #Setting version number and turn off DEV flag
-#        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
-#        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ganga/GangaCore/__init__.py
-#        sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
-#        git add ./setup.py ganga/GangaCore/__init__.py
-#        git commit -m "Setting version number constants"
-#
-#    - name: Commit release notes
-#      env:
-#        VERSION: 8.3.4
-#      run: |
-#        curl --request GET --url https://api.github.com/repos/${{ github.repository }}/releases/tags/$VERSION | jq -r '.body' > ganga/GangaRelease/ReleaseNotes-${VERSION}
-#        git add ./setup.py ganga/GangaCore/__init__.py ganga/GangaRelease/ReleaseNotes-${VERSION}
-#        git commit -m "Creating release notes for version ${VERSION}"
-#    - name: Re-tag
-#      env:
-#        VERSION: 8.3.4
-#      run: |
-#        git tag -fa $VERSION -m "Release ${VERSION}"
-#        git push --tags
+        VERSION=$(basename ${GITHUB_REF})
+        read -rd"\n" REL_ID BODY < <(curl --request GET --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/tags/${VERSION} | jq -r '.id, .body')
+        echo "::set-env name=VERSION::${VERSION}"
+        echo "::set-env name=REL_ID::${REL_ID}"
+        echo "::set-env name=BODY::${BODY}"
+    - name: Hardcode version number
+      run: |
+        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
+        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ganga/GangaCore/__init__.py
+        git add ./setup.py ganga/GangaCore/__init__.py
+        git commit -m "Setting version number constants"
+    - name: Hardcode development flag
+      run: |
+        sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
+        git add ganga/GangaCore/__init__.py
+        git commit -m "Setting developmet flag"
+    - name: Commit release notes
+      run: |
+        echo "$BODY" > ganga/GangaRelease/ReleaseNotes-${VERSION}
+        git add ganga/GangaRelease/ReleaseNotes-${VERSION}
+        git commit -m "Creating release notes for version ${VERSION}"
+    - name: Remove placeholder tag
+      run: git push origin :refs/tags/${VERSION}
+    - name: Re-tag
+      run: |
+        git tag -fa ${VERSION} -m "Ganga ${VERSION}"
+        git push --tags
+    - name: Update release
+      run: |
+        curl --request PATCH \
+             --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/$REL_ID \
+             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+             --header 'content-type: application/json' \
+             --data '{
+               "name": "Ganga ${VERSION}",
+               "tag_name": ${VERSION},
+               "body": "${BODY}",
+               "draft": false,
+               "prerelease": true
+             }'
