@@ -2,8 +2,6 @@ import os
 import shutil
 import time
 import copy
-import threading
-from GangaCore.Core.GangaRepository.Registry import Registry
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Objects import synchronised
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
@@ -12,6 +10,10 @@ import GangaCore.Utility.Config
 from GangaCore.GPIDev.Lib.File import getSharedPath
 logger = GangaCore.Utility.logging.getLogger()
 
+if getConfig("Configuration")["repositorytype"] != "Database":
+    from GangaCore.Core.GangaRepository.Registry import Registry
+else:
+    from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
 
 class PrepRegistry(Registry):
 

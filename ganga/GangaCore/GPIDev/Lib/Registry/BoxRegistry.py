@@ -1,21 +1,22 @@
 
 
+import GangaCore.Utility.logging
+from GangaCore.GPIDev.Base.Proxy import stripProxy
 from GangaCore.GPIDev.Base.Objects import GangaObject
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.GPIDev.Lib.GangaList.GangaList import makeGangaList
-
+from GangaCore.Core.GangaRepository.Registry import RegistryKeyError
 from GangaCore.Core.exceptions import GangaException, GangaTypeError
 
-from GangaCore.GPIDev.Base.Proxy import stripProxy
-
-from GangaCore.Core.GangaRepository.Registry import Registry, RegistryKeyError
-
 from .RegistrySlice import RegistrySlice, config
+from .RegistrySliceProxy import RegistrySliceProxy, _unwrap, _wrap
 
-from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
-
-import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger()
+
+if getConfig("Configuration")["repositorytype"] != "Database":
+    from GangaCore.Core.GangaRepository.Registry import Registry
+else:
+    from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
 
 class BoxMetadataObject(GangaObject):
 
@@ -251,4 +252,3 @@ class BoxRegistrySliceProxy(RegistrySliceProxy):
             reg = obj._getRegistry()
             if not reg is None:
                 reg._remove(obj)
-
