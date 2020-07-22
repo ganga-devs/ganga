@@ -13,11 +13,13 @@ jobs:
     - uses: actions/checkout@v1
     - name: Determine new release information
       run: |
+        git config --global user.email "a.richards@imperial.ac.uk"
+        git config --global user.name "Alexander Richards"
         VERSION=$(basename ${GITHUB_REF})
         ! read -rd"\n" REL_ID BODY < <(curl --request GET --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/tags/${VERSION} | jq -r '.id, .body')
         echo "::set-env name=VERSION::${VERSION}"
         echo "::set-env name=REL_ID::${REL_ID}"
-        echo "::set-env name=BODY::${BODY}"
+        echo -e "::set-env name=BODY::\"${BODY}\""
     - name: testing
       run: |
         echo $VERSION
