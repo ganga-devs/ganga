@@ -13,10 +13,10 @@ from .RegistrySliceProxy import RegistrySliceProxy, _unwrap, _wrap
 
 logger = GangaCore.Utility.logging.getLogger()
 
-if getConfig("Configuration")["repositorytype"] != "Database":
-    from GangaCore.Core.GangaRepository.Registry import Registry
-else:
+if getConfig('Configuration')["repositorytype"] == "Database":
     from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
+else:
+    from GangaCore.Core.GangaRepository.Registry import Registry
 
 class BoxMetadataObject(GangaObject):
 

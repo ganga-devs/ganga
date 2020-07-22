@@ -31,13 +31,13 @@ from GangaCore.Lib.Localhost import Localhost
 from GangaCore.Lib.Executable import Executable
 
 logger = getLogger()
-config = GangaCore.Utility.Config.getConfig('Configuration')
+config = getConfig('Configuration')
 
 
-if config["repositorytype"] != "Database":
-    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
-else:
+if config["repositorytype"] == "Database":
     from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
+else:
+    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 def lazyLoadJobFQID(this_job):
     return lazyLoadJobObject(this_job, 'fqid')

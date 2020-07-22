@@ -6,14 +6,14 @@ from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Objects import synchronised
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
-import GangaCore.Utility.Config
 from GangaCore.GPIDev.Lib.File import getSharedPath
+from GangaCore.Utility.Config import getConfig
 logger = GangaCore.Utility.logging.getLogger()
 
-if getConfig("Configuration")["repositorytype"] != "Database":
-    from GangaCore.Core.GangaRepository.Registry import Registry
-else:
+if getConfig("Configuration")["repositorytype"] == "Database":
     from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
+else:
+    from GangaCore.Core.GangaRepository.Registry import Registry
 
 class PrepRegistry(Registry):
 
@@ -395,7 +395,7 @@ class ShareRef(GangaObject):
         #stripProxy(self)._getRegistry()._hasStarted = True
         from GangaCore.GPIDev.Lib.File import getSharedPath
 
-        delete_share_config = GangaCore.Utility.Config.getConfig('Configuration')['deleteUnusedShareDir']
+        delete_share_config = getConfig('Configuration')['deleteUnusedShareDir']
         if delete_share_config == 'ask':
             ask_delete = 'Ask'
             default = 'none'

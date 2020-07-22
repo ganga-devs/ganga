@@ -23,11 +23,12 @@ from GangaCore.Core.exceptions import (
     )
 
 logger = GangaCore.Utility.logging.getLogger()
+config = getConfig('Configuration')
 
-if config["repositorytype"] != "Database":
-    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
-else:
+if config["repositorytype"] == "Database":
     from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
+else:
+    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 class IBackend(GangaObject):
 

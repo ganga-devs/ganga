@@ -7,6 +7,7 @@
 
 import GangaCore.Utility.logging
 from GangaCore.GPIDev.Lib.Job.Job import Job
+from GangaCore.Utility.Config import getConfig
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
@@ -18,10 +19,10 @@ from GangaCore.Core.GangaRepository.Registry import (
 from .RegistrySlice import RegistrySlice, config
 from .RegistrySliceProxy import RegistrySliceProxy, _unwrap, _wrap
 
-if getConfig("Configuration")["repositorytype"] != "Database":
-    from GangaCore.Core.GangaRepository.Registry import Registry
-else:
+if getConfig("Configuration")["repositorytype"] == "Database":
     from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
+else:
+    from GangaCore.Core.GangaRepository.Registry import Registry
 
 logger = GangaCore.Utility.logging.getLogger()
 
