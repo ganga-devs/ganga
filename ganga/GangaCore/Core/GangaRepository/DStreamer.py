@@ -32,7 +32,8 @@ def object_to_database(j, document, master=None, ignore_subs=[]):
     json_content["modified_time"] = time.time()
 
     if json_content["type"] == "Job":
-        json_content["_id"] = json_content["id"]  # `_id` is used for indexing by mongo.
+        # `_id` is used for indexing by mongo.
+        json_content["_id"] = json_content["id"]
         result = document.replace_one(
             filter={"_id": json_content["_id"]}, replacement=json_content, upsert=True,
         )
@@ -93,7 +94,7 @@ def index_to_database(data, document):
                 f"index could not be inserted in the document linked by {document.name}. Insertion resulted in: {result}",
             )
 
-    return result
+        return result
 
 
 def index_from_database(_filter, document):
@@ -160,7 +161,8 @@ class JsonDumper:
         The received item is a job object with proxy
         """
         starting_name, starting_node = "Job", j
-        job_json = JsonDumper.object_to_json(starting_name, starting_node, ignore_subs)
+        job_json = JsonDumper.object_to_json(
+            starting_name, starting_node, ignore_subs)
         return job_json
 
     @staticmethod
@@ -226,7 +228,8 @@ class JsonDumper:
                     elif isinstance(value, dict) and attr_name == "timestamps":
                         for time_stamp, dtime in value.items():
                             if isinstance(dtime, datetime.datetime):
-                                value[time_stamp] = dtime.strftime("%Y/%m/%d %H:%M:%S")
+                                value[time_stamp] = dtime.strftime(
+                                    "%Y/%m/%d %H:%M:%S")
                             node_info[attr_name] = value
                     else:
                         node_info[attr_name] = value
@@ -307,9 +310,11 @@ class JsonLoader:
                 temp_val = []
                 for val in json_content[key]:
                     if isinstance(val, dict):
-                        temp_val.append(self.load_component_object(self.obj, key, val))
+                        temp_val.append(
+                            self.load_component_object(self.obj, key, val))
                     else:
-                        temp_val.append(self.load_simple_object(self.obj, key, val))
+                        temp_val.append(
+                            self.load_simple_object(self.obj, key, val))
 
                 # simply attach loaded list of component objects to its parent object
                 self.obj = self.load_simple_object(self.obj, key, temp_val)
@@ -326,7 +331,8 @@ class JsonLoader:
         """This implementation is backwards compatible to the way things are currently in VStreamre
         """
         errors = []
-        obj = allPlugins.find(json_content["category"], json_content["type"]).getNew()
+        obj = allPlugins.find(
+            json_content["category"], json_content["type"]).getNew()
 
         # FIXME: Use a better approach to filter the metadata keys
         for key in set(json_content.keys()) - set(["category", "type", "version"]):
@@ -384,7 +390,8 @@ class JsonLoader:
                     if local_error:
                         errors.append(local_error)
                 elif (
-                    isinstance(part_attr[attr], dict) and "category" in part_attr[attr]
+                    isinstance(part_attr[attr],
+                               dict) and "category" in part_attr[attr]
                 ):
                     component_obj, local_error = JsonLoader.load_component_object(
                         component_obj, attr, part_attr[attr]

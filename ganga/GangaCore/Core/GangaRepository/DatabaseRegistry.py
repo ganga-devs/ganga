@@ -546,7 +546,7 @@ class Registry(object):
             if self._needs_metadata:
                 t2 = time.time()
                 if self.metadata is None:
-                    self.metadata = DatabaseRegistry(
+                    self.metadata = Registry(
                         self.name + ".metadata",
                         "Metadata repository for %s" % self.name,
                     )

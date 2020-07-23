@@ -17,7 +17,7 @@ from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from GangaCore.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 from GangaCore.GPIDev.Base import GangaObject
-from GangaCore.GPIDev.Base.Objects import Node
+from GangaCore.GPIDev.Base.Objects import Node, synchronised
 from GangaCore.GPIDev.Base.Proxy import addProxy, getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
 from GangaCore.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
@@ -495,6 +495,31 @@ class Job(GangaObject):
         # if frame[0].f_code.co_filename.find('/Ganga/GPIDev/')==-1 and frame[0].f_code.co_filename.find('/Ganga/Core/')==-1:
         #    raise AttributeError('cannot modify job.status directly, use job.updateStatus() method instead...')
         #del frame
+
+    # TODO: Make sure that if a component is in ignore_subs it is not visited at all
+    @synchronised
+    def to_json(self):
+        """Special Implementation of to_json for Job object
+        - A simple attribute: will not have the to_json function and thus we have to manually assign the value
+        - A componenet attribute: will have the to_json function and thus we can automatically generate the json dict for that and then assin it
+
+        """
+        node_info = {
+            "type": self._schema.name,
+            "version": f"{self._schema.version.major}.{self._schema.version.minor}",
+            "category": self._schema.category
+        }
+        if self._schema is None:
+            return node_info
+
+        for name, item in self._schema.allItems():
+            value = getattr(self, name)
+            if item['visitable']:
+                if hasattr(value, "to_json"):
+                    node_info[name] = (value.to_json())
+                else:
+                    node_info[name] = (value)
+        return node_info
 
     class State(object):
 
@@ -1127,14 +1152,14 @@ class Job(GangaObject):
         return None
 
     def prepare(self, force=False):
-        """A method to put a job's application into a prepared state. Returns 
+        """A method to put a job's application into a prepared state. Returns
         True on success.
 
         The benefits of preparing an application are twofold:
 
         1) The application can be copied from a previously executed job and
            run again over a different input dataset.
-        2) Sharing applications (and their associated files) between jobs will 
+        2) Sharing applications (and their associated files) between jobs will
            optimise disk usage of the Ganga client.
 
         See help(j.application.prepare) for application-specific comments.
@@ -1592,7 +1617,7 @@ class Job(GangaObject):
 
             if keep_on_fail:
                 self.updateStatus('failed')
-                
+
             else:
                 # revert to the new status
                 logger.error('%s ... reverting job %s to the new status', err, self.getFQID('.'))
@@ -1606,7 +1631,7 @@ class Job(GangaObject):
             - do not remove debug directory
             - cleanup subjobs
         This method is used as a hook for submitting->new transition
-        @see updateJobStatus() 
+        @see updateJobStatus()
         """
 
         # notify monitoring-services
@@ -2182,7 +2207,7 @@ class Job(GangaObject):
 
     def splitterCopy(self, other_job, _ignore_atts=None):
         """
-        A method for copying the job object. This is a copy of the generic GangaObject method with 
+        A method for copying the job object. This is a copy of the generic GangaObject method with
         some checks removed for maximum speed. This should therefore be used with great care!
         """
 
