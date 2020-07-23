@@ -33,6 +33,7 @@ jobs:
       run: |
         ! read -rd"\n" REL_ID BODY < <(curl --request GET --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/tags/${VERSION} | jq -r '.id, .body')
         echo "::set-env name=REL_ID::${REL_ID}"
+        echo "::set-env name=BTEST::$'`echo "$BODY"`'"
         echo "${BODY}" > ganga/GangaRelease/ReleaseNotes-${VERSION}
         git add ganga/GangaRelease/ReleaseNotes-${VERSION}
         git commit -m "Creating release notes for version ${VERSION}"
@@ -50,7 +51,7 @@ jobs:
         REL_DATA='{
           "name": "'"Ganga ${VERSION}"'",
           "tag_name": "'${VERSION}'",
-          "body": "'`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | sed 's/"/\\"/g'`'",
+          "body": "'`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | sed 's/"/\\"/g' | awk '{printf "%s\\n", $0}'`'",
           "draft": false,
           "prerelease": true
         }'
