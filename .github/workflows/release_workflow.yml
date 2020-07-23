@@ -55,7 +55,7 @@ jobs:
           "draft": false,
           "prerelease": true
         }'
-        echo $REL_DATA
+        echo "$REL_DATA"
         curl --request POST \
              --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases \
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
