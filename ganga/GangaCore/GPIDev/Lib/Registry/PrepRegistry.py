@@ -8,6 +8,8 @@ from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
 from GangaCore.GPIDev.Lib.File import getSharedPath
 from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+
 logger = GangaCore.Utility.logging.getLogger()
 
 if getConfig("Configuration")["repositorytype"] == "Database":
