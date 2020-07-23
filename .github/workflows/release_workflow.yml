@@ -11,35 +11,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: Determine new release information
+    - name: Setup Git
       run: |
         git config --global user.email "a.richards@imperial.ac.uk"
         git config --global user.name "Alexander Richards"
-        VERSION=$(basename ${GITHUB_REF})
-        ! read -rd"\n" REL_ID BODY < <(curl --request GET --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/tags/${VERSION} | jq -r '.id, .body')
-        BODY=`echo "$BODY" | sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g'`
-        echo "::set-env name=VERSION::${VERSION}"
-        echo "::set-env name=REL_ID::${REL_ID}"
-        echo "::set-env name=BODY::${BODY}"
-    - name: testing
-      run: |
-        echo $VERSION
-        echo $REL_ID
-        echo "$BODY"
-    - name: Hardcode version number
-      run: |
-        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
-        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ganga/GangaCore/__init__.py
-        git add ./setup.py ganga/GangaCore/__init__.py
-        git commit -m "Setting version number constants"
     - name: Hardcode development flag
       run: |
         sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
         git add ganga/GangaCore/__init__.py
         git commit -m "Setting developmet flag"
+    - name: Hardcode version number
+      run: |
+        VERSION=$(basename ${GITHUB_REF})
+        echo "::set-env name=VERSION::${VERSION}"
+        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
+        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ganga/GangaCore/__init__.py
+        git add ./setup.py ganga/GangaCore/__init__.py
+        git commit -m "Setting version number constants"
     - name: Commit release notes
       run: |
-        echo "$BODY" > ganga/GangaRelease/ReleaseNotes-${VERSION}
+        ! read -rd"\n" REL_ID BODY < <(curl --request GET --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/tags/${VERSION} | jq -r '.id, .body')
+        echo "::set-env name=REL_ID::${REL_ID}"
+        echo "${BODY}" > ganga/GangaRelease/ReleaseNotes-${VERSION}
         git add ganga/GangaRelease/ReleaseNotes-${VERSION}
         git commit -m "Creating release notes for version ${VERSION}"
     - name: Remove placeholder tag
@@ -57,7 +50,7 @@ jobs:
              --data '{
                "name": "Ganga ${VERSION}",
                "tag_name": ${VERSION},
-               "body": "${BODY}",
+               "body": `cat ganga/GangaRelease/ReleaseNotes-${VERSION}`,
                "draft": false,
                "prerelease": true
              }'
