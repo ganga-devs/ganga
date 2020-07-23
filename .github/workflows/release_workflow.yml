@@ -44,14 +44,15 @@ jobs:
         git push --tags
     - name: Update release
       run: |
+        REL_DATA='{
+          "name": "'"Ganga ${VERSION}"'",
+          "tag_name": "'${VERSION}'",
+          "body": "'`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | sed 's/"/\\"/g'`'",
+          "draft": false,
+          "prerelease": true
+        }'          
         curl --request PATCH \
              --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/$REL_ID \
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
              --header 'content-type: application/json' \
-             --data '{
-               "name": '"Ganga ${VERSION}"',
-               "tag_name": '"${VERSION}"',
-               "body": '"`cat ganga/GangaRelease/ReleaseNotes-${VERSION}`"',
-               "draft": false,
-               "prerelease": true
-             }'
+             --data $REL_DATA
