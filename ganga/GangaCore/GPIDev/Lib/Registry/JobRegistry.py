@@ -5,27 +5,26 @@
 # $Id: JobRegistry.py,v 1.1.2.1 2009-07-24 13:39:39 ebke Exp $
 ##########################################################################
 
-#from GangaCore.Utility.external.ordereddict import oDict
-from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
-
-from GangaCore.Core.exceptions import GangaException
-from GangaCore.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher
-
-from GangaCore.GPIDev.Base.Proxy import stripProxy, isType
-
 import GangaCore.Utility.logging
-
 from GangaCore.GPIDev.Lib.Job.Job import Job
-
-from .RegistrySlice import RegistrySlice
-
-from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
+from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
+from GangaCore.Core.GangaRepository.Registry import (
+    RegistryAccessError, RegistryFlusher, RegistryKeyError
+)
 
 # display default values for job list
-from .RegistrySlice import config
+from .RegistrySlice import RegistrySlice, config
+from .RegistrySliceProxy import RegistrySliceProxy, _unwrap, _wrap
+
+if getConfig("Configuration")["repositorytype"] == "Database":
+    from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
+else:
+    from GangaCore.Core.GangaRepository.Registry import Registry
 
 logger = GangaCore.Utility.logging.getLogger()
-
 
 class JobRegistry(Registry):
 
@@ -362,4 +361,3 @@ def jobSlice(joblist):
     return _wrap(this_slice)
 
 # , "Create a job slice from a job list") exported to the Runtime bootstrap
-

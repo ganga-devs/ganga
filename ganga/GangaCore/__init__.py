@@ -961,3 +961,32 @@ reg_config.addOption('DisableLoadCheck', True, 'Disable the checking of recent b
 cred_config = makeConfig('Credentials', 'This configures the credentials singleton')
 cred_config.addOption('CleanDelay', 1, 'Seconds between auto-clean of credentials when proxy externally destroyed')
 cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on disk')
+
+# ------------------------------------------------
+# Database
+db_config = makeConfig("DatabaseConfigurations",
+                       "Selection of database for ganga")
+db_config.addOption("database", "MONGODB",
+                    "others have not been implemented yet")
+db_config.addOption(
+    "containerName", "ganga_mongomon", "the identifier used to tag the docker container"
+)
+db_config.addOption("username", "default", "username")
+db_config.addOption("password", "default", "password")
+db_config.addOption("host", "default", "host")
+db_config.addOption("port", "default", "port")
+db_config.addOption("dbname", "default", "name of database")
+
+# ------------------------------------------------
+# CentralDatabase
+db_config = makeConfig("CentralDatabaseConfigurations", "Selection of central database for ganga")
+db_config.addOption("database", "NotImplementedError",
+                    "others have not been implemented yet")
+db_config.addOption(
+    "containerName", "NotImplementedError", "the identifier used to tag the docker container"
+)
+db_config.addOption("username", "NotImplementedError", "username")
+db_config.addOption("password", "NotImplementedError", "password")
+db_config.addOption("host", "NotImplementedError", "host")
+db_config.addOption("port", "NotImplementedError", "port")
+db_config.addOption("dbname", "NotImplementedError", "name of database")

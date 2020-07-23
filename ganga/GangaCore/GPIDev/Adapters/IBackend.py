@@ -4,29 +4,31 @@
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ##########################################################################
 
-from GangaCore.Core.exceptions import GangaKeyError, IncompleteJobSubmissionError
-from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
-from GangaCore.GPIDev.Base import GangaObject
-from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
-from GangaCore.GPIDev.Lib.Dataset import GangaDataset
-from GangaCore.GPIDev.Schema import Schema, Version
-from GangaCore.GPIDev.Credentials import credential_store, needed_credentials
-
-import GangaCore.Utility.logging
-
-from GangaCore.Utility.logic import implies
-
-from GangaCore.Core.exceptions import GangaException, IncompleteJobSubmissionError
-
-import os
 import itertools
+import os
 import time
 from collections import defaultdict
 
-from GangaCore.Core.GangaThread.WorkerThreads import getQueues
+import GangaCore.Utility.logging
+from GangaCore.Utility.logic import implies
+from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.Utility.Config import getConfig
+from GangaCore.GPIDev.Schema import Schema, Version
+from GangaCore.GPIDev.Lib.Dataset import GangaDataset
+from GangaCore.Core.GangaThread.WorkerThreads import getQueues
+from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
+from GangaCore.GPIDev.Credentials import credential_store, needed_credentials
+from GangaCore.Core.exceptions import (
+    GangaException, GangaKeyError, IncompleteJobSubmissionError
+    )
 
 logger = GangaCore.Utility.logging.getLogger()
+config = getConfig('Configuration')
+
+if config["repositorytype"] == "Database":
+    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
+else:
+    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 class IBackend(GangaObject):
 
@@ -568,4 +570,3 @@ def group_jobs_by_backend_credential(jobs):
             logger.debug('Required credential %s is missing', cred_req)
             needed_credentials.add(cred_req)
     return list(jobs_by_credential.values())
-
