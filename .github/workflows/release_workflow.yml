@@ -49,9 +49,9 @@ jobs:
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
              --header 'content-type: application/json' \
              --data '{
-               "name": "Ganga ${VERSION}",
-               "tag_name": ${VERSION},
-               "body": `cat ganga/GangaRelease/ReleaseNotes-${VERSION}`,
+               "name": '"Ganga ${VERSION}"',
+               "tag_name": '"${VERSION}"',
+               "body": '"`cat ganga/GangaRelease/ReleaseNotes-${VERSION}`"',
                "draft": false,
                "prerelease": true
              }'
