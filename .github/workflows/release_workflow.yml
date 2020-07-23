@@ -53,7 +53,8 @@ jobs:
           "body": "'`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | sed 's/"/\\"/g'`'",
           "draft": false,
           "prerelease": true
-        }'          
+        }'
+        echo $REL_DATA
         curl --request POST \
              --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases \
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
