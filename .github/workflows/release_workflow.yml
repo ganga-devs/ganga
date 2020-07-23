@@ -15,6 +15,7 @@ jobs:
       run: |
         git config --global user.email "a.richards@imperial.ac.uk"
         git config --global user.name "Alexander Richards"
+        git config remote.origin.url 'https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git'
     - name: Hardcode development flag
       run: |
         sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
