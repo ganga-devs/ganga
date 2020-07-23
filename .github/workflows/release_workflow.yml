@@ -44,6 +44,9 @@ jobs:
         git push --tags
     - name: Update release
       run: |
+        curl --request DELETE \
+             --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/$REL_ID \
+             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
         REL_DATA='{
           "name": "'"Ganga ${VERSION}"'",
           "tag_name": "'${VERSION}'",
@@ -51,8 +54,8 @@ jobs:
           "draft": false,
           "prerelease": true
         }'          
-        curl --request PATCH \
-             --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/$REL_ID \
+        curl --request POST \
+             --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases \
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
              --header 'content-type: application/json' \
              --data $REL_DATA
