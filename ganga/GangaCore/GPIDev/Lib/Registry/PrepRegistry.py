@@ -10,7 +10,7 @@ from GangaCore.GPIDev.Lib.File import getSharedPath
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 
-logger = GangaCore.Utility.logging.getLogger()
+logger = getLogger()
 
 if getConfig("Configuration")["repositorytype"] == "Database":
     from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry

@@ -10,8 +10,10 @@ from GangaCore.Core.exceptions import GangaException, GangaTypeError
 
 from .RegistrySlice import RegistrySlice, config
 from .RegistrySliceProxy import RegistrySliceProxy, _unwrap, _wrap
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
 
-logger = GangaCore.Utility.logging.getLogger()
+logger = getLogger()
 
 if getConfig('Configuration')["repositorytype"] == "Database":
     from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry

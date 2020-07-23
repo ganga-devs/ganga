@@ -449,7 +449,7 @@ class JsonLoader:
 
 
 # TODO: Add more functions here
-class XmlToJsonConverter:
+class XmlToDatabaseConverter:
     """This will ensure full backwards compatibilty. Functions for creating LocalJson repo from LocalXML and vice versa.
     """
 
@@ -459,7 +459,7 @@ class XmlToJsonConverter:
         """Converts the xml job representation to json representation
         """
         from GangaCore.GPIDev.Base.Proxy import stripProxy
-        from GangaCore.Core.GangaRepository.JStreamer import to_file as json_to_file
+        from GangaCore.Core.GangaRepository.DStreamer import object_to_database
         from GangaCore.Core.GangaRepository.VStreamer import from_file as xml_from_file
 
         # loading the job from xml rep
@@ -468,7 +468,7 @@ class XmlToJsonConverter:
 
         # saving the job as a json now
         with open(location, "r") as fout:
-            json_to_file(stripped_j, fobj=fout)
+            object_to_database(stripped_j, fobj=fout)
 
     @staticmethod
     def json_to_xml(fobj, location):
@@ -476,7 +476,7 @@ class XmlToJsonConverter:
         """
         from GangaCore.GPIDev.Base.Proxy import stripProxy
         from GangaCore.Core.GangaRepository.VStreamer import to_file as xml_to_file
-        from GangaCore.Core.GangaRepository.JStreamer import from_file as json_from_file
+        from GangaCore.Core.GangaRepository.DStreamer import object_from_file
 
         # loading the job from json rep
         job, error = json_from_file(fobj)

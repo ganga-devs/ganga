@@ -24,7 +24,7 @@ from GangaCore.Core.GangaRepository import (
     GangaRepository, RepositoryError, InaccessibleObjectError,
 )
 
-from GangaCore.Core.GangaRepository.JStreamer import (
+from GangaCore.Core.GangaRepository.DStreamer import (
     EmptyGangaObject, object_to_database, object_from_database,
     index_to_database, index_from_database,
 )
@@ -144,7 +144,7 @@ class GangaRepositoryLocal(GangaRepository):
     def save_index(self):
         """Save the index information of this registry into the database
         """
-       raise NotImplementedError
+        raise NotImplementedError
 
     def _parse_json(self, this_id, has_children, tmpobj):
         """

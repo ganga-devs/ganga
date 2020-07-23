@@ -28,7 +28,7 @@ class RegistryError(GangaException):
 
 class RegistryAccessError(RegistryError):
 
-    """ This error is raised if the request is valid in principle, 
+    """ This error is raised if the request is valid in principle,
         but the Registry cannot be accessed at the moment."""
 
     def __init__(self, what=''):
