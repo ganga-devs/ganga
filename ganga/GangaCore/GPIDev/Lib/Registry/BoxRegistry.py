@@ -159,6 +159,11 @@ class BoxRegistry(Registry):
         self._needs_metadata = True
         super(BoxRegistry, self).startup()
 
+    def shutdown(self, kill):
+        """
+        This allows us to clean up after the ShareDir on shutdown
+        """
+        super(BoxRegistry, self).shutdown(kill=kill)
 
 class BoxRegistrySlice(RegistrySlice):
 

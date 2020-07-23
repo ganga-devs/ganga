@@ -14,6 +14,12 @@ logger = getLogger()
 from GangaCore.Utility.Config import getConfig
 config = getConfig('Tasks')
 
+if getConfig('Configuration')["repositorytype"] == "Database":
+    from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
+else:
+    from GangaCore.Core.GangaRepository.Registry import Registry
+
+
 markup = ANSIMarkup()
 str_run = markup("run", overview_colours["running"])
 str_fail = markup("fail", overview_colours["failed"])
@@ -124,9 +130,9 @@ class TaskRegistry(Registry):
         self.flush_thread = RegistryFlusher(self, 'TaskRegistryFlusher')
         self.flush_thread.start()
 
-    def shutdown(self):
+    def shutdown(self, kill):
         self.flush_thread.join()
-        super(TaskRegistry, self).shutdown()
+        super(TaskRegistry, self).shutdown(kill=kill)
 
     def stop(self):
         if self._main_thread is not None:

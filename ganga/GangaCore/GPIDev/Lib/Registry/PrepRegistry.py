@@ -40,13 +40,13 @@ class PrepRegistry(Registry):
     def getProxy(self):
         pass
 
-    def shutdown(self):
+    def shutdown(self, kill):
         """
         This allows us to clean up after the ShareDir on shutdown
         """
         if self.shareref:
             self.shareref.cleanUpOrphans()
-        super(PrepRegistry, self).shutdown()
+        super(PrepRegistry, self).shutdown(kill=kill)
 
 class ShareRef(GangaObject):
 

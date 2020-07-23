@@ -152,10 +152,9 @@ class JobRegistry(Registry):
                     logger.debug("Failed to load job, it's potentially being used by another ganga sesion")
                     continue
 
-
-    def shutdown(self):
+    def shutdown(self, kill):
         self.flush_thread.join()
-        super(JobRegistry, self).shutdown()
+        super(JobRegistry, self).shutdown(kill=kill)
 
     def getJobTree(self):
         return self.jobtree

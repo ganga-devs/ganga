@@ -10,8 +10,8 @@ from GangaCore.GPIDev.Base.Proxy import getName, isType
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 from GangaCore.Core.GangaThread.GangaThread import GangaThread
 from GangaCore.Core.exceptions import (
-    GangaException, InaccessibleObjectError,RepositoryError
-    )
+    GangaException, InaccessibleObjectError, RepositoryError
+)
 
 logger = getLogger()
 
@@ -589,7 +589,7 @@ class Registry(object):
         This is intended to be called after the startup proceedure has been finished """
         pass
 
-    def shutdown(self):
+    def shutdown(self, kill):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         logger.debug("Shutting Down Registry")
         logger.debug("shutdown")
@@ -605,7 +605,7 @@ class Registry(object):
             # Now we can safely shutdown the metadata repo if one is loaded
             try:
                 if self.metadata is not None:
-                    self.metadata.shutdown()
+                    self.metadata.shutdown(kill=kill)
             except Exception as err:
                 logger.debug(
                     "Exception on shutting down metadata repository '%s' registry: %s",
@@ -618,7 +618,7 @@ class Registry(object):
             for obj in list(self._objects.values()):
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
-            self.repository.shutdown()
+            self.repository.shutdown(kill=kill)
 
             self.metadata = None
 

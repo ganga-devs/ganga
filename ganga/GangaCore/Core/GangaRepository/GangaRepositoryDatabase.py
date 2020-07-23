@@ -214,13 +214,14 @@ class GangaRepositoryLocal(GangaRepository):
 
         logger.debug(f"mongomon has started: {self.registry.name}")
 
-    def shutdown(self):
+    def shutdown(self, kill=False):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError
         Write an index file for all new objects in memory and master index file of indexes"""
         logger.debug("Shutting Down GangaRepositoryDatabase")
         self.index_write(shutdown=True)
-        self.kill_mongomon()
+        if kill:
+            self.kill_mongomon()
 
     def kill_mongomon(self):
         """Kill the mongo db instance in a docker container
@@ -415,7 +416,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         if shutdown:
             for id in self.objects:
-                self.write(this_id=id, shutdown=False)
+                self.index_write(this_id=id, shutdown=False)
         else:
             logger.debug("Adding index of {id}".format(id=this_id))
             obj = self.objects[this_id]
@@ -537,8 +538,8 @@ class GangaRepositoryLocal(GangaRepository):
         """
 
         # If this_id is not in the objects add the object we got from reading the Json
-        logger.info(f"tmpobj does have ?: {tmpobj._getRegistry()}")
-        logger.info(f"XXXXtmpobj does have ?: {self.objects[this_id]}")
+        # logger.info(f"tmpobj does have ?: {tmpobj._getRegistry()}")
+        # logger.info(f"XXXXtmpobj does have ?: {self.objects[this_id]}")
 
         need_to_copy = True
         if this_id not in self.objects:
