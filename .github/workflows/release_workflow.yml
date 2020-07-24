@@ -51,7 +51,7 @@ jobs:
         REL_DATA='{
           "name": "'"Ganga ${VERSION}"'",
           "tag_name": "'${VERSION}'",
-          "body": "'`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | sed 's/"/\\"/g' | awk '{printf "%s\\n", $0}'`'",
+          "body": "'`cat "ganga/GangaRelease/ReleaseNotes-${VERSION}"" | awk '{printf "%s\\n", $0}'`'",
           "draft": false,
           "prerelease": true
         }'
