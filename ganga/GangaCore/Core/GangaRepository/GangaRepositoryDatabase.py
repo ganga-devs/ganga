@@ -174,7 +174,6 @@ class GangaRepositoryLocal(GangaRepository):
         # FIXME: Add index updating here
         self.update_index(True, True, True)
         logger.debug("GangaRepositoryLocal Finished Startup")
-        logger.info(f"YES: {self.objects}")
 
     # TODO: Add options to add custom option information for the database
 
@@ -476,13 +475,11 @@ class GangaRepositoryLocal(GangaRepository):
             firstRun (bool): If this is the call from the Repo startup then load the master index for perfomance boost
         """
         # First locate and load the index files
-        logger.info(f"[1] objects: {(self.objects, self.registry.name)}")
         logger.debug("updating index...")
         if firstRun:
             objs = self.read_master_cache()
         else:
             objs = set(self.objects.keys())
-        logger.info(f"[X] objs: {objs}")
         changed_ids = []
         summary = []
         logger.debug("Iterating over Items")
@@ -556,7 +553,6 @@ class GangaRepositoryLocal(GangaRepository):
         #     isShutdown = not firstRun
         #     self._write_master_cache(isShutdown)
 
-        logger.info(f"[2] objects: {(self.objects, self.registry.name)}")
         return changed_ids
 
 
@@ -566,7 +562,6 @@ class GangaRepositoryLocal(GangaRepository):
         raise NotImplementedError("Load all the information at once")
 
         """
-        logger.info(f"Hellow from indeX_load")
         if startup:
             self.read_master_cache()
             return True
@@ -575,7 +570,6 @@ class GangaRepositoryLocal(GangaRepository):
             _filter={"_id": this_id},
             document=self.connection.index
         )
-        logger.info(f"searching for index found: {item}")
         if item and item["modified_time"] != self._cache_load_timestamp.get(this_id, 0):
             if this_id in self.objects:
                 obj = self.objects[this_id]
@@ -635,11 +629,9 @@ class GangaRepositoryLocal(GangaRepository):
         need_to_copy = True
         if this_id not in self.objects:
             self.objects[this_id] = tmpobj
-            logger.info(f"does have ?: {tmpobj._getRegistry()}")
             need_to_copy = False
 
         obj = self.objects[this_id]
-        logger.info(f"does have ?: {obj._getRegistry()}")
 
         # If the object was already in the objects (i.e. cache object, replace the schema content wilst avoiding R/O checks and such
         # The end goal is to keep the object at this_id the same object in memory but to make it closer to tmpobj.
@@ -684,8 +676,6 @@ class GangaRepositoryLocal(GangaRepository):
 
         if this_id not in self._fully_loaded:
             self._fully_loaded[this_id] = obj
-        logger.info(
-            f"(2)tmpobj does have ?: {self.objects[this_id]._getRegistry()}")
 
     def _load_json_from_obj(self, document, this_id):
         """
