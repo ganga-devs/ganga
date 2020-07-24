@@ -252,6 +252,7 @@ class GangaRepositoryLocal(GangaRepository):
         # of errors
         self.update_index(True, True)
         logger.debug("GangaRepositoryLocal Finished Startup")
+        # logger.info(f"YES: {self.objects}")
 
     def shutdown(self):
         """Shutdown the repository. Flushing is done by the Registry
@@ -538,8 +539,10 @@ class GangaRepositoryLocal(GangaRepository):
             firstRun (bool): If this is the call from the Repo startup then load the master index for perfomance boost
         """
         # First locate and load the index files
+        logger.info(f"[1] objects: {(self.objects, self.registry.name)}")
         logger.debug("updating index...")
         objs = self.get_index_listing()
+        logger.info(f"[X] objs: {objs}")
         changed_ids = []
         deleted_ids = set(self.objects.keys())
         summary = []
@@ -585,6 +588,7 @@ class GangaRepositoryLocal(GangaRepository):
                 try:
                     logger.debug("Loading disk based Object: %s from %s as indexes were missing" % (this_id, self.registry.name))
                     self.load([this_id])
+                    logger.info(f"LOAD() was called here")
                     changed_ids.append(this_id)
                     # Write out a new index if the file can be locked
                     if len(self.lock([this_id])) != 0:
@@ -642,7 +646,8 @@ class GangaRepositoryLocal(GangaRepository):
         if len(changed_ids) != 0:
             isShutdown = not firstRun
             self._write_master_cache(isShutdown)
-
+        
+        logger.info(f"[2] objects: {(self.objects, self.registry.name)}")
         return changed_ids
 
     def add(self, objs, force_ids=None):
@@ -861,11 +866,14 @@ class GangaRepositoryLocal(GangaRepository):
 
         # If this_id is not in the objects add the object we got from reading the XML
         need_to_copy = True
+        logger.info(f"[-1] The registry: {tmpobj._getRegistry()}")
         if this_id not in self.objects:
+            logger.info(f"[0] The registry: {tmpobj._getRegistry()}")
             self.objects[this_id] = tmpobj
             need_to_copy = False
 
         obj = self.objects[this_id]
+        logger.info(f"[1] The registry: {obj._getRegistry()}")
 
         # If the object was already in the objects (i.e. cache object, replace the schema content wilst avoiding R/O checks and such
         # The end goal is to keep the object at this_id the same object in memory but to make it closer to tmpobj.
@@ -946,6 +954,7 @@ class GangaRepositoryLocal(GangaRepository):
         self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
 
         logger.debug("Finished Loading XML")
+
 
     def _open_xml_file(self, fn, this_id, _copy_backup=False):
         """

@@ -89,7 +89,7 @@ def check_app_hash(obj):
 
 
 # RatPass: Find a better alternative for this, seems unnecessary
-def safe_save(_object, conn, master=None, ignore_subs=[]):
+def safe_save(_object, conn, master=-1, ignore_subs=[]):
     """Try to save the Json for this object in as safe a way as possible
     Args:
         _object (GangaObject): Object to be stored in database
@@ -106,16 +106,6 @@ def safe_save(_object, conn, master=None, ignore_subs=[]):
         raise RepositoryError(
             f"The object with obj_id {id} could not be saved into the database"
         )
-
-# similar to getting the filename for the objects and indexes
-
-
-def search_database(filter_keys, connection, document):
-    """Search the database for objects with the given keys
-    keys (list of tuples): List of (key, value) pairs that are to be searched
-    """
-    result = connection[document].find_one(filter=filter_keys)
-    return result
 
 
 class GangaRepositoryLocal(GangaRepository):
@@ -260,9 +250,6 @@ class GangaRepositoryLocal(GangaRepository):
                 )
             ids = force_ids
         else:
-            # TODO: Implement these
-            # ids = self.sessionlock.make_new_ids(len(objs))
-            # raise NotImplementedError
             ids = [i + len(self.objects) for i in range(len(objs))]
 
         logger.debug("made ids")
@@ -298,10 +285,8 @@ class GangaRepositoryLocal(GangaRepository):
             split_cache = None
 
             has_children = getattr(obj, self.sub_split, False)
-            # FIXME: Check the files implementation for objects with children
+
             if has_children:
-                raise NotImplementedError(
-                    "Childrens feature is not implemented yet")
                 logger.debug("has_children")
 
                 if hasattr(getattr(obj, self.sub_split), "flush"):
@@ -315,21 +300,19 @@ class GangaRepositoryLocal(GangaRepository):
                             if not split_cache[i]._dirty:
                                 continue
                             safe_save(
-                                master=None,
+                                master=this_id,
                                 ignore_subs=[],
                                 _object=split_cache[i],
                                 conn=self.connection[self.registry.name],
                             )
                             split_cache[i]._setFlushed()
-                    # Now generate an index file to take advantage of future non-loading goodness
-                    tempSubJList = SubJobXMLList(
-                        os.path.dirname(fn),
-                        self.registry,
-                        self.dataFileName,
-                        False,
-                        obj,
-                    )
-                    # equivalent to for sj in job.subjobs
+                    # # Now generate an index file to take advantage of future non-loading goodness
+                    tempSubJList = SubJobJsonList(
+                        registry=self.registry,
+                        connection=self.connection,
+                        parent=obj
+                        )
+                    # # equivalent to for sj in job.subjobs
                     tempSubJList._setParent(obj)
                     job_dict = {}
                     for sj in getattr(obj, self.sub_split):
@@ -338,12 +321,16 @@ class GangaRepositoryLocal(GangaRepository):
                     tempSubJList.flush(ignore_disk=True)
                     del tempSubJList
 
-                safe_save(fn, obj, self.to_file, self.sub_split)
-                # clean files not in subjobs anymore... (bug 64041)
-                for idn in os.listdir(os.path.dirname(fn)):
-                    split_cache = getattr(obj, self.sub_split)
-                    if idn.isdigit() and int(idn) >= len(split_cache):
-                        rmrf(os.path.join(os.path.dirname(fn), idn))
+                # Saving the parent object
+                safe_save(
+                    _object=obj,
+                    conn=self.connection[self.registry.name],
+                    ignore_subs=[],
+                    master=-1,
+                )
+
+                raise NotImplementedError(
+                    "You cannot give birth to jobs yet")
             else:
 
                 logger.debug("not has_children")
@@ -351,7 +338,7 @@ class GangaRepositoryLocal(GangaRepository):
                     _object=obj,
                     conn=self.connection[self.registry.name],
                     ignore_subs=[],
-                    master=None,
+                    master=-1,
                 )
 
             if this_id not in self.incomplete_objects:
@@ -425,8 +412,9 @@ class GangaRepositoryLocal(GangaRepository):
             self._cached_obj[this_id] = temp
             self._cache_load_timestamp[this_id] = time.time()
             if temp:
-                temp["category"] = obj._category
                 temp["classname"] = getName(obj)
+                temp["category"] = obj._category
+                temp["master"] = -1  # normal object do not have a master/parent
 
             index_to_database(
                 data=temp,
@@ -567,7 +555,7 @@ class GangaRepositoryLocal(GangaRepository):
             return True
 
         item = index_from_database(
-            _filter={"_id": this_id},
+            _filter={"id": this_id},
             document=self.connection.index
         )
         if item and item["modified_time"] != self._cache_load_timestamp.get(this_id, 0):
@@ -689,7 +677,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         b4 = time.time()
         tmpobj, errs = self.from_database(
-            _filter={"_id": this_id}, document=document
+            _filter={"id": this_id}, document=document
         )
         a4 = time.time()
         logger.debug("Loading Json file for ID: %s took %s sec" %
@@ -725,7 +713,7 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("Finished Loading Json")
 
     # FIXME: Allow bulk_reads when many ids are read
-    def load(self, ids, load_backup=False):
+    def load(self, ids):
         """
         Load the following "ids" from disk
         If we want to load the backup files for these ids then use _copy_backup
@@ -774,7 +762,7 @@ class GangaRepositoryLocal(GangaRepository):
             ids (list): The object keys which we want to iterate over from the objects dict
         """
         for this_id in ids:
-            self.connection.jobs.remove({"_id": this_id})
+            self.connection.jobs.remove({"id": this_id})
             self._internal_del__(this_id)
             if this_id in self._fully_loaded:
                 del self._fully_loaded[this_id]
@@ -817,9 +805,6 @@ class GangaRepositoryLocal(GangaRepository):
             _ = pymongo.MongoClient()
             _.drop_database(self.db_name)
 
-            raise NotImplementedError(
-                "Cleaning of the database document is not implemented yet"
-            )
         except Exception as err:
             logger.error(
                 "Failed to correctly clean repository due to: %s" % err)
@@ -836,24 +821,3 @@ class GangaRepositoryLocal(GangaRepository):
             return True
         except StopIteration:
             return False
-
-    def _handle_load_exception(self, err, fn, this_id, load_backup):
-        raise NotImplementedError
-
-    def get_index_listing(self):
-        raise NotImplementedError
-
-    def _read_master_cache(self):
-        raise NotImplementedError
-
-    def _clear_stored_cache(self):
-        raise NotImplementedError
-
-    def _write_master_cache(self, shutdown=False):
-        raise NotImplementedError
-
-    # def update_index(self, this_id=None, verbose=False, firstRun=False):
-    #     raise NotImplementedError
-
-    def _check_index_cache(self, obj, this_id):
-        raise NotImplementedError

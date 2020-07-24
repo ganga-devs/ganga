@@ -201,6 +201,8 @@ class SubJobXMLList(GangaObject):
 
         for sj_id in range_limit:
             if sj_id in self._cachedJobs:
+                # obj = self.__getitem__(sj_id)
+                # logger.info(f"object is {obj}")
                 this_cache = self._registry.getIndexCache(self.__getitem__(sj_id))
                 all_caches[sj_id] = this_cache
                 disk_location = self.__get_dataFile(sj_id)

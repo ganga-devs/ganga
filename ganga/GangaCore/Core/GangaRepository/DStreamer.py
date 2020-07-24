@@ -30,12 +30,14 @@ def object_to_database(j, document, master=None, ignore_subs=[]):
         json_content.pop(sub, None)
 
     json_content["modified_time"] = time.time()
+    if master is not None:
+        json_content["master"] = master
 
     if json_content["type"] == "Job":
-        # `_id` is used for indexing by mongo.
-        json_content["_id"] = json_content["id"]
+        # `id` is used for indexing by mongo.
+        # json_content["id"] = json_content["id"]
         result = document.replace_one(
-            filter={"_id": json_content["_id"]}, replacement=json_content, upsert=True,
+            filter={"id": json_content["id"], "master": json_content["master"]}, replacement=json_content, upsert=True,
         )
     else:
         result = document.insert(json_content)
@@ -59,7 +61,6 @@ def object_from_database(_filter, document):
     """
     content = document.find_one(filter=_filter)
     if content is None:
-        logger.error(f"to_database error {err}")
         logger.debug(
             f"to_database error for `filter` {_filter} and `document` {document.name}"
         )
@@ -81,10 +82,9 @@ def index_to_database(data, document):
     """
     if data:
         if "id" in data:
-            data["_id"] = data["id"]
             data["modified_time"] = time.time()
             result = document.replace_one(
-                filter={"_id": data["_id"]}, replacement=data, upsert=True,
+                filter={"id": data["id"]}, replacement=data, upsert=True,
             )
         else:
             result = document.insert_one(data)
