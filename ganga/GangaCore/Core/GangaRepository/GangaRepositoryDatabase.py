@@ -172,10 +172,12 @@ class GangaRepositoryLocal(GangaRepository):
                 raise Exception(err, msg)
 
         # FIXME: Add index updating here
-        self.read_master_cache()
+        self.update_index(True, True, True)
         logger.debug("GangaRepositoryLocal Finished Startup")
+        logger.info(f"YES: {self.objects}")
 
     # TODO: Add options to add custom option information for the database
+
     def start_mongomon(self, options=None, backend="docker"):
         """Start the mongodb with the prefered back_end
         """
@@ -443,13 +445,16 @@ class GangaRepositoryLocal(GangaRepository):
         master_cache = self.connection.index.find(
             filter={"category": self.registry.name})
         if master_cache:
-            for this_cache in master_cache:
-                this_id = this_cache["id"]
-                self._cached_obj[this_id] = this_cache
-                self.load([this_id])
+            return dict([(_['id'], True) for _ in master_cache])
+            # for this_cache in master_cache:
+            #     this_id = this_cache["id"]
+            #     self.index_load(this_id=this_id, index=this_cache)
+                # self._cached_obj[this_id] = this_cache
+                # self.load([this_id])
         else:
             logger.debug(
                 "No master index information exists, new/blank repository startup is assumed")
+            return {}
 
     def _clear_stored_cache(self):
         """
@@ -460,27 +465,124 @@ class GangaRepositoryLocal(GangaRepository):
         for k in self._cached_obj.keys():
             self._cached_obj.pop(k)
 
+
+    def update_index(self, this_id=None, verbose=False, firstRun=False):
+        """ Update the list of available objects
+        Raise RepositoryError
+        TODO avoid updating objects which haven't changed as this causes un-needed I/O
+        Args:
+            this_id (int): This is the id we want to explicitly check the index on disk for
+            verbose (bool): Should we be verbose
+            firstRun (bool): If this is the call from the Repo startup then load the master index for perfomance boost
+        """
+        # First locate and load the index files
+        logger.info(f"[1] objects: {(self.objects, self.registry.name)}")
+        logger.debug("updating index...")
+        if firstRun:
+            objs = self.read_master_cache()
+        else:
+            objs = set(self.objects.keys())
+        logger.info(f"[X] objs: {objs}")
+        changed_ids = []
+        summary = []
+        logger.debug("Iterating over Items")
+
+        for this_id in objs:
+            if this_id in self.incomplete_objects:
+                continue
+
+            if self.index_load(this_id):
+                changed_ids.append(this_id)
+
+            # this is bad - no or corrupted index but object not loaded yet!
+            # Try to load it!
+            if not this_id in self.objects:
+                try:
+                    logger.debug("Loading database based Object: %s from %s as indexes were missing" % (
+                        this_id, self.registry.name))
+                    self.load([this_id])
+                    changed_ids.append(this_id)
+                    if this_id not in self.incomplete_objects:
+                        # If object is loaded mark it dirty so next flush will regenerate XML,
+                        # otherwise just go about fixing it
+                        if not self.isObjectLoaded(self.objects[this_id]):
+                            self.index_write(this_id)
+                        else:
+                            self.objects[this_id]._setDirty()
+                    # self.unlock([this_id])
+                except KeyError as err:
+                    logger.debug("update Error: %s" % err)
+                    # deleted job
+                    if this_id in self.objects:
+                        self._internal_del__(this_id)
+                        changed_ids.append(this_id)
+                except (InaccessibleObjectError, ) as x:
+                    logger.debug(
+                        "update_index: Failed to load id %i: %s" % (this_id, x))
+                    summary.append((this_id, x))
+
+        logger.debug("Iterated over Items")
+
+        if len(summary) > 0:
+            cnt = {}
+            examples = {}
+            for this_id, x in summary:
+                if this_id in self.known_bad_ids:
+                    continue
+                cnt[getName(x)] = cnt.get(getName(x), []) + [str(this_id)]
+                examples[getName(x)] = str(x)
+                self.known_bad_ids.append(this_id)
+                # add object to incomplete_objects
+                if not this_id in self.incomplete_objects:
+                    logger.error(
+                        "Adding: %s to Incomplete Objects to avoid loading it again in future" % this_id)
+                    self.incomplete_objects.append(this_id)
+
+            for exc, ids in cnt.items():
+                logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (
+                    self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
+
+            if self.printed_explanation is False:
+                logger.error(
+                    "If you want to delete the incomplete objects, you can type:\n")
+                logger.error("'for i in %s.incomplete_ids(): %s(i).remove()'\n (then press 'Enter' twice)" % (
+                    self.registry.name, self.registry.name))
+                logger.error(
+                    "WARNING!!! This will result in corrupt jobs being completely deleted!!!")
+                self.printed_explanation = True
+        logger.debug("updated index done")
+
+        # if len(changed_ids) != 0:
+        #     isShutdown = not firstRun
+        #     self._write_master_cache(isShutdown)
+
+        logger.info(f"[2] objects: {(self.objects, self.registry.name)}")
+        return changed_ids
+
+
     def index_load(self, this_id, startup=False):
         """
         Will load index file from the database, so we know what objects exist in the database
         raise NotImplementedError("Load all the information at once")
 
         """
+        logger.info(f"Hellow from indeX_load")
         if startup:
             self.read_master_cache()
             return True
 
         item = index_from_database(
-            filter={"_id": this_id},
+            _filter={"_id": this_id},
             document=self.connection.index
         )
+        logger.info(f"searching for index found: {item}")
         if item and item["modified_time"] != self._cache_load_timestamp.get(this_id, 0):
             if this_id in self.objects:
                 obj = self.objects[this_id]
                 setattr(obj, "_registry_refresh", True)
             else:
                 try:
-                    obj = self._make_empty_object(
+                    obj = self._make_empty_object_(
                         this_id, item["category"], item["classname"])
                 except Exception as e:
                     raise Exception("{e} Failed to create empty ganga object for {this_id}".format(
@@ -502,17 +604,6 @@ class GangaRepositoryLocal(GangaRepository):
             logger.debug("Just silently continuing")
         return False
 
-    # def update_index(self, this_id=None, verbose=False, firstRun=False):
-    #     """ Update the list of available objects
-    #     Raise RepositoryError
-    #     TODO avoid updating objects which haven't changed as this causes un-needed I/O
-    #     Args:
-    #         this_id (int): This is the id we want to explicitly check the index on disk for
-    #         verbose (bool): Should we be verbose
-    #         firstRun (bool): If this is the call from the Repo startup then load the master index for perfomance boost
-    #     """
-    #     logger.debug("updating index...")
-    #     logger.debug(f"{str(this_id)}-{str(firstRun)}")
 
     def save_index(self):
         """Save the index information of this registry into the database
@@ -544,10 +635,11 @@ class GangaRepositoryLocal(GangaRepository):
         need_to_copy = True
         if this_id not in self.objects:
             self.objects[this_id] = tmpobj
+            logger.info(f"does have ?: {tmpobj._getRegistry()}")
             need_to_copy = False
 
         obj = self.objects[this_id]
-        logger.info(f"tmpobj does have ?: {obj._getRegistry()}")
+        logger.info(f"does have ?: {obj._getRegistry()}")
 
         # If the object was already in the objects (i.e. cache object, replace the schema content wilst avoiding R/O checks and such
         # The end goal is to keep the object at this_id the same object in memory but to make it closer to tmpobj.

@@ -82,6 +82,7 @@ def index_to_database(data, document):
     if data:
         if "id" in data:
             data["_id"] = data["id"]
+            data["modified_time"] = time.time()
             result = document.replace_one(
                 filter={"_id": data["_id"]}, replacement=data, upsert=True,
             )
