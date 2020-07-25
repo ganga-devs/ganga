@@ -823,9 +823,16 @@ under certain conditions; type license() for details.
 
         set_cmdline_config_options()
 
+        # TODO: Add Templates and Tasks here
         if self.options.migrate_database:
             logger.info("Migrating XML files to mongo database")
-            # raise NotImplementedError("Migration is yet to implemented")
+            from GangaCore.Core.GangaRepository.DStreamer import (
+                job_migrate, job_metadata_migrate, prep_metadata_migrate
+            )
+            # get_job_done()
+            job_migrate()
+            job_metadata_migrate()
+            prep_metadata_migrate()
 
         if self.options.TEST:
             # FIXME: CONFIG CHECK
