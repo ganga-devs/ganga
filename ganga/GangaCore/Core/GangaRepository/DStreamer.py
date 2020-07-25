@@ -462,54 +462,100 @@ class JsonLoader:
         return parent_obj, errors
 
 
-class XmlToDatabaseConverter:
-    """This will ensure full backwards compatibilty.
-    Functions for creating LocalJson repo from LocalXML and vice versa.
-    """
-    from GangaCore.Runtime.Repository_runtime import getLocalRoot
-    from GangaCore.test.GPI.newXMLTest.utilFunctions import getXMLDir, getXMLFile
+# class XmlToDatabaseConverter:
+#     """This will ensure full backwards compatibilty.
+#     Functions for creating LocalJson repo from LocalXML and vice versa.
+#     """
+#     import os
+#     import pickle
 
-    box_path = os.path.join(getLocalRoot(), '6.0', 'box')
-    jobs_path = os.path.join(getLocalRoot(), '6.0', 'jobs')
-    tasks_path = os.path.join(getLocalRoot(), '6.0', 'tasks')
-    preps_path = os.path.join(getLocalRoot(), '6.0', 'preps')
-    templates_path = os.path.join(getLocalRoot(), '6.0', 'templates')
+#     from GangaCore.GPIDev.Base.Proxy import getName, addProxy
+#     from GangaCore.Runtime.Repository_runtime import getLocalRoot
+#     from GangaCore.Core.GangaRepository.VStreamer import from_file
+#     from GangaCore.Core.GangaRepository.DStreamer import (
+#         index_from_database, index_to_database,
+#         object_from_database, object_to_database
+#     )
+#     from GangaCore.test.GPI.newXMLTest.utilFunctions import getXMLDir, getXMLFile
 
-    box_metadata_path = os.path.join(getLocalRoot(), '6.0', 'box.metadata')
-    jobs_metadata_path = os.path.join(getLocalRoot(), '6.0', 'jobs.metadata')
-    prep_metadata_path = os.path.join(getLocalRoot(), '6.0', 'prep.metadata')
+#     import pymongo
+#     _ = pymongo.MongoClient()
+#     db_name = "dumbmachine"
+#     connection = _[db_name]
 
-    job_ids = [i for i in os.listdir(os.path.join(jobs_path, "0xxx"))
-               if "index" not in i]
+#     box_path = os.path.join(getLocalRoot(), '6.0', 'box')
+#     jobs_path = os.path.join(getLocalRoot(), '6.0', 'jobs')
+#     tasks_path = os.path.join(getLocalRoot(), '6.0', 'tasks')
+#     preps_path = os.path.join(getLocalRoot(), '6.0', 'preps')
+#     templates_path = os.path.join(getLocalRoot(), '6.0', 'templates')
 
-    for idx in job_ids:
-        job_file = getXMLFile(int(idx))
-        index = job_file.replace("/data", ".index")
+#     box_metadata_path = os.path.join(getLocalRoot(), '6.0', 'box.metadata')
+#     jobs_metadata_path = os.path.join(getLocalRoot(), '6.0', 'jobs.metadata')
+#     prep_metadata_path = os.path.join(getLocalRoot(), '6.0', 'prep.metadata')
+
+#     job_ids = [i for i in os.listdir(os.path.join(jobs_path, "0xxx"))
+#                if "index" not in i]
+#     indexes = []
+#     for idx in job_ids:
+#         job_file = getXMLFile(int(idx))
+#         job_folder = os.path.dirname(job_file)
+#         jeb, err = from_file(open(job_file, "rb"))
+#         _, _, index = pickle.load(
+#             open(job_file.replace("/data", ".index"), "rb"))
+
+#         # check for subjobs
+#         if "subjobs.idx" in os.listdir(job_folder):
+#             # Will store the subjobs information as well
+#             subjob_ids = [i for i in os.listdir(job_folder) if i.isdecimal()]
+#             subjob_files = [os.path.join(job_folder, i, "data")
+#                             for i in subjob_ids]
+#             subjob_indexes = pickle.load(
+#                 open(os.path.join(job_folder, "subjobs.idx"), "rb"))
+#             for s_idx in subjob_indexes:
+#                 index = subjob_indexes[s_idx]
+#                 index["master"] = jeb.id
+#                 index["classname"] = "Job"
+#                 index["category"] = "jobs"
+#                 index_to_database(data=index, document=connection.index)
+
+#             for file in subjob_files:
+#                 s_jeb = from_file(open(file, "rb"))
+#                 object_to_database(j=jeb, document=connection.jobs,
+#                                    master=jeb.id, ignore_subs=[])
+
+#         index["master"] = -1  # normal object do not have a master/parent
+#         index["classname"] = getName(jeb)
+#         index["category"] = jeb._category
+#         # index["modified_time"] = time.time()
+#         indexes.append(index)
+#         index_to_database(data=index, document=connection.index)
+#         object_to_database(j=jeb, document=connection.jobs,
+#                            master=-1, ignore_subs=[])
 
 
-"""
-Will be used later on
-from GangaCore.Utility.Config import getConfig
+# """
+# Will be used later on
+# from GangaCore.Utility.Config import getConfig
 
-    # # getting the options from the config
-    # c = getConfig("DatabaseConfigurations")
+#     # # getting the options from the config
+#     # c = getConfig("DatabaseConfigurations")
 
-    # if c["database"] == "default":
-    #     path = getConfig("Configuration")["gangadir"]
-    #     conn = "sqlite:///" + path + "/ganga.db"
-    # else:
-    #     raise NotImplementedError("Other databases are not supported")
+#     # if c["database"] == "default":
+#     #     path = getConfig("Configuration")["gangadir"]
+#     #     conn = "sqlite:///" + path + "/ganga.db"
+#     # else:
+#     #     raise NotImplementedError("Other databases are not supported")
 
-    #     import urllib
+#     #     import urllib
 
-    #     dialect = c["database"]
-    #     driver = c["driver"]
-    #     username = urllib.parse.quote_plus(c["username"])
-    #     password = urllib.parse.quote_plus(c["password"])
-    #     host = c["host"]
-    #     port = c["port"]
-    #     database = c["dbname"]
+#     #     dialect = c["database"]
+#     #     driver = c["driver"]
+#     #     username = urllib.parse.quote_plus(c["username"])
+#     #     password = urllib.parse.quote_plus(c["password"])
+#     #     host = c["host"]
+#     #     port = c["port"]
+#     #     database = c["dbname"]
 
-    # mongouri = f"mongodb://{username}:{password}@{host}:{port}/"
-    # client = pymongo.MongoClient(mongouri)
-"""
+#     # mongouri = f"mongodb://{username}:{password}@{host}:{port}/"
+#     # client = pymongo.MongoClient(mongouri)
+# """

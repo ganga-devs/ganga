@@ -310,6 +310,9 @@ under certain conditions; type license() for details.
         parser.add_option("--daemon", dest='daemon', action="store_true", default=False,
                           help='run Ganga as service.')
 
+        parser.add_option("--migrate-database", dest='migrate_database', action="store_true", default=False,
+                        help='Convert All the XMl files to database fiels')
+
         parser.set_defaults(force_interactive=False, config_file=None,
                             force_loglevel=None, rexec=1, monitoring=1, prompt=1, generate_config=None)
         parser.disable_interspersed_args()
@@ -819,6 +822,10 @@ under certain conditions; type license() for details.
         # used
 
         set_cmdline_config_options()
+
+        if self.options.migrate_database:
+            logger.info("Migrating XML files to mongo database")
+            # raise NotImplementedError("Migration is yet to implemented")
 
         if self.options.TEST:
             # FIXME: CONFIG CHECK

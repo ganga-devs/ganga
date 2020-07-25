@@ -186,7 +186,7 @@ class SubJobJsonList(GangaObject):
 
                 index_to_database(
                     data=this_cache,
-                    document=self.connection['index']
+                    document=self.connection.index
                 )
 
     def flush(self):
