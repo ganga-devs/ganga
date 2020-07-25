@@ -81,10 +81,10 @@ def index_to_database(data, document):
         document : To be added
     """
     if data:
-        if "id" in data:
-            data["modified_time"] = time.time()
+        data["modified_time"] = time.time()
+        if "id" in data and "master" in data:
             result = document.replace_one(
-                filter={"id": data["id"]}, replacement=data, upsert=True,
+                filter={"id": data["id"], "master": data["master"]}, replacement=data, upsert=True,
             )
         else:
             result = document.insert_one(data)
@@ -98,20 +98,23 @@ def index_to_database(data, document):
         return result
 
 
-def index_from_database(_filter, document):
+def index_from_database(_filter, document, many=False):
     """Save the index information into the `index` document of the database
 
     Args:
         _filter : To be added
         document : To be added
     """
-    result = document.find_one(filter=_filter)
+    if many:
+        result = [*document.find(filter=_filter)]
+    else:
+        result = document.find_one(filter=_filter)
 
-    if result is None:
-        raise DatabaseError(
-            Exception,
-            f"index could not be extracted in the document linked by {document.name}. Insertion resulted in: {result}",
-        )
+    # if result is None:
+    #     raise DatabaseError(
+    #         Exception,
+    #         f"index could not be extracted in the document linked by {document.name}. Extracted resulted in: {result}:{_filter}",
+    #     )
     return result
 
 

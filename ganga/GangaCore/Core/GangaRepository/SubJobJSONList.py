@@ -1,3 +1,4 @@
+import sys
 import time
 import copy
 import errno
@@ -148,13 +149,15 @@ class SubJobJsonList(GangaObject):
             self._subjobIndexData = {}
             self._setDirty()
 
-    def write_subJobIndex(self, ignore_disk=False):
+    def write_subJobIndex(self):
         """interface for writing the index which captures errors and alerts the user vs throwing uncaught exception
         Args:
             ignore_disk (bool): Optional flag to force the class to ignore all on-disk data when flushing
         """
         all_caches = {}
-        range_limit = list(range(len(self)))
+        range_limit = list(self._cachedJobs.keys())
+        # range_limit = list(range(len(self)))
+        # print("GAGAGA", range_limit)
 
         for sj_id in range_limit:
             if sj_id in self._cachedJobs:
@@ -165,6 +168,7 @@ class SubJobJsonList(GangaObject):
                 all_caches[sj_id]['modified'] = time.time()  # this is tempo
             else:
                 if sj_id in self._subjobIndexData:
+                    this_cache = self._subjobIndexData[sj_id]
                     all_caches[sj_id] = self._subjobIndexData[sj_id]
                 else:
                     this_cache = self._registry.getIndexCache(
@@ -175,6 +179,8 @@ class SubJobJsonList(GangaObject):
             if this_cache:
                 from GangaCore.GPIDev.Base.Proxy import getName
 
+
+                obj = self.__getitem__(sj_id)
                 this_cache["classname"] = getName(obj)
                 this_cache["category"] = obj._category
                 this_cache["master"] = self.parent_id
@@ -183,6 +189,33 @@ class SubJobJsonList(GangaObject):
                     data=this_cache,
                     document=self.connection['index']
                 )
+
+    def flush(self):
+        """Flush all subjobs to disk using XML methods
+        Args:
+            ignore_disk (bool): Optional flag to force the class to ignore all on-disk data when flushing
+        """
+        self.write_subJobIndex()
+        # if ignore_disk:
+        #     range_limit = list(self._cachedJobs.keys())
+        # else:
+        #     range_limit = list(range(len(self)))
+
+        # for index in range_limit:
+        #     if index in self._cachedJobs:
+        #         ## If it ain't dirty skip it
+        #         if not self._cachedJobs[index]._dirty:
+        #             continue
+
+        #         subjob_data = self.__get_dataFile(str(index))
+        #         subjob_obj = self._cachedJobs[index]
+
+        #         if subjob_obj is subjob_obj._getRoot():
+        #             raise GangaException(
+        #                 self, "Subjob parent not set correctly in flush.")
+
+        #         safe_save(subjob_data, subjob_obj, to_file)
+
 
     def __iter__(self):
         """Return iterator for this class"""
@@ -202,7 +235,6 @@ class SubJobJsonList(GangaObject):
             master_id=self.parent_id,
             document=self.connection.index
         )
-
         if len(self._stored_len) != 2:
             self._stored_len = []
             self._stored_len.append(time.time())
@@ -285,6 +317,8 @@ class SubJobJsonList(GangaObject):
         Args:
             index (int): The index corresponding to the subjob object we want
         """
+        # logger.info(f"WHO called ME __get__? {sys._getframe().f_back.f_code.co_name}")
+
         try:
             return self._getItem(index)
         except (GangaException, IOError, DatabaseError) as err:
@@ -298,8 +332,6 @@ class SubJobJsonList(GangaObject):
         Args:
             index (int): The index corresponding to the subjob object we want
         """
-        raise NotImplementedError
-
         logger.debug("Requesting subjob: #%s" % index)
 
         if index not in self._cachedJobs:
@@ -311,7 +343,7 @@ class SubJobJsonList(GangaObject):
                 raise GangaException("Subjob: %s does NOT exist" % index)
 
             # load the subobject into a temporary object
-            loaded_sj = object_from_database(
+            loaded_sj, err = object_from_database(
                 _filter={"id": index, "master": self.parent_id},
                 document=self.connection[self._registry.name]
             )
@@ -449,7 +481,7 @@ class SubJobJsonList(GangaObject):
             datafileName (str): name of the files containing the xml, i.e. 'data' by convention
         """
         temp = index_from_database(
-            _filter={"master": master_id}, document=document)
+            _filter={"master": master_id}, document=document, many=True)
 
         if temp is not None:
             return True
@@ -468,9 +500,10 @@ class SubJobJsonList(GangaObject):
 
         result = index_from_database(
             _filter={"master": master_id},
-            document=document
+            document=document,
+            many=True
         )
 
         if result is not None:
-            return len([*result])
+            return len(result)
         return 0

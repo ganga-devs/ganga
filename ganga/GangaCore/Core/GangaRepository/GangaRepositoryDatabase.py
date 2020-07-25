@@ -318,7 +318,9 @@ class GangaRepositoryLocal(GangaRepository):
                     for sj in getattr(obj, self.sub_split):
                         job_dict[sj.id] = stripProxy(sj)
                     tempSubJList._reset_cachedJobs(job_dict)
-                    # tempSubJList.flush(ignore_disk=True)
+                    logger.info("Flushin the subjobs now")
+                    # logger.info(f"tpye: {type(tempSubJList)}-{self.registry}")
+                    tempSubJList.flush()
                     del tempSubJList
 
                 # Saving the parent object
@@ -428,7 +430,7 @@ class GangaRepositoryLocal(GangaRepository):
         """Reads the index document from the database
         """
         master_cache = self.connection.index.find(
-            filter={"category": self.registry.name})
+            filter={"category": self.registry.name, "master": -1}) # loading masters so.
         if master_cache:
             return dict([(_['id'], True) for _ in master_cache])
             # for this_cache in master_cache:
@@ -551,7 +553,7 @@ class GangaRepositoryLocal(GangaRepository):
             return True
 
         item = index_from_database(
-            _filter={"id": this_id},
+            _filter={"id": this_id, "master": -1}, #loading master jobs
             document=self.connection.index
         )
         if item and item["modified_time"] != self._cache_load_timestamp.get(this_id, 0):
