@@ -29,7 +29,8 @@ prep_metadata_path = os.path.join(getLocalRoot(), '6.0', 'prep.metadata')
 job_ids = [i for i in os.listdir(os.path.join(jobs_path, "0xxx"))
            if "index" not in i]
 for idx in sorted(job_ids):
-    ignore_subs = []
+    # ignore_subs = []
+    ignore_subs = ["subjobs"]
     print(f"this_Idx: {idx}")
     job_file = getXMLFile(int(idx))
     job_folder = os.path.dirname(job_file)
@@ -38,7 +39,6 @@ for idx in sorted(job_ids):
         open(job_file.replace("/data", ".index"), "rb"))
     # check for subjobs
     if "subjobs.idx" in os.listdir(job_folder):
-        # Will store the subjobs information as well
         subjob_ids = [i for i in os.listdir(job_folder) if i.isdecimal()]
         subjob_files = [os.path.join(job_folder, i, "data")
                         for i in subjob_ids]
@@ -52,18 +52,16 @@ for idx in sorted(job_ids):
             s_index["master"] = jeb.id
             s_index["classname"] = getName(s_jeb)
             s_index["category"] = s_jeb._category
-            s_index["modified_time"] = time.time()
             print(f"\t this_Idx: {s_jeb.id}-{s_idx}-{jeb.id}-{s_index}\n")
 
             index_to_database(data=s_index, document=connection.index)
             object_to_database(j=s_jeb, document=connection.jobs,
                                master=jeb.id, ignore_subs=[])
 
-
     index["master"] = -1  # normal object do not have a master/parent
     index["classname"] = getName(jeb)
     index["category"] = jeb._category
-    index["modified_time"] = time.time()
     index_to_database(data=index, document=connection.index)
     object_to_database(j=jeb, document=connection.jobs,
                        master=-1, ignore_subs=[])
+    # break
