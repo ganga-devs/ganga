@@ -311,26 +311,24 @@ class GangaRepositoryLocal(GangaRepository):
                         registry=self.registry,
                         connection=self.connection,
                         parent=obj
-                        )
+                    )
                     # # equivalent to for sj in job.subjobs
                     tempSubJList._setParent(obj)
                     job_dict = {}
                     for sj in getattr(obj, self.sub_split):
                         job_dict[sj.id] = stripProxy(sj)
                     tempSubJList._reset_cachedJobs(job_dict)
-                    tempSubJList.flush(ignore_disk=True)
+                    # tempSubJList.flush(ignore_disk=True)
                     del tempSubJList
 
                 # Saving the parent object
                 safe_save(
                     _object=obj,
                     conn=self.connection[self.registry.name],
-                    ignore_subs=[],
+                    ignore_subs=[self.sub_split],
                     master=-1,
                 )
 
-                raise NotImplementedError(
-                    "You cannot give birth to jobs yet")
             else:
 
                 logger.debug("not has_children")
@@ -436,8 +434,8 @@ class GangaRepositoryLocal(GangaRepository):
             # for this_cache in master_cache:
             #     this_id = this_cache["id"]
             #     self.index_load(this_id=this_id, index=this_cache)
-                # self._cached_obj[this_id] = this_cache
-                # self.load([this_id])
+            # self._cached_obj[this_id] = this_cache
+            # self.load([this_id])
         else:
             logger.debug(
                 "No master index information exists, new/blank repository startup is assumed")
@@ -451,7 +449,6 @@ class GangaRepositoryLocal(GangaRepository):
             self._cache_load_timestamp.pop(k)
         for k in self._cached_obj.keys():
             self._cached_obj.pop(k)
-
 
     def update_index(self, this_id=None, verbose=False, firstRun=False):
         """ Update the list of available objects
@@ -543,7 +540,6 @@ class GangaRepositoryLocal(GangaRepository):
 
         return changed_ids
 
-
     def index_load(self, this_id, startup=False):
         """
         Will load index file from the database, so we know what objects exist in the database
@@ -585,7 +581,6 @@ class GangaRepositoryLocal(GangaRepository):
             logger.debug("Doubly loading of object with ID: %s" % this_id)
             logger.debug("Just silently continuing")
         return False
-
 
     def save_index(self):
         """Save the index information of this registry into the database
@@ -636,9 +631,10 @@ class GangaRepositoryLocal(GangaRepository):
 
         if has_children:
             logger.debug("Adding children")
-            raise NotImplementedError
-            # NB Keep be a SetSchemaAttribute to bypass the list manipulation which will put this into a list in some cases
-            # obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, obj))
+            obj.setSchemaAttribute(self.sub_split, SubJobJsonList(
+                registry=self.registry, connection=self.connection,
+                parent=obj
+            ))
         else:
             if obj._schema.hasAttribute(self.sub_split):
                 # Infinite loop if we use setattr btw
@@ -693,13 +689,14 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("Checking children: %s" % str(this_id))
 
         # we dont check for `children` in the demo
-        # has_children = SubJobXMLList.checkJobHasChildren(
-        #     os.path.dirname(fn), self.dataFileName
-        # )
+        has_children = SubJobJsonList.checkJobHasChildren(
+            master_id=tmpobj.id,
+            document=self.connection[self.registry.name]
+        )
 
         # logger.debug("Found children: %s" % str(has_children))
 
-        self._parse_json(this_id, has_children=False, tmpobj=tmpobj)
+        self._parse_json(this_id, has_children=has_children, tmpobj=tmpobj)
 
         if hasattr(self.objects[this_id], self.sub_split):
             sub_attr = getattr(self.objects[this_id], self.sub_split)
