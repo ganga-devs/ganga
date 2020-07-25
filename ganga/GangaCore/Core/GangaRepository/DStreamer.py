@@ -110,7 +110,7 @@ def index_from_database(_filter, document):
     if result is None:
         raise DatabaseError(
             Exception,
-            f"index could not be inserted in the document linked by {document.name}. Insertion resulted in: {result}",
+            f"index could not be extracted in the document linked by {document.name}. Insertion resulted in: {result}",
         )
     return result
 

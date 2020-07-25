@@ -200,7 +200,7 @@ class SubJobJsonList(GangaObject):
 
         subjob_count = SubJobJsonList.countSubJobDirs(
             master_id=self.parent_id,
-            document=self.connection["index"]
+            document=self.connection.index
         )
 
         if len(self._stored_len) != 2:
