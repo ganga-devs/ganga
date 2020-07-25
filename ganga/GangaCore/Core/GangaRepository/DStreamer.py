@@ -462,43 +462,29 @@ class JsonLoader:
         return parent_obj, errors
 
 
-# TODO: Add more functions here
 class XmlToDatabaseConverter:
-    """This will ensure full backwards compatibilty. Functions for creating LocalJson repo from LocalXML and vice versa.
+    """This will ensure full backwards compatibilty.
+    Functions for creating LocalJson repo from LocalXML and vice versa.
     """
+    from GangaCore.Runtime.Repository_runtime import getLocalRoot
+    from GangaCore.test.GPI.newXMLTest.utilFunctions import getXMLDir, getXMLFile
 
-    # FIXME: Better approach for conversion is to read and parse the xml, instead of calling the VStreamer functions
-    @staticmethod
-    def xml_to_json(fobj, location):
-        """Converts the xml job representation to json representation
-        """
-        from GangaCore.GPIDev.Base.Proxy import stripProxy
-        from GangaCore.Core.GangaRepository.DStreamer import object_to_database
-        from GangaCore.Core.GangaRepository.VStreamer import from_file as xml_from_file
+    box_path = os.path.join(getLocalRoot(), '6.0', 'box')
+    jobs_path = os.path.join(getLocalRoot(), '6.0', 'jobs')
+    tasks_path = os.path.join(getLocalRoot(), '6.0', 'tasks')
+    preps_path = os.path.join(getLocalRoot(), '6.0', 'preps')
+    templates_path = os.path.join(getLocalRoot(), '6.0', 'templates')
 
-        # loading the job from xml rep
-        job, error = xml_from_file(fobj)
-        stripped_j = stripProxy(job)
+    box_metadata_path = os.path.join(getLocalRoot(), '6.0', 'box.metadata')
+    jobs_metadata_path = os.path.join(getLocalRoot(), '6.0', 'jobs.metadata')
+    prep_metadata_path = os.path.join(getLocalRoot(), '6.0', 'prep.metadata')
 
-        # saving the job as a json now
-        with open(location, "r") as fout:
-            object_to_database(stripped_j, fobj=fout)
+    job_ids = [i for i in os.listdir(os.path.join(jobs_path, "0xxx"))
+               if "index" not in i]
 
-    @staticmethod
-    def json_to_xml(fobj, location):
-        """Converts the json job representation to xml one
-        """
-        from GangaCore.GPIDev.Base.Proxy import stripProxy
-        from GangaCore.Core.GangaRepository.VStreamer import to_file as xml_to_file
-        from GangaCore.Core.GangaRepository.DStreamer import object_from_file
-
-        # loading the job from json rep
-        job, error = json_from_file(fobj)
-        stripped_j = stripProxy(job)
-
-        # saving the job as a xml now
-        with open(location, "r") as fout:
-            xml_to_file(stripped_j, fobj=fout)
+    for idx in job_ids:
+        job_file = getXMLFile(int(idx))
+        index = job_file.replace("/data", ".index")
 
 
 """
