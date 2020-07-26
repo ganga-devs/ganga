@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="container mt-4 pt-2">
-        <form action="{{ url_for('config') }}" method="POST">
+    <div class="container mt-2">
+        <form action="{{ url_for('config_page') }}" method="POST">
             <div class="form-row">
                 <div class="form-group col-md-9">
                     <select class="form-control custom-select" name="section">

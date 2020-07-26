@@ -1,21 +1,59 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="container mt-4">
-        <h3 class="font-weight-light mb-2">From Templates:</h3>
+    <div class="container-fluid px-md-5">
+        <div class="row">
+            <div class="col-md-6">
+                <h3 class="mb-2">Load Job</h3>
+                <form method=post enctype=multipart/form-data>
+                    <div class="input-group mb-3">
+                        <div class="custom-file">
+                            <input type="file" name="loadjobfile" class="custom-file-input" id="loadfileInput">
+                            <label class="custom-file-label" for="loadfileInput"
+                                   aria-describedby="loadfileInputAddon">Choose file</label>
+                        </div>
+                        <div class="input-group-append">
+                            <input class="input-group-text" id="loadfileInputAddon" type=submit value=Upload>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-2 d-flex align-items-center justify-content-between">
+                    <h3 class="my-0 d-inline-block">Run File</h3><a href="{{ url_for('quick_runfile') }}">Quick Create Run File</a>
+                </div>
+                <form method=post enctype=multipart/form-data>
+                    <div class="input-group mb-3">
+                        <div class="custom-file">
+                            <input type="file" name="runfile" class="custom-file-input" id="runfileInput">
+                            <label class="custom-file-label" for="runfileInput"
+                                   aria-describedby="inputGroupFileAddon02">Choose file</label>
+                        </div>
+                        <div class="input-group-append">
+                            <input class="input-group-text" id="inputGroupFileAddon02" type=submit value=Upload>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <hr class="my-3">
+        <div class="mb-2 d-flex align-items-center justify-content-between">
+            <h3 class="my-0 d-inline-block">From Templates</h3><a href="{{ url_for('templates_page') }}">Explore All Templates</a>
+        </div>
         <div class="row">
             {% for t in templates_list %}
                 <div class="col-md-4 mb-4">
-                    <div class="card">
+                    <div class="card" id="template-card" data-template_id="{{ t['id'] }}">
                         <div class="card-body">
-                            <h6 class="card-title">{% if t.name %} {{ t.name }} {% else %} Unnamed Template{% endif %}</h6>
+                            <h6 class="card-title">{{ t['name'] if t['name'].strip() != '' else 'Unnamed Template' }}</h6>
                             <hr class="my-1">
-                            <p class="m-0 p-0">fqid: {{ t.id|string }}</p>
-                            <p class="m-0 p-0">Subjobs: {{ t.subjobs|length }}</p>
-                            <p class="m-0 p-0">Application: {{ (t.application|string).split('(')[0] }}</p>
-                            <p class="m-0 p-0">Backend: {{ (t.backend|string).split('(')[0] }}</p>
-                            <p class="m-0 p-0">backend.actualCE: {{ t.backend.actualCE|string }}</p>
-                            <p class="m-0 p-0">Comment: {{ t.comment|string }}</p>
-                            <a href="#" class="btn btn-sm btn-block btn-primary mt-2">Create</a>
+                            <p class="m-0 p-0">id: {{ t['id'] }}</p>
+                            <p class="m-0 p-0">application: {{ t['application'].split('(')[0] }}</p>
+                            <p class="m-0 p-0">backend: {{ t['backend'].split('(')[0] }}</p>
+                            <p class="m-0 p-0">backend.actualCE: {{ t['backend.actualCE'] }}</p>
+                            <p class="m-0 p-0">comment: {{ t['comment'] }}</p>
+                            <div onclick="createJob({{ t['id'] }})" class="btn btn-sm btn-block btn-primary mt-2">
+                                Create
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -23,3 +61,6 @@
         </div>
     </div>
 {% endblock content %}
+{% block footer %}
+    <script defer src="{{ url_for('static', filename='js/create.js') }}"></script>
+{% endblock footer %}

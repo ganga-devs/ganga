@@ -10,3 +10,4 @@ class Config(object):
     SECRET_KEY = os.environ.get("SECRET_KEY") or "f3aa26t8b537abf6ee6305eefea0a10a"
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "gui_db.sqlite")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    UPLOAD_FOLDER = os.path.join(basedir, "gui", "static", "uploads")
