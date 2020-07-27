@@ -59,7 +59,10 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: CHECK
-        run: echo $(basename ${GITHUB_REF})
+        run: |
+          VERSION=$(basename ${GITHUB_REF})
+          echo ${VERSION}
+          git checkout ${VERSION}
       #- name: Create Deployment
       #  run: |
       #    VERSION=$(basename ${GITHUB_REF})
