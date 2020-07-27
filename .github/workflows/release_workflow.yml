@@ -46,21 +46,26 @@ jobs:
         git push --tags
     - name: Update release
       run: |
-        curl --request DELETE \
+        DATA=`jo tag_name=${VERSION} draft=false prerelease=true`
+        curl --request PATCH \
              --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/$REL_ID \
-             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
-        REL_DATA='{
-          "name": "'"Ganga ${VERSION}"'",
-          "tag_name": "'${VERSION}'",
-          "body": "'`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | awk '{printf "%s\\n", $0}'`'",
-          "draft": false,
-          "prerelease": true
-        }'
-        BODY=`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | tr -s "\n" | awk '{printf "%s\\n", $0}'`
-        DATA=`jo name="Ganga ${VERSION}" tag_name=${VERSION} draft=false prerelease=true body="$BODY"`
-        echo "$TEST"
-        curl --request POST \
-             --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases \
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
              --header 'content-type: application/json' \
              --data "$DATA"
+        #curl --request DELETE \
+        #     --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/$REL_ID \
+        #     --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
+        #REL_DATA='{
+        #  "name": "'"Ganga ${VERSION}"'",
+        #  "tag_name": "'${VERSION}'",
+        #  "body": "'`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | awk '{printf "%s\\n", $0}'`'",
+        #  "draft": false,
+        #  "prerelease": true
+        #}'
+        #BODY=`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | tr -s "\n" | awk '{printf "%s\\n", $0}'`
+        #DATA=`jo name="Ganga ${VERSION}" tag_name=${VERSION} draft=false prerelease=true body="$BODY"`
+        #curl --request POST \
+        #     --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases \
+        #     --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+        #     --header 'content-type: application/json' \
+        #     --data "$DATA"
