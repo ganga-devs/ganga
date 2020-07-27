@@ -58,6 +58,8 @@ jobs:
     needs: retag
     steps:
       - uses: actions/checkout@v1
+      - name: Install JSON tools
+        run: sudo apt-get install -y jo
       - name: Setup for deployment
         run: |
           pip install --upgrade pip setuptools wheel
