@@ -33,7 +33,6 @@ jobs:
       run: |
         ! read -rd"\n" REL_ID BODY < <(curl --request GET --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/tags/${VERSION} | jq -r '.id, .body')
         echo "::set-env name=REL_ID::${REL_ID}"
-        echo "::set-env name=BTEST::$'`echo "$BODY"`'"
         echo "${BODY}" > ganga/GangaRelease/ReleaseNotes-${VERSION}
         git add ganga/GangaRelease/ReleaseNotes-${VERSION}
         git commit -m "Creating release notes for version ${VERSION}"
@@ -61,4 +60,4 @@ jobs:
              --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases \
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
              --header 'content-type: application/json' \
-             --data "$REL_DATA"
+             --data `echo "$REL_DATA" | tr -s "\n" | awk '{printf "%s\\n", $0}'`
