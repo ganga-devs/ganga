@@ -56,7 +56,7 @@ jobs:
         }'
         REL_DATA=`echo -n "$REL_DATA" | tr -s "\n" | awk '{printf "%s\\n", $0}'`
         echo "$REL_DATA"
-        apt-get install -y jo
+        sudo apt-get install -y jo
         A=`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | awk '{printf "%s\\n", $0}'`
         TEST=`jo name="Ganga ${VERSION}" tag_name=${VERSION} draft=false prerelease=true body=$A`
         echo "$TEST"
