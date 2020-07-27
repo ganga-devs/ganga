@@ -56,7 +56,7 @@ jobs:
           "prerelease": true
         }'
         echo "$REL_DATA"
-        echo "$REL_DATA" | awk '{printf "%s\\n", $0}'
+        echo "$REL_DATA" | tr -s "\n" | awk '{printf "%s\\n", $0}'
         curl --request POST \
              --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases \
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
