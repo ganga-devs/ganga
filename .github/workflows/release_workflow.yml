@@ -56,11 +56,9 @@ jobs:
         }'
         REL_DATA=`echo -n "$REL_DATA" | tr -s "\n" | awk '{printf "%s\\n", $0}'`
         echo "$REL_DATA"
-        echo "curl --request POST \
-             --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases \
-             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-             --header 'content-type: application/json' \
-             --data \"$REL_DATA\""
+        A=`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | awk '{printf "%s\\n", $0}'`
+        TEST=`jo name="Ganga ${VERSION}" tag_name=${VERSION} draft=false prerelease=true body=$A
+        echo "$TEST"
         curl --request POST \
              --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases \
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
