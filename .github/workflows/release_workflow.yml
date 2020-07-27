@@ -46,7 +46,7 @@ jobs:
         git push --tags
     - name: Update release
       run: |
-        DATA=`jo tag_name=${VERSION} draft=false prerelease=true`
+        DATA=`jo tag_name=${VERSION} draft=false`
         curl --request PATCH \
              --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/$REL_ID \
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
