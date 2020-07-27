@@ -7,7 +7,7 @@ on:
 
 jobs:
   retag:
-    name: Update version number
+    name: Set version numbers and retag release
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -52,20 +52,38 @@ jobs:
              --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
              --header 'content-type: application/json' \
              --data "$DATA"
-        #curl --request DELETE \
-        #     --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/$REL_ID \
-        #     --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
-        #REL_DATA='{
-        #  "name": "'"Ganga ${VERSION}"'",
-        #  "tag_name": "'${VERSION}'",
-        #  "body": "'`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | awk '{printf "%s\\n", $0}'`'",
-        #  "draft": false,
-        #  "prerelease": true
-        #}'
-        #BODY=`cat ganga/GangaRelease/ReleaseNotes-${VERSION} | tr -s "\n" | awk '{printf "%s\\n", $0}'`
-        #DATA=`jo name="Ganga ${VERSION}" tag_name=${VERSION} draft=false prerelease=true body="$BODY"`
-        #curl --request POST \
-        #     --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases \
-        #     --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-        #     --header 'content-type: application/json' \
-        #     --data "$DATA"
+  deploy:
+    name: Deploy to PyPI
+    runs-on: ubuntu-latest
+    needs: retag
+    steps:
+      - uses: actions/checkout@v1
+      - name: Create Deployment
+        run: |
+          VERSION=$(basename ${GITHUB_REF})
+          echo "::set-env name=VERSION::${VERSION}"
+          DATA=`jo ref=${VERSION} environment=PyPI description="Deploy Ganga ${VERSION} to PyPI"`
+          STATUS_URL=`curl --request POST \
+                           --url ${GITHUB_API_URL}/repos/${{ github.repository }}/deployments \
+                           --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+                           --header 'content-type: application/json' \
+                           --data "$DATA" | jq -r '.statuses_url'`
+          echo "::set-env name=STATUS_URL::${STATUS_URL}"
+      - name: Set deployment status pending
+        run: |
+          DATA=`jo state=pending description="Starting deployment of Ganga ${VERSION} to PyPI"`
+          curl --request POST \
+               --url ${STATUS_URL} \
+               --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+               --header 'content-type: application/json' \
+               --data "$DATA"
+      - name: Deploy to PyPI
+        run: echo DEPLOY
+      - name: Set deployment status success
+        run: |
+          DATA=`jo state=success description="Deployment of Ganga ${VERSION} to PyPI"`
+          curl --request POST \
+               --url ${STATUS_URL} \
+               --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+               --header 'content-type: application/json' \
+               --data "$DATA"
