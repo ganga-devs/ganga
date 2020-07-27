@@ -79,6 +79,15 @@ jobs:
                --data "$DATA"
       - name: Deploy to PyPI
         run: echo DEPLOY
+      - name: Set deployment status failure
+        if: ${{ failure() }}
+        run: |
+          DATA=`jo state=failure description="Deployment of Ganga ${VERSION} to PyPI failed!"`
+          curl --request POST \
+               --url ${STATUS_URL} \
+               --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+               --header 'content-type: application/json' \
+               --data "$DATA"
       - name: Set deployment status success
         run: |
           DATA=`jo state=success description="Deployment of Ganga ${VERSION} to PyPI"`
