@@ -90,7 +90,7 @@ def checkDiskQuota():
         except GangaException as err:
             raise
         except Exception as err:
-            logger.info("Error checking disk partition: %s" % err)
+            logger.error("Error checking disk partition: %s" % err)
 
     return
 
