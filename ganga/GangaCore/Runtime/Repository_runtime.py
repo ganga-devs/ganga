@@ -77,7 +77,7 @@ def checkDiskQuota():
         try:
             global partition_warning
             global partition_critical
-            quota_percent = output.split('%')[0]
+            quota_percent = output.split(b'%')[0]
             if int(quota_percent) >= partition_warning:
                 logger.warning("WARNING: You're running low on disk space, Ganga may stall on launch or fail to download job output")
                 logger.warning("WARNING: Please free some disk space on: %s" % data_partition)
@@ -90,7 +90,7 @@ def checkDiskQuota():
         except GangaException as err:
             raise
         except Exception as err:
-            logger.debug("Error checking disk partition: %s" % err)
+            logger.error("Error checking disk partition: %s" % err)
 
     return
 
