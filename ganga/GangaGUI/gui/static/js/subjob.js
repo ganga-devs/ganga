@@ -1,26 +1,30 @@
 document.addEventListener('DOMContentLoaded', () => {
-
-    setInterval(refreshStatus, 2000)
-
+    setTimeout(refreshStatus, 0)
 });
 
 function handleOnSelectAttribute() {
-    const job_id = document.querySelector("#subjobInfo").dataset.job_id;
-    const subjob_id = document.querySelector("#subjobInfo").dataset.subjob_id;
-    const attribute = document.querySelector("#attributeSelect").value;
-    console.log(job_id, subjob_id, attribute)
-    getSubjobAttributeInfo(job_id, subjob_id, attribute);
+    const jobId = document.querySelector("#subjob-info").dataset.job_id;
+    const subjobId = document.querySelector("#subjob-info").dataset.subjob_id;
+    const attribute = document.querySelector("#attribute-select").value;
+    getSubjobAttributeInfo(jobId, subjobId, attribute);
 }
 
 function getSubjobAttributeInfo(job_id, subjob_id, attribute) {
+
     fetch(`/api/job/${job_id}/subjob/${subjob_id}/${attribute}`)
         .then(response => response.json())
         .then(data => {
-            const attributeInfoBox = document.querySelector("#attributeInfoBox");
-            attributeInfoBox.innerHTML = data[attribute]
+            if (data["success"] === false) {
+                // If API response false, display error
+                displayToast(notificationCount, data["message"], currentTime(), "danger");
+                notificationCount++;
+            } else {
+                const attributeInfoBox = document.querySelector("#attribute-info-box");
+                attributeInfoBox.innerHTML = data[attribute];
+            }
         })
         .catch(err => {
-            displayToast(notificationCount, err, Date.now(), "danger")
+            displayToast(notificationCount, err, currentTime(), "danger");
             notificationCount++;
         })
     ;
@@ -28,25 +32,32 @@ function getSubjobAttributeInfo(job_id, subjob_id, attribute) {
 
 function refreshStatus() {
 
-    const job_id = document.querySelector("#subjobInfo").dataset.job_id;
-    const subjob_id = document.querySelector("#subjobInfo").dataset.subjob_id;
+    console.log("Hello")
 
-    const statusColor = {
-        "new": "info", "completed": "success", "failed": "danger", "running": "primary",
-        "submitted": "secondary", "killed": "warning"
-    }
+    const job_id = document.querySelector("#subjob-info").dataset.job_id;
+    const subjob_id = document.querySelector("#subjob-info").dataset.subjob_id;
+
 
     fetch(`/api/job/${job_id}/subjob/${subjob_id}/status`)
         .then(response => response.json())
         .then(data => {
-            document.querySelector(`#subjob-id-${subjob_id}-status`).innerHTML = data["status"]
-            document.querySelector(`#subjob-id-${subjob_id}-status`).className = `badge badge-${statusColor[data["status"]]} badge-pill ml-2`
+            if (data["success"] === false) {
+                // If API response false, display error
+                displayToast(notificationCount, data["message"], currentTime(), "danger");
+                notificationCount++;
+            } else {
+                document.querySelector(`#subjob-id-${subjob_id}-status`).innerHTML = data["status"];
+                document.querySelector(`#subjob-id-${subjob_id}-status`).className = `badge badge-${statusColor[data["status"]]} badge-pill ml-2`;
+            }
         })
         .catch(err => {
-            displayToast(notificationCount, err, Date.now(), "danger")
+            displayToast(notificationCount, err, currentTime(), "danger");
             notificationCount++;
         })
     ;
 
+    // Recursively refresh
+    let refreshInterval = Number(localStorage.getItem('refreshInterval')) || 5000;
+    setTimeout(refreshStatus, refreshInterval);
 }
 

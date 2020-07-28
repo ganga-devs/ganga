@@ -1,36 +1,40 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("It works")
-    setInterval(refreshJobs, 2000)
+    setTimeout(refreshJobs, 0)
 });
 
 
 // Refresh jobs
 function refreshJobs() {
 
+    // Get HTML node container job id in their dataset
     let jobNodes = document.querySelectorAll(".job");
+
+    // Extract job id from the dataset of the HTML nodes
     let jobIds = JSON.stringify(Array.from(jobNodes).map(node => node.dataset["id"]));
 
-    const statusColor = {
-        "new": "info", "completed": "success", "failed": "danger", "running": "primary",
-        "submitted": "secondary", "killed": "warning"
-    }
-
+    // Make ajax request to server and update the status of the job
     fetch(`/api/jobs?ids=${jobIds}`)
         .then(response => response.json())
         .then(data => {
             if (data["success"] === false) {
-                displayToast(notificationCount, data["message"], currentTime(), "danger")
+                // If server response is false display error
+                displayToast(notificationCount, data["message"], currentTime(), "danger");
                 notificationCount++;
             } else {
-                console.log(data)
+                // Update status
                 for (let i = 0; i < data.length; i++) {
-                    document.querySelector(`#job-id-${data[i]["id"]}-status`).innerHTML = data[i]["status"]
-                    document.querySelector(`#job-id-${data[i]["id"]}-status`).className = `badge badge-${statusColor[data[i]["status"]]} badge-pill`
+                    document.querySelector(`#job-id-${data[i]["id"]}-status`).innerHTML = data[i]["status"];
+                    document.querySelector(`#job-id-${data[i]["id"]}-status`).className = `badge badge-${statusColor[data[i]["status"]]} badge-pill`;
                 }
             }
         })
         .catch(err => {
-            displayToast(notificationCount, err, Date.now(), "danger")
+            // Display js error, if any
+            displayToast(notificationCount, err, currentTime(), "danger");
             notificationCount++;
         })
+
+    // Recursively refresh
+    let refreshInterval = Number(localStorage.getItem('refreshInterval')) || 5000;
+    setTimeout(refreshJobs, refreshInterval);
 }

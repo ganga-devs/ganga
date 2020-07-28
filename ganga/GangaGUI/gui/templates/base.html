@@ -69,6 +69,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="http://ganga.readthedocs.io">Help</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('shutdown') }}">Shutdown</a>
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -91,11 +94,17 @@
 
     <!-- Footer -->
     <nav class="mt-5 navbar navbar-light bg-light border-top">
-        <ul class="navbar-nav ml-auto">
-                <span class="navbar-text">
-                    Ganga GUI GSoC Project
-                </span>
-        </ul>
+            <div class="form-group col-md-1 mt-2">
+                <select id="refresh-interval" onchange="updateRefreshInterval();" class="custom-select">
+                    <option value="1000">1</option>
+                    <option value="2000">2</option>
+                    <option value="5000" selected>5</option>
+                    <option value="10000">10</option>
+                    <option value="30000">30</option>
+                    <option value="60000">60</option>
+                </select>
+            </div>
+
     </nav>
 </div>
 

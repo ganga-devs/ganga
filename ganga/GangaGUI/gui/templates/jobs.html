@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block content %}
     <div class="container-fluid">
         <div class="col">
@@ -8,8 +9,8 @@
                 <div class="form-row">
                     <div class="col-md-2">
                         <div class="form-group">
-                            <label for="jobsPerPage">Jobs Per Page</label>
-                            <select name="jobs-per-page" class="form-control custom-select" id="jobsPerPage">
+                            <label for="jobs-per-page">Jobs Per Page</label>
+                            <select name="jobs-per-page" class="form-control custom-select" id="jobs-per-page">
                                 {% for n in [10, 20, 40, 80] %}
                                     <option {{ 'selected' if session['jobs_per_page'] == n }} value="{{ n }}">{{ n }}</option>
                                 {% endfor %}
@@ -18,40 +19,40 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="jobStatus">Job Status</label>
-                            <select name="job_status" class="form-control custom-select" id="jobStatus">
+                            <label for="job-status">Job Status</label>
+                            <select name="job-status" class="form-control custom-select" id="job-status">
                                     <option value="any">Any</option>
                                 {% for s in ['New', 'Running', 'Completed', 'Failed', 'Killed'] %}
-                                    <option {{ 'selected' if session['job_status'] == s|lower }}  value="{{ s|lower }}">{{ s }}</option>
+                                    <option {{ 'selected' if session['jobs_filter']['status'] == s|lower }}  value="{{ s|lower }}">{{ s }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="jobApplication">Job Application</label>
-                            <select name="job_application" class="form-control custom-select" id="jobApplication">
+                            <label for="job-application">Job Application</label>
+                            <select name="job-application" class="form-control custom-select" id="job-application">
                                 <option value="any">Any</option>
                                 {% for a in applications %}
-                                    <option {{ 'selected' if session['job_application'] == a }} value="{{ a }}">{{ a }}</option>
+                                    <option {{ 'selected' if session['jobs_filter']['application'] == a }} value="{{ a }}">{{ a }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="jobBackend">Job Backend</label>
-                            <select name="job_backend" class="form-control custom-select" id="jobBackend">
+                            <label for="job-backend">Job Backend</label>
+                            <select name="job-backend" class="form-control custom-select" id="job-backend">
                                 <option value="any">Any</option>
                                 {% for b in backends %}
-                                    <option {{ 'selected' if session['job_backend'] == b }} value="{{ b }}">{{ b }}</option>
+                                    <option {{ 'selected' if session['jobs_filter']['backend'] == b }} value="{{ b }}">{{ b }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
                     <div class="col-md-1">
-                        <label class="d-none d-md-block" for="filterButton">&nbsp;</label>
-                        <button type="submit" id="filterButton" class="btn btn-primary btn-block">Apply</button>
+                        <label class="d-none d-md-block" for="filter-button">&nbsp;</label>
+                        <button type="submit" id="filter-button" class="btn btn-primary btn-block">Apply</button>
                     </div>
                 </div>
             </form>
@@ -69,15 +70,15 @@
                 </thead>
                 <tbody>
                 {% for j in jobs_info_list %}
-                    <tr class="job" id="job-{{ j.id }}" data-id="{{ j.id }}" data-status="{{ j.status }}">
-                        <th class="align-middle" scope="row">{{ j.id }}</th>
+                    <tr class="job" id="job-{{ j.get('id') }}" data-id="{{ j.get('id') }}" data-status="{{ j.get('status') }}">
+                        <th class="align-middle" scope="row">{{ j.get('id') }}</th>
                         <td class="align-middle"><span id="job-id-{{j.id}}-status"
-                                class="badge badge-{{ status_color[j.status] }} badge-pill">{{ j.status }}</span></td>
-                        <td class="align-middle">{{ j.name if j.name.strip() != '' else 'Unnamed Job' }}</td>
-                        <td class="align-middle">{{ j.subjobs }}</td>
-                        <td class="align-middle text-break">{{ (j.application).split('(')[0] }}</td>
-                        <td class="align-middle text-break">{{ (j.backend).split('(')[0] }}</td>
-                        <td class="align-middle"><a href="{{ url_for('job_page', job_id=j.id) }}"
+                                class="badge badge-{{ status_color[j.get('status')] }} badge-pill">{{ j.get('status') }}</span></td>
+                        <td class="align-middle">{{ j.get('name') if (j.get('name')|string).strip() != '' else 'Unnamed Job' }}</td>
+                        <td class="align-middle">{{ j.get('subjobs') }}</td>
+                        <td class="align-middle text-break">{{ (j.get('application')|string).split('(')[0] }}</td>
+                        <td class="align-middle text-break">{{ (j.get('backend')|string).split('(')[0] }}</td>
+                        <td class="align-middle"><a href="{{ url_for('job_page', job_id=j.get('id')) }}"
                                                     class="btn btn-sm btn-primary">Job Info</a></td>
                     </tr>
                 {% endfor %}
@@ -99,6 +100,7 @@
         </div>
     </div>
 {% endblock content %}
+
 {% block footer %}
     <script defer src="{{ url_for('static', filename='js/jobs.js') }}"></script>
 {% endblock footer %}

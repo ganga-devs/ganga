@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
+
 {% block content %}
     <div class="container-fluid px-md-5">
         {# Quick Statistics Section #}
-        <h3 class="">Quick Statistics</h3>
+        <h3>Quick Statistics</h3>
         <div class="row">
             <div class="col-lg">
                 {# Statistics Card - New #}
@@ -59,46 +60,69 @@
             {# Recent Jobs Section #}
             <div class="col-md-6">
                 <h3>Recent Jobs</h3>
-                <div class="accordion" id="recentjobs">
+                <div class="accordion" id="recent-jobs">
                     <div class="list-group">
                         {% for j in recent_jobs_info|reverse %}
-                            <a href="#" id="job-id-{{ j.id }}"
+                            <a href="#" id="job-id-{{ j.get('id') }}"
                                class="recent-job list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last  }}"
-                               data-id="{{ j.id }}" data-status="{{ j.status }}" data-toggle="collapse"
-                               data-target="#collapse-job-id-{{ j.id }}" aria-expanded="true"
-                               aria-controls="collapse-job-id-{{ j.id }}">
-                                {{ j.id + '. ' + j.name if j.name.strip() != '' else j.id + '. '+ 'Unnamed Job' }}
-                                <span  id="job-id-{{ j.id }}-status" class="badge badge-{{ status_color[j.status] }} badge-pill">{{ j['status'] }}</span>
+                               data-id="{{ j.get('id') }}" data-status="{{ j.get('status') }}" data-toggle="collapse"
+                               data-target="#collapse-job-id-{{ j.get('id') }}" aria-expanded="true"
+                               aria-controls="collapse-job-id-{{ j.get('id') }}">
+                                {{ j.get('id') + '. ' + j.get('name') if j.get('name').strip() != '' else j.get('id') + '. '+ 'Unnamed Job' }}
+                                <span  id="job-id-{{ j.get('id') }}-status" class="badge badge-{{ status_color[j.get('status')] }} badge-pill">{{ j.get('status') }}</span>
                             </a>
-                            <div id="collapse-job-id-{{ j.id }}" class="collapse border-left border-right {{ 'border-bottom rounded-bottom' if loop.last }}"
-                                 aria-labelledby="headingOne"
-                                 data-parent="#recentjobs">
+                            <div id="collapse-job-id-{{ j.get('id') }}" class="collapse border-left border-right {{ 'border-bottom rounded-bottom' if loop.last }}"
+                                 data-parent="#recent-jobs">
                                 <div class="card-body">
-                                    <p class="m-0 p-0">fqid: {{ j['fqid'] }}</p>
-                                    <p class="m-0 p-0">subjobs: {{ j['subjobs'] }}</p>
-                                    <p class="m-0 p-0">application: {{ (j.application|string).split('(')[0] }}</p>
-                                    <p class="m-0 p-0">backend: {{ (j.backend|string).split('(')[0] }}</p>
-                                    <p class="m-0 p-0">backend.actualCE: {{ j['backend.actualCE'] }}</p>
-                                    <p class="m-0 p-0">comment: {{ j['comment'] }}</p>
-                                    <p class="m-0 p-0">subjobs statuses: {{ j['subjob_statuses'] }}</p>
+                                    <p class="m-0 p-0">fqid: {{ j.get('fqid') }}</p>
+                                    <p class="m-0 p-0">subjobs: {{ j.get('subjobs') }}</p>
+                                    <p class="m-0 p-0">application: {{ (j.get('application')|string).split('(')[0] }}</p>
+                                    <p class="m-0 p-0">backend: {{ (j.get('backend')|string).split('(')[0] }}</p>
+                                    <p class="m-0 p-0">backend.actualCE: {{ j.get('backend.actualCE') }}</p>
+                                    <p class="m-0 p-0">comment: {{ j.get('comment') }}</p>
+                                    <p class="m-0 p-0">subjobs statuses: {{ j.get('subjob_statuses') }}</p>
+                                    <a href="{{ url_for('job_page', job_id=j.get('id')) }}" class="btn btn-sm btn-primary mt-3">View Job</a>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 mt-3 mt-md-0 d-flex flex-column">
-                <h3>Job Chart</h3>
-                <div class="card mx-auto flex-grow-1 w-100">
-                    <div class="card-body d-flex justify-content-center">
-                        <canvas id="statChart" class="m-auto"></canvas>
+            {# Pinned Jobs Section #}
+            <div class="col-md-6">
+                <h3>Pinned Jobs</h3>
+                <div class="accordion" id="recent-jobs">
+                    <div class="list-group">
+                        {% for j in pinned_jobs|reverse %}
+                            <a href="#" id="job-id-{{ j.get('id') }}"
+                               class="recent-job list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last  }}"
+                               data-id="{{ j.get('id') }}" data-status="{{ j.get('status') }}" data-toggle="collapse"
+                               data-target="#collapse-job-id-{{ j.get('id') }}" aria-expanded="true"
+                               aria-controls="collapse-job-id-{{ j.get('id') }}">
+                                {{ j.get('id') + '. ' + j.get('name') if j.get('name').strip() != '' else j.get('id') + '. '+ 'Unnamed Job' }}
+                                <span  id="job-id-{{ j.get('id') }}-status" class="badge badge-{{ status_color[j.get('status')] }} badge-pill">{{ j.get('status') }}</span>
+                            </a>
+                            <div id="collapse-job-id-{{ j.get('id') }}" class="collapse border-left border-right {{ 'border-bottom rounded-bottom' if loop.last }}"
+                                 data-parent="#recent-jobs">
+                                <div class="card-body">
+                                    <p class="m-0 p-0">fqid: {{ j.get('fqid') }}</p>
+                                    <p class="m-0 p-0">subjobs: {{ j.get('subjobs') }}</p>
+                                    <p class="m-0 p-0">application: {{ (j.get('application')|string).split('(')[0] }}</p>
+                                    <p class="m-0 p-0">backend: {{ (j.get('backend')|string).split('(')[0] }}</p>
+                                    <p class="m-0 p-0">backend.actualCE: {{ j.get('backend.actualCE') }}</p>
+                                    <p class="m-0 p-0">comment: {{ j.get('comment') }}</p>
+                                    <p class="m-0 p-0">subjobs statuses: {{ j.get('subjob_statuses') }}</p>
+                                    <a href="{{ url_for('job_page', job_id=j.get('id')) }}" class="btn btn-sm btn-primary mt-3">View Job</a>
+                                </div>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 {% endblock content %}
+
 {% block footer %}
     <script defer src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock footer %}

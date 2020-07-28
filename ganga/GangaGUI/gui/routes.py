@@ -2,25 +2,31 @@ import io
 import os
 import jwt
 import json
-from functools import wraps, reduce
+from functools import wraps
 from itertools import chain
 from flask import request, jsonify, render_template, flash, redirect, url_for, session, send_file
 from GangaGUI.gui import app
 from GangaGUI.gui.models import User
 
-# ******************** View Routes ******************** #
+# ******************** Global Variables ******************** #
 
-# Global Variables
-
-# Colors showed for different job status in the GUI
-status_color = {"new": "info", "completed": "success", "failed": "danger", "running": "primary",
-                "submitted": "secondary", "killed": "warning"}
+# Colors showed for different job status in the GUI based on bootstrap
+status_color = {
+    "new": "info",
+    "completed": "success",
+    "failed": "danger",
+    "running": "primary",
+    "submitted": "secondary",
+    "killed": "warning"
+}
 
 # Allowed extensions when uploading any files to GUI
 ALLOWED_EXTENSIONS = {'txt', 'py'}
 
 
-# Dashboard route
+# ******************** View Routes ******************** #
+
+# Dashboard view
 @app.route("/")
 def dashboard():
     try:
@@ -30,11 +36,12 @@ def dashboard():
         import ganga.ganga
         from ganga import jobs
 
-    recent_jobs_info = []
     quick_statistics = {}
+    recent_jobs_info = []
+    pinned_jobs = []
 
     try:
-        # Set quick statistics
+        # Get quick statistics
         for stat in ["new", "running", "completed", "failed", "killed"]:
             quick_statistics[stat] = len(jobs.select(status=stat))
 
@@ -42,45 +49,28 @@ def dashboard():
         recent_jobs = list(jobs[-10:])
         for j in recent_jobs:
             recent_jobs_info.append(get_job_info(j.id))
+
     except Exception as err:
+        # Flash the error in the GUI
         flash(str(err), "danger")
 
-    return render_template("dashboard.html", title="Dashboard", status_color=status_color,
+    return render_template("dashboard.html",
+                           title="Dashboard",
                            quick_statistics=quick_statistics,
-                           recent_jobs_info=recent_jobs_info)
+                           recent_jobs_info=recent_jobs_info,
+                           pinned_jobs=pinned_jobs,
+                           status_color=status_color)
 
 
-# Refresh Dashboard Route
-@app.route("/api/jobs/stats")
-def jobs_stats_endpoint():
-    try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
-
-    quick_statistics = {}
-
-    try:
-        # Set quick statistics
-        for stat in ["new", "running", "completed", "failed", "killed"]:
-            quick_statistics[stat] = len(jobs.select(status=stat))
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)}), 400
-
-    return jsonify(quick_statistics)
-
-
+# Config View
 @app.route("/config", methods=["GET", "POST"])
 def config_page():
-    # TODO Change imports
     try:
-        from GangaCore.GPI import jobs, config
+        from GangaCore.GPI import config
     except ImportError:
         import ganga
         import ganga.ganga
-        from ganga import jobs, config
+        from ganga import config
 
     from GangaCore import getConfig
 
@@ -93,15 +83,21 @@ def config_page():
     except Exception as err:
         flash(str(err), "danger")
 
+    # When GUI request for specific section
     if request.method == "POST":
-        sectionName = request.form.get("section")
-        if sectionName is not None:
-            section = getConfig(str(sectionName))
+
+        # Get section name for request form data
+        section_name = request.form.get("section")
+
+        if section_name is not None:
+            section = getConfig(str(section_name))
             sections.append(section)
+
             return render_template("config.html", title="Config", sections=sections, configList=config_list)
         else:
             flash("Please select a config section to view.", "warning")
 
+    # Add all sections from config
     for c in config_list:
         section = getConfig(c)
         sections.append(section)
@@ -109,36 +105,39 @@ def config_page():
     return render_template("config.html", title="Config", sections=sections, configList=config_list)
 
 
+# Create View
 @app.route("/create", methods=["GET", "POST"])
 def create_page():
-    # TODO Change
     try:
-        from GangaCore.GPI import jobs, templates, jobs, templates, load, runfile, Job
+        from GangaCore.GPI import templates, load, runfile
     except:
         import ganga
         import ganga.ganga
-        from ganga import jobs, templates, load, runfile, Job
+        from ganga import templates, load, runfile
 
+    # Handle file uploads
     if request.method == "POST":
 
-        # Load job from a uploaded file
+        # Load from a uploaded file
         if "loadjobfile" in request.files:
             load_job_file = request.files["loadjobfile"]
             if load_job_file.filename == '':
                 flash("No selected file", "warning")
                 return redirect(request.url)
 
+            # If valid file, the save the file
             if load_job_file and allowed_file(load_job_file.filename):
-                save_path = os.path.join(app.config["UPLOAD_FOLDER"], "gui_load_job.txt")
+                save_path = os.path.join(app.config["UPLOAD_FOLDER"], "loadjobfile.txt")
                 load_job_file.save(save_path)
 
+                # Load the file
                 try:
                     j = load(save_path)
                 except Exception as err:
                     flash(str(err), "danger")
                     return redirect(request.url)
 
-                flash(f"Succesfully loaded job!", "success")
+                flash(f"Successfully loaded the file!", "success")
                 return redirect(request.url)
 
         # Run commands from a uploaded file
@@ -148,10 +147,12 @@ def create_page():
                 flash('No selected file', "warning")
                 return redirect(request.url)
 
+            # If valid file, save the file
             if run_file and allowed_file(run_file.filename):
-                save_path = os.path.join(app.config["UPLOAD_FOLDER"], "gui_run_file.py")
+                save_path = os.path.join(app.config["UPLOAD_FOLDER"], "runfile.py")
                 run_file.save(save_path)
 
+                # Run the file
                 try:
                     runfile(save_path)
                 except Exception as err:
@@ -167,6 +168,7 @@ def create_page():
     # Store templates in a list
     templates_list = []
     try:
+        # Get templates
         for t in templates[-6:]:
             templates_list.append(get_template_info(t.id))
     except Exception as err:
@@ -176,22 +178,26 @@ def create_page():
     return render_template("create.html", title="Create", templates_list=templates_list)
 
 
+# Route to quick create run file - related to create view
 @app.route("/create/runfile", methods=["GET", "POST"])
 def quick_runfile():
     try:
-        from GangaCore.GPI import jobs, runfile
+        from GangaCore.GPI import runfile
     except ImportError:
         import ganga
         import ganga.ganga
-        from ganga import jobs, export, load, runfile
+        from ganga import runfile
 
-    runfile_path = os.path.join(app.config["UPLOAD_FOLDER"], f"gui_run_file.py")
+    # Path to gui runfile
+    runfile_path = os.path.join(app.config["UPLOAD_FOLDER"], "runfile.py")
 
+    # Save runfile data
     if request.method == "POST":
-        runfile_data = request.form.get("runfile_data")
+        runfile_data = request.form.get("runfile-data")
         with open(runfile_path, "wt") as f:
             f.write(runfile_data)
 
+        # Run file
         try:
             runfile(runfile_path)
             flash("Successfully ran the file!", "success")
@@ -199,19 +205,20 @@ def quick_runfile():
             flash(str(err), "danger")
             return redirect(request.url)
 
-    return render_template("runfile.html", title=f"Runfile")
+    return render_template("runfile.html", title="Run File")
 
 
+# Templates view - list of templates in a tabular form
 @app.route("/templates", methods=["GET", "POST"])
 def templates_page():
     try:
-        from GangaCore.GPI import jobs, plugins, templates
+        from GangaCore.GPI import plugins, templates
     except ImportError:
         import ganga
         import ganga.ganga
-        from ganga import jobs, plugins, templates
+        from ganga import plugins, templates
 
-    # Session defaults
+    # Session defaults for remembering filter options
     if "templates_per_page" not in session:
         session["templates_per_page"] = 10
     if "templates_filter" not in session:
@@ -219,10 +226,10 @@ def templates_page():
 
     # Change filter values
     if request.method == "POST":
-        # Add form data to client session
+        # Add form data to session
         session["templates_per_page"] = int(request.form.get("templates-per-page"))
         session["templates_filter"] = {key: request.form.get(form_name) for key, form_name in
-                                       zip(["application", "backend"], ["template_application", "template_backend"])}
+                                       zip(["application", "backend"], ["template-application", "template-backend"])}
 
     # Current page
     current_page = int(request.args.get("page") or 0)
@@ -244,11 +251,11 @@ def templates_page():
         if current_page >= number_of_pages:
             return redirect(url_for("templates_page", page=number_of_pages - 1))
 
-        # subjobs list according to the filter
+        # templates list according to the filter
         tlist = filtered_list[
                 (current_page * templates_per_page):(current_page * templates_per_page + templates_per_page)]
 
-        # Get subjob info
+        # Get templates info
         for t in tlist:
             templates_info_list.append(get_template_info(t.id))
 
@@ -257,14 +264,20 @@ def templates_page():
         applications = plugins()["applications"]
 
     except Exception as err:
+        # Flash error if any
         flash(str(err), "danger")
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("create_page"))
 
-    return render_template("templates.html", title=f"Templates", number_of_pages=number_of_pages,
-                           current_page=current_page, backends=backends,
-                           applications=applications, templates_info_list=templates_info_list)
+    return render_template("templates.html",
+                           title="Templates",
+                           number_of_pages=number_of_pages,
+                           current_page=current_page,
+                           backends=backends,
+                           applications=applications,
+                           templates_info_list=templates_info_list)
 
 
+# Jobs view - list of jobs in a tabular form
 @app.route("/jobs", methods=["GET", "POST"])
 def jobs_page():
     try:
@@ -274,27 +287,19 @@ def jobs_page():
         import ganga.ganga
         from ganga import jobs, plugins
 
-    # Session defaults
+    # Session defaults for remembering filter options
     if "jobs_per_page" not in session:
         session["jobs_per_page"] = 10
-    for filter_type in ["job_status", "job_application", "job_backend"]:
-        if filter_type not in session:
-            session[filter_type] = "any"
+    if "jobs_filter" not in session:
+        session["jobs_filter"] = {key: "any" for key in ["status", "application", "backend"]}
 
     # Change filter values
     if request.method == "POST":
         # Add form data to client session
         session["jobs_per_page"] = int(request.form.get("jobs-per-page"))
-        session["job_status"] = request.form.get("job_status")
-        session["job_application"] = request.form.get("job_application")
-        session["job_backend"] = request.form.get("job_backend")
-
-    # Create job filter
-    jlist_filter = {
-        "status": session["job_status"],
-        "application": session["job_application"],
-        "backend": session["job_backend"]
-    }
+        session["jobs_filter"] = {key: request.form.get(form_name) for key, form_name in
+                                  zip(["status", "application", "backend"],
+                                      ["job-status", "job-application", "job-backend"])}
 
     # Current page
     current_page = int(request.args.get("page") or 0)
@@ -305,7 +310,8 @@ def jobs_page():
     jobs_info_list = []
     try:
         filtered_list = list(
-            jobs.select(**{k: jlist_filter[k] for k in jlist_filter.keys() if jlist_filter[k] != "any"}))
+            jobs.select(**{key: session["jobs_filter"][key] for key in session["jobs_filter"].keys() if
+                           session["jobs_filter"][key] != "any"}))
         filtered_list.reverse()
 
         # Calculate no of max pages
@@ -330,11 +336,17 @@ def jobs_page():
         flash(str(err), "danger")
         return redirect(url_for("dashboard"))
 
-    return render_template("jobs.html", title="Jobs", status_color=status_color,
-                           number_of_pages=number_of_pages, current_page=current_page, backends=backends,
-                           applications=applications, jobs_info_list=jobs_info_list)
+    return render_template("jobs.html",
+                           title="Jobs",
+                           jobs_info_list=jobs_info_list,
+                           backends=backends,
+                           applications=applications,
+                           number_of_pages=number_of_pages,
+                           current_page=current_page,
+                           status_color=status_color)
 
 
+# Job view - display information of the job
 @app.route('/job/<int:job_id>')
 def job_page(job_id: int):
     try:
@@ -345,7 +357,6 @@ def job_page(job_id: int):
         from ganga import jobs, full_print
 
     from GangaCore.GPIDev.Lib.Job import Job
-    import os
 
     # Get all attributes and methods from schema
     attrs = Job._schema.allItemNames()
@@ -354,7 +365,6 @@ def job_page(job_id: int):
     # Info variables
     job_info = {}
     full_job_info = None
-    subjobs_stats = {}
     stdout = None
     stderr = None
 
@@ -366,10 +376,6 @@ def job_page(job_id: int):
         print_output = io.StringIO()
         full_print(j, out=print_output)
         full_job_info = print_output.getvalue()
-
-        # Get subjobs quick statistics
-        for stat in ["new", "running", "completed", "failed", "killed"]:
-            subjobs_stats[stat] = len(j.subjobs.select(status=stat))
 
         # stdout and stderr path
         stdout_path = os.path.join(j.outputdir, "stdout")
@@ -388,11 +394,21 @@ def job_page(job_id: int):
     except Exception as err:
         flash(str(err), "danger")
 
-    return render_template("job.html", title=f"Job {job_id}", job_info=job_info, status_color=status_color, attrs=attrs,
-                           method_actions=method_actions, subjobs_stats=subjobs_stats, stdout=stdout,
-                           stderr=stderr, full_job_info=full_job_info)
+    if job_info == {}:
+        return redirect(url_for("jobs_page"))
+
+    return render_template("job.html",
+                           title=f"Job {job_id}",
+                           job_info=job_info,
+                           status_color=status_color,
+                           attrs=attrs,
+                           method_actions=method_actions,
+                           stdout=stdout,
+                           stderr=stderr,
+                           full_job_info=full_job_info)
 
 
+# Export job route
 @app.route("/job/<int:job_id>/export")
 def export_job(job_id: int):
     try:
@@ -402,8 +418,9 @@ def export_job(job_id: int):
         import ganga.ganga
         from ganga import jobs, export
 
-    export_save_path = os.path.join(app.config["UPLOAD_FOLDER"], f"exported_job.txt")
+    export_save_path = os.path.join(app.config["UPLOAD_FOLDER"], f"export.txt")
 
+    # Expoet job
     try:
         j = jobs[job_id]
         export(j, export_save_path)
@@ -414,6 +431,7 @@ def export_job(job_id: int):
     return send_file(export_save_path, as_attachment=True, cache_timeout=0, attachment_filename=f"Job_{job_id}.txt")
 
 
+# Edit job - related to Job view
 @app.route("/job/<int:job_id>/edit", methods=["GET", "POST"])
 def edit_job(job_id: int):
     try:
@@ -423,14 +441,16 @@ def edit_job(job_id: int):
         import ganga.ganga
         from ganga import jobs, export, load
 
-    load_file_path = os.path.join(app.config["UPLOAD_FOLDER"], f"gui_load_job.txt")
-    export_save_path = os.path.join(app.config["UPLOAD_FOLDER"], f"exported_job.txt")
+    load_file_path = os.path.join(app.config["UPLOAD_FOLDER"], "loadjobfile.txt")
+    export_save_path = os.path.join(app.config["UPLOAD_FOLDER"], "export.txt")
 
     if request.method == "POST":
-        edited_job_info = request.form.get("edited_job_info")
+        # Save the edited job info
+        edited_job_info = request.form.get("edited-job-info")
         with open(load_file_path, "wt") as f:
             f.write(edited_job_info)
 
+        # Load new job from the edited job info
         try:
             load(load_file_path)
             flash("Successfully edited job", "success")
@@ -442,6 +462,8 @@ def edit_job(job_id: int):
     try:
         j = jobs[job_id]
         export(j, export_save_path)
+
+        # Read exported job file to display
         with open(export_save_path) as f:
             exported_data = f.read()
     except Exception as err:
@@ -451,6 +473,7 @@ def edit_job(job_id: int):
     return render_template("edit_job.html", title=f"Edit Job {job_id}", job_id=job_id, exported_data=exported_data)
 
 
+# Browse Job directory - related to the Job view
 @app.route('/job/<int:job_id>/browse', defaults={'path': ''})
 @app.route("/job/<int:job_id>/browse/<path:path>")
 def browse_job(job_id: int, path):
@@ -492,10 +515,14 @@ def browse_job(job_id: int, path):
             "directory": os.path.isdir(os.path.join(abs_path, file))
         })
 
-    return render_template('job_dir.html', files=files, job_id=job_id, abs_path=abs_path, files_info=files_info,
+    return render_template('job_dir.html', title=f"Job {job_id} Directory",
+                           job_id=job_id,
+                           abs_path=abs_path,
+                           files_info=files_info,
                            back_path=back_path)
 
 
+# Subjobs view
 @app.route("/job/<int:job_id>/subjobs", methods=["GET", "POST"])
 def subjobs_page(job_id: int):
     try:
@@ -517,7 +544,7 @@ def subjobs_page(job_id: int):
         session["subjobs_per_page"] = int(request.form.get("subjobs-per-page"))
         session["subjobs_filter"] = {key: request.form.get(form_name) for key, form_name in
                                      zip(["status", "application", "backend"],
-                                         ["subjob_status", "subjob_application", "subjob_backend"])}
+                                         ["subjob-status", "subjob-application", "subjob-backend"])}
 
     # Current page
     current_page = int(request.args.get("page") or 0)
@@ -555,9 +582,15 @@ def subjobs_page(job_id: int):
         flash(str(err), "danger")
         return redirect(url_for("job_page", job_id=job_id))
 
-    return render_template("subjobs.html", title=f"Subjobs - Job {job_id}", status_color=status_color,
-                           number_of_pages=number_of_pages, current_page=current_page, backends=backends,
-                           applications=applications, subjobs_info_list=subjobs_info_list, job_id=job_id)
+    return render_template("subjobs.html",
+                           title=f"Subjobs - Job {job_id}",
+                           status_color=status_color,
+                           number_of_pages=number_of_pages,
+                           current_page=current_page,
+                           backends=backends,
+                           applications=applications,
+                           subjobs_info_list=subjobs_info_list,
+                           job_id=job_id)
 
 
 @app.route('/job/<int:job_id>/subjob/<int:subjob_id>')
@@ -570,7 +603,6 @@ def subjob_page(job_id: int, subjob_id: int):
         from ganga import jobs, full_print
 
     from GangaCore.GPIDev.Lib.Job import Job
-    import os
 
     # Get all attributes and methods from schema
     attrs = Job._schema.allItemNames()
@@ -579,6 +611,7 @@ def subjob_page(job_id: int, subjob_id: int):
     # Info variables
     subjob_info = {}
     full_subjob_info = None
+    browse_path = ""
     stdout = None
     stderr = None
 
@@ -591,6 +624,10 @@ def subjob_page(job_id: int, subjob_id: int):
         print_output = io.StringIO()
         full_print(sj, out=print_output)
         full_subjob_info = print_output.getvalue()
+
+        j_dir_basepath = os.path.dirname(os.path.dirname(j.outputdir))
+        sj_dir_basepath = os.path.dirname(os.path.dirname(sj.outputdir))
+        browse_path = sj_dir_basepath.replace(j_dir_basepath, "")
 
         # stdout and stderr path
         stdout_path = os.path.join(sj.outputdir, "stdout")
@@ -608,63 +645,24 @@ def subjob_page(job_id: int, subjob_id: int):
 
     except Exception as err:
         flash(str(err), "danger")
+        return redirect(url_for("subjobs_page", job_id=job_id))
 
-    return render_template("subjob.html", title=f"Subjob {subjob_id} - Job {job_id}", subjob_info=subjob_info,
-                           status_color=status_color, attrs=attrs,
-                           method_actions=method_actions, stdout=stdout,
-                           stderr=stderr, full_subjob_info=full_subjob_info, job_id=job_id)
-
-
-@app.route('/job/<int:job_id>/subjob/<int:subjob_id>/browse', defaults={'path': ''})
-@app.route("/job/<int:job_id>/subjob/<int:subjob_id>/browse/<path:path>")
-def browse_subjob(job_id: int, subjob_id, path):
-    try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
-
-    try:
-        j = jobs[job_id]
-        sj = j.subjobs[subjob_id]
-        subjob_base_dir = os.path.dirname(os.path.dirname(sj.outputdir))
-    except Exception as err:
-        flash(str(err), "danger")
-        return redirect(url_for("subjob_page", job_id=job_id, subjob_id=subjob_id))
-
-    # Joining the base and the requested path
-    abs_path = os.path.join(subjob_base_dir, path)
-
-    # URL path variable for going back
-    back_path = os.path.dirname(abs_path).replace(subjob_base_dir, "")
-
-    # Return back if path doesn't exist
-    if not os.path.exists(abs_path):
-        flash("Directory for this subjob does not exist.", "warning")
-        return redirect(url_for("subjob_page", job_id=job_id, subjob_id=subjob_id))
-
-    # Check if path is a file and serve
-    if os.path.isfile(abs_path):
-        return send_file(abs_path)
-
-    files_info = []
-    # Show directory contents
-    files = os.listdir(abs_path)
-    for file in files:
-        files_info.append({
-            "file": file,
-            "directory": os.path.isdir(os.path.join(abs_path, file))
-        })
-
-    return render_template('subjob_dir.html', files=files, job_id=job_id, subjob_id=subjob_id, abs_path=abs_path,
-                           files_info=files_info,
-                           back_path=back_path)
+    return render_template("subjob.html",
+                           title=f"Subjob {subjob_id} - Job {job_id}",
+                           subjob_info=subjob_info,
+                           status_color=status_color,
+                           attrs=attrs,
+                           method_actions=method_actions,
+                           stdout=stdout,
+                           stderr=stderr,
+                           full_subjob_info=full_subjob_info,
+                           job_id=job_id,
+                           browse_path=browse_path)
 
 
+# Credential Store view
 @app.route('/credentials')
 def credential_store_page():
-
     try:
         from GangaCore.GPI import credential_store
     except ImportError:
@@ -685,12 +683,13 @@ def credential_store_page():
             credential_info_list.append(credential_info)
     except Exception as err:
         flash(str(err), "danger")
+        return redirect(url_for("dashboard"))
 
     return render_template('credentials.html', credential_info_list=credential_info_list)
 
+
 @app.route('/plugins')
 def plugins_page():
-
     try:
         from GangaCore.GPI import plugins
     except ImportError:
@@ -701,7 +700,7 @@ def plugins_page():
     plugins_info = {}
 
     try:
-        plugins_info=plugins()
+        plugins_info = plugins()
     except Exception as err:
         flash(str(err), "danger")
 
@@ -983,8 +982,8 @@ def delete_job_endpoint(current_user, job_id: int):
 
 # Subjobs API - GET Method
 @app.route("/api/job/<int:job_id>/subjobs", methods=["GET"])
-@token_required
-def subjobs_endpoint(current_user, job_id: int):
+# @token_required
+def subjobs_endpoint(job_id: int):
     """
     Returns a list subjobs of a particular job in a similar way as Jobs API.
     
@@ -992,7 +991,12 @@ def subjobs_endpoint(current_user, job_id: int):
     :param current_user: Information of the current_user based on the request's JWT token
     """
 
-    from GangaCore.GPI import jobs
+    try:
+        from GangaCore.GPI import jobs
+    except ImportError:
+        import ganga
+        import ganga.ganga
+        from ganga import jobs
 
     try:
         j = jobs(int(job_id))
@@ -1006,7 +1010,7 @@ def subjobs_endpoint(current_user, job_id: int):
         subjob_ids = json.loads(request.args["ids"])
         try:
             for sjid in subjob_ids:
-                subjobs_info_list.append(get_job_info(sjid))
+                subjobs_info_list.append(get_subjob_info(job_id=job_id, subjob_id=sjid))
             return jsonify(subjobs_info_list)
         except Exception as err:
             return jsonify({"success": False, "message": str(err)}), 400
@@ -1115,6 +1119,28 @@ def jobs_endpoint():
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(job_info_list)
+
+
+# Refresh Dashboard Route
+@app.route("/api/jobs/stats")
+def jobs_stats_endpoint():
+    try:
+        from GangaCore.GPI import jobs
+    except ImportError:
+        import ganga
+        import ganga.ganga
+        from ganga import jobs
+
+    quick_statistics = {}
+
+    try:
+        # Set quick statistics
+        for stat in ["new", "running", "completed", "failed", "killed"]:
+            quick_statistics[stat] = len(jobs.select(status=stat))
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(quick_statistics)
 
 
 # Job IDs API - GET Method
@@ -1281,13 +1307,18 @@ def credential_store_endpoint(current_user):
 
 # Credential Store API - PUT Method - Renew all credentials
 @app.route("/api/credential_store/renew", methods=["PUT"])
-@token_required
-def renew_credentials_endpoint(current_user):
+# @token_required
+def renew_credentials_endpoint():
     """
     Renew all the credentials in the credential store.
     """
 
-    from GangaCore.GPI import credential_store
+    try:
+        from GangaCore.GPI import credential_store
+    except ImportError:
+        import ganga
+        import ganga.ganga
+        from ganga import credential_store
 
     try:
         credential_store.renew()
@@ -1401,6 +1432,7 @@ def get_template_info(template_id: int) -> dict:
     template_data = {}
     for attr in ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]:
         template_data[attr] = str(getattr(t, attr))
+    template_data["backend.actualCE"] = str(t.backend.actualCE)
 
     return template_data
 

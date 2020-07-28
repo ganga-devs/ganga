@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
+
 {% block content %}
     <div class="container-fluid">
         <div class="col">
-            <h3 class="">Subjobs Repository of Job {{ job_id }}</h3>
+            <h3>Subjobs Repository of Job {{ job_id }}</h3>
             <hr>
             <form class="mb-4 mb-md-0" action="{{ url_for('subjobs_page', page=current_page, job_id=job_id) }}" method="post">
                 <div class="form-row">
                     <div class="col-md-2">
                         <div class="form-group">
-                            <label for="subjobsPerPage">Subjobs Per Page</label>
-                            <select name="subjobs-per-page" class="form-control custom-select" id="subjobsPerPage">
+                            <label for="subjobs-per-page">Subjobs Per Page</label>
+                            <select name="subjobs-per-page" class="form-control custom-select" id="subjobs-per-page">
                                 {% for n in [10, 20, 40, 80] %}
                                     <option {{ 'selected' if session['subjobs_per_page'] == n }} value="{{ n }}">{{ n }}</option>
                                 {% endfor %}
@@ -18,8 +19,8 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="subjobStatus">Subjob Status</label>
-                            <select name="subjob_status" class="form-control custom-select" id="subjobStatus">
+                            <label for="subjob-status">Subjob Status</label>
+                            <select name="subjob-status" class="form-control custom-select" id="subjob-status">
                                     <option value="any">Any</option>
                                 {% for s in ['New', 'Running', 'Completed', 'Failed', 'Killed'] %}
                                     <option {{ 'selected' if session["subjobs_filter"]['status'] == s|lower }}  value="{{ s|lower }}">{{ s }}</option>
@@ -29,8 +30,8 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="subjobApplication">Subjob Application</label>
-                            <select name="subjob_application" class="form-control custom-select" id="subjobApplication">
+                            <label for="subjob-application">Subjob Application</label>
+                            <select name="subjob-application" class="form-control custom-select" id="subjob-application">
                                 <option value="any">Any</option>
                                 {% for a in applications %}
                                     <option {{ 'selected' if session["subjobs_filter"]['application'] == a }} value="{{ a }}">{{ a }}</option>
@@ -40,8 +41,8 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="subjobBackend">Subjob Backend</label>
-                            <select name="subjob_backend" class="form-control custom-select" id="subjobBackend">
+                            <label for="subjob-backend">Subjob Backend</label>
+                            <select name="subjob-backend" class="form-control custom-select" id="subjob-backend">
                                 <option value="any">Any</option>
                                 {% for b in backends %}
                                     <option {{ 'selected' if session["subjobs_filter"]['backend'] == b }} value="{{ b }}">{{ b }}</option>
@@ -50,8 +51,8 @@
                         </div>
                     </div>
                     <div class="col-md-1">
-                        <label class="d-none d-md-block" for="filterButton">&nbsp;</label>
-                        <button type="submit" id="filterButton" class="btn btn-primary btn-block">Apply</button>
+                        <label class="d-none d-md-block" for="filter-button">&nbsp;</label>
+                        <button type="submit" id="filter-button" class="btn btn-primary btn-block">Apply</button>
                     </div>
                 </div>
             </form>
@@ -68,14 +69,14 @@
                 </thead>
                 <tbody>
                 {% for sj in subjobs_info_list %}
-                    <tr class="subjob" id="subjob-{{ sj.id }}" data-id="{{ sj.id }}" data-status="{{ sj.status }}">
-                        <th class="align-middle" scope="row">{{ sj.fqid }}</th>
-                        <td class="align-middle"><span id="subjob-id-{{ sj.id }}-status"
-                                class="badge badge-{{ status_color[sj.status] }} badge-pill">{{ sj.status }}</span></td>
-                        <td class="align-middle">{{ sj.name if sj.name.strip() != '' else 'Unnamed Subjob' }}</td>
-                        <td class="align-middle text-break">{{ (sj.application).split('(')[0] }}</td>
-                        <td class="align-middle text-break">{{ (sj.backend).split('(')[0] }}</td>
-                        <td class="align-middle"><a href="{{ url_for('subjob_page', job_id=job_id, subjob_id=sj.id) }}"
+                    <tr class="subjob" id="subjob-{{ sj.get('id') }}" data-job_id="{{ job_id }}" data-id="{{ sj.get('id') }}" data-status="{{ sj.get('status') }}">
+                        <th class="align-middle" scope="row">{{ sj.get('fqid') }}</th>
+                        <td class="align-middle"><span id="subjob-id-{{ sj.get('id') }}-status"
+                                class="badge badge-{{ status_color[sj.get('status')] }} badge-pill">{{ sj.get('status') }}</span></td>
+                        <td class="align-middle">{{ sj.get('name') if (sj.get('name')|string).strip() != '' else 'Unnamed Subjob' }}</td>
+                        <td class="align-middle text-break">{{ (sj.get('application')|string).split('(')[0] }}</td>
+                        <td class="align-middle text-break">{{ (sj.get('backend')|string).split('(')[0] }}</td>
+                        <td class="align-middle"><a href="{{ url_for('subjob_page', job_id=job_id, subjob_id=sj.get('id')) }}"
                                                     class="btn btn-sm btn-primary">Subjob Info</a></td>
                     </tr>
                 {% endfor %}
@@ -97,6 +98,7 @@
         </div>
     </div>
 {% endblock content %}
+
 {% block footer %}
     <script defer src="{{ url_for('static', filename='js/subjobs.js') }}"></script>
 {% endblock footer %}

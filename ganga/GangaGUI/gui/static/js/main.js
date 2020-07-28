@@ -1,9 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-
-
+    document.querySelector("#refresh-interval").value = localStorage.getItem('refreshInterval');
 });
 
 let notificationCount = 0
+
+const statusColor = {
+        "new": "info", "completed": "success", "failed": "danger", "running": "primary",
+        "submitted": "secondary", "killed": "warning"
+    }
 
 function currentTime() {
     let date = new Date();
@@ -33,4 +37,10 @@ function displayToast(id, message, time, type) {
     console.log(toastContainer)
     toastContainer.insertAdjacentHTML("beforeend", template({message: message, time: time, id: id, type: type}))
     $(`#notification${id}`).toast('show')
+}
+
+function updateRefreshInterval() {
+    let refreshInterval = document.querySelector("#refresh-interval").value;
+    console.log(refreshInterval);
+    localStorage.setItem('refreshInterval', refreshInterval);
 }

@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
+
 {% block content %}
     <div class="container-fluid">
         <div class="col">
-            <h3 class="">Templates Repository</h3>
+            <h3>Templates Repository</h3>
             <hr>
             <form class="mb-4 mb-md-0" action="{{ url_for('templates_page', page=current_page) }}" method="post">
                 <div class="form-row">
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="templatesPerPage">Templates Per Page</label>
-                            <select name="templates-per-page" class="form-control custom-select" id="templatesPerPage">
+                            <label for="templates-per-page">Templates Per Page</label>
+                            <select name="templates-per-page" class="form-control custom-select" id="templates-per-page">
                                 {% for n in [10, 20, 40, 80] %}
                                     <option {{ 'selected' if session['templates_per_page'] == n }} value="{{ n }}">{{ n }}</option>
                                 {% endfor %}
@@ -18,8 +19,8 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="templatesApplication">Template Application</label>
-                            <select name="template_application" class="form-control custom-select" id="templateApplication">
+                            <label for="template-application">Template Application</label>
+                            <select name="template-application" class="form-control custom-select" id="template-application">
                                 <option value="any">Any</option>
                                 {% for a in applications %}
                                     <option {{ 'selected' if session["templates_filter"]['application'] == a }} value="{{ a }}">{{ a }}</option>
@@ -29,8 +30,8 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="templateBackend">Template Backend</label>
-                            <select name="template_backend" class="form-control custom-select" id="templateBackend">
+                            <label for="template-backend">Template Backend</label>
+                            <select name="template-backend" class="form-control custom-select" id="template-backend">
                                 <option value="any">Any</option>
                                 {% for b in backends %}
                                     <option {{ 'selected' if session["templates_filter"]['backend'] == b }} value="{{ b }}">{{ b }}</option>
@@ -39,8 +40,8 @@
                         </div>
                     </div>
                     <div class="col-md-1">
-                        <label class="d-none d-md-block" for="filterButton">&nbsp;</label>
-                        <button type="submit" id="filterButton" class="btn btn-primary btn-block">Apply</button>
+                        <label class="d-none d-md-block" for="filter-button">&nbsp;</label>
+                        <button type="submit" id="filter-button" class="btn btn-primary btn-block">Apply</button>
                     </div>
                 </div>
             </form>
@@ -56,12 +57,12 @@
                 </thead>
                 <tbody>
                 {% for t in templates_info_list %}
-                    <tr class="template" id="template{{ t.id }}" data-id="{{ t.id }}">
-                        <th class="align-middle" scope="row">{{ t.id }}</th>
-                        <td class="align-middle">{{ t.name if t.name.strip() != '' else 'Unnamed Template' }}</td>
-                        <td class="align-middle text-break">{{ (t.application).split('(')[0] }}</td>
-                        <td class="align-middle text-break">{{ (t.backend).split('(')[0] }}</td>
-                        <td class="align-middle"><a href="#" onclick="createJob({{ t['id'] }})" class="btn btn-sm btn-primary">
+                    <tr class="template" id="template{{ t.get('id') }}">
+                        <th class="align-middle" scope="row">{{ t.get('id') }}</th>
+                        <td class="align-middle">{{ t.get('name') if (t.get('name')|string).strip() != '' else 'Unnamed Template' }}</td>
+                        <td class="align-middle text-break">{{ (t.get('application')|string).split('(')[0] }}</td>
+                        <td class="align-middle text-break">{{ (t.get('backend')|string).split('(')[0] }}</td>
+                        <td class="align-middle"><a href="#" onclick="createJob({{ t.get('id') }});" class="btn btn-sm btn-primary">
                                 Create Job
                             </a></td>
                     </tr>
@@ -84,6 +85,7 @@
         </div>
     </div>
 {% endblock content %}
+
 {% block footer %}
     <script defer src="{{ url_for('static', filename='js/templates.js') }}"></script>
 {% endblock footer %}

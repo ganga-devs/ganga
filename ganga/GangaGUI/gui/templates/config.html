@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block content %}
     <div class="container mt-2">
         <form action="{{ url_for('config_page') }}" method="POST">
@@ -42,7 +43,7 @@
                   </table>
             </div>
         </div>
-        <hr class="my-1 mt-3 mb-3">
+        <hr class="my-3">
         {% endfor %}
     </div>
 {% endblock content %}
