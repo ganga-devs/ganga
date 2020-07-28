@@ -89,14 +89,12 @@ jobs:
       - name: Deploy to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_SECRET }}
         run: |
           echo -e "[distutils]\nindex-servers = pypi" > ~/.pypirc
           python setup.py register
           python setup.py sdist
           twine upload --skip-existing dist/ganga-*.tar.gz
-          rm dist/ganga-*.tar.gz
-          rm ~/.pypirc
       - name: Set deployment status failure
         if: ${{ failure() }}
         run: |
