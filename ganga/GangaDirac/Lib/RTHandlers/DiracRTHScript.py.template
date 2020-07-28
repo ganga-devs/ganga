@@ -30,7 +30,7 @@ j.setPlatform( '###PLATFORM###' )
 
 try:
 	j.setNumberOfProcessors(minNumberOfProcessors=###MIN_PROCESSORS###, maxNumberOfProcessors=###MAX_PROCESSORS###)
-except AttributeError, TypeError:
+except (AttributeError, TypeError):
 	pass
 
 result = dirac.submitJob(j)
