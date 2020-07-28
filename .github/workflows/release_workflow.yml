@@ -78,41 +78,30 @@ jobs:
                            --header 'content-type: application/json' \
                            --data "$DATA" | jq -r '.statuses_url'`
           echo "::set-env name=STATUS_URL::${STATUS_URL}"
-      - name: testing
+      - name: Deploy to PyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_SECRET }}
         run: |
-          echo $STATUS_URL
-          echo $VERSION
-      #- name: Set deployment status pending
-      #  run: |
-      #    DATA=`jo state=pending description="Starting deployment of Ganga ${VERSION} to PyPI"`
-      #    curl --request POST \
-      #         --url ${STATUS_URL} \
-      #         --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-      #         --header 'content-type: application/json' \
-      #         --data "$DATA"
-      #- name: Deploy to PyPI
-      #  env:
-      #    TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-      #    TWINE_PASSWORD: ${{ secrets.PYPI_SECRET }}
-      #  run: |
-      #    echo -e "[distutils]\nindex-servers = pypi" > ~/.pypirc
-      #    python setup.py register
-      #    python setup.py sdist
-      #    twine upload --skip-existing dist/ganga-*.tar.gz
-      #- name: Set deployment status failure
-      #  if: ${{ failure() }}
-      #  run: |
-      #    DATA=`jo state=failure description="Deployment of Ganga ${VERSION} to PyPI failed!"`
-      #    curl --request POST \
-      #         --url ${STATUS_URL} \
-      #         --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-      #         --header 'content-type: application/json' \
-      #         --data "$DATA"
-      #- name: Set deployment status success
-      #  run: |
-      #    DATA=`jo state=success description="Deployment of Ganga ${VERSION} to PyPI"`
-      #    curl --request POST \
-      #         --url ${STATUS_URL} \
-      #         --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-      #         --header 'content-type: application/json' \
-      #         --data "$DATA"
+          echo -e "[distutils]\nindex-servers = pypi" > ~/.pypirc
+          python setup.py register
+          python setup.py sdist
+          twine upload --skip-existing dist/ganga-*.tar.gz
+      - name: Set deployment status failure
+        if: ${{ failure() }}
+        run: |
+          DATA=`jo state=failure description="Deployment of Ganga ${VERSION} to PyPI failed!"`
+          curl --request POST \
+               --url ${STATUS_URL} \
+               --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+               --header 'content-type: application/json' \
+               --data "$DATA"
+      - name: Set deployment status success
+        if: ${{ success() }}
+        run: |
+          DATA=`jo state=success description="Deployment of Ganga ${VERSION} to PyPI"`
+          curl --request POST \
+               --url ${STATUS_URL} \
+               --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+               --header 'content-type: application/json' \
+               --data "$DATA"
