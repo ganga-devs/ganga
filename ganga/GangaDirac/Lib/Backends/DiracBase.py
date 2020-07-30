@@ -69,6 +69,16 @@ class DiracBase(IBackend):
     # settings can be set at any time but are only 'respected' during
     # submit and resubmit.
 
+    # Submitting a job for several processors:
+    You can request multiple processors with the minProcessors and maxProcessors attributes
+    These set the minimum and maximum allowed number of processors for your job
+    A job such as:
+    j.backend.minProcessors = 2
+    j.backend.minProcessors = 3
+    would request 2 processors.
+    Note that setting minProcessors to be more than 1 greatly reduces the number
+    of possible sites that your job can run at as multi core resources are rare.
+
     """
 
     dirac_monitoring_is_active = True
