@@ -62,8 +62,8 @@ jobs:
         run: sudo apt-get install -y jo
       - name: Install Twine (PyPI upload tool)
         run: |
-          pip install --upgrade pip setuptools wheel
-          pip install twine
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade twine
       - name: Checkout re-tagged version
         run: |
           VERSION=$(basename ${GITHUB_REF})
@@ -83,10 +83,10 @@ jobs:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_SECRET }}
         run: |
-          echo -e "[distutils]\nindex-servers = pypi" > ~/.pypirc
+          echo -e "[distutils]\nindex-servers = pypi\n[pypi]\nusername:${TWINE_USERNAME}\npassword:${TWINE_PASSWORD}" > ~/.pypirc
           python setup.py register
           python setup.py sdist
-          twine upload --skip-existing dist/ganga-*.tar.gz
+          python -m twine upload --skip-existing dist/ganga-*.tar.gz
       - name: Set deployment status failure
         if: ${{ failure() }}
         run: |
