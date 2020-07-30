@@ -691,7 +691,7 @@ class Condor(IBackend):
                Count the number of date elements.
                Check for the separation character between date elements.
         """
-        dateBreakdown = re.findall("\d+\D",splitLine[2])
+        dateBreakdown = re.findall(r"\d+\D",splitLine[2])
         numberOfDateElements = len(dateBreakdown)+1
         if numberOfDateElements > 0:
             self._condorDateFormat=(numberOfDateElements,dateBreakdown[0][-1])
