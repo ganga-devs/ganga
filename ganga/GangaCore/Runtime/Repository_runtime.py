@@ -1,7 +1,7 @@
 """
 Internal initialization of the repositories.
 """
-
+import re
 from pipes import quote
 import os.path
 from GangaCore.Utility.Config import getConfig, setConfigOption
