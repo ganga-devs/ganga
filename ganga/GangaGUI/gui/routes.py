@@ -11,6 +11,7 @@ from GangaGUI.gui.models import User
 # ******************** Global Variables ******************** #
 
 # Colors showed for different job status in the GUI based on bootstrap
+
 status_color = {
     "new": "info",
     "completed": "success",
@@ -194,7 +195,7 @@ def quick_runfile():
     # Save runfile data
     if request.method == "POST":
         runfile_data = request.form.get("runfile-data")
-        with open(runfile_path, "wt") as f:
+        with open(runfile_path, "w+") as f:
             f.write(runfile_data)
 
         # Run file
@@ -447,7 +448,7 @@ def edit_job(job_id: int):
     if request.method == "POST":
         # Save the edited job info
         edited_job_info = request.form.get("edited-job-info")
-        with open(load_file_path, "wt") as f:
+        with open(load_file_path, "w+") as f:
             f.write(edited_job_info)
 
         # Load new job from the edited job info
@@ -1444,8 +1445,16 @@ def allowed_file(filename):
 # ******************** Shutdown Function ******************** #
 
 # Route used to shutdown the flask server
-@app.route("/shutdown", methods=["POST"])
+@app.route("/shutdown", methods=["GET"])
 def shutdown():
+    from GangaGUI.start import stop_gui
+    stop_gui()
+    return "Shutting Down.."
+
+
+# Route used to shutdown the flask server [INTERNAL DONT USE TODO redirect to get if not localhost]
+@app.route("/shutdown", methods=["POST"])
+def _shutdown():
     func = request.environ.get("werkzeug.server.shutdown")
     func()
     response_data = {"success": True, "message": "Shutting down the server..."}
