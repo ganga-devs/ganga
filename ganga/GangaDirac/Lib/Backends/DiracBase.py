@@ -69,6 +69,16 @@ class DiracBase(IBackend):
     # settings can be set at any time but are only 'respected' during
     # submit and resubmit.
 
+    # Submitting a job for several processors:
+    You can request multiple processors with the minProcessors and maxProcessors attributes
+    These set the minimum and maximum allowed number of processors for your job
+    A job such as:
+    j.backend.minProcessors = 2
+    j.backend.minProcessors = 3
+    would request 2 processors.
+    Note that setting minProcessors to be more than 1 greatly reduces the number
+    of possible sites that your job can run at as multi core resources are rare.
+
     """
 
     dirac_monitoring_is_active = True
@@ -101,6 +111,12 @@ class DiracBase(IBackend):
                                 'if you *really* know what you are doing'),
         'settings': SimpleItem(defvalue={'CPUTime': 14 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
+        'minProcessors': SimpleItem(defvalue=1,
+                                    typelist=[int],
+                                    doc='Minimum number of processors the job needs'),
+        'maxProcessors': SimpleItem(defvalue=1,
+                                    typelist=[int],
+                                    doc='Maximum number of processors the job needs'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
         'blockSubmit' : SimpleItem(defvalue=True, 
                                doc='Shall we use the block submission?'),

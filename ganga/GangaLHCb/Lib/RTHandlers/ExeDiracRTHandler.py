@@ -123,6 +123,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         OUTPUT_PATH="",  # job.fqid,
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
+                                        MIN_PROCESSORS=job.backend.minProcessors,
+                                        MAX_PROCESSORS=job.backend.maxProcessors,
                                         PLATFORM=platform,
                                         REPLICATE='True' if config['ReplicateOutputData'] else '',
                                         # leave the sandbox for altering later as needs
