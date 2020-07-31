@@ -33,16 +33,16 @@ class GListApp(IPrepareApp):
     def configure(self, master_appconfig):
         return (None, None)
 
-    def _print_summary_bound_comp(self, value, verbosity_level, interactive):
+    def _print_summary_bound_comp(self, value, verbosity_level, interactive=False):
         return '_print_summary_bound_comp'
 
-    def _print_summary_bound_simple(self, value, verbosity_level, interactive):
+    def _print_summary_bound_simple(self, value, verbosity_level, interactive=False):
         return '_print_summary_bound_simple'
 
-    def _print_summary_simple_print(self, value, verbosity_level, interactive):
+    def _print_summary_simple_print(self, value, verbosity_level, interactive=False):
         return '_print_summary_simple_print'
 
-    def _print_summary_comp_print(self, value, verbosity_level, interactive):
+    def _print_summary_comp_print(self, value, verbosity_level, interactive=False):
         return '_print_summary_comp_print'
 
 
