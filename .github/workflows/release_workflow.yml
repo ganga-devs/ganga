@@ -81,7 +81,7 @@ jobs:
       - name: Deploy to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_SECRET }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: |
           echo -e "[distutils]\nindex-servers = pypi\n[pypi]\nusername:${TWINE_USERNAME}\npassword:${TWINE_PASSWORD}" > ~/.pypirc
           python setup.py register
