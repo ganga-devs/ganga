@@ -61,6 +61,12 @@ function handleRemoveJob() {
     executeAction(jobId, "remove", "")
 }
 
+// Remove Job
+function handleCopy() {
+    const jobId = document.querySelector("#job-info").dataset.job_id;
+    executeAction(jobId, "copy", "")
+}
+
 function executeAction(jobId, action, data) {
 
     const actionData = {}

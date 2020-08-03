@@ -6,12 +6,19 @@
             <div class="col-md-6 mb-3 mb-md-0">
                 <div class="card" id="job-info" data-job_id="{{ job_info.get('id') }}">
                     <div class="card-body">
-                        <h5 class="d-flex align-items-center">
-                            {{ job_info.get('name') if (job_info.get('name')|string).strip() != '' else 'Unnamed Job' }}
-                            <small>
-                                <span id="job-id-{{job_info.get('id')}}-status" class="badge badge-{{ status_color[job_info.get('status')] }} badge-pill ml-2">{{ job_info.get('status') }}</span>
-                            </small>
-                        </h5>
+                        <div class="d-flex justify-content-between">
+                            <h5 class="d-flex align-items-center">
+                                {{ job_info.get('name') if (job_info.get('name')|string).strip() != '' else 'Unnamed Job' }}
+                                <small>
+                                    <span id="job-id-{{ job_info.get('id') }}-status"
+                                          class="badge badge-{{ status_color[job_info.get('status')] }} badge-pill ml-2">{{ job_info.get('status') }}</span>
+                                </small>
+                            </h5>
+                            <div>
+                                <a href="#" onclick="handleCopy();" class="btn btn-sm btn-primary">Copy</a>
+                                <a href="{{ url_for('pin_job', job_id=job_info.get('id')) }}" class="btn btn-sm btn-primary">Pin Job</a>
+                            </div>
+                        </div>
                         <hr class="my-2">
                         <p class="m-0 p-0">fqid: {{ job_info.get('fqid') }}</p>
                         <p class="m-0 p-0">subjobs: {{ job_info.get('subjobs') }}</p>

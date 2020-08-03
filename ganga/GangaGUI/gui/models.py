@@ -12,6 +12,7 @@ class User(db.Model):
     user = db.Column(db.String(32))
     password_hash = db.Column(db.String(64))
     role = db.Column(db.String(32))
+    pinned_jobs = db.Column(db.Text)
 
     def store_password_hash(self, password: str):
         self.password_hash = generate_password_hash(password)

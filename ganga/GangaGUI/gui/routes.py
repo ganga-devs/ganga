@@ -4,8 +4,8 @@ import jwt
 import json
 from functools import wraps
 from itertools import chain
-from flask import request, jsonify, render_template, flash, redirect, url_for, session, send_file
-from GangaGUI.gui import app
+from flask import request, jsonify, render_template, flash, redirect, url_for, session, send_file, abort
+from GangaGUI.gui import app, db
 from GangaGUI.gui.models import User
 
 # ******************** Global Variables ******************** #
@@ -51,6 +51,12 @@ def dashboard():
         for j in recent_jobs:
             recent_jobs_info.append(get_job_info(j.id))
 
+        # Get pinned jobs
+        u = User.query.filter_by(user="GangaGUIAdmin").first()
+        pinned_job_ids = json.loads(u.pinned_jobs) if u.pinned_jobs is not None else []
+        for id in pinned_job_ids:
+            pinned_jobs.append(get_job_info(id))
+
     except Exception as err:
         # Flash the error in the GUI
         flash(str(err), "danger")
@@ -61,6 +67,44 @@ def dashboard():
                            recent_jobs_info=recent_jobs_info,
                            pinned_jobs=pinned_jobs,
                            status_color=status_color)
+
+
+@app.route('/pin/<int:job_id>')
+def pin_job(job_id: int):
+    u = User.query.filter_by(user="GangaGUIAdmin").first()
+
+    pinned_jobs = json.loads(u.pinned_jobs) if u.pinned_jobs is not None else []
+
+    if job_id not in pinned_jobs:
+        pinned_jobs.append(job_id)
+
+    u.pinned_jobs = json.dumps(pinned_jobs)
+
+    db.session.add(u)
+    db.session.commit()
+
+    flash(f"Pinned Job with ID {job_id}", "success")
+
+    return redirect(url_for('job_page', job_id=job_id))
+
+
+@app.route('/unpin/<int:job_id>')
+def unpin_job(job_id: int):
+    u = User.query.filter_by(user="GangaGUIAdmin").first()
+
+    pinned_jobs = json.loads(u.pinned_jobs) if u.pinned_jobs is not None else []
+
+    if job_id in pinned_jobs:
+        pinned_jobs.remove(job_id)
+
+    u.pinned_jobs = json.dumps(pinned_jobs)
+
+    db.session.add(u)
+    db.session.commit()
+
+    flash(f"Unpinned Job with ID {job_id}", "success")
+
+    return redirect(url_for("dashboard"))
 
 
 # Config View
@@ -708,6 +752,45 @@ def plugins_page():
     return render_template('plugins.html', plugins_info=plugins_info)
 
 
+@app.route("/plugin/<plugin_name>")
+def plugin_info_page(plugin_name: str):
+    # try:
+    #     from GangaCore import GPI
+    # except ImportError:
+    #     import ganga
+    #     import ganga.ganga
+    #     from ganga import plugin_name
+    #
+    # plugin = getattr(ganga, plugin_name)
+    #
+    # print(plugin)
+
+    using_core = False
+
+    try:
+        from GangaCore import GPI
+        from GangaCore.GPI import jobs
+        using_core = True
+    except ImportError:
+        import ganga
+        from ganga.ganga import ganga
+
+    docstring = None
+
+    try:
+        if using_core:
+            plugin = getattr(GPI, plugin_name)
+            docstring = plugin.__doc__
+        else:
+            plugin = getattr(ganga, plugin_name)
+            docstring = plugin.__doc__
+    except Exception as err:
+        flash(str(err), "danger")
+        return redirect(url_for("plugins_page"))
+
+    return render_template("plugin.html", title=f"{plugin_name}", docstring=docstring, plugin_name=plugin_name)
+
+
 # ******************** Token Based Authentication ******************** #
 
 # Generate token for API authentication - token validity 5 days
@@ -862,6 +945,26 @@ def job_create_endpoint():
     return jsonify({"success": True,
                     "message": "Job with ID {} created successfully using the template with ID {}".format(j.id,
                                                                                                           template_id)})
+
+
+# Perform Copy Action on the Job - PUT Method
+@app.route("/api/job/<int:job_id>/copy", methods=["PUT"])
+# @token_required
+def job_copy_endpoint(job_id: int):
+    try:
+        from GangaCore.GPI import jobs
+    except ImportError:
+        import ganga
+        import ganga.ganga
+        from ganga import jobs
+
+    try:
+        j = jobs[job_id]
+        new_j = j.copy()
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify({"success": True, "message": f"Successfully created a new copy with ID {new_j.id}"})
 
 
 # Perform Certain Action on the Job - PUT Method
@@ -1081,6 +1184,27 @@ def subjob_attribute_endpoint(job_id: int, subjob_id: int, attribute: str):
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(response_data)
+
+
+# Perform Copy Action on the Subjob - PUT Method
+@app.route("/api/job/<int:job_id>/subjob/<int:subjob_id>/copy", methods=["PUT"])
+# @token_required
+def subjob_copy_endpoint(job_id: int, subjob_id: int):
+    try:
+        from GangaCore.GPI import jobs
+    except ImportError:
+        import ganga
+        import ganga.ganga
+        from ganga import jobs
+
+    try:
+        j = jobs[job_id]
+        sj = j.subjobs[subjob_id]
+        new_j = sj.copy()
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify({"success": True, "message": f"Successfully created a new copy with ID {new_j.id}"})
 
 
 # ******************** Jobs API ******************** #

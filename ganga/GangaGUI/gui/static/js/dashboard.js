@@ -4,6 +4,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+function handleCopy(jobId) {
+
+    // Make ajax request to server
+    fetch(`/api/job/${jobId}/copy`, {
+        method: "PUT"
+    })
+        .then(response => response.json())
+        .then(data => {
+            // Display server response
+            displayToast(notificationCount, data["message"], currentTime(), data["success"] ? "success" : "danger");
+            notificationCount++;
+        })
+        .catch(err => {
+            // Display error if any
+            displayToast(notificationCount, err, currentTime(), "danger");
+            notificationCount++;
+        })
+    ;
+}
+
+
 // Refresh stat cards of dashboard
 function refreshStatistics() {
 

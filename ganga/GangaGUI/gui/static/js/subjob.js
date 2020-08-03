@@ -2,6 +2,27 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(refreshStatus, 0)
 });
 
+function handleCopy(jobId, subjobId) {
+
+    // Make ajax request to server
+    fetch(`/api/job/${jobId}/subjob/${subjobId}/copy`, {
+        method: "PUT"
+    })
+        .then(response => response.json())
+        .then(data => {
+            // Display server response
+            displayToast(notificationCount, data["message"], currentTime(), data["success"] ? "success" : "danger");
+            notificationCount++;
+        })
+        .catch(err => {
+            // Display error if any
+            displayToast(notificationCount, err, currentTime(), "danger");
+            notificationCount++;
+        })
+    ;
+
+}
+
 function handleOnSelectAttribute() {
     const jobId = document.querySelector("#subjob-info").dataset.job_id;
     const subjobId = document.querySelector("#subjob-info").dataset.subjob_id;
@@ -31,8 +52,6 @@ function getSubjobAttributeInfo(job_id, subjob_id, attribute) {
 }
 
 function refreshStatus() {
-
-    console.log("Hello")
 
     const job_id = document.querySelector("#subjob-info").dataset.job_id;
     const subjob_id = document.querySelector("#subjob-info").dataset.subjob_id;

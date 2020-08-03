@@ -12,7 +12,7 @@
                         <hr>
                             <ul>
                                 {% for plugin in plugins_info[category] %}
-                                    <li>{{ plugin }}</li>
+                                    <li><a href="{{ url_for('plugin_info_page', plugin_name=plugin) }}">{{ plugin }}</a></li>
                                 {% endfor %}
                             </ul>
                         </div>

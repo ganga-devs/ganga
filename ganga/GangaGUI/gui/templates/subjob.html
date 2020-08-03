@@ -5,12 +5,18 @@
             <div class="col-md-6 mb-3 mb-md-0">
                 <div class="card" id="subjob-info" data-job_id="{{ job_id }}" data-subjob_id="{{ subjob_info.get('id') }}">
                     <div class="card-body">
-                        <h5 class="d-flex align-items-center">
-                            {{ subjob_info.get('name') if (subjob_info.get('name')|string).strip() != '' else 'Unnamed Subjob' }}
-                            <small>
-                                <span id="subjob-id-{{subjob_info.get('id')}}-status" class="badge badge-{{ status_color[subjob_info.get('status')] }} badge-pill ml-2">{{ subjob_info.get('status') }}</span>
-                            </small>
-                        </h5>
+                        <div class="d-flex justify-content-between">
+                            <h5 class="d-flex align-items-center">
+                                {{ subjob_info.get('name') if (subjob_info.get('name')|string).strip() != '' else 'Unnamed Subjob' }}
+                                <small>
+                                    <span id="subjob-id-{{ subjob_info.get('id') }}-status"
+                                          class="badge badge-{{ status_color[subjob_info.get('status')] }} badge-pill ml-2">{{ subjob_info.get('status') }}</span>
+                                </small>
+                            </h5>
+                            <div>
+                                <a href="#" onclick="handleCopy({{ job_id }}, {{ subjob_info.get('id') }});" class="btn btn-sm btn-primary">Copy</a>
+                            </div>
+                        </div>
                         <hr class="my-2">
                         <p class="m-0 p-0">fqid: {{ subjob_info.get('fqid') }}</p>
                         <p class="m-0 p-0">application: {{ (subjob_info.get('application')|string).split('(')[0] }}</p>
