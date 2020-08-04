@@ -11,7 +11,7 @@ try:
     resp = requests.get('https://api.github.com/repos/ganga-devs/ganga/releases')
     if resp.status_code == 200:
         # assume the first is the latest
-        rel_ver = resp.json()[0]['name']
+        rel_ver = resp.json()[0]['tag_name']
 
         # Now check if it's installed
         if rel_ver not in  os.listdir('/cvmfs/ganga.cern.ch/Ganga/install/'):
