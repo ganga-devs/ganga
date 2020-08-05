@@ -255,8 +255,9 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("Failed to update index: %s on startup/shutdown" % k)
                 logger.debug("Reason: %s" % err)
 
-        # bulk saving the indexes
-        self.connection.index.insert_many(documents=all_indexes)
+        # bulk saving the indexes, if there is anything to save
+        if all_indexes:
+            self.connection.index.insert_many(documents=all_indexes)
 
         return
 
