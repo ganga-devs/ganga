@@ -35,9 +35,9 @@ config = getConfig('Configuration')
 
 
 if config["repositorytype"] == "Database":
-    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
+    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobJsonList
 else:
-    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList
 
 def lazyLoadJobFQID(this_job):
     return lazyLoadJobObject(this_job, 'fqid')
@@ -764,7 +764,7 @@ class Job(GangaObject):
         This returns a set of all of the different subjob statuses whilst respecting lazy loading
         """
 
-        if isinstance(self.subjobs, SubJobXMLList):
+        if isinstance(self.subjobs, SubJobJsonList):
             stats = set(self.subjobs.getAllSJStatus())
         else:
             stats = set(sj.status for sj in self.subjobs)
@@ -773,7 +773,7 @@ class Job(GangaObject):
 
     def returnSubjobStatuses(self):
         stats = []
-        if isinstance(self.subjobs, SubJobXMLList):
+        if isinstance(self.subjobs, SubJobJsonList):
             stats = self.subjobs.getAllSJStatus()
         else:
             stats = [sj.status for sj in self.subjobs]
@@ -1502,7 +1502,7 @@ class Job(GangaObject):
         from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 
         try:
-            assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
+            assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobJsonList)) and len(self.subjobs) == 0) )
         except AssertionError:
             raise JobManagerError("Number of subjobs in the job is inconsistent so not submitting the job")
 
@@ -2083,7 +2083,7 @@ class Job(GangaObject):
 
         if len(self._stored_subjobs_proxy) != len(self.subjobs):
 
-            if isType(self.subjobs, SubJobXMLList):
+            if isType(self.subjobs, SubJobJsonList):
                 subjob_slice.objects = self.subjobs
                 #self._stored_subjobs_proxy = _wrap(self._stored_subjobs_proxy)
             elif isType(self.subjobs, (list, GangaList)):

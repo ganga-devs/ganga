@@ -26,9 +26,9 @@ logger = GangaCore.Utility.logging.getLogger()
 config = getConfig('Configuration')
 
 if config["repositorytype"] == "Database":
-    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobXMLList
+    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobJsonList
 else:
-    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList
 
 class IBackend(GangaObject):
 
@@ -445,7 +445,7 @@ class IBackend(GangaObject):
                 #logger.info("Looking for sj")
                 monitorable_subjob_ids = []
 
-                if isType(j.subjobs, SubJobXMLList):
+                if isType(j.subjobs, SubJobJsonList):
                     cache = j.subjobs.getAllCachedData()
                     for sj_id in range(0,len(j.subjobs)):
                         if cache[sj_id]['status'] in ['submitted', 'running']:

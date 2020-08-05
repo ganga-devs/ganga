@@ -27,7 +27,7 @@ from GangaCore.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from GangaCore.Core.GangaRepository.VStreamer import XMLFileError
 
 from GangaCore.GPIDev.Base.Objects import Node
-from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList
 
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 
@@ -694,7 +694,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def _safe_flush_xml(self, this_id):
         """
-        Flush XML to disk whilst checking for relavent SubJobXMLList which handles subjobs now
+        Flush XML to disk whilst checking for relavent SubJobJsonList which handles subjobs now
         flush for "this_id" in the self.objects list
         Args:
             this_id (int): This is the id of the object we want to flush to disk
@@ -713,7 +713,7 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("has_children")
 
                 if hasattr(getattr(obj, self.sub_split), 'flush'):
-                    # I've been read from disk in the new SubJobXMLList format I know how to flush
+                    # I've been read from disk in the new SubJobJsonList format I know how to flush
                     getattr(obj, self.sub_split).flush()
                 else:
                     # I have been constructed in this session, I don't know how to flush!
@@ -731,7 +731,7 @@ class GangaRepositoryLocal(GangaRepository):
                             safe_save(sfn, split_cache[i], self.to_file)
                             split_cache[i]._setFlushed()
                     # Now generate an index file to take advantage of future non-loading goodness
-                    tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False, obj)
+                    tempSubJList = SubJobJsonList(os.path.dirname(fn), self.registry, self.dataFileName, False, obj)
                     ## equivalent to for sj in job.subjobs
                     tempSubJList._setParent(obj)
                     job_dict = {}
@@ -854,7 +854,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         If we must actually load the object from disk then we end up here.
         This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
-        If there are children then a SubJobXMLList is created to manage them.
+        If there are children then a SubJobJsonList is created to manage them.
         The fn of the job is passed to the SubbJobXMLList and there is some knowledge of if we should be loading the backup passed as well
         Args:
             fn (str): This is the path to the data file for this object in the XML
@@ -889,7 +889,7 @@ class GangaRepositoryLocal(GangaRepository):
         if has_children:
             logger.debug("Adding children")
             # NB Keep be a SetSchemaAttribute to bypass the list manipulation which will put this into a list in some cases 
-            obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, obj))
+            obj.setSchemaAttribute(self.sub_split, SubJobJsonList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, obj))
         else:
             if obj._schema.hasAttribute(self.sub_split):
                 # Infinite loop if we use setattr btw
@@ -940,7 +940,7 @@ class GangaRepositoryLocal(GangaRepository):
 	#logger.debug("Checking in: %s" % os.path.dirname(fn))
 	#logger.debug("found: %s" % os.listdir(os.path.dirname(fn)))
 
-        has_children = SubJobXMLList.checkJobHasChildren(os.path.dirname(fn), self.dataFileName)
+        has_children = SubJobJsonList.checkJobHasChildren(os.path.dirname(fn), self.dataFileName)
 
         logger.debug("Found children: %s" % str(has_children))
 

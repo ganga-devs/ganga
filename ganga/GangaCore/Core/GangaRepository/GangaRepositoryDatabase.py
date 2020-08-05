@@ -274,7 +274,7 @@ class GangaRepositoryLocal(GangaRepository):
     # FIXME: Force override of `ignore_subs` to include `master` information for subjobs
     def _flush(self, this_id):
         """
-        Flush Json to disk whilst checking for relavent SubJobXMLList which handles subjobs now
+        Flush Json to disk whilst checking for relavent SubJobJsonList which handles subjobs now
         flush for "this_id" in the self.objects list
         Args:
             this_id (int): This is the id of the object we want to flush to disk
@@ -290,7 +290,7 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("has_children")
 
                 if hasattr(getattr(obj, self.sub_split), "flush"):
-                    # I've been read from disk in the new SubJobXMLList format I know how to flush
+                    # I've been read from disk in the new SubJobJsonList format I know how to flush
                     getattr(obj, self.sub_split).flush()
                 else:
                     # I have been constructed in this session, I don't know how to flush!
@@ -599,7 +599,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         If we must actually load the object from database then we end up here.
         This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
-        If there are children then a SubJobXMLList is created to manage them.
+        If there are children then a SubJobJsonList is created to manage them.
         The fn of the job is passed to the SubbJobXMLList and there is some knowledge of if we should be loading the backup passed as well
         Args:
             this_id (int): This is the integer key of the object in the self.objects dict
