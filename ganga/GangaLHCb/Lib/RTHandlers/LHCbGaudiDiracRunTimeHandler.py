@@ -181,6 +181,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         OUTPUT_PATH="",
                                         SETTINGS=diracAPI_script_settings(job.application),
                                         DIRAC_OPTS=job.backend.diracOpts,
+                                        MIN_PROCESSORS=job.backend.minProcessors,
+                                        MAX_PROCESSORS=job.backend.maxProcessors,
                                         PLATFORM=app.platform,
                                         REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
                                         ANCESTOR_DEPTH=ancestor_depth,
