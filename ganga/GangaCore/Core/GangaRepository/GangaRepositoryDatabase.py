@@ -15,7 +15,7 @@ import GangaCore.Utility.logging
 from GangaCore import GANGA_SWAN_INTEGRATION
 from GangaCore.GPIDev.Base.Objects import Node
 from GangaCore.Utility.Config import getConfig
-from GangaCore.Utility.Plugin import PluginManagerError
+from GangaCore.Utility.Plugin import PluginManagerError, allPlugins
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
 from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList
 
@@ -29,6 +29,8 @@ from GangaCore.Core.GangaRepository.DStreamer import (
     index_to_database, index_from_database, DatabaseError
 )
 
+# Simple Patch to avoid SubJobJsonList not found in internal error
+allPlugins.add(SubJobJsonList,'internal','SubJobJsonList')
 
 logger = GangaCore.Utility.logging.getLogger()
 
