@@ -5,13 +5,13 @@ import json
 from functools import wraps
 from itertools import chain
 from flask import request, jsonify, render_template, flash, redirect, url_for, session, send_file, abort
+from flask_login import login_user, login_required, logout_user, current_user
 from GangaGUI.gui import app, db
 from GangaGUI.gui.models import User
 
 # ******************** Global Variables ******************** #
 
-# Colors showed for different job status in the GUI based on bootstrap
-
+# Colors showed for different job statuses in the GUI based on Bootstrap CSS
 status_color = {
     "new": "info",
     "completed": "success",
@@ -22,20 +22,70 @@ status_color = {
 }
 
 # Allowed extensions when uploading any files to GUI
-ALLOWED_EXTENSIONS = {'txt', 'py'}
+ALLOWED_EXTENSIONS = {"txt", "py"}
+
+# The top level ganga package used for importing GPI functions
+ganga = None
 
 
 # ******************** View Routes ******************** #
 
-# Dashboard view
-@app.route("/")
-def dashboard():
+# Execute before first request
+@app.before_first_request
+def imports():
+    global ganga
     try:
         from GangaCore.GPI import jobs
+        import GangaCore.GPI as ganga
     except ImportError:
         import ganga
-        import ganga.ganga
-        from ganga import jobs
+        from ganga.ganga import ganga
+
+
+# Login View
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """
+    Handles login route of the GUI.
+    """
+
+    # If already authenticated, logout
+    if current_user.is_authenticated:
+        logout_user()
+
+    # Login user
+    if request.method == "POST":
+
+        # Form data
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        # Database query
+        user = User.query.filter_by(user=username).first()
+
+        # If valid user, login
+        if user and user.verify_password(password):
+            login_user(user, True)
+            flash("Login successful", "success")
+            return redirect(url_for("dashboard"))
+
+        flash("Error identifying the user", "danger")
+
+    # Get users from the database
+    users = User.query.all()
+
+    return render_template("login.html", title="Login", users=users)
+
+
+# Dashboard view
+@app.route("/")
+@login_required
+def dashboard():
+    """
+    Handles the dashboard route of the GUI.
+    """
+
+    from ganga import jobs
 
     quick_statistics = {}
     recent_jobs_info = []
@@ -47,7 +97,7 @@ def dashboard():
             quick_statistics[stat] = len(jobs.select(status=stat))
 
         # Get last 10 jobs slice
-        recent_jobs = list(jobs[-10:])
+        recent_jobs = jobs[-10:]
         for j in recent_jobs:
             recent_jobs_info.append(get_job_info(j.id))
 
@@ -69,36 +119,56 @@ def dashboard():
                            status_color=status_color)
 
 
-@app.route('/pin/<int:job_id>')
+# Route to pin the job
+@app.route("/pin/<int:job_id>")
+@login_required
 def pin_job(job_id: int):
+    """
+    Pin the given job, that is shown in the dashboard.
+    :param job_id: int
+    """
+
+    # Get user from the database
     u = User.query.filter_by(user="GangaGUIAdmin").first()
 
+    # Load pinned jobs of the user from the database
     pinned_jobs = json.loads(u.pinned_jobs) if u.pinned_jobs is not None else []
 
+    # Pin job
     if job_id not in pinned_jobs:
         pinned_jobs.append(job_id)
 
+    # Add new pinned jobs to the database
     u.pinned_jobs = json.dumps(pinned_jobs)
-
     db.session.add(u)
     db.session.commit()
 
     flash(f"Pinned Job with ID {job_id}", "success")
 
-    return redirect(url_for('job_page', job_id=job_id))
+    return redirect(url_for("job_page", job_id=job_id))
 
 
-@app.route('/unpin/<int:job_id>')
+# Route to unpin the job
+@app.route("/unpin/<int:job_id>")
+@login_required
 def unpin_job(job_id: int):
+    """
+    Unpin the job, and make the required change in the GUI database.
+    :param job_id: int
+    """
+
+    # Get the user from the database
     u = User.query.filter_by(user="GangaGUIAdmin").first()
 
+    # Load user's pinned job from the database
     pinned_jobs = json.loads(u.pinned_jobs) if u.pinned_jobs is not None else []
 
+    # Unpin the job
     if job_id in pinned_jobs:
         pinned_jobs.remove(job_id)
 
+    # Commit changes to the database
     u.pinned_jobs = json.dumps(pinned_jobs)
-
     db.session.add(u)
     db.session.commit()
 
@@ -110,13 +180,11 @@ def unpin_job(job_id: int):
 # Config View
 @app.route("/config", methods=["GET", "POST"])
 def config_page():
-    try:
-        from GangaCore.GPI import config
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import config
+    """
+    Handles the config route of the GUI.
+    """
 
+    from ganga import config
     from GangaCore import getConfig
 
     sections = []
@@ -153,12 +221,11 @@ def config_page():
 # Create View
 @app.route("/create", methods=["GET", "POST"])
 def create_page():
-    try:
-        from GangaCore.GPI import templates, load, runfile
-    except:
-        import ganga
-        import ganga.ganga
-        from ganga import templates, load, runfile
+    """
+    Handles create route of the config page.
+    """
+
+    from ganga import templates, load, runfile
 
     # Handle file uploads
     if request.method == "POST":
@@ -166,7 +233,7 @@ def create_page():
         # Load from a uploaded file
         if "loadjobfile" in request.files:
             load_job_file = request.files["loadjobfile"]
-            if load_job_file.filename == '':
+            if load_job_file.filename == "":
                 flash("No selected file", "warning")
                 return redirect(request.url)
 
@@ -801,8 +868,8 @@ def generate_token():
     """
 
     # Request form data
-    request_user = request.form.get("user")
-    request_password = request.form.get("password")
+    request_user = request.json.get("username")
+    request_password = request.json.get("password")
 
     # Handle no user or no password case
     if not request_user or not request_password:

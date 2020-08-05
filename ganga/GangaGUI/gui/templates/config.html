@@ -2,7 +2,7 @@
 
 {% block content %}
     <div class="container mt-2">
-        <form action="{{ url_for('config_page') }}" method="POST">
+        <form method="post">
             <div class="form-row">
                 <div class="form-group col-md-9">
                     <select class="form-control custom-select" name="section">
@@ -18,11 +18,10 @@
             </div>
         </form>
         <hr class="my-1 mb-3 mt-3">
-
-            <div class="row justify-content-center">
-                <div class="col-12">
-                    <div class="accordion" id="config">
-                        <div class="list-group">
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="accordion" id="config">
+                    <div class="list-group">
                         {% for section in sections %}
                             <a href="#"
                                class="list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last }}"
@@ -61,11 +60,9 @@
                                 </div>
                             </div>
                         {% endfor %}
-                        </div>
                     </div>
                 </div>
             </div>
-{#            <hr class="my-3">#}
-
+        </div>
     </div>
 {% endblock content %}

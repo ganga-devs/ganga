@@ -65,13 +65,20 @@
                         {% for j in recent_jobs_info|reverse %}
                             <a href="#" id="job-id-{{ j.get('id') }}"
                                class="recent-job list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last }}"
-                               data-id="{{ j.get('id') }}" data-status="{{ j.get('status') }}" data-toggle="collapse"
-                               data-target="#collapse-job-id-{{ j.get('id') }}" aria-expanded="true"
+                               data-id="{{ j.get('id') }}"
+                               data-toggle="collapse"
+                               data-target="#collapse-job-id-{{ j.get('id') }}"
+                               aria-expanded="true"
                                aria-controls="collapse-job-id-{{ j.get('id') }}">
+
+                                {# Job name #}
                                 {{ j.get('id') + '. ' + j.get('name') if j.get('name').strip() != '' else j.get('id') + '. '+ 'Unnamed Job' }}
                                 <span id="job-id-{{ j.get('id') }}-status"
-                                      class="badge badge-{{ status_color[j.get('status')] }} badge-pill">{{ j.get('status') }}</span>
+                                      class="badge badge-{{ status_color[j.get('status')] }} badge-pill">
+                                    {{ j.get('status') }}
+                                </span>
                             </a>
+                            {# Job info after uncollapsing #}
                             <div id="collapse-job-id-{{ j.get('id') }}"
                                  class="collapse border-left border-right {{ 'border-bottom rounded-bottom' if loop.last }}"
                                  data-parent="#recent-jobs">
@@ -79,21 +86,28 @@
                                     <p class="m-0 p-0">fqid: {{ j.get('fqid') }}</p>
                                     <p class="m-0 p-0">subjobs: {{ j.get('subjobs') }}</p>
                                     <p class="m-0 p-0">
-                                        application: {{ (j.get('application')|string).split('(')[0] }}</p>
+                                        application: {{ (j.get('application')|string).split('(')[0] }}
+                                    </p>
                                     <p class="m-0 p-0">backend: {{ (j.get('backend')|string).split('(')[0] }}</p>
                                     <p class="m-0 p-0">backend.actualCE: {{ j.get('backend.actualCE') }}</p>
                                     <p class="m-0 p-0">comment: {{ j.get('comment') }}</p>
-                                    <p class="m-0 p-0">subjobs statuses: {{ j.get('subjob_statuses') }}</p>
+                                    <p class="m-0 p-0" id="subjob-statuses-job-id-{{ j.get('id') }}">
+                                        subjobs statuses: {{ j.get('subjob_statuses') }}
+                                    </p>
                                     <a href="{{ url_for('job_page', job_id=j.get('id')) }}"
-                                       class="btn btn-sm btn-primary mt-3">View Job</a>
-                                    <a href="#" onclick="handleCopy({{ j.get('id') }})" class="btn btn-sm btn-primary mt-3">Copy Job</a>
-
+                                       class="btn btn-sm btn-primary mt-3">
+                                        View Job
+                                    </a>
+                                    <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-copy">
+                                        Copy Job
+                                    </a>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
+
             {# Pinned Jobs Section #}
             <div class="col-md-6">
                 <h3>Pinned Jobs</h3>
@@ -102,13 +116,19 @@
                         {% for j in pinned_jobs|reverse %}
                             <a href="#" id="job-id-{{ j.get('id') }}"
                                class="pinned-job list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last }}"
-                               data-id="{{ j.get('id') }}" data-status="{{ j.get('status') }}" data-toggle="collapse"
-                               data-target="#collapse-pinned-job-id-{{ j.get('id') }}" aria-expanded="true"
+                               data-id="{{ j.get('id') }}"
+                               data-toggle="collapse"
+                               data-target="#collapse-pinned-job-id-{{ j.get('id') }}"
+                               aria-expanded="true"
                                aria-controls="collapse-pinned-job-id-{{ j.get('id') }}">
+                                {# Job name #}
                                 {{ j.get('id') + '. ' + j.get('name') if j.get('name').strip() != '' else j.get('id') + '. '+ 'Unnamed Job' }}
-                                <span id="job-id-{{ j.get('id') }}-status"
-                                      class="badge badge-{{ status_color[j.get('status')] }} badge-pill">{{ j.get('status') }}</span>
+                                <span id="pinned-job-id-{{ j.get('id') }}-status"
+                                      class="badge badge-{{ status_color[j.get('status')] }} badge-pill">
+                                    {{ j.get('status') }}
+                                </span>
                             </a>
+                            {# Job info when uncollapsed #}
                             <div id="collapse-pinned-job-id-{{ j.get('id') }}"
                                  class="collapse border-left border-right {{ 'border-bottom rounded-bottom' if loop.last }}"
                                  data-parent="#pinned-jobs">
@@ -116,14 +136,19 @@
                                     <p class="m-0 p-0">fqid: {{ j.get('fqid') }}</p>
                                     <p class="m-0 p-0">subjobs: {{ j.get('subjobs') }}</p>
                                     <p class="m-0 p-0">
-                                        application: {{ (j.get('application')|string).split('(')[0] }}</p>
+                                        application: {{ (j.get('application')|string).split('(')[0] }}
+                                    </p>
                                     <p class="m-0 p-0">backend: {{ (j.get('backend')|string).split('(')[0] }}</p>
                                     <p class="m-0 p-0">backend.actualCE: {{ j.get('backend.actualCE') }}</p>
                                     <p class="m-0 p-0">comment: {{ j.get('comment') }}</p>
-                                    <p class="m-0 p-0">subjobs statuses: {{ j.get('subjob_statuses') }}</p>
+                                    <p class="m-0 p-0" id="subjob-statuses-pinned-job-id-{{ j.get('id') }}">subjobs statuses: {{ j.get('subjob_statuses') }}</p>
                                     <a href="{{ url_for('job_page', job_id=j.get('id')) }}"
-                                       class="btn btn-sm btn-primary mt-3">View Job</a>
-                                    <a href="#" onclick="handleCopy({{ j.get('id') }})" class="btn btn-sm btn-primary mt-3">Copy Job</a>
+                                       class="btn btn-sm btn-primary mt-3">
+                                        View Job
+                                    </a>
+                                    <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-copy">
+                                        Copy Job
+                                    </a>
                                     <a href="{{ url_for('unpin_job', job_id=j.get('id')) }}" class="btn btn-sm btn-primary mt-3">Unpin Job</a>
                                 </div>
                             </div>

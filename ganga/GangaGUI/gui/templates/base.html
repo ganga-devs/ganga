@@ -12,25 +12,11 @@
     <!-- Custom Style Sheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.css">
-
-    <!-- Fontawesome -->
-    <script defer src="https://kit.fontawesome.com/eba61760c8.js"></script>
-
-    <!-- Vue -->
-    {# TODO check #}
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
-
     <!-- Include Handlebars from a CDN -->
     <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
 
     <!-- Title -->
-    {% if title %}
-        <title>{{ title }} - Ganga GUI</title>
-    {% else %}
-        <title>Ganga GUI</title>
-    {% endif %}
+    <title>{{ title + ' - Ganga GUI' if title else 'Ganga GUI' }}</title>
 
     <!-- Head Block -->
     {% block head %}{% endblock head %}
@@ -95,36 +81,26 @@
     <!-- Footer -->
     <nav class="mt-5 navbar navbar-light bg-light border-top">
             <div class="form-group col-md-1 mt-2">
-                <select id="refresh-interval" onchange="updateRefreshInterval();" class="custom-select">
+                <label for="refresh-interval" class="small text-muted">Refresh:</label>
+                <select id="refresh-interval" class="custom-select">
                     <option value="1000">1</option>
                     <option value="2000">2</option>
                     <option value="5000" selected>5</option>
                     <option value="10000">10</option>
                     <option value="30000">30</option>
                     <option value="60000">60</option>
+                    <option value="120000">120</option>
                 </select>
             </div>
-
     </nav>
 </div>
 
-{#  Toasts  #}
-<div style="position: fixed; bottom: 5rem; right: 1rem; overflow: scroll; max-height: 90vh;" id="toastContainer">
-    <div class="toast" data-delay="10000" id="testToast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-            <strong>Notification</strong>
-            <small class="text-muted mx-3">2 seconds ago</small>
-            <button type="button" class="ml-2 mb-1 close text-right" data-dismiss="toast" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        <div class="toast-body">
-            {{ message }}
-        </div>
-    </div>
-</div>
+{#  Toasts Container #}
+<div style="position: fixed; bottom: 1rem; right: 1rem; overflow: scroll; max-height: 90vh;" id="toast-container"></div>
 
+{# JavaScript files #}
 <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 {% block footer %}{% endblock footer %}
 
 <!-- Optional JavaScript -->
