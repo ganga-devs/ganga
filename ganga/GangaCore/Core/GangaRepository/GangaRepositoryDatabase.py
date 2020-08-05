@@ -211,10 +211,54 @@ class GangaRepositoryLocal(GangaRepository):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError
         Write an index file for all new objects in memory and master index file of indexes"""
-        logger.debug("Shutting Down GangaRepositoryDatabase")
-        self.index_write(shutdown=True)
+        from GangaCore.Utility.logging import getLogger
+        logger = getLogger()
+        logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
+        try:
+            self._write_master_cache()
+        except Exception as err:
+            logger.warning("Warning: Failed to write master index due to: %s" % err)
+
         if kill:
             self.kill_mongomon()
+
+
+    def _write_master_cache(self):
+        """
+        write a master index cache once per 300sec
+        Args:
+            shutdown (boool): True causes this to be written now
+        """
+        items_to_save = iter(self.objects.items())
+        all_indexes = []
+        for k, v in items_to_save:
+            if k in self.incomplete_objects:
+                continue
+            try:
+                if k in self._fully_loaded:
+                    # Check and write index first
+                    obj = v #self.objects[k]
+                    new_index = None
+                    if obj is not None:
+                        new_index = self.registry.getIndexCache(stripProxy(obj))
+
+                    if new_index is not None:
+                        new_index["classname"] = getName(obj)
+                        new_index["category"] = obj._category
+                        if getattr(obj, "master"):
+                            new_index["master"] = obj.master
+                        else:
+                            new_index["master"] = -1
+                        all_indexes.append(all_indexes)
+
+            except Exception as err:
+                logger.debug("Failed to update index: %s on startup/shutdown" % k)
+                logger.debug("Reason: %s" % err)
+
+        # bulk saving the indexes
+        self.connection.index.insert_many(documents=all_indexes)
+
+        return
 
     def kill_mongomon(self):
         """Kill the mongo db instance in a docker container
@@ -416,7 +460,11 @@ class GangaRepositoryLocal(GangaRepository):
             if temp:
                 temp["classname"] = getName(obj)
                 temp["category"] = obj._category
-                temp["master"] = -1  # normal object do not have a master/parent
+                if getattr(obj, "master"):
+                    temp["master"] = obj.master
+                else:
+                    temp["master"] = -1
+
 
             index_to_database(
                 data=temp,
