@@ -27,7 +27,7 @@ from GangaCore.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from GangaCore.Core.GangaRepository.VStreamer import XMLFileError
 
 from GangaCore.GPIDev.Base.Objects import Node
-from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList
+from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 

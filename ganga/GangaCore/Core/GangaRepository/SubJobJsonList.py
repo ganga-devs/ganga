@@ -225,10 +225,10 @@ class SubJobJsonList(GangaObject):
 
         # this_time = time.time()
 
-        # if len(self._stored_len) == 2:
-        #     last_time = self._stored_len[0]
-        #     if this_time == last_time:
-        #         return self._stored_len[1]
+        if len(self._stored_len) == 2:
+            # last_time = self._stored_len[0]
+            # if this_time == last_time:
+                return self._stored_len[1]
 
         subjob_count = SubJobJsonList.countSubJobDirs(
             master_id=self.parent_id,
@@ -496,7 +496,8 @@ class SubJobJsonList(GangaObject):
             datafileName (str): name of the files containing the xml, i.e. 'data' by convention
             checkDataFiles (bool): if True check for the existance of all of the data files and check this against the numerically named folders
         """
-
+        import sys
+        logger.info(f"countSubJobDirs was called by ({sys._getframe().f_back.f_code.co_name})")
         result = index_from_database(
             _filter={"master": master_id},
             document=document,

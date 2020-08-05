@@ -17,7 +17,7 @@ from GangaCore.GPIDev.Base.Objects import Node
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Plugin import PluginManagerError
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
-from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList
+from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 
 
 from GangaCore.Core.GangaRepository import (

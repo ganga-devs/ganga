@@ -26,9 +26,9 @@ logger = GangaCore.Utility.logging.getLogger()
 config = getConfig('Configuration')
 
 if config["repositorytype"] == "Database":
-    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList as SubJobJsonList
+    from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList as SubJobJsonList
 else:
-    from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList
+    from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 
 class IBackend(GangaObject):
 

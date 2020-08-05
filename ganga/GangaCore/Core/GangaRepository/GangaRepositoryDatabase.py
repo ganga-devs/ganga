@@ -17,7 +17,7 @@ from GangaCore.GPIDev.Base.Objects import Node
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Plugin import PluginManagerError, allPlugins
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
-from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList
+from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 
 
 from GangaCore.Core.GangaRepository import (
@@ -123,7 +123,6 @@ class GangaRepositoryLocal(GangaRepository):
         super(GangaRepositoryLocal, self).__init__(registry)
         self.dataFileName = "data"
         self.sub_split = "subjobs"
-        # self.root_document = self.registry.name
         self.root_document = "GangaDatabase"
         self._cache_load_timestamp = {}
         self.printed_explanation = False
@@ -133,7 +132,6 @@ class GangaRepositoryLocal(GangaRepository):
         """ Starts a repository and reads in a directory structure.
         Raise RepositoryError"""
         self._load_timestamp = {}
-
         # databased based initialization
         _ = pymongo.MongoClient()
         self.db_name = "dumbmachine"
@@ -142,11 +140,8 @@ class GangaRepositoryLocal(GangaRepository):
         # New Master index to speed up loading of many, MANY files
         self._cache_load_timestamp = {}
         self._cached_obj = {}
-        # self._cached_cat = {}
-        # self._cached_cls = {}
-        # track time for updating values in the object cache
-        self._cached_obj_timestamps = {}
-        self._master_index_timestamp = 0
+        # self._cached_obj_timestamps = {}
+        # self._master_index_timestamp = 0
 
         self.known_bad_ids = []
 
@@ -245,11 +240,11 @@ class GangaRepositoryLocal(GangaRepository):
                     if new_index is not None:
                         new_index["classname"] = getName(obj)
                         new_index["category"] = obj._category
-                        if getattr(obj, "master") and obj._category == "jobs":
+                        if hasattr(obj, "master") and obj._category == "jobs":
                             new_index["master"] = obj.master
                         else:
                             new_index["master"] = -1
-                        all_indexes.append(all_indexes)
+                        all_indexes.append(new_index)
 
             except Exception as err:
                 logger.debug("Failed to update index: %s on startup/shutdown" % k)
@@ -477,18 +472,16 @@ class GangaRepositoryLocal(GangaRepository):
                 raise NotImplementedError(
                     "Call function to save master index here.")
 
-    def read_master_cache(self):
+    def _read_master_cache(self):
         """Reads the index document from the database
         """
+        logger.debug("Reading the MasterCache")
         master_cache = self.connection.index.find(
             filter={"category": self.registry.name, "master": -1}) # loading masters so.
         if master_cache:
+            for cache in master_cache:
+                self.index_load(this_id=cache["id"], item=cache)
             return dict([(_['id'], True) for _ in master_cache])
-            # for this_cache in master_cache:
-            #     this_id = this_cache["id"]
-            #     self.index_load(this_id=this_id, index=this_cache)
-            # self._cached_obj[this_id] = this_cache
-            # self.load([this_id])
         else:
             logger.debug(
                 "No master index information exists, new/blank repository startup is assumed")
@@ -515,7 +508,7 @@ class GangaRepositoryLocal(GangaRepository):
         # First locate and load the index files
         logger.debug("updating index...")
         if firstRun:
-            objs = self.read_master_cache()
+            objs = self._read_master_cache()
         else:
             objs = set(self.objects.keys())
         changed_ids = []
@@ -593,20 +586,17 @@ class GangaRepositoryLocal(GangaRepository):
 
         return changed_ids
 
-    def index_load(self, this_id, startup=False):
+    def index_load(self, this_id, item=None):
         """
         Will load index file from the database, so we know what objects exist in the database
         raise NotImplementedError("Load all the information at once")
 
         """
-        if startup:
-            self.read_master_cache()
-            return True
-
-        item = index_from_database(
-            _filter={"id": this_id, "master": -1}, #loading master jobs
-            document=self.connection.index
-        )
+        if item is None:
+            item = index_from_database(
+                _filter={"id": this_id, "master": -1}, #loading master jobs
+                document=self.connection.index
+            )
         if item and item["modified_time"] != self._cache_load_timestamp.get(this_id, 0):
             if this_id in self.objects:
                 obj = self.objects[this_id]

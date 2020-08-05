@@ -25,6 +25,7 @@ def object_to_database(j, document, master=None, ignore_subs=[]):
     master (int): Index id of the master Job of `j`, if `j` is a subjob
     document : The document of database where the job json will be stored
     """
+    logger.info("object_to_database")
     json_content = j.to_json()
     for sub in ignore_subs:
         json_content.pop(sub, None)
@@ -59,6 +60,7 @@ def object_from_database(_filter, document):
     _filter (dict): The key-value pair used to search the object in the document
     document: The document in the database where the object is stored
     """
+    logger.info("object_from_database")
     content = document.find_one(filter=_filter)
     if content is None:
         logger.debug(
@@ -80,6 +82,7 @@ def index_to_database(data, document):
         data : To be added
         document : To be added
     """
+    logger.info("index_to_database")
     if data:
         data["modified_time"] = time.time()
         if "id" in data and "master" in data:
@@ -105,6 +108,8 @@ def index_from_database(_filter, document, many=False):
         _filter : To be added
         document : To be added
     """
+    import sys
+    logger.info(f"index_from_database was called by ({sys._getframe().f_back.f_code.co_name})")
     if many:
         result = [*document.find(filter=_filter)]
     else:
