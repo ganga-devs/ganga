@@ -245,7 +245,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if new_index is not None:
                         new_index["classname"] = getName(obj)
                         new_index["category"] = obj._category
-                        if getattr(obj, "master"):
+                        if getattr(obj, "master") and obj._category == "jobs":
                             new_index["master"] = obj.master
                         else:
                             new_index["master"] = -1
