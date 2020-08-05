@@ -7,7 +7,6 @@ import os
 import copy
 import json
 import time
-import errno
 import docker
 import pymongo
 import GangaCore.Utility.logging
@@ -240,6 +239,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if new_index is not None:
                         new_index["classname"] = getName(obj)
                         new_index["category"] = obj._category
+                        new_index["modified_time"] = time.time()
                         if hasattr(obj, "master") and obj._category == "jobs":
                             new_index["master"] = obj.master
                         else:
@@ -252,7 +252,12 @@ class GangaRepositoryLocal(GangaRepository):
 
         # bulk saving the indexes, if there is anything to save
         if all_indexes:
-            self.connection.index.insert_many(documents=all_indexes)
+            for temp in all_indexes:
+                index_to_database(
+                    data=temp,
+                    document=self.connection.index
+                )
+            # self.connection.index.insert_many(documents=all_indexes)
 
         return
 
@@ -360,8 +365,6 @@ class GangaRepositoryLocal(GangaRepository):
                     for sj in getattr(obj, self.sub_split):
                         job_dict[sj.id] = stripProxy(sj)
                     tempSubJList._reset_cachedJobs(job_dict)
-                    logger.info("Flushin the subjobs now")
-                    # logger.info(f"tpye: {type(tempSubJList)}-{self.registry}")
                     tempSubJList.flush()
                     del tempSubJList
 
