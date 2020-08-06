@@ -47,7 +47,7 @@ j.setAncestorDepth(###ANCESTOR_DEPTH###)
 
 
     DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'', '\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
-    DiracScript = DiracScript.replace('j.setPlatform( \'ANY\' )', 'j.setDIRACPlatform()')
+    DiracScript = DiracScript.replace('j.setPlatform( \'###PLATFORM###\' )', 'j.setDIRACPlatform()')
 
     setName_str = 'j.setName(\'###NAME###\')'
     DiracScript = DiracScript.replace(setName_str, "%s\n%s" % (setName_str, DiracLHCb_Options))
