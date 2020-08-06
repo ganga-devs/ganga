@@ -12,10 +12,7 @@ from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 
-if getConfig("Configuration")["repositorytype"] == "Database":
-    from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
-else:
-    from GangaCore.Core.GangaRepository.Registry import Registry
+from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
 
 class PrepRegistry(Registry):
 

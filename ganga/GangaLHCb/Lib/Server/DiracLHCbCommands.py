@@ -88,7 +88,7 @@ def getDBtagsFromLFN( lfn ):
     bk = BookkeepingClient()
     tr = TransformationClient()
     prod = int(lfn.split('/')[5]) # not sure if this works in all cases 
-    res = bk.getProductionInformations( prod )
+    res = bk.getProductionInformation( prod )
     #What type of step is this production ID
     step_type = tr.getTransformation(prod).get('Value', {}).get('Type', 'Unknown')
     #Is there a parent production step
@@ -97,9 +97,9 @@ def getDBtagsFromLFN( lfn ):
     #If the production ID of the given file is Merge, look at the parent ID for the tags
     if step_type == 'Merge':
         if parent_id:
-            res = bk.getProductionInformations( parent_id )
+            res = bk.getProductionInformation( parent_id )
     else:
-        res = bk.getProductionInformations( prod )
+        res = bk.getProductionInformation( prod )
     dddb = ''
     conddb = ''
     if res['OK']: # there should probably also be an 'else' for cases where no information could be retrieved 

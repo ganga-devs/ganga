@@ -7,7 +7,6 @@ import os
 import copy
 import json
 import time
-import errno
 import docker
 import pymongo
 import GangaCore.Utility.logging
@@ -15,9 +14,9 @@ import GangaCore.Utility.logging
 from GangaCore import GANGA_SWAN_INTEGRATION
 from GangaCore.GPIDev.Base.Objects import Node
 from GangaCore.Utility.Config import getConfig
-from GangaCore.Utility.Plugin import PluginManagerError
+from GangaCore.Utility.Plugin import PluginManagerError, allPlugins
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
-from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList
+from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 
 
 from GangaCore.Core.GangaRepository import (
@@ -29,6 +28,8 @@ from GangaCore.Core.GangaRepository.DStreamer import (
     index_to_database, index_from_database, DatabaseError
 )
 
+# Simple Patch to avoid SubJobJsonList not found in internal error
+allPlugins.add(SubJobJsonList,'internal','SubJobJsonList')
 
 logger = GangaCore.Utility.logging.getLogger()
 
@@ -121,7 +122,6 @@ class GangaRepositoryLocal(GangaRepository):
         super(GangaRepositoryLocal, self).__init__(registry)
         self.dataFileName = "data"
         self.sub_split = "subjobs"
-        # self.root_document = self.registry.name
         self.root_document = "GangaDatabase"
         self._cache_load_timestamp = {}
         self.printed_explanation = False
@@ -131,7 +131,6 @@ class GangaRepositoryLocal(GangaRepository):
         """ Starts a repository and reads in a directory structure.
         Raise RepositoryError"""
         self._load_timestamp = {}
-
         # databased based initialization
         _ = pymongo.MongoClient()
         self.db_name = "dumbmachine"
@@ -140,11 +139,8 @@ class GangaRepositoryLocal(GangaRepository):
         # New Master index to speed up loading of many, MANY files
         self._cache_load_timestamp = {}
         self._cached_obj = {}
-        # self._cached_cat = {}
-        # self._cached_cls = {}
-        # track time for updating values in the object cache
-        self._cached_obj_timestamps = {}
-        self._master_index_timestamp = 0
+        # self._cached_obj_timestamps = {}
+        # self._master_index_timestamp = 0
 
         self.known_bad_ids = []
 
@@ -209,10 +205,61 @@ class GangaRepositoryLocal(GangaRepository):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError
         Write an index file for all new objects in memory and master index file of indexes"""
-        logger.debug("Shutting Down GangaRepositoryDatabase")
-        self.index_write(shutdown=True)
+        from GangaCore.Utility.logging import getLogger
+        logger = getLogger()
+        logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
+        try:
+            self._write_master_cache()
+        except Exception as err:
+            logger.warning("Warning: Failed to write master index due to: %s" % err)
+
         if kill:
             self.kill_mongomon()
+
+
+    def _write_master_cache(self):
+        """
+        write a master index cache once per 300sec
+        Args:
+            shutdown (boool): True causes this to be written now
+        """
+        items_to_save = iter(self.objects.items())
+        all_indexes = []
+        for k, v in items_to_save:
+            if k in self.incomplete_objects:
+                continue
+            try:
+                if k in self._fully_loaded:
+                    # Check and write index first
+                    obj = v #self.objects[k]
+                    new_index = None
+                    if obj is not None:
+                        new_index = self.registry.getIndexCache(stripProxy(obj))
+
+                    if new_index is not None:
+                        new_index["classname"] = getName(obj)
+                        new_index["category"] = obj._category
+                        new_index["modified_time"] = time.time()
+                        if hasattr(obj, "master") and obj._category == "jobs":
+                            new_index["master"] = obj.master
+                        else:
+                            new_index["master"] = -1
+                        all_indexes.append(new_index)
+
+            except Exception as err:
+                logger.debug("Failed to update index: %s on startup/shutdown" % k)
+                logger.debug("Reason: %s" % err)
+
+        # bulk saving the indexes, if there is anything to save
+        if all_indexes:
+            for temp in all_indexes:
+                index_to_database(
+                    data=temp,
+                    document=self.connection.index
+                )
+            # self.connection.index.insert_many(documents=all_indexes)
+
+        return
 
     def kill_mongomon(self):
         """Kill the mongo db instance in a docker container
@@ -274,7 +321,7 @@ class GangaRepositoryLocal(GangaRepository):
     # FIXME: Force override of `ignore_subs` to include `master` information for subjobs
     def _flush(self, this_id):
         """
-        Flush Json to disk whilst checking for relavent SubJobXMLList which handles subjobs now
+        Flush Json to disk whilst checking for relavent SubJobJsonList which handles subjobs now
         flush for "this_id" in the self.objects list
         Args:
             this_id (int): This is the id of the object we want to flush to disk
@@ -290,7 +337,7 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("has_children")
 
                 if hasattr(getattr(obj, self.sub_split), "flush"):
-                    # I've been read from disk in the new SubJobXMLList format I know how to flush
+                    # I've been read from disk in the new SubJobJsonList format I know how to flush
                     getattr(obj, self.sub_split).flush()
                 else:
                     # I have been constructed in this session, I don't know how to flush!
@@ -318,8 +365,6 @@ class GangaRepositoryLocal(GangaRepository):
                     for sj in getattr(obj, self.sub_split):
                         job_dict[sj.id] = stripProxy(sj)
                     tempSubJList._reset_cachedJobs(job_dict)
-                    logger.info("Flushin the subjobs now")
-                    # logger.info(f"tpye: {type(tempSubJList)}-{self.registry}")
                     tempSubJList.flush()
                     del tempSubJList
 
@@ -414,7 +459,11 @@ class GangaRepositoryLocal(GangaRepository):
             if temp:
                 temp["classname"] = getName(obj)
                 temp["category"] = obj._category
-                temp["master"] = -1  # normal object do not have a master/parent
+                if getattr(obj, "master"):
+                    temp["master"] = obj.master
+                else:
+                    temp["master"] = -1
+
 
             index_to_database(
                 data=temp,
@@ -426,18 +475,16 @@ class GangaRepositoryLocal(GangaRepository):
                 raise NotImplementedError(
                     "Call function to save master index here.")
 
-    def read_master_cache(self):
+    def _read_master_cache(self):
         """Reads the index document from the database
         """
+        logger.debug("Reading the MasterCache")
         master_cache = self.connection.index.find(
             filter={"category": self.registry.name, "master": -1}) # loading masters so.
         if master_cache:
+            for cache in master_cache:
+                self.index_load(this_id=cache["id"], item=cache)
             return dict([(_['id'], True) for _ in master_cache])
-            # for this_cache in master_cache:
-            #     this_id = this_cache["id"]
-            #     self.index_load(this_id=this_id, index=this_cache)
-            # self._cached_obj[this_id] = this_cache
-            # self.load([this_id])
         else:
             logger.debug(
                 "No master index information exists, new/blank repository startup is assumed")
@@ -464,7 +511,7 @@ class GangaRepositoryLocal(GangaRepository):
         # First locate and load the index files
         logger.debug("updating index...")
         if firstRun:
-            objs = self.read_master_cache()
+            objs = self._read_master_cache()
         else:
             objs = set(self.objects.keys())
         changed_ids = []
@@ -542,20 +589,17 @@ class GangaRepositoryLocal(GangaRepository):
 
         return changed_ids
 
-    def index_load(self, this_id, startup=False):
+    def index_load(self, this_id, item=None):
         """
         Will load index file from the database, so we know what objects exist in the database
         raise NotImplementedError("Load all the information at once")
 
         """
-        if startup:
-            self.read_master_cache()
-            return True
-
-        item = index_from_database(
-            _filter={"id": this_id, "master": -1}, #loading master jobs
-            document=self.connection.index
-        )
+        if item is None:
+            item = index_from_database(
+                _filter={"id": this_id, "master": -1}, #loading master jobs
+                document=self.connection.index
+            )
         if item and item["modified_time"] != self._cache_load_timestamp.get(this_id, 0):
             if this_id in self.objects:
                 obj = self.objects[this_id]
@@ -599,7 +643,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         If we must actually load the object from database then we end up here.
         This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
-        If there are children then a SubJobXMLList is created to manage them.
+        If there are children then a SubJobJsonList is created to manage them.
         The fn of the job is passed to the SubbJobXMLList and there is some knowledge of if we should be loading the backup passed as well
         Args:
             this_id (int): This is the integer key of the object in the self.objects dict

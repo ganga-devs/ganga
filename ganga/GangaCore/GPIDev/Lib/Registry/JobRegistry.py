@@ -11,18 +11,14 @@ from GangaCore.Utility.Config import getConfig
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
-from GangaCore.Core.GangaRepository.Registry import (
-    RegistryAccessError, RegistryFlusher, RegistryKeyError
-)
 
 # display default values for job list
 from .RegistrySlice import RegistrySlice, config
 from .RegistrySliceProxy import RegistrySliceProxy, _unwrap, _wrap
 
-if getConfig("Configuration")["repositorytype"] == "Database":
-    from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
-else:
-    from GangaCore.Core.GangaRepository.Registry import Registry
+from GangaCore.Core.GangaRepository.DatabaseRegistry import (
+    Registry, RegistryAccessError, RegistryFlusher, RegistryKeyError
+)
 
 logger = GangaCore.Utility.logging.getLogger()
 

@@ -9,6 +9,7 @@ from os import listdir, path, stat
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Core.GangaRepository.DStreamer import DatabaseError
 from GangaCore.Core.GangaRepository.GangaRepository import RepositoryError
+from GangaCore.Utility.Plugin import allPlugins
 from GangaCore.GPIDev.Base.Objects import GangaObject
 from GangaCore.GPIDev.Base.Proxy import stripProxy
 from GangaCore.GPIDev.Schema.Schema import Schema, SimpleItem, Version
@@ -21,8 +22,6 @@ from GangaCore.Core.GangaRepository.DStreamer import (
 logger = getLogger()
 
 # FIXME There has to be a better way of doing this?
-
-
 class SJXLIterator(object):
     """Class for iterating over SJXMLList, potentially very unstable, dangerous and only supports looping forwards ever"""
 
@@ -226,10 +225,10 @@ class SubJobJsonList(GangaObject):
 
         # this_time = time.time()
 
-        # if len(self._stored_len) == 2:
-        #     last_time = self._stored_len[0]
-        #     if this_time == last_time:
-        #         return self._stored_len[1]
+        if len(self._stored_len) == 2:
+            # last_time = self._stored_len[0]
+            # if this_time == last_time:
+                return self._stored_len[1]
 
         subjob_count = SubJobJsonList.countSubJobDirs(
             master_id=self.parent_id,
@@ -497,7 +496,8 @@ class SubJobJsonList(GangaObject):
             datafileName (str): name of the files containing the xml, i.e. 'data' by convention
             checkDataFiles (bool): if True check for the existance of all of the data files and check this against the numerically named folders
         """
-
+        import sys
+        logger.info(f"countSubJobDirs was called by ({sys._getframe().f_back.f_code.co_name})")
         result = index_from_database(
             _filter={"master": master_id},
             document=document,

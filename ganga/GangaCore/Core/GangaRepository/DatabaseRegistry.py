@@ -1,7 +1,7 @@
 
 
 import time
-
+import threading
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Schema import Schema, Version
@@ -298,7 +298,8 @@ class Registry(object):
         Args:
             this_id (int): This is the key of an object in the object dictionary
         """
-        logger.debug("__getitem__")
+        import sys
+        logger.debug(f"__getitem__ was called by ({sys._getframe().f_back.f_code.co_name})")
         # Is this an Incomplete Object?
         if this_id in self._incomplete_objects:
             return IncompleteObject(self, this_id)
@@ -642,7 +643,7 @@ class Registry(object):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
         This ONLY applies to master jobs as the Registry has no apriori knowledge of the subjob structure.
-        Consult SubJobXMLList for a more fine grained loaded/not-loaded info/test.
+        Consult SubJobJsonList for a more fine grained loaded/not-loaded info/test.
         Consult SubJobJSONList for a more fine grained loaded/not-loaded info/test.
         Args:
             obj (GangaObject): Object which we want to look for in this repo

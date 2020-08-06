@@ -61,13 +61,13 @@ class TestSJSubmit(GangaUnitTest):
 
         jobs(0).resubmit()
 
-        # Test that resubmitting a job with SubJobXMLList subjobs doesn't stall
+        # Test that resubmitting a job with SubJobJsonList subjobs doesn't stall
         # Test them with all subjobs completed and resubmitOnlyFailedSubjobs = True
 
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(jobs(0))
 
-        # Test that resubmitting a subjob from SubJobXMLList that subjob doesn't stall
+        # Test that resubmitting a subjob from SubJobJsonList that subjob doesn't stall
         jobs(0).subjobs(0).resubmit()
 
         jobs(0).subjobs(0).force_status('failed', force=True)
@@ -101,7 +101,7 @@ class TestSJSubmit(GangaUnitTest):
 
         from GangaCore.GPI import jobs
 
-        # Test that resubmitting a job with SubJobXMLList subjobs doesn't stall
+        # Test that resubmitting a job with SubJobJsonList subjobs doesn't stall
         # Test them with all subjobs completed and resubmitOnlyFailedSubjobs = False
 
         jobs(0).resubmit()
@@ -109,7 +109,7 @@ class TestSJSubmit(GangaUnitTest):
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(jobs(0))
 
-        # Test that resubmitting a subjob from SubJobXMLList that subjob doesn't stall
+        # Test that resubmitting a subjob from SubJobJsonList that subjob doesn't stall
         jobs(0).subjobs(0).resubmit()
 
         jobs(0).subjobs(0).force_status('failed', force=True)
