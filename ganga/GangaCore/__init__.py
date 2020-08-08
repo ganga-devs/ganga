@@ -28,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '8.3.3'
+_gangaVersion = '8.3.5'
 _development = False
 
 # store a path to Ganga libraries
