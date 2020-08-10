@@ -139,7 +139,7 @@ class LHCbCompressedDataset(GangaDataset):
             if isType(files[0], LHCbCompressedFileSet):
                     self.addSet.extend(files)
 
-        #self.files._setParent(self)
+        self.files._setParent(self)
         self.persistency = persistency
         self.current = 0
         logger.debug("Dataset Created")
@@ -269,7 +269,7 @@ class LHCbCompressedDataset(GangaDataset):
         LHCbDataset, DiracFile or a list of string of LFNs'''
 
         if isType(other, LHCbCompressedDataset):
-            self._getFileSets().extend(other.files)
+            self._getFileSets().extend(other._getFileSets())
         elif isType(other, GangaLHCb.Lib.LHCbDataset.LHCbDataset):
             lfns = other.getLFNs()
             self._getFileSets().append(LHCbCompressedFileSet(lfns))

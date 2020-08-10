@@ -91,7 +91,7 @@ class TestDatasets(GangaUnitTest):
         assert ds1[2].lfn == '/second/path/set/c'
         assert isinstance(ds1[0:2], LHCbCompressedDataset)
         assert len(ds1[0:2]) == 2
-        assert len(ds1[0:2].files) == 1
+        assert len(ds1[0:2].files) == 2
         assert len(ds1[::2]) == 2
 
         #Check the getLFNs
