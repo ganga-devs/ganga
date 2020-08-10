@@ -83,7 +83,7 @@
                 </tbody>
             </table>
             <nav class="d-flex justify-content-center">
-                <ul class="pagination m-auto">
+                <ul class="pagination m-auto" style="overflow: scroll;">
                     <li class="page-item {{ 'disabled' if current_page <= 0 }}"><a class="page-link"
                                                                                            href="{{ url_for('subjobs_page', page=current_page - 1, job_id=job_id) }}">Previous</a>
                     </li>
