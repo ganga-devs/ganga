@@ -15,8 +15,8 @@
                                 </small>
                             </h5>
                             <div>
-                                <a href="#" onclick="handleCopy();" class="btn btn-sm btn-primary">Copy</a>
-                                <a href="{{ url_for('pin_job', job_id=job_info.get('id')) }}" class="btn btn-sm btn-primary">Pin Job</a>
+                                <a href="#" id="btn-copy" data-id="{{ job_info.get('id') }}" class="btn btn-sm btn-primary">Copy</a>
+                                <a href="#" id="btn-pin" data-id="{{ job_info.get('id') }}" class="btn btn-sm btn-primary">Pin Job</a>
                             </div>
                         </div>
                         <hr class="my-2">
@@ -37,20 +37,20 @@
                         (stderr)</a>
                 </div>
                 <div class="d-flex my-2">
-                    <a href="#" onclick="handleSubmitJob();" class="btn btn-primary w-100">Submit
+                    <a href="#" id="btn-submit" data-id="{{ job_info.get('id') }}" class="btn btn-primary w-100">Submit
                         Job</a>
-                    <a href="#" onclick="handleKillJob();" class="btn btn-warning mx-2 w-100">Kill
+                    <a href="#" id="btn-kill" data-id="{{ job_info.get('id') }}" class="btn btn-warning mx-2 w-100">Kill
                         Job</a>
-                    <a href="#" onclick="handleRemoveJob();" class="btn btn-danger w-100">Remove
+                    <a href="#" id="btn-remove" data-id="{{ job_info.get('id') }}" class="btn btn-danger w-100">Remove
                         Job</a>
                 </div>
                 <div class="d-flex my-2">
                     <a href="#" class="btn btn-dark w-100" data-toggle="modal" data-target="#job-info-modal">Job Info</a>
-                    <a href="{{ url_for('edit_job', job_id=job_info.get('id')) }}" class="btn btn-dark mx-2 w-100">Edit
+                    <a href="{{ url_for('job_edit', job_id=job_info.get('id')) }}" class="btn btn-dark mx-2 w-100">Edit
                         Job</a>
-                    <a href="{{ url_for('export_job', job_id=job_info.get('id')) }}" class="btn btn-dark w-100">Download</a>
+                    <a href="{{ url_for('job_export', job_id=job_info.get('id')) }}" class="btn btn-dark w-100">Download</a>
                 </div>
-                <a href="{{ url_for('browse_job', job_id=job_info.get('id')) }}" class="btn btn-block btn-primary">Browse Files</a>
+                <a href="{{ url_for('job_browse', job_id=job_info.get('id')) }}" class="btn btn-block btn-primary">Browse Files</a>
             </div>
             <div class="container-fluid mt-4">
                 <div class="row">
@@ -61,10 +61,10 @@
                                 <form>
                                     <div class="form-group">
                                         <label for="attribute-select">Select Attribute</label>
-                                        <select onchange="handleOnSelectAttribute()" class="custom-select"
+                                        <select data-id="{{ job_info.get('id') }}" class="custom-select"
                                                 id="attribute-select">
-                                            {% for attr in attrs %}
-                                                <option value="{{ attr }}">{{ attr }}</option>
+                                            {% for attribute_action in attribute_actions %}
+                                                <option value="{{ attribute_action }}">{{ attribute_action }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -88,7 +88,7 @@
                                                 {% endfor %}
                                             </optgroup>
                                             <optgroup label="Attributes">
-                                                {% for action in attrs %}
+                                                {% for action in attribute_actions %}
                                                     <option value="{{ action }}">{{ action }}</option>
                                                 {% endfor %}
                                             </optgroup>
@@ -96,9 +96,9 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="action-argument">Arguments (if any)</label>
-                                        <input id="action-data" type="text" class="form-control" id="action-argument">
+                                        <input type="text" class="form-control" id="action-argument">
                                     </div>
-                                    <button onclick="handleExecuteAction()" class="btn btn-primary btn-block">Execute
+                                    <button id="btn-execute" data-id="{{ job_info.get('id') }}"  class="btn btn-primary btn-block">Execute
                                     </button>
                                 </div>
                             </div>
@@ -174,7 +174,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <pre>{{ full_job_info if full_job_info != None }}</pre>
+                    <pre>{{ full_print_info if full_print_info != None }}</pre>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

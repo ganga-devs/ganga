@@ -1,41 +1,57 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+    // Refresh subjobs statuses
     setTimeout(refreshSubjobs, 0);
+
 });
 
 
 // Refresh subjobs
 function refreshSubjobs() {
 
-    console.log("Tick")
-
     // Get HTML nodes containing subjob id in dataset
-    let subjobNodes = document.querySelectorAll(".subjob");
+    const subjobNodes = document.querySelectorAll('.subjob');
 
     // Extract subjob id from the HTML nodes
-    let subjobIds = JSON.stringify(Array.from(subjobNodes).map(node => node.dataset["id"]));
+    const subjobIds = JSON.stringify(Array.from(subjobNodes).map(node => node.dataset['id']));
 
     // Extract job id from the subjob HTML node dataset
-    let jobId = document.querySelector(".subjob").dataset["job_id"]
+    const jobId = document.querySelector('.subjob').dataset['job_id']
 
-    fetch(`/api/job/${jobId}/subjobs?ids=${subjobIds}`)
+    // Make request to the server
+    fetch(`/api/jobs/${jobId}/subjobs?ids=${subjobIds}`, {
+        headers: {
+            'X-Access-Token': localStorage.getItem('token')
+        }
+    })
         .then(response => response.json())
         .then(data => {
-            if (data["success"] === false) {
-                displayToast(notificationCount, data["message"], currentTime(), "danger");
-                notificationCount++;
+
+            if (data['success'] === false) {
+
+                // If server responds to failure, display the error message
+                displayToast(data['message'], 'danger');
+
             } else {
+
+                // Refresh statuses
                 for (let i = 0; i < data.length; i++) {
-                    document.querySelector(`#subjob-id-${data[i]["id"]}-status`).innerHTML = data[i]["status"];
-                    document.querySelector(`#subjob-id-${data[i]["id"]}-status`).className = `badge badge-${statusColor[data[i]["status"]]} badge-pill`;
+                    document.querySelector(`#subjob-id-${data[i]['id']}-status`).innerHTML = data[i]['status'];
+                    document.querySelector(`#subjob-id-${data[i]['id']}-status`).className = `badge badge-${statusColor[data[i]['status']]} badge-pill`;
                 }
+
             }
+
         })
         .catch(err => {
-            displayToast(notificationCount, err, currentTime(), "danger");
-            notificationCount++;
+
+            // Display error, if any
+            displayToast(err, "danger");
+
         });
 
     // Recursively refresh
-    let refreshInterval = Number(localStorage.getItem('refreshInterval')) || 5000;
+    const refreshInterval = Number(localStorage.getItem('refreshInterval')) || 5000;
     setTimeout(refreshSubjobs, refreshInterval);
+
 }

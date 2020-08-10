@@ -68,7 +68,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for sj in subjobs_info_list %}
+                {% for sj in subjobs_info %}
                     <tr class="subjob" id="subjob-{{ sj.get('id') }}" data-job_id="{{ job_id }}" data-id="{{ sj.get('id') }}" data-status="{{ sj.get('status') }}">
                         <th class="align-middle" scope="row">{{ sj.get('fqid') }}</th>
                         <td class="align-middle"><span id="subjob-id-{{ sj.get('id') }}-status"
@@ -88,7 +88,7 @@
                                                                                            href="{{ url_for('subjobs_page', page=current_page - 1, job_id=job_id) }}">Previous</a>
                     </li>
                     {% for i in range(number_of_pages) %}
-                        <li class="page-item"><a class="page-link"
+                        <li class="page-item {{ 'active' if current_page == i }}"><a class="page-link"
                                                  href="{{ url_for('subjobs_page', page=i, job_id=job_id) }}">{{ i + 1 }}</a></li>
                     {% endfor %}
                     <li class="page-item {{ 'disabled' if current_page >= number_of_pages-1 }}"><a

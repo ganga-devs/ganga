@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block content %}
     <div class="container-fluid px-md-5">
         <h3>Plugins</h3>
@@ -12,7 +13,7 @@
                         <hr>
                             <ul>
                                 {% for plugin in plugins_info[category] %}
-                                    <li><a href="{{ url_for('plugin_info_page', plugin_name=plugin) }}">{{ plugin }}</a></li>
+                                    <li><a href="{{ url_for('plugin_page', plugin_name=plugin) }}">{{ plugin }}</a></li>
                                 {% endfor %}
                             </ul>
                         </div>

@@ -57,9 +57,9 @@ def _unprotected_ganga_exitfuncs():
     # Set the disk timeout to 1 sec, sacrifice stability for quicker exit
     setConfigOption('Configuration', 'DiskIOTimeout', 1)
 
-    # Stop GUIServerThread
-    from GangaGUI.start import stop_gui, gui_server
-    if gui_server is not None:
+    # Stop APIServerThread - GangaGUI
+    from GangaGUI.start import stop_gui, api_server
+    if api_server is not None:
         try:
             stop_gui()
         except Exception as err:

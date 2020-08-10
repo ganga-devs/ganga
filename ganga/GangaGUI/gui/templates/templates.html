@@ -10,9 +10,11 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="templates-per-page">Templates Per Page</label>
-                            <select name="templates-per-page" class="form-control custom-select" id="templates-per-page">
+                            <select name="templates-per-page" class="form-control custom-select"
+                                    id="templates-per-page">
                                 {% for n in [10, 20, 40, 80] %}
-                                    <option {{ 'selected' if session['templates_per_page'] == n }} value="{{ n }}">{{ n }}</option>
+                                    <option {{ 'selected' if session['templates_per_page'] == n }}
+                                            value="{{ n }}">{{ n }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -20,10 +22,12 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="template-application">Template Application</label>
-                            <select name="template-application" class="form-control custom-select" id="template-application">
+                            <select name="template-application" class="form-control custom-select"
+                                    id="template-application">
                                 <option value="any">Any</option>
                                 {% for a in applications %}
-                                    <option {{ 'selected' if session["templates_filter"]['application'] == a }} value="{{ a }}">{{ a }}</option>
+                                    <option {{ 'selected' if session["templates_filter"]['application'] == a }}
+                                            value="{{ a }}">{{ a }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -34,7 +38,8 @@
                             <select name="template-backend" class="form-control custom-select" id="template-backend">
                                 <option value="any">Any</option>
                                 {% for b in backends %}
-                                    <option {{ 'selected' if session["templates_filter"]['backend'] == b }} value="{{ b }}">{{ b }}</option>
+                                    <option {{ 'selected' if session["templates_filter"]['backend'] == b }}
+                                            value="{{ b }}">{{ b }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -56,15 +61,26 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for t in templates_info_list %}
-                    <tr class="template" id="template{{ t.get('id') }}">
+                {% for t in templates_info %}
+                    <tr class="template" id="template-{{ t.get('id') }}">
                         <th class="align-middle" scope="row">{{ t.get('id') }}</th>
                         <td class="align-middle">{{ t.get('name') if (t.get('name')|string).strip() != '' else 'Unnamed Template' }}</td>
                         <td class="align-middle text-break">{{ (t.get('application')|string).split('(')[0] }}</td>
                         <td class="align-middle text-break">{{ (t.get('backend')|string).split('(')[0] }}</td>
-                        <td class="align-middle"><a href="#" onclick="createJob({{ t.get('id') }});" class="btn btn-sm btn-primary">
-                                Create Job
-                            </a></td>
+                        <td class="align-middle" style="min-width: 20%;">
+                            <div>
+                                <a href="#" data-id="{{ t.get('id') }}"
+                                   class="btn btn-sm btn-primary btn-create my-1 my-md-0">
+                                    Create Job
+                                </a>
+                                <a href="#" data-id="{{ t.get('id') }}" class="btn btn-sm btn-info btn-template-info my-1 my-md-0">
+                                    Info
+                                </a>
+                                <a href="#" data-id="{{ t.get('id') }}" class="btn btn-sm btn-danger btn-delete my-1 my-md-0">
+                                    Delete
+                                </a>
+                            </div>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -72,16 +88,39 @@
             <nav class="d-flex justify-content-center">
                 <ul class="pagination m-auto">
                     <li class="page-item {{ 'disabled' if current_page <= 0 }}"><a class="page-link"
-                                                                                           href="{{ url_for('templates_page', page=current_page - 1) }}">Previous</a>
+                                                                                   href="{{ url_for('templates_page', page=current_page - 1) }}">Previous</a>
                     </li>
                     {% for i in range(number_of_pages) %}
-                        <li class="page-item"><a class="page-link"
-                                                 href="{{ url_for('templates_page', page=i) }}">{{ i + 1 }}</a></li>
+                        <li class="page-item {{ 'active' if current_page == i }}"><a class="page-link"
+                                                                                     href="{{ url_for('templates_page', page=i) }}">{{ i + 1 }}</a>
+                        </li>
                     {% endfor %}
                     <li class="page-item {{ 'disabled' if current_page >= number_of_pages-1 }}"><a
-                            class="page-link" href="{{ url_for('templates_page', page=current_page + 1) }}">Next</a></li>
+                            class="page-link" href="{{ url_for('templates_page', page=current_page + 1) }}">Next</a>
+                    </li>
                 </ul>
             </nav>
+        </div>
+    </div>
+    <!-- Template Info Modal -->
+    <div class="modal fade" id="template-info-modal" tabindex="-1" role="dialog"
+         aria-labelledby="template-info-modal-label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="template-info-modal-label">Template Info: </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre id="template-info-box"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock content %}

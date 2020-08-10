@@ -3,58 +3,73 @@ import string
 import uuid
 import random
 import requests
+import subprocess
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.Utility.logging import getLogger
-from GangaGUI.gui import app, db
+from GangaGUI.gui import gui, db
+from GangaGUI.api import internal
 from GangaGUI.gui.models import User
 
-
+# Ganga logger
 logger = getLogger()
+
+# Directory just level up from GangaGUI
+ganga_package_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Global API Server, will run in Ganga thread pool
+api_server = None
+
+# Global GUI Server, will start gunicorn server using subprocess.popen
 gui_server = None
 
 
-# GangaThread for Flask Server
-class GUIServerThread(GangaThread):
+# GangaThread for Internal API Flask server
+class APIServerThread(GangaThread):
 
     def __init__(self, name: str, host: str, port: int):
-        GangaThread.__init__(self, name=name)
+        super().__init__(name=name)
         self.host = host
         self.port = port
 
     def run(self):
         try:
-            logger.info("You can now access the GUI at http://{}:{}".format(self.host, self.port))
-            logger.info("If on a remote system you may need to set up port forwarding to reach the web server. This "
-                        "can be done with 'ssh -D {} <remote-ip>' from a terminal.".format(self.port)) 
-            app.run(host=self.host, port=self.port)
+            internal.run(host=self.host, port=self.port)
         except Exception as err:
-            logger.error("Failed to start GUI Server: {}".format(err))
+            logger.error(f"Failed to start API Server: {str(err)}")
 
     def shutdown(self):
         res = requests.post("http://localhost:{port}/shutdown".format(port=self.port))
-        logger.info("{} - Success {}, {}".format(res.status_code, res.json()["success"], res.json()["message"]))
+        logger.info(f"{res.status_code} - Success {res.json()['success']}, {res.json()['message']}")
         if res.status_code == 200:
             return True
         return False
-        
 
-def start_gui(host: str = "localhost", port: int = 5000, password: str = None) -> tuple:
+
+def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port: int = 5000,
+              password: str = None) -> tuple:
     """
-    Start GUI Flask App on a GangaThread
+    Start GUI Flask App on a Gunicorn server and API Flask App on a GangaThread
 
-    :param host: str
-    :param port: int
+    :param gui_host: str
+    :param gui_port: int
+    :param internal_port: int
     :param password: str
     :return: tuple
 
     Returns (host, port, user, password)
-    Accepts "host", "port" and "password" as arguments.
+    Accepts "gui_host", "gui_port", "internal_port" and "password" as arguments.
 
-    By default the "host" is set to "localhost". It means GUI will NOT be accessible over the network.
-    In order to make to accessible over the network, please set the host to "0.0.0.0" as in start_gui(host="0.0.0.0").
+    By default the "gui_host" is set to "0.0.0.0". It means GUI will be accessible over the network.
+    In order to make to accessible only inside the local machine, please set the host to "localhost" as in start_gui(gui_host="localhost").
 
-    "port" can be set to any free port available (default is 5000)
+    "gui_port" can be set to any free port available (default is 5500)
     If GUI is to be accessed over the network make sure the firewall allows the specified port.
+
+    "internal_port" can be set to any free port available (default is 5000)
+    "internal_port" is used by the API flask server which run on a Ganga Thread. This server has access to all of the
+    Ganga functions and information. The GUI Server communicates with the API Server over a RESTful interface for querying the data from Ganga.
+    The API server is not accessible from outside the machine, it is only meant to be accessed by the GUI Server.
+    The API server is a weak server and can not be use to deliver GUI over the internet.
 
     Use the "user" and "password" to log into the GUI or generate token to access the APIs
 
@@ -64,53 +79,79 @@ def start_gui(host: str = "localhost", port: int = 5000, password: str = None) -
     If the "password" is not specified, a random 7 character AlphaNumeric password is auto generated.
 
     Example Usage:
-    start_gui() -> will return ("localhost", 5000, "GangaGUIAdmin", "RNDPASS")
-    start_gui(password="mypassword") -> will return ("localhost", 5000, "GangaGUIAdmin", "mypassword")
-    start_gui(host="0.0.0.0", password="mypassword") -> will return ("0.0.0.0", 5000, "GangaGUIAdmin", "mypassword")
+    start_gui() -> will return ("0.0.0.0", 5500, "GangaGUIAdmin", "RNDPASS")
+    start_gui(password="mypassword") -> will return ("0.0.0.0", 5500, "GangaGUIAdmin", "mypassword")
+    start_gui(host="0.0.0.0", password="mypassword") -> will return ("0.0.0.0", 5500, "GangaGUIAdmin", "mypassword")
     start_gui(host="0.0.0.0", port=1234, password="mypassword") -> ("0.0.0.0", 1234, "GangaGUIAdmin", "mypassword")
     """
 
-    db_path = app.config["SQLALCHEMY_DATABASE_URI"][10:]
+    # Database path
+    db_path = gui.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "")
 
     if not os.path.exists(db_path):
         # Create database if does not exist
         db.create_all()
-        user = User(public_id=str(uuid.uuid4()), user="GangaGUIAdmin", role="Admin")
+        gui_user = User()
+        gui_user.public_id = str(uuid.uuid4())
+        gui_user.user = "GangaGUIAdmin"
+        gui_user.role = "Admin"
         if password is None:
             password = ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
-        user.store_password_hash(password)
-        db.session.add(user)
+        gui_user.store_password_hash(password)
+        db.session.add(gui_user)
         db.session.commit()
     else:
         # Store password for GangaGUIAdmin in database
-        user = User.query.filter_by(user="GangaGUIAdmin").first()
-        if user is None:
-            user = User(user="GangaGUIAdmin", role="Admin")
+        gui_user = User.query.filter_by(user="GangaGUIAdmin").first()
+        if gui_user is None:
+            gui_user = User()
+            gui_user.user = "GangaGUIAdmin"
+            gui_user.role = "Admin"
         if password is None:
             password = ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
-        user.store_password_hash(password)
-        user.public_id = str(uuid.uuid4())
-        db.session.add(user)
+        gui_user.store_password_hash(password)
+        gui_user.public_id = str(uuid.uuid4())
+        db.session.add(gui_user)
         db.session.commit()
 
-    # Start server
-    global gui_server
-    gui_server = GUIServerThread("GangaGUI", host, port)
-    logger.info("GUI Login Details: user='{}', password='{}'".format(user.user, password))
-    gui_server.start()
-    return host, port, user.user, password
+    global api_server, gui_server
+
+    # Start internal API server, it is always be meant for internal use by the GUI server
+    api_server = APIServerThread("GangaGUIAPI", "localhost", internal_port)
+    api_server.start()
+
+    # Start the GUI on a Gunicorn (production ready) server.
+    gui_env = os.environ.copy()
+    gui_env["INTERNAL_PORT"] = str(internal_port)
+    gui_accesslog_file = gui.config["ACCESS_LOG"]
+    gui_errorlog_file = gui.config["ERROR_LOG"]
+    gui_server = subprocess.Popen(
+        f"gunicorn --chdir {ganga_package_dir} --log-level warning --access-logfile {gui_accesslog_file} --error-logfile {gui_errorlog_file} --bind {gui_host}:{gui_port} wsgi:gui",
+        shell=True, cwd=os.path.dirname(__file__), env=gui_env)
+
+    # Display necessary information to the user
+    logger.info(f"GUI Login Details: user='{gui_user.user}', password='{password}'")
+    logger.info(f"You can now access the GUI at http://{gui_host}:{gui_port}")
+    logger.info(
+        f"If on a remote system you may need to set up port forwarding to reach the web server. This can be done with 'ssh -D {gui_port} <remote-ip>' from a terminal.")
+
+    return gui_host, gui_port, gui_user.user, password
 
 
 def stop_gui():
-    """Stop GUI Flask App on a GangaThread"""
-    global gui_server
-    if gui_server is not None:
-        if gui_server.shutdown():
-            gui_server = None
+    """Stop API Flask server on a GangaThread and the GUI Flask server running on a Gunicorn server"""
+
+    global api_server, gui_server
+
+    if api_server is not None:
+        gui_server.terminate()
+        if api_server.shutdown():
+            api_server = None
         else:
-            raise Exception("Error in shutting down the GUI server.")
+            raise Exception("Error in shutting down the API server.")
 
 
+# TODO Remove
 # Use this for starting the server for development purposes
 # Development user="GangaGUIAdmin" password="GangaGUIAdmin"
 if __name__ == "__main__":
@@ -120,5 +161,5 @@ if __name__ == "__main__":
     user.store_password_hash("GangaGUIAdmin")
     db.session.add(user)
     db.session.commit()
-    app.logger.warning("Development server running with debugger active. user='GangaGUIAdmin' password='GangaGUIAdmin'")
-    app.run(debug=True)
+    gui.logger.warning("Development server running with debugger active. user='GangaGUIAdmin' password='GangaGUIAdmin'")
+    gui.run(port=5500, debug=True)

@@ -6,8 +6,11 @@
         <hr>
         <div class="d-flex justify-content-between align-items-center mb-3">
             <p class=" my-0 py-0 d-inline"><b>Current location:</b> {{ abs_path }}</p>
-            <a class="btn btn-primary btn-sm" href="{{ url_for('browse_job', job_id=job_id, path=back_path) }}">Go
+            <div>
+                <a class="btn btn-primary btn-sm" href="{{ url_for('job_page', job_id=job_id) }}">Job page</a>
+                <a class="btn btn-primary btn-sm" href="{{ url_for('job_browse', job_id=job_id, path=back_path) }}">Go
                 back</a>
+            </div>
         </div>
         <div class="row">
             <div class="col">
@@ -19,13 +22,13 @@
                     </tr>
                     </thead>
                     <tbody>
-                    {% for file in files_info %}
+                    {% for file_info in files_info %}
                         <tr>
                             <th class="align-middle px-3 font-weight-normal"
-                                style="width: 1%">{{ 'Directory' if file.directory else 'File' }}</th>
+                                style="width: 1%">{{ 'Directory' if file_info.get('directory') else 'File' }}</th>
                             <td class="align-middle text-left"><a
-                                    href="{{ (request.path + '/' if request.path != '/' else '') + file.file }}"
-                                    class="btn-link">{{ file.file }}</a></td>
+                                    href="{{ (request.path + '/' if request.path != '/' else '') + file_info.get('file') }}"
+                                    class="btn-link">{{ file_info.get('file') }}</a></td>
                         </tr>
                     {% endfor %}
                     </tbody>

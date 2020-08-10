@@ -1,12 +1,12 @@
-import io
 import os
 import jwt
 import json
+import requests
 from functools import wraps
-from itertools import chain
-from flask import request, jsonify, render_template, flash, redirect, url_for, session, send_file, abort
+from flask import request, jsonify, render_template, flash, redirect, url_for, session, send_file
 from flask_login import login_user, login_required, logout_user, current_user
-from GangaGUI.gui import app, db
+from werkzeug.utils import secure_filename
+from GangaGUI.gui import gui, db
 from GangaGUI.gui.models import User
 
 # ******************** Global Variables ******************** #
@@ -24,26 +24,59 @@ status_color = {
 # Allowed extensions when uploading any files to GUI
 ALLOWED_EXTENSIONS = {"txt", "py"}
 
-# The top level ganga package used for importing GPI functions
-ganga = None
+# Internal url for communicating with API server running on a GangaThread
+INTERNAL_URL = f"http://localhost:{os.environ.get('INTERNAL_PORT')}"
+
+actions = {}
+plugins = {}
 
 
 # ******************** View Routes ******************** #
 
 # Execute before first request
-@app.before_first_request
-def imports():
-    global ganga
+@gui.before_first_request
+def initial_run():
+    """
+    This function runs before first request.
+    """
+
+    global actions, plugins
+
+    # If user is authenticated, log them out. This happens after a fresh start of the GUI server.
+    if current_user.is_authenticated:
+        logout_user()
+
+    # Set session defaults for templates filter
+    if "templates_per_page" not in session:
+        session["templates_per_page"] = 10
+    if "templates_filter" not in session:
+        session["templates_filter"] = {key: "any" for key in ["application", "backend"]}
+
+    # Set session defaults for jobs filter
+    if "jobs_per_page" not in session:
+        session["jobs_per_page"] = 10
+    if "jobs_filter" not in session:
+        session["jobs_filter"] = {key: "any" for key in ["status", "application", "backend"]}
+
+    # Set session defaults for subjobs filter
+    if "subjobs_per_page" not in session:
+        session["subjobs_per_page"] = 10
+    if "subjobs_filter" not in session:
+        session["subjobs_filter"] = {key: "any" for key in ["status", "application", "backend"]}
+
     try:
-        from GangaCore.GPI import jobs
-        import GangaCore.GPI as ganga
-    except ImportError:
-        import ganga
-        from ganga.ganga import ganga
+        # Get actions and plugins data once
+        actions = query_internal_api("/internal/jobs/actions", "get")
+        plugins = query_internal_api("/internal/plugins", "get")
+    except Exception as err:
+        flash(str(err), "danger")
+        return redirect(url_for("dashboard"))
+
+    # TODO Ping internal_url
 
 
 # Login View
-@app.route("/login", methods=["GET", "POST"])
+@gui.route("/login", methods=["GET", "POST"])
 def login():
     """
     Handles login route of the GUI.
@@ -51,7 +84,7 @@ def login():
 
     # If already authenticated, logout
     if current_user.is_authenticated:
-        logout_user()
+        return redirect(url_for("dashboard"))
 
     # Login user
     if request.method == "POST":
@@ -77,35 +110,44 @@ def login():
     return render_template("login.html", title="Login", users=users)
 
 
+# Logout View
+@gui.route("/logout", methods=["GET"])
+def logout():
+    """
+    Logout user from GUI
+    """
+
+    # Logout
+    if current_user.is_authenticated:
+        logout_user()
+
+    return redirect(url_for("login"))
+
+
 # Dashboard view
-@app.route("/")
+@gui.route("/")
 @login_required
 def dashboard():
     """
     Handles the dashboard route of the GUI.
     """
 
-    from ganga import jobs
-
     quick_statistics = {}
     recent_jobs_info = []
-    pinned_jobs = []
+    pinned_jobs_info = []
 
     try:
-        # Get quick statistics
-        for stat in ["new", "running", "completed", "failed", "killed"]:
-            quick_statistics[stat] = len(jobs.select(status=stat))
+        # Query overall statistics
+        quick_statistics = query_internal_api("/internal/jobs/statistics", "get")
 
-        # Get last 10 jobs slice
-        recent_jobs = jobs[-10:]
-        for j in recent_jobs:
-            recent_jobs_info.append(get_job_info(j.id))
+        # Query recent 10 jobs
+        recent_jobs_info = query_internal_api("/internal/jobs/recent", "get")
 
-        # Get pinned jobs
-        u = User.query.filter_by(user="GangaGUIAdmin").first()
-        pinned_job_ids = json.loads(u.pinned_jobs) if u.pinned_jobs is not None else []
-        for id in pinned_job_ids:
-            pinned_jobs.append(get_job_info(id))
+        # Query pinned jobs
+        u = current_user
+        pinned_jobs_info = query_internal_api("/internal/jobs", "get", params={
+            "ids": u.pinned_jobs if u.pinned_jobs is not None else json.dumps([]),
+            "auto-validate-ids": True})
 
     except Exception as err:
         # Flash the error in the GUI
@@ -115,265 +157,196 @@ def dashboard():
                            title="Dashboard",
                            quick_statistics=quick_statistics,
                            recent_jobs_info=recent_jobs_info,
-                           pinned_jobs=pinned_jobs,
+                           pinned_jobs_info=pinned_jobs_info,
                            status_color=status_color)
 
 
-# Route to pin the job
-@app.route("/pin/<int:job_id>")
+# Config view
+@gui.route("/config", methods=["GET", "POST"])
 @login_required
-def pin_job(job_id: int):
-    """
-    Pin the given job, that is shown in the dashboard.
-    :param job_id: int
-    """
-
-    # Get user from the database
-    u = User.query.filter_by(user="GangaGUIAdmin").first()
-
-    # Load pinned jobs of the user from the database
-    pinned_jobs = json.loads(u.pinned_jobs) if u.pinned_jobs is not None else []
-
-    # Pin job
-    if job_id not in pinned_jobs:
-        pinned_jobs.append(job_id)
-
-    # Add new pinned jobs to the database
-    u.pinned_jobs = json.dumps(pinned_jobs)
-    db.session.add(u)
-    db.session.commit()
-
-    flash(f"Pinned Job with ID {job_id}", "success")
-
-    return redirect(url_for("job_page", job_id=job_id))
-
-
-# Route to unpin the job
-@app.route("/unpin/<int:job_id>")
-@login_required
-def unpin_job(job_id: int):
-    """
-    Unpin the job, and make the required change in the GUI database.
-    :param job_id: int
-    """
-
-    # Get the user from the database
-    u = User.query.filter_by(user="GangaGUIAdmin").first()
-
-    # Load user's pinned job from the database
-    pinned_jobs = json.loads(u.pinned_jobs) if u.pinned_jobs is not None else []
-
-    # Unpin the job
-    if job_id in pinned_jobs:
-        pinned_jobs.remove(job_id)
-
-    # Commit changes to the database
-    u.pinned_jobs = json.dumps(pinned_jobs)
-    db.session.add(u)
-    db.session.commit()
-
-    flash(f"Unpinned Job with ID {job_id}", "success")
-
-    return redirect(url_for("dashboard"))
-
-
-# Config View
-@app.route("/config", methods=["GET", "POST"])
 def config_page():
     """
     Handles the config route of the GUI.
     """
 
-    from ganga import config
-    from GangaCore import getConfig
-
-    sections = []
-    config_list = []
-
-    try:
-        for c in config:
-            config_list.append(c)
-    except Exception as err:
-        flash(str(err), "danger")
+    full_config_info = []
+    config_info = []
+    section = None
 
     # When GUI request for specific section
     if request.method == "POST":
-
         # Get section name for request form data
-        section_name = request.form.get("section")
+        section = request.form.get("section")
+        section = None if section in ["", None] else section
 
-        if section_name is not None:
-            section = getConfig(str(section_name))
-            sections.append(section)
+    try:
+        # Query full config
+        full_config_info = query_internal_api("/internal/config", "get")
 
-            return render_template("config.html", title="Config", sections=sections, configList=config_list)
-        else:
-            flash("Please select a config section to view.", "warning")
+        # If asked for specific section, add only that for displaying
+        config_info = full_config_info if section is None else [s for s in full_config_info if s["name"] == section]
 
-    # Add all sections from config
-    for c in config_list:
-        section = getConfig(c)
-        sections.append(section)
+    except Exception as err:
+        # Flash the error in the GUI
+        flash(str(err), "danger")
 
-    return render_template("config.html", title="Config", sections=sections, configList=config_list)
+    return render_template("config.html", title="Config", full_config_info=full_config_info, config_info=config_info)
 
 
-# Create View
-@app.route("/create", methods=["GET", "POST"])
+# Create view
+@gui.route("/create", methods=["GET", "POST"])
+@login_required
 def create_page():
     """
-    Handles create route of the config page.
+    Handles create route of the GUI.
     """
-
-    from ganga import templates, load, runfile
 
     # Handle file uploads
     if request.method == "POST":
 
-        # Load from a uploaded file
-        if "loadjobfile" in request.files:
-            load_job_file = request.files["loadjobfile"]
-            if load_job_file.filename == "":
-                flash("No selected file", "warning")
+        # Load from the uploaded file
+        if "loadfile" in request.files:
+            loadfile = request.files["loadfile"]
+            if loadfile.filename == "":
+                flash("No file selected", "warning")
                 return redirect(request.url)
 
             # If valid file, the save the file
-            if load_job_file and allowed_file(load_job_file.filename):
-                save_path = os.path.join(app.config["UPLOAD_FOLDER"], "loadjobfile.txt")
-                load_job_file.save(save_path)
+            if loadfile and allowed_file(loadfile.filename):
+                save_path = os.path.join(gui.config["UPLOAD_FOLDER"], "loadfile.txt")
+                loadfile.save(save_path)
 
                 # Load the file
                 try:
-                    j = load(save_path)
+                    # Query to load the file
+                    response_info = query_internal_api("/internal/load", "get", params={"path": save_path})
+
                 except Exception as err:
+                    # Display error in the GUI
                     flash(str(err), "danger")
                     return redirect(request.url)
 
-                flash(f"Successfully loaded the file!", "success")
+                # Success message
+                flash(response_info.get("message"), "success")
                 return redirect(request.url)
 
-        # Run commands from a uploaded file
+        # Run file using the runfile GPI function
         if "runfile" in request.files:
-            run_file = request.files["runfile"]
-            if run_file.filename == '':
-                flash('No selected file', "warning")
+            runfile = request.files["runfile"]
+            if runfile.filename == "":
+                flash("No file selected", "warning")
                 return redirect(request.url)
 
             # If valid file, save the file
-            if run_file and allowed_file(run_file.filename):
-                save_path = os.path.join(app.config["UPLOAD_FOLDER"], "runfile.py")
-                run_file.save(save_path)
+            if runfile and allowed_file(runfile.filename):
+                save_path = os.path.join(gui.config["UPLOAD_FOLDER"], "runfile.py")
+                runfile.save(save_path)
 
                 # Run the file
                 try:
-                    runfile(save_path)
+                    # Query ganga to run the file
+                    response_info = query_internal_api("/internal/runfile", "get", params={"path": save_path})
+
                 except Exception as err:
+                    # Display error back to GUI
                     flash(str(err), "danger")
                     return redirect(request.url)
 
-                flash("Successfully ran the file!", "success")
+                # Success message
+                flash(response_info.get("message"), "success")
                 return redirect(request.url)
 
-        flash("No file part", "warning")
+        # No file case
+        flash("No file, retry!", "warning")
         return redirect(request.url)
 
-    # Store templates in a list
-    templates_list = []
     try:
-        # Get templates
-        for t in templates[-6:]:
-            templates_list.append(get_template_info(t.id))
+        # Query templates info
+        templates_info = query_internal_api("/internal/templates", "get",
+                                            params={"recent": True, "length": "6"})
+
     except Exception as err:
+        # Display error to GUI
         flash(str(err), "danger")
         return redirect(url_for("dashboard"))
 
-    return render_template("create.html", title="Create", templates_list=templates_list)
+    return render_template("create.html", title="Create", templates_info=templates_info)
 
 
-# Route to quick create run file - related to create view
-@app.route("/create/runfile", methods=["GET", "POST"])
-def quick_runfile():
-    try:
-        from GangaCore.GPI import runfile
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import runfile
+# Runfile view
+@gui.route("/create/runfile", methods=["GET", "POST"])
+@login_required
+def runfile_page():
+    """
+    Quick create a runfile to be run using the runfile GPI function.
+    """
 
-    # Path to gui runfile
-    runfile_path = os.path.join(app.config["UPLOAD_FOLDER"], "runfile.py")
+    # Runfile path
+    runfile_path = os.path.join(gui.config["UPLOAD_FOLDER"], "runfile.py")
 
-    # Save runfile data
+    # Save runfile data from frontend
     if request.method == "POST":
         runfile_data = request.form.get("runfile-data")
         with open(runfile_path, "w+") as f:
             f.write(runfile_data)
 
-        # Run file
+        # Run the file
         try:
-            runfile(runfile_path)
-            flash("Successfully ran the file!", "success")
+            # Query ganga to run the file
+            response_info = query_internal_api("/internal/runfile", "get", params={"path": runfile_path})
+            flash(response_info["message"], "success")
+
         except Exception as err:
+            # Display error back in the GUI
             flash(str(err), "danger")
             return redirect(request.url)
 
-    return render_template("runfile.html", title="Run File")
+    return render_template("runfile.html", title="Runfile")
 
 
-# Templates view - list of templates in a tabular form
-@app.route("/templates", methods=["GET", "POST"])
+# Templates view
+@gui.route("/templates", methods=["GET", "POST"])
+@login_required
 def templates_page():
-    try:
-        from GangaCore.GPI import plugins, templates
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import plugins, templates
+    """
+    Handles the templates route of the GUI. Displays templates in a tabular form.
+    """
 
-    # Session defaults for remembering filter options
-    if "templates_per_page" not in session:
-        session["templates_per_page"] = 10
-    if "templates_filter" not in session:
-        session["templates_filter"] = {key: "any" for key in ["application", "backend"]}
-
-    # Change filter values
+    # Update filter values
     if request.method == "POST":
-        # Add form data to session
+        # Add filter data to user session
         session["templates_per_page"] = int(request.form.get("templates-per-page"))
         session["templates_filter"] = {key: request.form.get(form_name) for key, form_name in
                                        zip(["application", "backend"], ["template-application", "template-backend"])}
 
     # Current page
-    current_page = int(request.args.get("page") or 0)
+    current_page = int(request.args.get("page")) if request.args.get("page") is not None else 0
 
     # Get user defined value from session
     templates_per_page = session["templates_per_page"]
 
-    templates_info_list = []
     try:
-        filtered_list = list(templates.select(
-            **{key: session["templates_filter"][key] for key in session["templates_filter"].keys() if
-               session["templates_filter"][key] != "any"}))
-        filtered_list.reverse()
 
-        # Calculate no of max pages
-        number_of_pages = int(len(filtered_list) / templates_per_page + 1)
+        # Query total number of templates
+        templates_length = query_internal_api("/internal/templates/length", "get", params=session["templates_filter"])
 
-        # if page exceeds, redirect to last page
+        # Calculate number of max pages
+        number_of_pages = (int(templates_length) // int(templates_per_page)) + 1
+
+        # if current page exceeds last possible page, redirect to last page
         if current_page >= number_of_pages:
             return redirect(url_for("templates_page", page=number_of_pages - 1))
 
-        # templates list according to the filter
-        tlist = filtered_list[
-                (current_page * templates_per_page):(current_page * templates_per_page + templates_per_page)]
+        # Add templates filters and range options for query params
+        params = session["templates_filter"].copy()
+        params.update({
+            "recent": True,
+            "length": templates_per_page,
+            "offset": current_page
+        })
 
-        # Get templates info
-        for t in tlist:
-            templates_info_list.append(get_template_info(t.id))
-
-        # Get backends and applications list
-        backends = plugins()["backends"]
-        applications = plugins()["applications"]
+        # Query templates information
+        templates_info = query_internal_api("/internal/templates", "get", params=params)
 
     except Exception as err:
         # Flash error if any
@@ -384,114 +357,94 @@ def templates_page():
                            title="Templates",
                            number_of_pages=number_of_pages,
                            current_page=current_page,
-                           backends=backends,
-                           applications=applications,
-                           templates_info_list=templates_info_list)
+                           backends=plugins["backends"],
+                           applications=plugins["applications"],
+                           templates_info=templates_info)
 
 
-# Jobs view - list of jobs in a tabular form
-@app.route("/jobs", methods=["GET", "POST"])
+# Jobs view
+@gui.route("/jobs", methods=["GET", "POST"])
+@login_required
 def jobs_page():
-    try:
-        from GangaCore.GPI import jobs, plugins
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs, plugins
+    """
+    Handles jobs route of the GUI. Displays jobs in a tabular view.
+    """
 
-    # Session defaults for remembering filter options
-    if "jobs_per_page" not in session:
-        session["jobs_per_page"] = 10
-    if "jobs_filter" not in session:
-        session["jobs_filter"] = {key: "any" for key in ["status", "application", "backend"]}
-
-    # Change filter values
+    # Update filter values
     if request.method == "POST":
-        # Add form data to client session
+        # Add form data to user session
         session["jobs_per_page"] = int(request.form.get("jobs-per-page"))
         session["jobs_filter"] = {key: request.form.get(form_name) for key, form_name in
                                   zip(["status", "application", "backend"],
                                       ["job-status", "job-application", "job-backend"])}
 
     # Current page
-    current_page = int(request.args.get("page") or 0)
+    current_page = int(request.args.get("page")) if request.args.get("page") is not None else 0
 
-    # Get user defined value from session
+    # Get user defined value from user session
     jobs_per_page = session["jobs_per_page"]
 
-    jobs_info_list = []
     try:
-        filtered_list = list(
-            jobs.select(**{key: session["jobs_filter"][key] for key in session["jobs_filter"].keys() if
-                           session["jobs_filter"][key] != "any"}))
-        filtered_list.reverse()
 
-        # Calculate no of max pages
-        number_of_pages = int(len(filtered_list) / jobs_per_page + 1)
+        # Query total number of jobs
+        jobs_length = query_internal_api("/internal/jobs/length", "get", params=session["jobs_filter"])
 
-        # if page exceeds, redirect to last page
+        # Calculate number of max pages
+        number_of_pages = (int(jobs_length) // int(jobs_per_page)) + 1
+
+        # if current page exceeds last possible page, redirect to last page
         if current_page >= number_of_pages:
             return redirect(url_for("jobs_page", page=number_of_pages - 1))
 
-        # job list according to the filter
-        jlist = filtered_list[(current_page * jobs_per_page):(current_page * jobs_per_page + jobs_per_page)]
+        # Add jobs filters and range options for query params
+        params = session["jobs_filter"].copy()
+        params.update({
+            "recent": True,
+            "length": jobs_per_page,
+            "offset": current_page
+        })
 
-        # Get job info
-        for j in jlist:
-            jobs_info_list.append(get_job_info(j.id))
-
-        # Get backends and applications list
-        backends = plugins()["backends"]
-        applications = plugins()["applications"]
+        # Query jobs information
+        jobs_info = query_internal_api("/internal/jobs", "get", params=params)
 
     except Exception as err:
+        # Display error back to GUI
         flash(str(err), "danger")
         return redirect(url_for("dashboard"))
 
     return render_template("jobs.html",
                            title="Jobs",
-                           jobs_info_list=jobs_info_list,
-                           backends=backends,
-                           applications=applications,
+                           jobs_info=jobs_info,
+                           backends=plugins["backends"],
+                           applications=plugins["applications"],
                            number_of_pages=number_of_pages,
                            current_page=current_page,
                            status_color=status_color)
 
 
-# Job view - display information of the job
-@app.route('/job/<int:job_id>')
+# Job view
+@gui.route('/jobs/<int:job_id>')
+@login_required
 def job_page(job_id: int):
-    try:
-        from GangaCore.GPI import jobs, full_print
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs, full_print
+    """
+    Handles job route of the GUI. Displays all the information about the job.
+    :param job_id: int
+    """
 
-    from GangaCore.GPIDev.Lib.Job import Job
-
-    # Get all attributes and methods from schema
-    attrs = Job._schema.allItemNames()
-    method_actions = Job._exportmethods
-
-    # Info variables
-    job_info = {}
-    full_job_info = None
     stdout = None
     stderr = None
 
     try:
-        j = jobs[int(job_id)]
-        job_info = get_job_info(j.id)
 
-        # Store full print output
-        print_output = io.StringIO()
-        full_print(j, out=print_output)
-        full_job_info = print_output.getvalue()
+        # Query job information
+        job_info = query_internal_api(f"/internal/jobs/{job_id}", "get")
+
+        # Query full print of the job
+        full_print_info = query_internal_api(f"/internal/jobs/{job_id}/full-print", "get")
 
         # stdout and stderr path
-        stdout_path = os.path.join(j.outputdir, "stdout")
-        stderr_path = os.path.join(j.outputdir, "stderr")
+        stdout_path = os.path.join(job_info["outputdir"], "stdout")
+        stderr_path = os.path.join(job_info["outputdir"], "stderr")
 
         # Get stdout
         if os.path.exists(stdout_path):
@@ -504,123 +457,140 @@ def job_page(job_id: int):
                 stderr = f.read()
 
     except Exception as err:
+        # Display error on the GUI
         flash(str(err), "danger")
-
-    if job_info == {}:
         return redirect(url_for("jobs_page"))
 
     return render_template("job.html",
                            title=f"Job {job_id}",
                            job_info=job_info,
                            status_color=status_color,
-                           attrs=attrs,
-                           method_actions=method_actions,
+                           attribute_actions=actions.get("attributes"),
+                           method_actions=actions.get("methods"),
                            stdout=stdout,
                            stderr=stderr,
-                           full_job_info=full_job_info)
+                           full_print_info=full_print_info)
 
 
-# Export job route
-@app.route("/job/<int:job_id>/export")
-def export_job(job_id: int):
+# Export job
+@gui.route("/jobs/<int:job_id>/export")
+@login_required
+def job_export(job_id: int):
+    """
+    Sends the job file which is generated using export function of GPI.
+    :param job_id: int
+    """
+
+    # Path to save file using export GPI function
+    export_path = os.path.join(gui.config["UPLOAD_FOLDER"], f"export.txt")
+
     try:
-        from GangaCore.GPI import jobs, export
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs, export
 
-    export_save_path = os.path.join(app.config["UPLOAD_FOLDER"], f"export.txt")
+        # Query to export the job at export path
+        response_info = query_internal_api(f"/internal/jobs/{job_id}/export", "get", params={"path": export_path})
 
-    # Expoet job
-    try:
-        j = jobs[job_id]
-        export(j, export_save_path)
+        # Send file
+        return send_file(export_path, as_attachment=True, cache_timeout=0, attachment_filename=f"Job_{job_id}.txt")
+
     except Exception as err:
+        # Display error back to GUI
         flash(str(err), "danger")
-        return redirect(url_for("job_page", job_id=job_id))
 
-    return send_file(export_save_path, as_attachment=True, cache_timeout=0, attachment_filename=f"Job_{job_id}.txt")
+    return redirect(url_for("job_page", job_id=job_id))
 
 
-# Edit job - related to Job view
-@app.route("/job/<int:job_id>/edit", methods=["GET", "POST"])
-def edit_job(job_id: int):
-    try:
-        from GangaCore.GPI import jobs, export, load
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs, export, load
+# Edit job
+@gui.route("/jobs/<int:job_id>/edit", methods=["GET", "POST"])
+@login_required
+def job_edit(job_id: int):
+    """
+    Show the exported job text on the GUI for it to be edited and submit. Will create a new job after submission.
+    :param job_id: int
+    """
 
-    load_file_path = os.path.join(app.config["UPLOAD_FOLDER"], "loadjobfile.txt")
-    export_save_path = os.path.join(app.config["UPLOAD_FOLDER"], "export.txt")
+    # Save paths
+    loadfile_path = os.path.join(gui.config["UPLOAD_FOLDER"], "loadfile.txt")
+    export_path = os.path.join(gui.config["UPLOAD_FOLDER"], "export.txt")
 
+    # Create a new job with the submitted information
     if request.method == "POST":
+
         # Save the edited job info
         edited_job_info = request.form.get("edited-job-info")
-        with open(load_file_path, "w+") as f:
+        with open(loadfile_path, "w+") as f:
             f.write(edited_job_info)
 
-        # Load new job from the edited job info
+        # Load the file
         try:
-            load(load_file_path)
-            flash("Successfully edited job", "success")
+            # Query to load the job
+            response_info = query_internal_api("/internal/load", "get", params={"path": loadfile_path})
+            flash(response_info["message"], "success")
+
         except Exception as err:
+            # Display error on the GUI
             flash(str(err), "danger")
             return redirect(request.url)
 
-    exported_data = None
     try:
-        j = jobs[job_id]
-        export(j, export_save_path)
+        # Query to export the job text
+        response_info = query_internal_api(f"/internal/jobs/{job_id}/export", "get", params={"path": export_path})
 
         # Read exported job file to display
-        with open(export_save_path) as f:
+        with open(export_path) as f:
             exported_data = f.read()
+
     except Exception as err:
+        # Display error on the GUI
         flash(str(err), "danger")
         return redirect(url_for("job_page", job_id=job_id))
 
     return render_template("edit_job.html", title=f"Edit Job {job_id}", job_id=job_id, exported_data=exported_data)
 
 
-# Browse Job directory - related to the Job view
-@app.route('/job/<int:job_id>/browse', defaults={'path': ''})
-@app.route("/job/<int:job_id>/browse/<path:path>")
-def browse_job(job_id: int, path):
-    try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
+# Browse job directory
+@gui.route("/job/<int:job_id>/browse", defaults={"path": ""})
+@gui.route("/job/<int:job_id>/browse/<path:path>")
+@login_required
+def job_browse(job_id: int, path):
+    """
+    Browse directory of the job.
+    :param job_id: int
+    :param path: str
+    """
 
     try:
-        j = jobs[job_id]
-        job_base_dir = os.path.dirname(os.path.dirname(j.outputdir))
+        # Query job information
+        job_info = query_internal_api(f"/internal/jobs/{job_id}", "get")
+
+        # Base directory of the job
+        job_base_dir = os.path.dirname(os.path.dirname(job_info["outputdir"]))
+
     except Exception as err:
+        # Display error on the GUI
         flash(str(err), "danger")
         return redirect(url_for("job_page", job_id=job_id))
 
-    # Joining the base and the requested path
+    # Join the base and the requested path
     abs_path = os.path.join(job_base_dir, path)
 
     # URL path variable for going back
     back_path = os.path.dirname(abs_path).replace(job_base_dir, "")
 
-    # Return back if path doesn't exist
+    # If path doesn't exist
     if not os.path.exists(abs_path):
         flash("Directory for this job does not exist.", "warning")
         return redirect(url_for("job_page", job_id=job_id))
 
-    # Check if path is a file and serve
+    # Check if path is a file and send
     if os.path.isfile(abs_path):
         return send_file(abs_path)
 
     files_info = []
+
     # Show directory contents
     files = os.listdir(abs_path)
+
+    # Store directory information
     for file in files:
         files_info.append({
             "file": file,
@@ -635,20 +605,13 @@ def browse_job(job_id: int, path):
 
 
 # Subjobs view
-@app.route("/job/<int:job_id>/subjobs", methods=["GET", "POST"])
+@gui.route("/jobs/<int:job_id>/subjobs", methods=["GET", "POST"])
+@login_required
 def subjobs_page(job_id: int):
-    try:
-        from GangaCore.GPI import jobs, plugins
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs, plugins
-
-    # Session defaults
-    if "subjobs_per_page" not in session:
-        session["subjobs_per_page"] = 10
-    if "subjobs_filter" not in session:
-        session["subjobs_filter"] = {key: "any" for key in ["status", "application", "backend"]}
+    """
+    Handles subjobs view of the GUI. Displays subjobs of a job in a tabular form.
+    :param job_id: int
+    """
 
     # Change filter values
     if request.method == "POST":
@@ -659,36 +622,33 @@ def subjobs_page(job_id: int):
                                          ["subjob-status", "subjob-application", "subjob-backend"])}
 
     # Current page
-    current_page = int(request.args.get("page") or 0)
+    current_page = int(request.args.get("page")) if request.args.get("page") is not None else 0
 
     # Get user defined value from session
     subjobs_per_page = session["subjobs_per_page"]
 
-    subjobs_info_list = []
     try:
-        j = jobs[job_id]
-        filtered_list = list(
-            j.subjobs.select(**{key: session["subjobs_filter"][key] for key in session["subjobs_filter"].keys() if
-                                session["subjobs_filter"][key] != "any"}))
-        filtered_list.reverse()
+        # Query total number of subjobs
+        subjobs_length = query_internal_api(f"/internal/jobs/{job_id}/subjobs/length", "get",
+                                            params=session["subjobs_filter"])
 
-        # Calculate no of max pages
-        number_of_pages = int(len(filtered_list) / subjobs_per_page + 1)
+        # Calculate number of max pages
+        number_of_pages = (int(subjobs_length) // int(subjobs_per_page)) + 1
 
-        # if page exceeds, redirect to last page
+        # if current page exceeds last possible page, redirect to last page
         if current_page >= number_of_pages:
             return redirect(url_for("subjobs_page", page=number_of_pages - 1, job_id=job_id))
 
-        # subjobs list according to the filter
-        sjlist = filtered_list[(current_page * subjobs_per_page):(current_page * subjobs_per_page + subjobs_per_page)]
+        # Add subjobs filters and range options for query params
+        params = session["subjobs_filter"].copy()
+        params.update({
+            "recent": True,
+            "length": subjobs_per_page,
+            "offset": current_page
+        })
 
-        # Get subjob info
-        for sj in sjlist:
-            subjobs_info_list.append(get_subjob_info(job_id=j.id, subjob_id=sj.id))
-
-        # Get backends and applications list
-        backends = plugins()["backends"]
-        applications = plugins()["applications"]
+        # Query subjobs information
+        subjobs_info = query_internal_api(f"/internal/jobs/{job_id}/subjobs", "get", params=params)
 
     except Exception as err:
         flash(str(err), "danger")
@@ -699,51 +659,44 @@ def subjobs_page(job_id: int):
                            status_color=status_color,
                            number_of_pages=number_of_pages,
                            current_page=current_page,
-                           backends=backends,
-                           applications=applications,
-                           subjobs_info_list=subjobs_info_list,
+                           backends=plugins["backends"],
+                           applications=plugins["applications"],
+                           subjobs_info=subjobs_info,
                            job_id=job_id)
 
 
-@app.route('/job/<int:job_id>/subjob/<int:subjob_id>')
+# Subjob view
+@gui.route("/jobs/<int:job_id>/subjobs/<int:subjob_id>", methods=["GET"])
+@login_required
 def subjob_page(job_id: int, subjob_id: int):
-    try:
-        from GangaCore.GPI import jobs, full_print
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs, full_print
+    """
+    Handles subjob route of the GUI. Displays extensive details of a subjob.
+    :param job_id: int
+    :param subjob_id: int
+    """
 
-    from GangaCore.GPIDev.Lib.Job import Job
-
-    # Get all attributes and methods from schema
-    attrs = Job._schema.allItemNames()
-    method_actions = Job._exportmethods
-
-    # Info variables
-    subjob_info = {}
-    full_subjob_info = None
-    browse_path = ""
     stdout = None
     stderr = None
 
     try:
-        j = jobs[int(job_id)]
-        sj = j.subjobs[subjob_id]
-        subjob_info = get_subjob_info(job_id=j.id, subjob_id=sj.id)
 
-        # Store full print output
-        print_output = io.StringIO()
-        full_print(sj, out=print_output)
-        full_subjob_info = print_output.getvalue()
+        # Query job information
+        job_outputdir = query_internal_api(f"/internal/jobs/{job_id}/outputdir", "get")
 
-        j_dir_basepath = os.path.dirname(os.path.dirname(j.outputdir))
-        sj_dir_basepath = os.path.dirname(os.path.dirname(sj.outputdir))
-        browse_path = sj_dir_basepath.replace(j_dir_basepath, "")
+        # Query subjob information
+        subjob_info = query_internal_api(f"/internal/jobs/{job_id}/subjobs/{subjob_id}", "get")
+
+        # Query full print of the job
+        full_print_info = query_internal_api(f"/internal/jobs/{job_id}/subjobs/{subjob_id}/full-print", "get")
+
+        # Extract browse path that can be used by job_browse route
+        job_dir_basepath = os.path.dirname(os.path.dirname(job_outputdir["outputdir"]))
+        subjob_dir_basepath = os.path.dirname(os.path.dirname(subjob_info["outputdir"]))
+        browse_path = subjob_dir_basepath.replace(job_dir_basepath, "")
 
         # stdout and stderr path
-        stdout_path = os.path.join(sj.outputdir, "stdout")
-        stderr_path = os.path.join(sj.outputdir, "stderr")
+        stdout_path = os.path.join(subjob_info["outputdir"], "stdout")
+        stderr_path = os.path.join(subjob_info["outputdir"], "stderr")
 
         # Get stdout
         if os.path.exists(stdout_path):
@@ -756,6 +709,7 @@ def subjob_page(job_id: int, subjob_id: int):
                 stderr = f.read()
 
     except Exception as err:
+        # Display error on the GUI
         flash(str(err), "danger")
         return redirect(url_for("subjobs_page", job_id=job_id))
 
@@ -763,105 +717,186 @@ def subjob_page(job_id: int, subjob_id: int):
                            title=f"Subjob {subjob_id} - Job {job_id}",
                            subjob_info=subjob_info,
                            status_color=status_color,
-                           attrs=attrs,
-                           method_actions=method_actions,
+                           attribute_actions=actions["attributes"],
+                           method_actions=actions["methods"],
                            stdout=stdout,
                            stderr=stderr,
-                           full_subjob_info=full_subjob_info,
+                           full_print_info=full_print_info,
                            job_id=job_id,
                            browse_path=browse_path)
 
 
-# Credential Store view
-@app.route('/credentials')
-def credential_store_page():
-    try:
-        from GangaCore.GPI import credential_store
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import credential_store
+# Credential view
+@gui.route("/credentials")
+@login_required
+def credentials_page():
+    """
+    Handles credential store view of the GUI. Displays credentials in a tabular form.
+    """
 
-    # Store credential store info in a list
-    credential_info_list = []
     try:
-        for c in credential_store:
-            credential_info = {}
-            credential_info["location"] = str(c.location)
-            credential_info["time_left"] = str(c.time_left())
-            credential_info["expiry_time"] = str(c.expiry_time())
-            credential_info["is_valid"] = str(c.is_valid())
-            credential_info["exists"] = str(c.exists())
-            credential_info_list.append(credential_info)
+        # Query credential store information
+        credentials_info = query_internal_api("/internal/credentials", "get")
+
     except Exception as err:
+        # Display error on the GUI
         flash(str(err), "danger")
         return redirect(url_for("dashboard"))
 
-    return render_template('credentials.html', credential_info_list=credential_info_list)
+    return render_template('credentials.html', credential_info_list=credentials_info)
 
 
-@app.route('/plugins')
+# Plugins view
+@gui.route('/plugins')
+@login_required
 def plugins_page():
-    try:
-        from GangaCore.GPI import plugins
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import plugins
-
-    plugins_info = {}
+    """
+    Handles plugins route of the GUI. Displays the list of plugins.
+    """
 
     try:
-        plugins_info = plugins()
+        # Store plugins information
+        plugins_info = plugins
+
     except Exception as err:
+        # Display error on the GUI
         flash(str(err), "danger")
+        return redirect(url_for("dashboard"))
 
     return render_template('plugins.html', plugins_info=plugins_info)
 
 
-@app.route("/plugin/<plugin_name>")
-def plugin_info_page(plugin_name: str):
-    # try:
-    #     from GangaCore import GPI
-    # except ImportError:
-    #     import ganga
-    #     import ganga.ganga
-    #     from ganga import plugin_name
-    #
-    # plugin = getattr(ganga, plugin_name)
-    #
-    # print(plugin)
-
-    using_core = False
+# Plugin view
+@gui.route("/plugin/<plugin_name>")
+@login_required
+def plugin_page(plugin_name: str):
+    """
+    Displays information about the plugin like it's docstring.
+    :param plugin_name: str
+    """
 
     try:
-        from GangaCore import GPI
-        from GangaCore.GPI import jobs
-        using_core = True
-    except ImportError:
-        import ganga
-        from ganga.ganga import ganga
+        # Query plugin information
+        plugin_info = query_internal_api(f"/internal/plugins/{plugin_name}", "get")
 
-    docstring = None
-
-    try:
-        if using_core:
-            plugin = getattr(GPI, plugin_name)
-            docstring = plugin.__doc__
-        else:
-            plugin = getattr(ganga, plugin_name)
-            docstring = plugin.__doc__
     except Exception as err:
+        # Display error on the GUI
         flash(str(err), "danger")
         return redirect(url_for("plugins_page"))
 
-    return render_template("plugin.html", title=f"{plugin_name}", docstring=docstring, plugin_name=plugin_name)
+    return render_template("plugin.html", title=f"{plugin_name}", plugin_info=plugin_info)
+
+
+# Ganga logs view
+@gui.route("/logs")
+@login_required
+def logs_page():
+    """
+    Diplay ganga log file.
+    :return:
+    """
+
+    ganga_log_path = gui.config["GANGA_LOG"]
+    gui_accesslog_path = gui.config["ACCESS_LOG"]
+    gui_errorlog_path = gui.config["ERROR_LOG"]
+
+    try:
+        # Get ganga log
+        with open(ganga_log_path, "rt") as f:
+            ganga_log_data = f.read()
+
+        # Get GUI access log
+        with open(gui_accesslog_path, "rt") as f:
+            gui_accesslog_data = f.read()
+
+        # Get GUI error log
+        with open(gui_errorlog_path, "rt") as f:
+            gui_errorlog_data = f.read()
+
+    except Exception as err:
+        flash(str(err), "danger")
+        return redirect(url_for("dashboard"))
+
+    return render_template("logs.html", title="Logs", ganga_log_data=ganga_log_data, gui_accesslog_data=gui_accesslog_data, gui_errorlog_data=gui_errorlog_data)
+
+
+@gui.route("/storage", defaults={"path": ""}, methods=["GET", "POST"])
+@gui.route("/storage/<path:path>", methods=["GET", "POST"])
+@login_required
+def storage_page(path):
+    """
+    A convenience feature to store some file remotely in gangadir/storage
+    """
+
+    # Storage folder path
+    storage_folder = gui.config["STORAGE_FOLDER"]
+
+    # Join the storage path and the requested path
+    abs_path = os.path.join(storage_folder, path)
+
+    # Handle file uploads
+    if request.method == "POST":
+
+        # Uploaded file
+        if "storagefile" in request.files:
+            storagefile = request.files["storagefile"]
+            if storagefile.filename == "":
+                flash("No file selected", "warning")
+                return redirect(request.url)
+
+            # If valid file, the save the file
+            if storagefile:
+                # Directory check
+                if not os.path.isdir(abs_path):
+                    flash("Error while uploading the file", "danger")
+                    return redirect(request.url)
+
+                filename = secure_filename(storagefile.filename)
+                save_path = os.path.join(abs_path, filename)
+                storagefile.save(save_path)
+
+                # Success message
+                flash("Successfully uploaded the file.", "success")
+                return redirect(request.url)
+
+        # No file case
+        flash("No file, retry!", "warning")
+        return redirect(request.url)
+
+    # URL path variable for going back
+    back_path = os.path.dirname(abs_path).replace(storage_folder, "")
+
+    # If path doesn't exist
+    if not os.path.exists(abs_path):
+        flash("Directory does not exist.", "warning")
+        return redirect(url_for("dashboard"))
+
+    # Check if path is a file and send
+    if os.path.isfile(abs_path):
+        return send_file(abs_path)
+
+    files_info = []
+
+    # Show directory contents
+    files = os.listdir(abs_path)
+
+    # Store directory information
+    for file in files:
+        files_info.append({
+            "file": file,
+            "directory": os.path.isdir(os.path.join(abs_path, file))
+        })
+
+    return render_template("storage.html", title="Storage",
+                           abs_path=abs_path,
+                           files_info=files_info,
+                           back_path=back_path)
 
 
 # ******************** Token Based Authentication ******************** #
 
 # Generate token for API authentication - token validity 5 days
-@app.route("/token", methods=["POST"])
+@gui.route("/token", methods=["POST"])
 def generate_token():
     """
     Using the 'user' and 'password' data from the form body, validates the user and returns a JSON Web Token (JWT).
@@ -910,9 +945,9 @@ def token_required(f):
 
         # Decode the token and subsequently identify the user
         try:
-            data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
-            current_user = User.query.filter_by(public_id=data["public_id"]).first()
-            if current_user is None:
+            data = jwt.decode(token, gui.config["SECRET_KEY"], algorithms=["HS256"])
+            current_api_user = User.query.filter_by(public_id=data["public_id"]).first()
+            if current_api_user is None:
                 return jsonify({"success": False, "message": "Token is old. Please renew"}), 401
         except jwt.ExpiredSignatureError:
             return jsonify({"success": False, "message": "Token is expired"}), 401
@@ -921,7 +956,7 @@ def token_required(f):
         except:
             return jsonify({"success": False, "message": "Could not verify token"}), 401
 
-        return f(current_user, *args, **kwargs)
+        return f(current_api_user, *args, **kwargs)
 
     return decorated
 
@@ -929,115 +964,122 @@ def token_required(f):
 # ******************** Job API ******************** #
 
 
-# Single Job Information API - GET Method
-@app.route("/api/job/<int:job_id>", methods=["GET"])
+# Single job information API - GET Method
+@gui.route("/api/jobs/<int:job_id>", methods=["GET"])
 @token_required
-def job_endpoint(current_user, job_id: int):
+def job_endpoint(current_api_user, job_id: int):
     """
     Given the job_id, returns the general information related to the job in JSON format.
 
-    Returned job information: fqid, status, name, number of subjobs, application, backend, backend.actualCE, comments, subjobs statuses.
-
     :param job_id: int
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
     try:
-        # Get the general info of the job
-        job_info = get_job_info(job_id)
+        # Query job information to the GPI
+        job_info = query_internal_api(f"/internal/jobs/{job_id}", "get")
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
     return jsonify(job_info)
 
 
-# Single Job Attribute Info API - GET Method
-@app.route("/api/job/<int:job_id>/<attribute>", methods=["GET"])
-# @token_required
-def job_attribute_endpoint(job_id: int, attribute: str):
+# Single job attribute information API - GET Method
+@gui.route("/api/jobs/<int:job_id>/<attribute>", methods=["GET"])
+@token_required
+def job_attribute_endpoint(current_api_user, job_id: int, attribute: str):
     """
-    Given the job_id and attribute, returns the attribute information in the JSON string format.
+    Given the job_id and attribute, returns the attribute information in the JSON format.
 
     :param job_id: int
     :param attribute: str
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
     try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
+        # Query job attribute information from ganga
+        job_attribute_info = query_internal_api(f"/internal/jobs/{job_id}/{attribute}", "get")
 
-    try:
-        j = jobs[job_id]
-        response_data = {attribute: str(getattr(j, attribute))}
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(response_data)
+    return jsonify(job_attribute_info)
 
 
-# Create Job Using Template API - POST Method
-@app.route("/api/job/create", methods=["POST"])
-# @token_required
-def job_create_endpoint():
+# Single job full print API - GET Method
+@gui.route("/api/jobs/<int:job_id>/full-print", methods=["GET"])
+@token_required
+def job_full_print_endpoint(current_api_user, job_id: int):
+    """
+    Return full print of the job.
+
+    :param job_id: int
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
+    """
+
+    try:
+        # Query job full print from ganga
+        full_print_info = query_internal_api(f"/internal/jobs/{job_id}/full-print", "get")
+
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(full_print_info)
+
+
+# Create job using template API - POST Method
+@gui.route("/api/jobs/create", methods=["POST"])
+@token_required
+def job_create_endpoint(current_api_user):
     """
     Create a new job using the existing template.
 
     IMPORTANT: template_id NEEDS to be provided in the request body. job_name can optionally be provided in the request body.
 
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
-    try:
-        from GangaCore.GPI import templates, Job
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import templates, Job
 
-    # Store request data
-    template_id: int = request.json["template_id"]
-    job_name: str = request.form.get("job_name")
+    # Request data
+    data = {
+        "template_id": request.json.get("template_id"),
+        "job_name": request.json.get("job_name")
+    }
 
     try:
-        # Create job using template
-        j = Job(templates[int(template_id)])
-        if job_name is not None:
-            j.name = job_name
+        # Query ganga to create a job using the template id
+        response_info = query_internal_api("/internal/jobs/create", "post", json=data)
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify({"success": True,
-                    "message": "Job with ID {} created successfully using the template with ID {}".format(j.id,
-                                                                                                          template_id)})
+    return jsonify(response_info)
 
 
-# Perform Copy Action on the Job - PUT Method
-@app.route("/api/job/<int:job_id>/copy", methods=["PUT"])
-# @token_required
-def job_copy_endpoint(job_id: int):
-    try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
+# Copy job API - PUT Method
+@gui.route("/api/jobs/<int:job_id>/copy", methods=["PUT"])
+@token_required
+def job_copy_endpoint(current_api_user, job_id: int):
+    """
+    Create a copy of the job.
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
+    :param job_id: int
+    """
 
     try:
-        j = jobs[job_id]
-        new_j = j.copy()
+        # Query ganga to copy the job
+        response_info = query_internal_api(f"/internal/jobs/{job_id}/copy", "put")
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify({"success": True, "message": f"Successfully created a new copy with ID {new_j.id}"})
+    return jsonify(response_info)
 
 
-# Perform Certain Action on the Job - PUT Method
-@app.route("/api/job/<int:job_id>/<action>", methods=["PUT"])
-# @token_required
-def job_action_endpoint(job_id: int, action: str):
+# Job action API - PUT Method
+@gui.route("/api/jobs/<int:job_id>/<action>", methods=["PUT"])
+@token_required
+def job_action_endpoint(current_api_user, job_id: int, action: str):
     """
     Given the job_id and action in the endpoint, perform the action on the job.
 
@@ -1051,324 +1093,320 @@ def job_action_endpoint(job_id: int, action: str):
 
     2)
         PUT http://localhost:5000/job/13/force_status
-        force_status="failed"
+        {"force_status":"failed"}
 
         The above request will force status of the job with ID 13 to killed. If unsuccessful will return back the error.
 
     3)
         PUT http://localhost:5000/job/13/name
-        name="New Name"
+        {"name"="New Name"}
 
         The above request will change the name of the job with ID 13 to "New Name". Notice how the required values
         are passed in the request body with the same name as action.
 
-    NOTE: It is NECESSARY to wrap a String value in double quotes ("") when provide a value in the request body.
-    Whereas DON'T wrap Integer or Boolean value in double quotes (""). Because values in double quotes are parsed as
-    String, numerical values without double quotes as Integer/Float and True/False without double quotes as Boolean.
-    You can also pass array of arguments. Eg. ["Test", 13, True] will be parsed as is in Python.
+    NOTE: It is NECESSARY to send body in JSON format for the request to be parsed in JSON.
 
     :param job_id: int
     :param action: str
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
+    # Request data
+    request_data = request.json
+
     try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
-    from GangaCore.GPIDev.Lib.Job import Job
+        # Query ganga to perform the action
+        response_info = query_internal_api(f"/internal/jobs/{job_id}/{action}", "put", json=request_data)
 
-    # Store request data in a dictionary
-    request_data = json.loads(request.data)
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
 
-    print(request_data)
-
-    # Action validity check
-    if action not in chain(Job._exportmethods, Job._schema.allItemNames()):
-        return jsonify({"success": False, "message": f"{action} not supported or does not exist"}), 400
-
-    # Action on Job Methods
-    if action in Job._exportmethods:
-        try:
-            j = jobs(job_id)
-
-            # Check for arguments in the request body for passing in the method
-            if action in request_data.keys():
-                # args = json.loads(request_data[action])
-                args = request_data[action]
-                print(args)
-                if isinstance(args, type([])):
-                    getattr(j, action)(*args)
-                else:
-                    getattr(j, action)(args)
-            else:
-                getattr(j, action)()
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    if action in Job._schema.allItemNames():
-        try:
-            j = jobs(job_id)
-
-            # Check for the value to set in the request body
-            if action in request_data.keys():
-                # arg = json.loads(request_data[action])
-                arg = request_data[action]
-                setattr(j, action, arg)
-            else:
-                return jsonify(
-                    {"success": False, "message": f"Please provide the value for {action} in the request body"}), 400
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    return jsonify(
-        {"success": True, "message": f"Successfully completed the action {action} on the Job with ID {job_id}"})
+    return jsonify(response_info)
 
 
-# Delete Job API - DELETE Method
-@app.route("/api/job/<int:job_id>", methods=["DELETE"])
+# Job delete API - DELETE Method
+@gui.route("/api/jobs/<int:job_id>", methods=["DELETE"])
 @token_required
-def delete_job_endpoint(current_user, job_id: int):
+def job_delete_endpoint(current_api_user, job_id: int):
     """
     Given the job id, removes the job from the job repository.
 
     :param job_id: int
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
-    from GangaCore.GPI import jobs
-
     try:
-        j = jobs[job_id]
-        j.remove()
+        # Query ganga to delete the job
+        response_info = query_internal_api(f"/internal/jobs/{job_id}", "delete")
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify({"success": True, "message": "Job with ID {} removed successfully".format(job_id)})
+    return jsonify(response_info)
+
+
+# Pin the Job
+@gui.route("/api/jobs/<int:job_id>/pin", methods=["PUT"])
+@token_required
+def job_pin_endpoint(current_api_user, job_id: int):
+    """
+    Pin the given job, which is then shown in the dashboard.
+    :param job_id: int
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
+    """
+
+    # Get current user
+    u = current_user
+
+    # Load pinned jobs of the user from the database
+    pinned_jobs = json.loads(u.pinned_jobs) if u.pinned_jobs is not None else []
+
+    # Pin job
+    if job_id not in pinned_jobs:
+        pinned_jobs.append(job_id)
+
+    # Add new pinned jobs to the database
+    u.pinned_jobs = json.dumps(pinned_jobs)
+    db.session.add(u)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": f"Successfully pinned Job (ID={job_id})."})
+
+
+# Unpin the job
+@gui.route("/api/jobs/<int:job_id>/unpin", methods=["PUT"])
+@token_required
+def job_unpin_endpoint(current_api_user, job_id: int):
+    """
+    Unpin the job, and make the required change to the GUI database.
+    :param job_id: int
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
+    """
+
+    # Get the user from the database
+    u = current_user
+
+    # Load user's pinned job from the database
+    pinned_jobs = json.loads(u.pinned_jobs) if u.pinned_jobs is not None else []
+
+    # Unpin the job
+    if job_id in pinned_jobs:
+        pinned_jobs.remove(job_id)
+
+    # Commit changes to the database
+    u.pinned_jobs = json.dumps(pinned_jobs)
+    db.session.add(u)
+    db.session.commit()
+
+    return jsonify({"success": True, "message": f"Successfully unpinned Job (ID={job_id})."})
 
 
 # ******************** Subjobs API ******************** #
 
 # Subjobs API - GET Method
-@app.route("/api/job/<int:job_id>/subjobs", methods=["GET"])
-# @token_required
-def subjobs_endpoint(job_id: int):
+@gui.route("/api/jobs/<int:job_id>/subjobs", methods=["GET"])
+@token_required
+def subjobs_endpoint(current_api_user, job_id: int):
     """
     Returns a list subjobs of a particular job in a similar way as Jobs API.
-    
+
+    The parameter accepted are:
+    * ids: provide a JSON string of list of IDs
+    * status: provide subjob status as a string for filter
+    * application: provide subjob application as a string for filter
+    * backend: provide backend application as a string for filter
+    * recent: if provided, starts a list from recent subjobs to old
+    * length: number of subjobs to be returned, provide as a int
+    * offset: how many subjobs to skip before returning the specified length of subjobs. Provide as int.
+        offset works as: number of subjobs skipped = offset * length
+
     :param job_id: int
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
-    try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
+    params = {
+        "ids": request.args.get("ids"),
+        "status": request.args.get("status"),
+        "application": request.args.get("application"),
+        "backend": request.args.get("backend"),
+        "recent": request.args.get("recent"),
+        "length": request.args.get("length"),
+        "offset": request.args.get("offset")
+    }
 
     try:
-        j = jobs(int(job_id))
+        # Query ganga for subjobs information
+        subjobs_info = query_internal_api(f"/internal/jobs/{job_id}/subjobs", "get", params=params)
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    # Store subjobs information in a list
-    subjobs_info_list = []
-
-    if "ids" in request.args:
-        subjob_ids = json.loads(request.args["ids"])
-        try:
-            for sjid in subjob_ids:
-                subjobs_info_list.append(get_subjob_info(job_id=job_id, subjob_id=sjid))
-            return jsonify(subjobs_info_list)
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
-
-    try:
-        for sj in j.subjobs:
-            subjobs_info_list.append(get_subjob_info(job_id=j.id, subjob_id=sj.id))
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)}), 400
-
-    return jsonify(subjobs_info_list)
+    return jsonify(subjobs_info)
 
 
-# Single Subjob Info API - GET Method
-@app.route("/api/job/<int:job_id>/subjob/<int:subjob_id>", methods=["GET"])
-# @token_required
-def subjob_endpoint(job_id: int, subjob_id: int):
+# Single subjob info API - GET Method
+@gui.route("/api/jobs/<int:job_id>/subjobs/<int:subjob_id>", methods=["GET"])
+@token_required
+def subjob_endpoint(current_api_user, job_id: int, subjob_id: int):
     """
     Returns information of a single subjob related to a particular job
 
-    Returned information: id, fqid, status, name, application, backend, backend.actualCE, comment
-
     :param job_id: int
     :param subjob_id: int
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
-    from GangaCore.GPI import jobs
-
-    # Using the job id and subjob id get the subjob info
     try:
-        j = jobs(int(job_id))
-        sj = j.subjobs[int(subjob_id)]
-        response_data = get_subjob_info(job_id=j.id, subjob_id=sj.id)
+        # Query subjob information to ganga
+        subjob_info = query_internal_api(f"/internal/jobs/{job_id}/subjobs/{subjob_id}", "get")
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(response_data)
+    return jsonify(subjob_info)
 
 
 # Single Subjob Attribute Info API - GET Method
-@app.route("/api/job/<int:job_id>/subjob/<int:subjob_id>/<attribute>", methods=["GET"])
-# @token_required
-def subjob_attribute_endpoint(job_id: int, subjob_id: int, attribute: str):
+@gui.route("/api/jobs/<int:job_id>/subjobs/<int:subjob_id>/<attribute>", methods=["GET"])
+@token_required
+def subjob_attribute_endpoint(current_api_user, job_id: int, subjob_id: int, attribute: str):
     """
     Given the job id, subjob id and attribute; return the attribute information in the string format via JSON.
 
     :param job_id: int
     :param subjob_id: int
     :param attribute: str
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
     try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
+        # Query attribute information from ganga
+        subjob_attribute_info = query_internal_api(f"/internal/jobs/{job_id}/subjobs/{subjob_id}/{attribute}", "get")
 
-    # Get subjob attribute info
-    try:
-        j = jobs[int(job_id)]
-        sj = j.subjobs[int(subjob_id)]
-        response_data = {attribute: str(getattr(sj, attribute))}
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(response_data)
+    return jsonify(subjob_attribute_info)
 
 
-# Perform Copy Action on the Subjob - PUT Method
-@app.route("/api/job/<int:job_id>/subjob/<int:subjob_id>/copy", methods=["PUT"])
-# @token_required
-def subjob_copy_endpoint(job_id: int, subjob_id: int):
+# Single subjob full print API - GET Method
+@gui.route("/api/jobs/<int:job_id>/subjobs/<int:subjob_id>/full-print", methods=["GET"])
+@token_required
+def subjob_full_print_endpoint(current_api_user, job_id: int, subjob_id: int):
+    """
+    Return full print of the subjob.
+
+    :param subjob_id: int
+    :param job_id: int
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
+    """
+
     try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
+        # Query subjob full print from ganga
+        full_print_info = query_internal_api(f"/internal/jobs/{job_id}/subjobs/{subjob_id}/full-print", "get")
 
-    try:
-        j = jobs[job_id]
-        sj = j.subjobs[subjob_id]
-        new_j = sj.copy()
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify({"success": True, "message": f"Successfully created a new copy with ID {new_j.id}"})
+    return jsonify(full_print_info)
+
+
+# Copy subjob API - PUT Method
+@gui.route("/api/jobs/<int:job_id>/subjobs/<int:subjob_id>/copy", methods=["PUT"])
+@token_required
+def subjob_copy_endpoint(current_api_user, job_id: int, subjob_id: int):
+    """
+    Create a copy of the subjob into a new job.
+    :param job_id:
+    :param subjob_id:
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
+    """
+
+    try:
+        # Query ganga to copy subjob
+        response_info = query_internal_api(f"/internal/jobs/{job_id}/subjobs/{subjob_id}/copy", "put")
+
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(response_info)
 
 
 # ******************** Jobs API ******************** #
 
 # Jobs API - GET Method
-@app.route("/api/jobs", methods=["GET"])
-# @token_required
-def jobs_endpoint():
+@gui.route("/api/jobs", methods=["GET"])
+@token_required
+def jobs_endpoint(current_api_user):
     """
     Returns a list of jobs with general information in JSON format.
-    :param current_user: Information of the current_user based on the request's JWT token
+
+    The parameter accepted are:
+    * ids: provide a JSON string of list of IDs
+    * status: provide job status as a string for filter
+    * application: provide job application as a string for filter
+    * backend: provide backend application as a string for filter
+    * recent: if provided, starts a list from recent job to old
+    * length: number of job to be returned, provide as a int
+    * offset: how many job to skip before returning the specified length of job. Provide as int.
+        offset works like: number of job skipped = offset * length
+    * auto-validate-ids: If ids provided in ids parameters does not exist in job repository, then skip those ids.
+
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
-    try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
-
-    # Store job information in a list
-    job_info_list = []
-
-    if "ids" in request.args:
-        job_ids = json.loads(request.args["ids"])
-        try:
-            for jid in job_ids:
-                job_info_list.append(get_job_info(jid))
-            return jsonify(job_info_list)
-        except Exception as err:
-            return jsonify({"success": False, "message": str(err)}), 400
+    params = {
+        "ids": request.args.get("ids"),
+        "status": request.args.get("status"),
+        "application": request.args.get("application"),
+        "backend": request.args.get("backend"),
+        "recent": request.args.get("recent"),
+        "length": request.args.get("length"),
+        "offset": request.args.get("offset"),
+        "auto-validate-ids": request.args.get("auto-validate-ids")
+    }
 
     try:
-        for j in jobs:
-            job_info_list.append(get_job_info(j.id))
+        # Get jobs information according to select filter and range filter
+        jobs_info = query_internal_api(f"/internal/jobs", "get", params=params)
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(job_info_list)
+    return jsonify(jobs_info)
 
 
-# Refresh Dashboard Route
-@app.route("/api/jobs/stats")
-def jobs_stats_endpoint():
-    try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
-
-    quick_statistics = {}
-
-    try:
-        # Set quick statistics
-        for stat in ["new", "running", "completed", "failed", "killed"]:
-            quick_statistics[stat] = len(jobs.select(status=stat))
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)}), 400
-
-    return jsonify(quick_statistics)
-
-
-# Job IDs API - GET Method
-@app.route("/api/jobs/ids", methods=["GET"])
+# Jobs statistics API - GET Method
+@gui.route("/api/jobs/statistics", methods=["GET"])
 @token_required
-def jobs_ids_endpoint(current_user):
+def jobs_statistics_endpoint(current_api_user):
     """
-    Returns a list of job ids present in job repository.
-
-    :param current_user: Information of the current_user based on the request's JWT token
+    Returns the number of jobs in new, running, completed, killed, failed status.
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
-    from GangaCore.GPI import jobs
-
-    # IDs list
     try:
-        ids_list = list(jobs.ids())
+        # Query ganga to get statistics information
+        statistics = query_internal_api("/internal/jobs/statistics", "get")
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(ids_list)
+    return jsonify(statistics)
 
 
-# Job Incomplete IDs API - GET Method
-@app.route("/api/jobs/incomplete_ids", methods=["GET"])
+# Job incomplete ids API - GET Method
+@gui.route("/api/jobs/incomplete_ids", methods=["GET"])
 @token_required
-def jobs_incomplete_ids_endpoint(current_user):
+def jobs_incomplete_ids_endpoint(current_api_user):
     """
     Returns a list of incomplete job ids in JSON format.
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
-    from GangaCore.GPI import jobs
-
-    # Incomplete IDs list
     try:
-        incomplete_ids_list = list(jobs.incomplete_ids())
+        # Query ganga to get incomplete ids list
+        incomplete_ids_list = query_internal_api("/internal/jobs/incomplete-ids", "get")
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
@@ -1378,277 +1416,266 @@ def jobs_incomplete_ids_endpoint(current_user):
 # ******************** Config API ******************** #
 
 # Config API - GET Method
-@app.route("/api/config", methods=["GET"])
+@gui.route("/api/config", methods=["GET"], defaults={"section": ""})
+@gui.route("/api/config/<section>", methods=["GET"])
 @token_required
-def config_endpoint(current_user):
+def config_endpoint(current_api_user, section: str):
     """
     Returns a list of all the section of the configuration and their options as well as the values in JSON format.
 
-    :param current_user: Information of the current_user based on the request's JWT token
+    If section is provide, returns information about the section in JSON format.
+
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
-    from GangaCore.GPI import config
-    from GangaCore.Utility.Config import getConfig
+    try:
+        # Query ganga to get config information
+        if section != "":
+            config_info = query_internal_api(f"/internal/config/{section}", "get")
+        else:
+            config_info = query_internal_api("/internal/config", "get")
 
-    # To store sections of config
-    list_of_sections = []
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
 
-    # Get each section information and append to the list
-    for section in config:
-
-        config_section = getConfig(section)
-        options_list = []
-
-        # Get options information for the particular config section
-        for o in config_section.options.keys():
-            options_list.append({
-                "name": str(config_section.options[o].name),
-                "value": str(config_section.options[o].value),
-                "docstring": str(config_section.options[o].docstring),
-            })
-
-        # Append config section data to the list
-        list_of_sections.append({
-            "name": str(config_section.name),
-            "docstring": str(config_section.docstring),
-            "options": options_list,
-        })
-
-    return jsonify(list_of_sections)
+    return jsonify(config_info)
 
 
 # ******************** Templates API ******************** #
 
 # Templates API - GET Method
-@app.route("/api/templates", methods=["GET"])
+@gui.route("/api/templates", methods=["GET"])
 @token_required
-def templates_endpoint(current_user):
+def templates_endpoint(current_api_user):
     """
     Returns a list of objects containing template info in JSON format.
 
-    :param current_user: Information of the current_user based on the request's JWT token
+    * ids: provide a JSON string of list of IDs
+    * status: provide template status as a string for filter
+    * application: provide template application as a string for filter
+    * backend: provide backend application as a string for filter
+    * recent: if provided, starts a list from recent template to old
+    * length: number of template to be returned, provide as a int
+    * offset: how many template to skip before returning the specified length of template. Provide as int.
+        offset works like: number of template skipped = offset * length
+
+    :param current_api_user: Information of the current_user based on the request's JWT token
     """
 
-    from GangaCore.GPI import templates
+    params = {
+        "application": request.args.get("application"),
+        "backend": request.args.get("backend"),
+        "recent": request.args.get("recent"),
+        "length": request.args.get("length"),
+        "offset": request.args.get("offset"),
+    }
 
-    # Store templates info in a list
-    templates_info_list = []
     try:
-        for t in templates:
-            templates_info_list.append(get_template_info(t.id))
+        # Query ganga for templates information
+        templates_info = query_internal_api("/internal/templates", "get", params=params)
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(templates_info_list)
+    return jsonify(templates_info)
+
+
+# Single template full print API - GET Method
+@gui.route("/api/templates/<int:template_id>/full-print", methods=["GET"])
+@token_required
+def template_full_print_endpoint(current_api_user, template_id: int):
+    """
+    Return full print of the template.
+
+    :param template_id: int
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
+    """
+
+    try:
+        # Query template full print from ganga
+        full_print_info = query_internal_api(f"/internal/templates/{template_id}/full-print", "get")
+
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(full_print_info)
 
 
 # Template API - DELETE Method
-@app.route("/api/template/<int:template_id>", methods=["DELETE"])
+@gui.route("/api/templates/<int:template_id>", methods=["DELETE"])
 @token_required
-def delete_template_endpoint(current_user, template_id: int):
+def delete_template_endpoint(current_api_user, template_id: int):
     """
 
     Given the templates id, delete it from the template repository.
 
     :param template_id: int
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
-    from GangaCore.GPI import templates
-
-    # Remove template
     try:
-        t = templates[template_id]
-        t.remove()
+        # Query ganga to remove the template
+        response_info = query_internal_api(f"/internal/templates/{template_id}", "delete")
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify({"success": True, "message": "Template with ID {} removed successfully".format(template_id)})
+    return jsonify(response_info)
 
 
-# ******************** Credential Store API ******************** #
+# ******************** Credentials API ******************** #
 
-# Credential Store API - GET Method - Get list of all credentials
-@app.route("/api/credential_store", methods=["GET"])
+# Credential store API - GET Method
+@gui.route("/api/credentials", methods=["GET"])
 @token_required
-def credential_store_endpoint(current_user):
+def credentials_endpoint(current_api_user):
     """
     Return a list of credentials and their information in JSON format.
 
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
-    from GangaCore.GPI import credential_store
-
-    # Store credential store info in a list
-    credential_info_list = []
     try:
-        for c in credential_store:
-            credential_info = {}
-            credential_info["location"] = str(c.location)
-            credential_info["time_left"] = str(c.time_left())
-            credential_info["expiry_time"] = str(c.expiry_time())
-            credential_info["is_valid"] = str(c.is_valid())
-            credential_info["exists"] = str(c.exists())
-            credential_info_list.append(credential_info)
+        # Query ganga for credentials information
+        credentials_info = query_internal_api("/internal/credentials", "get")
+
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify(credential_info_list)
+    return jsonify(credentials_info)
 
 
 # Credential Store API - PUT Method - Renew all credentials
-@app.route("/api/credential_store/renew", methods=["PUT"])
-# @token_required
-def renew_credentials_endpoint():
+@gui.route("/api/credentials/renew", methods=["PUT"])
+@token_required
+def credentials_renew_endpoint(current_api_user):
     """
     Renew all the credentials in the credential store.
+
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
     try:
-        from GangaCore.GPI import credential_store
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import credential_store
+        # Query ganga to renew credentials
+        response_info = query_internal_api("/internal/credentials/renew", "put")
 
-    try:
-        credential_store.renew()
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
 
-    return jsonify({"success": True, "message": "Credentials store credentials renewed"})
+    return jsonify(response_info)
 
 
 # ******************** Job Tree API ******************** #
 
-# Job Tree API - GET Method
-@app.route("/api/jobtree", methods=["GET"])
+# Job tree API - GET Method
+@gui.route("/api/jobtree", methods=["GET"])
 @token_required
-def jobtree_endpoint(current_user):
+def jobtree_endpoint(current_api_user):
     """
     Return the job tree folder structure as the json format of python dict.
 
-    :param current_user: Information of the current_user based on the request's JWT token
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
     """
 
-    from GangaCore.GPI import jobtree
-
     try:
-        # Reset job tree to root of job repository
-        jobtree.cd()
+        # Query ganga to get job tree information
+        jobtree_info = query_internal_api("/internal/jobtree", "get")
 
-        # Return the jobtree folder structure
-        return jsonify(jobtree.folders)
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(jobtree_info)
+
+
+# ******************** Job Tree API ******************** #
+
+# Plugins API - GET Method
+@gui.route("/api/plugins", methods=["GET"])
+@token_required
+def plugins_endpoint(current_api_user):
+    """
+    Return plugins information, category and names of the plugins in the category.
+
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
+    """
+
+    try:
+        # Query ganga to get plugins information
+        plugins_info = query_internal_api("/internal/plugins", "get")
+
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(plugins_info)
+
+
+# Plugin API - GET Method
+@gui.route("/api/plugins/<plugin_name>", methods=["GET"])
+@token_required
+def plugin_endpoint(current_api_user, plugin_name: str):
+    """
+    Return single plugin information like name and docstring.
+
+    :param plugin_name: str
+    :param current_api_user: Information of the current_api_user based on the request's JWT token
+    """
+
+    try:
+        # Query ganga to get plugin information
+        plugin_info = query_internal_api(f"/internal/plugins/{plugin_name}", "get")
+
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(plugin_info)
 
 
 # ******************** Helper Functions ******************** #
 
-def get_job_info(job_id: int) -> dict:
-    """
-    Given the job_id, return a dict containing
-    [id, fqid, status, name, subjobs, application, backend, backend.actualCE, comments, subjob_statuses] info of the job.
-
-    :param job_id: int
-    :return: dict
-    """
-
-    try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
-
-    j = jobs[int(job_id)]
-
-    # Store job info in a dict
-    job_info = {}
-    for attr in ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]:
-        job_info[attr] = str(getattr(j, attr))
-    job_info["backend.actualCE"] = str(j.backend.actualCE)
-    job_info["subjob_statuses"] = str(j.returnSubjobStatuses())
-    job_info["subjobs"] = str(len(j.subjobs))
-
-    return job_info
-
-
-def get_subjob_info(job_id: int, subjob_id: int) -> dict:
-    """
-    Given job_id and subjob_id, return a dict container general information about the subjob.
-
-    :param job_id: int
-    :param subjob_id: int
-    :return: dict
-    """
-
-    try:
-        from GangaCore.GPI import jobs
-    except ImportError:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs
-
-    j = jobs(int(job_id))
-    sj = j.subjobs[int(subjob_id)]
-
-    # Store subjob info in a dict
-    subjob_info = {}
-    for attr in ["id", "fqid", "status", "name", "application", "backend", "comment"]:
-        subjob_info[attr] = str(getattr(sj, attr))
-    subjob_info["backend.actualCE"] = str(sj.backend.actualCE)
-
-    return subjob_info
-
-
-def get_template_info(template_id: int) -> dict:
-    """
-    Given the template_id, return a dict containing general info of the template.
-
-    :param template_id: int
-    :return: dict
-    """
-
-    try:
-        from GangaCore.GPI import jobs, templates
-    except:
-        import ganga
-        import ganga.ganga
-        from ganga import jobs, templates
-
-    t = templates[int(template_id)]
-
-    # Store template info in a dict
-    template_data = {}
-    for attr in ["id", "fqid", "status", "name", "subjobs", "application", "backend", "comment"]:
-        template_data[attr] = str(getattr(t, attr))
-    template_data["backend.actualCE"] = str(t.backend.actualCE)
-
-    return template_data
-
-
+# Validate uploaded filename.
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+# Make HTTP request to the Internal Flask Server which is running on a GangaThread which has access to ganga namespace.
+def query_internal_api(route: str, method: str, **kwargs):
+    """
+    :param route: str
+    :param method: str
+    :param kwargs: dict
+    :return: dict
+
+    Make a HTTP request to the Internal API Flask server which runs on a GangaThread to query data from Ganga.
+    Check response status code and extract the data or raise an exception accordingly.
+
+    kwargs can be param, json, etc. Any attribute that is supported by the requests module.
+    """
+
+    # Raise error if HTTP method not supported
+    if method not in ["get", "post", "put", "delete"]:
+        raise Exception(f"Unsupported method: {method}")
+
+    # Made the HTTP requests, along with whatever arguments provided
+    res = getattr(requests, method)(INTERNAL_URL + route, **kwargs)
+
+    # Check is request is OK
+    if res.status_code != 200:
+        raise Exception(res.json().get("message"))
+
+    # Return request data
+    return res.json()
+
+
 # ******************** Shutdown Function ******************** #
 
-# Route used to shutdown the flask server
-@app.route("/shutdown", methods=["GET"])
+# Route used to shutdown the Internal API server and GUI server
+@gui.route("/shutdown", methods=["GET"])
 def shutdown():
-    from GangaGUI.start import stop_gui
-    stop_gui()
-    return "Shutting Down.."
+    try:
+        response_info = query_internal_api("/shutdown", "get")
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
 
-
-# Route used to shutdown the flask server [INTERNAL DONT USE TODO redirect to get if not localhost]
-@app.route("/shutdown", methods=["POST"])
-def _shutdown():
-    func = request.environ.get("werkzeug.server.shutdown")
-    func()
-    response_data = {"success": True, "message": "Shutting down the server..."}
-    return jsonify(response_data)
+    return "GUI Shutdown Successful."
 
 # ******************** EOF ******************** #

@@ -1,45 +1,76 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // Add event listener to update the loadfile label to the selected file
+    loadfileInput = document.querySelector('#loadfile-input');
+    loadfileInput.addEventListener('change', updateLoadfileFilename);
+
+    // Add event listener to update the runfile label to the selected file
+    runfileInput = document.querySelector('#runfile-input');
+    runfileInput.addEventListener('change', updateRunfileFilename);
+
+    // Add event listeners to create buttons
+    const btnCreateList = document.querySelectorAll('.btn-create');
+    Array.from(btnCreateList).map(btnCreate => btnCreate.addEventListener('click', createJobHandler));
+
 });
 
-function createJob(template_id) {
+function createJobHandler(e) {
+
+    // Get template id from the dataset of button
+    const templateId = e.target.dataset.id;
 
     // Make ajax request to the server with template id in the body
-    fetch(`/api/job/create`, {
-        method: "POST",
+    fetch(`/api/jobs/create`, {
+        method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Access-Token': localStorage.getItem('token')
         },
         body: JSON.stringify({
-            template_id: template_id
+            template_id: templateId
         })
     })
         .then(response => response.json())
         .then(data => {
+
             // Display server response
-            displayToast(notificationCount, data["message"], currentTime(), data["success"] ? "success" : "danger");
-            notificationCount++;
+            displayToast(data['message'], data['success'] ? 'success' : 'danger');
+
         })
         .catch(err => {
+
             // Display error if any
-            displayToast(notificationCount, err, currentTime(), "danger")
-            notificationCount++;
+            displayToast(err, "danger");
+
         })
     ;
+
 }
 
 
 // For updating the loadfile label to the filename of selected file
-function updateLoadfileFilename() {
-    let loadfileInput = document.querySelector("#loadfile-input");
-    let loadfileLabel = document.querySelector("#loadfile-input-label");
+function updateLoadfileFilename(e) {
+
+    // loadfile Input
+    const loadfileInput = e.target;
+
+    // Label to be updated
+    const loadfileLabel = document.querySelector("#loadfile-input-label");
+
+    // Update label
     loadfileLabel.innerHTML = loadfileInput.files[0].name;
 }
 
 
 // For updating the runfile label to the filename of selected file
-function updateRunfileFilename() {
-    let runfileInput = document.querySelector("#runfile-input");
-    let runfileLabel = document.querySelector("#runfile-input-label");
+function updateRunfileFilename(e) {
+
+    // runfile Input
+    const runfileInput = e.target;
+
+    // Label to be update
+    const runfileLabel = document.querySelector("#runfile-input-label");
+
+    // Update label
     runfileLabel.innerHTML = runfileInput.files[0].name;
 }

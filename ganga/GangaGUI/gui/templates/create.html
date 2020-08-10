@@ -8,7 +8,7 @@
                 <form method=post enctype=multipart/form-data>
                     <div class="input-group mb-3">
                         <div class="custom-file">
-                            <input onchange="updateLoadfileFilename();" type="file" name="loadjobfile" class="custom-file-input" id="loadfile-input">
+                            <input type="file" name="loadfile" class="custom-file-input" id="loadfile-input">
                             <label class="custom-file-label" id="loadfile-input-label" for="loadfile-input"
                                    aria-describedby="loadfileInputAddon">Choose file</label>
                         </div>
@@ -20,12 +20,12 @@
             </div>
             <div class="col-md-6">
                 <div class="mb-2 d-flex align-items-center justify-content-between">
-                    <h3 class="my-0 d-inline-block">Run File</h3><a href="{{ url_for('quick_runfile') }}">Quick Create Run File</a>
+                    <h3 class="my-0 d-inline-block">Run File</h3><a href="{{ url_for('runfile_page') }}">Quick Create Run File</a>
                 </div>
                 <form method=post enctype=multipart/form-data>
                     <div class="input-group mb-3">
                         <div class="custom-file">
-                            <input onchange="updateRunfileFilename();" type="file" name="runfile" class="custom-file-input" id="runfile-input">
+                            <input type="file" name="runfile" class="custom-file-input" id="runfile-input">
                             <label class="custom-file-label" for="runfile-input" id="runfile-input-label"
                                    aria-describedby="runfileInputAddon">Choose file</label>
                         </div>
@@ -41,7 +41,7 @@
             <h3 class="my-0 d-inline-block">From Templates</h3><a href="{{ url_for('templates_page') }}">Explore All Templates</a>
         </div>
         <div class="row">
-            {% for t in templates_list %}
+            {% for t in templates_info %}
                 <div class="col-md-4 mb-4">
                     <div class="card" id="template-card" data-template_id="{{ t.get('id') }}">
                         <div class="card-body">
@@ -52,9 +52,9 @@
                             <p class="m-0 p-0">backend: {{ t.get('backend').split('(')[0] }}</p>
                             <p class="m-0 p-0">backend.actualCE: {{ t.get('backend.actualCE') }}</p>
                             <p class="m-0 p-0">comment: {{ t.get('comment') }}</p>
-                            <div onclick="createJob({{ t.get('id') }})" class="btn btn-sm btn-block btn-primary mt-2">
+                            <a href="#" data-id="{{ t.get('id') }}" class="btn btn-sm btn-block btn-primary mt-2 btn-create">
                                 Create
-                            </div>
+                            </a>
                         </div>
                     </div>
                 </div>

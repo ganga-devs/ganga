@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const refreshIntervalSelector = document.querySelector('#refresh-interval');
     refreshIntervalSelector.addEventListener('change', updateRefreshInterval);
 
+    // Add event listen to logout button to trigger logout function
+    const btnLogout = document.querySelector('#btn-logout')
+    btnLogout.addEventListener('click', logoutHandler)
+
 });
 
 // Global variables
@@ -61,4 +65,19 @@ function displayToast(message, type, id=notificationCount, time=currentTime()) {
 function updateRefreshInterval(e) {
     let refreshInterval = e.target.value;
     localStorage.setItem('refreshInterval', refreshInterval);
+}
+
+
+// Handle logout
+function logoutHandler(e) {
+
+    // Prevent default behaviour
+    e.preventDefault();
+
+    // Remove token from the browser storage
+    localStorage.removeItem('token');
+
+    // Navigate to logout route
+    window.location.href = '/logout';
+
 }

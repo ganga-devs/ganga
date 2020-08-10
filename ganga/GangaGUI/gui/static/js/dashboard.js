@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCopyList = document.querySelectorAll('.btn-copy')
     Array.from(btnCopyList).map(btnCopy => btnCopy.addEventListener('click', copyHandler))
 
+    // Add event listeners to unpin button
+    const btnUnpinList = document.querySelectorAll('.btn-unpin')
+    Array.from(btnUnpinList).map(btnUnpin => btnUnpin.addEventListener('click', unpinHandler))
+
 });
 
 
@@ -22,7 +26,41 @@ function copyHandler(e) {
     const jobId = e.target.dataset.id;
 
     // Make ajax request to server
-    fetch(`/api/job/${jobId}/copy`, {
+    fetch(`/api/jobs/${jobId}/copy`, {
+        method: 'PUT',
+        headers: {
+            'X-Access-Token': localStorage.getItem('token')
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+
+            // Display server response
+            displayToast(data['message'], data['success'] ? 'success' : 'danger');
+
+        })
+        .catch(err => {
+
+            // Display error if any
+            displayToast(err, 'danger');
+
+        })
+    ;
+
+}
+
+
+// Handles unpin of the job
+function unpinHandler(e) {
+
+    // Prevent default behaviour
+    e.preventDefault();
+
+    // Get job id from the copy button dataset
+    const jobId = e.target.dataset.id;
+
+    // Make ajax request to server
+    fetch(`/api/jobs/${jobId}/unpin`, {
         method: 'PUT',
         headers: {
             'X-Access-Token': localStorage.getItem('token')
@@ -56,7 +94,7 @@ function refreshStatistics() {
     const statCards = statuses.map((stat) => document.querySelector(`#stat-${stat}`));
 
     // Make ajax request to the server
-    fetch('/api/jobs/stats', {
+    fetch('/api/jobs/statistics', {
         headers: {
             'X-Access-Token': localStorage.getItem('token')
         }
@@ -142,7 +180,6 @@ function refreshRecentJobs() {
 
 
 // Refresh pinned jobs
-// Refresh recent jobs of dashboard
 function refreshPinnedJobs() {
 
     // Get HTML nodes

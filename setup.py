@@ -95,6 +95,8 @@ setup(name='ganga',
           'Flask~=1.1.2',
           'PyJWT~=1.7.1',
           'Flask-SQLAlchemy~=2.4.3',
+          'gunicorn~=20.0.4',
+          'Flask-Login~=0.5.0'
       ],
       extras_require={
           'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],

@@ -69,7 +69,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for j in jobs_info_list %}
+                {% for j in jobs_info %}
                     <tr class="job" id="job-{{ j.get('id') }}" data-id="{{ j.get('id') }}" data-status="{{ j.get('status') }}">
                         <th class="align-middle" scope="row">{{ j.get('id') }}</th>
                         <td class="align-middle"><span id="job-id-{{j.id}}-status"
@@ -90,7 +90,7 @@
                                                                                            href="{{ url_for('jobs_page', page=current_page - 1) }}">Previous</a>
                     </li>
                     {% for i in range(number_of_pages) %}
-                        <li class="page-item"><a class="page-link"
+                        <li class="page-item {{ 'active' if current_page == i }}"><a class="page-link"
                                                  href="{{ url_for('jobs_page', page=i) }}">{{ i + 1 }}</a></li>
                     {% endfor %}
                     <li class="page-item {{ 'disabled' if current_page >= number_of_pages-1 }}"><a

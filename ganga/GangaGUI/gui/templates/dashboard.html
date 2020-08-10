@@ -109,11 +109,11 @@
             </div>
 
             {# Pinned Jobs Section #}
-            <div class="col-md-6">
+            <div class="col-md-6 mt-3 mt-md-0">
                 <h3>Pinned Jobs</h3>
                 <div class="accordion" id="pinned-jobs">
                     <div class="list-group">
-                        {% for j in pinned_jobs|reverse %}
+                        {% for j in pinned_jobs_info|reverse %}
                             <a href="#" id="job-id-{{ j.get('id') }}"
                                class="pinned-job list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last }}"
                                data-id="{{ j.get('id') }}"
@@ -149,7 +149,7 @@
                                     <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-copy">
                                         Copy Job
                                     </a>
-                                    <a href="{{ url_for('unpin_job', job_id=j.get('id')) }}" class="btn btn-sm btn-primary mt-3">Unpin Job</a>
+                                    <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-unpin">Unpin Job</a>
                                 </div>
                             </div>
                         {% endfor %}

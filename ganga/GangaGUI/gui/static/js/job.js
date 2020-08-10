@@ -1,129 +1,339 @@
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(refreshStatus, 0)
+
+    // Refresh Job status
+    setTimeout(refreshJobStatus, 0);
+
+    // Add event listener to copy button
+    const btnCopy = document.querySelector('#btn-copy');
+    btnCopy.addEventListener('click', copyHandler);
+
+    // Add event listener to pin button
+    const btnPin =  document.querySelector('#btn-pin');
+    btnPin.addEventListener('click', pinHandler);
+
+    // Add event listener to submit button
+    const btnSubmit =  document.querySelector('#btn-submit');
+    btnSubmit.addEventListener('click', submitHandler);
+
+    // Add event listener to kill button
+    const btnKill =  document.querySelector('#btn-kill');
+    btnKill.addEventListener('click', killHandler);
+
+    // Add event listener to remove button
+    const btnRemove =  document.querySelector('#btn-remove');
+    btnRemove.addEventListener('click', removeHandler);
+
+    // Add event listener to display attribute information
+    const attributeSelect =  document.querySelector('#attribute-select');
+    attributeSelect.addEventListener('change', attributeSelectHandler);
+
+    // Add event listener to display attribute information
+    const btnExecute =  document.querySelector('#btn-execute');
+    btnExecute.addEventListener('click', executeHandler);
+
 });
 
 
-// Display job attribute info on select
-function handleOnSelectAttribute() {
-    const jobId = document.querySelector("#job-info").dataset.job_id;
-    const attribute = document.querySelector("#attribute-select").value;
-    getJobAttributeInfo(jobId, attribute);
-}
+// Handles copying of the job
+function copyHandler(e) {
 
-function getJobAttributeInfo(job_id, attribute) {
+    // Prevent default behaviour
+    e.preventDefault();
 
-    // Make ajax request to server
-    fetch(`/api/job/${job_id}/${attribute}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data["success"] === false) {
-                // If API response false, display error
-                displayToast(notificationCount, data["message"], currentTime(), "danger");
-                notificationCount++;
-            } else {
-                // Display attribute info
-                const attributeInfoBox = document.querySelector("#attribute-info-box");
-                attributeInfoBox.innerHTML = data[attribute];
-            }
-        })
-        .catch(err => {
-            // Display error if any
-            displayToast(notificationCount, err, currentTime(), "danger");
-            notificationCount++;
-        })
-    ;
-}
-
-// Execute action on the job
-function handleExecuteAction() {
-    const jobId = document.querySelector("#job-info").dataset.job_id;
-    const action = document.querySelector("#action-select").value;
-    let actionData = document.querySelector("#action-data").value;
-    actionData = actionData.trim();
-    executeAction(jobId, action, actionData);
-}
-
-// Submit Job
-function handleSubmitJob() {
-    const jobId = document.querySelector("#job-info").dataset.job_id;
-    executeAction(jobId, "submit", "")
-}
-
-// Kill Job
-function handleKillJob() {
-    const jobId = document.querySelector("#job-info").dataset.job_id;
-    executeAction(jobId, "kill", "")
-}
-
-// Remove Job
-function handleRemoveJob() {
-    const jobId = document.querySelector("#job-info").dataset.job_id;
-    executeAction(jobId, "remove", "")
-}
-
-// Remove Job
-function handleCopy() {
-    const jobId = document.querySelector("#job-info").dataset.job_id;
-    executeAction(jobId, "copy", "")
-}
-
-function executeAction(jobId, action, data) {
-
-    const actionData = {}
-
-    // If action data is empty, don't add it to body
-    data.length === 0 ? {} : actionData[action] = data;
+    // Get job id from the copy button dataset
+    const jobId = e.target.dataset.id;
 
     // Make ajax request to server
-    fetch(`/api/job/${jobId}/${action}`, {
-        method: "PUT",
-        body: JSON.stringify(actionData)
+    fetch(`/api/jobs/${jobId}/copy`, {
+        method: 'PUT',
+        headers: {
+            'X-Access-Token': localStorage.getItem('token')
+        }
     })
         .then(response => response.json())
         .then(data => {
+
             // Display server response
-            displayToast(notificationCount, data["message"], currentTime(), data["success"] ? "success" : "danger");
-            notificationCount++;
+            displayToast(data['message'], data['success'] ? 'success' : 'danger');
+
         })
         .catch(err => {
+
             // Display error if any
-            displayToast(notificationCount, err, currentTime(), "danger");
-            notificationCount++;
+            displayToast(err, 'danger');
+
         })
     ;
+
 }
 
-// Refresh job status
-function refreshStatus() {
 
-    let jobIds = JSON.stringify(Array.from([document.querySelector("#job-info").dataset.job_id]));
+// Handles pinning of the job
+function pinHandler(e) {
 
-    fetch(`/api/jobs?ids=${jobIds}`)
+    // Prevent default behaviour
+    e.preventDefault();
+
+    // Get job id from the copy button dataset
+    const jobId = e.target.dataset.id;
+
+    // Make ajax request to server
+    fetch(`/api/jobs/${jobId}/pin`, {
+        method: 'PUT',
+        headers: {
+            'X-Access-Token': localStorage.getItem('token')
+        }
+    })
         .then(response => response.json())
         .then(data => {
-            if (data["success"] === false) {
-                displayToast(notificationCount, data["message"], currentTime(), "danger");
-                notificationCount++;
+
+            // Display server response
+            displayToast(data['message'], data['success'] ? 'success' : 'danger');
+
+        })
+        .catch(err => {
+
+            // Display error if any
+            displayToast(err, 'danger');
+
+        })
+    ;
+
+}
+
+
+// Handles submitting of the job
+function submitHandler(e) {
+
+    // Prevent default behaviour
+    e.preventDefault();
+
+    // Get job id from the copy button dataset
+    const jobId = e.target.dataset.id;
+
+    // Execute submit action
+    executeAction(jobId, 'submit');
+
+}
+
+
+// Handles submitting of the job
+function killHandler(e) {
+
+    // Prevent default behaviour
+    e.preventDefault();
+
+    // Get job id from the copy button dataset
+    const jobId = e.target.dataset.id;
+
+    // Execute kill action
+    executeAction(jobId, 'kill');
+
+}
+
+
+// Handles submitting of the job
+function removeHandler(e) {
+
+    // Prevent default behaviour
+    e.preventDefault();
+
+    // Get job id from the copy button dataset
+    const jobId = e.target.dataset.id;
+
+    // Make ajax request to server to remove the job
+    fetch(`/api/jobs/${jobId}`, {
+        method: "DELETE",
+        headers: {
+            'X-Access-Token': localStorage.getItem('token')
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data['success'] === false) {
+
+                // If API response false, display error
+                displayToast(data['message'], 'danger');
+
             } else {
-                document.querySelector(`#job-id-${data[0]["id"]}-status`).innerHTML = data[0]["status"];
-                document.querySelector(`#job-id-${data[0]["id"]}-status`).className = `badge badge-${statusColor[data[0]["status"]]} badge-pill ml-2`;
+
+                // Display remove message
+                displayToast(data['message'], 'success');
+
+                console.log("Navigating 4...")
+
+                // Change page after 3 seconds
+                setTimeout(() => window.location.href = document.referrer, 2000)
+
+            }
+
+        })
+        .catch(err => {
+
+            // Display error if any
+            displayToast(err, 'danger');
+
+        })
+    ;
+
+    // Execute remove action
+    // executeAction(jobId, 'remove');
+
+}
+
+
+// Handles displaying of attribute information of the job
+function attributeSelectHandler(e) {
+
+    // Prevent default behaviour
+    e.preventDefault();
+
+    // Get job id from the copy button dataset
+    const jobId = e.target.dataset.id;
+
+    // Get attribute to query
+    const attribute = e.target.value
+
+    // Make ajax request to server
+    fetch(`/api/jobs/${jobId}/${attribute}`, {
+        headers: {
+            'X-Access-Token': localStorage.getItem('token')
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data['success'] === false) {
+
+                // If API response false, display error
+                displayToast(data['message'], 'danger');
+
+            } else {
+
+                // Display attribute info
+                const attributeInfoBox = document.querySelector('#attribute-info-box');
+                attributeInfoBox.innerHTML = data[attribute];
+
+            }
+
+        })
+        .catch(err => {
+
+            // Display error if any
+            displayToast(err, 'danger');
+
+        })
+    ;
+
+}
+
+
+// Handles execution of action on the job
+function executeHandler(e) {
+
+    // Prevent default behaviour
+    e.preventDefault();
+
+    // Job id
+    const jobId = e.target.dataset.id;
+
+    // Action to execute
+    const action = document.querySelector('#action-select').value;
+
+    // Action argument
+    const actionArgument = document.querySelector('#action-argument').value;
+
+    // Execute action
+    executeAction(jobId, action, actionArgument.trim());
+
+}
+
+
+// Execute action on the job
+function executeAction(jobId, action, argument='') {
+
+    const actionArgument = {};
+
+    // If action data is empty, don't add it to body
+    if (argument.length !== 0) {
+        actionArgument[action] = argument;
+    }
+
+    // Make ajax request to server
+    fetch(`/api/jobs/${jobId}/${action}`, {
+        method: 'PUT',
+        body: JSON.stringify(actionArgument),
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Access-Token': localStorage.getItem('token')
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+
+            // Display server response
+            displayToast(data['message'],data['success'] ? 'success' : 'danger');
+
+        })
+        .catch(err => {
+
+            // Display error if any
+            displayToast(err, 'danger');
+
+        })
+    ;
+
+}
+
+
+// Refresh job status
+function refreshJobStatus() {
+
+    // Job id
+    const jobId = document.querySelector('#job-info').dataset.job_id;
+
+    // Make request to server for job information
+    fetch(`/api/jobs/${jobId}`, {
+        headers: {
+            'X-Access-Token': localStorage.getItem('token')
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+
+            if (data['success'] === false) {
+
+                // If server responds with failure, display message
+                displayToast(data['message'], 'danger');
+
+            } else {
+
+                // Get locations to update
+                document.querySelector(`#job-id-${data['id']}-status`).innerHTML = data['status'];
+                document.querySelector(`#job-id-${data['id']}-status`).className = `badge badge-${statusColor[data['status']]} badge-pill ml-2`;
 
                 // Get subjob status card nodes
-                let statCards = ["running", "failed-killed", "completing", "completed"].map((stat) => document.querySelector(`#stat-${stat}`));
-                let subjobStatuses = data[0]["subjob_statuses"].split("/")
+                const statCards = ['running', 'failed-killed', 'completing', 'completed'].map((stat) => document.querySelector(`#stat-${stat}`));
+                let subjobStatuses = data['subjob_statuses'].split('/')
                 for (let i = 0; i < statCards.length; i++) {
                     statCards[i].innerHTML = subjobStatuses[i]
                 }
+
             }
+
         })
         .catch(err => {
-            displayToast(notificationCount, err, currentTime(), "danger");
-            notificationCount++;
+
+            // Display error, if any
+            displayToast(err, 'danger');
+
         });
 
     // Recursively refresh
     let refreshInterval = Number(localStorage.getItem('refreshInterval')) || 5000;
-    setTimeout(refreshStatus, refreshInterval);
+    setTimeout(refreshJobStatus, refreshInterval);
+
 }
 
 

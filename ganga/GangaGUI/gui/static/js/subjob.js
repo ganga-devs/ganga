@@ -1,82 +1,142 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+    // Refresh subjob status
     setTimeout(refreshStatus, 0)
+
+    // Add event listener to copy button
+    const btnCopy = document.querySelector('#btn-copy');
+    btnCopy.addEventListener('click', copyHandler);
+
+    // Add event listener to display attribute information
+    const attributeSelect =  document.querySelector('#attribute-select');
+    attributeSelect.addEventListener('change', attributeSelectHandler);
+
 });
 
-function handleCopy(jobId, subjobId) {
+
+// Handles copying of the subjob to a new job
+function copyHandler(e) {
+
+    // Prevent default behavior
+    e.preventDefault();
+
+    // Get job id from the btn dataset
+    const jobId = e.target.dataset.job_id;
+
+    // Get subjob id from the btn dataset
+    const subjobId = e.target.dataset.subjob_id;
 
     // Make ajax request to server
-    fetch(`/api/job/${jobId}/subjob/${subjobId}/copy`, {
-        method: "PUT"
+    fetch(`/api/jobs/${jobId}/subjobs/${subjobId}/copy`, {
+        method: 'PUT',
+        headers: {
+            'X-Access-Token': localStorage.getItem('token')
+        }
     })
         .then(response => response.json())
         .then(data => {
+
             // Display server response
-            displayToast(notificationCount, data["message"], currentTime(), data["success"] ? "success" : "danger");
-            notificationCount++;
+            displayToast(data['message'], data['success'] ? 'success' : 'danger');
+
         })
         .catch(err => {
+
             // Display error if any
-            displayToast(notificationCount, err, currentTime(), "danger");
-            notificationCount++;
+            displayToast(err, 'danger');
+
         })
     ;
 
 }
 
-function handleOnSelectAttribute() {
-    const jobId = document.querySelector("#subjob-info").dataset.job_id;
-    const subjobId = document.querySelector("#subjob-info").dataset.subjob_id;
-    const attribute = document.querySelector("#attribute-select").value;
-    getSubjobAttributeInfo(jobId, subjobId, attribute);
-}
 
-function getSubjobAttributeInfo(job_id, subjob_id, attribute) {
+// Handles displaying attribute information of the subjob
+function attributeSelectHandler(e) {
 
-    fetch(`/api/job/${job_id}/subjob/${subjob_id}/${attribute}`)
+    // Get job id value from the select dataset
+    const jobId = e.target.dataset.job_id;
+
+    // Get the subjob id value from the select dataset
+    const subjobId = e.target.dataset.subjob_id;
+
+    // Get attribute value from the select value
+    const attribute = e.target.value;
+
+    // Make a request to the server
+    fetch(`/api/jobs/${jobId}/subjobs/${subjobId}/${attribute}`, {
+        headers: {
+            'X-Access-Token': localStorage.getItem('token')
+        }
+    })
         .then(response => response.json())
         .then(data => {
-            if (data["success"] === false) {
+
+            if (data['success'] === false) {
+
                 // If API response false, display error
-                displayToast(notificationCount, data["message"], currentTime(), "danger");
-                notificationCount++;
+                displayToast(data['message'], 'danger');
+
             } else {
-                const attributeInfoBox = document.querySelector("#attribute-info-box");
+
+                // Display attribute information
+                const attributeInfoBox = document.querySelector('#attribute-info-box');
                 attributeInfoBox.innerHTML = data[attribute];
+
             }
+
         })
         .catch(err => {
-            displayToast(notificationCount, err, currentTime(), "danger");
-            notificationCount++;
+
+            // Display error while making the request, if any
+            displayToast(err, 'danger');
+
         })
     ;
 }
 
+
+// Refreshes status of the job
 function refreshStatus() {
 
-    const job_id = document.querySelector("#subjob-info").dataset.job_id;
-    const subjob_id = document.querySelector("#subjob-info").dataset.subjob_id;
+    // Job id and subjob id
+    const jobId = document.querySelector('#subjob-info').dataset.job_id;
+    const subjobId = document.querySelector('#subjob-info').dataset.subjob_id;
 
-
-    fetch(`/api/job/${job_id}/subjob/${subjob_id}/status`)
+    // Get subjob information from the server
+    fetch(`/api/jobs/${jobId}/subjobs/${subjobId}/status`, {
+        headers: {
+            'X-Access-Token': localStorage.getItem('token')
+        }
+    })
         .then(response => response.json())
         .then(data => {
-            if (data["success"] === false) {
+
+            if (data['success'] === false) {
+
                 // If API response false, display error
-                displayToast(notificationCount, data["message"], currentTime(), "danger");
-                notificationCount++;
+                displayToast(data['message'], 'danger');
+
             } else {
-                document.querySelector(`#subjob-id-${subjob_id}-status`).innerHTML = data["status"];
-                document.querySelector(`#subjob-id-${subjob_id}-status`).className = `badge badge-${statusColor[data["status"]]} badge-pill ml-2`;
+
+                // Update status
+                document.querySelector(`#subjob-id-${subjobId}-status`).innerHTML = data['status'];
+                document.querySelector(`#subjob-id-${subjobId}-status`).className = `badge badge-${statusColor[data['status']]} badge-pill ml-2`;
+
             }
+
         })
         .catch(err => {
-            displayToast(notificationCount, err, currentTime(), "danger");
-            notificationCount++;
+
+            // Display error while making the request, if any
+            displayToast(err, 'danger');
+
         })
     ;
 
     // Recursively refresh
-    let refreshInterval = Number(localStorage.getItem('refreshInterval')) || 5000;
+    const refreshInterval = Number(localStorage.getItem('refreshInterval')) || 5000;
     setTimeout(refreshStatus, refreshInterval);
+
 }
 

@@ -1,27 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // Add event listener to renew button
+    const btnRenew = document.querySelector('#btn-renew')
+    btnRenew.addEventListener('click', renewCredentials)
+
 });
 
 // Renew Credentials
 function renewCredentials() {
 
-    // Make ajax request to the server with template id in the body
-    fetch(`/api/credential_store/renew`, {
-        method: "PUT",
+    // Make ajax request to the server to renew credentials
+    fetch(`/api/credentials/renew`, {
+        method: 'PUT',
         headers: {
-
-        },
+            'X-Access-Token': localStorage.getItem('token')
+        }
     })
         .then(response => response.json())
         .then(data => {
+
             // Display server response
-            displayToast(notificationCount, data["message"], currentTime(), data["success"] ? "success" : "danger");
-            notificationCount++;
+            displayToast(data["message"], data["success"] ? "success" : "danger");
+
         })
         .catch(err => {
+
             // Display error if any
-            displayToast(notificationCount, err, currentTime(), "danger")
-            notificationCount++;
+            displayToast(err, "danger")
+
         })
     ;
+
 }
