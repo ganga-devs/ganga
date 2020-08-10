@@ -173,8 +173,9 @@ class LHCbCompressedDataset(GangaDataset):
     def __getattribute__(self, name):
         if name == 'files':
             outList = GangaList()
+            outList.setPrintSummary()
             for _set in self._getFileSets():
-                outList.extend(_set.getLFNs())
+                outList.extend([DiracFile(lfn = _lfn) for _lfn in _set.getLFNs()])
             return outList
         else:
             return super(LHCbCompressedDataset, self).__getattribute__(name)
