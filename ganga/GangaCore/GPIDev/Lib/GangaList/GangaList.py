@@ -127,10 +127,6 @@ class GangaList(GangaObject):
         self._is_a_ref = False
         super(GangaList, self).__init__()
 
-    def setPrintSummary(self):
-        '''Set the summary print'''
-        setattr(self, 'printSummary', True)
-
     # convenience methods
     @staticmethod
     def is_list(obj):
@@ -604,13 +600,8 @@ class GangaList(GangaObject):
         schema_entry = self.findSchemaParentSchemaEntry(parent)
 
         if parent is None:
-            if hasattr(self, 'printSummary'):
-                self_len = len(self)
-                out.write(decorateListEntries(self_len, getName(type(self[0]))))
-                return
-            else:
-                full_print(self, out)
-                return
+            full_print(self, out)
+            return
 
         if schema_entry:
             self_len = len(self)

@@ -52,7 +52,7 @@ class LHCbCompressedFileSet(GangaObject):
                 self.lfn_prefix = commonpath
                 self.suffixes = suffixes
             else:
-                self._getFileSets().append(files)
+                self.files.append(files)
 
     def __len__(self):
         return len(self.suffixes)
@@ -102,42 +102,42 @@ class LHCbCompressedDataset(GangaDataset):
 
     def __init__(self, files=None, metadata = None, persistency=None, depth=0, fromRef=False):
         super(LHCbCompressedDataset, self).__init__()
-        setattr(self, 'files', [])
+        self.files = []
         #if files is an LHCbDataset
 
         if files and isType(files, GangaLHCb.Lib.LHCbDataset.LHCbDataset):
             newset = LHCbCompressedFileSet(files.getLFNs())
-            self.addSet(newset)
+            self.files.append(newset)
         #if files is an LHCbCompressedDataset
         if files and isType(files, LHCbCompressedDataset):
-            self.addSet(files.files)
+            self.files.extend(files.files)
         #if files is just a string
         if files and isType(files, str):
             newset = LHCbCompressedFileSet(files)
-            self.addSet(newset)
+            self.files.append(newset)
         #if files is a single DiracFile
         if files and isType(files, DiracFile):
             newset = LHCbCompressedFileSet(files.lfn)
-            self.addSet(newset)
+            self.files.append(newset)
         #if files is a single LHCbCompressedFileSet
         if files and isType(files, LHCbCompressedFileSet):
-            self.addSet(files)
+            self.files.append(files)
         #if files is a list
         if files and isType(files, [list, GangaList]):
             #Is it a list of strings? Then it may have been produced from the BKQuery so pass along the metadata as well
             if isType(files[0], str):
                 newset = LHCbCompressedFileSet(files)
-                self.addSet(newset)
+                self.files.append(newset)
             #Is it a list of DiracFiles?
             if isType(files[0], DiracFile):
                 lfns = []
                 for _df in files:
                     lfns.append(_df.lfn)
                 newset = LHCbCompressedFileSet(lfns)
-                self.addSset.append(newset)
+                self.files.append(newset)
             #Is it a list of file sets?
             if isType(files[0], LHCbCompressedFileSet):
-                    self.addSet.extend(files)
+                    self.files.extend(files)
 
         self.files._setParent(self)
         self.persistency = persistency
@@ -149,36 +149,26 @@ class LHCbCompressedDataset(GangaDataset):
         '''Figure out where a file of index i is. Returns the subset no and the location within that subset'''
         setNo = 0
         fileTotal = 0
-        while fileTotal < i+1 and setNo < len(self._getFileSets()):
-            fileTotal += len(self._getFileSets()[setNo])
+        while fileTotal < i+1 and setNo < len(self.files):
+            fileTotal += len(self.files[setNo])
             setNo += 1
         if fileTotal < i:
             return -1, -1
         setNo = setNo - 1
-        fileTotal = fileTotal - len(self._getFileSets()[setNo])
+        fileTotal = fileTotal - len(self.files[setNo])
         setLocation = i - fileTotal
         return setNo, setLocation
 
     def _totalNFiles(self):
         '''Return the total no. of files in the dataset'''
         total = 0
-        for _set in self._getFileSets():
+        for _set in self.files:
             total += len(_set)
         return total
 
     def __len__(self):
         '''Redefine the __len__ function'''
         return self._totalNFiles()
-
-    def __getattribute__(self, name):
-        if name == 'files':
-            outList = GangaList()
-            outList.setPrintSummary()
-            for _set in self._getFileSets():
-                outList.extend([DiracFile(lfn = _lfn) for _lfn in _set.getLFNs()])
-            return outList
-        else:
-            return super(LHCbCompressedDataset, self).__getattribute__(name)
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
@@ -193,14 +183,14 @@ class LHCbCompressedDataset(GangaDataset):
             #If we are going backwards start at the end
             if i.step and i.step < 0:
                 step = -1
-                setNo = len(self._getFileSets())-1
+                setNo = len(self.files)-1
             currentPrefix = None
             #Iterate over the LFNs and find out where it came from
             ds = LHCbCompressedDataset()
             tempList = []
             j = 0
             while j < len(newLFNs):
-                if newLFNs[j] in self._getFileSets()[setNo].getLFNs():
+                if newLFNs[j] in self.files[setNo].getLFNs():
                     tempList.append(newLFNs[j])
                     j += 1
                 else:
@@ -215,7 +205,7 @@ class LHCbCompressedDataset(GangaDataset):
             if setNo < 0 or i >= self._totalNFiles():
                 logger.error("Unable to retrieve file %s. It is larger than the dataset size" % i)
                 return None
-            ds = DiracFile(lfn = self._getFileSets()[setNo].getLFN(setLocation), credential_requirements = self.credential_requirements)
+            ds = DiracFile(lfn = self.files[setNo].getLFN(setLocation), credential_requirements = self.credential_requirements)
         return ds
 
     def __iter__(self):
@@ -231,16 +221,9 @@ class LHCbCompressedDataset(GangaDataset):
             self.current += 1
             return self[self.current-1]
 
-    def _getFileSets(self):
-        '''Internal method to get the list of file sets'''
-        return super(LHCbCompressedDataset, self).__getattribute__('files')
-
     def addSet(self, newSet):
         '''Add a new FileSet to the dataset'''
-        if isType(newSet, [list, GangaList]):
-            self._getFileSets().extend(newSet)
-        else:
-            self._getFileSets().append(newSet)
+        self.files.append(newSet)
 
     def getFileNames(self):
         'Returns a list of the names of all files stored in the dataset'
@@ -269,14 +252,14 @@ class LHCbCompressedDataset(GangaDataset):
         LHCbDataset, DiracFile or a list of string of LFNs'''
 
         if isType(other, LHCbCompressedDataset):
-            self._getFileSets().extend(other._getFileSets())
+            self.files.extend(other.files)
         elif isType(other, GangaLHCb.Lib.LHCbDataset.LHCbDataset):
             lfns = other.getLFNs()
-            self._getFileSets().append(LHCbCompressedFileSet(lfns))
+            self.files.append(LHCbCompressedFileSet(lfns))
         elif isType(other, DiracFile):
-            self._getFileSets().append(LHCbCompressedFileSet(other.lfn))
+            self.files.append(LHCbCompressedFileSet(other.lfn))
         elif isType(other, [list, tuple, GangaList]):
-            self._getFilesSets().append(LHCbCompressedFileSet(other))
+            self.files.append(LHCbCompressedFileSet(other))
         else:
             logger.error("Cannot add object of type %s to an LHCbCompressedDataset" % type(other))
 
@@ -285,7 +268,7 @@ class LHCbCompressedDataset(GangaDataset):
         lfns = []
         if not self:
             return lfns
-        for fileset in self._getFileSets():
+        for fileset in self.files:
             lfns.extend(fileset.getLFNs())
         logger.debug("Returning #%s LFNS" % str(len(lfns)))
         return lfns
