@@ -9,15 +9,17 @@ import json
 import time
 import docker
 import pymongo
-import GangaCore.Utility.logging
 
+from GangaCore.Utility import logging
 from GangaCore import GANGA_SWAN_INTEGRATION
 from GangaCore.GPIDev.Base.Objects import Node
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Plugin import PluginManagerError, allPlugins
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
 from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
-from GangaCore.Core.GangaRepository.ContainerControllers import controller_map
+from GangaCore.Core.GangaRepository.ContainerControllers import (
+    native_handler, docker_handler, udocker_handler, singularity_handler
+)
 
 from GangaCore.Core.GangaRepository import (
     GangaRepository, RepositoryError, InaccessibleObjectError,
@@ -29,11 +31,18 @@ from GangaCore.Core.GangaRepository.DStreamer import (
 )
 
 # Simple Patch to avoid SubJobJsonList not found in internal error
-allPlugins.add(SubJobJsonList,'internal','SubJobJsonList')
+allPlugins.add(SubJobJsonList, 'internal', 'SubJobJsonList')
 
-logger = GangaCore.Utility.logging.getLogger()
+logger = logging.getLogger()
 
 save_all_history = False
+
+controller_map = {
+    "native": native_handler,
+    "docker": docker_handler,
+    "udocker": udocker_handler,
+    "singularity": singularity_handler
+}
 
 
 def check_app_hash(obj):
@@ -130,26 +139,23 @@ class GangaRepositoryLocal(GangaRepository):
     def startup(self):
         """ Starts a repository and reads in a directory structure.
         Raise RepositoryError"""
+
         self._load_timestamp = {}
-        # databased based initialization
-        _ = pymongo.MongoClient()
-        self.db_name = "dumbmachine"
-        self.connection = _[self.db_name]
+        mongo_client = pymongo.MongoClient()
 
-        # New Master index to speed up loading of many, MANY files
-        self._cache_load_timestamp = {}
         self._cached_obj = {}
-        # self._cached_obj_timestamps = {}
-        # self._master_index_timestamp = 0
-
         self.known_bad_ids = []
+        self._cache_load_timestamp = {}  # this is not really required now
 
+        self.container_controller = None
         self.to_database = object_to_database
         self.from_database = object_from_database
-        self.database_config - getConfig("DatabaseConfigurations")
+        self.database_config = getConfig("DatabaseConfigurations")
+        self.db_name = self.database_config["dbname"]
+        self.connection = mongo_client[self.db_name]
 
         try:
-            self.start_mongomon()
+            self.start_database()
         except Exception as err:
             # database is not responsive, lets raise an error
             logger.error("Error: %s" % err)
@@ -165,24 +171,37 @@ class GangaRepositoryLocal(GangaRepository):
         """Start the mongodb with the prefered back_end
         """
         self.container_controller = controller_map[
-            self.database_config[""]
+            self.database_config["controller"]
         ]
+        self.container_controller(
+            database_config=self.database_config,
+            action="start"
+        )
 
     def shutdown(self, kill=False):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError
         Write an index file for all new objects in memory and master index file of indexes"""
-        from GangaCore.Utility.logging import getLogger
-        logger = getLogger()
-        logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
+        logger.debug("Shutting Down GangaRepositoryLocal: %s" %
+                     self.registry.name)
         try:
             self._write_master_cache()
         except Exception as err:
-            logger.warning("Warning: Failed to write master index due to: %s" % err)
+            logger.warning(
+                "Warning: Failed to write master index due to: %s" % err)
 
         if kill:
-            self.kill_mongomon()
+            self.kill_database()
 
+    def kill_database(self):
+        """Kill the mongo db instance in a docker container
+        """
+        # if the database is naitve, we skip shutting it down
+        self.container_controller(
+            database_config=self.database_config,
+            action="kill"
+        )
+        logger.debug(f"mongo stopped from: {self.registry.name}")
 
     def _write_master_cache(self):
         """
@@ -198,10 +217,11 @@ class GangaRepositoryLocal(GangaRepository):
             try:
                 if k in self._fully_loaded:
                     # Check and write index first
-                    obj = v #self.objects[k]
+                    obj = v  # self.objects[k]
                     new_index = None
                     if obj is not None:
-                        new_index = self.registry.getIndexCache(stripProxy(obj))
+                        new_index = self.registry.getIndexCache(
+                            stripProxy(obj))
 
                     if new_index is not None:
                         new_index["classname"] = getName(obj)
@@ -214,7 +234,8 @@ class GangaRepositoryLocal(GangaRepository):
                         all_indexes.append(new_index)
 
             except Exception as err:
-                logger.debug("Failed to update index: %s on startup/shutdown" % k)
+                logger.debug(
+                    "Failed to update index: %s on startup/shutdown" % k)
                 logger.debug("Reason: %s" % err)
 
         # bulk saving the indexes, if there is anything to save
@@ -227,24 +248,6 @@ class GangaRepositoryLocal(GangaRepository):
             # self.connection.index.insert_many(documents=all_indexes)
 
         return
-
-    def kill_mongomon(self):
-        """Kill the mongo db instance in a docker container
-        """
-        # check if the docker container already exists
-        database_name = getConfig("DatabaseConfigurations")["containerName"]
-        try:
-            container = self.container_client.containers.get(database_name)
-            container.kill()
-            logger.info("mongo stopped")
-        except docker.errors.APIError as e:
-            if e.response.status_code == 409:
-                logger.debug(
-                    "database container was already killed by another registry"
-                )
-            else:
-                raise e
-        logger.debug(f"mongo stopped: {self.registry.name}")
 
     def add(self, objs, force_ids=None):
         """ Add the given objects to the repository, forcing the IDs if told to.
@@ -431,7 +434,6 @@ class GangaRepositoryLocal(GangaRepository):
                 else:
                     temp["master"] = -1
 
-
             index_to_database(
                 data=temp,
                 document=self.connection.index
@@ -447,7 +449,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         logger.debug("Reading the MasterCache")
         master_cache = self.connection.index.find(
-            filter={"category": self.registry.name, "master": -1}) # loading masters so.
+            filter={"category": self.registry.name, "master": -1})  # loading masters so.
         if master_cache:
             for cache in master_cache:
                 self.index_load(this_id=cache["id"], item=cache)
@@ -564,7 +566,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         if item is None:
             item = index_from_database(
-                _filter={"id": this_id, "master": -1}, #loading master jobs
+                _filter={"id": this_id, "master": -1},  # loading master jobs
                 document=self.connection.index
             )
         if item and item["modified_time"] != self._cache_load_timestamp.get(this_id, 0):
