@@ -1,3 +1,5 @@
+# TODO: Add progress bars, when pulling docker containers (stream logs to show progress?)
+
 import os
 import docker
 
@@ -5,6 +7,7 @@ from GangaCore.Utility import logging
 from GangaCore.Utility.Config import getConfig
 
 logger = logging.getLogger()
+
 
 
 def native_handler(database_config, action="start"):
@@ -15,7 +18,7 @@ def native_handler(database_config, action="start"):
     1. Database is already started, ganga should not explicitely start the database, as ganga may not have permissions
     2. Database cannot be shut by ganga, citing the same reasons as above.
     """
-    if action not in ["start", "kill"]:
+    if action not in ["start", "quit"]:
         raise NotImplementedError(f"Illegal Opertion on container")
     if action == "start":
         logger.info("Native Database detection, skipping startup")
@@ -29,6 +32,10 @@ def udocker_handler(database_config, action="start"):
     -------
     database_config: The config from ganga config
     action: The action to be performed using the handler
+
+    Raises
+    ------
+    NotImplementedError
     """
     """
     udocker run -d --name db -v ~/mongo/data:/data/db -p 27017:27017 mongo:latest
@@ -61,7 +68,7 @@ def docker_handler(database_config, action="start"):
     database_config: The config from ganga config
     action: The action to be performed using the handler
     """
-    if action not in ["start", "kill"]:
+    if action not in ["start", "quit"]:
         raise NotImplementedError(f"Illegal Opertion on container")
 
     container_client = docker.from_env()
@@ -88,10 +95,11 @@ def docker_handler(database_config, action="start"):
                 name=database_config["containerName"],
                 image=database_config["baseImage"],
                 ports={"27017/tcp": database_config["port"]},
-                mounts=[
-                    docker.types.Mount(
-                        target="/data/db", source=host_path,  type="bind")
-                ]
+                # FIXME: this causes error sometimes, when removing jobs
+                # mounts=[
+                #     docker.types.Mount(
+                #         target="/data/db", source=host_path,  type="bind")
+                # ]
                 # volumes={
                 #     os.path.expanduser("~/gangadir/gangaDB"): {"bind": "/data/db", "mode": "rw"}}
             )

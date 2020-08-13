@@ -33,14 +33,8 @@ def object_to_database(j, document, master=None, ignore_subs=[]):
     if master is not None:
         json_content["master"] = master
 
-<<<<<<< HEAD
-    if json_content["type"] == "Job" and "master" in json_content:
-        # `id` is used for indexing by mongo.
-        # json_content["id"] = json_content["id"]
-=======
     #!  Assumption that only job objects are updated after creation, needs clarification
     if json_content["type"] == "Job":
->>>>>>> added more controllers for database
         result = document.replace_one(
             filter={"id": json_content["id"], "master": json_content["master"]}, replacement=json_content, upsert=True,
         )
