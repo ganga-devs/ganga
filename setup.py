@@ -93,6 +93,8 @@ setup(name='ganga',
           'google-auth-oauthlib',
           'requests>=2.23.0',
           'Flask~=1.1.2',
+          "docker", # Make this optional
+          "pymongo",
           'PyJWT~=1.7.1',
           'Flask-SQLAlchemy~=2.4.3',
       ],
