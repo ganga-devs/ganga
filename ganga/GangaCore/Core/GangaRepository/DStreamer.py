@@ -1,11 +1,9 @@
-# TODO: Remove unrequired imports
 import os
 import json
 import time
 import pymongo
 import datetime
 
-from pymongo import ReturnDocument
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Schema import Schema, Version
 from GangaCore.Core.exceptions import GangaException
@@ -21,12 +19,13 @@ def object_to_database(j, document, master=None, ignore_subs=[]):
     """Save GangaObject in database
 
     Arguments:
-    j (GangaObject): The job to be converted
+    j (GangaObject): The object to be stored in the database
     master (int): Index id of the master Job of `j`, if `j` is a subjob
-    document : The document of database where the job json will be stored
+    document (pymongo.document) : The document of database where the job json will be stored
+    ignore_subs (list): The attribtutes of the object to be ignored when storing in database
     """
-    logger.debug("object_to_database")
     json_content = j.to_json()
+
     for sub in ignore_subs:
         json_content.pop(sub, None)
 
@@ -34,9 +33,8 @@ def object_to_database(j, document, master=None, ignore_subs=[]):
     if master is not None:
         json_content["master"] = master
 
+    #!  Assumption that only job objects are updated after creation, needs clarification
     if json_content["type"] == "Job":
-        # `id` is used for indexing by mongo.
-        # json_content["id"] = json_content["id"]
         result = document.replace_one(
             filter={"id": json_content["id"], "master": json_content["master"]}, replacement=json_content, upsert=True,
         )
