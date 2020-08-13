@@ -21,12 +21,17 @@ from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 
 
 from GangaCore.Core.GangaRepository import (
-    GangaRepository, RepositoryError, InaccessibleObjectError,
+    GangaRepository,
+    RepositoryError,
+    InaccessibleObjectError,
 )
 
 from GangaCore.Core.GangaRepository.DStreamer import (
-    EmptyGangaObject, object_to_database, object_from_database,
-    index_to_database, index_from_database,
+    EmptyGangaObject,
+    object_to_database,
+    object_from_database,
+    index_to_database,
+    index_from_database,
 )
 
 
@@ -229,7 +234,6 @@ class GangaRepositoryLocal(GangaRepository):
             return True
         except StopIteration:
             return False
-
 
     def _handle_load_exception(self, err, fn, this_id, load_backup):
         raise NotImplementedError

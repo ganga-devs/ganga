@@ -18,20 +18,29 @@ from GangaCore.Utility.Plugin import PluginManagerError, allPlugins
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
 from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 from GangaCore.Core.GangaRepository.ContainerControllers import (
-    native_handler, docker_handler, udocker_handler, singularity_handler
+    native_handler,
+    docker_handler,
+    udocker_handler,
+    singularity_handler,
 )
 
 from GangaCore.Core.GangaRepository import (
-    GangaRepository, RepositoryError, InaccessibleObjectError,
+    GangaRepository,
+    RepositoryError,
+    InaccessibleObjectError,
 )
 
 from GangaCore.Core.GangaRepository.DStreamer import (
-    EmptyGangaObject, object_to_database, object_from_database,
-    index_to_database, index_from_database, DatabaseError
+    EmptyGangaObject,
+    object_to_database,
+    object_from_database,
+    index_to_database,
+    index_from_database,
+    DatabaseError,
 )
 
 # Simple Patch to avoid SubJobJsonList not found in internal error
-allPlugins.add(SubJobJsonList, 'internal', 'SubJobJsonList')
+allPlugins.add(SubJobJsonList, "internal", "SubJobJsonList")
 
 logger = logging.getLogger()
 
@@ -41,7 +50,7 @@ controller_map = {
     "native": native_handler,
     "docker": docker_handler,
     "udocker": udocker_handler,
-    "singularity": singularity_handler
+    "singularity": singularity_handler,
 }
 
 
@@ -87,8 +96,7 @@ def check_app_hash(obj):
                 logger.warning("%s" % err)
             jobObj = stripProxy(hashable_app).getJobObject()
             if jobObj is not None:
-                logger.warning("Job: %s is now possibly corrupt!" %
-                               jobObj.getFQID("."))
+                logger.warning("Job: %s is now possibly corrupt!" % jobObj.getFQID("."))
             logger.warning(
                 "If you knowingly circumvented the protection, ignore this message (and, optionally,"
             )
@@ -99,7 +107,7 @@ def check_app_hash(obj):
 
 
 # RatPass: Find a better alternative for this, seems unnecessary
-def safe_save(_object, conn, master=-1, ignore_subs=[]):
+def safe_save(_object, conn, master=None, ignore_subs=[]):
     """Try to save the Json for this object in as safe a way as possible
     Args:
         _object (GangaObject): Object to be stored in database
@@ -170,25 +178,18 @@ class GangaRepositoryLocal(GangaRepository):
     def start_database(self):
         """Start the mongodb with the prefered back_end
         """
-        self.container_controller = controller_map[
-            self.database_config["controller"]
-        ]
-        self.container_controller(
-            database_config=self.database_config,
-            action="start"
-        )
+        self.container_controller = controller_map[self.database_config["controller"]]
+        self.container_controller(database_config=self.database_config, action="start")
 
     def shutdown(self, kill=False):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError
         Write an index file for all new objects in memory and master index file of indexes"""
-        logger.debug("Shutting Down GangaRepositoryLocal: %s" %
-                     self.registry.name)
+        logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         try:
             self._write_master_cache()
         except Exception as err:
-            logger.warning(
-                "Warning: Failed to write master index due to: %s" % err)
+            logger.warning("Warning: Failed to write master index due to: %s" % err)
 
         if kill:
             self.kill_database()
@@ -197,10 +198,7 @@ class GangaRepositoryLocal(GangaRepository):
         """Kill the mongo db instance in a docker container
         """
         # if the database is naitve, we skip shutting it down
-        self.container_controller(
-            database_config=self.database_config,
-            action="kill"
-        )
+        self.container_controller(database_config=self.database_config, action="kill")
         logger.debug(f"mongo stopped from: {self.registry.name}")
 
     def _write_master_cache(self):
@@ -220,8 +218,7 @@ class GangaRepositoryLocal(GangaRepository):
                     obj = v  # self.objects[k]
                     new_index = None
                     if obj is not None:
-                        new_index = self.registry.getIndexCache(
-                            stripProxy(obj))
+                        new_index = self.registry.getIndexCache(stripProxy(obj))
 
                     if new_index is not None:
                         new_index["classname"] = getName(obj)
@@ -234,17 +231,13 @@ class GangaRepositoryLocal(GangaRepository):
                         all_indexes.append(new_index)
 
             except Exception as err:
-                logger.debug(
-                    "Failed to update index: %s on startup/shutdown" % k)
+                logger.debug("Failed to update index: %s on startup/shutdown" % k)
                 logger.debug("Reason: %s" % err)
 
         # bulk saving the indexes, if there is anything to save
         if all_indexes:
             for temp in all_indexes:
-                index_to_database(
-                    data=temp,
-                    document=self.connection.index
-                )
+                index_to_database(data=temp, document=self.connection.index)
             # self.connection.index.insert_many(documents=all_indexes)
 
         return
@@ -325,9 +318,7 @@ class GangaRepositoryLocal(GangaRepository):
                             split_cache[i]._setFlushed()
                     # # Now generate an index file to take advantage of future non-loading goodness
                     tempSubJList = SubJobJsonList(
-                        registry=self.registry,
-                        connection=self.connection,
-                        parent=obj
+                        registry=self.registry, connection=self.connection, parent=obj
                     )
                     # # equivalent to for sj in job.subjobs
                     tempSubJList._setParent(obj)
@@ -394,8 +385,7 @@ class GangaRepositoryLocal(GangaRepository):
                 if this_id not in self._fully_loaded:
                     self._fully_loaded[this_id] = self.objects[this_id]
 
-                subobj_attr = getattr(
-                    self.objects[this_id], self.sub_split, None)
+                subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
                 sub_attr_dirty = getattr(subobj_attr, "_dirty", False)
                 if sub_attr_dirty:
                     if hasattr(subobj_attr, "flush"):
@@ -406,8 +396,7 @@ class GangaRepositoryLocal(GangaRepository):
             except (OSError, IOError, DatabaseError) as x:
                 raise RepositoryError(
                     self,
-                    "Error of type: %s on flushing id '%s': %s" % (
-                        type(x), this_id, x),
+                    "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x),
                 )
 
     def index_write(self, this_id=None, shutdown=False):
@@ -434,29 +423,27 @@ class GangaRepositoryLocal(GangaRepository):
                 else:
                     temp["master"] = -1
 
-            index_to_database(
-                data=temp,
-                document=self.connection.index
-            )
+            index_to_database(data=temp, document=self.connection.index)
             # TODO: Instead of replacing everything, replace only the changed
             # if the repository is shutting down, save everything again
             if shutdown:
-                raise NotImplementedError(
-                    "Call function to save master index here.")
+                raise NotImplementedError("Call function to save master index here.")
 
     def _read_master_cache(self):
         """Reads the index document from the database
         """
         logger.debug("Reading the MasterCache")
         master_cache = self.connection.index.find(
-            filter={"category": self.registry.name, "master": -1})  # loading masters so.
+            filter={"category": self.registry.name, "master": -1}
+        )  # loading masters so.
         if master_cache:
             for cache in master_cache:
                 self.index_load(this_id=cache["id"], item=cache)
-            return dict([(_['id'], True) for _ in master_cache])
+            return dict([(_["id"], True) for _ in master_cache])
         else:
             logger.debug(
-                "No master index information exists, new/blank repository startup is assumed")
+                "No master index information exists, new/blank repository startup is assumed"
+            )
             return {}
 
     def _clear_stored_cache(self):
@@ -498,8 +485,10 @@ class GangaRepositoryLocal(GangaRepository):
             # Try to load it!
             if not this_id in self.objects:
                 try:
-                    logger.debug("Loading database based Object: %s from %s as indexes were missing" % (
-                        this_id, self.registry.name))
+                    logger.debug(
+                        "Loading database based Object: %s from %s as indexes were missing"
+                        % (this_id, self.registry.name)
+                    )
                     self.load([this_id])
                     changed_ids.append(this_id)
                     if this_id not in self.incomplete_objects:
@@ -516,9 +505,10 @@ class GangaRepositoryLocal(GangaRepository):
                     if this_id in self.objects:
                         self._internal_del__(this_id)
                         changed_ids.append(this_id)
-                except (InaccessibleObjectError, ) as x:
+                except (InaccessibleObjectError,) as x:
                     logger.debug(
-                        "update_index: Failed to load id %i: %s" % (this_id, x))
+                        "update_index: Failed to load id %i: %s" % (this_id, x)
+                    )
                     summary.append((this_id, x))
 
         logger.debug("Iterated over Items")
@@ -535,20 +525,28 @@ class GangaRepositoryLocal(GangaRepository):
                 # add object to incomplete_objects
                 if not this_id in self.incomplete_objects:
                     logger.error(
-                        "Adding: %s to Incomplete Objects to avoid loading it again in future" % this_id)
+                        "Adding: %s to Incomplete Objects to avoid loading it again in future"
+                        % this_id
+                    )
                     self.incomplete_objects.append(this_id)
 
             for exc, ids in cnt.items():
-                logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (
-                    self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
+                logger.error(
+                    "Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)"
+                    % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc])
+                )
 
             if self.printed_explanation is False:
                 logger.error(
-                    "If you want to delete the incomplete objects, you can type:\n")
-                logger.error("'for i in %s.incomplete_ids(): %s(i).remove()'\n (then press 'Enter' twice)" % (
-                    self.registry.name, self.registry.name))
+                    "If you want to delete the incomplete objects, you can type:\n"
+                )
                 logger.error(
-                    "WARNING!!! This will result in corrupt jobs being completely deleted!!!")
+                    "'for i in %s.incomplete_ids(): %s(i).remove()'\n (then press 'Enter' twice)"
+                    % (self.registry.name, self.registry.name)
+                )
+                logger.error(
+                    "WARNING!!! This will result in corrupt jobs being completely deleted!!!"
+                )
                 self.printed_explanation = True
         logger.debug("updated index done")
 
@@ -567,7 +565,7 @@ class GangaRepositoryLocal(GangaRepository):
         if item is None:
             item = index_from_database(
                 _filter={"id": this_id, "master": -1},  # loading master jobs
-                document=self.connection.index
+                document=self.connection.index,
             )
         if item and item["modified_time"] != self._cache_load_timestamp.get(this_id, 0):
             if this_id in self.objects:
@@ -576,10 +574,14 @@ class GangaRepositoryLocal(GangaRepository):
             else:
                 try:
                     obj = self._make_empty_object_(
-                        this_id, item["category"], item["classname"])
+                        this_id, item["category"], item["classname"]
+                    )
                 except Exception as e:
-                    raise Exception("{e} Failed to create empty ganga object for {this_id}".format(
-                        e=e, this_id=this_id))
+                    raise Exception(
+                        "{e} Failed to create empty ganga object for {this_id}".format(
+                            e=e, this_id=this_id
+                        )
+                    )
             obj._index_cache = item
             self._cached_obj[this_id] = item
             self._cache_load_timestamp[this_id] = item["modified_time"]
@@ -587,9 +589,12 @@ class GangaRepositoryLocal(GangaRepository):
 
         elif this_id not in self.objects:
             self.objects[this_id] = self._make_empty_object_(
-                this_id, self._cached_obj[this_id]["category"], self._cached_obj[this_id]["classname"])
+                this_id,
+                self._cached_obj[this_id]["category"],
+                self._cached_obj[this_id]["classname"],
+            )
             self.objects[this_id]._index_cache = self._cached_obj[this_id]
-            setattr(self.objects[this_id], '_registry_refresh', True)
+            setattr(self.objects[this_id], "_registry_refresh", True)
             return True
 
         else:
@@ -646,10 +651,12 @@ class GangaRepositoryLocal(GangaRepository):
 
         if has_children:
             logger.debug("Adding children")
-            obj.setSchemaAttribute(self.sub_split, SubJobJsonList(
-                registry=self.registry, connection=self.connection,
-                parent=obj
-            ))
+            obj.setSchemaAttribute(
+                self.sub_split,
+                SubJobJsonList(
+                    registry=self.registry, connection=self.connection, parent=obj
+                ),
+            )
         else:
             if obj._schema.hasAttribute(self.sub_split):
                 # Infinite loop if we use setattr btw
@@ -687,16 +694,12 @@ class GangaRepositoryLocal(GangaRepository):
         """
 
         b4 = time.time()
-        tmpobj, errs = self.from_database(
-            _filter={"id": this_id}, document=document
-        )
+        tmpobj, errs = self.from_database(_filter={"id": this_id}, document=document)
         a4 = time.time()
-        logger.debug("Loading Json file for ID: %s took %s sec" %
-                     (this_id, a4 - b4))
+        logger.debug("Loading Json file for ID: %s took %s sec" % (this_id, a4 - b4))
 
         if len(errs) > 0:
-            logger.error("#%s Error(s) Loading File: %s" %
-                         (len(errs), document.name))
+            logger.error("#%s Error(s) Loading File: %s" % (len(errs), document.name))
             for err in errs:
                 logger.error("err: %s" % err)
             raise InaccessibleObjectError(self, this_id, errs[0])
@@ -705,8 +708,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         # we dont check for `children` in the demo
         has_children = SubJobJsonList.checkJobHasChildren(
-            master_id=tmpobj.id,
-            document=self.connection[self.registry.name]
+            master_id=tmpobj.id, document=self.connection[self.registry.name]
         )
 
         # logger.debug("Found children: %s" % str(has_children))
@@ -740,14 +742,15 @@ class GangaRepositoryLocal(GangaRepository):
 
             if this_id in self.incomplete_objects:
                 raise RepositoryError(
-                    self, "Trying to re-load a corrupt repository id: {this_id}".format(
-                        this_id=this_id)
+                    self,
+                    "Trying to re-load a corrupt repository id: {this_id}".format(
+                        this_id=this_id
+                    ),
                 )
 
             try:
                 self._load_json_from_obj(
-                    this_id=this_id,
-                    document=self.connection[self.registry.name]
+                    this_id=this_id, document=self.connection[self.registry.name]
                 )
             except RepositoryError as err:
                 logger.debug(f"Repo Exception: {err}")
@@ -818,8 +821,7 @@ class GangaRepositoryLocal(GangaRepository):
             _.drop_database(self.db_name)
 
         except Exception as err:
-            logger.error(
-                "Failed to correctly clean repository due to: %s" % err)
+            logger.error("Failed to correctly clean repository due to: %s" % err)
         self.startup()
 
     def isObjectLoaded(self, obj):
