@@ -77,8 +77,6 @@ def initial_run():
         flash(str(err), "danger")
         return redirect(url_for("dashboard"))
 
-    # TODO Ping internal_url
-
 
 # Login View
 @gui.route("/login", methods=["GET", "POST"])

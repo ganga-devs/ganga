@@ -46,7 +46,7 @@ class APIServerThread(GangaThread):
 
 
 def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port: int = 5000,
-              password: str = None) -> tuple:
+              password: str = None):
     """
     Start GUI Flask App on a Gunicorn server and API Flask App on a GangaThread
 
@@ -54,7 +54,6 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
     :param gui_port: int
     :param internal_port: int
     :param password: str
-    :return: tuple
 
     Returns (host, port, user, password)
     Accepts "gui_host", "gui_port", "internal_port" and "password" as arguments.
@@ -85,6 +84,17 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
     start_gui(host="0.0.0.0", port=1234, password="mypassword") -> ("0.0.0.0", 1234, "GangaGUIAdmin", "mypassword")
     """
 
+    global api_server, gui_server
+
+    # For when it is called by ganga-gui binary for starting the integrated terminal
+    if os.environ.get('WEB_CLI') is not None:
+        print("GUI TERMINAL: STARTING GANGA...")  # TODO
+        # Start internal API server, it is always be meant for internal use by the GUI server
+        api_server = APIServerThread("GangaGUIAPI", "localhost", internal_port)
+        api_server.start()
+
+        return True
+
     # Database path
     db_path = gui.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "")
 
@@ -113,8 +123,6 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
         gui_user.public_id = str(uuid.uuid4())
         db.session.add(gui_user)
         db.session.commit()
-
-    global api_server, gui_server
 
     # Start internal API server, it is always be meant for internal use by the GUI server
     api_server = APIServerThread("GangaGUIAPI", "localhost", internal_port)
@@ -151,6 +159,7 @@ def stop_gui():
 
     if gui_server is not None:
         gui_server.terminate()
+
 
 # TODO Remove
 # Use this for starting the server for development purposes
