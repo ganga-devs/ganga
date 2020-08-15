@@ -83,13 +83,8 @@ def index_to_database(data, document):
     """
     logger.debug("index_to_database")
     if data:
-<<<<<<< HEAD
         data["modified_time"] = time.time()
         if "id" in data and "master" in data:
-=======
-        if "id" in data and "master" in data:
-            data["modified_time"] = time.time()
->>>>>>> migration works, --migrate option does not :(
             result = document.replace_one(
                 filter={"id": data["id"], "master": data["master"]}, replacement=data, upsert=True,
             )
