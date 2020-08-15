@@ -940,6 +940,12 @@ def run_file():
     return jsonify({"success": True, "message": "Successfully ran the file."})
 
 
+# Ping route to check if server is online
+@internal.route("/ping")
+def ping():
+    return jsonify(True)
+
+
 # ******************** Helper Functions ******************** #
 
 def get_job_info(job_id: int) -> dict:
@@ -1009,12 +1015,6 @@ def get_template_info(template_id: int) -> dict:
     template_info["backend.actualCE"] = str(t.backend.actualCE)
 
     return template_info
-
-
-# Ping route to check if server is online
-@internal.route("/ping")
-def ping():
-    return jsonify(True)
 
 
 # ******************** Shutdown Function ******************** #
