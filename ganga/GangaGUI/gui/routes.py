@@ -2,6 +2,7 @@ import os
 import jwt
 import json
 import requests
+import time
 from functools import wraps
 from flask import request, jsonify, render_template, flash, redirect, url_for, session, send_file
 from flask_login import login_user, login_required, logout_user, current_user
@@ -41,6 +42,10 @@ def initial_run():
     """
 
     global actions, plugins
+
+    if not ping_internal():
+        # TODO Stop servers
+        pass
 
     # If user is authenticated, log them out. This happens after a fresh start of the GUI server.
     if current_user.is_authenticated:
@@ -1664,6 +1669,27 @@ def query_internal_api(route: str, method: str, **kwargs):
 
     # Return request data
     return res.json()
+
+
+# Ping internal API server
+def ping_internal():
+    """
+    Ping internal API server if it is running
+    """
+
+    trials = 0
+    while True:
+        try:
+            ping = query_internal_api("/ping", "get")
+            if ping is True:
+                return True
+        except:
+            time.sleep(0.5)
+
+        print("Internal API server not online, retrying...")
+        trials += 1
+        if trials > 10:
+            return False
 
 
 # ******************** Shutdown Function ******************** #
