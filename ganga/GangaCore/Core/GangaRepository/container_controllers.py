@@ -125,9 +125,9 @@ def docker_handler(database_config, action="start"):
             )
             if container.status != "running":
                 container.restart()
-                logger.info("gangaDB has started in background")
+                logger.info(f"{database_config['containerName']} has started in background")
             else:
-                logger.debug("gangaDB was already running in background")
+                logger.debug(f"{database_config['containerName']} was already running in background")
 
         except docker.errors.NotFound:
             # call the function to get the gangadir here

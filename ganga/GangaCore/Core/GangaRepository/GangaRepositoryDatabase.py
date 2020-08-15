@@ -198,7 +198,7 @@ class GangaRepositoryLocal(GangaRepository):
         """Kill the mongo db instance in a docker container
         """
         # if the database is naitve, we skip shutting it down
-        self.container_controller(database_config=self.database_config, action="kill")
+        self.container_controller(database_config=self.database_config, action="quit")
         logger.debug(f"mongo stopped from: {self.registry.name}")
 
     def _write_master_cache(self):
