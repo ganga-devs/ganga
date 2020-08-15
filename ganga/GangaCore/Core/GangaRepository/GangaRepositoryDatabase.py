@@ -17,7 +17,7 @@ from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Plugin import PluginManagerError, allPlugins
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
 from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
-from GangaCore.Core.GangaRepository.ContainerControllers import (
+from GangaCore.Core.GangaRepository.container_controllers import (
     native_handler,
     docker_handler,
     udocker_handler,

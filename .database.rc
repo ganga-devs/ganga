@@ -167,6 +167,31 @@ repositorytype = Database
 #  jobs are stored. Currently the only supported type is LocalFilesystem.
 #workspacetype = LocalFilesystem
 
+#=======================================================================
+#  Selection of database for ganga
+[DatabaseConfigurations]
+
+#  the identifier used to tag the docker container
+#containerName = ganga_mongomon
+
+#  others have not been implemented yet
+#database = MONGODB
+
+#  name of database
+#dbname = default
+
+#  host
+#host = default
+
+#  password
+#password = default
+
+#  port
+#port = default
+
+#  username
+#username = default
+
 
 #=======================================================================
 #  This configures the credentials singleton
