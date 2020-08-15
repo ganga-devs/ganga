@@ -144,12 +144,13 @@ def stop_gui():
     global api_server, gui_server
 
     if api_server is not None:
-        gui_server.terminate()
         if api_server.shutdown():
             api_server = None
         else:
             raise Exception("Error in shutting down the API server.")
 
+    if gui_server is not None:
+        gui_server.terminate()
 
 # TODO Remove
 # Use this for starting the server for development purposes
