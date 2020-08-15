@@ -37,20 +37,20 @@ class SJXLIterator(object):
             raise StopIteration
 
 
-class SubJobXMLList(GangaObject):
+class SubJobJsonList(GangaObject):
     """
-        SUBJOBXMLLIST class for managing the subjobs so they're loaded only when needed
+        SubJobJsonList class for managing the subjobs so they're loaded only when needed
     """
 
     _category = 'internal'
     _exportmethods = ['__getitem__', '__len__', '__iter__', 'getAllCachedData', 'values']
     _hidden = True
-    _name = 'SubJobXMLList'
+    _name = 'SubJobJsonList'
 
     _schema = Schema(Version(1, 0), {})
 
     def __init__(self, jobDirectory='', registry=None, dataFileName='data', load_backup=False, parent=None):
-        """ Constructor for SubjobXMLList
+        """ Constructor for SubJobJsonList
         Args:
             jobDirectory (str): dir on disk which contains subjob folders
             registry (Registry): the registry managing me,
@@ -58,7 +58,7 @@ class SubJobXMLList(GangaObject):
             load_backup (bool): are we using the backpus only/first? This used to be set like this btw
             paret (Job): parent of self after constuction
         """
-        super(SubJobXMLList, self).__init__()
+        super(SubJobJsonList, self).__init__()
 
         self._jobDirectory = jobDirectory
         self._registry = registry
@@ -92,7 +92,7 @@ class SubJobXMLList(GangaObject):
     ## THIS CLASS DOES NOT MAKE USE OF THE SCHEMA TO STORE INFORMATION AS TRANSIENT OR UNCOPYABLE
     ## THIS CLASS CONTAINS A LOT OF OBJECT REFERENCES WHICH SHOULD NOT BE DEEPCOPIED!!!
     def __deepcopy__(self, memo=None):
-        obj = super(SubJobXMLList, self).__deepcopy__(memo)
+        obj = super(SubJobJsonList, self).__deepcopy__(memo)
 
         obj._subjobIndexData = copy.deepcopy(self._subjobIndexData, memo)
         obj._jobDirectory = copy.deepcopy(self._jobDirectory, memo)
@@ -201,6 +201,8 @@ class SubJobXMLList(GangaObject):
 
         for sj_id in range_limit:
             if sj_id in self._cachedJobs:
+                # obj = self.__getitem__(sj_id)
+                # logger.info(f"object is {obj}")
                 this_cache = self._registry.getIndexCache(self.__getitem__(sj_id))
                 all_caches[sj_id] = this_cache
                 disk_location = self.__get_dataFile(sj_id)
@@ -264,7 +266,7 @@ class SubJobXMLList(GangaObject):
         if not path.isdir( self._jobDirectory ):
             return 0
 
-        subjob_count = SubJobXMLList.countSubJobDirs(self._jobDirectory, self._dataFileName, False)
+        subjob_count = SubJobJsonList.countSubJobDirs(self._jobDirectory, self._dataFileName, False)
 
         if len(self._stored_len) != 2:
             self._stored_len = []
@@ -436,7 +438,7 @@ class SubJobXMLList(GangaObject):
             parent_name = "None"
         logger.debug('Setting Parent: %s' % parent_name)
 
-        super(SubJobXMLList, self)._setParent(parentObj)
+        super(SubJobJsonList, self)._setParent(parentObj)
 
         if self._definedParent is not parentObj:
             self._definedParent = parentObj
@@ -531,7 +533,7 @@ class SubJobXMLList(GangaObject):
         """ Like Node only descend into objects which aren't in the Schema"""
         for index in self._cachedJobs:
             self._cachedJobs[index]._setFlushed()
-        super(SubJobXMLList, self)._setFlushed()
+        super(SubJobJsonList, self)._setFlushed()
 
     def _private_display(self, reg_slice, this_format, default_width, markup):
         """ This is a private display method which makes use of the display slice as well as knowlede of the wanted format, default_width and markup to be used
@@ -579,7 +581,7 @@ class SubJobXMLList(GangaObject):
         if not path.isdir(jobDirectory):
             return False
         else:
-            return bool(SubJobXMLList.countSubJobDirs(jobDirectory, datafileName, True))
+            return bool(SubJobJsonList.countSubJobDirs(jobDirectory, datafileName, True))
 
     @staticmethod
     def countSubJobDirs(jobDirectory, datafileName, checkDataFiles):

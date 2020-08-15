@@ -25,22 +25,25 @@ def object_to_database(j, document, master=None, ignore_subs=[]):
     master (int): Index id of the master Job of `j`, if `j` is a subjob
     document : The document of database where the job json will be stored
     """
+    logger.debug("object_to_database")
     json_content = j.to_json()
     for sub in ignore_subs:
         json_content.pop(sub, None)
 
     json_content["modified_time"] = time.time()
+    if master is not None:
+        json_content["master"] = master
 
     if json_content["type"] == "Job":
-        json_content["_id"] = json_content["id"]  # `_id` is used for indexing by mongo.
+        # `id` is used for indexing by mongo.
+        # json_content["id"] = json_content["id"]
         result = document.replace_one(
-            filter={"_id": json_content["_id"]}, replacement=json_content, upsert=True,
+            filter={"id": json_content["id"], "master": json_content["master"]}, replacement=json_content, upsert=True,
         )
     else:
-        result = document.insert(json_content)
+        result = document.insert_one(json_content)
 
     if result is None:
-        logger.error(f"to_database error {err}")
         logger.debug(f"to_database error for object {j}")
         raise DatabaseError(
             Exception,
@@ -56,9 +59,9 @@ def object_from_database(_filter, document):
     _filter (dict): The key-value pair used to search the object in the document
     document: The document in the database where the object is stored
     """
+    logger.debug("object_from_database")
     content = document.find_one(filter=_filter)
     if content is None:
-        logger.error(f"to_database error {err}")
         logger.debug(
             f"to_database error for `filter` {_filter} and `document` {document.name}"
         )
@@ -78,11 +81,12 @@ def index_to_database(data, document):
         data : To be added
         document : To be added
     """
+    logger.debug("index_to_database")
     if data:
-        if "id" in data:
-            data["_id"] = data["id"]
+        data["modified_time"] = time.time()
+        if "id" in data and "master" in data:
             result = document.replace_one(
-                filter={"_id": data["_id"]}, replacement=data, upsert=True,
+                filter={"id": data["id"], "master": data["master"]}, replacement=data, upsert=True,
             )
         else:
             result = document.insert_one(data)
@@ -93,23 +97,27 @@ def index_to_database(data, document):
                 f"index could not be inserted in the document linked by {document.name}. Insertion resulted in: {result}",
             )
 
-    return result
+        return result
 
 
-def index_from_database(_filter, document):
+def index_from_database(_filter, document, many=False):
     """Save the index information into the `index` document of the database
 
     Args:
         _filter : To be added
         document : To be added
     """
-    result = document.find_one(filter=_filter)
+    logger.debug("index_from_database")
+    if many:
+        result = [*document.find(filter=_filter)]
+    else:
+        result = document.find_one(filter=_filter)
 
-    if result is None:
-        raise DatabaseError(
-            Exception,
-            f"index could not be inserted in the document linked by {document.name}. Insertion resulted in: {result}",
-        )
+    # if result is None:
+    #     raise DatabaseError(
+    #         Exception,
+    #         f"index could not be extracted in the document linked by {document.name}. Extracted resulted in: {result}:{_filter}",
+    #     )
     return result
 
 
@@ -160,7 +168,8 @@ class JsonDumper:
         The received item is a job object with proxy
         """
         starting_name, starting_node = "Job", j
-        job_json = JsonDumper.object_to_json(starting_name, starting_node, ignore_subs)
+        job_json = JsonDumper.object_to_json(
+            starting_name, starting_node, ignore_subs)
         return job_json
 
     @staticmethod
@@ -226,7 +235,8 @@ class JsonDumper:
                     elif isinstance(value, dict) and attr_name == "timestamps":
                         for time_stamp, dtime in value.items():
                             if isinstance(dtime, datetime.datetime):
-                                value[time_stamp] = dtime.strftime("%Y/%m/%d %H:%M:%S")
+                                value[time_stamp] = dtime.strftime(
+                                    "%Y/%m/%d %H:%M:%S")
                             node_info[attr_name] = value
                     else:
                         node_info[attr_name] = value
@@ -307,9 +317,11 @@ class JsonLoader:
                 temp_val = []
                 for val in json_content[key]:
                     if isinstance(val, dict):
-                        temp_val.append(self.load_component_object(self.obj, key, val))
+                        temp_val.append(
+                            self.load_component_object(self.obj, key, val))
                     else:
-                        temp_val.append(self.load_simple_object(self.obj, key, val))
+                        temp_val.append(
+                            self.load_simple_object(self.obj, key, val))
 
                 # simply attach loaded list of component objects to its parent object
                 self.obj = self.load_simple_object(self.obj, key, temp_val)
@@ -326,7 +338,8 @@ class JsonLoader:
         """This implementation is backwards compatible to the way things are currently in VStreamre
         """
         errors = []
-        obj = allPlugins.find(json_content["category"], json_content["type"]).getNew()
+        obj = allPlugins.find(
+            json_content["category"], json_content["type"]).getNew()
 
         # FIXME: Use a better approach to filter the metadata keys
         for key in set(json_content.keys()) - set(["category", "type", "version"]):
@@ -384,7 +397,8 @@ class JsonLoader:
                     if local_error:
                         errors.append(local_error)
                 elif (
-                    isinstance(part_attr[attr], dict) and "category" in part_attr[attr]
+                    isinstance(part_attr[attr],
+                               dict) and "category" in part_attr[attr]
                 ):
                     component_obj, local_error = JsonLoader.load_component_object(
                         component_obj, attr, part_attr[attr]

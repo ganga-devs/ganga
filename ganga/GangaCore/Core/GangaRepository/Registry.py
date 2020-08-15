@@ -95,6 +95,12 @@ def makeRepository(registry):
     if registry.type in ["LocalXML", "LocalPickle"]:
         from GangaCore.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal
         return GangaRepositoryLocal(registry)
+    elif registry.type in ["Database"]:
+        from GangaCore.Core.GangaRepository.GangaRepositoryDatabase import GangaRepositoryLocal
+        return GangaRepositoryLocal(registry)
+    elif registry.type in ["CentralDatabase"]:
+        from GangaCore.Core.GangaRepository.GangaRepositoryCentral import GangaRepositoryLocal
+        return GangaRepositoryLocal(registry)
     elif registry.type in ["SQLite"]:
         from GangaCore.Core.GangaRepository.GangaRepositorySQLite import GangaRepositorySQLite
         return GangaRepositorySQLite(registry)
@@ -699,7 +705,7 @@ class Registry(object):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
         This ONLY applies to master jobs as the Registry has no apriori knowledge of the subjob structure.
-        Consult SubJobXMLList for a more fine grained loaded/not-loaded info/test.
+        Consult SubJobJsonList for a more fine grained loaded/not-loaded info/test.
         Args:
             obj (GangaObject): Object which we want to look for in this repo
         """

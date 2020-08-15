@@ -801,6 +801,43 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
 
         visitor.nodeEnd(self)
 
+    # TODO: Remove the @synchronised, once locks are removed altogether
+    @synchronised
+    def to_json(self):
+        """
+        Returns the json representation of the job
+        """
+        import datetime
+        from GangaCore.GPIDev.Base.Proxy import isType
+        from GangaCore.Core.GangaRepository.DStreamer import JsonDumper
+
+        node_info = {
+            "type": self._schema.name,
+            "version": f"{self._schema.version.major}.{self._schema.version.minor}",
+            "category": self._schema.category
+        }
+        if self._schema is None:
+            return node_info
+
+        for attr_name, attr_object in self._schema.allItems():
+            value = getattr(self, attr_name)
+            if isType(value, (list, tuple)):
+                node_info[attr_name] = list(value)
+            # GangaList has its own custom to_json() and thus that is called instead of JD.object_to_json
+            elif isType(value, GangaList):
+                node_info[attr_name] = value.to_json()
+            elif isinstance(value, GangaObject):
+                node_info[attr_name] = JsonDumper.object_to_json(
+                    attr_name, getattr(self, attr_name), [])
+            elif isinstance(value, dict) and attr_name == "timestamps":
+                for time_stamp, dtime in value.items():
+                    if isinstance(dtime, datetime.datetime):
+                        value[time_stamp] = dtime.strftime("%Y/%m/%d %H:%M:%S")
+                    node_info[attr_name] = value
+            else:
+                node_info[attr_name] = getattr(self, attr_name)
+        return node_info
+
     def copyFrom(self, srcobj, _ignore_atts=None):
         # type: (GangaObject, Optional[Sequence[str]]) -> None
         """

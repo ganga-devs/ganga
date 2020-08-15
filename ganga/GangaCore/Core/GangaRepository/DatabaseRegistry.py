@@ -1,7 +1,7 @@
 
 
 import time
-
+import threading
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Schema import Schema, Version
@@ -10,8 +10,8 @@ from GangaCore.GPIDev.Base.Proxy import getName, isType
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 from GangaCore.Core.GangaThread.GangaThread import GangaThread
 from GangaCore.Core.exceptions import (
-    GangaException, InaccessibleObjectError,RepositoryError
-    )
+    GangaException, InaccessibleObjectError, RepositoryError
+)
 
 logger = getLogger()
 
@@ -298,7 +298,8 @@ class Registry(object):
         Args:
             this_id (int): This is the key of an object in the object dictionary
         """
-        logger.debug("__getitem__")
+        import sys
+        logger.debug(f"__getitem__ was called by ({sys._getframe().f_back.f_code.co_name})")
         # Is this an Incomplete Object?
         if this_id in self._incomplete_objects:
             return IncompleteObject(self, this_id)
@@ -546,7 +547,7 @@ class Registry(object):
             if self._needs_metadata:
                 t2 = time.time()
                 if self.metadata is None:
-                    self.metadata = DatabaseRegistry(
+                    self.metadata = Registry(
                         self.name + ".metadata",
                         "Metadata repository for %s" % self.name,
                     )
@@ -589,7 +590,7 @@ class Registry(object):
         This is intended to be called after the startup proceedure has been finished """
         pass
 
-    def shutdown(self):
+    def shutdown(self, kill):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         logger.debug("Shutting Down Registry")
         logger.debug("shutdown")
@@ -605,7 +606,7 @@ class Registry(object):
             # Now we can safely shutdown the metadata repo if one is loaded
             try:
                 if self.metadata is not None:
-                    self.metadata.shutdown()
+                    self.metadata.shutdown(kill=kill)
             except Exception as err:
                 logger.debug(
                     "Exception on shutting down metadata repository '%s' registry: %s",
@@ -618,7 +619,7 @@ class Registry(object):
             for obj in list(self._objects.values()):
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
-            self.repository.shutdown()
+            self.repository.shutdown(kill=kill)
 
             self.metadata = None
 
@@ -642,7 +643,7 @@ class Registry(object):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
         This ONLY applies to master jobs as the Registry has no apriori knowledge of the subjob structure.
-        Consult SubJobXMLList for a more fine grained loaded/not-loaded info/test.
+        Consult SubJobJsonList for a more fine grained loaded/not-loaded info/test.
         Consult SubJobJSONList for a more fine grained loaded/not-loaded info/test.
         Args:
             obj (GangaObject): Object which we want to look for in this repo

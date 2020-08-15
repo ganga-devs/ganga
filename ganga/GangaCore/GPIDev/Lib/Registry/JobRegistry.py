@@ -11,18 +11,14 @@ from GangaCore.Utility.Config import getConfig
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
-from GangaCore.Core.GangaRepository.Registry import (
-    RegistryAccessError, RegistryFlusher, RegistryKeyError
-)
 
 # display default values for job list
 from .RegistrySlice import RegistrySlice, config
 from .RegistrySliceProxy import RegistrySliceProxy, _unwrap, _wrap
 
-if getConfig("Configuration")["repositorytype"] == "Database":
-    from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
-else:
-    from GangaCore.Core.GangaRepository.Registry import Registry
+from GangaCore.Core.GangaRepository.DatabaseRegistry import (
+    Registry, RegistryAccessError, RegistryFlusher, RegistryKeyError
+)
 
 logger = GangaCore.Utility.logging.getLogger()
 
@@ -152,10 +148,9 @@ class JobRegistry(Registry):
                     logger.debug("Failed to load job, it's potentially being used by another ganga sesion")
                     continue
 
-
-    def shutdown(self):
+    def shutdown(self, kill):
         self.flush_thread.join()
-        super(JobRegistry, self).shutdown()
+        super(JobRegistry, self).shutdown(kill=kill)
 
     def getJobTree(self):
         return self.jobtree

@@ -17,7 +17,7 @@ from GangaCore.GPIDev.Base.Objects import Node
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Plugin import PluginManagerError
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
-from GangaCore.Core.GangaRepository.SubJobJSONList import SubJobJsonList
+from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 
 
 from GangaCore.Core.GangaRepository import (
@@ -99,7 +99,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def _flush(self, this_id):
         """
-        Flush Json to disk whilst checking for relavent SubJobXMLList which handles subjobs now
+        Flush Json to disk whilst checking for relavent SubJobJsonList which handles subjobs now
         flush for "this_id" in the self.objects list
         Args:
             this_id (int): This is the id of the object we want to flush to disk
@@ -150,7 +150,7 @@ class GangaRepositoryLocal(GangaRepository):
         """
         If we must actually load the object from database then we end up here.
         This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
-        If there are children then a SubJobXMLList is created to manage them.
+        If there are children then a SubJobJsonList is created to manage them.
         The fn of the job is passed to the SubbJobXMLList and there is some knowledge of if we should be loading the backup passed as well
         Args:
             this_id (int): This is the integer key of the object in the self.objects dict
