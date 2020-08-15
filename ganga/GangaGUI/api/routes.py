@@ -877,7 +877,6 @@ def actions():
     :return: json
     """
 
-    from GangaCore.GPI import jobs
     from GangaCore.GPIDev.Lib.Job import Job
 
     try:
@@ -1010,6 +1009,12 @@ def get_template_info(template_id: int) -> dict:
     template_info["backend.actualCE"] = str(t.backend.actualCE)
 
     return template_info
+
+
+# Ping route to check if server is online
+@internal.route("/ping")
+def ping():
+    return jsonify(True)
 
 
 # ******************** Shutdown Function ******************** #
