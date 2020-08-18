@@ -107,7 +107,7 @@ def check_app_hash(obj):
 
 
 # RatPass: Find a better alternative for this, seems unnecessary
-def safe_save(_object, conn, master=None, ignore_subs=[]):
+def safe_save(_object, conn, master, ignore_subs=[]):
     """Try to save the Json for this object in as safe a way as possible
     Args:
         _object (GangaObject): Object to be stored in database
@@ -309,6 +309,7 @@ class GangaRepositoryLocal(GangaRepository):
                         for i in range(len(split_cache)):
                             if not split_cache[i]._dirty:
                                 continue
+                            logger.info("saving information now for ", this_id)
                             safe_save(
                                 master=this_id,
                                 ignore_subs=[],
@@ -340,6 +341,7 @@ class GangaRepositoryLocal(GangaRepository):
             else:
 
                 logger.debug("not has_children")
+                logger.info("saving information now for ", this_id)
                 safe_save(
                     _object=obj,
                     conn=self.connection[self.registry.name],

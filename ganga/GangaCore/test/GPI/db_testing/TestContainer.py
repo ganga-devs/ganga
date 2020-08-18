@@ -1,3 +1,11 @@
+"""
+TODO:
+1. Add test steps for:
+    1. udocker
+    2. singularity
+    3. docker itself (maybe)
+"""
+
 import pytest
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Virtualization import (
@@ -21,7 +29,7 @@ def installations():
 
 
 
-class TestDatabaseBackend(GangaUnitTest):
+class TestDatabaseBackends(GangaUnitTest):
     """
     Init all the database containers and see if they work
     """
@@ -37,7 +45,7 @@ class TestDatabaseBackend(GangaUnitTest):
             "native": checkNative(),
             "singularity": checkSingularity()
         }
-        super(TestDatabaseBackend, self).setUp(extra_opts=extra_opts)
+        super(TestDatabaseBackends, self).setUp(extra_opts=extra_opts)
 
     def test_docker_backend_lifetime(self):
         """

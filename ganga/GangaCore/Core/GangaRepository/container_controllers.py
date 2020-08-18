@@ -105,7 +105,7 @@ def singularity_handler(database_config, action="start"):
         stdout, stderr = process.communicate()
     return stdout, stderr # we only need the last one
 
-
+# TODO: Return flags to indicate whether the starting was success or not
 def docker_handler(database_config, action="start"):
     """
     Will handle the loading of container using docker
