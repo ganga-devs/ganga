@@ -14,7 +14,7 @@ from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 
 logger = getLogger()
 
-def object_to_database(j, document, master=None, ignore_subs=[]):
+def object_to_database(j, document, master, ignore_subs=[]):
     """Save GangaObject in database
 
     Parameters

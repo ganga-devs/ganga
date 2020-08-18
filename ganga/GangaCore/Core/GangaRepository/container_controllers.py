@@ -144,10 +144,10 @@ def docker_handler(database_config, action="start"):
                 # FIXME: this causes error sometimes, when removing jobs
                 # mounts=[
                 #     docker.types.Mount(
-                #         target="/data/db", source=host_path,  type="bind")
-                # ]
+                #         target="/data/db", source=bind_loc,  type="bind")
+                # ],
                 # volumes={
-                #     os.path.expanduser("bind_loc"): {"bind": "/data/db", "mode": "rw"}}
+                #     bind_loc: {"bind": "/data/db", "mode": "rw"}}
             )
         except Exception as e:
             # TODO: Handle gracefull quiting of ganga

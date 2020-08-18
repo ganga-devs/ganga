@@ -198,7 +198,7 @@ class GangaRepositoryLocal(GangaRepository):
         """Kill the mongo db instance in a docker container
         """
         # if the database is naitve, we skip shutting it down
-        self.container_controller(database_config=self.database_config, action="kill")
+        self.container_controller(database_config=self.database_config, action="quit")
         logger.debug(f"mongo stopped from: {self.registry.name}")
 
     def _write_master_cache(self):
@@ -224,7 +224,7 @@ class GangaRepositoryLocal(GangaRepository):
                         new_index["classname"] = getName(obj)
                         new_index["category"] = obj._category
                         new_index["modified_time"] = time.time()
-                        if hasattr(obj, "master") and obj._category == "jobs":
+                        if hasattr(obj, "master") and obj._category == "jobs" and obj.master:
                             new_index["master"] = obj.master
                         else:
                             new_index["master"] = -1
