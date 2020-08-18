@@ -8,6 +8,21 @@ import os
 import urllib
 import os
 
+def checkNative():
+    """
+    Check if the mongo database is instanlled locally
+    """
+    cmds = ["mongo", "mongod"] # commands to check if mongo is installed
+    nullOutput = open(os.devnull, 'wb')
+    returnCode = 1
+    try:
+        for cmd in cmds:
+            returnCode = subprocess.call([cmd], stdout=nullOutput, stderr=nullOutput, shell=True)
+    except Exception as e:
+        print(e)
+    if returnCode == 0 : return True
+    return False
+
 def checkSingularity():
     """Check whether Singularity is installed and the current user has right to access
 

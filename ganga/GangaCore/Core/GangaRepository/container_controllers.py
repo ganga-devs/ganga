@@ -20,7 +20,7 @@ COMMANDS = {
             "exec": "singularity exec instance://{instance_name} mongod --fork --logpath /data/daemon-mongod.log"
         },
         # "start": "singularity instance start --bind data:/data {image_name} {instance_name}; singularity exec instance://ganga_mongo mongod &",
-        "kill": {
+        "quit": {
             "shutdown": "singularity instance stop {instance_name}"
         }
     }
@@ -34,7 +34,7 @@ def create_mongodir():
     dirs_to_make = [os.path.join(GANGADIR, "data"),
                     os.path.join(GANGADIR, "data/db"),
                     os.path.join(GANGADIR, "data/configdb")]
-    _ = map(lambda x: os.makedirs(x, exist_ok=True), dirs_to_make)
+    _ = [*map(lambda x: os.makedirs(x, exist_ok=True), dirs_to_make)]
 
     return os.path.join(GANGADIR, "data")
 
@@ -87,6 +87,7 @@ def singularity_handler(database_config, action="start"):
     action: The action to be performed using the handler
     """
     installed = checkSingularity()
+    create_mongodir() # create the directories if required
     if not installed:
         raise Exception(
             "uDocker was not installed in the system. Make sure that")
