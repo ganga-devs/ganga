@@ -14,16 +14,6 @@ from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 
 logger = getLogger()
 
-<<<<<<< HEAD
-
-def object_to_database(j, document, master, ignore_subs=[]):
-    """Save GangaObject in database
-
-    Arguments:
-    j (GangaObject): The object to be stored in the database
-    master (int): Index id of the master Job of `j`, if `j` is a subjob
-    document (pymongo.document) : The document of database where the job json will be stored
-=======
 def object_to_database(j, document, master, ignore_subs=[]):
     """Save GangaObject in database
 
@@ -32,7 +22,6 @@ def object_to_database(j, document, master, ignore_subs=[]):
     j (GangaObject): The object to be stored in the database
     master (int): Index id of the master Job of `j`, if `j` is a subjob
     document (pymongo.document) : The document of database where the object json will be stored
->>>>>>> db-handlers
     ignore_subs (list): The attribtutes of the object to be ignored when storing in database
     """
     json_content = j.to_json()
