@@ -52,7 +52,9 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """
         extra_opts = [
             ("TestingFramework", "AutoCleanup", "False"),
-            ("Configuration", "repositorytype", "Database")
+            ("Configuration", "repositorytype", "Database"),
+            ("DatabaseConfiguration", "containerName", "testContainer"),
+            ("DatabaseConfiguration", "dbname", "testDatabase")
         ]
         self.database_config = get_test_config
         super(TestGangaDBGenAndLoad, self).setUp(extra_opts=extra_opts)
@@ -63,28 +65,30 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """
         # self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
         assert "False" == (getConfig('TestingFramework')['AutoCleanup'])
+        assert None == (getConfig('DatabaseConfiguration')['containerName'])
 
-        from GangaCore.GPI import Job, jobs
-        j = Job()
-        assert len(jobs) == 1
-        j.name = 'modified_name'
 
-    def test_b_JobJsonExists(self):
-        """
-        Check whether the job json exists in the table
-        """
-        import pymongo
-        db_name = "testDatabase"
-        _ = pymongo.MongoClient()
+    #     from GangaCore.GPI import Job, jobs
+    #     j = Job()
+    #     assert len(jobs) == 1
+    #     j.name = 'modified_name'
 
-        connection = _[db_name]
+    # def test_b_JobJsonExists(self):
+    #     """
+    #     Check whether the job json exists in the table
+    #     """
+    #     import pymongo
+    #     db_name = "testDatabase"
+    #     _ = pymongo.MongoClient()
 
-    def test_c_RemoveJobs(self):
-        """
-        Remove all the jobs from the registry
-        """
-        from GangaCore.GPI import Job, jobs
+    #     connection = _[db_name]
 
-        jobs.remove()
+    # def test_c_RemoveJobs(self):
+    #     """
+    #     Remove all the jobs from the registry
+    #     """
+    #     from GangaCore.GPI import Job, jobs
 
-        assert len(jobs) == 0
+    #     jobs.remove()
+
+    #     assert len(jobs) == 0

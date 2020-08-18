@@ -20,7 +20,11 @@ COMMANDS = {
             "exec": "singularity exec instance://{instance_name} mongod --fork --logpath /data/daemon-mongod.log"
         },
         # "start": "singularity instance start --bind data:/data {image_name} {instance_name}; singularity exec instance://ganga_mongo mongod &",
+<<<<<<< HEAD
         "quit": {
+=======
+        "kill": {
+>>>>>>> db-handlers
             "shutdown": "singularity instance stop {instance_name}"
         }
     }
@@ -34,7 +38,11 @@ def create_mongodir():
     dirs_to_make = [os.path.join(GANGADIR, "data"),
                     os.path.join(GANGADIR, "data/db"),
                     os.path.join(GANGADIR, "data/configdb")]
+<<<<<<< HEAD
     _ = [*map(lambda x: os.makedirs(x, exist_ok=True), dirs_to_make)]
+=======
+    _ = map(lambda x: os.makedirs(x, exist_ok=True), dirs_to_make)
+>>>>>>> db-handlers
 
     return os.path.join(GANGADIR, "data")
 
@@ -87,7 +95,10 @@ def singularity_handler(database_config, action="start"):
     action: The action to be performed using the handler
     """
     installed = checkSingularity()
+<<<<<<< HEAD
     create_mongodir() # create the directories if required
+=======
+>>>>>>> db-handlers
     if not installed:
         raise Exception(
             "uDocker was not installed in the system. Make sure that")
@@ -105,7 +116,11 @@ def singularity_handler(database_config, action="start"):
         stdout, stderr = process.communicate()
     return stdout, stderr # we only need the last one
 
+<<<<<<< HEAD
 # TODO: Return flags to indicate whether the starting was success or not
+=======
+
+>>>>>>> db-handlers
 def docker_handler(database_config, action="start"):
     """
     Will handle the loading of container using docker
@@ -126,9 +141,15 @@ def docker_handler(database_config, action="start"):
             )
             if container.status != "running":
                 container.restart()
+<<<<<<< HEAD
                 logger.info(f"{database_config['containerName']} has started in background")
             else:
                 logger.debug(f"{database_config['containerName']} was already running in background")
+=======
+                logger.info("gangaDB has started in background")
+            else:
+                logger.debug("gangaDB was already running in background")
+>>>>>>> db-handlers
 
         except docker.errors.NotFound:
             # call the function to get the gangadir here
@@ -145,10 +166,17 @@ def docker_handler(database_config, action="start"):
                 # FIXME: this causes error sometimes, when removing jobs
                 # mounts=[
                 #     docker.types.Mount(
+<<<<<<< HEAD
                 #         target="/data/db", source=host_path,  type="bind")
                 # ]
                 # volumes={
                 #     os.path.expanduser("bind_loc"): {"bind": "/data/db", "mode": "rw"}}
+=======
+                #         target="/data/db", source=bind_loc,  type="bind")
+                # ],
+                # volumes={
+                #     bind_loc: {"bind": "/data/db", "mode": "rw"}}
+>>>>>>> db-handlers
             )
         except Exception as e:
             # TODO: Handle gracefull quiting of ganga

@@ -224,7 +224,7 @@ class GangaRepositoryLocal(GangaRepository):
                         new_index["classname"] = getName(obj)
                         new_index["category"] = obj._category
                         new_index["modified_time"] = time.time()
-                        if hasattr(obj, "master") and obj._category == "jobs":
+                        if hasattr(obj, "master") and obj._category == "jobs" and obj.master:
                             new_index["master"] = obj.master
                         else:
                             new_index["master"] = -1
