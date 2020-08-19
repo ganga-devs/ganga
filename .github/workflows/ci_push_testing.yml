@@ -3,8 +3,6 @@ name: CI Push Testing
 on: [pull_request]
 
 jobs:
-
-
   db-unit:
     name: Database Testing
     runs-on: ubuntu-latest
