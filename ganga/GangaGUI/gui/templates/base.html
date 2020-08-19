@@ -22,7 +22,7 @@
     {% block head %}{% endblock head %}
 </head>
 <body>
-<div class="d-flex flex-column min-vh-100">
+<div class="d-flex flex-column min-vh-100 overflow-hidden">
     <!-- Navbar -->
     <div class="mb-4">
         <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
@@ -52,6 +52,9 @@
                     <li class="nav-item {{ 'active' if request.path == url_for('config_page') }}">
                         <a class="nav-link" href="{{ url_for('config_page') }}">Config</a>
                     </li>
+                    {{ ('<li class="nav-item">
+                            <a href="#" class="nav-link" id="btn-cli">CLI</a>
+                        </li>'|safe) if session['web_cli'] == True }}
                     <li class="nav-item">
                         <a class="nav-link" href="http://ganga.readthedocs.io">Help</a>
                     </li>
@@ -79,7 +82,7 @@
     </div>
 
     <!-- Footer -->
-    <nav class="mt-5 pb-4 pb-md-0 navbar navbar-light bg-light border-top d-flex flex-column flex-md-row justify-content-between align-items-md-center align-items-stretch">
+    <nav class="mt-5 pb-4 pb-md-0 navbar navbar-light bg-light border-top d-flex flex-column flex-md-row justify-content-between align-items-md-center align-items-stretch position-relative">
         <div class="flex-shrink-0">
             <div class="form-group col-12 col-md mt-2">
                 <label for="refresh-interval" class="small text-muted">Refresh:</label>
@@ -98,16 +101,31 @@
             <a href="{{ url_for('logs_page') }}" class="btn btn-link my-1 p-0 m-md-0 ml-md-3">Logs</a>
             <a href="{{ url_for('runfile_page') }}" class="btn btn-link my-1 p-0 m-md-0 ml-md-3">Quick Run</a>
             <a href="{{ url_for('storage_page') }}" class="btn btn-link my-1 p-0 m-md-0 ml-md-3">Storage Pod</a>
-            <p class="text-dark my-1 p-0 m-d-0 ml-md-3">{{ current_user.user }} (<a href="#" id="btn-logout" class="">Logout</a>)</p>
+            <p class="text-dark my-1 p-0 m-d-0 ml-md-3">{{ current_user.user }} (<a href="#" id="btn-logout" class="">Logout</a>)
+            </p>
+        </div>
+
+        {# Web CLI Container #}
+        <div id="cli-container" data-port="{{ session.get('web_cli_port') }}"
+             style="display: none; position: fixed; bottom: 0; left: 0; height: 50vh; width: 100%; z-index: 50; box-shadow: 0 -2px 6px rgba(0,0,0,0.30);"
+             class="rounded-top overflow-hidden">
+            {{
+                ('<iframe src="#" id="cli-iframe" title="Web CLI" style="width: 100%; height: 100%; border: none;"></iframe>' | safe ) if session['web_cli'] == True
+            }}
         </div>
     </nav>
+
 </div>
 
 {#  Toasts Container #}
 <div style="position: fixed; bottom: 1rem; right: 1rem; overflow: scroll; max-height: 90vh;" id="toast-container"></div>
 
+
 {# JavaScript files #}
 <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+{# JS file specific to web cli mode #}
+<script defer src="{{ url_for('static', filename='js/webcli.js') if session['web_cli'] == True else '#' }}"></script>
 
 {% block footer %}{% endblock footer %}
 

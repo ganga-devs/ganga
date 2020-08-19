@@ -31,6 +31,12 @@ INTERNAL_URL = f"http://localhost:{os.environ.get('INTERNAL_PORT')}"
 actions = {}
 plugins = {}
 
+# If gunicorn server is started by the Web CLI server (ganga-gui)
+web_cli = False
+if os.environ.get("WEB_CLI") is not None:
+    web_cli = True
+    web_cli_port = os.environ.get("WEB_CLI_PORT")
+
 
 # ******************** View Routes ******************** #
 
@@ -42,6 +48,14 @@ def initial_run():
     """
 
     global actions, plugins
+
+    if web_cli is True:
+        if not ping_web_cli():
+            # TODO
+            pass
+        session["web_cli"] = True
+        session["web_cli_port"] = web_cli_port
+
 
     if not ping_internal():
         # TODO Stop servers
@@ -820,7 +834,8 @@ def logs_page():
         flash(str(err), "danger")
         return redirect(url_for("dashboard"))
 
-    return render_template("logs.html", title="Logs", ganga_log_data=ganga_log_data, gui_accesslog_data=gui_accesslog_data, gui_errorlog_data=gui_errorlog_data)
+    return render_template("logs.html", title="Logs", ganga_log_data=ganga_log_data,
+                           gui_accesslog_data=gui_accesslog_data, gui_errorlog_data=gui_errorlog_data)
 
 
 @gui.route("/storage", defaults={"path": ""}, methods=["GET", "POST"])
@@ -1687,6 +1702,28 @@ def ping_internal():
         print("Internal API server not online, retrying...")
         trials += 1
         if trials > 10:
+            return False
+
+
+# Ping Web CLI server
+def ping_web_cli():
+    """
+    Ping web cli server so that it starts the Ganga Session.
+    """
+
+    trials = 0
+    while True:
+        try:
+            res = requests.get(f"http://localhost:{web_cli_port}/ping")
+            ping = res.json()
+            if ping is True:
+                return True
+        except:
+            time.sleep(1)
+
+        print("Web CLI server not online, retrying...")
+        trials += 1
+        if trials > 20:
             return False
 
 

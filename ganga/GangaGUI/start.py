@@ -88,12 +88,62 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
 
     # For when it is called by ganga-gui binary for starting the integrated terminal
     if os.environ.get('WEB_CLI') is not None:
-        print("GUI TERMINAL: STARTING GANGA...")  # TODO
+
+        # Get the internal port to start the API server on
+        if os.environ.get("INTERNAL_PORT") is not None:
+            internal_port = int(os.environ.get("INTERNAL_PORT"))
+
         # Start internal API server, it is always be meant for internal use by the GUI server
         api_server = APIServerThread("GangaGUIAPI", "localhost", internal_port)
         api_server.start()
+        print("Yes reached here.")
 
         return True
+
+    # Create default user
+    gui_user, gui_password = create_default_user(password=password)
+
+    # Start internal API server, it is always be meant for internal use by the GUI server
+    api_server = APIServerThread("GangaGUIAPI", "localhost", internal_port)
+    api_server.start()
+
+    # Start GUI server
+    gui_server = start_gui_server(gui_host=gui_host, gui_port=gui_port, internal_port=internal_port,
+                                  package_dir=ganga_package_dir)
+
+    # Display necessary information to the user
+    logger.info(f"GUI Login Details: user='{gui_user.user}', password='{gui_password}'")
+    logger.info(f"You can now access the GUI at http://{gui_host}:{gui_port}")
+    logger.info(
+        f"If on a remote system you may need to set up port forwarding to reach the web server. This can be done with 'ssh -D {gui_port} <remote-ip>' from a terminal.")
+
+    return gui_host, gui_port, gui_user.user, gui_password
+
+
+def stop_gui():
+    """Stop API Flask server on a GangaThread and the GUI Flask server running on a Gunicorn server"""
+
+    global api_server, gui_server
+
+    if api_server is not None:
+        if api_server.shutdown():
+            api_server = None
+        else:
+            raise Exception("Error in shutting down the API server.")
+
+    if gui_server is not None:
+        gui_server.terminate()
+
+
+# ******************** Helper Functions ******************** #
+
+
+def create_default_user(password=None):
+    """
+    Creates default user called GangaGUIAdmin.
+    :param password: str
+    :return: tuple
+    """
 
     # Database path
     db_path = gui.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "")
@@ -124,42 +174,45 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
         db.session.add(gui_user)
         db.session.commit()
 
-    # Start internal API server, it is always be meant for internal use by the GUI server
-    api_server = APIServerThread("GangaGUIAPI", "localhost", internal_port)
-    api_server.start()
+    return gui_user, password
+
+
+def start_gui_server(gui_host, gui_port, internal_port, package_dir=ganga_package_dir, web_cli_mode=False, web_cli_port=None):
+    """
+    Start the GUI server on a Gunicorn server - this is started as a separate process and communicated with the Internal API server running on a GangaThread which has access to Ganga resources.
+
+    :param gui_host: str
+    :param gui_port: str
+    :param internal_port: int or str
+    :param package_dir: str
+    :return: Popen
+    """
 
     # Start the GUI on a Gunicorn (production ready) server.
+
+    # Set the env for the GUI server
     gui_env = os.environ.copy()
     gui_env["INTERNAL_PORT"] = str(internal_port)
+    # If started by ganga-gui binary to start the web cli
+    if web_cli_mode:
+        if web_cli_port is None:
+            raise Exception("Please provide Web CLI Port.")
+        gui_env["WEB_CLI"] = str(True)
+        gui_env["WEB_CLI_PORT"] = str(int(web_cli_port))
+
+    # Log location
     gui_accesslog_file = gui.config["ACCESS_LOG"]
     gui_errorlog_file = gui.config["ERROR_LOG"]
+
+    # Start the server
     gui_server = subprocess.Popen(
-        f"gunicorn --chdir {ganga_package_dir} --log-level warning --access-logfile {gui_accesslog_file} --error-logfile {gui_errorlog_file} --bind {gui_host}:{gui_port} wsgi:gui",
-        shell=True, cwd=os.path.dirname(__file__), env=gui_env)
+        f"gunicorn --chdir {package_dir} --log-level warning --access-logfile {gui_accesslog_file} --error-logfile {gui_errorlog_file} --bind {gui_host}:{gui_port} wsgi:gui",
+        shell=True, cwd=os.path.dirname(os.path.abspath(__file__)), env=gui_env)
 
-    # Display necessary information to the user
-    logger.info(f"GUI Login Details: user='{gui_user.user}', password='{password}'")
-    logger.info(f"You can now access the GUI at http://{gui_host}:{gui_port}")
-    logger.info(
-        f"If on a remote system you may need to set up port forwarding to reach the web server. This can be done with 'ssh -D {gui_port} <remote-ip>' from a terminal.")
-
-    return gui_host, gui_port, gui_user.user, password
+    return gui_server
 
 
-def stop_gui():
-    """Stop API Flask server on a GangaThread and the GUI Flask server running on a Gunicorn server"""
-
-    global api_server, gui_server
-
-    if api_server is not None:
-        if api_server.shutdown():
-            api_server = None
-        else:
-            raise Exception("Error in shutting down the API server.")
-
-    if gui_server is not None:
-        gui_server.terminate()
-
+# ******************** EOF ******************** #
 
 # TODO Remove
 # Use this for starting the server for development purposes

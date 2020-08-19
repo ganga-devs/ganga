@@ -8,10 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshIntervalSelector.addEventListener('change', updateRefreshInterval);
 
     // Add event listen to logout button to trigger logout function
-    const btnLogout = document.querySelector('#btn-logout')
-    btnLogout.addEventListener('click', logoutHandler)
+    const btnLogout = document.querySelector('#btn-logout');
+    btnLogout.addEventListener('click', logoutHandler);
 
 });
+
 
 // Global variables
 let notificationCount = 0;
