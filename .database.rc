@@ -1,15 +1,15 @@
-# Ganga configuration file ($Name: Ganga-8-3-1 $). DO NOT remove this line.
+# Ganga configuration file ($Name: Ganga-8-3-3 $). DO NOT remove this line.
 #
 #=======================================================================
 # All  settings are  commented out,  so ganga  will apply  the default
-# values automatically. Wherever possible these default values are indicated.
+# values automatically. Wherever possible these default values are indicated. 
 # To see which configuration settings are used, type at ganga prompt:
 #  print config
 #
 # Support of Atlas and LHCb-specific functionality:
 #
 # GANGA_CONFIG_PATH environment variable or --config-path option at the command
-# line is used to enable LHCb or Atlas extensions.
+# line is used to enable LHCb or Atlas extensions. 
 # For example:
 #    $ export GANGA_CONFIG_PATH=GangaLHCb/LHCb.ini
 #    $ ganga
@@ -19,6 +19,32 @@
 # In LHCb environment you do not need to worry about it because it is done
 # by GangaEnv command automatically.
 #
+
+
+#=======================================================================
+#  Selection of central database for ganga
+[CentralDatabaseConfigurations]
+
+#  the identifier used to tag the docker container
+#containerName = NotImplementedError
+
+#  others have not been implemented yet
+#database = NotImplementedError
+
+#  name of database
+#dbname = NotImplementedError
+
+#  host
+#host = NotImplementedError
+
+#  password
+#password = NotImplementedError
+
+#  port
+#port = NotImplementedError
+
+#  username
+#username = NotImplementedError
 
 
 #=======================================================================
@@ -51,7 +77,7 @@
 #IgnoreRuntimeWarnings = False
 
 #  the search path for the load() function
-#LOAD_PATH =
+#LOAD_PATH = 
 
 #  Do not require an AFS token when running on an AFS filesystem. Not
 #  recommended!
@@ -71,7 +97,7 @@
 #  Examples:
 #    RUNTIME_PATH = GangaGUI
 #    RUNTIME_PATH = /my/SpecialExtensions:GangaTest
-#RUNTIME_PATH =
+#RUNTIME_PATH = 
 
 #  Flag to print out the relevent subsection of release notes for each
 #  experiment at start up
@@ -92,13 +118,13 @@
 
 #  Full path to user script to call periodically. The script will be executed as
 #  if called within Ganga by 'execfile'.
-#ServerUserScript =
+#ServerUserScript = 
 
 #  Time in seconds between executions of the user script
 #ServerUserScriptWaitTime = 300
 
 #  block of GPI commands executed at startup
-#StartupGPI =
+#StartupGPI = 
 
 #  The type of the interactive shell: IPython (cooler) or Console (limited)
 #TextShell = IPython
@@ -127,7 +153,7 @@
 #  Location of local job repositories and workspaces. Default is ~/gangadir but
 #  in somecases (such as LSF CNAF) this needs to be modified to point to the
 #  shared file system directory.
-#gangadir = /home/weakstation/gangadir
+#gangadir = /home/dumbmachine/gangadir
 
 #  Type of locking strategy which can be used. UNIX or FIXED . default = UNIX
 #lockingStrategy = UNIX
@@ -149,6 +175,8 @@
 #  Type of the repository.
 #  Examples:
 #    LocalXML
+#    Database
+#    CentralDatabase
 repositorytype = Database
 
 #  If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs.
@@ -161,36 +189,11 @@ repositorytype = Database
 #  User name. The same person may have different roles (user names) and still
 #  use the same gangadir. Unless explicitly set this option defaults to the real
 #  user name.
-#user = weakstation
+#user = dumbmachine
 
 #  Type of workspace. Workspace is a place where input and output sandbox of
 #  jobs are stored. Currently the only supported type is LocalFilesystem.
 #workspacetype = LocalFilesystem
-
-#=======================================================================
-#  Selection of database for ganga
-[DatabaseConfigurations]
-
-#  the identifier used to tag the docker container
-#containerName = ganga_mongomon
-
-#  others have not been implemented yet
-#database = MONGODB
-
-#  name of database
-#dbname = default
-
-#  host
-#host = default
-
-#  password
-#password = default
-
-#  port
-#port = default
-
-#  username
-#username = default
 
 
 #=======================================================================
@@ -210,11 +213,11 @@ repositorytype = Database
 
 #  The file containing the python commands that the local DIRAC server can
 #  execute. The default DiracCommands.py is added automatically
-#DiracCommandFiles = ['/home/weakstation/work/ganga/ganga/GangaDirac/Lib/Server/DiracDefinition.py', '/home/weakstation/work/ganga/ganga/GangaDirac/Lib/Server/DiracCommands.py']
+#DiracCommandFiles = ['/home/dumbmachine/work/ganga/ganga/GangaDirac/Lib/Server/DiracDefinition.py', '/home/dumbmachine/work/ganga/ganga/GangaDirac/Lib/Server/DiracCommands.py']
 
 #  DEPRECATED. Ganga environment file for DIRAC environment (do not change
 #  unless you are sure you know what you are doing).
-#DiracEnvFile =
+#DiracEnvFile = 
 
 #  A JSON file containing the environment for DIRAC. Overrides DiracEnvSource
 #DiracEnvJSON = None
@@ -230,7 +233,7 @@ repositorytype = Database
 #  Base dir prepended to create LFN name from DiracFile('name'). If this is
 #  unset then it will default to /[userVO]/user/[first letter of user
 #  name]/[user name]
-#DiracLFNBase =
+#DiracLFNBase = 
 
 #  The Maximum allowed number of bulk submitted jobs before Ganga intervenes
 #MaxDiracBulkJobs = 500
@@ -314,7 +317,36 @@ repositorytype = Database
 #useGangaPath = False
 
 #  The name of the VO that the user belongs to
-#userVO =
+#userVO = 
+
+
+#=======================================================================
+#  Selection of database for ganga
+[DatabaseConfigurations]
+
+#  Docker Image for the database
+#baseImage = mongo:latest
+
+#  the identifier used to tag the docker container
+#containerName = gangaDB
+
+#  Database Controller [Native, Docker, uDocker, Singularity]
+#controller = docker
+
+#  name of database
+#dbname = default
+
+#  host
+#host = default
+
+#  password
+#password = default
+
+#  port
+#port = 27017
+
+#  username
+#username = default
 
 
 #=======================================================================
@@ -502,12 +534,12 @@ repositorytype = Database
 [LCG]
 
 #  sets allowed computing elements by a regular expression
-#AllowedCEs =
+#AllowedCEs = 
 
 #  Config file for ARC submission. Use to specify CEs, etc. Default is blank
 #  which will mean no config file is specified and the default
 #  (~/arc/client.conf) is used
-#ArcConfigFile =
+#ArcConfigFile = 
 
 #  sets the copy command for ARC when dealing with sandboxes
 #ArcCopyCommand = arcget
@@ -528,16 +560,16 @@ repositorytype = Database
 
 #  sets the generic LCG-UI configuration script for the GLITE workload
 #  management system
-#Config =
+#Config = 
 
 #  sets the copy command for CREAM when dealing with sandboxes
 #CreamCopyCommand = gfal-copy-url
 
 #  sets the baseURI for getting the input sandboxes for the job
-#CreamInputSandboxBaseURI =
+#CreamInputSandboxBaseURI = 
 
 #  sets the baseURI for putting the output sandboxes for the job
-#CreamOutputSandboxBaseURI =
+#CreamOutputSandboxBaseURI = 
 
 #  sets the file catalogue server
 #DefaultLFC = prod-lfc-shared-central.cern.ch
@@ -547,10 +579,10 @@ repositorytype = Database
 
 #  sets the space token for storing temporary files (e.g. oversized input
 #  sandbox)
-#DefaultSRMToken =
+#DefaultSRMToken = 
 
 #  sets excluded computing elements by a regular expression
-#ExcludedCEs =
+#ExcludedCEs = 
 
 
 #GLITE_ALLOWED_WMS_LIST = []
@@ -559,7 +591,7 @@ repositorytype = Database
 #GLITE_SETUP = /afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh
 
 #  sets the WMProxy service to be contacted
-#GLITE_WMS_WMPROXY_ENDPOINT =
+#GLITE_WMS_WMPROXY_ENDPOINT = 
 
 #  sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job
 #GliteBulkJobSize = 50
@@ -583,10 +615,10 @@ repositorytype = Database
 #OutputDownloaderThread = 10
 
 #  sets the ranking rule for picking up computing element
-#Rank =
+#Rank = 
 
 #  sets the replica catalogue server
-#ReplicaCatalog =
+#ReplicaCatalog = 
 
 #  sets the full qualified class name for other specific LCG job requirements
 #Requirements = GangaCore.Lib.LCG.LCGRequirements
@@ -607,7 +639,7 @@ repositorytype = Database
 #StatusPollingTimeout = 300
 
 #  sets the storage index
-#StorageIndex =
+#StorageIndex = 
 
 #  sets the number of concurrent threads for job submission to gLite WMS
 #SubmissionThread = 10
@@ -616,7 +648,7 @@ repositorytype = Database
 #SubmissionTimeout = 300
 
 #  sets the name of the grid virtual organisation
-#VirtualOrganisation =
+#VirtualOrganisation = 
 
 
 #=======================================================================
@@ -639,7 +671,7 @@ repositorytype = Database
 #kill_str = bkill %s
 
 #  String contains commands executing before submiting job to queue
-#postexecute =
+#postexecute = 
 # def filefilter(fn):
 #   # FILTER OUT Batch INTERNAL INPUT/OUTPUT FILES:
 #   # 10 digits . any number of digits . err or out
@@ -648,7 +680,7 @@ repositorytype = Database
 #   return internals.match(fn) or fn == '.Batch.start'
 
 #  String contains commands executing before submiting job to queue
-#preexecute =
+#preexecute = 
 
 
 #  Name of environment with queue name of the job
@@ -712,7 +744,7 @@ repositorytype = Database
 
 #  custom formatting string for Ganga logging  e.g. '%(name)-35s:
 #  %(levelname)-8s %(message)s'
-#_customFormat =
+#_customFormat = 
 
 #  format of logging messages: TERSE,NORMAL,VERBOSE,DEBUG
 #_format = NORMAL
@@ -736,7 +768,7 @@ repositorytype = Database
 #associate = {'log': 'TextMerger', 'root': 'RootMerger', 'text': 'TextMerger', 'txt': 'TextMerger'}
 
 #  location of the merger's outputdir
-#merge_output_dir = /home/weakstation/gangadir/merge_results
+#merge_output_dir = /home/dumbmachine/gangadir/merge_results
 
 #  Standard (default) merger
 #std_merge = TextMerger
@@ -836,14 +868,14 @@ repositorytype = Database
 #kill_str = qdel %s
 
 #  String contains commands executing before submiting job to queue
-#postexecute =
+#postexecute = 
 # env = os.environ
 # jobnumid = env["PBS_JOBID"]
 # os.chdir("/tmp/")
 # os.system("rm -rf /tmp/%s/" %jobnumid)
 
 #  String contains commands executing before submiting job to queue
-#preexecute =
+#preexecute = 
 # env = os.environ
 # jobnumid = env["PBS_JOBID"]
 # os.system("mkdir /tmp/%s/" %jobnumid)
@@ -892,7 +924,7 @@ repositorytype = Database
 
 #  disk space checking callback. This function should return False when there is
 #  no disk space available, True otherwise
-#DiskSpaceChecker =
+#DiskSpaceChecker = 
 
 #  Time before the user gets the warning that a thread has locked up due to
 #  failing to update the heartbeat attribute
@@ -1020,7 +1052,7 @@ repositorytype = Database
 #location = /ROOT/6.04.02/x86_64-slc6-gcc48-opt
 
 #  Set to a specific ROOT version. Will override other options.
-#path =
+#path = 
 
 #  Location of the python used for execution of PyROOT script
 #pythonhome = /Python/2.7.9.p1/x86_64-slc6-gcc48-opt
@@ -1066,7 +1098,7 @@ repositorytype = Database
 #kill_str = qdel %s
 
 #  String contains commands executing before submiting job to queue
-#postexecute =
+#postexecute = 
 
 #  String contains commands executing before submiting job to queue
 #preexecute = os.chdir(os.environ["TMPDIR"])
@@ -1121,7 +1153,7 @@ repositorytype = Database
 #kill_str = scancel %s
 
 #  String contains the last commands executing right before the job ends
-#postexecute =
+#postexecute = 
 # env = os.environ
 # jobnumid = env.get("SLURM_JOB_ID") or env.get("SLURM_JOBID") or "pid_"+str(os.getpid())
 # scratchDir = env.get("MEMFS") or env.get("LOCALFS") or env.get("SCRATCH_LOCAL") or env.get("SCRATCHDIR") or env.get("SLURM_TMPDIR") or env.get("SCRATCH") or env.get("TMPDIR") or "/tmp"
@@ -1131,7 +1163,7 @@ repositorytype = Database
 # os.system("rm -rf "+scratchDir)
 
 #  String contains the first commands executing right after the job starts
-#preexecute =
+#preexecute = 
 # env = os.environ
 # jobnumid = env.get("SLURM_JOB_ID") or env.get("SLURM_JOBID") or "pid_"+str(os.getpid())
 # scratchDir = env.get("MEMFS") or env.get("LOCALFS") or env.get("SCRATCH_LOCAL") or env.get("SCRATCHDIR") or env.get("SLURM_TMPDIR") or env.get("SCRATCH") or env.get("TMPDIR") or "/tmp"
@@ -1193,7 +1225,7 @@ repositorytype = Database
 [defaults_ARC]
 
 #  ARC CE endpoint
-#CE =
+#CE = 
 
 
 #credential_requirements = VomsProxy()
@@ -1202,7 +1234,7 @@ repositorytype = Database
 #jobtype = Normal
 
 #  The queue to send the job to.
-#queue =
+#queue = 
 
 #  Requirements for the resource selection
 #requirements = None
@@ -1235,7 +1267,7 @@ repositorytype = Database
 [defaults_CREAM]
 
 #  CREAM CE endpoint
-#CE =
+#CE = 
 
 
 #credential_requirements = VomsProxy()
@@ -1255,7 +1287,7 @@ repositorytype = Database
 [defaults_Condor]
 
 #  Provide an accounting group for this job.
-#accounting_group =
+#accounting_group = 
 
 #  Additional options to set in the CDF file given by a dictionary
 #cdf_options = {}
@@ -1267,10 +1299,10 @@ repositorytype = Database
 #getenv = False
 
 #  Globus RSL settings (for Condor-G submission)
-#globus_rsl =
+#globus_rsl = 
 
 #  Globus scheduler to be used (required for Condor-G submission)
-#globusscheduler =
+#globusscheduler = 
 
 #  Ranking scheme to be used when selecting execution host
 #rank = Memory
@@ -1298,23 +1330,23 @@ repositorytype = Database
 [defaults_CondorRequirements]
 
 #  System architecture
-#arch =
+#arch = 
 
 #  Excluded execution hosts, given as a string of space-separated names:
 #  'machine1 machine2 machine3'; or as a list of names: [ 'machine1',
 #  'machine2', 'machine3' ]
-#excluded_machine =
+#excluded_machine = 
 
 #  Requested execution hosts, given as a string of space-separated names:
 #  'machine1 machine2 machine3'; or as a list of names: [ 'machine1',
 #  'machine2', 'machine3' ]
-#machine =
+#machine = 
 
 #  Mininum physical memory
 #memory = 0
 
 #  Operating system
-#opsys =
+#opsys = 
 
 #  Other requirements, given as a list of strings, for example: [ 'OSTYPE ==
 #  "SLC4"', '(POOL == "GENERAL" || POOL == "GEN_FARM")' ]; the final requirement
@@ -1333,7 +1365,7 @@ repositorytype = Database
 #check_all_trfs = True
 
 #  comment of the task
-#comment =
+#comment = 
 
 #  Number of Jobs run concurrently
 #float = 0
@@ -1505,7 +1537,7 @@ repositorytype = Database
 [defaults_Docker]
 
 #  Link to the container image
-#image =
+#image = 
 
 #  Mode of container execution
 #mode = P1
@@ -1519,10 +1551,10 @@ repositorytype = Database
 #options = []
 
 #  Deploy token password
-#tokenpassword =
+#tokenpassword = 
 
 #  Deploy token username
-#tokenuser =
+#tokenuser = 
 
 
 #=======================================================================
@@ -1562,7 +1594,7 @@ repositorytype = Database
 [defaults_File]
 
 #  path to the file source
-#name =
+#name = 
 
 #  destination subdirectory (a relative path)
 #subdir = .
@@ -1620,7 +1652,7 @@ repositorytype = Database
 [defaults_GenericSplitter]
 
 #  The attribute on which the job is splitted
-#attribute =
+#attribute = 
 
 #  Dictionary to specify multiple attributes to split over
 #multi_attrs = {}
@@ -1637,13 +1669,13 @@ repositorytype = Database
 #compressed = False
 
 #  reason for the upload failure
-#failureReason =
+#failureReason = 
 
 #  local dir where the file is stored, used from get and put methods
-#localDir =
+#localDir = 
 
 #  pattern of the file name
-#namePattern =
+#namePattern = 
 
 
 #=======================================================================
@@ -1654,13 +1686,13 @@ repositorytype = Database
 #attributes = {}
 
 #  the main identity of the file
-#id =
+#id = 
 
 #  the md5sum of the file
-#md5sum =
+#md5sum = 
 
 #  the name of the file
-#name =
+#name = 
 
 
 #=======================================================================
@@ -1671,7 +1703,7 @@ repositorytype = Database
 #max_try = 1
 
 #  file transfer protocol
-#protocol =
+#protocol = 
 
 
 #=======================================================================
@@ -1682,13 +1714,13 @@ repositorytype = Database
 #attributes = {}
 
 #  the main identity of the file
-#id =
+#id = 
 
 #  the md5sum of the file
-#md5sum =
+#md5sum = 
 
 #  the name of the file
-#name =
+#name = 
 
 
 #=======================================================================
@@ -1696,7 +1728,7 @@ repositorytype = Database
 [defaults_GridftpSandboxCache]
 
 #  the base URI for storing cached files
-#baseURI =
+#baseURI = 
 
 #  the command to be exectued to copy files
 #copyCommand = globus-copy-url
@@ -1705,7 +1737,7 @@ repositorytype = Database
 #max_try = 1
 
 #  file transfer protocol
-#protocol =
+#protocol = 
 
 
 #=======================================================================
@@ -1716,7 +1748,7 @@ repositorytype = Database
 #check_all_trfs = True
 
 #  comment of the task
-#comment =
+#comment = 
 
 #  Number of Jobs run concurrently
 #float = 0
@@ -1738,13 +1770,13 @@ repositorytype = Database
 [defaults_Job]
 
 #  specification of the application to be executed
-#application = <GangaCore.Lib.Executable.Executable.Executable object at 0x7f8114d868f0>
+#application = <GangaCore.Lib.Executable.Executable.Executable object at 0x7fa799b3e4f0>
 
 #  specification of the resources to be used (e.g. batch system)
-#backend = <GangaCore.Lib.Localhost.Localhost.Localhost object at 0x7f8114d86950>
+#backend = <GangaCore.Lib.Localhost.Localhost.Localhost object at 0x7fa799b42a90>
 
 #  comment of the job
-#comment =
+#comment = 
 
 #  Automatically resubmit failed subjobs
 #do_auto_resubmit = False
@@ -1763,7 +1795,7 @@ repositorytype = Database
 #inputsandbox = []
 
 #  optional label which may be any combination of ASCII characters
-#name =
+#name = 
 
 #  dataset definition (typically this is specific either to an application, a
 #  site or the virtual organization
@@ -1802,13 +1834,13 @@ repositorytype = Database
 [defaults_JobTemplate]
 
 #  specification of the application to be executed
-#application = <GangaCore.Lib.Executable.Executable.Executable object at 0x7f8114da18f0>
+#application = <GangaCore.Lib.Executable.Executable.Executable object at 0x7fa799b543b0>
 
 #  specification of the resources to be used (e.g. batch system)
-#backend = <GangaCore.Lib.Localhost.Localhost.Localhost object at 0x7f8114da1950>
+#backend = <GangaCore.Lib.Localhost.Localhost.Localhost object at 0x7fa799b54400>
 
 #  comment of the job
-#comment =
+#comment = 
 
 #  Automatically resubmit failed subjobs
 #do_auto_resubmit = False
@@ -1827,7 +1859,7 @@ repositorytype = Database
 #inputsandbox = []
 
 #  optional label which may be any combination of ASCII characters
-#name =
+#name = 
 
 #  dataset definition (typically this is specific either to an application, a
 #  site or the virtual organization
@@ -1866,7 +1898,7 @@ repositorytype = Database
 [defaults_JobTree]
 
 
-#name =
+#name = 
 
 
 #=======================================================================
@@ -1874,7 +1906,7 @@ repositorytype = Database
 [defaults_LCG]
 
 #  Request a specific Computing Element
-#CE =
+#CE = 
 
 
 #credential_requirements = VomsProxy()
@@ -1903,19 +1935,19 @@ repositorytype = Database
 #attributes = {}
 
 #  the main identity of the file
-#id =
+#id = 
 
 #  the LFC hostname
-#lfc_host =
+#lfc_host = 
 
 #  the original file path on local machine
-#local_fpath =
+#local_fpath = 
 
 #  the md5sum of the file
-#md5sum =
+#md5sum = 
 
 #  the name of the file
-#name =
+#name = 
 
 
 #=======================================================================
@@ -1923,7 +1955,7 @@ repositorytype = Database
 [defaults_LCGRequirements]
 
 #  allowed CEs in regular expression
-#allowedCEs =
+#allowedCEs = 
 
 #  Minimum available CPU time (min)
 #cputime = 0
@@ -1936,7 +1968,7 @@ repositorytype = Database
 #datarequirements = []
 
 #  excluded CEs in regular expression
-#excludedCEs =
+#excludedCEs = 
 
 #  External connectivity
 #ipconnectivity = False
@@ -1962,7 +1994,7 @@ repositorytype = Database
 [defaults_LCGSEFile]
 
 #  the LCG SE SURL
-#SURL =
+#SURL = 
 
 #  wheather the output file should be compressed before sending somewhere
 #compressed = False
@@ -1971,34 +2003,34 @@ repositorytype = Database
 #credential_requirements = VomsProxy
 
 #  outputdir of the job with which the outputsandbox file object is associated
-#joboutputdir =
+#joboutputdir = 
 
 #  the LCG LFC hostname
 #lfc_host = lfc-dteam.cern.ch
 
 #  local dir where the file is stored, used from get and put methods
-#localDir =
+#localDir = 
 
 #  list of locations where the outputfiles were uploaded
 #locations = []
 
 #  pattern of the file name
-#namePattern =
+#namePattern = 
 
 #  the LCG SE port
-#port =
+#port = 
 
 #  the LCG SE hostname
 #se = srm-public.cern.ch
 
 #  the relative path to the file from the VO directory on the SE
-#se_rpath =
+#se_rpath = 
 
 #  the LCG SE type
-#se_type =
+#se_type = 
 
 #  the SRM space token, meaningful only when se_type is set to srmv2
-#srm_token =
+#srm_token = 
 
 
 #=======================================================================
@@ -2006,16 +2038,16 @@ repositorytype = Database
 [defaults_LCGSandboxCache]
 
 #  the LCG LFC hostname
-#lfc_host =
+#lfc_host = 
 
 #  max. number of tries in case of failures
 #max_try = 1
 
 #  file transfer protocol
-#protocol =
+#protocol = 
 
 #  the LCG SE hostname
-#se =
+#se = 
 
 #  the relative path to the VO directory on the SE
 #se_rpath = generated
@@ -2024,7 +2056,7 @@ repositorytype = Database
 #se_type = srmv2
 
 #  the SRM space token, meaningful only when se_type is set to srmv2
-#srm_token =
+#srm_token = 
 
 
 #=======================================================================
@@ -2032,10 +2064,10 @@ repositorytype = Database
 [defaults_LSF]
 
 #  extra options for Batch. See help(Batch) for more details
-#extraopts =
+#extraopts = 
 
 #  queue name as defomed in your local Batch installation
-#queue =
+#queue = 
 
 
 #=======================================================================
@@ -2057,10 +2089,10 @@ repositorytype = Database
 #compressed = False
 
 #  local dir where the file is stored, used from get and put methods
-#localDir =
+#localDir = 
 
 #  pattern of the file name
-#namePattern =
+#namePattern = 
 
 
 #=======================================================================
@@ -2074,16 +2106,16 @@ repositorytype = Database
 #inputremotedirectory = None
 
 #  outputdir of the job with which the outputsandbox file object is associated
-#joboutputdir =
+#joboutputdir = 
 
 #  local dir where the file is stored, used from get and put methods
-#localDir =
+#localDir = 
 
 #  list of locations where the outputfiles are uploaded
 #locations = []
 
 #  pattern of the file name
-#namePattern =
+#namePattern = 
 
 #  keyword path to where the output should be uploaded, i.e.
 #  /some/path/here/{jid}/{sjid}/{fname},
@@ -2135,7 +2167,7 @@ repositorytype = Database
 [defaults_Notifier]
 
 #  Email address
-#address =
+#address = 
 
 #  Email on subjob completion
 #verbose = False
@@ -2146,10 +2178,10 @@ repositorytype = Database
 [defaults_PBS]
 
 #  extra options for Batch. See help(Batch) for more details
-#extraopts =
+#extraopts = 
 
 #  queue name as defomed in your local Batch installation
-#queue =
+#queue = 
 
 
 #=======================================================================
@@ -2160,13 +2192,13 @@ repositorytype = Database
 #environment = {}
 
 #  Command line to start ganga on the remote host
-#ganga_cmd =
+#ganga_cmd = 
 
 #  The directory to use for the remote workspace, repository, etc.
-#ganga_dir =
+#ganga_dir = 
 
 #  The remote host and port number ('host:port') to use. Default port is 22.
-#host =
+#host = 
 
 #  Set to the type of ssh key to use (if required). Possible values are 'RSA'
 #  and 'DSS'.
@@ -2181,10 +2213,10 @@ repositorytype = Database
 #  Set to true to the location of the the ssh key to use for authentication,
 #  e.g. /home/mws/.ssh/id_rsa. Note, you should make sure 'key_type' is also set
 #  correctly.
-#ssh_key =
+#ssh_key = 
 
 #  The username at the remote host
-#username =
+#username = 
 
 
 #=======================================================================
@@ -2248,10 +2280,10 @@ repositorytype = Database
 [defaults_SGE]
 
 #  extra options for Batch. See help(Batch) for more details
-#extraopts =
+#extraopts = 
 
 #  queue name as defomed in your local Batch installation
-#queue =
+#queue = 
 
 
 #=======================================================================
@@ -2262,7 +2294,7 @@ repositorytype = Database
 #associated_files = []
 
 #  path to the file source
-#name =
+#name = 
 
 #  destination subdirectory (a relative path)
 #subdir = .
@@ -2284,16 +2316,16 @@ repositorytype = Database
 #inputremotedirectory = None
 
 #  outputdir of the job with which the outputsandbox file object is associated
-#joboutputdir =
+#joboutputdir = 
 
 #  local dir where the file is stored, used from get and put methods
-#localDir =
+#localDir = 
 
 #  list of locations where the outputfiles are uploaded
 #locations = []
 
 #  pattern of the file name
-#namePattern =
+#namePattern = 
 
 #  keyword path to where the output should be uploaded, i.e.
 #  /some/path/here/{jid}/{sjid}/{fname},
@@ -2312,7 +2344,7 @@ repositorytype = Database
 
 #  Link to the container image. This can either be a singularity URL or a
 #  GangaFile object
-#image =
+#image = 
 
 #  Mounts to attempt from the host system. The key is the directory name on the
 #  host, and the value inside the container. If the directory is not available
@@ -2323,10 +2355,10 @@ repositorytype = Database
 #options = []
 
 #  Deploy token password
-#tokenpassword =
+#tokenpassword = 
 
 #  Deploy token username
-#tokenuser =
+#tokenuser = 
 
 
 #=======================================================================
@@ -2334,10 +2366,10 @@ repositorytype = Database
 [defaults_Slurm]
 
 #  extra options for Batch. See help(Batch) for more details
-#extraopts =
+#extraopts = 
 
 #  queue name as defomed in your local Batch installation
-#queue =
+#queue = 
 
 
 #=======================================================================
@@ -2390,7 +2422,7 @@ repositorytype = Database
 #include_file_mask = []
 
 #  Local location to copy files to
-#local_location =
+#local_location = 
 
 
 #=======================================================================
@@ -2426,4 +2458,3 @@ repositorytype = Database
 
 #  Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation
 #vo = None
-

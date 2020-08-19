@@ -309,7 +309,6 @@ class GangaRepositoryLocal(GangaRepository):
                         for i in range(len(split_cache)):
                             if not split_cache[i]._dirty:
                                 continue
-                            logger.info("saving information now for ", this_id)
                             safe_save(
                                 master=this_id,
                                 ignore_subs=[],
@@ -341,7 +340,6 @@ class GangaRepositoryLocal(GangaRepository):
             else:
 
                 logger.debug("not has_children")
-                logger.info("saving information now for ", this_id)
                 safe_save(
                     _object=obj,
                     conn=self.connection[self.registry.name],
@@ -779,7 +777,7 @@ class GangaRepositoryLocal(GangaRepository):
             ids (list): The object keys which we want to iterate over from the objects dict
         """
         for this_id in ids:
-            self.connection.jobs.remove({"id": this_id})
+            self.connection.jobs.delete_one({"id": this_id})
             self._internal_del__(this_id)
             if this_id in self._fully_loaded:
                 del self._fully_loaded[this_id]
