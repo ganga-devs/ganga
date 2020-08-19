@@ -2,11 +2,9 @@
 Testing functions related to ganga db
 """
 import pymongo
-import pytest
 from GangaCore.Utility.Config import getConfig
-from GangaCore.Utility.Virtualization import checkNative, checkDocker
-
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
 def clean_database():
@@ -32,6 +30,13 @@ def get_db_connection():
 
     return connection
 
+config = [
+    ("DatabaseConfigurations", "port", "27017"),
+    ("DatabaseConfigurations", "baseImage", "mongo"),
+    ("DatabaseConfigurations", "dbname", "testDatabase"),
+    ("DatabaseConfigurations", "containerName", "testContainer")
+]
+
 
 class TestGangaDBGenAndLoad(GangaUnitTest):
     """
@@ -42,31 +47,17 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """
         """
         extra_opts = [
-            ('Registry', 'AutoFlusherWaitTime', 5),
             ('TestingFramework', 'AutoCleanup', 'False'),
-            ("Configuration", "repositorytype", "Database")
-            # ("DatabaseConfiguration", "port", "27017"),
-            # ("DatabaseConfiguration", "baseImage", "mongo"),
-            # ("DatabaseConfiguration", "dbname", "testDatabase"),
-            # ("DatabaseConfiguration", "containerName", "testContainer")
+            ("DatabaseConfigurations", "controller", "native")
         ]
-        # extra_opts = {
-        #     "port": "27017",
-        #     "baseImage": "mongo",
-        #     "dbname": "testDatabase",
-        #     "containerName": "testContainer"
-        # }
         self.connection = get_db_connection()
-        super(TestGangaDBGenAndLoad, self).setUp(extra_opts=extra_opts)
+        super(TestGangaDBGenAndLoad, self).setUp(repositorytype="Database", extra_opts=extra_opts)
 
     def test_a_JobConstruction(self):
         """
         Constructing the first job
         """
         assert 'False' == (getConfig('TestingFramework')['AutoCleanup'])
-        assert "testDatabase" == (getConfig('DatabaseConfiguration')['dbname'])
-        assert "testContainer" == (
-            getConfig('DatabaseConfiguration')['containerName'])
 
         from GangaCore.GPI import Job, jobs
         j = Job()

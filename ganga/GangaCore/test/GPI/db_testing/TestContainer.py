@@ -57,6 +57,7 @@ class TestDatabaseBackends(GangaUnitTest):
             # starting the database container
             docker_handler(
                 action="start",
+                gangadir=self.gangadir(),
                 database_config=self.database_config
             )
             # testing status of the database container
@@ -87,6 +88,7 @@ class TestDatabaseBackends(GangaUnitTest):
             # start the singularity container
             singularity_handler(
                 action="start",
+                gangadir=self.gangadir(),
                 database_config=self.database_config
             )
 
@@ -106,6 +108,7 @@ class TestDatabaseBackends(GangaUnitTest):
             # shutting down the container
             singularity_handler(
                 action="quit",
+                gangadir=self.gangadir(),
                 database_config=self.database_config
             )
             process = subprocess.Popen(

@@ -16,10 +16,9 @@ COMMANDS = {
     "udocker": None,
     "singularity": {
         "start": {
-            "register": "singularity instance start --bind {bind_loc}:/data docker://{image_name} {instance_name}",
+            "register": "singularity instance start --bind '{bind_loc}':/data docker://{image_name} {instance_name}",
             "exec": "singularity exec instance://{instance_name} mongod --fork --logpath /data/daemon-mongod.log"
         },
-        # "start": "singularity instance start --bind data:/data {image_name} {instance_name}; singularity exec instance://ganga_mongo mongod &",
         "quit": {
             "shutdown": "singularity instance stop {instance_name}"
         }
@@ -66,7 +65,7 @@ def udocker_handler(database_config, action="start"):
     NotImplementedError
     """
     """
-    udocker run -d --name db -v ~/mongo/data:/data/db -p 27017:27017 mongo:latest
+    udocker run -d --name db -v ~/mongo/data:/data/db -p 27017:27017 mongo
 
     """
     run_command = f"{UDOCKER_BINARY} run {ARUMENTS} {database_config['databaseName']}"
@@ -79,7 +78,7 @@ def udocker_handler(database_config, action="start"):
     raise NotImplementedError
 
 
-def singularity_handler(database_config, action="start"):
+def singularity_handler(database_config, action="start", gangadir=GANGADIR):
     """
     Will handle the loading of container using docker
     -------
@@ -90,14 +89,13 @@ def singularity_handler(database_config, action="start"):
     if not installed:
         raise Exception(
             "uDocker was not installed in the system. Make sure that")
-    bind_loc = create_mongodir()
+    bind_loc = create_mongodir(gangadir=gangadir)
     for key, cmd in COMMANDS["singularity"][action].items():
         stdout = None if key == "register" else subprocess.PIPE
         command = cmd.format(
             bind_loc=bind_loc,
             instance_name=DATABASE_CONFIG["containerName"],
-            image_name=DATABASE_CONFIG["baseImage"].replace(
-                ":latest", "")
+            image_name=DATABASE_CONFIG["baseImage"]
         )
         process = subprocess.Popen(
             command, stdout=stdout, stderr=subprocess.PIPE, shell=True)

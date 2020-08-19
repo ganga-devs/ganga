@@ -968,7 +968,7 @@ db_config = makeConfig("DatabaseConfigurations",
                        "Selection of database for ganga")
 db_config.addOption("controller", "docker",
                     "Database Controller [Native, Docker, uDocker, Singularity]")
-db_config.addOption("baseImage", "mongo:latest",
+db_config.addOption("baseImage", "mongo",
                     "Docker Image for the database")
 db_config.addOption(
     "containerName", "gangaDB", "the identifier used to tag the docker container"
