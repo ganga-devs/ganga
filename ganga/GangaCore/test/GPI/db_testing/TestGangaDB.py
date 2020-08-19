@@ -44,11 +44,11 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         extra_opts = [
             ('Registry', 'AutoFlusherWaitTime', 5),
             ('TestingFramework', 'AutoCleanup', 'False'),
-            ("DatabaseConfiguration", "port", "27017"),
-            ("Configuration", "repositorytype", "Database"),
-            ("DatabaseConfiguration", "baseImage", "mongo"),
-            ("DatabaseConfiguration", "dbname", "testDatabase"),
-            ("DatabaseConfiguration", "containerName", "testContainer")
+            ("Configuration", "repositorytype", "Database")
+            # ("DatabaseConfiguration", "port", "27017"),
+            # ("DatabaseConfiguration", "baseImage", "mongo"),
+            # ("DatabaseConfiguration", "dbname", "testDatabase"),
+            # ("DatabaseConfiguration", "containerName", "testContainer")
         ]
         # extra_opts = {
         #     "port": "27017",
