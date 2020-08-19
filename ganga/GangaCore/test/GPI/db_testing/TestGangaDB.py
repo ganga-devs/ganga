@@ -1,5 +1,13 @@
 """
 Testing functions related to ganga db
+from pymongo import MongoClient
+from pymongo.errors import ServerSelectionTimeoutError
+client = MongoClient(serverSelectionTimeoutMS=10, connectTimeoutMS=20000)
+try:
+    info = client.server_info() # Forces a call.
+except ServerSelectionTimeoutError:
+    print("server is down.")
+
 """
 import pymongo
 from GangaCore.Utility.Config import getConfig
@@ -7,186 +15,197 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
-def clean_database():
-    """
-    Clean the information from the database
-    """
-    import pymongo
-    db_name = "default"
-    _ = pymongo.MongoClient()
-    _.drop_database(db_name)
+def test_mongo_running():
+    from pymongo import MongoClient
+    from pymongo.errors import ServerSelectionTimeoutError
+    client = MongoClient(serverSelectionTimeoutMS=10, connectTimeoutMS=20000)
+    try:
+        info = client.server_info() # Forces a call.
+        assert True
+    except ServerSelectionTimeoutError:
+        assert False
 
 
-def get_db_connection():
-    """
-    Connection to the testing mongo database
-    """
-
-    # FIXME: Can't seem to get `ganga` to read the modified config changes
-    # patching the effect by using custom config
-    db_name = "default"
-    _ = pymongo.MongoClient()
-    connection = _[db_name]
-
-    return connection
-
-config = [
-    ("DatabaseConfigurations", "port", "27017"),
-    ("DatabaseConfigurations", "baseImage", "mongo"),
-    ("DatabaseConfigurations", "dbname", "testDatabase"),
-    ("DatabaseConfigurations", "containerName", "testContainer")
-]
+# def clean_database():
+#     """
+#     Clean the information from the database
+#     """
+#     import pymongo
+#     db_name = "default"
+#     _ = pymongo.MongoClient()
+#     _.drop_database(db_name)
 
 
-class TestGangaDBGenAndLoad(GangaUnitTest):
-    """
-    Testing the generation of jobs, saving of jobs and finally loading of jobs
-    """
+# def get_db_connection():
+#     """
+#     Connection to the testing mongo database
+#     """
 
-    def setUp(self):
-        """
-        """
-        extra_opts = [
-            ('TestingFramework', 'AutoCleanup', 'False'),
-            ("DatabaseConfigurations", "controller", "native")
-        ]
-        self.connection = get_db_connection()
-        super(TestGangaDBGenAndLoad, self).setUp(repositorytype="Database", extra_opts=extra_opts)
+#     # FIXME: Can't seem to get `ganga` to read the modified config changes
+#     # patching the effect by using custom config
+#     db_name = "default"
+#     _ = pymongo.MongoClient()
+#     connection = _[db_name]
 
-    def test_a_JobConstruction(self):
-        """
-        Constructing the first job
-        """
-        assert 'False' == (getConfig('TestingFramework')['AutoCleanup'])
+#     return connection
 
-        from GangaCore.GPI import Job, jobs
-        j = Job()
-        assert len(jobs) == 1
-        j.name = 'modified_name'
+# config = [
+#     ("DatabaseConfigurations", "port", "27017"),
+#     ("DatabaseConfigurations", "baseImage", "mongo"),
+#     ("DatabaseConfigurations", "dbname", "testDatabase"),
+#     ("DatabaseConfigurations", "containerName", "testContainer")
+# ]
 
-    def test_b_JobJsonExists(self):
-        """
-        Check whether the job json exists in the table
-        """
-        # assert len(
-        #     [*connection.jobs.find_one(filter={"name": "modified_name"})]) == 1
-        assert len([*self.connection.jobs.find()]) == 1
 
-    def test_c_JsonUpdated(self):
-        """
-        Submit the job and check if the `status` has been updated
-        """
-        from GangaCore.GPI import jobs, disableMonitoring, enableMonitoring
+# class TestGangaDBGenAndLoad(GangaUnitTest):
+#     """
+#     Testing the generation of jobs, saving of jobs and finally loading of jobs
+#     """
 
-        disableMonitoring()
+#     def setUp(self):
+#         """
+#         """
+#         extra_opts = [
+#             ('TestingFramework', 'AutoCleanup', 'False'),
+#             ("DatabaseConfigurations", "controller", "native")
+#         ]
+#         self.connection = get_db_connection()
+#         super(TestGangaDBGenAndLoad, self).setUp(repositorytype="Database", extra_opts=extra_opts)
 
-        j = jobs(0)
+#     def test_a_JobConstruction(self):
+#         """
+#         Constructing the first job
+#         """
+#         assert 'False' == (getConfig('TestingFramework')['AutoCleanup'])
 
-        job_json = self.connection.jobs.find_one(
-            filter={"name": "modified_name"})
-        if job_json is None:
-            assert False
+#         from GangaCore.GPI import Job, jobs
+#         j = Job()
+#         assert len(jobs) == 1
+#         j.name = 'modified_name'
 
-        last_update = job_json["modified_time"]
+#     def test_b_JobJsonExists(self):
+#         """
+#         Check whether the job json exists in the table
+#         """
+#         # assert len(
+#         #     [*connection.jobs.find_one(filter={"name": "modified_name"})]) == 1
+#         assert len([*self.connection.jobs.find()]) == 1
 
-        j.submit()
+#     def test_c_JsonUpdated(self):
+#         """
+#         Submit the job and check if the `status` has been updated
+#         """
+#         from GangaCore.GPI import jobs, disableMonitoring, enableMonitoring
 
-        job_json = self.connection.jobs.find_one(
-            filter={"name": "modified_name"})
-        if job_json is None:
-            assert False
+#         disableMonitoring()
 
-        newest_update = job_json["modified_time"]
+#         j = jobs(0)
 
-        from GangaTest.Framework.utils import sleep_until_completed
+#         job_json = self.connection.jobs.find_one(
+#             filter={"name": "modified_name"})
+#         if job_json is None:
+#             assert False
 
-        enableMonitoring()
+#         last_update = job_json["modified_time"]
 
-        if j.status in ['submitted', 'running']:
-            sleep_until_completed(j, 60)
+#         j.submit()
 
-        job_json = self.connection.jobs.find_one(
-            filter={"name": "modified_name"})
-        if job_json is None:
-            assert False
+#         job_json = self.connection.jobs.find_one(
+#             filter={"name": "modified_name"})
+#         if job_json is None:
+#             assert False
 
-        final_update = job_json["modified_time"]
+#         newest_update = job_json["modified_time"]
 
-        assert newest_update > last_update
+#         from GangaTest.Framework.utils import sleep_until_completed
 
-    def test_d_JsonContent(self):
-        """
-        Check if the json content in the database is correct and as expected
+#         enableMonitoring()
 
-        Assert that the json saved in the database is valid enough to regenerate that job
-        """
-        from GangaCore.GPI import jobs, Job
-        from GangaCore.GPIDev.Base.Proxy import stripProxy
+#         if j.status in ['submitted', 'running']:
+#             sleep_until_completed(j, 60)
 
-        from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonLoader, object_from_database
-        )
+#         job_json = self.connection.jobs.find_one(
+#             filter={"name": "modified_name"})
+#         if job_json is None:
+#             assert False
 
-        # job_json = object_from_database(_filter={"name": "modified_name"})
-        job_json = self.connection.jobs.find_one(
-            filter={"name": "modified_name"})
-        loader = JsonLoader()
-        tmp_job, error = loader.parse_static(job_json)
-        if error:
-            raise Exception(error)
+#         final_update = job_json["modified_time"]
 
-        ignore_subs = ['time', 'subjobs', 'info',
-                       'application', 'backend', 'id']
+#         assert newest_update > last_update
 
-        assert tmp_job == jobs(0)._impl
+#     def test_d_JsonContent(self):
+#         """
+#         Check if the json content in the database is correct and as expected
 
-    def test_e_JsonContent(self):
-        """
-        Check if the json content in the database is correct and as expected
+#         Assert that the json saved in the database is valid enough to regenerate that job
+#         """
+#         from GangaCore.GPI import jobs, Job
+#         from GangaCore.GPIDev.Base.Proxy import stripProxy
 
-        Assert that the json saved in the database is valid enough to regenerate that job
-        """
-        from GangaCore.GPI import jobs, Job
-        from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
-        from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonLoader, object_from_database
-        )
+#         from GangaCore.Core.GangaRepository.DStreamer import (
+#             JsonLoader, object_from_database
+#         )
 
-        from GangaCore.GPI import jobs
+#         # job_json = object_from_database(_filter={"name": "modified_name"})
+#         job_json = self.connection.jobs.find_one(
+#             filter={"name": "modified_name"})
+#         loader = JsonLoader()
+#         tmp_job, error = loader.parse_static(job_json)
+#         if error:
+#             raise Exception(error)
 
-        j = jobs(0)
+#         ignore_subs = ['time', 'subjobs', 'info',
+#                        'application', 'backend', 'id']
 
-        index = self.connection.index.find_one(filter={
-            "name": "modified_name"
-        })
-        assert isinstance(index, dict)
+#         assert tmp_job == jobs(0)._impl
 
-        raw_j = stripProxy(j)
-        index_cache = raw_j._getRegistry().getIndexCache(raw_j)
-        assert isinstance(index_cache, dict)
+#     def test_e_JsonContent(self):
+#         """
+#         Check if the json content in the database is correct and as expected
 
-        index_cls = getName(raw_j)
-        index_cat = raw_j._category
-        index_cache.update({"classname": getName(raw_j)})
-        index_cache.update({"category": raw_j._category})
+#         Assert that the json saved in the database is valid enough to regenerate that job
+#         """
+#         from GangaCore.GPI import jobs, Job
+#         from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
+#         from GangaCore.Core.GangaRepository.DStreamer import (
+#             JsonLoader, object_from_database
+#         )
 
-        # assert that the database index has all the values requried
-        for key, val in index_cache.items():
-            assert index[key] == val
+#         from GangaCore.GPI import jobs
 
-    def test_f_RemoveJobs(self):
-        """
-        Remove all the jobs from the registry
-        """
-        from GangaCore.GPI import jobs
+#         j = jobs(0)
 
-        jobs.remove()
+#         index = self.connection.index.find_one(filter={
+#             "name": "modified_name"
+#         })
+#         assert isinstance(index, dict)
 
-        assert len(jobs) == 0
+#         raw_j = stripProxy(j)
+#         index_cache = raw_j._getRegistry().getIndexCache(raw_j)
+#         assert isinstance(index_cache, dict)
 
-    def test_g_JobJsonExists(self):
-        """
-        Check whether the job json exists in the table
-        """
-        assert len([*self.connection.jobs.find()]) == 0
-        clean_database()
+#         index_cls = getName(raw_j)
+#         index_cat = raw_j._category
+#         index_cache.update({"classname": getName(raw_j)})
+#         index_cache.update({"category": raw_j._category})
+
+#         # assert that the database index has all the values requried
+#         for key, val in index_cache.items():
+#             assert index[key] == val
+
+#     def test_f_RemoveJobs(self):
+#         """
+#         Remove all the jobs from the registry
+#         """
+#         from GangaCore.GPI import jobs
+
+#         jobs.remove()
+
+#         assert len(jobs) == 0
+
+#     def test_g_JobJsonExists(self):
+#         """
+#         Check whether the job json exists in the table
+#         """
+#         assert len([*self.connection.jobs.find()]) == 0
+#         clean_database()
