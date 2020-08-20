@@ -25,8 +25,8 @@ jobs:
     #     python3 -m pip install -e .[dev]
     # - name: Test with pytest
     #   run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDB.py
-    - run: npm ci
-    - run: node client.js
+    - run: npm ganga/GangaCore/test/GPI/db_testing/package.json
+    - run: node ganga/GangaCore/test/GPI/db_testing/client.js
       env:
         # use mongodb for the host here because we have specified a container for the job.
         # If we were running the job on the VM this would be localhost
