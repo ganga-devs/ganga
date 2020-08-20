@@ -6,9 +6,7 @@ jobs:
   db-unit:
     name: Database Testing
     runs-on: ubuntu-latest
-    # container: centos:7
-    container:
-      image:  node:10.16-jessie
+    container: centos:7
     services:
       mongodb:
         image: mongo
