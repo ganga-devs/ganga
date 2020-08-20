@@ -26,8 +26,6 @@ jobs:
     - name: Test with pytest
       run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDB.py
       env:
-        # use mongodb for the host here because we have specified a container for the job.
-        # If we were running the job on the VM this would be localhost
         MONGODB_HOST: mongodb
         MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
