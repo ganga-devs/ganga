@@ -21,6 +21,10 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
         python3 -m pip install -e .[dev]
+
+    - name: Check if Mongo is running
+      run: ps -ax | grep mongo
+
     - name: Test with pytest
       run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDB.py
       env:

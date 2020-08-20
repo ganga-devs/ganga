@@ -24,7 +24,7 @@ def test_mongo_running_host():
     connection_string = f"mongodb://{HOST}:{PORT}/dbName"
     client = MongoClient(connection_string, serverSelectionTimeoutMS=10, connectTimeoutMS=20000)
     try:
-        info = client.server_info() # Forces a call.
+        _ = client.server_info() # Forces a call.
         assert True
     except ServerSelectionTimeoutError:
         assert False
@@ -35,7 +35,7 @@ def test_mongo_running():
     from pymongo.errors import ServerSelectionTimeoutError
     client = MongoClient(serverSelectionTimeoutMS=10, connectTimeoutMS=20000)
     try:
-        info = client.server_info() # Forces a call.
+        _ = client.server_info() # Forces a call.
         assert True
     except ServerSelectionTimeoutError:
         assert False
