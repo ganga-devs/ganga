@@ -683,7 +683,7 @@ class Condor(IBackend):
 
         return None
 
-    def setCondorDateFormat(self,dateString):
+    def setCondorDateFormat(self, dateString):
         """Helper function to set the _condorDateFormat for a given dateString.
 
            This is called on-the-fly while parsing the condorLog in getStateTime.
@@ -691,7 +691,7 @@ class Condor(IBackend):
                Count the number of date elements.
                Check for the separation character between date elements.
         """
-        dateBreakdown = re.findall(r"\d+\D",splitLine[2])
+        dateBreakdown = re.findall(r"\d+\D", dateString)
         numberOfDateElements = len(dateBreakdown)+1
         if numberOfDateElements > 0:
             self._condorDateFormat=(numberOfDateElements,dateBreakdown[0][-1])
@@ -702,7 +702,7 @@ class Condor(IBackend):
             logger.warning(
                     "setCondorDateFormat cannot determine date format: '%s'", dateString)
 
-    def getCondorDate(self,dateString):
+    def getCondorDate(self, dateString, timeString):
         """Helper function to unify the condor date format according to the format obtained in setCondorDateFormat and stored in _condorDateFormat
 
            Depending on the version of condor, the format of the date is different:
@@ -711,11 +711,11 @@ class Condor(IBackend):
         """
         result=dateString
         if self._condorDateFormat:
-            if condorDateFormat[1] != "/":
-                result=result.replace(condorDateFormat[1],"/")
-            if condorDateFormat[0] == 2:
+            if self._condorDateFormat[1] != "/":
+                result=result.replace(self._condorDateFormat[1],"/")
+            if self._condorDateFormat[0] == 2:
                 year = datetime.datetime.now().year
-                if datetime.datetime.strptime(str(year)+"/"+result+' '+splitLine[3], "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
+                if datetime.datetime.strptime(str(year)+"/"+result+' '+timeString, "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
                     year = year - 1
                 result=str(year)+"/"+result
         return result
@@ -759,8 +759,8 @@ class Condor(IBackend):
             splitLine = l.split()
             if checkstr == splitLine[0]:
                 if not self._condorDateFormat:
-                    setCondorDateFormat(splitLine[2])
-                condorDate=getCondorDate(splitLine[2])
+                    self.setCondorDateFormat(splitLine[2])
+                condorDate=self.getCondorDate(splitLine[2], splitLine[3])
                 timestr = condorDate+' '+splitLine[3]
                 try:
                     t = datetime.datetime(
