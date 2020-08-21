@@ -145,9 +145,10 @@ class TestGangaDBNested(GangaUnitTest):
         if error:
             raise Exception(error)
 
-        ignore_subs = ['time', 'subjobs', 'info',
-                       'application', 'backend', 'id']
-
         assert tmp_job == jobs(0)._impl
 
-        clean_database()
+    def test_j_DeleteAll(self):
+        db_name = "default"
+        _ = pymongo.MongoClient()
+        _.drop_database(db_name)
+        assert True

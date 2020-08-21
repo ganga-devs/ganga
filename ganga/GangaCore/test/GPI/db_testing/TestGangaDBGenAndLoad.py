@@ -13,7 +13,6 @@ import os
 import pymongo
 from GangaCore.Utility.Config import getConfig
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 def clean_database():
     """
@@ -56,7 +55,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """
         extra_opts = [
             ('TestingFramework', 'AutoCleanup', 'False'),
-            ("DatabaseConfigurations", "controller", "native")
+            ("DatabaseConfigurations", "controller", "docker")
         ]
         self.connection = get_db_connection()
         super(TestGangaDBGenAndLoad, self).setUp(repositorytype="Database", extra_opts=extra_opts)
@@ -197,4 +196,9 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         Check whether the job json exists in the table
         """
         assert len([*self.connection.jobs.find()]) == 0
-        clean_database()
+
+    def test_j_DeleteAll(self):
+        db_name = "default"
+        _ = pymongo.MongoClient()
+        _.drop_database(db_name)
+        assert True
