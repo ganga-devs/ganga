@@ -3,14 +3,80 @@ import jwt
 import json
 import requests
 import time
+import select
+import termios
+import struct
+import fcntl
+import subprocess
+import pty
+import sys
+import datetime
 from functools import wraps
-from flask import request, jsonify, render_template, flash, redirect, url_for, session, send_file
-from flask_login import login_user, login_required, logout_user, current_user
 from werkzeug.utils import secure_filename
-from GangaGUI.gui import gui, db
-from GangaGUI.gui.models import User
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, session, send_file
+from flask_login import login_user, login_required, logout_user, current_user, UserMixin
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+from flask_socketio import SocketIO
+from GangaGUI.gui.config import Config
+
+# ******************** Initialisation of Flask App for GUI ******************** #
+
+
+# GUI Flask App and set configuration from ./config.py file
+gui = Flask(__name__)
+gui.config.from_object(Config)
+
+# Database object which is used to interact with the "gui.sqlite" in gangadir/gui folder
+# NOTE: IT HAS NO RELATION WITH THE GANGA PERSISTENT DATABASE
+db = SQLAlchemy(gui)
+
+# Login manage for the view routes
+login = LoginManager(gui)
+login.login_view = "login"
+login.login_message = "Please Login to Access this Page."
+login.login_message_category = "warning"
+
+# For websocket, for communication between frontend and backend
+socketio = SocketIO(gui)
+
+
+# ******************** The user class for database and authentication ******************** #
+
+# ORM Class to represent Users - used to access the GUI & API resources
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    public_id = db.Column(db.String(64), unique=True)
+    user = db.Column(db.String(32), unique=True)
+    password_hash = db.Column(db.String(64))
+    role = db.Column(db.String(32))
+    pinned_jobs = db.Column(db.Text)
+
+    def store_password_hash(self, password: str):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password: str) -> bool:
+        return check_password_hash(self.password_hash, password)
+
+    def generate_auth_token(self, expires_in_days: int = 5) -> str:
+        return jwt.encode(
+            {"public_id": self.public_id, "exp": datetime.datetime.utcnow() + datetime.timedelta(days=expires_in_days)},
+            gui.config["SECRET_KEY"], algorithm="HS256")
+
+    def __repr__(self):
+        return "User {}: {} (Public ID: {}, Role: {})".format(self.id, self.user, self.public_id, self.role)
+
+
+# User Loader Function for Flask Login
+@login.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 
 # ******************** Global Variables ******************** #
+
 
 # Colors showed for different job statuses in the GUI based on Bootstrap CSS
 status_color = {
@@ -25,64 +91,41 @@ status_color = {
 # Allowed extensions when uploading any files to GUI
 ALLOWED_EXTENSIONS = {"txt", "py"}
 
-# Internal url for communicating with API server running on a GangaThread
-INTERNAL_URL = f"http://localhost:{os.environ.get('INTERNAL_PORT')}"
-
+# Variables to globally store plugins and actions
 actions = {}
 plugins = {}
 
-# If gunicorn server is started by the Web CLI server (ganga-gui)
-web_cli = False
-if os.environ.get("WEB_CLI") is not None:
-    web_cli = True
-    web_cli_port = os.environ.get("WEB_CLI_PORT")
 
+# ******************** Run Before First Request ******************** #
 
-# ******************** View Routes ******************** #
 
 # Execute before first request
 @gui.before_first_request
 def initial_run():
     """
-    This function runs before first request.
+    This function runs before first request. It stores actions and plugins information from the ganga. It create default session cookies. If WEB_CLI is also started then it also starts a Ganga session.
     """
 
     global actions, plugins
 
-    if web_cli is True:
-        if not ping_web_cli():
-            # TODO
-            pass
-        session["web_cli"] = True
-        session["web_cli_port"] = web_cli_port
-
-
-    if not ping_internal():
-        # TODO Stop servers
-        pass
+    # Start ganga if WEB_CLI mode is True
+    if gui.config['WEB_CLI'] is True:
+        start_ganga(gui.config['INTERNAL_PORT'], args=gui.config["GANGA_ARGS"])
+        session["WEB_CLI"] = True
 
     # If user is authenticated, log them out. This happens after a fresh start of the GUI server.
     if current_user.is_authenticated:
         logout_user()
 
-    # Set session defaults for templates filter
-    if "templates_per_page" not in session:
-        session["templates_per_page"] = 10
-    if "templates_filter" not in session:
-        session["templates_filter"] = {key: "any" for key in ["application", "backend"]}
+    # Create user session defaults
+    create_session_defaults()
 
-    # Set session defaults for jobs filter
-    if "jobs_per_page" not in session:
-        session["jobs_per_page"] = 10
-    if "jobs_filter" not in session:
-        session["jobs_filter"] = {key: "any" for key in ["status", "application", "backend"]}
+    # Check if internal server is online, exit after 20s of retrying
+    if not ping_internal():
+        print("INTERNAL SERVER UNAVAILABLE, TERMINATING...")
+        sys.exit(1)
 
-    # Set session defaults for subjobs filter
-    if "subjobs_per_page" not in session:
-        session["subjobs_per_page"] = 10
-    if "subjobs_filter" not in session:
-        session["subjobs_filter"] = {key: "any" for key in ["status", "application", "backend"]}
-
+    # Get job actions and plugins information from ganga
     try:
         # Get actions and plugins data once
         actions = query_internal_api("/internal/jobs/actions", "get")
@@ -90,6 +133,9 @@ def initial_run():
     except Exception as err:
         flash(str(err), "danger")
         return redirect(url_for("dashboard"))
+
+
+# ******************** View Routes ******************** #
 
 
 # Login View
@@ -911,6 +957,49 @@ def storage_page(path):
                            back_path=back_path)
 
 
+# Serve CLI
+@gui.route("/cli")
+@login_required
+def serve_cli():
+    return render_template("cli.html")
+
+
+# Establish a websocket connection from the frontend to the server
+@socketio.on("connect", namespace="/pty")
+def connect():
+    """
+    New client connected, start reading and writing from the pseudo terminal.
+    """
+
+    if gui.config["CHILD_PID"] and current_user.is_authenticated:
+        # Start background reading and emitting the output of the pseudo terminal
+        socketio.start_background_task(target=read_and_forward_pty_output)
+        return
+
+
+# Input from the frontend
+@socketio.on("pty-input", namespace="/pty")
+def pty_input(data):
+    """
+    Write to the child pty. The pty sees this as if you are typing in a real terminal.
+    """
+
+    if gui.config["FD"] and current_user.is_authenticated:
+        os.write(gui.config["FD"], data["input"].encode())
+
+
+# Resize the pseudo terminal when the frontend is resized
+@socketio.on("resize", namespace="/pty")
+def resize(data):
+    """
+    Resize the pseudo terminal according to the dimension at the frontend.
+    :param data: contains information about rows and cols of the frontend terminal.
+    """
+
+    if gui.config["FD"] and current_user.is_authenticated:
+        set_windowsize(gui.config["FD"], data["rows"], data["cols"])
+
+
 # ******************** Token Based Authentication ******************** #
 
 # Generate token for API authentication - token validity 5 days
@@ -1669,6 +1758,9 @@ def query_internal_api(route: str, method: str, **kwargs):
     kwargs can be param, json, etc. Any attribute that is supported by the requests module.
     """
 
+    # Internal url for communicating with API server running on a GangaThread
+    INTERNAL_URL = f"http://localhost:{gui.config['INTERNAL_PORT']}"
+
     # Raise error if HTTP method not supported
     if method not in ["get", "post", "put", "delete"]:
         raise Exception(f"Unsupported method: {method}")
@@ -1684,6 +1776,30 @@ def query_internal_api(route: str, method: str, **kwargs):
     return res.json()
 
 
+def create_session_defaults():
+    """
+    Create user session defaults and assign default values to them.
+    """
+
+    # Set session defaults for templates filter
+    if "templates_per_page" not in session:
+        session["templates_per_page"] = 10
+    if "templates_filter" not in session:
+        session["templates_filter"] = {key: "any" for key in ["application", "backend"]}
+
+    # Set session defaults for jobs filter
+    if "jobs_per_page" not in session:
+        session["jobs_per_page"] = 10
+    if "jobs_filter" not in session:
+        session["jobs_filter"] = {key: "any" for key in ["status", "application", "backend"]}
+
+    # Set session defaults for subjobs filter
+    if "subjobs_per_page" not in session:
+        session["subjobs_per_page"] = 10
+    if "subjobs_filter" not in session:
+        session["subjobs_filter"] = {key: "any" for key in ["status", "application", "backend"]}
+
+
 # Ping internal API server
 def ping_internal():
     """
@@ -1697,34 +1813,78 @@ def ping_internal():
             if ping is True:
                 return True
         except:
-            time.sleep(0.5)
+            time.sleep(2)
 
-        print("Internal API server not online, retrying...")
+        print("Internal API server not online (mostly because Ganga is booting up), retrying...")
         trials += 1
         if trials > 10:
             return False
 
 
-# Ping Web CLI server
-def ping_web_cli():
+def start_ganga(internal_port: int, args: str = ""):
     """
-    Ping web cli server so that it starts the Ganga Session.
+    Start a ganga session in a pseudo terminal and stores the file descriptor of the terminal as well as the PID of the ganga session.
+    :param args: str - str of arguments to provide to ganga
+    :param internal_port: int
     """
 
-    trials = 0
+    # Create child process attached to a pty that we can read from and write to
+    (child_pid, fd) = pty.fork()
+
+    if child_pid == 0:
+        # This is the child process fork. Anything printed here will show up in the pty, including the output of this subprocess
+        ganga_env = os.environ.copy()
+        ganga_env["WEB_CLI"] = "True"
+        ganga_env["INTERNAL_PORT"] = str(internal_port)
+        subprocess.run(f"ganga --webgui {args}", shell=True, env=ganga_env)
+    else:
+        # This is the parent process fork. Store fd (connected to the child’s controlling terminal) and child pid
+        gui.config["FD"] = fd
+        gui.config["CHILD_PID"] = child_pid
+        set_windowsize(fd, 50, 50)
+        print("Ganga started, PID: ", child_pid)
+
+
+# Set the window size of the pseudo terminal according to the size in the frontend
+def set_windowsize(fd, row, col, xpix=0, ypix=0):
+    winsize = struct.pack("HHHH", row, col, xpix, ypix)
+    fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
+
+
+# Read and forward that data from the pseudo terminal to the frontend
+def read_and_forward_pty_output():
+    max_read_bytes = 1024 * 20
     while True:
-        try:
-            res = requests.get(f"http://localhost:{web_cli_port}/ping")
-            ping = res.json()
-            if ping is True:
-                return True
-        except:
-            time.sleep(1)
+        socketio.sleep(0.01)
+        if gui.config["FD"]:
+            timeout_sec = 0
+            (data_ready, _, _) = select.select([gui.config["FD"]], [], [], timeout_sec)
+            if data_ready:
+                output = os.read(gui.config["FD"], max_read_bytes).decode()
+                socketio.emit("pty-output", {"output": output}, namespace="/pty")
 
-        print("Web CLI server not online, retrying...")
-        trials += 1
-        if trials > 20:
-            return False
+
+def start_web_cli(host: str, port: int, internal_port: int, log_output=True, ganga_args: str = ""):
+    """
+    Start the web server on eventlet serving the terminal on the specified port. (Production ready server)
+    :param ganga_args: str - arguments to be passed to ganga
+    :param host: str
+    :param port: int
+    :param internal_port: int
+    """
+
+    from GangaGUI.start import create_default_user
+
+    # Create default user
+    gui_user, gui_password = create_default_user()
+
+    print(f"Starting the GUI server on http://{host}:{port}")
+    print(f"You login information for the GUI is: Username: {gui_user.user} Password: {gui_password}")
+
+    gui.config["INTERNAL_PORT"] = internal_port
+    gui.config["WEB_CLI"] = True
+    gui.config["GANGA_ARGS"] = ganga_args
+    socketio.run(gui, host=host, port=port, log_output=log_output)  # TODO
 
 
 # ******************** Shutdown Function ******************** #
@@ -1732,6 +1892,11 @@ def ping_web_cli():
 # Route used to shutdown the Internal API server and GUI server
 @gui.route("/shutdown", methods=["GET"])
 def shutdown():
+
+    if gui.config["WEB_CLI"] is True:
+        flash("WEB CLI Mode is on, cannot self shutdown server. Consider doing manually.", "warning")
+        return redirect(url_for("dashboard"))
+
     try:
         response_info = query_internal_api("/shutdown", "get")
     except Exception as err:

@@ -52,9 +52,9 @@
                     <li class="nav-item {{ 'active' if request.path == url_for('config_page') }}">
                         <a class="nav-link" href="{{ url_for('config_page') }}">Config</a>
                     </li>
-                    {{ ('<li class="nav-item">
-                            <a href="#" class="nav-link" id="btn-cli">CLI</a>
-                        </li>'|safe) if session['web_cli'] == True }}
+                    <li class="nav-item">
+                        <a href="#" class="nav-link btn-cli {{ 'd-none' if session['WEB_CLI'] == False }}">CLI</a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="http://ganga.readthedocs.io">Help</a>
                     </li>
@@ -106,12 +106,15 @@
         </div>
 
         {# Web CLI Container #}
-        <div id="cli-container" data-port="{{ session.get('web_cli_port') }}"
+        <div id="cli-container"
              style="display: none; position: fixed; bottom: 0; left: 0; height: 50vh; width: 100%; z-index: 50; box-shadow: 0 -2px 6px rgba(0,0,0,0.30);"
              class="rounded-top overflow-hidden">
-            {{
-                ('<iframe src="#" id="cli-iframe" title="Web CLI" style="width: 100%; height: 100%; border: none;"></iframe>' | safe ) if session['web_cli'] == True
-            }}
+            <div class="d-flex justify-content-end align-items-center mt-2 px-2" style="position: absolute; top: 0; right:0;">
+                <a href="{{ url_for('serve_cli') if session['WEB_CLI'] == True }}" target="_blank"
+                  class="btn btn-primary btn-sm text-white" style="cursor: pointer">Open in New Tab</a>
+                <a class="btn btn-danger btn-sm text-white btn-cli ml-2" style="cursor: pointer">Hide</a>
+            </div>
+            <iframe src="{{ url_for('serve_cli') if session['WEB_CLI'] == True }}" id="cli-iframe" title="Web CLI" style="width: 100%; height: 100%; border: none;"></iframe>
         </div>
     </nav>
 
@@ -124,8 +127,8 @@
 {# JavaScript files #}
 <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
 
-{# JS file specific to web cli mode #}
-<script defer src="{{ url_for('static', filename='js/webcli.js') if session['web_cli'] == True else '#' }}"></script>
+{# JS file specific to web cli mode#}
+<script defer src="{{ url_for('static', filename='js/slidecli.js') if session['WEB_CLI'] == True else '#' }}"></script>
 
 {% block footer %}{% endblock footer %}
 

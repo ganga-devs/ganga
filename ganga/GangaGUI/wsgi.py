@@ -1,3 +1,3 @@
 """Entry point for the gunicorn server"""
 
-from GangaGUI.gui import gui
+from GangaGUI.gui.routes import gui

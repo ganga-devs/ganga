@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <!-- Xterm.js Style Sheet -->
+    <link rel="stylesheet" href="https://unpkg.com/xterm@3.6.0/dist/xterm.css"/>
+
+    <title>CLI - Ganga GUI</title>
+
+    <!-- Customs styles -->
+    <style>
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+
+        }
+
+        div {
+            margin: 0;
+            padding: 0;
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 0.5rem;
+            right: 1rem;
+            background-color: lightgray;
+            z-index: 100;
+            border-radius: 3px;
+            padding: 0.25rem 0.5rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            font-size: 0.75rem;
+        }
+
+        .connected {
+            background-color: green;
+            color: white;
+        }
+
+        .disconnected {
+            background-color: darkred;
+            color: white;
+        }
+
+        #terminal {
+            width: calc(100% - 1rem);
+            height: calc(100% - 1rem);
+        }
+
+        .container {
+            width: 100vw;
+            height: 100vh;
+            background-color: black;
+            padding: 0.5rem;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="container">
+    <p onclick="clear();" class="status-bar">Status: <span id="status">Connecting...</span></p>
+    <div id="terminal"></div>
+</div>
+
+<!-- Xterm JS, then Socketio -->
+<script src="https://unpkg.com/xterm@3.6.0/dist/xterm.js"></script>
+<script src="https://unpkg.com/xterm@3.6.0/dist/addons/fit/fit.js"></script>
+<script src="https://unpkg.com/xterm@3.6.0/dist/addons/webLinks/webLinks.js"></script>
+<script src="https://unpkg.com/xterm@3.6.0/dist/addons/fullscreen/fullscreen.js"></script>
+<script src="https://unpkg.com/xterm@3.6.0/dist/addons/search/search.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+<script defer src="{{ url_for('static', filename='js/cli.js') }}"></script>
+
+</body>
+</html>

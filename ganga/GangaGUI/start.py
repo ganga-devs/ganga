@@ -6,9 +6,9 @@ import requests
 import subprocess
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.Utility.logging import getLogger
-from GangaGUI.gui import gui, db
+from GangaGUI.gui.routes import gui, db
 from GangaGUI.api import internal
-from GangaGUI.gui.models import User
+from GangaGUI.gui.routes import User
 
 # Ganga logger
 logger = getLogger()
@@ -88,7 +88,6 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
 
     # For when it is called by ganga-gui binary for starting the integrated terminal
     if os.environ.get('WEB_CLI') is not None:
-
         # Get the internal port to start the API server on
         if os.environ.get("INTERNAL_PORT") is not None:
             internal_port = int(os.environ.get("INTERNAL_PORT"))
@@ -96,7 +95,6 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
         # Start internal API server, it is always be meant for internal use by the GUI server
         api_server = APIServerThread("GangaGUIAPI", "localhost", internal_port)
         api_server.start()
-        print("Yes reached here.")
 
         return True
 
