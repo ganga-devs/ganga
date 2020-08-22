@@ -6,7 +6,7 @@ from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
 HOST, PORT = "mongodb", 27017
-HOST, PORT = "localhost", 27017
+# HOST, PORT = "localhost", 27017
 config = [
     ("DatabaseConfigurations", "port", "27017"),
     ("DatabaseConfigurations", "host", HOST),
@@ -53,8 +53,8 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """
         extra_opts = [
             ('TestingFramework', 'AutoCleanup', 'False'),
-            ("DatabaseConfigurations", "controller", "native"),
-            # ("DatabaseConfigurations", "controller", "docker"),
+            # ("DatabaseConfigurations", "controller", "native"),
+            ("DatabaseConfigurations", "controller", "docker"),
             *config
         ]
         self.connection = get_db_connection()

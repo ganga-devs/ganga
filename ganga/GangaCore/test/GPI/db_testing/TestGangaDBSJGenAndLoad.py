@@ -8,7 +8,7 @@ from GangaCore.Utility.Virtualization import checkNative, checkDocker
 testStr = "testFooString"
 testArgs = [[1],[2],[3],[4],[5]]
 HOST, PORT = "mongodb", 27017
-HOST, PORT = "localhost", 27017
+# HOST, PORT = "localhost", 27017
 config = [
     ("DatabaseConfigurations", "port", PORT),
     ("DatabaseConfigurations", "host", HOST),
@@ -50,8 +50,8 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """Make sure that the Job object isn't destroyed between tests"""
         extra_opts = [
             ('TestingFramework', 'AutoCleanup', 'False'),
-            ("DatabaseConfigurations", "controller", "native"),
-            # ("DatabaseConfigurations", "controller", "docker"),
+            # ("DatabaseConfigurations", "controller", "native"),
+            ("DatabaseConfigurations", "controller", "docker"),
             *config
         ]
         self.connection = get_db_connection()
