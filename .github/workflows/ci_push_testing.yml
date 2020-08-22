@@ -36,7 +36,10 @@ jobs:
         MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
     - name: Test with REAL thing
-      run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBNested.py
+      run: |
+        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBNested.py
+        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBGenAndLoad.py
+        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBSJGenAndLoad.py
       env:
         MONGODB_HOST: mongodb
         MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
