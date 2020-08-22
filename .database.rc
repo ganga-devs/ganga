@@ -325,7 +325,7 @@ repositorytype = Database
 [DatabaseConfigurations]
 
 #  Docker Image for the database
-#baseImage = mongo:latest
+#baseImage = mongo
 
 #  the identifier used to tag the docker container
 #containerName = gangaDB

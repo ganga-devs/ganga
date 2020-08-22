@@ -96,7 +96,7 @@ class TestXMLCorruption(GangaUnitTest):
         assert backend2 is not None
 
         XMLFileName = getXMLFile(0)
-        
+
         from GangaCore.GPIDev.Base.Proxy import stripProxy
 
         print(("%s" % stripProxy(jobs(0)).__dict__))
