@@ -30,7 +30,7 @@ jobs:
         pip install -e .[dev]
         pip install pymongo pytest docker
     - name: Test with pytest
-      run: python -m pytest ganga/GangaCore/test/GPI/db_testing/blank.py
+      run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/blank.py
       # env:
       #   MONGODB_HOST: mongodb
       #   MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
