@@ -24,8 +24,10 @@ jobs:
       run: apt install -y python3
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install -e .[dev]
+        # python3 -m pip install --upgrade pip setuptools wheel
+        pip3 install --upgrade pip setuptools wheel
+        # python3 -m pip install -e .[dev]
+        pip3 install -e .[dev]
     - name: Test with pytest
       run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/blank.py
       # env:
