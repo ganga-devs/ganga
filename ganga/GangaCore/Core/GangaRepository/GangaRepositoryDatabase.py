@@ -148,11 +148,9 @@ class GangaRepositoryLocal(GangaRepository):
         """ Starts a repository and reads in a directory structure.
         Raise RepositoryError"""
 
-        self._load_timestamp = {}
-        mongo_client = pymongo.MongoClient()
-
         self._cached_obj = {}
         self.known_bad_ids = []
+        self._load_timestamp = {}
         self._cache_load_timestamp = {}  # this is not really required now
 
         self.container_controller = None
@@ -160,7 +158,6 @@ class GangaRepositoryLocal(GangaRepository):
         self.from_database = object_from_database
         self.database_config = getConfig("DatabaseConfigurations")
         self.db_name = self.database_config["dbname"]
-        self.connection = mongo_client[self.db_name]
 
         try:
             self.start_database()
@@ -175,9 +172,16 @@ class GangaRepositoryLocal(GangaRepository):
         self.update_index(True, True, True)
         logger.debug("GangaRepositoryLocal Finished Startup")
 
+
     def start_database(self):
         """Start the mongodb with the prefered back_end
         """
+        PORT = self.database_config["port"]
+        HOST = self.database_config["host"]
+        connection_string = f"mongodb://{HOST}:{PORT}/"
+        client = pymongo.MongoClient(connection_string)
+        self.connection = client[self.db_name]
+
         self.container_controller = controller_map[self.database_config["controller"]]
         self.container_controller(database_config=self.database_config, action="start")
 

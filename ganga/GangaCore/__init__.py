@@ -968,14 +968,14 @@ db_config = makeConfig("DatabaseConfigurations",
                        "Selection of database for ganga")
 db_config.addOption("controller", "docker",
                     "Database Controller [Native, Docker, uDocker, Singularity]")
-db_config.addOption("baseImage", "mongo:latest",
+db_config.addOption("baseImage", "mongo",
                     "Docker Image for the database")
 db_config.addOption(
     "containerName", "gangaDB", "the identifier used to tag the docker container"
 )
 db_config.addOption("username", "default", "username")
 db_config.addOption("password", "default", "password")
-db_config.addOption("host", "default", "host")
+db_config.addOption("host", "localhost", "host")
 db_config.addOption("port", 27017, "port")
 db_config.addOption("dbname", "default", "name of database")
 
