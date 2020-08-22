@@ -155,7 +155,6 @@ class TestGangaDBNested(GangaUnitTest):
         assert tmp_job == jobs(0)._impl
 
     def test_j_DeleteAll(self):
-        db_name = "default"
-        _ = pymongo.MongoClient()
-        _.drop_database(db_name)
+        db_name = "testDatabase"
+        self.connection.drop_database(db_name)
         assert True
