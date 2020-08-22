@@ -155,6 +155,11 @@ class TestGangaDBNested(GangaUnitTest):
         assert tmp_job == jobs(0)._impl
 
     def test_j_DeleteAll(self):
+        """
+        This is usefull when testing locally.
+        """
         db_name = "testDatabase"
-        self.connection.drop_database(db_name)
-        assert True
+        PORT = 27017
+        connection_string = f"mongodb://{HOST}:{PORT}/"
+        _ = pymongo.MongoClient(connection_string)
+        _.drop_database(db_name)
