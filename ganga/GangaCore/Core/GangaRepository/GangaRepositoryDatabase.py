@@ -149,7 +149,7 @@ class GangaRepositoryLocal(GangaRepository):
         Raise RepositoryError"""
 
         self._load_timestamp = {}
-        mongo_client = pymongo.MongoClient()
+
 
         self._cached_obj = {}
         self.known_bad_ids = []
@@ -160,10 +160,10 @@ class GangaRepositoryLocal(GangaRepository):
         self.from_database = object_from_database
         self.database_config = getConfig("DatabaseConfigurations")
         self.db_name = self.database_config["dbname"]
-        self.connection = mongo_client[self.db_name]
 
         try:
             self.start_database()
+            self.connection = self._mongo_connection()
         except Exception as err:
             # database is not responsive, lets raise an error
             logger.error("Error: %s" % err)
@@ -174,6 +174,19 @@ class GangaRepositoryLocal(GangaRepository):
         # FIXME: Add index updating here
         self.update_index(True, True, True)
         logger.debug("GangaRepositoryLocal Finished Startup")
+
+    def _mongo_connection(self):
+        """
+        Create connection for mongo db
+        """
+        PORT = getConfig("DatabaseConfigurations")["port"]
+        # PORT = os.environ["MONGODB_PORT"] if "MONGODB_PORT" in os.environ else 27017
+        HOST = getConfig("DatabaseConfigurations")["host"]
+        # HOST = os.environ["MONGODB_HOST "] if "MONGODB_HOST " in os.environ else "mongodb"
+        connection_string = f"mongodb://{HOST}:{PORT}/"
+        client = pymongo.MongoClient(connection_string)
+        return client[self.db_name]
+
 
     def start_database(self):
         """Start the mongodb with the prefered back_end

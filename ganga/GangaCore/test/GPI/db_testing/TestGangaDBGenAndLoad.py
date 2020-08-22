@@ -55,7 +55,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """
         extra_opts = [
             ('TestingFramework', 'AutoCleanup', 'False'),
-            ("DatabaseConfigurations", "controller", "docker")
+            ("DatabaseConfigurations", "controller", "native")
         ]
         self.connection = get_db_connection()
         super(TestGangaDBGenAndLoad, self).setUp(repositorytype="Database", extra_opts=extra_opts)
