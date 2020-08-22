@@ -39,6 +39,7 @@ def get_db_connection():
 
 config = [
     ("DatabaseConfigurations", "port", "27017"),
+    ("DatabaseConfigurations", "host", "mongodb"),
     ("DatabaseConfigurations", "baseImage", "mongo"),
     ("DatabaseConfigurations", "dbname", "testDatabase"),
     ("DatabaseConfigurations", "containerName", "testContainer")
@@ -55,7 +56,8 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """
         extra_opts = [
             ('TestingFramework', 'AutoCleanup', 'False'),
-            ("DatabaseConfigurations", "controller", "native")
+            ("DatabaseConfigurations", "controller", "docker"),
+            # *config
         ]
         self.connection = get_db_connection()
         super(TestGangaDBGenAndLoad, self).setUp(repositorytype="Database", extra_opts=extra_opts)

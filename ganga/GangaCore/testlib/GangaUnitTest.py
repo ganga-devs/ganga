@@ -352,4 +352,3 @@ class GangaUnitTest(unittest.TestCase):
 
         if hasattr(cls, 'tearDownTest'):
             cls.tearDownTest()
-
