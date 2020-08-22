@@ -1,73 +1,25 @@
 import os
+import utils
 import pymongo
+
 from GangaCore.Utility.Config import getConfig
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
-HOST, PORT = "mongodb", 27017
-# HOST, PORT = "localhost", 27017
-config = [
-    ("DatabaseConfigurations", "port", "27017"),
-    ("DatabaseConfigurations", "host", HOST),
-    ("DatabaseConfigurations", "baseImage", "mongo"),
-    ("DatabaseConfigurations", "dbname", "testDatabase"),
-    ("DatabaseConfigurations", "containerName", "testContainer")
-]
-
-
-def clean_database():
-    """
-    Clean the information from the database
-    """
-    db_name = "testDatabase"
-    PORT = 27017
-    connection_string = f"mongodb://{HOST}:{PORT}/"
-    _ = pymongo.MongoClient(connection_string)
-    _.drop_database(db_name)
-
-
-def get_db_connection():
-    """
-    Connection to the testing mongo database
-    """
-
-    # FIXME: Can't seem to get `ganga` to read the modified config changes
-    # patching the effect by using custom config
-    db_name = "testDatabase"
-    PORT = 27017
-    connection_string = f"mongodb://{HOST}:{PORT}/"
-    _ = pymongo.MongoClient(connection_string)
-    connection = _[db_name]
-
-    return connection
-
-
-def getNestedList():
-    from GangaCore.GPI import LocalFile, GangaList
-    gl = GangaList()
-    gl2 = GangaList()
-    for i in range(5):
-        gl.append(LocalFile())
-    for i in range(5):
-        gl2.append(gl)
-    return gl2
+HOST, PORT = utils.get_host_port()
 
 
 class TestGangaDBNested(GangaUnitTest):
     """
     Testing the generation of jobs, saving of jobs and finally loading of jobs
     """
+
     def setUp(self):
         """
         """
-        extra_opts = [
-            ('TestingFramework', 'AutoCleanup', 'False'),
-            # ("DatabaseConfigurations", "controller", "native"),
-            ("DatabaseConfigurations", "controller", "docker"),
-            *config
-        ]
-        self.connection = get_db_connection()
+        extra_opts = utils.get_options(HOST, PORT)
+        self.connection = utils.get_db_connection(HOST, PORT)
         super(TestGangaDBNested, self).setUp(
             repositorytype="Database", extra_opts=extra_opts)
 
@@ -81,9 +33,9 @@ class TestGangaDBNested(GangaUnitTest):
         assert len(jobs) == 1
 
         j.splitter = ArgSplitter()
-        j.splitter.args = getNestedList()
+        j.splitter.args = utils.getNestedList()
 
-        assert j.splitter.args == getNestedList()
+        assert j.splitter.args == utils.getNestedList()
 
     def test_b_JobNotLoaded(self):
         """ Second get the job and check that getting it via jobs doesn't cause it to be loaded"""
@@ -122,7 +74,7 @@ class TestGangaDBNested(GangaUnitTest):
 
         assert isinstance(j.splitter, ArgSplitter)
 
-        assert j.splitter.args._impl.to_json() == getNestedList()._impl.to_json()
+        assert j.splitter.args._impl.to_json() == utils.getNestedList()._impl.to_json()
 
     def test_d_testJSONContent(self):
         # Check content of JSON is as expected
@@ -147,8 +99,4 @@ class TestGangaDBNested(GangaUnitTest):
         """
         This is usefull when testing locally.
         """
-        db_name = "testDatabase"
-        PORT = 27017
-        connection_string = f"mongodb://{HOST}:{PORT}/"
-        _ = pymongo.MongoClient(connection_string)
-        _.drop_database(db_name)
+        utils.clean_database(HOST, PORT)

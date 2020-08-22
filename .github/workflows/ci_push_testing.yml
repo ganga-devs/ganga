@@ -28,19 +28,15 @@ jobs:
       run: |
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
-        pip3 install pymongo pytest docker
-    - name: Test with blank
-      run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/blank.py
-      env:
-        MONGODB_HOST: mongodb
-        MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+        pip3 install pymongo pytest
 
-    - name: Test with REAL thing
+    - name: Testing GangaDB
       run: |
         python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBNested.py
         python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBGenAndLoad.py
         python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBSJGenAndLoad.py
       env:
+        GANGA_GITHUB_HOST: True
         MONGODB_HOST: mongodb
         MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 

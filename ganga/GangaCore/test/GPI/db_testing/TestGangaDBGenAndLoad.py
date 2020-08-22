@@ -1,46 +1,13 @@
 import os
+import utils
 import pymongo
+
 from GangaCore.Utility.Config import getConfig
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
-HOST, PORT = "mongodb", 27017
-# HOST, PORT = "localhost", 27017
-config = [
-    ("DatabaseConfigurations", "port", "27017"),
-    ("DatabaseConfigurations", "host", HOST),
-    ("DatabaseConfigurations", "baseImage", "mongo"),
-    ("DatabaseConfigurations", "dbname", "testDatabase"),
-    ("DatabaseConfigurations", "containerName", "testContainer")
-]
-
-
-def clean_database():
-    """
-    Clean the information from the database
-    """
-    db_name = "testDatabase"
-    PORT = 27017
-    connection_string = f"mongodb://{HOST}:{PORT}/"
-    _ = pymongo.MongoClient(connection_string)
-    _.drop_database(db_name)
-
-
-def get_db_connection():
-    """
-    Connection to the testing mongo database
-    """
-
-    # FIXME: Can't seem to get `ganga` to read the modified config changes
-    # patching the effect by using custom config
-    db_name = "testDatabase"
-    PORT = 27017
-    connection_string = f"mongodb://{HOST}:{PORT}/"
-    _ = pymongo.MongoClient(connection_string)
-    connection = _[db_name]
-
-    return connection
+HOST, PORT = utils.get_host_port()
 
 
 class TestGangaDBGenAndLoad(GangaUnitTest):
@@ -51,14 +18,10 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
     def setUp(self):
         """
         """
-        extra_opts = [
-            ('TestingFramework', 'AutoCleanup', 'False'),
-            # ("DatabaseConfigurations", "controller", "native"),
-            ("DatabaseConfigurations", "controller", "docker"),
-            *config
-        ]
-        self.connection = get_db_connection()
-        super(TestGangaDBGenAndLoad, self).setUp(repositorytype="Database", extra_opts=extra_opts)
+        extra_opts = utils.get_options(HOST, PORT)
+        self.connection = utils.get_db_connection(HOST, PORT)
+        super(TestGangaDBGenAndLoad, self).setUp(
+            repositorytype="Database", extra_opts=extra_opts)
 
     def test_a_JobConstruction(self):
         """
@@ -197,12 +160,8 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """
         assert len([*self.connection.jobs.find()]) == 0
 
-    def test_j_DeleteAll(self):
+    def test_h_DeleteAll(self):
         """
         This is usefull when testing locally.
         """
-        db_name = "testDatabase"
-        PORT = 27017
-        connection_string = f"mongodb://{HOST}:{PORT}/"
-        _ = pymongo.MongoClient(connection_string)
-        _.drop_database(db_name)
+        utils.clean_database(HOST, PORT)
