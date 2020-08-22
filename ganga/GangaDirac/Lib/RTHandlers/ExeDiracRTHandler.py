@@ -2,6 +2,7 @@
 import os
 import inspect
 import GangaCore.Utility.Virtualization
+from GangaCore import _gangaVersion
 from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
 from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -124,7 +125,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
-                                        INPUT_SANDBOX='##INPUT_SANDBOX##'
+                                        INPUT_SANDBOX='##INPUT_SANDBOX##',
+                                        GANGA_VERSION=_gangaVersion,
                                         )
 
         #logger.info("dirac_script: %s" % dirac_script)
