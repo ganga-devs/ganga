@@ -74,8 +74,8 @@ class TestGangaDBNested(GangaUnitTest):
         """
         extra_opts = [
             ('TestingFramework', 'AutoCleanup', 'False'),
-            ("DatabaseConfigurations", "controller", "native")
-            # ("DatabaseConfigurations", "controller", "docker")
+            ("DatabaseConfigurations", "controller", "native"),
+            # ("DatabaseConfigurations", "controller", "docker"),
             *config
         ]
         self.connection = get_db_connection()
