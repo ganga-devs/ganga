@@ -1,58 +1,36 @@
-# ******************** Imports ******************** #
-
-import os
-import uuid
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaGUI.gui import app, db
-from GangaGUI.gui.models import User
-
-# ******************** Global Variables ******************** #
-
-currentdir = os.path.dirname(os.path.abspath(__file__))
-token = None
+from GangaGUI.api import internal
 
 
 # ******************** Test Class ******************** #
 
+
 # Job API Tests
-class TestGangaGUIJobAPI(GangaUnitTest):
+class TestGangaGUIInternalJobAPI(GangaUnitTest):
 
     # Setup
     def setUp(self, extra_opts=[]):
-        super(TestGangaGUIJobAPI, self).setUp(extra_opts=[])
+        super(TestGangaGUIInternalJobAPI, self).setUp(extra_opts=[])
 
         # App config and database creation
-        app.config["TESTING"] = True
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(currentdir, "gui_test.sqlite")
-        db.create_all()
-
-        # Temp user for the test
-        tempuser = User(public_id=str(uuid.uuid4()), user="GangaGUITestUser", role="Admin")
-        tempuser.store_password_hash("testpassword")
-        db.session.add(tempuser)
-        db.session.commit()
+        internal.config["TESTING"] = True
 
         # Flask test client
-        self.app = app.test_client()
-
-        # Generate token for requests
-        global token
-        res = self.app.post("/token", data={"user": "GangaGUITestUser", "password": "testpassword"})
-        token = res.json["token"]
+        self.app = internal.test_client()
 
     # Job API Test - GET Method, Single Job Info - Job ID out of index
     def test_GET_method_id_out_of_range(self):
-        res = self.app.get(f"/api/job/1", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/1")
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - GET Method, Single Job Info - Job ID negative
     def test_GET_method_id_negative(self):
-        res = self.app.get(f"/api/job/-1", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/-1")
         self.assertTrue(res.status_code == 404)
 
     # Job API Test - GET Method, Single Job Info - Job ID string
     def test_GET_method_id_string(self):
-        res = self.app.get(f"/api/job/test", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/test")
         self.assertTrue(res.status_code == 404)
 
     # Job API Test - GET Method, Single Job Info - Everything correct
@@ -65,7 +43,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j.comment = "Test comment"
 
         # Make the GET request
-        res = self.app.get(f"/api/job/{j.id}", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/{j.id}")
 
         # Response assertions
         self.assertTrue(res.status_code == 200)
@@ -86,17 +64,17 @@ class TestGangaGUIJobAPI(GangaUnitTest):
 
     # Job API Test - GET Method, Single Job Attribute Info - Job ID out of index
     def test_job_attribute_GET_method_id_out_of_index(self):
-        res = self.app.get(f"/api/job/1/id", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/1/id")
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - GET Method, Single Job Attribute Info - Job ID negative
     def test_job_attribute_GET_method_id_negative(self):
-        res = self.app.get(f"/api/job/-1/id", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/-1/id")
         self.assertTrue(res.status_code == 404)
 
     # Job API Test - GET Method, Single Job Attribute Info - Job ID string
     def test_job_attribute_GET_method_id_string(self):
-        res = self.app.get(f"/api/job/test/id", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/test/id")
         self.assertTrue(res.status_code == 404)
 
     # Job API Test - GET Method, Single Job Attribute Info - Job ID corrent but unsupported attribute
@@ -109,7 +87,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j.comment = "Test comment"
 
         # GET request
-        res = self.app.get(f"/api/job/{j.id}/test", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/{j.id}/test")
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - GET Method, Single Job Attribute Info - Job ID correct and supported attribute
@@ -130,23 +108,23 @@ class TestGangaGUIJobAPI(GangaUnitTest):
 
         # For each attribute make a GET request and assert the response data
         for attribute in supported_attributes:
-            res = self.app.get(f"/api/job/{j.id}/{attribute}", headers={"X-Access-Token": token})
+            res = self.app.get(f"/internal/jobs/{j.id}/{attribute}")
             self.assertTrue(res.status_code == 200)
             self.assertTrue(attribute in res.json.keys())
 
     # Job API Test - POST Method, Create Job from Template - Template ID not provide in the request body
     def test_POST_method_template_id_not_given(self):
-        res = self.app.post(f"/api/job/create", headers={"X-Access-Token": token})
+        res = self.app.post(f"/internal/jobs/create")
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - POST Method, Create Job from Template - Template ID is not an int
     def test_POST_method_template_id_not_int(self):
-        res = self.app.post(f"/api/job/create", headers={"X-Access-Token": token}, data={"template_id": "test"})
+        res = self.app.post(f"/internal/jobs/create", json={"template_id": "test"})
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - POST Method, Create Job from Template - Template ID incorrect
     def test_POST_method_incorrect_template_id(self):
-        res = self.app.post(f"/api/job/create", headers={"X-Access-Token": token}, data={"template_id": 2})
+        res = self.app.post(f"/internal/jobs/create", json={"template_id": 2})
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - POST Method, Create Job from Template - Template ID correct and job name not give
@@ -158,8 +136,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         t.name = "Test Template Name"
 
         # POST request
-        res = self.app.post(f"/api/job/create", headers={"X-Access-Token": token},
-                            data={"template_id": t.id, "job_name": "Custom Test Name"})
+        res = self.app.post(f"/internal/jobs/create",
+                            json={"template_id": t.id, "job_name": "Custom Test Name"})
         self.assertTrue(res.status_code == 200)
 
         job_created = False
@@ -180,7 +158,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         t.name = "Test Template Name"
 
         # POST request
-        res = self.app.post(f"/api/job/create", headers={"X-Access-Token": token}, data={"template_id": t.id})
+        res = self.app.post(f"/internal/jobs/create", json={"template_id": t.id})
         self.assertTrue(res.status_code == 200)
 
         job_created = False
@@ -194,17 +172,17 @@ class TestGangaGUIJobAPI(GangaUnitTest):
 
     # Job API Test - PUT Method, Action on Single Job - Job ID out of index
     def test_PUT_method_id_out_of_index(self):
-        res = self.app.put(f"/api/job/1/name", headers={"X-Access-Token": token}, data={"name": "New Test Name"})
+        res = self.app.put(f"/internal/jobs/1/name", json={"name": "New Test Name"})
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - PUT Method, Action on Single Job - Job ID negative
     def test_PUT_method_id_negative(self):
-        res = self.app.put(f"/api/job/-1/id", headers={"X-Access-Token": token}, data={"name": "New Test Name"})
+        res = self.app.put(f"/internal/jobs/-1/id", json={"name": "New Test Name"})
         self.assertTrue(res.status_code == 404)
 
     # Job API Test - PUT Method, Action on Single Job - Job ID string
     def test_PUT_method_id_string(self):
-        res = self.app.put(f"/api/job/test/id", headers={"X-Access-Token": token}, data={"name": "New Test Name"})
+        res = self.app.put(f"/internal/jobs/test/id", json={"name": "New Test Name"})
         self.assertTrue(res.status_code == 404)
 
     # Job API Test - PUT Method, Action on Single Job - Job ID correct but unsupported action
@@ -217,7 +195,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j.comment = "Test comment"
 
         # PUT request
-        res = self.app.put(f"/api/job/{j.id}/test", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/test")
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - PUT Method, Action on Single Job - do_auto_resubmit action - no or bad form data
@@ -230,12 +208,12 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j.do_auto_resubmit = False
 
         # PUT request without form data
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit")
         self.assertTrue(res.status_code == 400)
 
         # PUT request with bad form data
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
-                           data={"do_auto_resubmit": '"Bad Value"'})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit",
+                           json={"do_auto_resubmit": '"Bad Value"'})
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - PUT Method, Action on Single Job - do_auto_resubmit action - correct form data
@@ -253,26 +231,26 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j.backend = Local()
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
-                           data={"do_auto_resubmit": 'true'})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit",
+                           json={"do_auto_resubmit": True})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.do_auto_resubmit == True)
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
-                           data={"do_auto_resubmit": 'false'})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit",
+                           json={"do_auto_resubmit": False})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.do_auto_resubmit == False)
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
-                           data={"do_auto_resubmit": 'true'})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit",
+                           json={"do_auto_resubmit": True})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.do_auto_resubmit == True)
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
-                           data={"do_auto_resubmit": 'false'})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit",
+                           json={"do_auto_resubmit": False})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.do_auto_resubmit == False)
 
@@ -282,8 +260,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "running")
 
         # Cannot change value in running state
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
-                           data={"do_auto_resubmit": 'true'})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit",
+                           json={"do_auto_resubmit": True})
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.do_auto_resubmit == False)
         self.assertTrue(j.status == "running")
@@ -293,8 +271,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "killed")
 
         # Cannot change value in killed state
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
-                           data={"do_auto_resubmit": 'true'})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit",
+                           json={"do_auto_resubmit": True})
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.do_auto_resubmit == False)
         self.assertTrue(j.status == "killed")
@@ -304,8 +282,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "failed")
 
         # Cannot change value in failed state
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
-                           data={"do_auto_resubmit": 'true'})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit",
+                           json={"do_auto_resubmit": True})
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.do_auto_resubmit == False)
         self.assertTrue(j.status == "failed")
@@ -315,8 +293,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "completed")
 
         # Cannot change value in completed state
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
-                           data={"do_auto_resubmit": 'true'})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit",
+                           json={"do_auto_resubmit": True})
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.do_auto_resubmit == False)
         self.assertTrue(j.status == "completed")
@@ -330,7 +308,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j.name = "Name 1"
 
         # PUT request without form data
-        res = self.app.put(f"/api/job/{j.id}/name", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/name")
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - PUT Method, Action on Single Job - name action - correct form data
@@ -346,7 +324,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j.backend = Local()
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/name", headers={"X-Access-Token": token}, data={"name": '"Name 2"'})
+        res = self.app.put(f"/internal/jobs/{j.id}/name", json={"name": "Name 2"})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.name == "Name 2")
 
@@ -356,8 +334,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "running")
 
         # Cannot change name in running state
-        res = self.app.put(f"/api/job/{j.id}/name", headers={"X-Access-Token": token},
-                           data={"name": '"Name 3"'})
+        res = self.app.put(f"/internal/jobs/{j.id}/name",
+                           json={"name": '"Name 3"'})
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.name == "Name 2")
         self.assertTrue(j.status == "running")
@@ -372,12 +350,12 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j.parallel_submit = True
 
         # PUT request with no data
-        res = self.app.put(f"/api/job/{j.id}/parallel_submit", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/parallel_submit")
         self.assertTrue(res.status_code == 400)
 
         # PUT reqeust with bad data
-        res = self.app.put(f"/api/job/{j.id}/do_auto_resubmit", headers={"X-Access-Token": token},
-                           data={"parallel_submit": '"Bad Value"'})
+        res = self.app.put(f"/internal/jobs/{j.id}/do_auto_resubmit",
+                           json={"parallel_submit": "Bad value"})
         self.assertTrue(res.status_code == 400)
 
     # Job API Test - PUT Method, Action on Single Job - parallel_submit action - good form data
@@ -396,27 +374,27 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "new")
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/parallel_submit", headers={"X-Access-Token": token},
-                           data={"parallel_submit": "false"})
+        res = self.app.put(f"/internal/jobs/{j.id}/parallel_submit",
+                           json={"parallel_submit": False})
         print(res.json)
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.do_auto_resubmit == False)
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/parallel_submit", headers={"X-Access-Token": token},
-                           data={"parallel_submit": 'true'})
+        res = self.app.put(f"/internal/jobs/{j.id}/parallel_submit",
+                           json={"parallel_submit": True})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.parallel_submit == True)
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/parallel_submit", headers={"X-Access-Token": token},
-                           data={"parallel_submit": 'false'})
+        res = self.app.put(f"/internal/jobs/{j.id}/parallel_submit",
+                           json={"parallel_submit": False})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.parallel_submit == False)
 
         # PUT request with correct form data
-        res = self.app.put(f"/api/job/{j.id}/parallel_submit", headers={"X-Access-Token": token},
-                           data={"parallel_submit": 'true'})
+        res = self.app.put(f"/internal/jobs/{j.id}/parallel_submit",
+                           json={"parallel_submit": True})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.parallel_submit == True)
 
@@ -428,8 +406,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "running")
 
         # Cannot change value in running state
-        res = self.app.put(f"/api/job/{j.id}/parallel_submit", headers={"X-Access-Token": token},
-                           data={"parallel_submit": 'false'})
+        res = self.app.put(f"/internal/jobs/{j.id}/parallel_submit",
+                           json={"parallel_submit": False})
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.parallel_submit == True)
         self.assertTrue(j.status == "running")
@@ -452,7 +430,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(len(jobs) == 1)
 
         # Cannot kill job in new state
-        res = self.app.put(f"/api/job/{j.id}/kill", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/kill")
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.status == "new")
 
@@ -462,12 +440,12 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "running")
 
         # Kill the job in running state
-        res = self.app.put(f"/api/job/{j.id}/kill", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/kill")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "killed")
 
         # Cannot kill job in killed state
-        res = self.app.put(f"/api/job/{j.id}/kill", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/kill")
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.status == "killed")
 
@@ -476,7 +454,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "failed")
 
         # Cannot kill job in failed state but it will return 200 OK HTTP code
-        res = self.app.put(f"/api/job/{j.id}/kill", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/kill")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "failed")
 
@@ -485,7 +463,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "completed")
 
         # Cannot kill job in completed state but it will return 200 OK HTTP code
-        res = self.app.put(f"/api/job/{j.id}/kill", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/kill")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "completed")
 
@@ -503,12 +481,12 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "new")
 
         # Request without a body
-        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/force_status")
         self.assertTrue(res.status_code == 400)
 
         # Reuqest with a bad value in the body - Bad values are other than (completed, failed)
-        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token},
-                           data={"force_status": '"BadValue"'})
+        res = self.app.put(f"/internal/jobs/{j.id}/force_status",
+                           json={"force_status": '"BadValue"'})
         self.assertTrue(res.status_code == 400)
 
     # Job API - PUT Method, force_status action - good request body
@@ -529,8 +507,8 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "new")
 
         # Cannot change job status from new to completed
-        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token},
-                           data={"force_status": '"completed"'})
+        res = self.app.put(f"/internal/jobs/{j.id}/force_status",
+                           json={"force_status": "completed"})
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.status == "new")
 
@@ -540,15 +518,15 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "running")
 
         # Change job status from running to failed
-        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token},
-                           data={"force_status": '"failed"'})
+        res = self.app.put(f"/internal/jobs/{j.id}/force_status",
+                           json={"force_status": "failed"})
         print(res.json)
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "failed")
 
         # Change job status from failed to completed
-        res = self.app.put(f"/api/job/{j.id}/force_status", headers={"X-Access-Token": token},
-                           data={"force_status": '"completed"'})
+        res = self.app.put(f"/internal/jobs/{j.id}/force_status",
+                           json={"force_status": "completed"})
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "completed")
 
@@ -570,7 +548,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "new")
 
         # Cannot resubmit job with status new
-        res = self.app.put(f"/api/job/{j.id}/resubmit", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/resubmit")
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.status == "new")
 
@@ -580,7 +558,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "completed")
 
         # Cannot resubmit job with status running
-        res = self.app.put(f"/api/job/{j.id}/resubmit", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/resubmit")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status != "completed")
 
@@ -602,7 +580,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "new")
 
         # Submit a job with status new
-        res = self.app.put(f"/api/job/{j.id}/submit", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/submit")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status != "new")
 
@@ -610,7 +588,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "running")
 
         # Cannot submit job with status running
-        res = self.app.put(f"/api/job/{j.id}/submit", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/submit")
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.status == "running")
 
@@ -619,7 +597,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "killed")
 
         # Cannot submit job with status killed
-        res = self.app.put(f"/api/job/{j.id}/submit", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/submit")
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.status == "killed")
 
@@ -628,7 +606,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "failed")
 
         # Cannot submit job with status failed
-        res = self.app.put(f"/api/job/{j.id}/submit", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/submit")
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.status == "failed")
 
@@ -637,7 +615,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "completed")
 
         # Cannot submit job with status failed
-        res = self.app.put(f"/api/job/{j.id}/submit", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/submit")
         self.assertTrue(res.status_code == 400)
         self.assertTrue(j.status == "completed")
 
@@ -659,7 +637,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "new")
 
         # Run runPostProcessors of job with status new
-        res = self.app.put(f"/api/job/{j.id}/runPostProcessors", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/runPostProcessors")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "new")
 
@@ -669,7 +647,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "running")
 
         # Run runPostProcessors of job with status running
-        res = self.app.put(f"/api/job/{j.id}/runPostProcessors", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/runPostProcessors")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "running")
 
@@ -678,7 +656,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "killed")
 
         # Run runPostProcessors of job with status killed
-        res = self.app.put(f"/api/job/{j.id}/runPostProcessors", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/runPostProcessors")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "killed")
 
@@ -687,7 +665,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "failed")
 
         # Run runPostProcessors of job with status failed
-        res = self.app.put(f"/api/job/{j.id}/runPostProcessors", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/runPostProcessors")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "failed")
 
@@ -696,23 +674,23 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(j.status == "completed")
 
         # Run runPostProcessors of job with status running
-        res = self.app.put(f"/api/job/{j.id}/runPostProcessors", headers={"X-Access-Token": token})
+        res = self.app.put(f"/internal/jobs/{j.id}/runPostProcessors")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(j.status == "completed")
 
     # Job API - DELETE Method, ID Out of Index
     def test_DELETE_method_id_out_of_range(self):
-        res = self.app.delete(f"/api/job/1", headers={"X-Access-Token": token})
+        res = self.app.delete(f"/internal/jobs/1")
         self.assertTrue(res.status_code == 400)
 
     # Job API - DELETE Method, ID is Negative
     def test_DELETE_method_id_negative(self):
-        res = self.app.delete(f"/api/job/-1", headers={"X-Access-Token": token})
+        res = self.app.delete(f"/internal/jobs/-1")
         self.assertTrue(res.status_code == 404)
 
     # Job API - DELETE Method, ID is String
     def test_DELETE_method_id_string(self):
-        res = self.app.delete(f"/api/job/test", headers={"X-Access-Token": token})
+        res = self.app.delete(f"/internal/jobs/test")
         self.assertTrue(res.status_code == 404)
 
     # Job API - DELETE Method - Job in new state
@@ -733,7 +711,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         self.assertTrue(len(jobs) == 1)
 
         # Delete the job with status new
-        res = self.app.delete(f"/api/job/{j.id}", headers={"X-Access-Token": token})
+        res = self.app.delete(f"/internal/jobs/{j.id}")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(jobs) == 0)
         self.assertTrue(j.id not in jobs.ids())
@@ -757,7 +735,7 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         sleep_until_state(j)
 
         # Delete the job with status completed
-        res = self.app.delete(f"/api/job/{j.id}", headers={"X-Access-Token": token})
+        res = self.app.delete(f"/internal/jobs/{j.id}")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(jobs) == 0)
         self.assertTrue(j.id not in jobs.ids())
@@ -782,14 +760,13 @@ class TestGangaGUIJobAPI(GangaUnitTest):
         j.force_status("failed")
 
         # Delete the job with status completed
-        res = self.app.delete(f"/api/job/{j.id}", headers={"X-Access-Token": token})
+        res = self.app.delete(f"/internal/jobs/{j.id}")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(jobs) == 0)
         self.assertTrue(j.id not in jobs.ids())
 
     # Tear down
     def tearDown(self):
-        super(TestGangaGUIJobAPI, self).tearDown()
-        db.session.remove()
-        db.drop_all()
-        os.remove(os.path.join(currentdir, "gui_test.sqlite"))
+        super(TestGangaGUIInternalJobAPI, self).tearDown()
+
+# ******************** EOF ******************** #

@@ -1,13 +1,13 @@
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaGUI.gui import app
+from GangaGUI.gui.routes import gui
 
 
 class TestGangaGUIDashboard(GangaUnitTest):
 
     def setUp(self, extra_opts=[]):
         super(TestGangaGUIDashboard, self).setUp(extra_opts=[])
-        app.config["TESTING"] = True
-        self.app = app.test_client()
+        gui.config["TESTING"] = True
+        self.app = gui.test_client()
 
     # TODO trivial test, remove later
     def test_dashboard(self):

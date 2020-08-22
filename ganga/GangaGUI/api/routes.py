@@ -82,8 +82,9 @@ def job_create():
     from GangaCore.GPI import templates, Job
 
     # Parse request body
-    template_id = request.json.get("template_id")
-    job_name = request.json.get("job_name")
+    request_json = request.json if request.json else {}
+    template_id = request_json.get("template_id")
+    job_name = request_json.get("job_name")
 
     try:
         # Create job using template
@@ -134,7 +135,7 @@ def job_action(job_id: int, action: str):
     from GangaCore.GPIDev.Lib.Job import Job
 
     # Store request data in a dictionary
-    request_data = request.json
+    request_data = request.json if request.json else {}
 
     # Action validity check
     if action not in chain(Job._exportmethods, Job._schema.allItemNames()):
