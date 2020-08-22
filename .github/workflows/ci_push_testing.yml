@@ -18,6 +18,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Update packages
+      run: apt update -y
     - name: Set up Python 3
       run: apt install -y python3
     - name: Install dependencies
