@@ -28,6 +28,7 @@ jobs:
       run: |
         pip install --upgrade pip setuptools wheel
         pip install -e .[dev]
+        pip install pymongo pytest docker
     - name: Test with pytest
       run: pytest ganga/GangaCore/test/GPI/db_testing/blank.py
       # env:
