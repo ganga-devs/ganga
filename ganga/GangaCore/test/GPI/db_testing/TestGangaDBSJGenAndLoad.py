@@ -1,18 +1,30 @@
-
-import time
+import os
 import pymongo
 from GangaCore.Utility.Config import getConfig
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.Utility.Virtualization import checkNative, checkDocker
+
 
 testStr = "testFooString"
 testArgs = [[1],[2],[3],[4],[5]]
+HOST, PORT = "mongodb", 27017
+HOST, PORT = "localhost", 27017
+config = [
+    ("DatabaseConfigurations", "port", PORT),
+    ("DatabaseConfigurations", "host", HOST),
+    ("DatabaseConfigurations", "baseImage", "mongo"),
+    ("DatabaseConfigurations", "dbname", "testDatabase"),
+    ("DatabaseConfigurations", "containerName", "testContainer")
+]
 
 def clean_database():
     """
     Clean the information from the database
     """
-    db_name = "default"
-    _ = pymongo.MongoClient()
+    db_name = "testDatabase"
+    PORT = 27017
+    connection_string = f"mongodb://{HOST}:{PORT}/"
+    _ = pymongo.MongoClient(connection_string)
     _.drop_database(db_name)
 
 
@@ -23,18 +35,13 @@ def get_db_connection():
 
     # FIXME: Can't seem to get `ganga` to read the modified config changes
     # patching the effect by using custom config
-    db_name = "default"
-    _ = pymongo.MongoClient()
+    db_name = "testDatabase"
+    PORT = 27017
+    connection_string = f"mongodb://{HOST}:{PORT}/"
+    _ = pymongo.MongoClient(connection_string)
     connection = _[db_name]
 
     return connection
-
-config = [
-    ("DatabaseConfigurations", "port", "27017"),
-    ("DatabaseConfigurations", "baseImage", "mongo"),
-    ("DatabaseConfigurations", "dbname", "testDatabase"),
-    ("DatabaseConfigurations", "containerName", "testContainer")
-]
 
 
 class TestGangaDBGenAndLoad(GangaUnitTest):
@@ -42,8 +49,10 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
         extra_opts = [
-            ('Registry', 'AutoFlusherWaitTime', 5),
-            ('TestingFramework', 'AutoCleanup', 'False')
+            ('TestingFramework', 'AutoCleanup', 'False'),
+            ("DatabaseConfigurations", "controller", "native"),
+            # ("DatabaseConfigurations", "controller", "docker"),
+            *config
         ]
         self.connection = get_db_connection()
         super(TestGangaDBGenAndLoad, self).setUp(repositorytype="Database", extra_opts=extra_opts)
@@ -188,6 +197,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
         assert tmp_job == jobs(0)._impl
 
+# FIXME: I do not undertand this test
     # def test_g_testSJJsonContent(self):
     #     # Check SJ content
     #     from GangaCore.Core.GangaRepository.VStreamer import to_file, from_file
@@ -205,14 +215,14 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
     #         to_file(stripProxy(j), new_temp_file_a, ignore_subs)
     #         new_temp_file_a.flush()
 
-        
+
 
     #     counter = 0
     #     for sj in j.subjobs:
-    #         JsonFileName = getSJXMLFile(sj)
-    #         assert path.isfile(XMLFileName)
+    #         JsonFileName = getSJJSONFile(sj)
+    #         assert path.isfile(JSONFileName)
 
-    #         with open(XMLFileName, 'rb') as handler:
+    #         with open(JSONFileName, 'rb') as handler:
     #             tmpobj, errs = from_file(handler)
     #             assert hasattr(tmpobj, 'id')
     #             assert tmpobj.id == counter
@@ -223,16 +233,16 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
     #                 new_temp_file.flush()
 
     #             #import filecmp
-    #             #assert filecmp.cmp(XMLFileName, temp_name)
+    #             #assert filecmp.cmp(JSONFileName, temp_name)
     #             assert open(temp_name_a).read() == open(temp_name).read()
     #             unlink(temp_name)
 
     #         counter+=1
 
-        # assert counter == len(jobs(0).subjobs)
-        # unlink(temp_name_a)
+    #     assert counter == len(jobs(0).subjobs)
+    #     unlink(temp_name_a)
 
-    def test_h_testXMLIndex(self):
+    def test_h_testJSONIndex(self):
         # Check index of job
         from GangaCore.GPI import jobs, Job
         from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
@@ -299,7 +309,10 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
 
     def test_j_DeleteAll(self):
-        db_name = "default"
-        _ = pymongo.MongoClient()
+        """
+        This is usefull when testing locally.
+        """
+        db_name = "testDatabase"
+        connection_string = f"mongodb://{HOST}:{PORT}/"
+        _ = pymongo.MongoClient(connection_string)
         _.drop_database(db_name)
-        assert True

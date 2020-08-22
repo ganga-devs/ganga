@@ -1,14 +1,3 @@
-"""
-Testing functions related to ganga db
-from pymongo import MongoClient
-from pymongo.errors import ServerSelectionTimeoutError
-client = MongoClient(serverSelectionTimeoutMS=10, connectTimeoutMS=20000)
-try:
-    info = client.server_info() # Forces a call.
-except ServerSelectionTimeoutError:
-    print("server is down.")
-
-"""
 import os
 import pymongo
 from GangaCore.Utility.Config import getConfig
@@ -16,8 +5,8 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
-# HOST = "localhost"
-HOST = "mongodb"
+HOST, PORT = "mongodb", 27017
+HOST, PORT = "localhost", 27017
 config = [
     ("DatabaseConfigurations", "port", "27017"),
     ("DatabaseConfigurations", "host", HOST),
@@ -154,7 +143,7 @@ class TestGangaDBNested(GangaUnitTest):
 
         assert tmp_job == jobs(0)._impl
 
-    def test_j_DeleteAll(self):
+    def test_e_DeleteAll(self):
         """
         This is usefull when testing locally.
         """
