@@ -30,7 +30,10 @@ jobs:
         pip3 install -e .[dev]
         pip3 install pymongo pytest docker
     - name: Test with pytest
-      run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/blank.py
+      run: |
+        echo $MONGODB_HOST
+        echo $MONGODB_PORT
+        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/blank.py
       env:
         # MONGODB_HOST: mongodb
         MONGODB_HOST: localhost
