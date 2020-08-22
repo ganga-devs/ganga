@@ -22,8 +22,8 @@ jobs:
       run: apt update -y
     - name: Set up Python 3
       run: |
-      apt install -y python3
-      apt install -y python-pip
+        apt install -y python3
+        apt install -y python-pip
     - name: Install dependencies
       run: |
         pip install --upgrade pip setuptools wheel
