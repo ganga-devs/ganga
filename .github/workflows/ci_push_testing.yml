@@ -21,16 +21,19 @@ jobs:
     - name: Update packages
       run: apt update -y
     - name: Set up Python 3
-      run: apt install -y python3
+      run: |
+      apt install -y python3
+      apt install -y python-pip
     - name: Install dependencies
       run: |
-        # python3 -m pip install --upgrade pip setuptools wheel
-        pip3 install --upgrade pip setuptools wheel
-        # python3 -m pip install -e .[dev]
-        pip3 install -e .[dev]
+        pip install --upgrade pip setuptools wheel
+        pip install -e .[dev]
     - name: Test with pytest
-      run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/blank.py
+      run: pytest ganga/GangaCore/test/GPI/db_testing/blank.py
       # env:
       #   MONGODB_HOST: mongodb
       #   MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
+
+        # python3 -m pip install --upgrade pip setuptools wheel
+        # python3 -m pip install -e .[dev]
