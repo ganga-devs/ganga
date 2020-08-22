@@ -16,13 +16,27 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
+
+config = [
+    ("DatabaseConfigurations", "port", "27017"),
+    # ("DatabaseConfigurations", "host", "mongodb"),
+    ("DatabaseConfigurations", "host", "localhost"),
+    ("DatabaseConfigurations", "baseImage", "mongo"),
+    ("DatabaseConfigurations", "dbname", "testDatabase"),
+    ("DatabaseConfigurations", "containerName", "testContainer")
+]
+
+
 def clean_database():
     """
     Clean the information from the database
     """
-    import pymongo
-    db_name = "default"
-    _ = pymongo.MongoClient()
+    db_name = "testDatabase"
+    PORT = 27017
+    HOST = "localhost"
+    # HOST = "mongodb"
+    connection_string = f"mongodb://{HOST}:{PORT}/"
+    _ = pymongo.MongoClient(connection_string)
     _.drop_database(db_name)
 
 
@@ -33,8 +47,12 @@ def get_db_connection():
 
     # FIXME: Can't seem to get `ganga` to read the modified config changes
     # patching the effect by using custom config
-    db_name = "default"
-    _ = pymongo.MongoClient()
+    db_name = "testDatabase"
+    PORT = 27017
+    HOST = "localhost"
+    # HOST = "mongodb"
+    connection_string = f"mongodb://{HOST}:{PORT}/"
+    _ = pymongo.MongoClient(connection_string)
     connection = _[db_name]
 
     return connection
@@ -51,25 +69,17 @@ def getNestedList():
     return gl2
 
 
-config = [
-    ("DatabaseConfigurations", "port", "27017"),
-    ("DatabaseConfigurations", "baseImage", "mongo"),
-    ("DatabaseConfigurations", "dbname", "testDatabase"),
-    ("DatabaseConfigurations", "containerName", "testContainer")
-]
-
-
 class TestGangaDBNested(GangaUnitTest):
     """
     Testing the generation of jobs, saving of jobs and finally loading of jobs
     """
-
     def setUp(self):
         """
         """
         extra_opts = [
             ('TestingFramework', 'AutoCleanup', 'False'),
-            ("DatabaseConfigurations", "controller", "docker")
+            ("DatabaseConfigurations", "controller", "docker"),
+            *config
         ]
         self.connection = get_db_connection()
         super(TestGangaDBNested, self).setUp(
@@ -128,8 +138,8 @@ class TestGangaDBNested(GangaUnitTest):
 
         assert j.splitter.args._impl.to_json() == getNestedList()._impl.to_json()
 
-    def test_d_testXMLContent(self):
-        # Check content of XML is as expected
+    def test_d_testJSONContent(self):
+        # Check content of JSON is as expected
         from GangaCore.GPI import jobs, Job
         from GangaCore.GPIDev.Base.Proxy import stripProxy
 

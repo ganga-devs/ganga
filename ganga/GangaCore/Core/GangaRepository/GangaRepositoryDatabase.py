@@ -148,12 +148,6 @@ class GangaRepositoryLocal(GangaRepository):
         """ Starts a repository and reads in a directory structure.
         Raise RepositoryError"""
 
-<<<<<<< HEAD
-        self._load_timestamp = {}
-
-
-=======
->>>>>>> db-handlers
         self._cached_obj = {}
         self.known_bad_ids = []
         self._load_timestamp = {}
@@ -167,7 +161,6 @@ class GangaRepositoryLocal(GangaRepository):
 
         try:
             self.start_database()
-            self.connection = self._mongo_connection()
         except Exception as err:
             # database is not responsive, lets raise an error
             logger.error("Error: %s" % err)
