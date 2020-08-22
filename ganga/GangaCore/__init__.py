@@ -975,7 +975,7 @@ db_config.addOption(
 )
 db_config.addOption("username", "default", "username")
 db_config.addOption("password", "default", "password")
-db_config.addOption("host", "mongodb", "host")
+db_config.addOption("host", "localhost", "host")
 db_config.addOption("port", 27017, "port")
 db_config.addOption("dbname", "default", "name of database")
 
