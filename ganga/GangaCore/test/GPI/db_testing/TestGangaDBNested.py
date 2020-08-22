@@ -16,11 +16,11 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
-
+# HOST = "localhost"
+HOST = "mongodb"
 config = [
     ("DatabaseConfigurations", "port", "27017"),
-    # ("DatabaseConfigurations", "host", "mongodb"),
-    ("DatabaseConfigurations", "host", "localhost"),
+    ("DatabaseConfigurations", "host", HOST),
     ("DatabaseConfigurations", "baseImage", "mongo"),
     ("DatabaseConfigurations", "dbname", "testDatabase"),
     ("DatabaseConfigurations", "containerName", "testContainer")
@@ -33,8 +33,6 @@ def clean_database():
     """
     db_name = "testDatabase"
     PORT = 27017
-    HOST = "localhost"
-    # HOST = "mongodb"
     connection_string = f"mongodb://{HOST}:{PORT}/"
     _ = pymongo.MongoClient(connection_string)
     _.drop_database(db_name)
@@ -49,8 +47,6 @@ def get_db_connection():
     # patching the effect by using custom config
     db_name = "testDatabase"
     PORT = 27017
-    HOST = "localhost"
-    # HOST = "mongodb"
     connection_string = f"mongodb://{HOST}:{PORT}/"
     _ = pymongo.MongoClient(connection_string)
     connection = _[db_name]
