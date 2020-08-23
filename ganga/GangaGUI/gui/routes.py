@@ -1010,8 +1010,9 @@ def generate_token():
     """
 
     # Request form data
-    request_user = request.json.get("username")
-    request_password = request.json.get("password")
+    request_json = request.json if request.json else {}
+    request_user = request_json.get("username")
+    request_password = request_json.get("password")
 
     # Handle no user or no password case
     if not request_user or not request_password:

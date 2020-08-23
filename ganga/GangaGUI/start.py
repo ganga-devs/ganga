@@ -46,10 +46,11 @@ class APIServerThread(GangaThread):
 
 
 def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port: int = 5000,
-              password: str = None):
+              password: str = None, only_internal: bool = False):
     """
     Start GUI Flask App on a Gunicorn server and API Flask App on a GangaThread
 
+    :param only_internal: bool - will only start the internal API server
     :param gui_host: str
     :param gui_port: int
     :param internal_port: int
@@ -87,7 +88,8 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
     global api_server, gui_server
 
     # For when it is called by ganga-gui binary for starting the integrated terminal
-    if os.environ.get('WEB_CLI') is not None:
+    if os.environ.get('WEB_CLI') is not None or only_internal is not False:
+
         # Get the internal port to start the API server on
         if os.environ.get("INTERNAL_PORT") is not None:
             internal_port = int(os.environ.get("INTERNAL_PORT"))
@@ -175,7 +177,8 @@ def create_default_user(password=None):
     return gui_user, password
 
 
-def start_gui_server(gui_host, gui_port, internal_port, package_dir=ganga_package_dir, web_cli_mode=False, web_cli_port=None):
+def start_gui_server(gui_host, gui_port, internal_port, package_dir=ganga_package_dir, web_cli_mode=False,
+                     web_cli_port=None):
     """
     Start the GUI server on a Gunicorn server - this is started as a separate process and communicated with the Internal API server running on a GangaThread which has access to Ganga resources.
 
