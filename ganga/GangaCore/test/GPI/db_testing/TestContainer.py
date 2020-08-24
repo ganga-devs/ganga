@@ -27,7 +27,7 @@ class TestDatabaseBackends(GangaUnitTest):
     def setUp(self):
         """
         """
-        extra_opts = [('TestingFramework', 'AutoCleanup', 'False')]
+        extra_opts = utils.get_options(HOST, PORT)
         self.database_config = getConfig("DatabaseConfigurations")
         self.installations = {
             "docker": checkDocker(),
