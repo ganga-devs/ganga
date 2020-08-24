@@ -63,7 +63,7 @@ class TestDatabaseBackends(GangaUnitTest):
                         for container in container_client.containers.list()])
             assert not flag
 
-        else:
+        else: 
             # skip the test if docker is not installed
             print("docker is not installed and thus skipping")
             return

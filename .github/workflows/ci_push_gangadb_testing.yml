@@ -77,7 +77,7 @@ jobs:
     - name: Test Container Controllers
       run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestContainer.py
       env:
-        GANGA_GITHUB_HOST: True
+        GANGA_GITHUB_HOST: False
         MONGODB_HOST: mongodb
         MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
