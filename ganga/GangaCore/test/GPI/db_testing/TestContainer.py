@@ -68,50 +68,50 @@ class TestDatabaseBackends(GangaUnitTest):
     #         print("docker is not installed and thus skipping")
     #         return
 
-    def test_singularity_backend_lifetime(self):
-        """
-        Test the starting and shutdown of udocker container image
-        """
-        import subprocess
-        from GangaCore.Core.GangaRepository.container_controllers import singularity_handler
-        if self.installations["singularity"]:
-            # start the singularity container
-            singularity_handler(
-                action="start",
-                gangadir=self.gangadir(),
-                database_config=self.database_config
-            )
+    # def test_singularity_backend_lifetime(self):
+    #     """
+    #     Test the starting and shutdown of udocker container image
+    #     """
+    #     import subprocess
+    #     from GangaCore.Core.GangaRepository.container_controllers import singularity_handler
+    #     if self.installations["singularity"]:
+    #         # start the singularity container
+    #         singularity_handler(
+    #             action="start",
+    #             gangadir=self.gangadir(),
+    #             database_config=self.database_config
+    #         )
 
-            # checking if the container started up
-            process = subprocess.Popen(
-                "singularity instance list", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                shell=True
-            )
-            stdout, stderr = process.communicate()
-            flag = False
-            flag = any([
-                self.database_config["containerName"] in line
-                for line in stdout.decode().split()
-                ])
-            assert flag
+    #         # checking if the container started up
+    #         process = subprocess.Popen(
+    #             "singularity instance list", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    #             shell=True
+    #         )
+    #         stdout, stderr = process.communicate()
+    #         flag = False
+    #         flag = any([
+    #             self.database_config["containerName"] in line
+    #             for line in stdout.decode().split()
+    #             ])
+    #         assert flag
 
-            # shutting down the container
-            singularity_handler(
-                action="quit",
-                gangadir=self.gangadir(),
-                database_config=self.database_config
-            )
-            process = subprocess.Popen(
-                "singularity instance list", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                shell=True
-            )
-            stdout, stderr = process.communicate()
-            flag = True
-            flag = any([
-                self.database_config["containerName"] in line
-                for line in stdout.decode().split()
-                ])
-            assert not flag
+    #         # shutting down the container
+    #         singularity_handler(
+    #             action="quit",
+    #             gangadir=self.gangadir(),
+    #             database_config=self.database_config
+    #         )
+    #         process = subprocess.Popen(
+    #             "singularity instance list", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    #             shell=True
+    #         )
+    #         stdout, stderr = process.communicate()
+    #         flag = True
+    #         flag = any([
+    #             self.database_config["containerName"] in line
+    #             for line in stdout.decode().split()
+    #             ])
+    #         assert not flag
 
 
     def test_udocker_backend_lifetime(self):
