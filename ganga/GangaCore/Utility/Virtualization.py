@@ -59,7 +59,6 @@ def checkUDocker(location='~'):
         Return value: True or False"""
     # check for linked udocker
     nullOutput = open(os.devnull, 'wb')
-    returnCode = 1
     try:
         returnCode = subprocess.call(["udocker", "--help"], stdout=nullOutput, stderr=nullOutput)
     except:
