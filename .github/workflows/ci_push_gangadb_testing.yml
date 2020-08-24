@@ -64,20 +64,20 @@ jobs:
     #   run: udocker pull mongo:latest
 
 
-    # - name: Set up Python 3
-    #   run: |
-    #     sudo apt-get install -y python3
-    #     sudo apt-get install -y python3-pip
-    # - name: Install dependencies
-    #   run: |
-    #     pip3 install --upgrade pip setuptools wheel
-    #     pip3 install -e .[dev]
-    #     pip3 install pymongo pytest spython
+    - name: Set up Python 3
+      run: |
+        sudo apt-get install -y python3
+        sudo apt-get install -y python3-pip
+    - name: Install dependencies
+      run: |
+        pip3 install --upgrade pip setuptools wheel
+        pip3 install -e .[dev]
+        pip3 install pymongo pytest spython
       
-    # - name: Test Container Controllers
-    #   run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestContainer.py
-    #   env:
-    #     GANGA_GITHUB_HOST: True
-    #     MONGODB_HOST: mongodb
-    #     MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+    - name: Test Container Controllers
+      run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestContainer.py
+      env:
+        GANGA_GITHUB_HOST: True
+        MONGODB_HOST: mongodb
+        MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
