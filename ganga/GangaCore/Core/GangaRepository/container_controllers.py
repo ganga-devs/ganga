@@ -12,19 +12,19 @@ logger = logging.getLogger()
 
 GANGADIR = os.path.expandvars('$HOME/gangadir')
 DATABASE_CONFIG = getConfig("DatabaseConfigurations")
-COMMANDS = {
-    "udocker": None,
-    "singularity": {
-        "start": {
-            "register": "singularity instance start --bind {bind_loc}:/data docker://{image_name} {instance_name}",
-            "exec": "singularity exec instance://{instance_name} mongod --fork --logpath /data/daemon-mongod.log"
-        },
-        # "start": "singularity instance start --bind data:/data {image_name} {instance_name}; singularity exec instance://ganga_mongo mongod &",
-        "kill": {
-            "shutdown": "singularity instance stop {instance_name}"
-        }
-    }
-}
+# COMMANDS = {
+#     "udocker": None,
+#     "singularity": {
+#         "start": {
+#             "register": "singularity instance start --bind {bind_loc}:/data docker://{image_name} {instance_name}",
+#             "exec": "singularity exec instance://{instance_name} mongod --fork --logpath /data/daemon-mongod.log"
+#         },
+#         # "start": "singularity instance start --bind data:/data {image_name} {instance_name}; singularity exec instance://ganga_mongo mongod &",
+#         "kill": {
+#             "shutdown": "singularity instance stop {instance_name}"
+#         }
+#     }
+# }
 
 def create_mongodir():
     """
@@ -33,7 +33,7 @@ def create_mongodir():
     dirs_to_make = [os.path.join(GANGADIR, "data"),
                     os.path.join(GANGADIR, "data/db"),
                     os.path.join(GANGADIR, "data/configdb")]
-    _ = map(lambda x: os.makedirs(x, exist_ok=True), dirs_to_make)
+    _ = [*map(lambda x: os.makedirs(x, exist_ok=True), dirs_to_make)]
 
     return os.path.join(GANGADIR, "data")
 
@@ -78,36 +78,67 @@ def udocker_handler(database_config, action="start"):
     raise NotImplementedError("Would recommend not to use udocker")
 
 
+# def singularity_handler(database_config, action="start"):
+#     """
+#     Will handle the loading of container using docker
+#     -------
+#     database_config: The config from ganga config
+#     action: The action to be performed using the handler
+#     """
+#     installed = checkSingularity()
+#     if not installed:
+#         raise Exception(
+#             "uDocker was not installed in the system. Make sure that")
+#     bind_loc = create_mongodir()
+#     for key, cmd in COMMANDS["singularity"][action].items():
+#         stdout = None if key == "register" else subprocess.PIPE
+#         command = cmd.format(
+#             bind_loc=bind_loc,
+#             instance_name=database_config["containerName"],
+#             image_name=database_config["baseImage"].replace(
+#                 ":latest", "")
+#         )
+#         process = subprocess.Popen(
+#             command, stdout=stdout, stderr=subprocess.PIPE, shell=True)
+#         stdout, stderr = process.communicate()
+#     return stdout, stderr # we only need the last one
+
 def singularity_handler(database_config, action="start"):
     """
-    Will handle the loading of container using docker
-    -------
-    database_config: The config from ganga config
-    action: The action to be performed using the handler
-    """
-    installed = checkSingularity()
-    if not installed:
-        raise Exception(
-            "uDocker was not installed in the system. Make sure that")
-    bind_loc = create_mongodir()
-    for key, cmd in COMMANDS["singularity"][action].items():
-        stdout = None if key == "register" else subprocess.PIPE
-        command = cmd.format(
-            bind_loc=bind_loc,
-            instance_name=database_config["containerName"],
-            image_name=database_config["baseImage"].replace(
-                ":latest", "")
-        )
-        process = subprocess.Popen(
-            command, stdout=stdout, stderr=subprocess.PIPE, shell=True)
-        stdout, stderr = process.communicate()
-    return stdout, stderr # we only need the last one
+    Uses spython module
 
+    Args:
+        database_config: The config from ganga config
+        action: The action to be performed using the handler
+    """
+    from spython.main import Client
+
+    if action == "start":
+        container_exists = any([
+            instance.name == database_config["containerName"]
+            for instance in Client.instances(quiet=True)
+            ])
+        if not container_exists:
+            bind_loc = create_mongodir()
+            options = [
+                "--bind", f"{bind_loc}:/data"
+            ]
+            container = Client.instance(
+                f"docker://{database_config['baseImage']}",
+                options=options, name=database_config['containerName']
+            )
+            # container.start()
+            Client.execute(container, "mongod --fork --logpath /data/daemon-mongod.log", quiet=True)
+    else:
+        for instance in Client.instances(quiet=True):
+            if instance.name == database_config['containerName']:
+                instance.stop()
 
 def docker_handler(database_config, action="start"):
     """
     Will handle the loading of container using docker
-    -------
+
+    Args:
     database_config: The config from ganga config
     action: The action to be performed using the handler
     """

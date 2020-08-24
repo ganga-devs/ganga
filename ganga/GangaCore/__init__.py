@@ -967,7 +967,8 @@ cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on 
 db_config = makeConfig("DatabaseConfigurations",
                        "Selection of database for ganga")
 db_config.addOption("controller", "docker",
-                    "Database Controller [Native, Docker, uDocker, Singularity]")
+# db_config.addOption("controller", "singularity",
+                    "Database Controller [native, docker, udocker, singularity]")
 db_config.addOption("baseImage", "mongo",
                     "Docker Image for the database")
 db_config.addOption(
