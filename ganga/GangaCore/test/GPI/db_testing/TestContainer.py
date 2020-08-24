@@ -114,8 +114,6 @@ class TestDatabaseBackends(GangaUnitTest):
             assert not flag
 
 
-
-
     def test_udocker_backend_lifetime(self):
         """
         Test the starting and shutdown of udocker container image
@@ -132,7 +130,7 @@ class TestDatabaseBackends(GangaUnitTest):
 
             # checking if the container started up
             process = subprocess.Popen(
-                "./udocker ps", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                "udocker ps", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 shell=True
             )
             stdout, stderr = process.communicate()
@@ -148,7 +146,7 @@ class TestDatabaseBackends(GangaUnitTest):
 
             # checking if the container started up
             process = subprocess.Popen(
-                "./udocker ps", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                "udocker ps", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 shell=True
             )
             stdout, stderr = process.communicate()

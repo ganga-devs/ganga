@@ -57,3 +57,5 @@ jobs:
     #     sudo ln -s ./udocker /bin
     - name: Test uDocker installation
       run: ./udocker --help
+    - name: Test Container Controllers
+      run: ./udocker --help
