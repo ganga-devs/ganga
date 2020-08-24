@@ -52,7 +52,8 @@ jobs:
         curl https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py > udocker
         chmod u+rx ./udocker
         ./udocker install
-        sudo ln -s ./udocker /bin
-
-    - name: Build Container
-      run: udocker --help
+    # - name: UDocker Link
+    #   run: |
+    #     sudo ln -s ./udocker /bin
+    - name: Test uDocker installation
+      run: ./udocker --help
