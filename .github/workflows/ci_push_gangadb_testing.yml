@@ -42,8 +42,8 @@ jobs:
     #     make -C builddir && \
     #     sudo make -C builddir install          
           
-    # - name: Check out code for the container build
-    #   uses: actions/checkout@v1
+    - name: Check out code for the container build
+      uses: actions/checkout@v1
 
     # - name: Build Container
     #   run: singularity pull docker://mongo:latest
