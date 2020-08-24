@@ -12,19 +12,7 @@ logger = logging.getLogger()
 
 GANGADIR = os.path.expandvars('$HOME/gangadir')
 DATABASE_CONFIG = getConfig("DatabaseConfigurations")
-# COMMANDS = {
-#     "udocker": None,
-#     "singularity": {
-#         "start": {
-#             "register": "singularity instance start --bind {bind_loc}:/data docker://{image_name} {instance_name}",
-#             "exec": "singularity exec instance://{instance_name} mongod --fork --logpath /data/daemon-mongod.log"
-#         },
-#         # "start": "singularity instance start --bind data:/data {image_name} {instance_name}; singularity exec instance://ganga_mongo mongod &",
-#         "kill": {
-#             "shutdown": "singularity instance stop {instance_name}"
-#         }
-#     }
-# }
+
 
 def create_mongodir():
     """
@@ -37,6 +25,7 @@ def create_mongodir():
 
     return os.path.join(GANGADIR, "data")
 
+
 def native_handler(database_config, action="start"):
     """
     Will handle when the database is installed locally
@@ -45,12 +34,12 @@ def native_handler(database_config, action="start"):
     1. Database is already started, ganga should not explicitely start the database, as ganga may not have permissions
     2. Database cannot be shut by ganga, citing the same reasons as above.
     """
-    if action not in ["start", "quit"]:
-        raise NotImplementedError(f"Illegal Opertion on container")
+    # if action not in ["start", "quit"]:
+    #     raise NotImplementedError(f"Illegal Opertion on container")
     if action == "start":
-        logger.info("Native Database detection, skipping startup")
+        logger.debug("Native Database detection, skipping startup")
     else:
-        logger.info("Native Database detection, skipping closing")
+        logger.debug("Native Database detection, skipping closing")
 
 
 def udocker_handler(database_config, action="start"):
@@ -78,31 +67,6 @@ def udocker_handler(database_config, action="start"):
     raise NotImplementedError("Would recommend not to use udocker")
 
 
-# def singularity_handler(database_config, action="start"):
-#     """
-#     Will handle the loading of container using docker
-#     -------
-#     database_config: The config from ganga config
-#     action: The action to be performed using the handler
-#     """
-#     installed = checkSingularity()
-#     if not installed:
-#         raise Exception(
-#             "uDocker was not installed in the system. Make sure that")
-#     bind_loc = create_mongodir()
-#     for key, cmd in COMMANDS["singularity"][action].items():
-#         stdout = None if key == "register" else subprocess.PIPE
-#         command = cmd.format(
-#             bind_loc=bind_loc,
-#             instance_name=database_config["containerName"],
-#             image_name=database_config["baseImage"].replace(
-#                 ":latest", "")
-#         )
-#         process = subprocess.Popen(
-#             command, stdout=stdout, stderr=subprocess.PIPE, shell=True)
-#         stdout, stderr = process.communicate()
-#     return stdout, stderr # we only need the last one
-
 def singularity_handler(database_config, action="start"):
     """
     Uses spython module
@@ -113,11 +77,16 @@ def singularity_handler(database_config, action="start"):
     """
     from spython.main import Client
 
+    if not checkSingularity():
+        raise Exception("Singularity seems to not be installed on the system.")
+    if action not in ["start", "quit"]:
+        raise NotImplementedError(f"Illegal Opertion on container")
+
     if action == "start":
         container_exists = any([
             instance.name == database_config["containerName"]
             for instance in Client.instances(quiet=True)
-            ])
+        ])
         if not container_exists:
             bind_loc = create_mongodir()
             options = [
@@ -128,11 +97,17 @@ def singularity_handler(database_config, action="start"):
                 options=options, name=database_config['containerName']
             )
             # container.start()
-            Client.execute(container, "mongod --fork --logpath /data/daemon-mongod.log", quiet=True)
+            Client.execute(
+                container, "mongod --fork --logpath /data/daemon-mongod.log", quiet=True)
+            logger.info("gangaDB has started in background")
+        else:
+            logger.debug("gangaDB was already running in background")
     else:
         for instance in Client.instances(quiet=True):
             if instance.name == database_config['containerName']:
                 instance.stop()
+                logger.info("gangaDB has been shutdown")
+
 
 def docker_handler(database_config, action="start"):
     """
