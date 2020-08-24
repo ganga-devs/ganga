@@ -114,44 +114,44 @@ class TestDatabaseBackends(GangaUnitTest):
     #         assert not flag
 
 
-    def test_udocker_backend_lifetime(self):
-        """
-        Test the starting and shutdown of udocker container image
-        """
-        import subprocess
-        from GangaCore.Core.GangaRepository.container_controllers import udocker_handler
-        if self.installations["udocker"]:
-            # start the singularity container
-            udocker_handler(
-                action="start",
-                gangadir=self.gangadir(),
-                database_config=self.database_config
-            )
+    # def test_udocker_backend_lifetime(self):
+    #     """
+    #     Test the starting and shutdown of udocker container image
+    #     """
+    #     import subprocess
+    #     from GangaCore.Core.GangaRepository.container_controllers import udocker_handler
+    #     if self.installations["udocker"]:
+    #         # start the singularity container
+    #         udocker_handler(
+    #             action="start",
+    #             gangadir=self.gangadir(),
+    #             database_config=self.database_config
+    #         )
 
-            # checking if the container started up
-            process = subprocess.Popen(
-                "udocker ps", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                shell=True
-            )
-            stdout, stderr = process.communicate()
-            flag = self.database_config['containerName'] in stdout.decode()
-            assert flag
+    #         # checking if the container started up
+    #         process = subprocess.Popen(
+    #             "udocker ps", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    #             shell=True
+    #         )
+    #         stdout, stderr = process.communicate()
+    #         flag = self.database_config['containerName'] in stdout.decode()
+    #         assert flag
 
-            # shutting down the container
-            udocker_handler(
-                action="quit",
-                gangadir=self.gangadir(),
-                database_config=self.database_config
-            )
+    #         # shutting down the container
+    #         udocker_handler(
+    #             action="quit",
+    #             gangadir=self.gangadir(),
+    #             database_config=self.database_config
+    #         )
 
-            # checking if the container started up
-            process = subprocess.Popen(
-                "udocker ps", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                shell=True
-            )
-            stdout, stderr = process.communicate()
-            flag = self.database_config['containerName'] in stdout.decode()
-            assert not flag
+    #         # checking if the container started up
+    #         process = subprocess.Popen(
+    #             "udocker ps", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    #             shell=True
+    #         )
+    #         stdout, stderr = process.communicate()
+    #         flag = self.database_config['containerName'] in stdout.decode()
+    #         assert not flag
 
 
 
