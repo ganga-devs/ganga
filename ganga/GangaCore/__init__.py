@@ -967,7 +967,7 @@ cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on 
 db_config = makeConfig("DatabaseConfigurations",
                        "Selection of database for ganga")
 db_config.addOption("controller", "docker",
-                    "Database Controller [native, docker, udocker, singularity]")
+                    "Database Controller [Native, Docker, uDocker, Singularity]")
 db_config.addOption("baseImage", "mongo",
                     "Docker Image for the database")
 db_config.addOption(
@@ -993,3 +993,4 @@ db_config.addOption("password", "NotImplementedError", "password")
 db_config.addOption("host", "NotImplementedError", "host")
 db_config.addOption("port", "NotImplementedError", "port")
 db_config.addOption("dbname", "NotImplementedError", "name of database")
+1

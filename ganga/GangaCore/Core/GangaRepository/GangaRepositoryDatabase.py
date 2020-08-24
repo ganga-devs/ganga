@@ -107,7 +107,7 @@ def check_app_hash(obj):
 
 
 # RatPass: Find a better alternative for this, seems unnecessary
-def safe_save(_object, conn, master=None, ignore_subs=[]):
+def safe_save(_object, conn, master, ignore_subs=[]):
     """Try to save the Json for this object in as safe a way as possible
     Args:
         _object (GangaObject): Object to be stored in database
@@ -781,7 +781,7 @@ class GangaRepositoryLocal(GangaRepository):
             ids (list): The object keys which we want to iterate over from the objects dict
         """
         for this_id in ids:
-            self.connection.jobs.remove({"id": this_id})
+            self.connection.jobs.delete_one({"id": this_id})
             self._internal_del__(this_id)
             if this_id in self._fully_loaded:
                 del self._fully_loaded[this_id]

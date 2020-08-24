@@ -8,6 +8,21 @@ import os
 import urllib
 import os
 
+def checkNative():
+    """
+    Check if the mongo database is instanlled locally
+    """
+    cmds = ["mongo", "mongod"] # commands to check if mongo is installed
+    nullOutput = open(os.devnull, 'wb')
+    returnCode = 1
+    try:
+        for cmd in cmds:
+            returnCode = subprocess.call([cmd], stdout=nullOutput, stderr=nullOutput, shell=True)
+    except Exception as e:
+        print(e)
+    if returnCode == 0 : return True
+    return False
+
 def checkSingularity():
     """Check whether Singularity is installed and the current user has right to access
 
@@ -42,18 +57,14 @@ def checkUDocker(location='~'):
     """Check whether UDocker is installed and the current user has right to access
 
         Return value: True or False"""
-    # first test for binary
-
+    # check for linked udocker
     nullOutput = open(os.devnull, 'wb')
-    returnCode = 1
     try:
-        returnCode = subprocess.call(["udocker", "ps"], stdout=nullOutput, stderr=nullOutput)
+        returnCode = subprocess.call(["udocker", "--help"], stdout=nullOutput, stderr=nullOutput)
+        if returnCode == 0 : return True
     except:
         pass 
-    if returnCode == 0 : return True
-    return False
-
-    # last resort test for location
+    # check for local udocker
     fname = os.path.join(os.path.expanduser(location),"udocker")
     nullOutput = open(os.devnull, 'wb')
     if (os.path.isfile(fname)):
@@ -92,4 +103,3 @@ def installUdocker(location='~'):
     if (returnCode != 0):
         raise OSError('Error installing uDocker')
     print('UDocker Successfully installed')
-
