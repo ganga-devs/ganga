@@ -42,9 +42,6 @@ jobs:
         make -C builddir && \
         sudo make -C builddir install          
           
-    - name: Check out code for the container build
-      uses: actions/checkout@v1
-
     - name: Build Container
       run: singularity pull docker://mongo:latest
 
@@ -57,7 +54,10 @@ jobs:
       # run: sudo ln -s ./udocker /bin
       run: sudo ln -s $PWD/udocker /bin
     - name: Test uDocker installation
-      run: ./udocker pull mongo:latest
+      run: udocker pull mongo:latest
+
+    - name: Check out code for the container build
+      uses: actions/checkout@v1
 
     - name: Set up Python 3
       run: |
