@@ -59,7 +59,8 @@ def clear_config():
 _setupGangaPath()
 
 
-def start_ganga(gangadir_for_test, repositorytype, extra_opts=[], extra_args=None):
+# def start_ganga(gangadir_for_test, repositorytype, extra_opts=[], extra_args=None):
+def start_ganga(gangadir_for_test, repositorytype="LocalXML", extra_opts=[], extra_args=None):
     """
     Startup Ganga by calling the same set of 'safe' functions each time
     Args:

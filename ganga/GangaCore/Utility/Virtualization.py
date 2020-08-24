@@ -68,9 +68,12 @@ def checkUDocker(location='~'):
     fname = os.path.join(os.path.expanduser(location),"udocker")
     nullOutput = open(os.devnull, 'wb')
     if (os.path.isfile(fname)):
-        returnCode = subprocess.call([fname, "ps"], stdout=nullOutput, stderr=nullOutput)
-        if (returnCode == 0):
-            return True
+        try:
+            returnCode = subprocess.call([fname, "ps"], stdout=nullOutput, stderr=nullOutput)
+            if (returnCode == 0):
+                return True
+        except:
+            pass
     return False
 
 
