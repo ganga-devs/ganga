@@ -53,9 +53,8 @@ jobs:
         curl https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py > udocker
         chmod u+rx ./udocker
         ./udocker install
-    # - name: UDocker Link
-    #   run: |
-    #     sudo ln -s ./udocker /bin
+    - name: UDocker Link
+      run: sudo ln -s ./udocker /bin
     - name: Test uDocker installation
       run: ./udocker pull mongo:latest
 
