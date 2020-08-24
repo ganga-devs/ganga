@@ -120,7 +120,7 @@ class TestDatabaseBackends(GangaUnitTest):
         """
         import subprocess
         from GangaCore.Core.GangaRepository.container_controllers import udocker_handler
-        if self.installations["singularity"]:
+        if self.installations["udocker"]:
             # start the singularity container
             udocker_handler(
                 action="start",

@@ -102,7 +102,7 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR):
             # TODO: Some Errors can be ignored
             raise Exception(err)
 
-        if "gangaDB" in out.decode():
+        if database_config['containerName'] in out.decode():
             proc = subprocess.Popen(
                 stop_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
