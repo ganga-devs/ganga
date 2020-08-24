@@ -269,11 +269,7 @@ jobs:
     - name: Check out code for the container build
       uses: actions/checkout@v1
 
-
-    # - name: Check Docker is inInstalling Docker
-    #   run: docker ps
-
-    - name: [Singularity] Install Dependencies
+    - name: Singularity Install Dependencies
       run: |
         sudo apt-get update && sudo apt-get install -y \
           build-essential \
@@ -283,7 +279,7 @@ jobs:
           squashfs-tools \
           libseccomp-dev \
           pkg-config
-    - name: [Singularity] Install
+    - name: Singularity Install
       env:
         SINGULARITY_VERSION: 3.2.1
       run: |
@@ -299,29 +295,29 @@ jobs:
         make -C builddir && \
         sudo make -C builddir install
 
-    - name: [Singularity] Download MongoDB
+    - name: Singularity Download MongoDB
       run: singularity pull docker://mongo:latest
 
-    - name: [uDocker] Installation
+    - name: uDocker Installation
       run: |
         curl https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py > udocker
         chmod u+rx ./udocker
         ./udocker install
-    - name: [uDocker] Linking Binary
+    - name: uDocker Linking Binary
       # run: sudo ln -s ./udocker /bin
       run: sudo ln -s $PWD/udocker /bin
 
-    - name: [uDocker] Download MongoDB
+    - name: uDocker Download MongoDB
       run: udocker pull mongo:latest
 
-    - name: [Docker] Download MongoDB
+    - name: Docker Download MongoDB
       run: docker pull mongo:latest
 
     - name: Set up Python 3
       run: |
         sudo apt-get install -y python3
         sudo apt-get install -y python3-pip
-    - name: [Python3] Install dependencies
+    - name: Python3 Install dependencies
       run: |
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
