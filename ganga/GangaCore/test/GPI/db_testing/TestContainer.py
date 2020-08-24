@@ -35,8 +35,7 @@ class TestDatabaseBackends(GangaUnitTest):
             "native": checkNative(),
             "singularity": checkSingularity()
         }
-        super(TestDatabaseBackends, self).setUp(
-            repositorytype="Database", extra_opts=extra_opts)
+        super(TestDatabaseBackends, self).setUp(extra_opts=extra_opts)
 
     def test_docker_backend_lifetime(self):
         """
