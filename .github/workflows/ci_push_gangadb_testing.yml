@@ -4,8 +4,8 @@ on: [pull_request]
 
 jobs:
 
-  singularity-test:
-    name: Singularity Controller Tests
+  controller-tests:
+    name: Database Controller Tests
     runs-on: ubuntu-18.04
     steps:
 
@@ -19,11 +19,11 @@ jobs:
     - name: Check out code for the container build
       uses: actions/checkout@v1
 
-      
-    - name: Installing Docker
-      run: docker ps
 
-    - name: Install Dependencies
+    # - name: Check Docker is inInstalling Docker
+    #   run: docker ps
+
+    - name: [Singularity] Install Dependencies
       run: |
         sudo apt-get update && sudo apt-get install -y \
           build-essential \
@@ -33,7 +33,7 @@ jobs:
           squashfs-tools \
           libseccomp-dev \
           pkg-config
-    - name: Install Singularity
+      - name: [Singularity] Install
       env:
         SINGULARITY_VERSION: 3.2.1
       run: |
@@ -47,35 +47,36 @@ jobs:
         cd singularity && \
         ./mconfig -p /usr/local && \
         make -C builddir && \
-        sudo make -C builddir install          
-          
-    - name: Build Container
+        sudo make -C builddir install
+
+      - name: [Singularity] Download MongoDB
       run: singularity pull docker://mongo:latest
 
-    - name: UDocker Installation
+    - name: [uDocker] Installation
       run: |
         curl https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py > udocker
         chmod u+rx ./udocker
         ./udocker install
-    - name: UDocker Link
+    - name: [uDocker] Linking Binary
       # run: sudo ln -s ./udocker /bin
       run: sudo ln -s $PWD/udocker /bin
-    - name: Test uDocker installation
+
+    - name: [uDocker] Download MongoDB
       run: udocker pull mongo:latest
 
-    - name: Test uDocker installation
+    - name: [Docker] Download MongoDB
       run: docker pull mongo:latest
 
     - name: Set up Python 3
       run: |
         sudo apt-get install -y python3
         sudo apt-get install -y python3-pip
-    - name: Install dependencies
+    - name: [Python3] Install dependencies
       run: |
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
         pip3 install pymongo pytest spython
-      
+
     - name: Test Container Controllers
       run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestContainer.py
       env:
@@ -83,3 +84,46 @@ jobs:
         GANGA_GITHUB_HOST: False
         MONGODB_HOST: mongodb
         MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+
+
+  db-unit:
+    name: Database Testing
+    runs-on: ubuntu-latest
+    container: mongo
+    services:
+      mongodb:
+        image: mongo
+        ports:
+        - 27017:27017
+
+    steps:
+    - name: Check out code for the container build
+      uses: actions/checkout@v1
+
+    - name: Update packages
+      run: apt update -y
+
+    - name: Set up Python 3
+      run: |
+        apt install -y python3
+        apt install -y python3-pip
+
+    - name: Install dependencies
+      run: |
+        pip3 install --upgrade pip setuptools wheel
+        pip3 install -e .[dev]
+        pip3 install pymongo pytest
+
+    - name: Testing GangaDB
+      run: |
+        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBNested.py
+        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBGenAndLoad.py
+        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBSJGenAndLoad.py
+      env:
+        GANGA_GITHUB_HOST: True
+        MONGODB_HOST: mongodb
+        MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+
+
+        # python3 -m pip install --upgrade pip setuptools wheel
+        # python3 -m pip install -e .[dev]
