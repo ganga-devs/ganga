@@ -59,7 +59,7 @@ def clear_config():
 _setupGangaPath()
 
 
-def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
+def start_ganga(gangadir_for_test, repositorytype, extra_opts=[], extra_args=None):
     """
     Startup Ganga by calling the same set of 'safe' functions each time
     Args:
@@ -114,7 +114,7 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     default_opts = [
         ('Configuration', 'RUNTIME_PATH', 'GangaTest'),
         ('Configuration', 'gangadir', gangadir_for_test),
-        ('Configuration', 'repositorytype', 'LocalXML'),
+        ('Configuration', 'repositorytype', repositorytype),
         ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
         ('Registry', 'DisableLoadCheck', True),
@@ -305,7 +305,7 @@ class GangaUnitTest(unittest.TestCase):
         if hasattr(cls, 'setUpTest'):
             cls.setUpTest()
 
-    def setUp(self, extra_opts=[]):
+    def setUp(self, extra_opts=[], repositorytype="LocalXML"):
         """
         Setup the unit test which is about to run
         Args:
@@ -320,8 +320,9 @@ class GangaUnitTest(unittest.TestCase):
             os.makedirs(gangadir)
         print("\n") # useful when watching stdout from tests
         print("Starting Ganga in: %s" % gangadir)
-        start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
+        start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts, repositorytype=repositorytype)
         GangaUnitTest._test_dir = gangadir
+        GangaUnitTest._repositorytype = repositorytype
         GangaUnitTest._test_args = extra_opts
 
     def tearDown(self):
@@ -339,7 +340,7 @@ class GangaUnitTest(unittest.TestCase):
         This is used for cleaning up anything at a module level of higher
         """
         print("Tearing down test fully on completion")
-        start_ganga(gangadir_for_test=cls._test_dir, extra_opts=cls._test_args)
+        start_ganga(gangadir_for_test=cls._test_dir, repositorytype=cls._repositorytype, extra_opts=cls._test_args)
         # Should Ganga clean up properly on test finishing?
 #        stop_ganga(not pytest.config.getoption("--keepRepo"))
 #        if not pytest.config.getoption("--keepRepo"):
@@ -351,4 +352,3 @@ class GangaUnitTest(unittest.TestCase):
 
         if hasattr(cls, 'tearDownTest'):
             cls.tearDownTest()
-
