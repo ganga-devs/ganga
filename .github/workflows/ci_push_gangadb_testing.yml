@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
 
+
     - name: Set up Go 1.12
       uses: actions/setup-go@v1
       with:
@@ -57,5 +58,18 @@ jobs:
     #     sudo ln -s ./udocker /bin
     - name: Test uDocker installation
       run: ./udocker --help
+
+    - name: Update packages
+      run: apt update -y
+    - name: Set up Python 3
+      run: |
+        apt install -y python3
+        apt install -y python3-pip
+    - name: Install dependencies
+      run: |
+        pip3 install --upgrade pip setuptools wheel
+        pip3 install -e .[dev]
+        pip3 install pymongo pytest
+      
     - name: Test Container Controllers
-      run: ./udocker --help
+      run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestContainer.py
