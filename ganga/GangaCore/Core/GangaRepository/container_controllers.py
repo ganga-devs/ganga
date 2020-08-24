@@ -60,8 +60,8 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR):
     start_container = f"udocker run  --volume={bind_loc}/db:/data/db {database_config['containerName']}"
     create_container = f"udocker create --name={database_config['containerName']} {database_config['baseImage']}"
 
-    # if not checkUDocker():
-    if checkUDocker():
+    if not checkUDocker():
+    # if checkUDocker():
         raise Exception("Udocker seems to not be installed on the system.")
     if action not in ["start", "quit"]:
         raise NotImplementedError(f"Illegal Opertion on container")
