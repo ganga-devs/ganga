@@ -171,7 +171,8 @@ def docker_handler(database_config, action="start"):
                 name=database_config["containerName"],
                 image=database_config["baseImage"],
                 ports={"27017/tcp": database_config["port"]},
-                volumes=[f"{bind_loc}:/data"]
+                # volumes=[f"{bind_loc}:/data"]
+                volumes=[f"{bind_loc}/db:/data/db"]
             )
         except Exception as e:
             # TODO: Handle gracefull quiting of ganga
