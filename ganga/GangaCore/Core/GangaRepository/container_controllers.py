@@ -57,14 +57,60 @@ def udocker_handler(database_config, action="start"):
     udocker run -d --name db -v ~/mongo/data:/data/db -p 27017:27017 mongo:latest
 
     """
-    # run_command = f"{UDOCKER_BINARY} run {ARUMENTS} {database_config['databaseName']}"
-    # kwargs = {
-    #     "d": 1,
-    #     "-name": "mongodb",
-    #     "v": "~/mongo/data:/data/db",
-    #     "p": "27017:27017"
-    # }
-    raise NotImplementedError("Would recommend not to use udocker")
+    import subprocess
+
+    bind_loc = create_mongodir()
+    list_images = f"udocker ps"
+    stop_container = f"udocker rm {database_config['containerName']}"
+    start_container = f"udocker run {database_config['containerName']} --volume={bind_loc}/db:/data/db --fork --logpath /data/daemon-mongod.log"
+    create_container = f"udocker create --name={database_config['containerName']} {database_config['baseImage']}"
+
+    if not checkUDocker():
+        raise Exception("Udocker seems to not be installed on the system.")
+    if action not in ["start", "quit"]:
+        raise NotImplementedError(f"Illegal Opertion on container")
+
+    logger.info("Would recommend not to use udocker")
+    if action == "start":
+        # check if the container exists already
+        proc = subprocess.Popen(
+            list_images, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        out, err = proc.communicate()
+        if err:
+            # TODO: Some Errors can be ignored
+            raise Exception(err)
+
+        if "gangaDB" not in out.decode():
+            # run the container
+            proc = subprocess.Popen(
+                create_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            out, err = proc.communicate()
+            if err:
+                raise Exception(err)
+
+            proc = subprocess.Popen(
+                start_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            # out, err = proc.communicate() DO NOT COMMUNICATE THIS PROCESS
+            logger.info("gangaDB should have started in background")
+    else:
+        # check if the container exists already
+        proc = subprocess.Popen(
+            list_images, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        out, err = proc.communicate()
+        if err:
+            # TODO: Some Errors can be ignored
+            raise Exception(err)
+
+        if "gangaDB" in out.decode():
+            proc = subprocess.Popen(
+                stop_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            # out, err = proc.communicate() DO NOT COMMUNICATE THIS PROCESS
+            logger.info("gangaDB should have shutdown")
 
 
 def singularity_handler(database_config, action="start"):
