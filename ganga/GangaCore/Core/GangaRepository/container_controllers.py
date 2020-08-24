@@ -62,7 +62,7 @@ def udocker_handler(database_config, action="start"):
     bind_loc = create_mongodir()
     list_images = f"udocker ps"
     stop_container = f"udocker rm {database_config['containerName']}"
-    start_container = f"udocker run {database_config['containerName']} --volume={bind_loc}/db:/data/db --fork --logpath /data/daemon-mongod.log"
+    start_container = f"udocker run  --volume={bind_loc}/db:/data/db {database_config['containerName']}"
     create_container = f"udocker create --name={database_config['containerName']} {database_config['baseImage']}"
 
     if not checkUDocker():
@@ -91,9 +91,10 @@ def udocker_handler(database_config, action="start"):
                 raise Exception(err)
 
             proc = subprocess.Popen(
-                start_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                start_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                close_fds=True
             )
-            # out, err = proc.communicate() DO NOT COMMUNICATE THIS PROCESS
+            # out, err = proc.communicate() # DO NOT COMMUNICATE THIS PROCESS
             logger.info("gangaDB should have started in background")
     else:
         # check if the container exists already
