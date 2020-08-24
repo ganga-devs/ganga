@@ -61,18 +61,17 @@ def checkUDocker(location='~'):
     nullOutput = open(os.devnull, 'wb')
     try:
         returnCode = subprocess.call(["udocker", "--help"], stdout=nullOutput, stderr=nullOutput)
+        if returnCode == 0 : return True
     except:
         pass 
-    if returnCode == 0 : return True
-    else:
-        # check for local udocker
-        fname = os.path.join(os.path.expanduser(location),"udocker")
-        nullOutput = open(os.devnull, 'wb')
-        if (os.path.isfile(fname)):
-            returnCode = subprocess.call([fname, "ps"], stdout=nullOutput, stderr=nullOutput)
-            if (returnCode == 0):
-                return True
-        return False
+    # check for local udocker
+    fname = os.path.join(os.path.expanduser(location),"udocker")
+    nullOutput = open(os.devnull, 'wb')
+    if (os.path.isfile(fname)):
+        returnCode = subprocess.call([fname, "ps"], stdout=nullOutput, stderr=nullOutput)
+        if (returnCode == 0):
+            return True
+    return False
 
 
 def installUdocker(location='~'):
