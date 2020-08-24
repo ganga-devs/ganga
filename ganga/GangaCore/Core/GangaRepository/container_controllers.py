@@ -52,10 +52,6 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR):
     ------
     NotImplementedError
     """
-    """
-    udocker run -d --name db -v ~/mongo/data:/data/db -p 27017:27017 mongo:latest
-
-    """
     import subprocess
 
     bind_loc = create_mongodir(gangadir=gangadir)
@@ -64,6 +60,7 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR):
     start_container = f"udocker run  --volume={bind_loc}/db:/data/db {database_config['containerName']}"
     create_container = f"udocker create --name={database_config['containerName']} {database_config['baseImage']}"
 
+    # if not checkUDocker():
     if not checkUDocker():
         raise Exception("Udocker seems to not be installed on the system.")
     if action not in ["start", "quit"]:
