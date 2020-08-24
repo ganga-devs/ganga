@@ -351,30 +351,3 @@ class JsonLoader:
                 % (name, type(parent_obj))
             )
         return parent_obj, errors
-
-"""
-Will be used later on
-from GangaCore.Utility.Config import getConfig
-
-    # # getting the options from the config
-    # c = getConfig("DatabaseConfigurations")
-
-    # if c["database"] == "default":
-    #     path = getConfig("Configuration")["gangadir"]
-    #     conn = "sqlite:///" + path + "/ganga.db"
-    # else:
-    #     raise NotImplementedError("Other databases are not supported")
-
-    #     import urllib
-
-    #     dialect = c["database"]
-    #     driver = c["driver"]
-    #     username = urllib.parse.quote_plus(c["username"])
-    #     password = urllib.parse.quote_plus(c["password"])
-    #     host = c["host"]
-    #     port = c["port"]
-    #     database = c["dbname"]
-
-    # mongouri = f"mongodb://{username}:{password}@{host}:{port}/"
-    # client = pymongo.MongoClient(mongouri)
-"""

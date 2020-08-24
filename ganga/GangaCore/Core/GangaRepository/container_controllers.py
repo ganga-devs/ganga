@@ -14,35 +14,34 @@ GANGADIR = os.path.expandvars('$HOME/gangadir')
 DATABASE_CONFIG = getConfig("DatabaseConfigurations")
 
 
-def create_mongodir():
+def create_mongodir(gangadir):
     """
     Will create a the required data folder for mongo db
     """
-    dirs_to_make = [os.path.join(GANGADIR, "data"),
-                    os.path.join(GANGADIR, "data/db"),
-                    os.path.join(GANGADIR, "data/configdb")]
+    dirs_to_make = [os.path.join(gangadir, "data"),
+                    os.path.join(gangadir, "data/db"),
+                    os.path.join(gangadir, "data/configdb")]
     _ = [*map(lambda x: os.makedirs(x, exist_ok=True), dirs_to_make)]
 
-    return os.path.join(GANGADIR, "data")
+    return os.path.join(gangadir, "data")
 
 
-def native_handler(database_config, action="start"):
+def native_handler(database_config, action="start", gangadir=GANGADIR):
     """
     Will handle when the database is installed locally
-
     Assumptions:
     1. Database is already started, ganga should not explicitely start the database, as ganga may not have permissions
     2. Database cannot be shut by ganga, citing the same reasons as above.
     """
-    # if action not in ["start", "quit"]:
-    #     raise NotImplementedError(f"Illegal Opertion on container")
+    if action not in ["start", "quit"]:
+        raise NotImplementedError(f"Illegal Opertion on container")
     if action == "start":
-        logger.debug("Native Database detection, skipping startup")
+        logger.info("Native Database detection, skipping startup")
     else:
-        logger.debug("Native Database detection, skipping closing")
+        logger.info("Native Database detection, skipping closing")
 
 
-def udocker_handler(database_config, action="start"):
+def udocker_handler(database_config, action="start", gangadir=GANGADIR):
     """
     Will handle the loading of container using docker
     -------
@@ -53,19 +52,16 @@ def udocker_handler(database_config, action="start"):
     ------
     NotImplementedError
     """
-    """
-    udocker run -d --name db -v ~/mongo/data:/data/db -p 27017:27017 mongo:latest
-
-    """
     import subprocess
 
-    bind_loc = create_mongodir()
+    bind_loc = create_mongodir(gangadir=gangadir)
     list_images = f"udocker ps"
     stop_container = f"udocker rm {database_config['containerName']}"
     start_container = f"udocker run  --volume={bind_loc}/db:/data/db {database_config['containerName']}"
     create_container = f"udocker create --name={database_config['containerName']} {database_config['baseImage']}"
 
     if not checkUDocker():
+    # if checkUDocker():
         raise Exception("Udocker seems to not be installed on the system.")
     if action not in ["start", "quit"]:
         raise NotImplementedError(f"Illegal Opertion on container")
@@ -81,7 +77,7 @@ def udocker_handler(database_config, action="start"):
             # TODO: Some Errors can be ignored
             raise Exception(err)
 
-        if "gangaDB" not in out.decode():
+        if database_config['containerName'] not in out.decode():
             # run the container
             proc = subprocess.Popen(
                 create_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -106,7 +102,7 @@ def udocker_handler(database_config, action="start"):
             # TODO: Some Errors can be ignored
             raise Exception(err)
 
-        if "gangaDB" in out.decode():
+        if database_config['containerName'] in out.decode():
             proc = subprocess.Popen(
                 stop_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
@@ -114,7 +110,7 @@ def udocker_handler(database_config, action="start"):
             logger.info("gangaDB should have shutdown")
 
 
-def singularity_handler(database_config, action="start"):
+def singularity_handler(database_config, action="start", gangadir=GANGADIR):
     """
     Uses spython module
 
@@ -135,7 +131,7 @@ def singularity_handler(database_config, action="start"):
             for instance in Client.instances(quiet=True)
         ])
         if not container_exists:
-            bind_loc = create_mongodir()
+            bind_loc = create_mongodir(gangadir=gangadir)
             options = [
                 "--bind", f"{bind_loc}:/data"
             ]
@@ -156,7 +152,7 @@ def singularity_handler(database_config, action="start"):
                 logger.info("gangaDB has been shutdown")
 
 
-def docker_handler(database_config, action="start"):
+def docker_handler(database_config, action="start", gangadir=GANGADIR):
     """
     Will handle the loading of container using docker
 
@@ -183,7 +179,7 @@ def docker_handler(database_config, action="start"):
 
         except docker.errors.NotFound:
             # call the function to get the gangadir here
-            bind_loc = create_mongodir()
+            bind_loc = create_mongodir(gangadir=gangadir)
             logger.info(
                 f"Pulling a copy of baseImage: {database_config['baseImage']}")
 
