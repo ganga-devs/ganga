@@ -26,7 +26,6 @@ COMMANDS = {
     }
 }
 
-
 def create_mongodir():
     """
     Will create a the required data folder for mongo db
@@ -69,14 +68,14 @@ def udocker_handler(database_config, action="start"):
     udocker run -d --name db -v ~/mongo/data:/data/db -p 27017:27017 mongo:latest
 
     """
-    run_command = f"{UDOCKER_BINARY} run {ARUMENTS} {database_config['databaseName']}"
-    kwargs = {
-        "d": 1,
-        "-name": "mongodb",
-        "v": "~/mongo/data:/data/db",
-        "p": "27017:27017"
-    }
-    raise NotImplementedError
+    # run_command = f"{UDOCKER_BINARY} run {ARUMENTS} {database_config['databaseName']}"
+    # kwargs = {
+    #     "d": 1,
+    #     "-name": "mongodb",
+    #     "v": "~/mongo/data:/data/db",
+    #     "p": "27017:27017"
+    # }
+    raise NotImplementedError("Would recommend not to use udocker")
 
 
 def singularity_handler(database_config, action="start"):
@@ -95,8 +94,8 @@ def singularity_handler(database_config, action="start"):
         stdout = None if key == "register" else subprocess.PIPE
         command = cmd.format(
             bind_loc=bind_loc,
-            instance_name=DATABASE_CONFIG["containerName"],
-            image_name=DATABASE_CONFIG["baseImage"].replace(
+            instance_name=database_config["containerName"],
+            image_name=database_config["baseImage"].replace(
                 ":latest", "")
         )
         process = subprocess.Popen(
@@ -141,13 +140,7 @@ def docker_handler(database_config, action="start"):
                 name=database_config["containerName"],
                 image=database_config["baseImage"],
                 ports={"27017/tcp": database_config["port"]},
-                # FIXME: this causes error sometimes, when removing jobs
-                # mounts=[
-                #     docker.types.Mount(
-                #         target="/data/db", source=bind_loc,  type="bind")
-                # ],
-                # volumes={
-                #     bind_loc: {"bind": "/data/db", "mode": "rw"}}
+                volumes=[f"{bind_loc}:/data"]
             )
         except Exception as e:
             # TODO: Handle gracefull quiting of ganga
