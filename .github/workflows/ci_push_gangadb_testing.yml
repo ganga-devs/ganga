@@ -46,7 +46,7 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Build Container
-      run: singularity pull mongo:latest
+      run: singularity pull docker://mongo:latest
 
     - name: UDocker Installation
       run: |
