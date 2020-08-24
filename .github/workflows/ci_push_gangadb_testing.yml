@@ -67,7 +67,7 @@ jobs:
       run: |
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
-        pip3 install pymongo pytest
+        pip3 install pymongo pytest spython
       
     - name: Test Container Controllers
       run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestContainer.py
