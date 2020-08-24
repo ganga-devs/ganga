@@ -46,7 +46,7 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Build Container
-      run: singularity --help
+      run: singularity pull mongo:latest
 
     - name: UDocker Installation
       run: |
@@ -57,7 +57,7 @@ jobs:
     #   run: |
     #     sudo ln -s ./udocker /bin
     - name: Test uDocker installation
-      run: ./udocker --help
+      run: ./udocker pull mongo:latest
 
     - name: Set up Python 3
       run: |
