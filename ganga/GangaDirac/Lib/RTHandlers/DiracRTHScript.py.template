@@ -26,7 +26,7 @@ j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
 ###DIRAC_OPTS###
 
 # submit the job to dirac
-j.setPlatform( '###PLATFORM###' )
+j.setPlatform('###PLATFORM###')
 
 try:
 	j.setNumberOfProcessors(minNumberOfProcessors=###MIN_PROCESSORS###, maxNumberOfProcessors=###MAX_PROCESSORS###)
