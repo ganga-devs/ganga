@@ -63,6 +63,8 @@ jobs:
     # - name: Test uDocker installation
     #   run: udocker pull mongo:latest
 
+    - name: Test uDocker installation
+      run: docker pull mongo:latest
 
     - name: Set up Python 3
       run: |
