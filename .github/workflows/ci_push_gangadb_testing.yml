@@ -60,11 +60,11 @@ jobs:
       run: ./udocker --help
 
     - name: Update packages
-      run: apt update -y
+      run: apt-get update -y
     - name: Set up Python 3
       run: |
-        apt install -y python3
-        apt install -y python3-pip
+        apt-get install -y python3
+        apt-get install -y python3-pip
     - name: Install dependencies
       run: |
         pip3 install --upgrade pip setuptools wheel
