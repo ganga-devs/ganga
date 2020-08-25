@@ -7,6 +7,7 @@ import random
 import threading
 import uuid
 import shutil
+from GangaCore import _gangaVersion
 from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException, GangaFileError
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -668,6 +669,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
                                         INPUT_SANDBOX=repr([f for f in inputsandbox]),
+                                        GANGA_VERSION=_gangaVersion,
                                         )
 
         # NB
