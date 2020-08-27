@@ -35,9 +35,9 @@ config = getConfig('Configuration')
 
 
 if config["repositorytype"] == "Database":
-    from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList as SubJobJsonList
-else:
     from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
+else:
+    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList as SubJobJsonList
 
 def lazyLoadJobFQID(this_job):
     return lazyLoadJobObject(this_job, 'fqid')
