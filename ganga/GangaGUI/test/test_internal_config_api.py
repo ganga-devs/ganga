@@ -1,44 +1,22 @@
-# ******************** Imports ******************** #
-
-import os
-import uuid
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaGUI.gui import app, db
-from GangaGUI.gui.models import User
-
-# ******************** Global Variables ******************** #
-
-currentdir = os.path.dirname(os.path.abspath(__file__))
-token = None
+from GangaGUI.api import internal
 
 
 # ******************** Test Class ******************** #
 
+
 # Config API Tests
-class TestGangaGUIConfigAPI(GangaUnitTest):
+class TestGangaGUIInternalConfigAPI(GangaUnitTest):
 
     # Setup
     def setUp(self, extra_opts=[]):
-        super(TestGangaGUIConfigAPI, self).setUp(extra_opts=[])
+        super(TestGangaGUIInternalConfigAPI, self).setUp(extra_opts=[])
 
         # App config and database creation
-        app.config["TESTING"] = True
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(currentdir, "gui_test.sqlite")
-        db.create_all()
-
-        # Temp user for the test
-        tempuser = User(public_id=str(uuid.uuid4()), user="GangaGUITestUser", role="Admin")
-        tempuser.store_password_hash("testpassword")
-        db.session.add(tempuser)
-        db.session.commit()
+        internal.config["TESTING"] = True
 
         # Flask test client
-        self.app = app.test_client()
-
-        # Generate token for requests
-        global token
-        res = self.app.post("/token", data={"user": "GangaGUITestUser", "password": "testpassword"})
-        token = res.json["token"]
+        self.app = internal.test_client()
 
     # Config API - GET Method
     def test_GET_method_config_list(self):
@@ -69,13 +47,13 @@ class TestGangaGUIConfigAPI(GangaUnitTest):
                 "options": options_list,
             })
 
-        res = self.app.get(f"/api/config", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/config")
+        # print(res.json) # to check the res body
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(res.json) == len(list_of_sections))
 
     # Tear down
     def tearDown(self):
-        super(TestGangaGUIConfigAPI, self).tearDown()
-        db.session.remove()
-        db.drop_all()
-        os.remove(os.path.join(currentdir, "gui_test.sqlite"))
+        super(TestGangaGUIInternalConfigAPI, self).tearDown()
+
+# ******************** EOF ******************** #

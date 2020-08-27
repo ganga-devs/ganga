@@ -1,20 +1,37 @@
 import os
 import uuid
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaGUI.gui import app, db
-from GangaGUI.gui.models import User
+from GangaGUI.gui.routes import gui, db, User
+from GangaCore.Runtime.GPIexport import exportToGPI
+from GangaGUI.start import start_gui
 
+# Export start_gui function to GPI
+exportToGPI("start_gui", start_gui, "Functions")
+
+# Path of current directory
 currentdir = os.path.dirname(os.path.abspath(__file__))
+
+
+# ******************** Test Class ******************** #
 
 
 class TestGangaGUIDatabase(GangaUnitTest):
 
     def setUp(self, extra_opts=[]):
         super(TestGangaGUIDatabase, self).setUp(extra_opts=[])
-        app.config["TESTING"] = True
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(currentdir, "gui_test.sqlite")
-        self.app = app.test_client()
+        gui.config["TESTING"] = True
+        gui.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(currentdir, "gui_test.sqlite")
+        gui.config["LOGIN_DISABLED"] = True
+        gui.config["INTERNAL_PORT"] = 5000
 
+        # Flask testing client
+        self.app = gui.test_client()
+
+        # Start internal API server
+        from GangaCore.GPI import start_gui
+        start_gui(only_internal=True, internal_port=5000)
+
+    # Test creation of database file
     def test_database_creation(self):
         db.create_all()
         self.assertTrue(os.path.exists(os.path.join(currentdir, "gui_test.sqlite")))
@@ -33,8 +50,11 @@ class TestGangaGUIDatabase(GangaUnitTest):
         self.assertTrue(db_users[0].password_hash == tempuser.password_hash)
         self.assertTrue(db_users[0].verify_password("testpassword"))
 
+    # Teardown, remove dummy database file
     def tearDown(self):
         super(TestGangaGUIDatabase, self).tearDown()
         db.session.remove()
         db.drop_all()
         os.remove(os.path.join(currentdir, "gui_test.sqlite"))
+
+# ******************** EOF ******************** #
