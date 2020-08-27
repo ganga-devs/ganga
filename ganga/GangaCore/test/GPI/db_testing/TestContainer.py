@@ -18,7 +18,6 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 HOST, PORT = utils.get_host_port()
 
 
-
 class TestDatabaseBackends(GangaUnitTest):
     """
     Init all the database containers and see if they work
@@ -37,42 +36,7 @@ class TestDatabaseBackends(GangaUnitTest):
         }
         super(TestDatabaseBackends, self).setUp(extra_opts=extra_opts)
 
-    def test_docker_backend_lifetime(self):
-        """
-        Check if docker contaienr is installed
-        """
-        import docker
-        from GangaCore.Core.GangaRepository.container_controllers import docker_handler
-        if self.installations["docker"]:
-            # starting the database container
-            docker_handler(
-                action="start",
-                gangadir=self.gangadir(),
-                database_config=self.database_config
-            )
-            # testing status of the database container
-            container_client = docker.from_env()
-            flag = any([container.name == self.database_config["containerName"]
-                        for container in container_client.containers.list()])
-            assert flag
-
-            # shutting the container
-            docker_handler(
-                action="quit",
-                gangadir=self.gangadir(),
-                database_config=self.database_config
-            )
-
-            flag = any([container.name == self.database_config["containerName"]
-                        for container in container_client.containers.list()])
-            assert not flag
-
-        else: 
-            # skip the test if docker is not installed
-            print("docker is not installed and thus skipping")
-            return
-
-    def test_singularity_backend_lifetime(self):
+    def test_a_singularity_backend_lifetime(self):
         """
         Test the starting and shutdown of udocker container image
         """
@@ -96,7 +60,7 @@ class TestDatabaseBackends(GangaUnitTest):
             flag = any([
                 self.database_config["containerName"] in line
                 for line in stdout.decode().split()
-                ])
+            ])
             assert flag
 
             # shutting down the container
@@ -114,11 +78,10 @@ class TestDatabaseBackends(GangaUnitTest):
             flag = any([
                 self.database_config["containerName"] in line
                 for line in stdout.decode().split()
-                ])
+            ])
             assert not flag
 
-
-    def test_udocker_backend_lifetime(self):
+    def test_b_udocker_backend_lifetime(self):
         """
         Test the starting and shutdown of udocker container image
         """
@@ -157,11 +120,44 @@ class TestDatabaseBackends(GangaUnitTest):
             flag = self.database_config['containerName'] in stdout.decode()
             assert not flag
 
-
-
-    def test_native_backend_lifetime(self):
+    def test_c_native_backend_lifetime(self):
         """
         Check if native database is running
         """
         # we cannot control the starting of the database and shutting so skiping
         pass
+
+    def test_d_docker_backend_lifetime(self):
+        """
+        Check if docker contaienr is installed
+        """
+        import docker
+        from GangaCore.Core.GangaRepository.container_controllers import docker_handler
+        if self.installations["docker"]:
+            # starting the database container
+            docker_handler(
+                action="start",
+                gangadir=self.gangadir(),
+                database_config=self.database_config
+            )
+            # testing status of the database container
+            container_client = docker.from_env()
+            flag = any([container.name == self.database_config["containerName"]
+                        for container in container_client.containers.list()])
+            assert flag
+
+            # shutting the container
+            docker_handler(
+                action="quit",
+                gangadir=self.gangadir(),
+                database_config=self.database_config
+            )
+
+            flag = any([container.name == self.database_config["containerName"]
+                        for container in container_client.containers.list()])
+            assert not flag
+
+        else:
+            # skip the test if docker is not installed
+            print("docker is not installed and thus skipping")
+            return
