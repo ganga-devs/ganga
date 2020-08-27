@@ -1,5 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
+from GangaCore import _gangaVersion
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings
 from GangaGaudi.Lib.RTHandlers.GaudiRunTimeHandler import GaudiRunTimeHandler
@@ -51,11 +52,14 @@ class GaudiDiracRunTimeHandler(GaudiRunTimeHandler):
                                         OUTPUT_PATH="",  # job.fqid,
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
+                                        MIN_PROCESSORS=job.backend.minProcessors,
+                                        MAX_PROCESSORS=job.backend.maxProcessors,
                                         PLATFORM=app.platform,
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
-                                        INPUT_SANDBOX='##INPUT_SANDBOX##'
+                                        INPUT_SANDBOX='##INPUT_SANDBOX##',
+                                        GANGA_VERSION=_gangaVersion,
                                         )
 
         return StandardJobConfig(dirac_script,

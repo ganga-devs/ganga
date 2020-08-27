@@ -26,6 +26,14 @@ j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
 ###DIRAC_OPTS###
 
 # submit the job to dirac
-j.setPlatform( '###PLATFORM###' )
+j.setPlatform('###PLATFORM###')
+
+try:
+	j.setNumberOfProcessors(minNumberOfProcessors=###MIN_PROCESSORS###, maxNumberOfProcessors=###MAX_PROCESSORS###)
+except (AttributeError, TypeError):
+	pass
+
+j._addParameter(j.workflow, 'GangaVersion', 'JDL', '###GANGA_VERSION###', 'The version of ganga used to submit this job')
+
 result = dirac.submitJob(j)
 output(result)

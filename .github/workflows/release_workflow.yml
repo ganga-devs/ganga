@@ -1,0 +1,107 @@
+name: Release Workflow
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  retag:
+    name: Set version numbers and retag release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install JSON tools
+      run: sudo apt-get install -y jo
+    - name: Setup Git
+      run: |
+        git config --global user.email "a.richards@imperial.ac.uk"
+        git config --global user.name "Alexander Richards"
+        git config remote.origin.url 'https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git'
+    - name: Hardcode development flag
+      run: |
+        sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
+        git add ganga/GangaCore/__init__.py
+        git commit -m "Setting developmet flag"
+    - name: Hardcode version number
+      run: |
+        VERSION=$(basename ${GITHUB_REF})
+        echo "::set-env name=VERSION::${VERSION}"
+        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
+        sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ganga/GangaCore/__init__.py
+        git add ./setup.py ganga/GangaCore/__init__.py
+        git commit -m "Setting version number constants"
+    - name: Commit release notes
+      run: |
+        ! read -rd"\n" REL_ID BODY < <(curl --request GET --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/tags/${VERSION} | jq -r '.id, .body')
+        echo "::set-env name=REL_ID::${REL_ID}"
+        echo "${BODY}" > ganga/GangaRelease/ReleaseNotes-${VERSION}
+        git add ganga/GangaRelease/ReleaseNotes-${VERSION}
+        git commit -m "Creating release notes for version ${VERSION}"
+    - name: Remove placeholder tag
+      run: git push origin :refs/tags/${VERSION}
+    - name: Re-tag
+      run: |
+        git tag -fa ${VERSION} -m "Ganga ${VERSION}"
+        git push --tags
+    - name: Update release
+      run: |
+        DATA=`jo tag_name=${VERSION} draft=false`
+        curl --request PATCH \
+             --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/$REL_ID \
+             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+             --header 'content-type: application/json' \
+             --data "$DATA"
+  deploy:
+    name: Deploy to PyPI
+    runs-on: ubuntu-latest
+    needs: retag
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install JSON tools
+        run: sudo apt-get install -y jo
+      - name: Install Twine (PyPI upload tool)
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade twine
+      - name: Checkout re-tagged version
+        run: |
+          VERSION=$(basename ${GITHUB_REF})
+          echo "::set-env name=VERSION::${VERSION}"
+          git checkout ${VERSION}
+      - name: Create Deployment
+        run: |
+          DATA=`jo ref=${VERSION} environment=PyPI description="Deploy Ganga ${VERSION} to PyPI"`
+          STATUS_URL=`curl --request POST \
+                           --url ${GITHUB_API_URL}/repos/${{ github.repository }}/deployments \
+                           --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+                           --header 'content-type: application/json' \
+                           --data "$DATA" | jq -r '.statuses_url'`
+          echo "::set-env name=STATUS_URL::${STATUS_URL}"
+      - name: Deploy to PyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          echo -e "[distutils]\nindex-servers = pypi\n[pypi]\nusername:${TWINE_USERNAME}\npassword:${TWINE_PASSWORD}" > ~/.pypirc
+          python setup.py register
+          python setup.py sdist
+          python -m twine upload --skip-existing dist/ganga-*.tar.gz
+      - name: Set deployment status failure
+        if: ${{ failure() }}
+        run: |
+          DATA=`jo state=failure description="Deployment of Ganga ${VERSION} to PyPI failed!"`
+          curl --request POST \
+               --url ${STATUS_URL} \
+               --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+               --header 'content-type: application/json' \
+               --data "$DATA"
+      - name: Set deployment status success
+        if: ${{ success() }}
+        run: |
+          DATA=`jo state=success description="Deployment of Ganga ${VERSION} to PyPI"`
+          curl --request POST \
+               --url ${STATUS_URL} \
+               --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+               --header 'content-type: application/json' \
+               --data "$DATA"

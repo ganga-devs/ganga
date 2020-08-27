@@ -4,6 +4,7 @@ from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
 from GangaCore.GPIDev.Lib.Tasks.CoreUnit import CoreUnit
+from GangaCore.GPIDev.Lib.Tasks.TaskChainInput import TaskChainInput
 from GangaCore.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
 from GangaCore.GPIDev.Lib.Job.Job import Job
 from GangaCore.GPIDev.Base.Proxy import stripProxy, getName, isType

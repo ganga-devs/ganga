@@ -95,6 +95,9 @@ class Condor(IBackend):
         # Add a volatile variable for recording the first time a job's stdout is checked
         self._stdout_check_time = 0
 
+        # Store the format of the date in the condorLog
+        self._condorDateFormat = None
+
         super(Condor, self).__init__()
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
@@ -459,7 +462,7 @@ class Condor(IBackend):
 
         if virtualization:
             commandString = virtualization.modify_script(commandString)
-        
+
         wrapper = job.getInputWorkspace().writefile\
             (FileBuffer(wrapperName, commandString), executable=1)
 
@@ -680,11 +683,48 @@ class Condor(IBackend):
 
         return None
 
+    def setCondorDateFormat(self, dateString):
+        """Helper function to set the _condorDateFormat for a given dateString.
+
+           This is called on-the-fly while parsing the condorLog in getStateTime.
+           Depending on the version of condor, the format of the date is different:
+               Count the number of date elements.
+               Check for the separation character between date elements.
+        """
+        dateBreakdown = re.findall(r"\d+\D", dateString)
+        numberOfDateElements = len(dateBreakdown)+1
+        if numberOfDateElements > 0:
+            self._condorDateFormat=(numberOfDateElements,dateBreakdown[0][-1])
+            if numberOfDateElements > 3 or numberOfDateElements == 1:
+                logger.warning(
+                    "setCondorDateFormat number of date elements does not match: '%s'", dateString)
+        else:
+            logger.warning(
+                    "setCondorDateFormat cannot determine date format: '%s'", dateString)
+
+    def getCondorDate(self, dateString, timeString):
+        """Helper function to unify the condor date format according to the format obtained in setCondorDateFormat and stored in _condorDateFormat
+
+           Depending on the version of condor, the format of the date is different:
+               If there are only two date elements, the condorLog doesn't tell you the year so we guess the closest one to now.
+               The separation character of the year/month/day is unified to the same character for easy parsing.
+        """
+        result=dateString
+        if self._condorDateFormat:
+            if self._condorDateFormat[1] != "/":
+                result=result.replace(self._condorDateFormat[1],"/")
+            if self._condorDateFormat[0] == 2:
+                year = datetime.datetime.now().year
+                if datetime.datetime.strptime(str(year)+"/"+result+' '+timeString, "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
+                    year = year - 1
+                result=str(year)+"/"+result
+        return result
+
     def getStateTime(self, status):
         """Obtains the timestamps for the 'running', 'completed', and 'failed' states.
 
            The condorLog file in the job's output directory is read to obtain the start and stop times of the job.
-           These are converted into datetime objects and returned to the user. The condorLog doesn't tell you the year so we guess the closest one to now.
+           These are converted into datetime objects and returned to the user.
         """
         j = self.getJobObject()
         end_list = ['completed', 'failed']
@@ -714,13 +754,14 @@ class Condor(IBackend):
             logger.debug('unable to open file %s', p)
             return None
 
+
         for l in f:
             splitLine = l.split()
             if checkstr == splitLine[0]:
-                year = datetime.datetime.now().year
-                if datetime.datetime.strptime(str(datetime.datetime.now().year)+'/'+splitLine[2]+' '+splitLine[3], "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
-                    year = year - 1
-                timestr = str(year)+'/'+splitLine[2]+' '+splitLine[3]
+                if not self._condorDateFormat:
+                    self.setCondorDateFormat(splitLine[2])
+                condorDate=self.getCondorDate(splitLine[2], splitLine[3])
+                timestr = condorDate+' '+splitLine[3]
                 try:
                     t = datetime.datetime(
                         *(time.strptime(timestr, "%Y/%m/%d %H:%M:%S")[0:6]))
@@ -757,5 +798,3 @@ class Condor(IBackend):
         staticmethod(updateMonitoringInformation)
 
 #_________________________________________________________________________
-
-
