@@ -15,7 +15,7 @@ from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 
-if getConfig('Configuration')["repositorytype"] == "Database":
+if getConfig('Configuration')["repositorytype"] in ["Database", "CentralDatabase"]:
     from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
 else:
     from GangaCore.Core.GangaRepository.Registry import Registry
