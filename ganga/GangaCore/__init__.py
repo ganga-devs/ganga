@@ -980,7 +980,7 @@ else:
         file.write(str(port))
 
 db_config = makeConfig("DatabaseConfigurations", "Selection of database for ganga")
-db_config.addOption("controller", "docker", "Database Controller [Native, Docker, uDocker, Singularity]")
+db_config.addOption("controller", "udocker", "Database Controller [Native, Docker, uDocker, Singularity]")
 db_config.addOption("baseImage", "mongo", "Docker Image for the database")
 db_config.addOption("containerName", container_name, "the identifier used to tag the docker container")
 db_config.addOption("username", "default", "username")

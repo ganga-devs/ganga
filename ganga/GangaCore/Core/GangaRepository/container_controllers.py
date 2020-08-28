@@ -51,13 +51,15 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR):
     Raises
     ------
     NotImplementedError
+
+    udocker run --volume=/home/dumbmachine/gangadir/data:/data --publish=27018:27017 gangaDB mongo --eval "db.getSiblingDB('admin').shutdownServer()"
     """
     import subprocess
 
     bind_loc = create_mongodir(gangadir=gangadir)
     list_images = f"udocker ps"
     stop_container = f"udocker rm {database_config['containerName']}"
-    start_container = f"udocker run  --volume={bind_loc}/db:/data/db {database_config['containerName']}"
+    start_container = f"udocker run --volume={bind_loc}/db:/data/db --publish={database_config['port']}:27017 {database_config['containerName']}"
     create_container = f"udocker create --name={database_config['containerName']} {database_config['baseImage']}"
 
     if not checkUDocker():
