@@ -172,13 +172,15 @@ class GangaRepositoryLocal(GangaRepository):
         self.update_index(True, True, True)
         logger.debug("GangaRepositoryLocal Finished Startup")
 
-
+    # TODO: catch pymongo.errors.ServerSelectionTimeoutError
+    # This shows that the port is already used
     def start_database(self):
         """Start the mongodb with the prefered back_end
         """
         PORT = self.database_config["port"]
         HOST = self.database_config["host"]
         connection_string = f"mongodb://{HOST}:{PORT}/"
+        logger.info(connection_string)
         client = pymongo.MongoClient(connection_string)
         self.connection = client[self.db_name]
 

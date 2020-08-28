@@ -173,7 +173,8 @@ def docker_handler(database_config, action="start", gangadir=GANGADIR):
             )
             if container.status != "running":
                 container.restart()
-                logger.info("gangaDB has started in background")
+                logger.info(
+                    f"gangaDB has started in background at {database_config['port']}")
             else:
                 logger.debug("gangaDB was already running in background")
 
@@ -181,7 +182,7 @@ def docker_handler(database_config, action="start", gangadir=GANGADIR):
             # call the function to get the gangadir here
             bind_loc = create_mongodir(gangadir=gangadir)
             logger.info(
-                f"Pulling a copy of baseImage: {database_config['baseImage']}")
+                f"Creating Container at {database_config['port']}")
 
             # if the container was not found by docker, lets create it.
             container = container_client.containers.run(
@@ -192,6 +193,8 @@ def docker_handler(database_config, action="start", gangadir=GANGADIR):
                 # volumes=[f"{bind_loc}:/data"]
                 volumes=[f"{bind_loc}/db:/data/db"]
             )
+
+            logger.info(f"2 gangaDB has started in background at {database_config['port']}")
         except Exception as e:
             # TODO: Handle gracefull quiting of ganga
             logger.error(e)
