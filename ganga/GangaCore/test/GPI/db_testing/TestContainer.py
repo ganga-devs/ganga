@@ -7,6 +7,7 @@ TODO:
 """
 
 import utils
+import gdown
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Virtualization import (
     checkNative, checkDocker,
@@ -36,12 +37,23 @@ class TestDatabaseBackends(GangaUnitTest):
         }
         super(TestDatabaseBackends, self).setUp(extra_opts=extra_opts)
 
+    def test_1a_download_sif_file(self):
+        """
+        Download the sif file requried 
+        """
+        # download the requried sif file
+        url = 'https://drive.google.com/uc?id=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk'
+        output = 'mongo.sif'
+        gdown.download(url, output, quiet=False)
+        assert True
+
     def test_a_singularity_backend_lifetime(self):
         """
         Test the starting and shutdown of udocker container image
         """
         import subprocess
         from GangaCore.Core.GangaRepository.container_controllers import singularity_handler
+
         if self.installations["singularity"]:
             # start the singularity container
             singularity_handler(

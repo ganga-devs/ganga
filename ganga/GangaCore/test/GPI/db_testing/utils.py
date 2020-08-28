@@ -45,9 +45,9 @@ def get_options(host, port):
 
 def get_host_port():
     if "GANGA_GITHUB_HOST" in os.environ.keys():  # we are testing in github actions
-        return "mongodb", 27017
+        return "mongodb", "27017"
     else:  # docker is better for local testing
-        return "localhost", 27017
+        return "localhost", "27017"
 
 
 def getNestedList():

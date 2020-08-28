@@ -13,6 +13,13 @@ logger = logging.getLogger()
 GANGADIR = os.path.expandvars('$HOME/gangadir')
 DATABASE_CONFIG = getConfig("DatabaseConfigurations")
 
+def check_logs(path):
+    """
+    Check the logs of forked mongo proc
+    """
+    log = open(path, 'r').read()
+    to_raise = any([line for line in log.split("\n")])
+    return to_raise
 
 def create_mongodir(gangadir):
     """
@@ -119,8 +126,23 @@ def singularity_handler(database_config, action="start", gangadir=GANGADIR):
     Args:
         database_config: The config from ganga config
         action: The action to be performed using the handler
+
+    This could also help things:
+    - create container: Not needed, we have the sif file
+    - run the command on the container: 
+    - stop the container: DOCKER_COMMAND=mongo --eval 'db.getSiblingDB("admin").shutdownServer()'
     """
     from spython.main import Client
+
+    # check if the singularity sif exists
+    sif_file = os.path.join(gangadir, "mongo.sif")
+    if not os.path.isfile(sif_file):
+        raise FileNotFoundError(
+            "The mongo.sif file does not exists. Please download it using DOWNLOAD_URL and store it: ", sif_file)
+
+
+    bind_loc = create_mongodir(gangadir=gangadir)
+    container_flag_loc = os.path.join(gangadir, "container.flag")
 
     if not checkSingularity():
         raise Exception("Singularity seems to not be installed on the system.")
@@ -128,30 +150,38 @@ def singularity_handler(database_config, action="start", gangadir=GANGADIR):
         raise NotImplementedError(f"Illegal Opertion on container")
 
     if action == "start":
-        container_exists = any([
-            instance.name == database_config["containerName"]
-            for instance in Client.instances(quiet=True)
-        ])
-        if not container_exists:
-            bind_loc = create_mongodir(gangadir=gangadir)
-            options = [
-                "--bind", f"{bind_loc}:/data"
-            ]
-            container = Client.instance(
-                f"docker://{database_config['baseImage']}",
-                options=options, name=database_config['containerName']
-            )
-            # container.start()
-            Client.execute(
-                container, "mongod --fork --logpath /data/daemon-mongod.log", quiet=True)
-            logger.info("gangaDB has started in background")
-        else:
-            logger.debug("gangaDB was already running in background")
-    else:
-        for instance in Client.instances(quiet=True):
-            if instance.name == database_config['containerName']:
-                instance.stop()
-                logger.info("gangaDB has been shutdown")
+        # check if the container is already running
+        if os.path.exists(container_flag_loc) and open(container_flag_loc, "r").read() == "True":
+            return True, None # the container is already running
+
+        options = ["--bind", f"{bind_loc}:/data"]
+        std = Client.execute(
+            sif_file, f"mongod --port {database_config['port']} --fork --logpath /data/daemon-mongod.log", options=options)
+
+        if isinstance(std, dict):
+            raise Exception("An error occured while trying to fork proc ", std['message'])
+            return False, "An error occured while trying to fork proc" + std['message']
+        
+        open(container_flag_loc, "w").write("True")
+
+        # read the logs to see if there are any issues
+        # to_raise = check_logs()
+        # if to_raise:
+        #     raise Exception("There was a error while forking mognod, please check the logs at ~/gangadir/data/daemon-mongod.log")
+
+        logger.info(f"Singularity started mongodb on port: {database_config['port']}")
+
+    elif action == "quit":
+        std = Client.execute(
+            sif_file, f"mongod --dbpath {bind_loc}/db --port {database_config['port']} --shutdown"
+        )
+
+        if isinstance(std, dict):
+            raise Exception("error while stopping mongod", std['message'])
+
+        open(container_flag_loc, "w").write("False")
+        logger.info("Singularity MongoDB shutdown")
+    return True, None
 
 
 def docker_handler(database_config, action="start", gangadir=GANGADIR):
