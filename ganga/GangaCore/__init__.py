@@ -4,6 +4,7 @@ import re
 import inspect
 import getpass
 import subprocess
+from GangaCore.Utility.Config import get_unique_name, get_unique_port
 from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours
 
 # Global Variable to enable Job Sharing mechanism required in GANGA SWAN INTEGRATION.
@@ -964,27 +965,37 @@ cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on 
 
 # ------------------------------------------------
 # Database
-db_config = makeConfig("DatabaseConfigurations",
-                       "Selection of database for ganga")
-db_config.addOption("database", "MONGODB",
-                    "others have not been implemented yet")
-db_config.addOption(
-    "containerName", "ganga_mongomon", "the identifier used to tag the docker container"
-)
+# check if the user information exists on disk
+container_config = os.path.join(getConfig("Configuration")["gangadir"], "container.rc")
+if os.path.exists(container_config):
+    container_name, username, port = open(container_config, "r").read().split()
+else:
+    temp = get_unique_name()
+    container_name, username, port = temp, temp, get_unique_port()
+    with open(container_config, "w") as file:
+        file.write(container_name)
+        file.write("\n")
+        file.write(username)
+        file.write("\n")
+        file.write(str(port))
+
+db_config = makeConfig("DatabaseConfigurations", "Selection of database for ganga")
+db_config.addOption("controller", "udocker", "Database Controller [Native, Docker, uDocker, Singularity]")
+db_config.addOption("baseImage", "mongo", "Docker Image for the database")
+db_config.addOption("containerName", container_name, "the identifier used to tag the docker container")
 db_config.addOption("username", "default", "username")
 db_config.addOption("password", "default", "password")
-db_config.addOption("host", "default", "host")
-db_config.addOption("port", "default", "port")
-db_config.addOption("dbname", "default", "name of database")
+db_config.addOption("host", "localhost", "host")
+db_config.addOption("port", port, "port")
+db_config.addOption("dbname", username, "name of database")
 
 # ------------------------------------------------
-# CentralDatabase
-db_config = makeConfig("CentralDatabaseConfigurations", "Selection of central database for ganga")
+# CentralDatabase, add option to interpret username
+db_config = makeConfig("CentralDatabaseConfigurations",
+                       "Selection of central database for ganga")
 db_config.addOption("database", "NotImplementedError",
                     "others have not been implemented yet")
-db_config.addOption(
-    "containerName", "NotImplementedError", "the identifier used to tag the docker container"
-)
+db_config.addOption("containerName", "NotImplementedError", "the identifier used to tag the docker container")
 db_config.addOption("username", "NotImplementedError", "username")
 db_config.addOption("password", "NotImplementedError", "password")
 db_config.addOption("host", "NotImplementedError", "host")

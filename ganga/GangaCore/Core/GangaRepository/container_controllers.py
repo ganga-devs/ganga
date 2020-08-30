@@ -1,0 +1,253 @@
+# TODO: Add progress bars, when pulling docker containers (stream logs to show progress?)
+
+import os
+import docker
+import subprocess
+
+from GangaCore.Utility import logging
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.Virtualization import checkDocker, checkUDocker, checkSingularity, installUdocker
+
+logger = logging.getLogger()
+
+GANGADIR = os.path.expandvars('$HOME/gangadir')
+DATABASE_CONFIG = getConfig("DatabaseConfigurations")
+
+def check_logs(path):
+    """
+    Check the logs of forked mongo proc
+    """
+    log = open(path, 'r').read()
+    to_raise = any([line for line in log.split("\n")])
+    return to_raise
+
+def create_mongodir(gangadir):
+    """
+    Will create a the required data folder for mongo db
+    """
+    dirs_to_make = [os.path.join(gangadir, "data"),
+                    os.path.join(gangadir, "data/db"),
+                    os.path.join(gangadir, "data/configdb")]
+    _ = [*map(lambda x: os.makedirs(x, exist_ok=True), dirs_to_make)]
+
+    return os.path.join(gangadir, "data")
+
+
+def native_handler(database_config, action="start", gangadir=GANGADIR):
+    """
+    Will handle when the database is installed locally
+    Assumptions:
+    1. Database is already started, ganga should not explicitely start the database, as ganga may not have permissions
+    2. Database cannot be shut by ganga, citing the same reasons as above.
+    """
+    if action not in ["start", "quit"]:
+        raise NotImplementedError(f"Illegal Opertion on container")
+    if action == "start":
+        logger.info("Native Database detection, skipping startup")
+    else:
+        logger.info("Native Database detection, skipping closing")
+
+
+def udocker_handler(database_config, action="start", gangadir=GANGADIR):
+    """
+    Will handle the loading of container using docker
+    -------
+    database_config: The config from ganga config
+    action: The action to be performed using the handler
+
+    Raises
+    ------
+    NotImplementedError
+
+    udocker run --volume=/home/dumbmachine/gangadir/data:/data --publish=27018:27017 gangaDB mongo --eval "db.getSiblingDB('admin').shutdownServer()"
+    """
+    import subprocess
+
+    bind_loc = create_mongodir(gangadir=gangadir)
+    list_images = f"udocker ps"
+    stop_container = f"udocker rm {database_config['containerName']}"
+    start_container = f"udocker run --volume={bind_loc}/db:/data/db --publish={database_config['port']}:27017 {database_config['containerName']}"
+    create_container = f"udocker create --name={database_config['containerName']} {database_config['baseImage']}"
+
+    if not checkUDocker():
+    # if checkUDocker():
+        raise Exception("Udocker seems to not be installed on the system.")
+    if action not in ["start", "quit"]:
+        raise NotImplementedError(f"Illegal Opertion on container")
+
+    logger.info("Would recommend not to use udocker")
+    if action == "start":
+        # check if the container exists already
+        proc = subprocess.Popen(
+            list_images, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        out, err = proc.communicate()
+        if err:
+            # TODO: Some Errors can be ignored
+            raise Exception(err)
+
+        if database_config['containerName'] not in out.decode():
+            # run the container
+            proc = subprocess.Popen(
+                create_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            out, err = proc.communicate()
+            if err:
+                raise Exception(err)
+
+            proc = subprocess.Popen(
+                start_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                close_fds=True
+            )
+            # out, err = proc.communicate() # DO NOT COMMUNICATE THIS PROCESS
+            logger.info("gangaDB should have started in background")
+    else:
+        # check if the container exists already
+        proc = subprocess.Popen(
+            list_images, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        out, err = proc.communicate()
+        if err:
+            # TODO: Some Errors can be ignored
+            raise Exception(err)
+
+        if database_config['containerName'] in out.decode():
+            proc = subprocess.Popen(
+                stop_container, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            # out, err = proc.communicate() DO NOT COMMUNICATE THIS PROCESS
+            logger.info("gangaDB should have shutdown")
+
+
+def singularity_handler(database_config, action="start", gangadir=GANGADIR):
+    """
+    Uses spython module
+
+    Args:
+        database_config: The config from ganga config
+        action: The action to be performed using the handler
+
+    This could also help things:
+    - create container: Not needed, we have the sif file
+    - run the command on the container: 
+    - stop the container: DOCKER_COMMAND=mongo --eval 'db.getSiblingDB("admin").shutdownServer()'
+    """
+    from spython.main import Client
+
+    # check if the singularity sif exists
+    sif_file = os.path.join(gangadir, "mongo.sif")
+    if not os.path.isfile(sif_file):
+        raise FileNotFoundError(
+            "The mongo.sif file does not exists. Please download it using DOWNLOAD_URL and store it: ", sif_file)
+
+
+    bind_loc = create_mongodir(gangadir=gangadir)
+    container_flag_loc = os.path.join(gangadir, "container.flag")
+
+    if not checkSingularity():
+        raise Exception("Singularity seems to not be installed on the system.")
+    if action not in ["start", "quit"]:
+        raise NotImplementedError(f"Illegal Opertion on container")
+
+    if action == "start":
+        # check if the container is already running
+        if os.path.exists(container_flag_loc) and open(container_flag_loc, "r").read() == "True":
+            return True, None # the container is already running
+
+        options = ["--bind", f"{bind_loc}:/data"]
+        std = Client.execute(
+            sif_file, f"mongod --port {database_config['port']} --fork --logpath /data/daemon-mongod.log", options=options)
+
+        if isinstance(std, dict):
+            raise Exception("An error occured while trying to fork proc ", std['message'])
+            return False, "An error occured while trying to fork proc" + std['message']
+        
+        open(container_flag_loc, "w").write("True")
+
+        # read the logs to see if there are any issues
+        # to_raise = check_logs()
+        # if to_raise:
+        #     raise Exception("There was a error while forking mognod, please check the logs at ~/gangadir/data/daemon-mongod.log")
+
+        logger.info(f"Singularity started mongodb on port: {database_config['port']}")
+
+    elif action == "quit":
+        std = Client.execute(
+            sif_file, f"mongod --dbpath {bind_loc}/db --port {database_config['port']} --shutdown"
+        )
+
+        if isinstance(std, dict):
+            raise Exception("error while stopping mongod", std['message'])
+
+        open(container_flag_loc, "w").write("False")
+        logger.info("Singularity MongoDB shutdown")
+    return True, None
+
+
+def docker_handler(database_config, action="start", gangadir=GANGADIR):
+    """
+    Will handle the loading of container using docker
+
+    Args:
+    database_config: The config from ganga config
+    action: The action to be performed using the handler
+    """
+    if not checkDocker():
+        raise Exception("Docker seems to not be installed on the system.")
+    if action not in ["start", "quit"]:
+        raise NotImplementedError(f"Illegal Opertion on container")
+
+    container_client = docker.from_env()
+    if action == "start":
+        try:
+            container = container_client.containers.get(
+                database_config["containerName"]
+            )
+            if container.status != "running":
+                container.restart()
+                logger.info(
+                    f"gangaDB has started in background at {database_config['port']}")
+            else:
+                logger.debug("gangaDB was already running in background")
+
+        except docker.errors.NotFound:
+            # call the function to get the gangadir here
+            bind_loc = create_mongodir(gangadir=gangadir)
+            logger.info(
+                f"Creating Container at {database_config['port']}")
+
+            # if the container was not found by docker, lets create it.
+            container = container_client.containers.run(
+                detach=True,
+                name=database_config["containerName"],
+                image=database_config["baseImage"],
+                ports={"27017/tcp": database_config["port"]},
+                # volumes=[f"{bind_loc}:/data"]
+                volumes=[f"{bind_loc}/db:/data/db"]
+            )
+
+            logger.info(f"2 gangaDB has started in background at {database_config['port']}")
+        except Exception as e:
+            # TODO: Handle gracefull quiting of ganga
+            logger.error(e)
+            logger.info(
+                "Quiting ganga as the mongo backend could not start")
+            raise e
+
+        return True
+    else:
+        # killing the container
+        try:
+            container = container_client.containers.get(
+                database_config["containerName"]
+            )
+            container.kill()
+            logger.info("gangaDB has been shutdown")
+        except docker.errors.APIError as e:
+            if e.response.status_code == 409:
+                logger.debug(
+                    "database container was already killed by another registry"
+                )
+            else:
+                raise e
+        return True
