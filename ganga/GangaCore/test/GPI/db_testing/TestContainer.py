@@ -2,9 +2,9 @@
 TODO:
 1. Added tests to check fail conditions
 """
-
+import os
+import time
 import utils
-import gdown
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Virtualization import (
     checkNative, checkDocker,
@@ -24,8 +24,9 @@ class TestDatabaseBackends(GangaUnitTest):
     def setUp(self):
         """
         """
+        from GangaCore.Core.GangaRepository.container_controllers import generate_database_config
         extra_opts = utils.get_options(HOST, PORT)
-        self.database_config = getConfig("DatabaseConfigurations")
+        self.database_config = generate_database_config()
         self.installations = {
             "docker": checkDocker(),
             "udocker": checkUDocker(),
@@ -36,12 +37,19 @@ class TestDatabaseBackends(GangaUnitTest):
 
     def test_1a_download_sif_file(self):
         """
-        Download the sif file requried 
+        Download the sif file requried
         """
-        # download the requried sif file
-        url = 'https://drive.google.com/uc?id=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk'
-        output = 'mongo.sif'
-        gdown.download(url, output, quiet=False)
+        if "GANGA_GITHUB_HOST" in os.environ.keys():
+            import gdown  # download the required sif file
+            url = 'https://drive.google.com/uc?id=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk'
+            output = 'mongo.sif'
+            gdown.download(url, output, quiet=True)
+
+        import shutil # copy the files from repository to testing directory
+        shutil.copy(
+            src="mongo.sif",
+            dst=self.gangadir()
+        )
         assert True
 
     def test_a_singularity_backend_lifetime(self):
@@ -49,7 +57,7 @@ class TestDatabaseBackends(GangaUnitTest):
         Test the starting and shutdown of udocker container image
         """
         import subprocess
-        from GangaCore.Core.GangaRepository.container_controllers import singularity_handler
+        from GangaCore.Core.GangaRepository.container_controllers import singularity_handler, mongod_exists
 
         if self.installations["singularity"]:
             # start the singularity container
@@ -60,17 +68,11 @@ class TestDatabaseBackends(GangaUnitTest):
             )
 
             # checking if the container started up
-            process = subprocess.Popen(
-                "singularity instance list", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                shell=True
+            # print("SEX: ", )
+            flag = mongod_exists(
+                controller="singularity", cname=os.path.join(self.gangadir(), "mongo.sif")
             )
-            stdout, stderr = process.communicate()
-            flag = False
-            flag = any([
-                self.database_config["containerName"] in line
-                for line in stdout.decode().split()
-            ])
-            assert flag
+            assert flag is not None
 
             # shutting down the container
             singularity_handler(
@@ -78,24 +80,17 @@ class TestDatabaseBackends(GangaUnitTest):
                 gangadir=self.gangadir(),
                 database_config=self.database_config
             )
-            process = subprocess.Popen(
-                "singularity instance list", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                shell=True
+            flag = mongod_exists(
+                controller="singularity", cname=os.path.join(self.gangadir(), "mongo.sif")
             )
-            stdout, stderr = process.communicate()
-            flag = True
-            flag = any([
-                self.database_config["containerName"] in line
-                for line in stdout.decode().split()
-            ])
-            assert not flag
+            assert flag is None
 
     def test_b_udocker_backend_lifetime(self):
         """
         Test the starting and shutdown of udocker container image
         """
         import subprocess
-        from GangaCore.Core.GangaRepository.container_controllers import udocker_handler
+        from GangaCore.Core.GangaRepository.container_controllers import udocker_handler, mongod_exists
         if self.installations["udocker"]:
             # start the singularity container
             udocker_handler(
@@ -105,13 +100,10 @@ class TestDatabaseBackends(GangaUnitTest):
             )
 
             # checking if the container started up
-            process = subprocess.Popen(
-                "udocker ps", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                shell=True
+            flag = mongod_exists(
+                controller="udocker", cname=self.database_config["containerName"]
             )
-            stdout, stderr = process.communicate()
-            flag = self.database_config['containerName'] in stdout.decode()
-            assert flag
+            assert flag is not None
 
             # shutting down the container
             udocker_handler(
@@ -121,13 +113,11 @@ class TestDatabaseBackends(GangaUnitTest):
             )
 
             # checking if the container started up
-            process = subprocess.Popen(
-                "udocker ps", stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                shell=True
+            time.sleep(2)
+            flag = mongod_exists(
+                controller="udocker", cname=self.database_config["containerName"]
             )
-            stdout, stderr = process.communicate()
-            flag = self.database_config['containerName'] in stdout.decode()
-            assert not flag
+            assert flag is None
 
     def test_c_native_backend_lifetime(self):
         """
@@ -169,4 +159,3 @@ class TestDatabaseBackends(GangaUnitTest):
         else:
             # skip the test if docker is not installed
             print("docker is not installed and thus skipping")
-            return

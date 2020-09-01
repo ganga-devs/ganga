@@ -965,29 +965,15 @@ cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on 
 
 # ------------------------------------------------
 # Database
-# check if the user information exists on disk
-container_config = os.path.join(getConfig("Configuration")["gangadir"], "container.rc")
-if os.path.exists(container_config):
-    container_name, username, port = open(container_config, "r").read().split()
-else:
-    temp = get_unique_name()
-    container_name, username, port = temp, temp, get_unique_port()
-    with open(container_config, "w") as file:
-        file.write(container_name)
-        file.write("\n")
-        file.write(username)
-        file.write("\n")
-        file.write(str(port))
-
 db_config = makeConfig("DatabaseConfigurations", "Selection of database for ganga")
 db_config.addOption("controller", "udocker", "Database Controller [Native, Docker, uDocker, Singularity]")
 db_config.addOption("baseImage", "mongo", "Docker Image for the database")
-db_config.addOption("containerName", container_name, "the identifier used to tag the docker container")
+# db_config.addOption("containerName", container_name, "the identifier used to tag the docker container")
 db_config.addOption("username", "default", "username")
 db_config.addOption("password", "default", "password")
 db_config.addOption("host", "localhost", "host")
-db_config.addOption("port", port, "port")
-db_config.addOption("dbname", username, "name of database")
+# db_config.addOption("port", port, "port")
+# db_config.addOption("dbname", username, "name of database")
 
 # ------------------------------------------------
 # CentralDatabase, add option to interpret username

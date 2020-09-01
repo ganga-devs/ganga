@@ -438,6 +438,26 @@ under certain conditions; type license() for details.
 
             logger.info("IPython history migrated successfully.")
 
+    @staticmethod
+    def generate_container_rc(interactive):
+        print("GENERATING container.rc")
+        from GangaCore.Utility.logging import getLogger
+        from GangaCore.Utility.Config import get_unique_name, get_unique_port
+        logger = getLogger()
+
+        container_config = os.path.join(getConfig("Configuration")["gangadir"], "container.rc")
+        if os.path.exists(container_config):
+            container_name, username, port = open(container_config, "r").read().split()
+        else:
+            logger.debug("Generating container.rc file in the gangadir")
+            temp = get_unique_name()
+            container_name, username, port = temp, temp, get_unique_port()
+            with open(container_config, "w") as file:
+                file.write(container_name)
+                file.write("\n")
+                file.write(username)
+                file.write("\n")
+                file.write(str(port))
 
     @staticmethod
     def generate_config_file(config_file, interactive):
@@ -903,6 +923,7 @@ under certain conditions; type license() for details.
     def bootstrap(interactive):
         import GangaCore.Utility.Config
         config = GangaCore.Utility.Config.getConfig('Configuration')
+        GangaProgram.generate_container_rc(False)
 
         from GangaCore.Utility.Runtime import loadPlugins, autoPopulateGPI
         loadPlugins(GangaCore.GPI)

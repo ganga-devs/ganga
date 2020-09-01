@@ -31,9 +31,7 @@ def get_options(host, port):
     config = [
         ("DatabaseConfigurations", "host", host),
         ("DatabaseConfigurations", "port", port),
-        ("DatabaseConfigurations", "baseImage", "mongo"),
-        ("DatabaseConfigurations", "dbname", "testDatabase"),
-        ("DatabaseConfigurations", "containerName", "testContainer")
+        ("DatabaseConfigurations", "baseImage", "mongo")
     ]
     options = [('TestingFramework', 'AutoCleanup', 'False')]
     if "GANGA_GITHUB_HOST" in os.environ.keys():  # we are testing in github actions

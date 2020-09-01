@@ -24,6 +24,7 @@ from GangaCore.Core.GangaRepository.container_controllers import (
     docker_handler,
     udocker_handler,
     singularity_handler,
+    generate_database_config
 )
 
 from GangaCore.Core.GangaRepository import (
@@ -156,12 +157,11 @@ class GangaRepositoryLocal(GangaRepository):
         self._cached_obj = {}
         self.known_bad_ids = []
         self._load_timestamp = {}
-        self._cache_load_timestamp = {}  # this is not really required now
-
         self.container_controller = None
         self.to_database = object_to_database
         self.from_database = object_from_database
-        self.database_config = getConfig("DatabaseConfigurations")
+        # self.database_config = getConfig("DatabaseConfigurations")
+        self.database_config = generate_database_config()
         self.db_name = self.database_config["dbname"]
 
         if getConfig('Configuration')['lockingStrategy'] == "UNIX":

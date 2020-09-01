@@ -14,6 +14,8 @@ from GangaCore.Utility.Virtualization import (
     checkSingularity,
     installUdocker,
 )
+from GangaCore.Utility.Config import get_unique_name, get_unique_port
+
 
 logger = logging.getLogger()
 
@@ -24,7 +26,7 @@ UDOCKER_LOC = os.path.expanduser(getConfig("Configuration")["UDockerlocation"])
 class ContainerCommandError(Exception):
     """Expection for when errors occur after running subprocess like container commands"""
 
-    def __init__(self, message, command, controller):
+    def __init__(self, message, controller):
         """
         Args:
             message (str): Error message
@@ -32,11 +34,42 @@ class ContainerCommandError(Exception):
             controller (str): Controller on which the command was run
         """
         self.message = message
-        self.command = command
         self.controller = controller
 
     def __str__(self):
-        return f"[{self.controller}]: Error {self.message} while running command: {self.command}"
+        return f"[{self.controller}]: Errored with {self.message}"
+
+
+def generate_database_config():
+    """
+    Generate the requried variables for database config
+    The username, containerName and port are saved in the $GANGADIR/container.rc
+
+    """
+    values = ["controller", "host", "baseImage", "username", "password"]
+    container_config = os.path.join(
+        getConfig("Configuration")["gangadir"], "container.rc"
+    )
+    config = dict([(key, getConfig("DatabaseConfigurations")[key]) for key in values])
+
+    print(f"the container config is : {container_config}")
+    if os.path.exists(container_config):
+        container_name, dbname, port = open(container_config, "r").read().split()
+    else:
+        temp = get_unique_name()
+        container_name, dbname, port = temp, temp, get_unique_port()
+        with open(container_config, "w") as file:
+            file.write(container_name)
+            file.write("\n")
+            file.write(dbname)
+            file.write("\n")
+            file.write(str(port))
+
+    config.update({"containerName": container_name})
+    config.update({"dbname": dbname})
+    config.update({"port": port})
+
+    return config
 
 
 def mongod_exists(controller, cname=None):
@@ -122,7 +155,7 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
     start_container = f"""udocker run \
     --volume={bind_loc}/db:/data/db \
     --publish={database_config['port']}:27017 \
-    {database_config['containerName']} --logpath {gangadir}/logs/mongod-ganga.log
+    {database_config['containerName']} --logpath mongod-ganga.log
     """
 
     if not checkUDocker():
@@ -133,7 +166,6 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
 
     if not os.path.exists(container_loc):
         logger.info(f"Creating udocker container for {database_config['baseImage']}")
-
         proc = subprocess.Popen(
             create_container,
             shell=True,
@@ -142,9 +174,7 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
         )
         _, err = proc.communicate()
         if err:
-            raise ContainerCommandError(
-                message=err.decode(), controller="udocker", command=create_container
-            )
+            raise ContainerCommandError(message=err.decode(), controller="udocker")
 
     if action == "start":
         proc_status = mongod_exists(
@@ -158,7 +188,7 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            time.sleep(1) # give a second for the above ommand to propagate
+            time.sleep(1)  # give a second for the above ommand to propagate
             proc_status = mongod_exists(
                 controller="udocker", cname=database_config["containerName"]
             )
@@ -166,18 +196,21 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
                 import shutil
 
                 src = os.path.join(
-                    container_loc, "ROOT", "root",
+                    container_loc,
+                    "ROOT",
+                    "root",
                     "mongod-ganga.log",
                 )
                 dest = os.path.join(gangadir, "logs", "mongod-ganga.log")
                 shutil.copy(src=src, dst=dest)
 
                 raise ContainerCommandError(
-                    message="Check the logs at $GANGADIR/logs/mongod-ganga.log", controller="udocker", command=create_container
+                    message="Check the logs at $GANGADIR/logs/mongod-ganga.log",
+                    controller="udocker"
                 )
             # out, err = proc.communicate() # DO NOT COMMUNICATE THIS PROCESS
             logger.info(
-                f"gangaDB should have started on port: {database_config['port']}"
+                f"uDocker gangaDB should have started on port: {database_config['port']}"
             )
     else:
         proc_status = mongod_exists(
@@ -194,12 +227,14 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
             out, err = proc.communicate()
             if err:
                 raise ContainerCommandError(
-                    message=err.decode(), controller="udocker", command=stop_container
+                    message=err.decode(), controller="udocker"
                 )
-            logger.info("gangaDB should have shutdown")
+            logger.info("uDocker gangaDB should have shutdown")
 
 
-def singularity_handler(database_config, action="start", gangadir=GANGADIR, errored=False):
+def singularity_handler(
+    database_config, action="start", gangadir=GANGADIR, errored=False
+):
     """
     Uses spython module
 
@@ -207,9 +242,6 @@ def singularity_handler(database_config, action="start", gangadir=GANGADIR, erro
         database_config: The config from ganga config
         action: The action to be performed using the handler
     """
-    from spython.main import Client
-
-    # check if the singularity sif exists
     sif_file = os.path.join(gangadir, "mongo.sif")
     if not os.path.isfile(sif_file):
         raise FileNotFoundError(
@@ -218,15 +250,14 @@ def singularity_handler(database_config, action="start", gangadir=GANGADIR, erro
         )
 
     bind_loc = create_mongodir(gangadir=gangadir)
-    start_container = f'''singularity run \
+    start_container = f"""singularity run \
     --bind {bind_loc}:/data \
     {sif_file} mongod \
-    --port {database_config['port']} --logpath mongod-ganga.log'''
+    --port {database_config['port']} --logpath mongod-ganga.log"""
 
-    stop_container = f'''singularity run \
+    stop_container = f"""singularity run \
     --bind {bind_loc}:/data \
-    {sif_file} mongod --port {database_config['port']} --shutdown'''
-
+    {sif_file} mongod --port {database_config['port']} --shutdown"""
 
     if not checkSingularity():
         raise Exception("Singularity seems to not be installed on the system.")
@@ -247,10 +278,11 @@ def singularity_handler(database_config, action="start", gangadir=GANGADIR, erro
             proc_status = mongod_exists(controller="singularity", cname=sif_file)
             if proc_status is None:
                 raise ContainerCommandError(
-                    message="Check the logs at $GANGADIR/logs/mongod-ganga.log", controller="singularity", command=start_container
+                    message="Check the logs at $GANGADIR/logs/mongod-ganga.log",
+                    controller="singularity"
                 )
             logger.info(
-                f"gangaDB should have started on port: {database_config['port']}"
+                f"Singularity gangaDB started on port: {database_config['port']}"
             )
     # elif action == "quit":
     else:
@@ -265,11 +297,9 @@ def singularity_handler(database_config, action="start", gangadir=GANGADIR, erro
             out, err = proc.communicate()
             if err:
                 raise ContainerCommandError(
-                    message=err.decode(), controller="singularity", command=stop_container
+                    message=err.decode(), controller="singularity"
                 )
-            logger.info("gangaDB should have shutdown")
-
-    return True, None
+            logger.info("Singularity gangaDB should have shutdown")
 
 
 def docker_handler(database_config, action="start", gangadir=GANGADIR):
@@ -294,17 +324,14 @@ def docker_handler(database_config, action="start", gangadir=GANGADIR):
             if container.status != "running":
                 container.restart()
                 logger.info(
-                    f"gangaDB has started in background at {database_config['port']}"
+                    f"Docker gangaDB has started in background at {database_config['port']}"
                 )
             else:
-                logger.debug("gangaDB was already running in background")
+                logger.debug("Docker gangaDB was already running in background")
 
         except docker.errors.NotFound:
-            # call the function to get the gangadir here
             bind_loc = create_mongodir(gangadir=gangadir)
-            logger.info(f"Creating Container at {database_config['port']}")
 
-            # if the container was not found by docker, lets create it.
             container = container_client.containers.run(
                 detach=True,
                 name=database_config["containerName"],
@@ -315,7 +342,7 @@ def docker_handler(database_config, action="start", gangadir=GANGADIR):
             )
 
             logger.info(
-                f"2 gangaDB has started in background at {database_config['port']}"
+                f"Docker gangaDB has started in background at {database_config['port']}"
             )
         except Exception as e:
             # TODO: Handle gracefull quiting of ganga
@@ -331,13 +358,11 @@ def docker_handler(database_config, action="start", gangadir=GANGADIR):
                 database_config["containerName"]
             )
             container.kill()
-            logger.info("gangaDB has been shutdown")
+            # call the function to get the gangadir here
+            logger.info("Docker gangaDB has been shutdown")
         except docker.errors.APIError as e:
             if e.response.status_code == 409:
-                logger.debug(
-                    "database container was already killed by another registry"
-                )
+                logger.debug("Docker container was already killed by another registry")
             else:
                 raise e
         return True
-
