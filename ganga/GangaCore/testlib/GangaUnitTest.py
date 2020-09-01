@@ -8,7 +8,7 @@ try:
 except ImportError:
     import unittest
 
-ganga_test_dir_name = 'gangadir testing'
+ganga_test_dir_name = 'gangadir-testing'
 ganga_config_file = '/not/a/file'
 
 def _getGangaPath():

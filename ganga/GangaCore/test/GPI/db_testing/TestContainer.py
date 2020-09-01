@@ -1,9 +1,6 @@
 """
 TODO:
-1. Add test steps for:
-    1. udocker
-    2. singularity
-    3. docker itself (maybe)
+1. Added tests to check fail conditions
 """
 
 import utils

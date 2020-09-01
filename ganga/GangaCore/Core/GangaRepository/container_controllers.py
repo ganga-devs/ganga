@@ -108,9 +108,6 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
     -------
     database_config: The config from ganga config
     action: The action to be performed using the handler
-
-    start: udocker create     --name=ratin     mongo
-    run : udocker run     --volume=/home/dumbmachine/gangadir/data/db:/data/db     --publish=56033:27017     ratin
     """
 
     bind_loc = create_mongodir(gangadir=gangadir)
@@ -135,11 +132,8 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
     if action not in ["start", "quit"]:
         raise NotImplementedError(f"Illegal Opertion on container")
 
-    # check if the container exists
     if not os.path.exists(container_loc):
-        # create the container
         logger.info(f"Creating udocker container for {database_config['baseImage']}")
-        print(create_container)
 
         proc = subprocess.Popen(
             create_container,
@@ -158,12 +152,8 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
             controller="udocker", cname=database_config["containerName"]
         )
         if proc_status is None:
-            print(start_container)
             proc = subprocess.Popen(
-                # start_container,
-                [
-                    "udocker run     --volume=/home/dumbmachine/gangadir/data/db:/data/db     --publish=56033:27017     fcaaa19e_eb4a_11ea_8ea8_278d184438c5 --logpath mongod-ganga.log"
-                ],
+                start_container,
                 shell=True,
                 close_fds=True,
                 stdout=subprocess.DEVNULL,
@@ -174,7 +164,6 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
                 controller="udocker", cname=database_config["containerName"]
             )
             if proc_status is None:
-                # copy the log file from container to gangadir
                 import shutil
 
                 src = os.path.join(
