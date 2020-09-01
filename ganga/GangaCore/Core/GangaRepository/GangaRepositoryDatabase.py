@@ -16,6 +16,8 @@ from GangaCore.GPIDev.Base.Objects import Node
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Plugin import PluginManagerError, allPlugins
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
+from GangaCore.Core.GangaRepository.SessionLock import SessionLockManager, dry_run_unix_locks
+from GangaCore.Core.GangaRepository.FixedLock import FixedLockManager
 from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 from GangaCore.Core.GangaRepository.container_controllers import (
     native_handler,
@@ -138,12 +140,14 @@ class GangaRepositoryLocal(GangaRepository):
             Registry (Registry): This is the registry which manages this Repo
         """
         super(GangaRepositoryLocal, self).__init__(registry)
+        self._fully_loaded = {}
+        self.gangadir = os.path.expanduser(getConfig("Configuration")["gangadir"])
         self.dataFileName = "data"
         self.sub_split = "subjobs"
-        self.root_document = "GangaDatabase"
         self._cache_load_timestamp = {}
         self.printed_explanation = False
-        self._fully_loaded = {}
+        self.lockroot = os.path.join(self.gangadir, "sessions")
+
 
     def startup(self):
         """ Starts a repository and reads in a directory structure.
@@ -160,6 +164,27 @@ class GangaRepositoryLocal(GangaRepository):
         self.database_config = getConfig("DatabaseConfigurations")
         self.db_name = self.database_config["dbname"]
 
+        if getConfig('Configuration')['lockingStrategy'] == "UNIX":
+            # First test the UNIX locks are working as expected
+            try:
+                dry_run_unix_locks(self.lockroot)
+            except Exception as err:
+                # Locking has not worked, lets raise an error
+                logger.error("Error: %s" % err)
+                msg = "\n\nUnable to launch due to underlying filesystem not working with unix locks."
+                msg += "Please try launching again with [Configuration]lockingStrategy=FIXED to start Ganga without multiple session support."
+                raise RepositoryError(self, msg)
+
+            # Locks passed test so lets continue
+            self.sessionlock = SessionLockManager(
+                self, self.lockroot, self.registry.name)
+        elif getConfig('Configuration')['lockingStrategy'] == "FIXED":
+            self.sessionlock = FixedLockManager(
+                self, self.lockroot, self.registry.name)
+        else:
+            raise RepositoryError(self, "Unable to launch due to unknown file-locking Strategy: \"%s\"" %
+                                  getConfig('Configuration')['lockingStrategy'])
+
         try:
             self.start_database()
         except Exception as err:
@@ -168,6 +193,7 @@ class GangaRepositoryLocal(GangaRepository):
             msg = "Unable to reach the database server."
             msg += "Please contanct the developers"
             raise Exception(err, msg)
+        self.sessionlock.startup()
 
         # FIXME: Add index updating here
         self.update_index(True, True, True)
@@ -182,7 +208,7 @@ class GangaRepositoryLocal(GangaRepository):
         HOST = self.database_config["host"]
         connection_string = f"mongodb://{HOST}:{PORT}/"
         client = pymongo.MongoClient(
-        connection_string, serverSelectionTimeoutMS = 20)
+        connection_string, serverSelectionTimeoutMS=2000)
         self.connection = client[self.db_name]
 
         self.container_controller = controller_map[self.database_config["controller"]]
@@ -462,7 +488,8 @@ class GangaRepositoryLocal(GangaRepository):
                     "No master index information exists, new/blank repository startup is assumed"
                 )
                 return {}
-        except pymongo.errors.ServerSelectionTimeoutError:
+        except pymongo.errors.ServerSelectionTimeoutError as e:
+            # raise e
             import sys
             logger.info(
                 "Mongod could not start, please check the log at $GANGADIR/data/daemon-mongod.log")

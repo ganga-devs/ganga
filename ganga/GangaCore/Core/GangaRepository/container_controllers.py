@@ -17,8 +17,7 @@ from GangaCore.Utility.Virtualization import (
 
 logger = logging.getLogger()
 
-GANGADIR = os.path.expandvars("$HOME/gangadir")
-DATABASE_CONFIG = getConfig("DatabaseConfigurations")
+GANGADIR = os.path.expandvars(getConfig("Configuration")["gangadir"])
 UDOCKER_LOC = os.path.expanduser(getConfig("Configuration")["UDockerlocation"])
 
 
