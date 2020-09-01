@@ -182,9 +182,7 @@ class GangaRepositoryLocal(GangaRepository):
         HOST = self.database_config["host"]
         connection_string = f"mongodb://{HOST}:{PORT}/"
         client = pymongo.MongoClient(
-            connection_string)
-        # connection_string, serverSelectionTimeoutMS = 20)
-        logger.info(f"Attempting connection to : {connection_string}")
+        connection_string, serverSelectionTimeoutMS = 20)
         self.connection = client[self.db_name]
 
         self.container_controller = controller_map[self.database_config["controller"]]
@@ -836,8 +834,10 @@ class GangaRepositoryLocal(GangaRepository):
         """get_session_list()
         Tries to determine the other sessions that are active and returns an informative string for each of them.
         """
-        import psutil
-        return [str(proc) for proc in psutil.process_iter() if proc.name() == 'ganga' and proc.pid != os.getpid()]
+        # import psutil
+        # return [str(proc) for proc in psutil.process_iter() if proc.name() == 'ganga' and proc.pid != os.getpid()]
+        return self.sessionlock.get_other_sessions()
+
 
     def clean(self):
         """clean() --> True/False
