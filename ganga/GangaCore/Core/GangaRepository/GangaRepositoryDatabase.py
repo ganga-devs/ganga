@@ -107,7 +107,7 @@ def check_app_hash(obj):
             logger.warning("https://github.com/ganga-devs/ganga/issues/")
 
 
-# RatPass: Find a better alternative for this, seems unnecessary
+# TODO: If ServerSelectionTimeoutError: forecully close ganga
 def safe_save(_object, conn, master, ignore_subs=[]):
     """Try to save the Json for this object in as safe a way as possible
     Args:
@@ -202,8 +202,8 @@ class GangaRepositoryLocal(GangaRepository):
         except Exception as err:
             logger.warning(
                 "Warning: Failed to write master index due to: %s" % err)
-
-        if kill:
+        other_sessions = self.get_other_sessions()
+        if kill and not len(other_sessions):
             self.kill_database()
 
     def kill_database(self):
@@ -836,8 +836,8 @@ class GangaRepositoryLocal(GangaRepository):
         """get_session_list()
         Tries to determine the other sessions that are active and returns an informative string for each of them.
         """
-        return []
-        return self.sessionlock.get_other_sessions()
+        import psutil
+        return [str(proc) for proc in psutil.process_iter() if proc.name() == 'ganga' and proc.pid != os.getpid()]
 
     def clean(self):
         """clean() --> True/False
