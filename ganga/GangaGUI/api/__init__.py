@@ -1,5 +1,6 @@
 from flask import Flask
 import sys
+import os
 import logging
 
 # Disable development server warning (as it is not applicable to our GUI Flask App)
@@ -12,6 +13,6 @@ log.setLevel(logging.ERROR)
 
 # Flask app for APIs
 internal = Flask(__name__)
-internal.config['SECRET_KEY'] = "f3aa26t8b537abf6ee6305eefe2wr10a" # TODO Generate secret key
+internal.config['SECRET_KEY'] = os.urandom(24)
 
 from GangaGUI.api import routes

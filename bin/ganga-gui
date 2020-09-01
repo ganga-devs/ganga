@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
 
+"""
+Starts Ganga GUI with integrated terminal
+"""
+
 import argparse
+import sys
+import os
+
+# Insert the path to Ganga itself - this is required for the installations without pip
+exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
+gangaDir = os.path.join(os.path.dirname(exeDir), 'ganga')
+sys.path.insert(0, gangaDir)
+
 from GangaGUI.gui.routes import start_web_cli
 
 # Command line options
@@ -28,4 +40,5 @@ ganga_args = args.ganga_args
 log_output = not args.quite
 
 # Start the web cli - this will also start a Ganga Session
-start_web_cli(host=web_cli_host, port=web_cli_port, internal_port=internal_server_port, ganga_args=ganga_args, log_output=log_output)
+start_web_cli(host=web_cli_host, port=web_cli_port, internal_port=internal_server_port, ganga_args=ganga_args,
+              log_output=log_output)
