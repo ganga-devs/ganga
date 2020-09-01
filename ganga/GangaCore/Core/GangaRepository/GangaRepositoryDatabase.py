@@ -96,7 +96,8 @@ def check_app_hash(obj):
                 logger.warning("%s" % err)
             jobObj = stripProxy(hashable_app).getJobObject()
             if jobObj is not None:
-                logger.warning("Job: %s is now possibly corrupt!" % jobObj.getFQID("."))
+                logger.warning("Job: %s is now possibly corrupt!" %
+                               jobObj.getFQID("."))
             logger.warning(
                 "If you knowingly circumvented the protection, ignore this message (and, optionally,"
             )
@@ -180,22 +181,27 @@ class GangaRepositoryLocal(GangaRepository):
         PORT = self.database_config["port"]
         HOST = self.database_config["host"]
         connection_string = f"mongodb://{HOST}:{PORT}/"
-        logger.info(connection_string)
-        client = pymongo.MongoClient(connection_string)
+        client = pymongo.MongoClient(
+            connection_string)
+        # connection_string, serverSelectionTimeoutMS = 20)
+        logger.info(f"Attempting connection to : {connection_string}")
         self.connection = client[self.db_name]
 
         self.container_controller = controller_map[self.database_config["controller"]]
-        self.container_controller(database_config=self.database_config, action="start")
+        self.container_controller(
+            database_config=self.database_config, action="start")
 
     def shutdown(self, kill=False):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError
         Write an index file for all new objects in memory and master index file of indexes"""
-        logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
+        logger.debug("Shutting Down GangaRepositoryLocal: %s" %
+                     self.registry.name)
         try:
             self._write_master_cache()
         except Exception as err:
-            logger.warning("Warning: Failed to write master index due to: %s" % err)
+            logger.warning(
+                "Warning: Failed to write master index due to: %s" % err)
 
         if kill:
             self.kill_database()
@@ -204,7 +210,8 @@ class GangaRepositoryLocal(GangaRepository):
         """Kill the mongo db instance in a docker container
         """
         # if the database is naitve, we skip shutting it down
-        self.container_controller(database_config=self.database_config, action="quit")
+        self.container_controller(
+            database_config=self.database_config, action="quit")
         logger.debug(f"mongo stopped from: {self.registry.name}")
 
     def _write_master_cache(self):
@@ -224,7 +231,8 @@ class GangaRepositoryLocal(GangaRepository):
                     obj = v  # self.objects[k]
                     new_index = None
                     if obj is not None:
-                        new_index = self.registry.getIndexCache(stripProxy(obj))
+                        new_index = self.registry.getIndexCache(
+                            stripProxy(obj))
 
                     if new_index is not None:
                         new_index["classname"] = getName(obj)
@@ -237,7 +245,8 @@ class GangaRepositoryLocal(GangaRepository):
                         all_indexes.append(new_index)
 
             except Exception as err:
-                logger.debug("Failed to update index: %s on startup/shutdown" % k)
+                logger.debug(
+                    "Failed to update index: %s on startup/shutdown" % k)
                 logger.debug("Reason: %s" % err)
 
         # bulk saving the indexes, if there is anything to save
@@ -391,7 +400,8 @@ class GangaRepositoryLocal(GangaRepository):
                 if this_id not in self._fully_loaded:
                     self._fully_loaded[this_id] = self.objects[this_id]
 
-                subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
+                subobj_attr = getattr(
+                    self.objects[this_id], self.sub_split, None)
                 sub_attr_dirty = getattr(subobj_attr, "_dirty", False)
                 if sub_attr_dirty:
                     if hasattr(subobj_attr, "flush"):
@@ -402,7 +412,8 @@ class GangaRepositoryLocal(GangaRepository):
             except (OSError, IOError, DatabaseError) as x:
                 raise RepositoryError(
                     self,
-                    "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x),
+                    "Error of type: %s on flushing id '%s': %s" % (
+                        type(x), this_id, x),
                 )
 
     def index_write(self, this_id=None, shutdown=False):
@@ -433,24 +444,33 @@ class GangaRepositoryLocal(GangaRepository):
             # TODO: Instead of replacing everything, replace only the changed
             # if the repository is shutting down, save everything again
             if shutdown:
-                raise NotImplementedError("Call function to save master index here.")
+                raise NotImplementedError(
+                    "Call function to save master index here.")
 
     def _read_master_cache(self):
         """Reads the index document from the database
         """
         logger.debug("Reading the MasterCache")
-        master_cache = self.connection.index.find(
-            filter={"category": self.registry.name, "master": -1}
-        )  # loading masters so.
-        if master_cache:
-            for cache in master_cache:
-                self.index_load(this_id=cache["id"], item=cache)
-            return dict([(_["id"], True) for _ in master_cache])
-        else:
-            logger.debug(
-                "No master index information exists, new/blank repository startup is assumed"
-            )
-            return {}
+        try:
+            master_cache = self.connection.index.find(
+                filter={"category": self.registry.name, "master": -1}
+            )  # loading masters so.
+            if master_cache:
+                for cache in master_cache:
+                    self.index_load(this_id=cache["id"], item=cache)
+                return dict([(_["id"], True) for _ in master_cache])
+            else:
+                logger.debug(
+                    "No master index information exists, new/blank repository startup is assumed"
+                )
+                return {}
+        except pymongo.errors.ServerSelectionTimeoutError:
+            import sys
+            logger.info(
+                "Mongod could not start, please check the log at $GANGADIR/data/daemon-mongod.log")
+            self.container_controller(
+                database_config=self.database_config, action="quit", errored=True)
+            sys.exit()
 
     def _clear_stored_cache(self):
         """
@@ -700,12 +720,15 @@ class GangaRepositoryLocal(GangaRepository):
         """
 
         b4 = time.time()
-        tmpobj, errs = self.from_database(_filter={"id": this_id}, document=document)
+        tmpobj, errs = self.from_database(
+            _filter={"id": this_id}, document=document)
         a4 = time.time()
-        logger.debug("Loading Json file for ID: %s took %s sec" % (this_id, a4 - b4))
+        logger.debug("Loading Json file for ID: %s took %s sec" %
+                     (this_id, a4 - b4))
 
         if len(errs) > 0:
-            logger.error("#%s Error(s) Loading File: %s" % (len(errs), document.name))
+            logger.error("#%s Error(s) Loading File: %s" %
+                         (len(errs), document.name))
             for err in errs:
                 logger.error("err: %s" % err)
             raise InaccessibleObjectError(self, this_id, errs[0])
@@ -814,7 +837,7 @@ class GangaRepositoryLocal(GangaRepository):
         Tries to determine the other sessions that are active and returns an informative string for each of them.
         """
         return []
-        # return self.sessionlock.get_other_sessions()
+        return self.sessionlock.get_other_sessions()
 
     def clean(self):
         """clean() --> True/False
@@ -827,7 +850,8 @@ class GangaRepositoryLocal(GangaRepository):
             _.drop_database(self.db_name)
 
         except Exception as err:
-            logger.error("Failed to correctly clean repository due to: %s" % err)
+            logger.error(
+                "Failed to correctly clean repository due to: %s" % err)
         self.startup()
 
     def isObjectLoaded(self, obj):
