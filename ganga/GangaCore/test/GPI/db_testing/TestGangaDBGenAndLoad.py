@@ -5,7 +5,7 @@ import pymongo
 from GangaCore.Utility.Config import getConfig
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Utility.Virtualization import checkNative, checkDocker
-
+from GangaCore.Core.GangaRepository.container_controllers import generate_database_config
 
 HOST, PORT = utils.get_host_port()
 
@@ -28,7 +28,6 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         Constructing the first job
         """
         assert 'False' == (getConfig('TestingFramework')['AutoCleanup'])
-
         from GangaCore.GPI import Job, jobs
         j = Job()
         assert len(jobs) == 1

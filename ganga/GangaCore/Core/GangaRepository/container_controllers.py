@@ -19,7 +19,6 @@ from GangaCore.Utility.Config import get_unique_name, get_unique_port
 
 logger = logging.getLogger()
 
-GANGADIR = os.path.expandvars(getConfig("Configuration")["gangadir"])
 UDOCKER_LOC = os.path.expanduser(getConfig("Configuration")["UDockerlocation"])
 
 
@@ -119,7 +118,7 @@ def create_mongodir(gangadir):
     return os.path.join(gangadir, "data")
 
 
-def native_handler(database_config, action="start", gangadir=GANGADIR):
+def native_handler(database_config, action, gangadir):
     """
     Will handle when the database is installed locally
     Assumptions:
@@ -134,7 +133,7 @@ def native_handler(database_config, action="start", gangadir=GANGADIR):
         logger.info("Native Database detection, skipping closing")
 
 
-def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=False):
+def udocker_handler(database_config, action, gangadir):
     """
     Will handle the loading of container using docker
     -------
@@ -181,6 +180,7 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
             controller="udocker", cname=database_config["containerName"]
         )
         if proc_status is None:
+            print("starting the container", start_container)
             proc = subprocess.Popen(
                 start_container,
                 shell=True,
@@ -217,7 +217,8 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
             controller="udocker", cname=database_config["containerName"]
         )
 
-        if proc_status is not None or errored:
+        if proc_status is not None:
+        # if proc_status is not None or errored:
             proc = subprocess.Popen(
                 stop_container,
                 shell=True,
@@ -233,7 +234,7 @@ def udocker_handler(database_config, action="start", gangadir=GANGADIR, errored=
 
 
 def singularity_handler(
-    database_config, action="start", gangadir=GANGADIR, errored=False
+    database_config, action, gangadir
 ):
     """
     Uses spython module
@@ -287,7 +288,8 @@ def singularity_handler(
     # elif action == "quit":
     else:
         proc_status = mongod_exists(controller="singularity", cname=sif_file)
-        if proc_status is not None or errored:
+        if proc_status is not None:
+        # if proc_status is not None or errored:
             proc = subprocess.Popen(
                 stop_container,
                 shell=True,
@@ -302,7 +304,7 @@ def singularity_handler(
             logger.info("Singularity gangaDB should have shutdown")
 
 
-def docker_handler(database_config, action="start", gangadir=GANGADIR):
+def docker_handler(database_config, action, gangadir):
     """
     Will handle the loading of container using docker
 
@@ -344,6 +346,8 @@ def docker_handler(database_config, action="start", gangadir=GANGADIR):
             logger.info(
                 f"Docker gangaDB has started in background at {database_config['port']}"
             )
+
+            # check whether the container started
         except Exception as e:
             # TODO: Handle gracefull quiting of ganga
             logger.error(e)

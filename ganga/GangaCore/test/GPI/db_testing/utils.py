@@ -33,7 +33,10 @@ def get_options(host, port):
         ("DatabaseConfigurations", "port", port),
         ("DatabaseConfigurations", "baseImage", "mongo")
     ]
-    options = [('TestingFramework', 'AutoCleanup', 'False')]
+    options = [
+        ('TestingFramework', 'AutoCleanup', 'False'),
+        ('TestingFramework', 'Flag', 'True')
+        ]
     if "GANGA_GITHUB_HOST" in os.environ.keys():  # we are testing in github actions
         options.append(("DatabaseConfigurations", "controller", "native"))
     else:  # docker is better for local testing

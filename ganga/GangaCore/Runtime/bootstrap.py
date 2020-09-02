@@ -445,13 +445,23 @@ under certain conditions; type license() for details.
         from GangaCore.Utility.Config import get_unique_name, get_unique_port
         logger = getLogger()
 
+        try:
+            getConfig("TestingFramework")['Flag']
+            testing_flag = True
+        except KeyError:
+            testing_flag = False
+
+        logger.info(f"testing flag: {testing_flag}")
         container_config = os.path.join(getConfig("Configuration")["gangadir"], "container.rc")
         if os.path.exists(container_config):
             container_name, username, port = open(container_config, "r").read().split()
         else:
             logger.debug("Generating container.rc file in the gangadir")
-            temp = get_unique_name()
-            container_name, username, port = temp, temp, get_unique_port()
+            if testing_flag is True:
+                container_name, username, port = "testDatabase", "testDatabase", 27017
+            else:
+                temp = get_unique_name()
+                container_name, username, port = temp, temp, get_unique_port()
             with open(container_config, "w") as file:
                 file.write(container_name)
                 file.write("\n")
