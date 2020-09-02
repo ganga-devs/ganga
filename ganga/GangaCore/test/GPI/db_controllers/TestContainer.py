@@ -4,7 +4,7 @@ TODO:
 """
 import os
 import time
-import utils
+from GangaCore.test.GPI.db_testing import utils
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Virtualization import (
     checkNative, checkDocker,
