@@ -35,7 +35,7 @@ class TestDatabaseBackends(GangaUnitTest):
         }
         super(TestDatabaseBackends, self).setUp(extra_opts=extra_opts)
 
-    def test_1a_download_sif_file(self):
+    def test_a1_download_sif_file(self):
         """
         Download the sif file requried
         """
@@ -52,7 +52,7 @@ class TestDatabaseBackends(GangaUnitTest):
         )
         assert True
 
-    def test_a_singularity_backend_lifetime(self):
+    def test_a2_singularity_backend_lifetime(self):
         """
         Test the starting and shutdown of udocker container image
         """
@@ -68,7 +68,6 @@ class TestDatabaseBackends(GangaUnitTest):
             )
 
             # checking if the container started up
-            # print("SEX: ", )
             flag = mongod_exists(
                 controller="singularity", cname=os.path.join(self.gangadir(), "mongo.sif")
             )
@@ -126,36 +125,36 @@ class TestDatabaseBackends(GangaUnitTest):
         # we cannot control the starting of the database and shutting so skiping
         pass
 
-    def test_d_docker_backend_lifetime(self):
-        """
-        Check if docker contaienr is installed
-        """
-        import docker
-        from GangaCore.Core.GangaRepository.container_controllers import docker_handler
-        if self.installations["docker"]:
-            # starting the database container
-            docker_handler(
-                action="start",
-                gangadir=self.gangadir(),
-                database_config=self.database_config
-            )
-            # testing status of the database container
-            container_client = docker.from_env()
-            flag = any([container.name == self.database_config["containerName"]
-                        for container in container_client.containers.list()])
-            assert flag
+    # def test_d_docker_backend_lifetime(self):
+    #     """
+    #     Check if docker contaienr is installed
+    #     """
+    #     import docker
+    #     from GangaCore.Core.GangaRepository.container_controllers import docker_handler
+    #     if self.installations["docker"]:
+    #         # starting the database container
+    #         docker_handler(
+    #             action="start",
+    #             gangadir=self.gangadir(),
+    #             database_config=self.database_config
+    #         )
+    #         # testing status of the database container
+    #         container_client = docker.from_env()
+    #         flag = any([container.name == self.database_config["containerName"]
+    #                     for container in container_client.containers.list()])
+    #         assert flag
 
-            # shutting the container
-            docker_handler(
-                action="quit",
-                gangadir=self.gangadir(),
-                database_config=self.database_config
-            )
+    #         # shutting the container
+    #         docker_handler(
+    #             action="quit",
+    #             gangadir=self.gangadir(),
+    #             database_config=self.database_config
+    #         )
 
-            flag = any([container.name == self.database_config["containerName"]
-                        for container in container_client.containers.list()])
-            assert not flag
+    #         flag = any([container.name == self.database_config["containerName"]
+    #                     for container in container_client.containers.list()])
+    #         assert not flag
 
-        else:
-            # skip the test if docker is not installed
-            print("docker is not installed and thus skipping")
+    #     else:
+    #         # skip the test if docker is not installed
+    #         print("docker is not installed and thus skipping")

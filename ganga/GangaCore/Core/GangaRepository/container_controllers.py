@@ -188,7 +188,7 @@ def udocker_handler(database_config, action, gangadir):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            time.sleep(1)  # give a second for the above ommand to propagate
+            time.sleep(2)  # give a second for the above ommand to propagate
             proc_status = mongod_exists(
                 controller="udocker", cname=database_config["containerName"]
             )
@@ -228,7 +228,7 @@ def udocker_handler(database_config, action, gangadir):
             out, err = proc.communicate()
             if err:
                 raise ContainerCommandError(
-                    message=err.decode(), controller="udocker"
+                    message=err.decode() + f"{proc_status}", controller="udocker"
                 )
             logger.info("uDocker gangaDB should have shutdown")
 
@@ -268,6 +268,7 @@ def singularity_handler(
     if action == "start":
         proc_status = mongod_exists(controller="singularity", cname=sif_file)
         if proc_status is None:
+            print("STARTCONTAINER: ", start_container)
             proc = subprocess.Popen(
                 start_container,
                 shell=True,
@@ -288,8 +289,10 @@ def singularity_handler(
     # elif action == "quit":
     else:
         proc_status = mongod_exists(controller="singularity", cname=sif_file)
-        if proc_status is not None:
         # if proc_status is not None or errored:
+        if proc_status is not None and proc_status.status() != "terminated":
+            print(f"STATUS: {proc_status}", proc_status.status(), )
+            print("STOPCONTAINER: ", stop_container)
             proc = subprocess.Popen(
                 stop_container,
                 shell=True,
@@ -299,7 +302,7 @@ def singularity_handler(
             out, err = proc.communicate()
             if err:
                 raise ContainerCommandError(
-                    message=err.decode(), controller="singularity"
+                    message=err.decode() + f"{proc_status}", controller="singularity"
                 )
             logger.info("Singularity gangaDB should have shutdown")
 

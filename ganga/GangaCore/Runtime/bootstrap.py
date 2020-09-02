@@ -448,7 +448,7 @@ under certain conditions; type license() for details.
         try:
             getConfig("TestingFramework")['Flag']
             testing_flag = True
-        except KeyError:
+        except (KeyError, GangaCore.Utility.Config.Config.ConfigError):
             testing_flag = False
 
         logger.info(f"testing flag: {testing_flag}")
