@@ -338,7 +338,7 @@ jobs:
         pip3 install pymongo pytest psutil gdown
 
     - name: Test Container Controllers
-      run: python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestContainer.py
+      run: python3 -m pytest ganga/GangaCore/test/GPI/db_controllers/
       env:
         # To force usage of docker controller
         GANGA_GITHUB_HOST: False
@@ -376,9 +376,7 @@ jobs:
 
     - name: Testing GangaDB
       run: |
-        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBNested.py
-        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBGenAndLoad.py
-        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/TestGangaDBSJGenAndLoad.py
+        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/
       env:
         GANGA_GITHUB_HOST: True
         MONGODB_HOST: mongodb
