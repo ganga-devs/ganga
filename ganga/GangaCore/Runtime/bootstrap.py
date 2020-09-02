@@ -440,34 +440,35 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def generate_container_rc(interactive):
-        print("GENERATING container.rc")
-        from GangaCore.Utility.logging import getLogger
-        from GangaCore.Utility.Config import get_unique_name, get_unique_port
-        logger = getLogger()
+        if getConfig("Configuration")["repositorytype"] == "Database":
+            print("GENERATING container.rc")
+            from GangaCore.Utility.logging import getLogger
+            from GangaCore.Utility.Config import get_unique_name, get_unique_port
+            logger = getLogger()
 
-        try:
-            getConfig("TestingFramework")['Flag']
-            testing_flag = True
-        except (KeyError, GangaCore.Utility.Config.Config.ConfigError):
-            testing_flag = False
+            try:
+                getConfig("TestingFramework")['Flag']
+                testing_flag = True
+            except (KeyError, GangaCore.Utility.Config.Config.ConfigError):
+                testing_flag = False
 
-        logger.info(f"testing flag: {testing_flag}")
-        container_config = os.path.join(getConfig("Configuration")["gangadir"], "container.rc")
-        if os.path.exists(container_config):
-            container_name, username, port = open(container_config, "r").read().split()
-        else:
-            logger.debug("Generating container.rc file in the gangadir")
-            if testing_flag is True:
-                container_name, username, port = "testDatabase", "testDatabase", 27017
+            logger.info(f"testing flag: {testing_flag}")
+            container_config = os.path.join(getConfig("Configuration")["gangadir"], "container.rc")
+            if os.path.exists(container_config):
+                container_name, username, port = open(container_config, "r").read().split()
             else:
-                temp = get_unique_name()
-                container_name, username, port = temp, temp, get_unique_port()
-            with open(container_config, "w") as file:
-                file.write(container_name)
-                file.write("\n")
-                file.write(username)
-                file.write("\n")
-                file.write(str(port))
+                logger.debug("Generating container.rc file in the gangadir")
+                if testing_flag is True:
+                    container_name, username, port = "testDatabase", "testDatabase", 27017
+                else:
+                    temp = get_unique_name()
+                    container_name, username, port = temp, temp, get_unique_port()
+                with open(container_config, "w") as file:
+                    file.write(container_name)
+                    file.write("\n")
+                    file.write(username)
+                    file.write("\n")
+                    file.write(str(port))
 
     @staticmethod
     def generate_config_file(config_file, interactive):
