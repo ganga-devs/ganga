@@ -134,7 +134,7 @@ jobs:
     - name: Set up Python 3
       run: yum install -y python3
     - name: Set up psutil on centos
-      run: yum install -y gcc python-devel
+      run: yum install -y gcc python3-devel
 
     - name: Install dependencies
       run: |
