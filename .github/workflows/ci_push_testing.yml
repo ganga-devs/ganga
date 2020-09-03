@@ -60,6 +60,7 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
         python3 -m pip install -e .[dev]
+        python3 -m pip install psutil
     - name: Test with pytest
       run: python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/GPI
       env:
@@ -343,38 +344,38 @@ jobs:
         MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
 
-  db-unit:
-    name: Database Testing
-    runs-on: ubuntu-latest
-    needs: lint
-    container: mongo
-    services:
-      mongodb:
-        image: mongo
-        ports:
-        - 27017:27017
+  # db-unit:
+  #   name: Database Testing
+  #   runs-on: ubuntu-latest
+  #   needs: lint
+  #   container: mongo
+  #   services:
+  #     mongodb:
+  #       image: mongo
+  #       ports:
+  #       - 27017:27017
 
-    steps:
-    - name: Check out code for the container build
-      uses: actions/checkout@v1
+  #   steps:
+  #   - name: Check out code for the container build
+  #     uses: actions/checkout@v1
 
-    - name: Update packages
-      run: apt update -y
+  #   - name: Update packages
+  #     run: apt update -y
 
-    - name: Set up Python 3
-      run: |
-        apt install -y python3
-        apt install -y python3-pip
+  #   - name: Set up Python 3
+  #     run: |
+  #       apt install -y python3
+  #       apt install -y python3-pip
 
-    - name: Install dependencies
-      run: |
-        pip3 install --upgrade pip setuptools wheel
-        pip3 install -e .[dev]
-    - name: Testing GangaDB
-      run: |
-        python3 -m pytest ganga/GangaCore/test/GPI/db_testing/
-      env:
-        GANGA_GITHUB_HOST: True
-        MONGODB_HOST: mongodb
-        MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+  #   - name: Install dependencies
+  #     run: |
+  #       pip3 install --upgrade pip setuptools wheel
+  #       pip3 install -e .[dev]
+  #   - name: Testing GangaDB
+  #     run: |
+  #       python3 -m pytest ganga/GangaCore/test/GPI/db_testing/
+  #     env:
+  #       GANGA_GITHUB_HOST: True
+  #       MONGODB_HOST: mongodb
+  #       MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
         
