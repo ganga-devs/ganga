@@ -4,30 +4,30 @@ on: [pull_request]
 
 jobs:
 
-  lint:
-    name: Linting
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.6
-    - name: Install dependencies
-      run: |
-        python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install flake8
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        # disable for now
-        flake8 --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics ganga
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics ganga
+  # lint:
+  #   name: Linting
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v1
+  #   - name: Set up Python 3.6
+  #     uses: actions/setup-python@v1
+  #     with:
+  #       python-version: 3.6
+  #   - name: Install dependencies
+  #     run: |
+  #       python3 -m pip install --upgrade pip setuptools wheel
+  #       python3 -m pip install flake8
+  #   - name: Lint with flake8
+  #     run: |
+  #       # stop the build if there are Python syntax errors or undefined names
+  #       # disable for now
+  #       flake8 --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics ganga
+  #       # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+  #       flake8 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics ganga
 
   core-unit:
     name: GangaCore Unit
-    needs: lint
+    # needs: lint
     runs-on: ubuntu-18.04
     steps:
 
@@ -75,7 +75,6 @@ jobs:
         chmod u+rx ./udocker
         ./udocker install
     - name: uDocker Linking Binary
-      # run: sudo ln -s ./udocker /bin
       run: sudo ln -s $PWD/udocker /bin
 
     - name: uDocker Download MongoDB
@@ -95,7 +94,9 @@ jobs:
         pip3 install pymongo pytest psutil gdown
 
     - name: Test Container Controllers
-      run: python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/Unit
+      # run: python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/Unit
+      run: python3 -m pytest ganga/GangaCore/test/GPI/db_controllers/
+
       env:
         # To force usage of docker controller
         GANGA_GITHUB_HOST: False
