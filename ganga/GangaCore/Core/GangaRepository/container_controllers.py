@@ -192,6 +192,7 @@ def udocker_handler(database_config, action, gangadir):
             proc_status = mongod_exists(
                 controller="udocker", cname=database_config["containerName"]
             )
+            print(proc_status.status())
             if proc_status is None:
                 import shutil
 
@@ -216,7 +217,7 @@ def udocker_handler(database_config, action, gangadir):
         proc_status = mongod_exists(
             controller="udocker", cname=database_config["containerName"]
         )
-
+        print("asd", proc_status.status())
         if proc_status is not None:
         # if proc_status is not None or errored:
             proc = subprocess.Popen(
