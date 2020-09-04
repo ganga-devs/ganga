@@ -66,8 +66,8 @@ jobs:
         make -C builddir && \
         sudo make -C builddir install
 
-    - name: Singularity Download MongoDB
-      run: singularity pull docker://mongo:latest
+    # - name: Singularity Download MongoDB
+    #   run: singularity pull docker://mongo:latest
 
     - name: uDocker Installation
       run: |
@@ -95,7 +95,7 @@ jobs:
 
     - name: Test Container Controllers
       # run: python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/Unit
-      run: python3 -m pytest ganga/GangaCore/test/GPI/db_controllers/
+      run: python3 -m pytest ganga/GangaCore/test/Unit/db_controllers
 
       env:
         # To force usage of docker controller
