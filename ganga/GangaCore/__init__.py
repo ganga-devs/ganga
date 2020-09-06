@@ -965,8 +965,11 @@ cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on 
 
 # ------------------------------------------------
 # Database
-db_config = makeConfig("DatabaseConfigurations", "Selection of database for ganga")
-db_config.addOption("controller", "udocker", "Database Controller [Native, Docker, uDocker, Singularity]")
+db_config = makeConfig("DatabaseConfiguration", "Selection of database for ganga")
+# db_config.addOption("container_rc", expandvars(
+#     None, '~/gangadir/container.rc'), "The location of container.rc file")
+db_config.addOption("controller", "docker",
+                    "Database Controller [Native, Docker, uDocker, Singularity]")
 db_config.addOption("baseImage", "mongo", "Docker Image for the database")
 # db_config.addOption("containerName", container_name, "the identifier used to tag the docker container")
 db_config.addOption("username", "default", "username")
@@ -977,7 +980,7 @@ db_config.addOption("host", "localhost", "host")
 
 # ------------------------------------------------
 # CentralDatabase, add option to interpret username
-db_config = makeConfig("CentralDatabaseConfigurations",
+db_config = makeConfig("CentralDatabaseConfiguration",
                        "Selection of central database for ganga")
 db_config.addOption("database", "NotImplementedError",
                     "others have not been implemented yet")

@@ -29,15 +29,11 @@ def get_db_connection(host, port):
 
 def get_options(host, port):
     config = [
-        ("DatabaseConfigurations", "host", host),
-        ("DatabaseConfigurations", "port", port),
-        ("DatabaseConfigurations", "baseImage", "mongo")
+        ("DatabaseConfiguration", "host", host),
+        ("DatabaseConfiguration", "port", port),
+        ("DatabaseConfiguration", "baseImage", "mongo")
     ]
     options = [('TestingFramework', 'AutoCleanup', 'False')]
-    if "GANGA_GITHUB_HOST" in os.environ.keys():  # we are testing in github actions
-        options.append(("DatabaseConfigurations", "controller", "native"))
-    else:  # docker is better for local testing
-        options.append(("DatabaseConfigurations", "controller", "docker"))
     return options + config
 
 
