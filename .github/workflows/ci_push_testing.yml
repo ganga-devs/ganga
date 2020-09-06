@@ -335,7 +335,7 @@ jobs:
       run: |
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
-        pip3 install pymongo pytest psutil
+        pip3 install pymongo pytest psutil gdown
 
     - name: Test Container Controllers
       run: python3 -m pytest ganga/GangaCore/test/gangaDB/db_controllers
@@ -369,11 +369,14 @@ jobs:
         apt install -y python3
         apt install -y python3-pip
 
+    - name: Docker Download MongoDB
+      run: docker pull mongo:latest
+
     - name: Install dependencies
       run: |
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
-        pip3 install pymongo pytest psutil
+        pip3 install pymongo pytest psutil gdown
 
     - name: Testing GangaDB
       run: |
