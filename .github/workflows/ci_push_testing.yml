@@ -335,7 +335,7 @@ jobs:
       run: |
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
-        pip3 install pymongo pytest spython
+        pip3 install pymongo pytest psutil
 
     - name: Test Container Controllers
       run: python3 -m pytest ganga/GangaCore/test/gangaDB/db_controllers
@@ -373,7 +373,7 @@ jobs:
       run: |
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
-        pip3 install pymongo pytest
+        pip3 install pymongo pytest psutil
 
     - name: Testing GangaDB
       run: |
