@@ -146,6 +146,7 @@ def create_mongodir(gangadir):
     if not os.path.exists(data_path):
         dirs_to_make = [
             data_path, os.path.join(data_path, "db"),
+            os.path.join(gangadir, "logs"),
             os.path.join(data_path, "configdb")
         ]
         _ = [*map(lambda x: os.makedirs(x, exist_ok=True), dirs_to_make)]

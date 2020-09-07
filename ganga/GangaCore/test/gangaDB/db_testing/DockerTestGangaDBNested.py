@@ -1,109 +1,109 @@
-import os
-import utils
-import pymongo
+# import os
+# import utils
+# import pymongo
 
-from GangaCore.Utility.Config import getConfig
-from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaCore.Utility.Virtualization import checkNative, checkDocker
-
-
-HOST, PORT = utils.get_host_port()
+# from GangaCore.Utility.Config import getConfig
+# from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+# from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
-class DockerTestGangaDBNested(GangaUnitTest):
-    """
-    Testing the generation of jobs, saving of jobs and finally loading of jobs
-    """
+# HOST, PORT = utils.get_host_port()
 
-    def setUp(self):
-        """
-        """
-        extra_opts = utils.get_options(HOST, PORT)
-        extra_opts.append(("DatabaseConfiguration", "controller", "docker"))
-        extra_opts.append(("TestingFramework", "Flag", True))
-        self.connection = utils.get_db_connection(HOST, PORT)
-        super(DockerTestGangaDBNested, self).setUp(
-            repositorytype="Database", extra_opts=extra_opts)
 
-    def test_nothing(self):
-        """This is just to see if docker started
-        """
-        assert True
+# class DockerTestGangaDBNested(GangaUnitTest):
+#     """
+#     Testing the generation of jobs, saving of jobs and finally loading of jobs
+#     """
 
-    # def test_a_JobConstruction(self):
-    #     """ First construct the Job object (singular)"""
-    #     from GangaCore.Utility.Config import getConfig
-    #     # self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
+#     def setUp(self):
+#         """
+#         """
+#         extra_opts = utils.get_options(HOST, PORT)
+#         extra_opts.append(("DatabaseConfiguration", "controller", "docker"))
+#         extra_opts.append(("TestingFramework", "Flag", True))
+#         self.connection = utils.get_db_connection(HOST, PORT)
+#         super(DockerTestGangaDBNested, self).setUp(
+#             repositorytype="Database", extra_opts=extra_opts)
 
-    #     from GangaCore.GPI import Job, jobs, ArgSplitter
-    #     j = Job()
-    #     assert len(jobs) == 1
+#     def test_nothing(self):
+#         """This is just to see if docker started
+#         """
+#         assert True
 
-    #     j.splitter = ArgSplitter()
-    #     j.splitter.args = utils.getNestedList()
+#     # def test_a_JobConstruction(self):
+#     #     """ First construct the Job object (singular)"""
+#     #     from GangaCore.Utility.Config import getConfig
+#     #     # self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
 
-    #     assert j.splitter.args == utils.getNestedList()
+#     #     from GangaCore.GPI import Job, jobs, ArgSplitter
+#     #     j = Job()
+#     #     assert len(jobs) == 1
 
-    # def test_b_JobNotLoaded(self):
-    #     """ Second get the job and check that getting it via jobs doesn't cause it to be loaded"""
-    #     from GangaCore.GPI import jobs
+#     #     j.splitter = ArgSplitter()
+#     #     j.splitter.args = utils.getNestedList()
 
-    #     assert len(jobs) == 1
+#     #     assert j.splitter.args == utils.getNestedList()
 
-    #     print(("len: %s" % len(jobs)))
+#     # def test_b_JobNotLoaded(self):
+#     #     """ Second get the job and check that getting it via jobs doesn't cause it to be loaded"""
+#     #     from GangaCore.GPI import jobs
 
-    #     j = jobs(0)
+#     #     assert len(jobs) == 1
 
-    #     from GangaCore.GPIDev.Base.Proxy import stripProxy
-    #     raw_j = stripProxy(j)
+#     #     print(("len: %s" % len(jobs)))
 
-    #     has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+#     #     j = jobs(0)
 
-    #     assert not has_loaded_job
+#     #     from GangaCore.GPIDev.Base.Proxy import stripProxy
+#     #     raw_j = stripProxy(j)
 
-    # def test_c_JobLoaded(self):
-    #     """ Third do something to trigger a loading of a Job and then test if it's loaded"""
-    #     from GangaCore.GPI import jobs, ArgSplitter
+#     #     has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
 
-    #     assert len(jobs) == 1
+#     #     assert not has_loaded_job
 
-    #     j = jobs(0)
+#     # def test_c_JobLoaded(self):
+#     #     """ Third do something to trigger a loading of a Job and then test if it's loaded"""
+#     #     from GangaCore.GPI import jobs, ArgSplitter
 
-    #     from GangaCore.GPIDev.Base.Proxy import stripProxy, addProxy
-    #     raw_j = stripProxy(j)
+#     #     assert len(jobs) == 1
 
-    #     # ANY COMMAND TO LOAD A JOB CAN BE USED HERE
-    #     raw_j.printSummaryTree()
+#     #     j = jobs(0)
 
-    #     has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+#     #     from GangaCore.GPIDev.Base.Proxy import stripProxy, addProxy
+#     #     raw_j = stripProxy(j)
 
-    #     assert has_loaded_job
+#     #     # ANY COMMAND TO LOAD A JOB CAN BE USED HERE
+#     #     raw_j.printSummaryTree()
 
-    #     assert isinstance(j.splitter, ArgSplitter)
+#     #     has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
 
-    #     assert j.splitter.args._impl.to_json() == utils.getNestedList()._impl.to_json()
+#     #     assert has_loaded_job
 
-    # def test_d_testJSONContent(self):
-    #     # Check content of JSON is as expected
-    #     from GangaCore.GPI import jobs, Job
-    #     from GangaCore.GPIDev.Base.Proxy import stripProxy
+#     #     assert isinstance(j.splitter, ArgSplitter)
 
-    #     from GangaCore.Core.GangaRepository.DStreamer import (
-    #         JsonLoader, object_from_database
-    #     )
+#     #     assert j.splitter.args._impl.to_json() == utils.getNestedList()._impl.to_json()
 
-    #     # job_json = object_from_database(_filter={"name": "modified_name"})
-    #     job_json = self.connection.jobs.find_one(filter={"id": 0})
+#     # def test_d_testJSONContent(self):
+#     #     # Check content of JSON is as expected
+#     #     from GangaCore.GPI import jobs, Job
+#     #     from GangaCore.GPIDev.Base.Proxy import stripProxy
 
-    #     loader = JsonLoader()
-    #     tmp_job, error = loader.parse_static(job_json)
-    #     if error:
-    #         raise Exception(error)
+#     #     from GangaCore.Core.GangaRepository.DStreamer import (
+#     #         JsonLoader, object_from_database
+#     #     )
 
-    #     assert tmp_job == jobs(0)._impl
+#     #     # job_json = object_from_database(_filter={"name": "modified_name"})
+#     #     job_json = self.connection.jobs.find_one(filter={"id": 0})
 
-    # def test_e_DeleteAll(self):
-    #     """
-    #     This is usefull when testing locally.
-    #     """
-    #     utils.clean_database(HOST, PORT)
+#     #     loader = JsonLoader()
+#     #     tmp_job, error = loader.parse_static(job_json)
+#     #     if error:
+#     #         raise Exception(error)
+
+#     #     assert tmp_job == jobs(0)._impl
+
+#     # def test_e_DeleteAll(self):
+#     #     """
+#     #     This is usefull when testing locally.
+#     #     """
+#     #     utils.clean_database(HOST, PORT)

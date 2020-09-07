@@ -1,70 +1,64 @@
-# """
-# TODO:
-# 1. Added tests to check fail conditions
-# """
-# import os
-# import time
-# from GangaCore.test.GPI.db_testing import utils
-# from GangaCore.Utility.Config import getConfig
-# from GangaCore.Utility.Virtualization import (
-#     checkNative, checkDocker,
-#     checkUDocker, checkSingularity
-# )
-# from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+"""Test the udocker container 
+"""
+
+import os
+import time
+import json
+import pytest
+from GangaCore.Core.GangaRepository.container_controllers import get_database_config
+from GangaCore.test.GPI.db_testing import utils
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.Virtualization import checkUDocker
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.Core.GangaRepository.container_controllers import udocker_handler, mongod_exists, ContainerCommandError
+
+HOST, PORT = utils.get_host_port()
 
 
-# HOST, PORT = utils.get_host_port()
+class UdockerTestHandler(GangaUnitTest):
+    """
+    udocker Backend Controllers
+    """
 
+    def setUp(self):
+        """
+        """
+        extra_opts = utils.get_options(HOST, PORT)
+        extra_opts.append(("TestingFramework", "Flag", True))
+        self.udocker_installed = checkUDocker()
+        self.database_config = get_database_config(None)
+        super(UdockerTestHandler, self).setUp(extra_opts=extra_opts)
 
-# class TestDatabaseBackends(GangaUnitTest):
-#     """
-#     Init all the database containers and see if they work
-#     """
+    def test_udocker_handler(self):
+        """
+        Test the starting and shutdown of udocker container image
+        """
+        import subprocess
 
-#     def setUp(self):
-#         """
-#         """
-#         from GangaCore.Core.GangaRepository.container_controllers import get_database_config
-#         extra_opts = utils.get_options(HOST, PORT)
-#         self.database_config = get_database_config(None)
-#         self.installations = {
-#             "docker": checkDocker(),
-#             "udocker": checkUDocker(),
-#             "native": checkNative(),
-#             "singularity": checkSingularity()
-#         }
-#         super(TestDatabaseBackends, self).setUp(extra_opts=extra_opts)
+        if self.udocker_installed:
+            # start the udocker container
+            udocker_handler(
+                action="start",
+                gangadir=self.gangadir(),
+                database_config=self.database_config
+            )
 
-#     def test_d_docker_backend_lifetime(self):
-#         """
-#         Check if docker contaienr is installed
-#         """
-#         import docker
-#         from GangaCore.Core.GangaRepository.container_controllers import docker_handler
-#         if self.installations["docker"]:
-#             # starting the database container
-#             docker_handler(
-#                 action="start",
-#                 gangadir=self.gangadir(),
-#                 database_config=self.database_config
-#             )
-#             # testing status of the database container
-#             container_client = docker.from_env()
-#             flag = any([container.name == self.database_config["containerName"]
-#                         for container in container_client.containers.list()])
-#             assert flag
+            # checking if the container started up
+            flag = mongod_exists(
+                controller="udocker", cname=self.database_config['containerName'])
+            assert flag is not None
 
-#             # shutting the container
-#             docker_handler(
-#                 action="quit",
-#                 gangadir=self.gangadir(),
-#                 database_config=self.database_config
-#             )
+            # shutting down the container
+            udocker_handler(
+                action="quit",
+                gangadir=self.gangadir(),
+                database_config=self.database_config
+            )
+            time.sleep(5)
+            flag = mongod_exists(
+                controller="udocker", cname=self.database_config['containerName'])
+            assert flag is None
 
-#             flag = any([container.name == self.database_config["containerName"]
-#                         for container in container_client.containers.list()])
-#             assert not flag
-
-#         else:
-#             # skip the test if docker is not installed
-#             print("docker is not installed and thus skipping")
+        else:
+            raise Exception(
+                "udocker is not installed in the testing environment")

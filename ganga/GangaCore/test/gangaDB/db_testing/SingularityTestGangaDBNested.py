@@ -4,6 +4,7 @@ import pymongo
 
 from GangaCore.Utility.Config import getConfig
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.Core.GangaRepository.container_controllers import get_database_config
 from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
@@ -28,6 +29,7 @@ class SingularityTestGangaDBNested(GangaUnitTest):
     def test_nothing(self):
         """This is just to see if docker started
         """
+        print(get_database_config(self.gangadir()))
         assert True
 
     # def test_a_JobConstruction(self):
