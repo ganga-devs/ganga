@@ -338,7 +338,7 @@ jobs:
         pip3 install pymongo pytest psutil gdown
 
     - name: Test Container Controllers
-      run: python3 -m pytest -sx ganga/GangaCore/test/gangaDB/db_controllers/SingularityTestHandler.py
+      run: sudo python3 -m pytest -sx ganga/GangaCore/test/gangaDB/db_controllers/SingularityTestHandler.py
 
 
   db-unit:

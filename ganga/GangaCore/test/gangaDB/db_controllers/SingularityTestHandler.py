@@ -36,17 +36,17 @@ class SingularityTestHandler(GangaUnitTest):
         """
         Download the sif file requried
         """
-        if "GANGA_GITHUB_HOST" in os.environ.keys():
+        if os.path.isfile(os.path.join(self.gangadir(), "mongo.sif")):
             import gdown  # download the required sif file
             url = 'https://drive.google.com/uc?id=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk'
             output = 'mongo.sif'
             gdown.download(url, output, quiet=True)
 
-        import shutil  # copy the files from repository to testing directory
-        shutil.copy(
-            src="mongo.sif",
-            dst=self.gangadir()
-        )
+            import shutil  # copy the files from repository to testing directory
+            shutil.copy(
+                src="mongo.sif",
+                dst=self.gangadir()
+            )
 
         # create logs folder in the testing dir
         os.makedirs(os.path.join(self.gangadir(), "logs"), exist_ok=True)
