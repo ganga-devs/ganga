@@ -416,7 +416,7 @@ jobs:
         pip3 install pymongo pytest psutil gdown
 
     - name: Test Container Controllers
-      run: python3 -m pytest -s ganga/GangaCore/test/gangaDB/db_testing
+      run: python3 -m pytest -s ganga/GangaCore/test/gangaDB/db_testing/SingularityTestGangaDBNested.py
       env:
         # To force usage of docker controller
         GANGA_GITHUB_HOST: False

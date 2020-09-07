@@ -122,6 +122,22 @@ def mongod_exists(controller, cname=None):
     return None
 
 
+def download_mongo_sif(path):
+    """
+    Download and save the mongo.sif file in the path
+    """
+    import gdown  # download the required sif file
+    url = 'https://drive.google.com/uc?id=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk'
+    output = 'mongo.sif'
+    gdown.download(url, output, quiet=False)
+
+    import shutil  # copy the files from repository to testing directory
+    shutil.copy(
+        src="mongo.sif",
+        dst=path
+    )
+
+
 def create_mongodir(gangadir):
     """
     Will create a the required data folder for mongo db
@@ -163,11 +179,12 @@ def singularity_handler(database_config, action, gangadir):
     sif_file = os.path.join(gangadir, "mongo.sif")
 
     if not os.path.isfile(sif_file):
-        raise FileNotFoundError(
-            "The mongo.sif file does not exists. " +
-            "Please read: https://github.com/ganga-devs/ganga/wiki/GangaDB-User-Guide",
-            sif_file,
-        )
+        download_mongo_sif(gangadir)
+        # raise FileNotFoundError(
+        #     "The mongo.sif file does not exists. " +
+        #     "Please read: https://github.com/ganga-devs/ganga/wiki/GangaDB-User-Guide",
+        #     sif_file,
+        # )
 
     bind_loc = create_mongodir(gangadir=gangadir)
     start_container = f"""singularity run \
