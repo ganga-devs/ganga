@@ -82,9 +82,9 @@ class SingularityTestHandler(GangaUnitTest):
             )
             assert flag is None
         except Exception as e:
-            print(os.path.join(
+            print(open(os.path.join(
                 self.gangadir(), "logs", "mongod-ganga.log"
-            ).read())
+            )).read())
             raise e
 
     def test_b_singularity_check_logs_created(self):
