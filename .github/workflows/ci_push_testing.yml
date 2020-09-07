@@ -346,85 +346,119 @@ jobs:
         MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
 
+  # db-unit:
+  #   name: Database Testing
+  #   needs: lint
+  #   runs-on: ubuntu-18.04
+  #   services:
+  #     mongodb:
+  #       image: mongo
+  #       ports:
+  #       - 27017:27017
+  #   steps:
+
+  #   - name: Set up Go 1.12
+  #     uses: actions/setup-go@v1
+  #     with:
+  #       go-version: 1.12
+  #     id: go
+
+  #   - name: Check out code for the container build
+  #     uses: actions/checkout@v1
+
+  #   - name: Singularity Install Dependencies
+  #     run: |
+  #       apt-get update && apt-get install -y \
+  #         build-essential \
+  #         libssl-dev \
+  #         uuid-dev \
+  #         libgpgme11-dev \
+  #         squashfs-tools \
+  #         libseccomp-dev \
+  #         pkg-config
+  #   - name: Singularity Install
+  #     env:
+  #       SINGULARITY_VERSION: 3.2.1
+  #     run: |
+  #       export GOPATH=/tmp/go
+  #       mkdir -p $GOPATH
+  #       mkdir -p /usr/local/var/singularity/mnt && \
+  #       mkdir -p $GOPATH/src/github.com/sylabs && \
+  #       cd $GOPATH/src/github.com/sylabs && \
+  #       wget -qO- https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz | \
+  #       tar xzv && \
+  #       cd singularity && \
+  #       ./mconfig -p /usr/local && \
+  #       make -C builddir && \
+  #       make -C builddir install
+
+  #   - name: Singularity Download MongoDB
+  #     run: singularity pull docker://mongo:latest
+
+  #   - name: uDocker Installation
+  #     run: |
+  #       curl https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py > udocker
+  #       chmod u+rx ./udocker
+  #       ./udocker install
+  #   - name: uDocker Linking Binary
+  #     # run: ln -s ./udocker /bin
+  #     run: ln -s $PWD/udocker /bin
+
+  #   - name: uDocker Download MongoDB
+  #     run: udocker pull mongo:latest
+
+  #   - name: Docker Download MongoDB
+  #     run: docker pull mongo:latest
+
+  #   - name: Set up Python 3
+  #     run: |
+  #       apt-get install -y python3
+  #       apt-get install -y python3-pip
+  #   - name: Python3 Install dependencies
+  #     run: |
+  #       pip3 install --upgrade pip setuptools wheel
+  #       pip3 install -e .[dev]
+  #       pip3 install pymongo pytest psutil gdown
+
+  #   - name: Test Container Controllers
+  #     run: python3 -m pytest -s ganga/GangaCore/test/gangaDB/db_testing/SingularityTestGangaDBNested.py
+  #     env:
+  #       # To force usage of docker controller
+  #       GANGA_GITHUB_HOST: False
+  #       MONGODB_HOST: mongodb
+  #       MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+
   db-unit:
     name: Database Testing
+    runs-on: ubuntu-latest
     needs: lint
-    runs-on: ubuntu-18.04
+    container: mongo
     services:
       mongodb:
         image: mongo
         ports:
         - 27017:27017
+
     steps:
-
-    - name: Set up Go 1.12
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.12
-      id: go
-
     - name: Check out code for the container build
       uses: actions/checkout@v1
 
-    - name: Singularity Install Dependencies
-      run: |
-        sudo apt-get update && sudo apt-get install -y \
-          build-essential \
-          libssl-dev \
-          uuid-dev \
-          libgpgme11-dev \
-          squashfs-tools \
-          libseccomp-dev \
-          pkg-config
-    - name: Singularity Install
-      env:
-        SINGULARITY_VERSION: 3.2.1
-      run: |
-        export GOPATH=/tmp/go
-        mkdir -p $GOPATH
-        sudo mkdir -p /usr/local/var/singularity/mnt && \
-        mkdir -p $GOPATH/src/github.com/sylabs && \
-        cd $GOPATH/src/github.com/sylabs && \
-        wget -qO- https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz | \
-        tar xzv && \
-        cd singularity && \
-        ./mconfig -p /usr/local && \
-        make -C builddir && \
-        sudo make -C builddir install
-
-    - name: Singularity Download MongoDB
-      run: singularity pull docker://mongo:latest
-
-    - name: uDocker Installation
-      run: |
-        curl https://raw.githubusercontent.com/indigo-dc/udocker/master/udocker.py > udocker
-        chmod u+rx ./udocker
-        ./udocker install
-    - name: uDocker Linking Binary
-      # run: sudo ln -s ./udocker /bin
-      run: sudo ln -s $PWD/udocker /bin
-
-    - name: uDocker Download MongoDB
-      run: udocker pull mongo:latest
-
-    - name: Docker Download MongoDB
-      run: docker pull mongo:latest
+    - name: Update packages
+      run: apt update -y
 
     - name: Set up Python 3
       run: |
-        sudo apt-get install -y python3
-        sudo apt-get install -y python3-pip
-    - name: Python3 Install dependencies
+        apt install -y python3
+        apt install -y python3-pip
+
+    - name: Install dependencies
       run: |
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
-        pip3 install pymongo pytest psutil gdown
-
-    - name: Test Container Controllers
-      run: python3 -m pytest -s ganga/GangaCore/test/gangaDB/db_testing/SingularityTestGangaDBNested.py
+    - name: Testing GangaDB
+      run: |
+        python3 -m pytest -x ganga/GangaCore/test/gangaDB/final
       env:
-        # To force usage of docker controller
-        GANGA_GITHUB_HOST: False
+        GANGA_GITHUB_HOST: True
         MONGODB_HOST: mongodb
         MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
-
