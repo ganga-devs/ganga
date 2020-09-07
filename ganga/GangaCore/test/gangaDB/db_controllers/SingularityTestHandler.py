@@ -57,9 +57,7 @@ class SingularityTestHandler(GangaUnitTest):
         """
         Test the starting and shutdown of udocker container image
         """
-        import subprocess
-
-        if self.sing_installated:
+        try:
             # start the singularity container
             singularity_handler(
                 action="start",
@@ -83,10 +81,11 @@ class SingularityTestHandler(GangaUnitTest):
                 controller="singularity", cname=os.path.join(self.gangadir(), "mongo.sif")
             )
             assert flag is None
-
-        else:
-            raise Exception(
-                "Singularity is not installed in the testing environment")
+        except Exception as e:
+            print(os.path.join(
+                self.gangadir(), "logs", "mongod-ganga.log"
+            ).read())
+            raise e
 
     def test_b_singularity_check_logs_created(self):
         """
