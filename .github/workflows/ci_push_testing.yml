@@ -337,9 +337,13 @@ jobs:
         pip3 install -e .[dev]
         pip3 install pymongo pytest psutil gdown
 
-    - name: Test Container Controllers
-      run: sudo python3 -m pytest -sx ganga/GangaCore/test/gangaDB/db_controllers/SingularityTestHandler.py
-
+    # - name: Test Container Controllers
+    #   run: python3 -m pytest -sx ganga/GangaCore/test/gangaDB/db_controllers/SingularityTestHandler.py
+    - name: Test if the singularity containers work
+      run: |
+       gdown https://drive.google.com/uc\?id\=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk
+       mkdir data
+       singularity run --bind data:/data mongo.sif mongod
 
   db-unit:
     name: Database Testing
