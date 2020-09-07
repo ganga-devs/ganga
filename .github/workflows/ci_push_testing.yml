@@ -177,7 +177,7 @@ jobs:
   #   name: GangaLHCb Unit
   #   needs: lint
   #   runs-on: ubuntu-latest
-  #   container: 
+  #   container:
   #     image: centos:7
   #     options: --privileged
   #   steps:
@@ -341,7 +341,7 @@ jobs:
     #   run: python3 -m pytest -sx ganga/GangaCore/test/gangaDB/db_controllers/SingularityTestHandler.py
     - name: Test if the singularity containers work
       run: |
-       gdown https://drive.google.com/uc\?id\=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk
+       /home/runner/.local/bin/gdown https://drive.google.com/uc\?id\=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk
        mkdir data
        singularity run --bind data:/data mongo.sif mongod
 
