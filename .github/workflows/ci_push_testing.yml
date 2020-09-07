@@ -350,6 +350,11 @@ jobs:
     name: Database Testing
     needs: lint
     runs-on: ubuntu-18.04
+    services:
+      mongodb:
+        image: mongo
+        ports:
+        - 27017:27017
     steps:
 
     - name: Set up Go 1.12
@@ -417,9 +422,9 @@ jobs:
 
     - name: Test Container Controllers
       run: python3 -m pytest -s ganga/GangaCore/test/gangaDB/db_testing/SingularityTestGangaDBNested.py
-      # env:
-      #   # To force usage of docker controller
-      #   GANGA_GITHUB_HOST: False
-      #   MONGODB_HOST: mongodb
-      #   MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+      env:
+        # To force usage of docker controller
+        GANGA_GITHUB_HOST: False
+        MONGODB_HOST: mongodb
+        MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
