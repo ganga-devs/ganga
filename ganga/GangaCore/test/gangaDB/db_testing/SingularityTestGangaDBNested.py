@@ -20,7 +20,7 @@ class SingularityTestGangaDBNested(GangaUnitTest):
         """
         """
         extra_opts = utils.get_options(HOST, PORT)
-        extra_opts.append(("DatabaseConfiguration", "controller", "singularity"))
+        extra_opts.append(("DatabaseConfiguration", "controller", "native"))
         extra_opts.append(("TestingFramework", "Flag", True))
         self.connection = utils.get_db_connection(HOST, PORT)
         super(SingularityTestGangaDBNested, self).setUp(
