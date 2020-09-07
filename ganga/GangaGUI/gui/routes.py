@@ -112,8 +112,8 @@ def initial_run():
     if gui.config['WEB_CLI'] is True:
         start_ganga(gui.config['INTERNAL_PORT'], args=gui.config["GANGA_ARGS"])
         session["WEB_CLI"] = True
-    else:
-        gui.config['INTERNAL_PORT'] = os.environ.get('INTERNAL_PORT')
+    elif gui.config['INTERNAL_PORT'] is None:
+        gui.config['INTERNAL_PORT'] = os.environ['INTERNAL_PORT']
 
     # If user is authenticated, log them out. This happens after a fresh start of the GUI server.
     if current_user.is_authenticated:
