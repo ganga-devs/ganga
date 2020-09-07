@@ -453,7 +453,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip3 install --upgrade pip setuptools wheel
+        pip3 install --upgrade pip setuptools wheel psutil
         pip3 install -e .[dev]
     - name: Testing GangaDB
       run: |
