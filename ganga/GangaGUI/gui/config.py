@@ -20,9 +20,8 @@ for dir_name in ["upload", "logs", "storage"]:
         os.makedirs(dir_path)
 
 
-# TODO Look into ways to generate secret_key without much input from user side - .gangarc?
 class Config(object):
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "f3aa26t8b537abf6ee6305eefea0a10a"
+    SECRET_KEY = os.urandom(24)
 
     # Database related configuration
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(gui_dir, "gui.sqlite")
