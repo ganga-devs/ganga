@@ -167,9 +167,9 @@ class TestDatabaseBackends(GangaUnitTest):
     def setUp(self):
         """
         """
-        from GangaCore.Core.GangaRepository.container_controllers import generate_database_config
+        from GangaCore.Core.GangaRepository.container_controllers import get_database_config
         extra_opts = utils.get_options(HOST, PORT)
-        self.database_config = generate_database_config()
+        self.database_config = get_database_config(None)
         self.installations = {
             "docker": checkDocker(),
             "udocker": checkUDocker(),
@@ -182,7 +182,7 @@ class TestDatabaseBackends(GangaUnitTest):
         """
         Download the sif file requried
         """
-        if "GANGA_GITHUB_HOST" in os.environ.keys():
+        if not os.path.exists("mongo.sif"):
             import gdown  # download the required sif file
             url = 'https://drive.google.com/uc?id=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk'
             output = 'mongo.sif'
