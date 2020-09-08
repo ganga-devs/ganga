@@ -324,7 +324,6 @@ def udocker_handler(database_config, action, gangadir):
             proc_status = mongod_exists(
                 controller="udocker", cname=database_config["containerName"]
             )
-            print(proc_status.status())
             if proc_status is None:
                 import shutil
 
