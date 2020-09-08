@@ -55,7 +55,7 @@ def get_database_config(gangadir):
 
     if gangadir:
         container_config_loc = os.path.join(gangadir, "container.rc")
-    
+
     try:
         testing_flag = getConfig("TestingFramework")['Flag']
     except (KeyError, ConfigError):

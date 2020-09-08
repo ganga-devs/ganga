@@ -29,7 +29,7 @@
 #         extra_opts = utils.get_options(HOST, PORT)
 #         extra_opts.append(("TestingFramework", "Flag", True))
 #         self.sing_installated = checkSingularity()
-#         self.database_config = get_database_config(None)
+#         database_config = get_database_config(None)
 #         super(SingularityTestHandler, self).setUp(extra_opts=extra_opts)
 
 #     def test_a1_setup_sif_file(self):
@@ -62,7 +62,7 @@
 #         singularity_handler(
 #             action="start",
 #             gangadir=self.gangadir(),
-#             database_config=self.database_config
+#             database_config=database_config
 #         )
 
 #         # checking if the container started up
@@ -75,7 +75,7 @@
 #     #         singularity_handler(
 #     #             action="quit",
 #     #             gangadir=self.gangadir(),
-#     #             database_config=self.database_config
+#     #             database_config=database_config
 #     #         )
 #     #         flag = mongod_exists(
 #     #             controller="singularity", cname=os.path.join(self.gangadir(), "mongo.sif")
@@ -108,7 +108,7 @@
 #     #             singularity_handler(
 #     #                 action=action,
 #     #                 gangadir=self.gangadir(),
-#     #                 database_config=self.database_config
+#     #                 database_config=database_config
 #     #             )
 
 #     # def test_d_permission_error_singularity_handler(self):
@@ -126,7 +126,7 @@
 #     #         singularity_handler(
 #     #             action="start",
 #     #             gangadir=self.gangadir(),
-#     #             database_config=self.database_config
+#     #             database_config=database_config
 #     #         )
 
 #     #     flag = mongod_exists(
@@ -154,6 +154,7 @@ from GangaCore.Utility.Virtualization import (
     checkUDocker, checkSingularity
 )
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.Core.GangaRepository.container_controllers import get_database_config
 
 
 HOST, PORT = utils.get_host_port()
@@ -167,9 +168,7 @@ class TestDatabaseBackends(GangaUnitTest):
     def setUp(self):
         """
         """
-        from GangaCore.Core.GangaRepository.container_controllers import get_database_config
         extra_opts = utils.get_options(HOST, PORT)
-        self.database_config = get_database_config(None)
         self.installations = {
             "docker": checkDocker(),
             "udocker": checkUDocker(),
@@ -202,12 +201,14 @@ class TestDatabaseBackends(GangaUnitTest):
         import subprocess
         from GangaCore.Core.GangaRepository.container_controllers import singularity_handler, mongod_exists
 
+        database_config = get_database_config(self.gangadir())
+
         if self.installations["singularity"]:
             # start the singularity container
             singularity_handler(
                 action="start",
                 gangadir=self.gangadir(),
-                database_config=self.database_config
+                database_config=database_config
             )
 
             # checking if the container started up
@@ -220,7 +221,7 @@ class TestDatabaseBackends(GangaUnitTest):
             singularity_handler(
                 action="quit",
                 gangadir=self.gangadir(),
-                database_config=self.database_config
+                database_config=database_config
             )
             flag = mongod_exists(
                 controller="singularity", cname=os.path.join(self.gangadir(), "mongo.sif")
@@ -233,17 +234,20 @@ class TestDatabaseBackends(GangaUnitTest):
         """
         import subprocess
         from GangaCore.Core.GangaRepository.container_controllers import udocker_handler, mongod_exists
+
+        database_config = get_database_config(self.gangadir())
+
         if self.installations["udocker"]:
             # start the singularity container
             udocker_handler(
                 action="start",
                 gangadir=self.gangadir(),
-                database_config=self.database_config
+                database_config=database_config
             )
 
             # checking if the container started up
             flag = mongod_exists(
-                controller="udocker", cname=self.database_config["containerName"]
+                controller="udocker", cname=database_config["containerName"]
             )
             assert flag is not None
 
@@ -251,13 +255,13 @@ class TestDatabaseBackends(GangaUnitTest):
             udocker_handler(
                 action="quit",
                 gangadir=self.gangadir(),
-                database_config=self.database_config
+                database_config=database_config
             )
 
             # checking if the container started up
             time.sleep(2)
             flag = mongod_exists(
-                controller="udocker", cname=self.database_config["containerName"]
+                controller="udocker", cname=database_config["containerName"]
             )
             assert flag is None
 
@@ -279,11 +283,11 @@ class TestDatabaseBackends(GangaUnitTest):
     #         docker_handler(
     #             action="start",
     #             gangadir=self.gangadir(),
-    #             database_config=self.database_config
+    #             database_config=database_config
     #         )
     #         # testing status of the database container
     #         container_client = docker.from_env()
-    #         flag = any([container.name == self.database_config["containerName"]
+    #         flag = any([container.name == database_config["containerName"]
     #                     for container in container_client.containers.list()])
     #         assert flag
 
@@ -291,10 +295,10 @@ class TestDatabaseBackends(GangaUnitTest):
     #         docker_handler(
     #             action="quit",
     #             gangadir=self.gangadir(),
-    #             database_config=self.database_config
+    #             database_config=database_config
     #         )
 
-    #         flag = any([container.name == self.database_config["containerName"]
+    #         flag = any([container.name == database_config["containerName"]
     #                     for container in container_client.containers.list()])
     #         assert not flag
 
