@@ -299,8 +299,6 @@ class Registry(object):
         Args:
             this_id (int): This is the key of an object in the object dictionary
         """
-        import sys
-        logger.debug(f"__getitem__ was called by ({sys._getframe().f_back.f_code.co_name})")
         # Is this an Incomplete Object?
         if this_id in self._incomplete_objects:
             return IncompleteObject(self, this_id)

@@ -439,25 +439,39 @@ under certain conditions; type license() for details.
             logger.info("IPython history migrated successfully.")
 
     @staticmethod
-    def generate_container_rc(interactive):
-        print("GENERATING container.rc")
-        from GangaCore.Utility.logging import getLogger
-        from GangaCore.Utility.Config import get_unique_name, get_unique_port
-        logger = getLogger()
+    def generate_container_rc():
+        if getConfig("Configuration")["repositorytype"] == "Database":
+            logger = GangaCore.Utility.logging.getLogger()
+            container_config = os.path.join(getConfig("Configuration")[
+                                            "gangadir"], "container.rc")
 
-        container_config = os.path.join(getConfig("Configuration")["gangadir"], "container.rc")
-        if os.path.exists(container_config):
-            container_name, username, port = open(container_config, "r").read().split()
-        else:
-            logger.debug("Generating container.rc file in the gangadir")
-            temp = get_unique_name()
-            container_name, username, port = temp, temp, get_unique_port()
-            with open(container_config, "w") as file:
-                file.write(container_name)
-                file.write("\n")
-                file.write(username)
-                file.write("\n")
-                file.write(str(port))
+            try:
+                getConfig("TestingFramework")['Flag']
+                testing_flag = True
+            except (KeyError, GangaCore.Utility.Config.Config.ConfigError):
+                testing_flag = False
+
+            if os.path.exists(container_config):
+                logger.info(
+                    f"Reading container things from: {container_config}")
+                container_name, username, port = open(
+                    container_config, "r").read().split()
+            else:
+                logger.info("Generating container.rc")
+                from GangaCore.Utility.Config import get_unique_name, get_unique_port
+
+                if testing_flag is True:
+                    container_name, username, port = "testDatabase", "testDatabase", 27017
+                else:
+                    temp = get_unique_name()
+                    container_name, username, port = temp, temp, get_unique_port()
+                with open(container_config, "w") as file:
+                    file.write(container_name)
+                    file.write("\n")
+                    file.write(username)
+                    file.write("\n")
+                    file.write(str(port))
+            return container_config
 
     @staticmethod
     def generate_config_file(config_file, interactive):
@@ -588,6 +602,7 @@ under certain conditions; type license() for details.
             logger.info('re-reading in old config for updating...')
             load_user_config(specified_config, {})
             self.generate_config_file(specified_config, interactive)
+            self.generate_container_rc()
             sys.exit(0)
         bugVer, minVer = self.new_version()
         if not os.path.exists(specified_config) \
@@ -601,6 +616,7 @@ under certain conditions; type license() for details.
                 yes = 'y'
             if yes.lower() in ['', 'y']:
                 self.generate_config_file(default_config, interactive)
+                # self.generate_container_rc()
                 if interactive:
                     input('Press <Enter> to continue.\n')
         elif bugVer:
@@ -923,7 +939,6 @@ under certain conditions; type license() for details.
     def bootstrap(interactive):
         import GangaCore.Utility.Config
         config = GangaCore.Utility.Config.getConfig('Configuration')
-        GangaProgram.generate_container_rc(False)
 
         from GangaCore.Utility.Runtime import loadPlugins, autoPopulateGPI
         loadPlugins(GangaCore.GPI)

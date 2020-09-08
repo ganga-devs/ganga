@@ -31,7 +31,7 @@ from GangaCore.Core.GangaRepository.container_controllers import (
 )
 
 
-database_config = getConfig("DatabaseConfigurations")
+database_config = getConfig("DatabaseConfiguration")
 
 controller_map = {
     "native": native_handler,

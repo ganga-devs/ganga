@@ -16,9 +16,6 @@ def get_db_connection(host, port):
     """
     Connection to the testing mongo database
     """
-
-    # FIXME: Can't seem to get `ganga` to read the modified config changes
-    # patching the effect by using custom config
     db_name = "testDatabase"
     connection_string = f"mongodb://{host}:{port}/"
     _ = pymongo.MongoClient(connection_string)
@@ -29,15 +26,18 @@ def get_db_connection(host, port):
 
 def get_options(host, port):
     config = [
-        ("DatabaseConfigurations", "host", host),
-        ("DatabaseConfigurations", "port", port),
-        ("DatabaseConfigurations", "baseImage", "mongo")
+        ("DatabaseConfiguration", "host", host),
+        ("DatabaseConfiguration", "port", port),
+        ("DatabaseConfiguration", "baseImage", "mongo")
     ]
-    options = [('TestingFramework', 'AutoCleanup', 'False')]
+    options = [
+        ('TestingFramework', 'Flag', True),
+        ('TestingFramework', 'AutoCleanup', 'False')
+    ]
     if "GANGA_GITHUB_HOST" in os.environ.keys():  # we are testing in github actions
-        options.append(("DatabaseConfigurations", "controller", "native"))
+        options.append(("DatabaseConfiguration", "controller", "native"))
     else:  # docker is better for local testing
-        options.append(("DatabaseConfigurations", "controller", "docker"))
+        options.append(("DatabaseConfiguration", "controller", "docker"))
     return options + config
 
 

@@ -17,6 +17,7 @@ class TestGangaDBNested(GangaUnitTest):
 
     def setUp(self):
         """
+        Setup the environment for the testing
         """
         extra_opts = utils.get_options(HOST, PORT)
         self.connection = utils.get_db_connection(HOST, PORT)

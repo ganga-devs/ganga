@@ -8,13 +8,15 @@ from GangaCore.Utility.Virtualization import checkNative, checkDocker
 
 
 testStr = "testFooString"
-testArgs = [[1],[2],[3],[4],[5]]
+testArgs = [[1], [2], [3], [4], [5]]
 HOST, PORT = utils.get_host_port()
+
 
 class TestGangaDBGenAndLoad(GangaUnitTest):
 
     def setUp(self):
         """
+        Setup the environment for the testing
         """
         extra_opts = utils.get_options(HOST, PORT)
         self.connection = utils.get_db_connection(HOST, PORT)
@@ -27,7 +29,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         # self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
 
         from GangaCore.GPI import Job, jobs, ArgSplitter
-        j=Job(splitter=ArgSplitter(args=testArgs))
+        j = Job(splitter=ArgSplitter(args=testArgs))
 
         assert len(jobs) == 1
 
@@ -36,6 +38,8 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         stripProxy(j)._setDirty()
 
     def test_b_JobJsonExists(self):
+        """Check if the Job exists in the repository
+        """
         # Check things exist
         from GangaCore.GPI import jobs
 
@@ -43,7 +47,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
         print(("len: %s" % len(jobs)))
 
-        j=jobs(0)
+        j = jobs(0)
 
         assert len([*self.connection.jobs.find()]) == 1
 
@@ -122,7 +126,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
         assert len(jobs) == 1
 
-        j=jobs(0)
+        j = jobs(0)
 
         for sj in j.subjobs:
             this_bak = sj.backend
@@ -138,7 +142,6 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
             assert self.connection.jobs.find_one(
                 filter={"id": sj.id, "master": 0}
             )
-
 
     def test_f_testJsonContent(self):
         # Check their content
@@ -178,8 +181,6 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
     #         j=jobs(0)
     #         to_file(stripProxy(j), new_temp_file_a, ignore_subs)
     #         new_temp_file_a.flush()
-
-
 
     #     counter = 0
     #     for sj in j.subjobs:
@@ -242,7 +243,6 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
         # assert len(jobs) == 2
 
-
         from GangaCore.GPI import jobs, Job
         from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
         from GangaCore.Core.GangaRepository.DStreamer import (
@@ -251,7 +251,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
         from GangaCore.GPI import jobs
 
-        j=jobs(0)
+        j = jobs(0)
 
         for sj in j.subjobs:
             raw_sj = stripProxy(sj)
@@ -269,8 +269,6 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
             # assert that the database index has all the values requried
             for key, val in index_cache.items():
                 assert index[key] == val
-
-
 
     def test_j_DeleteAll(self):
         """
