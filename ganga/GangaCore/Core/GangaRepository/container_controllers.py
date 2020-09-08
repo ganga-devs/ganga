@@ -233,6 +233,7 @@ def singularity_handler(database_config, action, gangadir):
                 except:
                     pass
                 finally:
+                    print(f"The avail processes are: {[proc for proc in psutil.process_iter() if proc.name() == 'mongod']}")
                     raise ContainerCommandError(
                         message="For more information check the logs at $GANGADIR/logs/mongod-ganga.log",
                         controller="singularity"
