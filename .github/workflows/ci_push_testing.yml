@@ -270,7 +270,7 @@ jobs:
 
   controller-tests:
     name: Database Controller Tests
-    # needs: lint
+    needs: lint
     runs-on: ubuntu-18.04
     steps:
 
@@ -308,7 +308,6 @@ jobs:
         ./mconfig -p /usr/local && \
         make -C builddir && \
         sudo make -C builddir install
-
     - name: Singularity Download MongoDB
       run: singularity pull docker://mongo:latest
 
@@ -336,14 +335,13 @@ jobs:
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
         pip3 install pymongo pytest psutil gdown
-
-    # - name: Test Container Controllers
-    #   run: python3 -m pytest -sx ganga/GangaCore/test/gangaDB/db_controllers/SingularityTestHandler.py
-    - name: Test if the singularity containers work
-      run: |
-       /home/runner/.local/bin/gdown https://drive.google.com/uc\?id\=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk
-       mkdir data
-       singularity run --bind data:/data mongo.sif mongod
+    - name: Test Container Controllers
+      run: python3 -m pytest ganga/GangaCore/test/gangaDB/db_controllers/SingularityTestHandler.py
+      env:
+        # To force usage of docker controller
+        GANGA_GITHUB_HOST: False
+        MONGODB_HOST: mongodb
+        MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
   db-unit:
     name: Database Testing
