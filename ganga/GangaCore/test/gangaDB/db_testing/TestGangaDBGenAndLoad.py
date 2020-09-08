@@ -15,9 +15,9 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
     Testing the generation of jobs, saving of jobs and finally loading of jobs
     """
 
-
     def setUp(self):
         """
+        Setup the environment for the testing
         """
         extra_opts = utils.get_options(HOST, PORT)
         self.connection = utils.get_db_connection(HOST, PORT)

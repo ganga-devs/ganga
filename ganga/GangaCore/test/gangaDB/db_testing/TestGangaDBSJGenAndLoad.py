@@ -16,6 +16,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
     def setUp(self):
         """
+        Setup the environment for the testing
         """
         extra_opts = utils.get_options(HOST, PORT)
         self.connection = utils.get_db_connection(HOST, PORT)
@@ -37,6 +38,8 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         stripProxy(j)._setDirty()
 
     def test_b_JobJsonExists(self):
+        """Check if the Job exists in the repository
+        """
         # Check things exist
         from GangaCore.GPI import jobs
 

@@ -1,23 +1,27 @@
 import os
 import time
-import utils
-from GangaCore.Utility.Config import getConfig
-from GangaCore.Utility.Virtualization import (
-    checkNative, checkDocker,
-    checkUDocker, checkSingularity
-)
-from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaCore.Core.GangaRepository.container_controllers import get_database_config
 
+import docker
+
+import utils
+from GangaCore.Core.GangaRepository.container_controllers import (
+    docker_handler, get_database_config, mongod_exists, udocker_handler)
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.Virtualization import (checkDocker, checkNative,
+                                              checkSingularity, checkUDocker)
 
 HOST, PORT = utils.get_host_port()
 
 
-class TestDatabaseBackends(GangaUnitTest):
+class TestContainerHandler(GangaUnitTest):
     """
     Init all the database containers and see if they work
 
-    errs: FATAL:   container creation failed: mount /proc/self/fd/5->/usr/local/var/singularity/mnt/session/rootfs error: can't mount image /proc/self/fd/5: failed to mount squashfs filesystem: invalid argument
+    FIXME: The error when creating a singularity container in github actions
+    errs: FATAL:
+    container creation failed: mount /proc/self/fd/5->/usr/local/var/singularity/mnt/session/rootfs error:
+    can't mount image /proc/self/fd/5: failed to mount squashfs filesystem: invalid argument
     https://github.com/ganga-devs/ganga/runs/1084178708?check_suite_focus=true
     """
 
@@ -31,8 +35,9 @@ class TestDatabaseBackends(GangaUnitTest):
             "native": checkNative(),
             "singularity": checkSingularity()
         }
-        super(TestDatabaseBackends, self).setUp(extra_opts=extra_opts)
+        super(TestContainerHandler, self).setUp(extra_opts=extra_opts)
 
+    # Commented due the the error mentioned in the class doc
     # def test_a1_download_sif_file(self):
     #     """
     #     Download the sif file requried
@@ -54,7 +59,6 @@ class TestDatabaseBackends(GangaUnitTest):
     #     """
     #     Test the starting and shutdown of udocker container image
     #     """
-    #     import subprocess
     #     from GangaCore.Core.GangaRepository.container_controllers import singularity_handler, mongod_exists
 
     #     database_config = get_database_config(self.gangadir())
@@ -88,9 +92,6 @@ class TestDatabaseBackends(GangaUnitTest):
         """
         Test the starting and shutdown of udocker container image
         """
-        import subprocess
-        from GangaCore.Core.GangaRepository.container_controllers import udocker_handler, mongod_exists
-
         database_config = get_database_config(self.gangadir())
 
         if self.installations["udocker"]:
@@ -132,9 +133,6 @@ class TestDatabaseBackends(GangaUnitTest):
         """
         Check if docker contaienr is installed
         """
-        import docker
-        from GangaCore.Core.GangaRepository.container_controllers import docker_handler
-
         database_config = get_database_config(self.gangadir())
 
         if self.installations["docker"]:
