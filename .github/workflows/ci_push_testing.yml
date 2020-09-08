@@ -335,8 +335,15 @@ jobs:
         pip3 install --upgrade pip setuptools wheel
         pip3 install -e .[dev]
         pip3 install pymongo pytest psutil gdown
-    - name: Test Container Controllers
-      run: python3 -m pytest ganga/GangaCore/test/gangaDB/db_controllers/SingularityTestHandler.py
+    # - name: Test Container Controllers
+    #   run: python3 -m pytest ganga/GangaCore/test/gangaDB/db_controllers/SingularityTestHandler.py
+    - name: Check if singularity workds
+      run: singularity --help
+    - name: Test run the mongo db
+      run: |
+        mkdir data
+        /home/runner/.local/bin/gdown https://drive.google.com/uc?id=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk
+        singularity run --bind data:/data mongo.sif mongod
       env:
         # To force usage of docker controller
         GANGA_GITHUB_HOST: False
