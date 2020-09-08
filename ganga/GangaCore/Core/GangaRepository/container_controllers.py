@@ -304,6 +304,7 @@ def udocker_handler(database_config, action, gangadir):
         )
         _, err = proc.communicate()
         if err:
+            logger.debug(f"create_container commands: {create_container}")
             raise ContainerCommandError(
                 message=err.decode(), controller="udocker")
 
@@ -312,7 +313,6 @@ def udocker_handler(database_config, action, gangadir):
             controller="udocker", cname=database_config["containerName"]
         )
         if proc_status is None:
-            print("starting the container", start_container)
             proc = subprocess.Popen(
                 start_container,
                 shell=True,
@@ -325,6 +325,7 @@ def udocker_handler(database_config, action, gangadir):
                 controller="udocker", cname=database_config["containerName"]
             )
             if proc_status is None:
+                logger.debug(f"start_container commands: {start_container}")
                 import shutil
 
                 src = os.path.join(
@@ -348,7 +349,6 @@ def udocker_handler(database_config, action, gangadir):
         proc_status = mongod_exists(
             controller="udocker", cname=database_config["containerName"]
         )
-        print("asd", proc_status.status())
         if proc_status is not None:
             # if proc_status is not None or errored:
             proc = subprocess.Popen(
@@ -359,6 +359,7 @@ def udocker_handler(database_config, action, gangadir):
             )
             out, err = proc.communicate()
             if err:
+                logger.debug(f"stop_container commands: {stop_container}")
                 raise ContainerCommandError(
                     message=err.decode() + f"{proc_status}", controller="udocker"
                 )
