@@ -4,7 +4,7 @@ import pymongo
 
 from GangaCore.Utility.Config import getConfig
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaCore.Utility.Virtualization import checkNative, checkDocker
+from GangaCore.Utility.Virtualization import checkDocker
 
 
 testStr = "testFooString"

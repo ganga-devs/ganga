@@ -4,8 +4,8 @@ import pymongo
 
 from GangaCore.Utility.Config import getConfig
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaCore.Utility.Virtualization import checkNative, checkDocker
-from GangaCore.Core.GangaRepository.container_controllers import get_database_config
+from GangaCore.Utility.Virtualization import checkDocker
+from GangaCore.Core.GangaRepository.container_controllers import get_database_config, checkNative
 
 HOST, PORT = utils.get_host_port()
 

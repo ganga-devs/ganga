@@ -38,6 +38,23 @@ class ContainerCommandError(Exception):
         return f"[{self.controller}]: Errored with {self.message}"
 
 
+def checkNative():
+    """
+    Check if the mongo database is instanlled locally
+    """
+    cmds = ["mongo", "mongod"]  # commands to check if mongo is installed
+    nullOutput = open(os.devnull, 'wb')
+    returnCode = 1
+    try:
+        for cmd in cmds:
+            returnCode = subprocess.call(
+                [cmd], stdout=nullOutput, stderr=nullOutput, shell=True)
+    except Exception as e:
+        print(e)
+    if returnCode == 0:
+        return True
+    return False
+
 def get_database_config(gangadir):
     """
     Generate the requried variables for database config
@@ -127,7 +144,7 @@ def download_mongo_sif(path):
     Download and save the mongo.sif file in the path
     """
     import gdown  # download the required sif file
-    url = 'https://drive.google.com/uc?id=1Z7k9LoFxGQKMjLzoe1D_jL9m5ReeixXk'
+    url = 'https://cernbox.cern.ch/index.php/s/fv37NbLf24FpoWY/download'
     output = 'mongo.sif'
     gdown.download(url, output, quiet=False)
 

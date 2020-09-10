@@ -5,11 +5,10 @@ import docker
 
 import utils
 from GangaCore.Core.GangaRepository.container_controllers import (
-    docker_handler, get_database_config, mongod_exists, udocker_handler)
+    docker_handler, checkNative, get_database_config, mongod_exists, udocker_handler)
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Utility.Config import getConfig
-from GangaCore.Utility.Virtualization import (checkDocker, checkNative,
-                                              checkSingularity, checkUDocker)
+from GangaCore.Utility.Virtualization import (checkDocker, checkSingularity, checkUDocker)
 
 HOST, PORT = utils.get_host_port()
 
