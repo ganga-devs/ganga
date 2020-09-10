@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="col">
+            <h3>Templates Repository</h3>
+            <hr>
+            <form class="mb-4 mb-md-0" action="{{ url_for('templates_page', page=current_page) }}" method="post">
+                <div class="form-row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="templates-per-page">Templates Per Page</label>
+                            <select name="templates-per-page" class="form-control custom-select"
+                                    id="templates-per-page">
+                                {% for n in [10, 20, 40, 80] %}
+                                    <option {{ 'selected' if session['templates_per_page'] == n }}
+                                            value="{{ n }}">{{ n }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="template-application">Template Application</label>
+                            <select name="template-application" class="form-control custom-select"
+                                    id="template-application">
+                                <option value="any">Any</option>
+                                {% for a in applications %}
+                                    <option {{ 'selected' if session["templates_filter"]['application'] == a }}
+                                            value="{{ a }}">{{ a }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="template-backend">Template Backend</label>
+                            <select name="template-backend" class="form-control custom-select" id="template-backend">
+                                <option value="any">Any</option>
+                                {% for b in backends %}
+                                    <option {{ 'selected' if session["templates_filter"]['backend'] == b }}
+                                            value="{{ b }}">{{ b }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="d-none d-md-block" for="filter-button">&nbsp;</label>
+                        <button type="submit" id="filter-button" class="btn btn-primary btn-block">Apply</button>
+                    </div>
+                </div>
+            </form>
+            <table class="table table-striped table-bordered text-center table-responsive-sm">
+                <thead>
+                <tr>
+                    <th class="align-middle" scope="col">ID</th>
+                    <th class="align-middle" scope="col">Name</th>
+                    <th class="align-middle" scope="col">Application</th>
+                    <th class="align-middle" scope="col">Backend</th>
+                    <th class="align-middle" scope="col">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for t in templates_info %}
+                    <tr class="template" id="template-{{ t.get('id') }}">
+                        <th class="align-middle" scope="row">{{ t.get('id') }}</th>
+                        <td class="align-middle">{{ t.get('name') if (t.get('name')|string).strip() != '' else 'Unnamed Template' }}</td>
+                        <td class="align-middle text-break">{{ (t.get('application')|string).split('(')[0] }}</td>
+                        <td class="align-middle text-break">{{ (t.get('backend')|string).split('(')[0] }}</td>
+                        <td class="align-middle" style="min-width: 20%;">
+                            <div>
+                                <a href="#" data-id="{{ t.get('id') }}"
+                                   class="btn btn-sm btn-primary btn-create my-1 my-md-0">
+                                    Create Job
+                                </a>
+                                <a href="#" data-id="{{ t.get('id') }}" class="btn btn-sm btn-info btn-template-info my-1 my-md-0">
+                                    Info
+                                </a>
+                                <a href="#" data-id="{{ t.get('id') }}" class="btn btn-sm btn-danger btn-delete my-1 my-md-0">
+                                    Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <nav class="d-flex justify-content-center">
+                <ul class="pagination m-auto" style="overflow: scroll;">
+                    <li class="page-item {{ 'disabled' if current_page <= 0 }}"><a class="page-link"
+                                                                                   href="{{ url_for('templates_page', page=current_page - 1) }}">Previous</a>
+                    </li>
+                    {% for i in range(number_of_pages) %}
+                        <li class="page-item {{ 'active' if current_page == i }}"><a class="page-link"
+                                                                                     href="{{ url_for('templates_page', page=i) }}">{{ i + 1 }}</a>
+                        </li>
+                    {% endfor %}
+                    <li class="page-item {{ 'disabled' if current_page >= number_of_pages-1 }}"><a
+                            class="page-link" href="{{ url_for('templates_page', page=current_page + 1) }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <!-- Template Info Modal -->
+    <div class="modal fade" id="template-info-modal" tabindex="-1" role="dialog"
+         aria-labelledby="template-info-modal-label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="template-info-modal-label">Template Info: </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre id="template-info-box"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block footer %}
+    <script defer src="{{ url_for('static', filename='js/templates.js') }}"></script>
+{% endblock footer %}

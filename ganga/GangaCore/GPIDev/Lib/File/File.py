@@ -97,7 +97,7 @@ class File(GangaObject):
 
 
     def _attribute_filter__set__(self, attribName, attribValue):
-        if attribName is 'name':
+        if attribName == 'name':
             return expandfilename(attribValue)
         return attribValue
 
@@ -244,7 +244,7 @@ class ShareDir(GangaObject):
                     shareref.decrease(self)
                 else:
                     logger.error('File %s not found' % expandfilename(item))
-            elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
+            elif isType(item, File) and item.name != '' and os.path.isfile(expandfilename(item.name)):
                 logger.info('Copying file object %s to shared directory %s' % (item.name, self.name))
                 shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(), self.name))
                 shareref = getRegistry("prep").getShareRef()

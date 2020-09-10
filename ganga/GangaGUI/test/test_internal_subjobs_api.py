@@ -1,58 +1,36 @@
-# ******************** Imports ******************** #
-
-import os
-import uuid
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaGUI.gui import app, db
-from GangaGUI.gui.models import User
-
-# ******************** Global Vairables ******************** #
-
-currentdir = os.path.dirname(os.path.abspath(__file__))
-token = None
+from GangaGUI.api import internal
 
 
 # ******************** Test Class ******************** #
 
+
 # Subjobs API Tests
-class TestGangaGUISubjobsAPI(GangaUnitTest):
+class TestGangaInternalGUISubjobsAPI(GangaUnitTest):
 
     # Setup
     def setUp(self, extra_opts=[]):
-        super(TestGangaGUISubjobsAPI, self).setUp(extra_opts=[])
+        super(TestGangaInternalGUISubjobsAPI, self).setUp(extra_opts=[])
 
         # App config setup and test database creation
-        app.config["TESTING"] = True
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(currentdir, "gui_test.sqlite")
-        db.create_all()
-
-        # Temp user for testing purpose
-        tempuser = User(public_id=str(uuid.uuid4()), user="GangaGUITestUser", role="Admin")
-        tempuser.store_password_hash("testpassword")
-        db.session.add(tempuser)
-        db.session.commit()
+        internal.config["TESTING"] = True
 
         # Flask test client
-        self.app = app.test_client()
-
-        # Token for HTTP requests
-        global token
-        res = self.app.post("/token", data={"user": "GangaGUITestUser", "password": "testpassword"})
-        token = res.json["token"]
+        self.app = internal.test_client()
 
     # Subjobs API - GET Method, Subjobs List - Job ID out of range
     def test_GET_method_job_id_out_of_range(self):
-        res = self.app.get(f"/api/job/1/subjobs", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/1/subjobs")
         self.assertTrue(res.status_code == 400)
 
     # Subjobs API - GET Method, Subjobs List - Job ID negative
     def test_GET_method_job_id_negative(self):
-        res = self.app.get(f"/api/job/-1/subjobs", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/-1/subjobs")
         self.assertTrue(res.status_code == 404)
 
     # Subjobs API - GET Method, Subjobs List - Job ID string
     def test_GET_method_job_id_string(self):
-        res = self.app.get(f"/api/job/test/subjobs", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/test/subjobs")
         self.assertTrue(res.status_code == 404)
 
     # Subjobs API - GET Method, Subjobs List - No subjob case
@@ -64,7 +42,7 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
         j.name = "Test Name"
 
         # GET request
-        res = self.app.get(f"/api/job/{j.id}/subjobs", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/{j.id}/subjobs")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(res.json) == 0)
 
@@ -83,7 +61,7 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
         j.submit()
 
         # GET request
-        res = self.app.get(f"/api/job/{j.id}/subjobs", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/{j.id}/subjobs")
         self.assertTrue(res.status_code == 200)
         self.assertTrue(len(res.json) == 20)
 
@@ -95,17 +73,17 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
 
     # Subjobs API - GET Method, Single Subjob info - Job ID out of range
     def test_GET_method_single_subjob_info_job_id_out_of_range(self):
-        res = self.app.get(f"/api/job/1/subjob/2", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/1/subjobs/2")
         self.assertTrue(res.status_code == 400)
 
     # Subjobs API - GET Method, Single Subjob info - Job ID negative
     def test_GET_method_single_subjob_info_job_id_negative(self):
-        res = self.app.get(f"/api/job/-1/subjob/2", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/-1/subjobs/2")
         self.assertTrue(res.status_code == 404)
 
     # Subjobs API - GET Method, Single Subjob info - Job ID string
     def test_GET_method_single_subjob_info_job_id_string(self):
-        res = self.app.get(f"/api/job/test/subjob/2", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/test/subjobs/2")
         self.assertTrue(res.status_code == 404)
 
     # Subjobs API - GET Method, Single Subjob info - No subjob case
@@ -117,7 +95,7 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
         j.name = "Test Name"
 
         # GET request
-        res = self.app.get(f"/api/job/{j.id}/subjob/2", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/{j.id}/subjobs/2")
         self.assertTrue(res.status_code == 400)
 
     # Subjobs API - GET Method, Single Subjob info - subjob id out of index
@@ -135,7 +113,7 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
         j.submit()
 
         # GET request
-        res = self.app.get(f"/api/job/{j.id}/subjob/21", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/{j.id}/subjobs/21")
         self.assertTrue(res.status_code == 400)
 
     # Subjobs API - GET Method, Single Subjob Info
@@ -153,7 +131,7 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
         j.submit()
 
         # GET request
-        res = self.app.get(f"/api/job/{j.id}/subjob/{j.subjobs[2].id}", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/{j.id}/subjobs/{j.subjobs[2].id}")
         print(res.json)
         self.assertTrue(res.status_code == 200)
 
@@ -164,17 +142,17 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
 
     # Subjobs API - GET Method, Single Subjob Attribute info - Job ID out of range
     def test_GET_method_single_subjob_attr_info_job_id_out_of_range(self):
-        res = self.app.get(f"/api/job/1/subjob/2/fqid", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/1/subjobs/2/fqid")
         self.assertTrue(res.status_code == 400)
 
     # Subjobs API - GET Method, Single Subjob Attribute info - Job ID negative
     def test_GET_method_single_subjob_attr_info_job_id_negative(self):
-        res = self.app.get(f"/api/job/-1/subjob/2/fqid", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/-1/subjobs/2/fqid")
         self.assertTrue(res.status_code == 404)
 
     # Subjobs API - GET Method, Single Subjob Attribute info - Job ID string
     def test_GET_method_single_subjob_attr_info_job_id_string(self):
-        res = self.app.get(f"/api/job/test/subjob/2/fqid", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/test/subjobs/2/fqid")
         self.assertTrue(res.status_code == 404)
 
     # Subjobs API - GET Method, Single Subjob Attribute info - No subjob case
@@ -186,7 +164,7 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
         j.name = "Test Name"
 
         # GET request
-        res = self.app.get(f"/api/job/{j.id}/subjob/2/fqid", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/{j.id}/subjobs/2/fqid")
         self.assertTrue(res.status_code == 400)
 
     # Subjobs API - GET Method, Single Subjob Attribute info - subjob id out of index
@@ -204,7 +182,7 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
         j.submit()
 
         # GET request
-        res = self.app.get(f"/api/job/{j.id}/subjob/21/fqid", headers={"X-Access-Token": token})
+        res = self.app.get(f"/internal/jobs/{j.id}/subjobs/21/fqid")
         self.assertTrue(res.status_code == 400)
 
     # Subjobs API - GET Method, Single Subjob Attribute Info
@@ -228,14 +206,12 @@ class TestGangaGUISubjobsAPI(GangaUnitTest):
 
         for i in range(0, 5):
             for attribute in supported_attributes:
-                res = self.app.get(f"/api/job/{j.id}/subjob/{j.subjobs[i].id}/{attribute}",
-                                   headers={"X-Access-Token": token})
+                res = self.app.get(f"/internal/jobs/{j.id}/subjobs/{j.subjobs[i].id}/{attribute}")
                 self.assertTrue(res.status_code == 200)
                 self.assertTrue(attribute in res.json.keys())
 
     # Tear down
     def tearDown(self):
-        super(TestGangaGUISubjobsAPI, self).tearDown()
-        db.session.remove()
-        db.drop_all()
-        os.remove(os.path.join(currentdir, "gui_test.sqlite"))
+        super(TestGangaInternalGUISubjobsAPI, self).tearDown()
+
+# ******************** EOF ******************** #

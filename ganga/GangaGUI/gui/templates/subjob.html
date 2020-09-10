@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container-fluid px-md-5">
+        <div class="row d-flex justify-content-center align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="card" id="subjob-info" data-job_id="{{ job_id }}" data-subjob_id="{{ subjob_info.get('id') }}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="d-flex align-items-center">
+                                {{ subjob_info.get('name') if (subjob_info.get('name')|string).strip() != '' else 'Unnamed Subjob' }}
+                                <small>
+                                    <span id="subjob-id-{{ subjob_info.get('id') }}-status"
+                                          class="badge badge-{{ status_color[subjob_info.get('status')] }} badge-pill ml-2">{{ subjob_info.get('status') }}</span>
+                                </small>
+                            </h5>
+                            <div>
+                                <a href="#" id="btn-copy" data-job_id="{{ job_id }}" data-subjob_id="{{ subjob_info.get('id') }}" class="btn btn-sm btn-primary">Copy</a>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <p class="m-0 p-0">fqid: {{ subjob_info.get('fqid') }}</p>
+                        <p class="m-0 p-0">application: {{ (subjob_info.get('application')|string).split('(')[0] }}</p>
+                        <p class="m-0 p-0">backend: {{ (subjob_info.get('backend')|string).split('(')[0] }}</p>
+                        <p class="m-0 p-0">backend.actualCE: {{ subjob_info.get('backend.actualCE') }}</p>
+                        <p class="m-0 p-0">comment: {{ subjob_info.get('comment') }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex my-2">
+                    <a href="#" class="btn btn-info mr-1 w-100" data-toggle="modal" data-target="#stdout-modal">Peek
+                        (stdout)</a>
+                    <a href="#" class="btn btn-info ml-1 w-100" data-toggle="modal" data-target="#stderr-modal">Peek
+                        (stderr)</a>
+                </div>
+                <div class="d-flex my-2">
+                    <a href="#" class="btn btn-dark w-100" data-toggle="modal" data-target="#job-info-modal">Job Info</a>
+                </div>
+                <a href="{{ url_for('job_browse', job_id=job_id, path=browse_path) }}" class="btn btn-block btn-primary">Browse Files</a>
+            </div>
+            <div class="container-fluid mt-4">
+                <div class="row">
+                    <div class="col mb-3 d-flex flex-column">
+                        <h3>Subjob Attributes</h3>
+                        <div class="card flex-grow-1" style="max-height: 500px; overflow: scroll">
+                            <div class="card-body pb-1">
+                                <form>
+                                    <div class="form-group">
+                                        <label for="attribute-select">Select Attribute</label>
+                                        <select data-job_id="{{ job_id }}" data-subjob_id="{{ subjob_info.get('id') }}" class="custom-select"
+                                                id="attribute-select">
+                                            {% for attribute_action in attribute_actions %}
+                                                <option value="{{ attribute_action }}">{{ attribute_action }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </form>
+                                <hr class="my-1">
+                                <pre id="attribute-info-box" class="pt-3"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Subjob Info Modal -->
+    <div class="modal fade" id="job-info-modal" tabindex="-1" role="dialog" aria-labelledby="job-info-modal-label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="job-info-modal-label">Subjob #{{ subjob_info.get('id') }} Info</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre>{{ full_print_info if full_print_info != None }}</pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- stdout Modal -->
+    <div class="modal fade" id="stdout-modal" tabindex="-1" role="dialog" aria-labelledby="stdout-modal-label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stdout-modal-label">Subjob #{{ subjob_info.get('id') }} stdout {{ " - File does not exist" if stdout == None }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ stdout if stdout != None }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- stderr Modal -->
+    <div class="modal fade" id="stderr-modal" tabindex="-1" role="dialog" aria-labelledby="stderr-modal-label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stderr-modal-label">Subjob #{{ subjob_info.get('id') }} stderr {{ " - File does not exist" if stderr == None }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ stderr if stderr != None }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block footer %}
+    <script defer src="{{ url_for('static', filename='js/subjob.js') }}"></script>
+{% endblock footer %}

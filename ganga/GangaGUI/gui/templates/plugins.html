@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container-fluid px-md-5">
+        <h3>Plugins</h3>
+        <hr>
+        <div class="row">
+            {% for category in plugins_info %}
+                <div class="col-md-4  my-2 my-md-3 d-flex flex-column">
+                    <div class="card flex-grow-1">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ category }}</h5>
+                        <hr>
+                            <ul>
+                                {% for plugin in plugins_info[category] %}
+                                    <li><a href="{{ url_for('plugin_page', plugin_name=plugin) }}">{{ plugin }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock content %}

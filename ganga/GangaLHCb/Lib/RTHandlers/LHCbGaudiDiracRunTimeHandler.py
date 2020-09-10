@@ -1,6 +1,7 @@
 import copy
 import os
 import pickle
+from GangaCore import _gangaVersion
 from GangaCore.Core.exceptions import BackendError
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
@@ -188,7 +189,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         ANCESTOR_DEPTH=ancestor_depth,
                                         ## This is to be modified in the final 'submit' function in the backend
                                         ## The backend also handles the inputfiles DiracFiles ass appropriate
-                                        INPUT_SANDBOX='##INPUT_SANDBOX##'
+                                        INPUT_SANDBOX='##INPUT_SANDBOX##',
+                                        GANGA_VERSION=_gangaVersion,
                                         )
         logger.debug("prepare: LHCbGaudiDiracRunTimeHandler")
 

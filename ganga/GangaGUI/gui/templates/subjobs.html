@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="col">
+            <h3>Subjobs Repository of Job {{ job_id }}</h3>
+            <hr>
+            <form class="mb-4 mb-md-0" action="{{ url_for('subjobs_page', page=current_page, job_id=job_id) }}" method="post">
+                <div class="form-row">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="subjobs-per-page">Subjobs Per Page</label>
+                            <select name="subjobs-per-page" class="form-control custom-select" id="subjobs-per-page">
+                                {% for n in [10, 20, 40, 80] %}
+                                    <option {{ 'selected' if session['subjobs_per_page'] == n }} value="{{ n }}">{{ n }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="subjob-status">Subjob Status</label>
+                            <select name="subjob-status" class="form-control custom-select" id="subjob-status">
+                                    <option value="any">Any</option>
+                                {% for s in ['New', 'Running', 'Completed', 'Failed', 'Killed'] %}
+                                    <option {{ 'selected' if session["subjobs_filter"]['status'] == s|lower }}  value="{{ s|lower }}">{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="subjob-application">Subjob Application</label>
+                            <select name="subjob-application" class="form-control custom-select" id="subjob-application">
+                                <option value="any">Any</option>
+                                {% for a in applications %}
+                                    <option {{ 'selected' if session["subjobs_filter"]['application'] == a }} value="{{ a }}">{{ a }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="subjob-backend">Subjob Backend</label>
+                            <select name="subjob-backend" class="form-control custom-select" id="subjob-backend">
+                                <option value="any">Any</option>
+                                {% for b in backends %}
+                                    <option {{ 'selected' if session["subjobs_filter"]['backend'] == b }} value="{{ b }}">{{ b }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="d-none d-md-block" for="filter-button">&nbsp;</label>
+                        <button type="submit" id="filter-button" class="btn btn-primary btn-block">Apply</button>
+                    </div>
+                </div>
+            </form>
+            <table class="table table-striped table-bordered text-center table-responsive-sm">
+                <thead>
+                <tr>
+                    <th class="align-middle" scope="col">fqid</th>
+                    <th class="align-middle" scope="col">Status</th>
+                    <th class="align-middle" scope="col">Name</th>
+                    <th class="align-middle" scope="col">Application</th>
+                    <th class="align-middle" scope="col">Backend</th>
+                    <th class="align-middle" scope="col">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for sj in subjobs_info %}
+                    <tr class="subjob" id="subjob-{{ sj.get('id') }}" data-job_id="{{ job_id }}" data-id="{{ sj.get('id') }}" data-status="{{ sj.get('status') }}">
+                        <th class="align-middle" scope="row">{{ sj.get('fqid') }}</th>
+                        <td class="align-middle"><span id="subjob-id-{{ sj.get('id') }}-status"
+                                class="badge badge-{{ status_color[sj.get('status')] }} badge-pill">{{ sj.get('status') }}</span></td>
+                        <td class="align-middle">{{ sj.get('name') if (sj.get('name')|string).strip() != '' else 'Unnamed Subjob' }}</td>
+                        <td class="align-middle text-break">{{ (sj.get('application')|string).split('(')[0] }}</td>
+                        <td class="align-middle text-break">{{ (sj.get('backend')|string).split('(')[0] }}</td>
+                        <td class="align-middle"><a href="{{ url_for('subjob_page', job_id=job_id, subjob_id=sj.get('id')) }}"
+                                                    class="btn btn-sm btn-primary">Subjob Info</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <nav class="d-flex justify-content-center">
+                <ul class="pagination m-auto" style="overflow: scroll;">
+                    <li class="page-item {{ 'disabled' if current_page <= 0 }}"><a class="page-link"
+                                                                                           href="{{ url_for('subjobs_page', page=current_page - 1, job_id=job_id) }}">Previous</a>
+                    </li>
+                    {% for i in range(number_of_pages) %}
+                        <li class="page-item {{ 'active' if current_page == i }}"><a class="page-link"
+                                                 href="{{ url_for('subjobs_page', page=i, job_id=job_id) }}">{{ i + 1 }}</a></li>
+                    {% endfor %}
+                    <li class="page-item {{ 'disabled' if current_page >= number_of_pages-1 }}"><a
+                            class="page-link" href="{{ url_for('subjobs_page', page=current_page + 1, job_id=job_id) }}">Next</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block footer %}
+    <script defer src="{{ url_for('static', filename='js/subjobs.js') }}"></script>
+{% endblock footer %}
