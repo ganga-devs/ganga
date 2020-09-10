@@ -97,11 +97,10 @@ setup(name='ganga',
           'Flask-SQLAlchemy>=2.4.3',
           'gunicorn>=20.0.4',
           'Flask-Login>=0.5.0',
-          'Flask-SocketIO>=4.3.1', 
+          'Flask-SocketIO>=4.3.1',
           'eventlet>=0.26.1',
           "docker",
-          "pymongo",
-          "psutil"
+          "pymongo"
       ],
       extras_require={
           'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],
