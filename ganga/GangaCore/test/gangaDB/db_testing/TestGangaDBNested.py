@@ -83,13 +83,13 @@ class TestGangaDBNested(GangaUnitTest):
         from GangaCore.GPIDev.Base.Proxy import stripProxy
 
         from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonLoader, object_from_database
+            JsonRepresentation, object_from_database
         )
 
         # job_json = object_from_database(_filter={"name": "modified_name"})
         job_json = self.connection.jobs.find_one(filter={"id": 0})
 
-        loader = JsonLoader()
+        loader = JsonRepresentation()
         tmp_job, error = loader.parse_static(job_json)
         if error:
             raise Exception(error)

@@ -68,7 +68,7 @@ def object_from_database(_filter, document):
             Exception,
             f"{_filter} pair was not found in the document linked by {document.name}",
         )
-    loader = JsonLoader()
+    loader = JsonRepresentation()
     obj, error = loader.parse_static(content)
     return obj, error
 
@@ -136,13 +136,9 @@ class EmptyGangaObject(GangaObject):
         super(EmptyGangaObject, self).__init__()
 
 
-# TODO: This is currently not in use, idea behind use is that
-## docker container/database shuts or becomes irresponsive
 class DockerIncessableError(GangaException):
     message = "raise this error, when the database timeout passes"
     pass
-    # raise NotImplemented
-
 
 class DatabaseError(GangaException):
     def __init__(self, excpt, message):
@@ -220,7 +216,7 @@ class JsonDumper:
                 return node_info
 
 
-class JsonLoader:
+class JsonRepresentation:
     """Loads the Ganga Object from json
     """
     @staticmethod
@@ -237,14 +233,14 @@ class JsonLoader:
                 isinstance(json_content[key], dict)
                 or isinstance(json_content[key], list)
             ) and "category" in json_content[key]:
-                obj, local_error = JsonLoader.load_component_object(
+                obj, local_error = JsonRepresentation.load_component_object(
                     obj, key, json_content[key]
                 )
                 if local_error:
                     errors.append(local_error)
 
             else:
-                obj, local_error = JsonLoader.load_simple_object(
+                obj, local_error = JsonRepresentation.load_simple_object(
                     obj, key, json_content[key]
                 )
                 if local_error:
@@ -275,15 +271,15 @@ class JsonLoader:
                     temp_val = []
                     for val in part_attr[attr]:
                         if isinstance(val, dict) and "category" in part_attr[attr]:
-                            itr_obj, err = JsonLoader.load_list_object(val)
+                            itr_obj, err = JsonRepresentation.load_list_object(val)
                             if err:
                                 errors.append(err)
                             temp_val.append(itr_obj)
                         else:
-                            # itr_obj, err = JsonLoader.load_simple_object(component_obj, attr, val)
+                            # itr_obj, err = JsonRepresentation.load_simple_object(component_obj, attr, val)
                             temp_val.append(val)
 
-                    component_obj, local_error = JsonLoader.load_simple_object(
+                    component_obj, local_error = JsonRepresentation.load_simple_object(
                         component_obj, attr, temp_val
                     )
                     if local_error:
@@ -292,7 +288,7 @@ class JsonLoader:
                     isinstance(part_attr[attr],
                                dict) and "category" in part_attr[attr]
                 ):
-                    component_obj, local_error = JsonLoader.load_component_object(
+                    component_obj, local_error = JsonRepresentation.load_component_object(
                         component_obj, attr, part_attr[attr]
                     )
                 else:

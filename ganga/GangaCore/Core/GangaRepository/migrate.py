@@ -27,11 +27,8 @@ from GangaCore.Core.GangaRepository.container_controllers import (
     native_handler,
     docker_handler,
     udocker_handler,
-    singularity_handler,
+    singularity_handler, get_database_config
 )
-
-
-database_config = getConfig("DatabaseConfiguration")
 
 controller_map = {
     "native": native_handler,
@@ -141,8 +138,12 @@ def get_job_done():
     # prep_metadata_path = os.path.join(getLocalRoot(), '6.0', 'prep.metadata')
     # box_path = os.path.join(getLocalRoot(), '6.0', 'box')
 
+    gangadir = getConfig("Configuration")['gangadir']
+    database_config = get_database_config(gangadir)
+
     container_controller = controller_map[database_config["controller"]]
-    container_controller(database_config=database_config, action="start")
+    container_controller(database_config=database_config,
+                         action="start", gangadir=gangadir)
 
     PORT = database_config["port"]
     HOST = database_config["host"]
@@ -156,7 +157,7 @@ def get_job_done():
     job_metadata_migrate(connection)
     prep_metadata_migrate(connection)
 
-    container_controller(database_config=database_config, action="quit")
+    container_controller(database_config=database_config, action="quit", gangadir=gangadir)
 
 
 get_job_done()

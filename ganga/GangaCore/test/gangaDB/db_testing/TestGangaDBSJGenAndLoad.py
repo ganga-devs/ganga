@@ -149,12 +149,12 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         from GangaCore.GPIDev.Base.Proxy import stripProxy
 
         from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonLoader, object_from_database
+            JsonRepresentation, object_from_database
         )
 
         job_json = self.connection.jobs.find_one(
             filter={"id": 0, "master": -1})
-        loader = JsonLoader()
+        loader = JsonRepresentation()
         tmp_job, error = loader.parse_static(job_json)
         if error:
             raise Exception(error)
@@ -212,7 +212,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         from GangaCore.GPI import jobs, Job
         from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
         from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonLoader, object_from_database
+            JsonRepresentation, object_from_database
         )
 
         from GangaCore.GPI import jobs
@@ -246,7 +246,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         from GangaCore.GPI import jobs, Job
         from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
         from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonLoader, object_from_database
+            JsonRepresentation, object_from_database
         )
 
         from GangaCore.GPI import jobs
