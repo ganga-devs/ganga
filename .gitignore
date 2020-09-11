@@ -3,8 +3,10 @@
 *~
 __pycache__
 python/ganga.egg-info
+ganga.egg-info
 doc/_build
 .idea
+.vscode
 doc/API/Ganga*
 doc/API/ganga.rst
 doc/API/modules.rst

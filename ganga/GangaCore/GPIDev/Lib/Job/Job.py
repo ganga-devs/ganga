@@ -13,12 +13,11 @@ from GangaCore.GPIDev.MonitoringServices import getMonitoringObject
 from GangaCore.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError, TypeMismatchError, SplitterError
 from GangaCore.Core import Sandbox
 from GangaCore.Core.GangaRepository import getRegistry
-from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from GangaCore.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 from GangaCore.GPIDev.Base import GangaObject
-from GangaCore.GPIDev.Base.Objects import Node
+from GangaCore.GPIDev.Base.Objects import Node, synchronised
 from GangaCore.GPIDev.Base.Proxy import addProxy, getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
 from GangaCore.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
@@ -32,8 +31,13 @@ from GangaCore.Lib.Localhost import Localhost
 from GangaCore.Lib.Executable import Executable
 
 logger = getLogger()
-config = GangaCore.Utility.Config.getConfig('Configuration')
+config = getConfig('Configuration')
 
+
+if config["repositorytype"] == "Database":
+    from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
+else:
+    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList as SubJobJsonList
 
 def lazyLoadJobFQID(this_job):
     return lazyLoadJobObject(this_job, 'fqid')
@@ -492,6 +496,31 @@ class Job(GangaObject):
         #    raise AttributeError('cannot modify job.status directly, use job.updateStatus() method instead...')
         #del frame
 
+    # TODO: Make sure that if a component is in ignore_subs it is not visited at all
+    @synchronised
+    def to_json(self):
+        """Special Implementation of to_json for Job object
+        - A simple attribute: will not have the to_json function and thus we have to manually assign the value
+        - A componenet attribute: will have the to_json function and thus we can automatically generate the json dict for that and then assin it
+
+        """
+        node_info = {
+            "type": self._schema.name,
+            "version": f"{self._schema.version.major}.{self._schema.version.minor}",
+            "category": self._schema.category
+        }
+        if self._schema is None:
+            return node_info
+
+        for name, item in self._schema.allItems():
+            value = getattr(self, name)
+            if item['visitable']:
+                if hasattr(value, "to_json"):
+                    node_info[name] = (value.to_json())
+                else:
+                    node_info[name] = (value)
+        return node_info
+
     class State(object):
 
         def __init__(self, state, transition_comment='', hook=None):
@@ -735,7 +764,7 @@ class Job(GangaObject):
         This returns a set of all of the different subjob statuses whilst respecting lazy loading
         """
 
-        if isinstance(self.subjobs, SubJobXMLList):
+        if isinstance(self.subjobs, SubJobJsonList):
             stats = set(self.subjobs.getAllSJStatus())
         else:
             stats = set(sj.status for sj in self.subjobs)
@@ -744,7 +773,7 @@ class Job(GangaObject):
 
     def returnSubjobStatuses(self):
         stats = []
-        if isinstance(self.subjobs, SubJobXMLList):
+        if isinstance(self.subjobs, SubJobJsonList):
             stats = self.subjobs.getAllSJStatus()
         else:
             stats = [sj.status for sj in self.subjobs]
@@ -1123,14 +1152,14 @@ class Job(GangaObject):
         return None
 
     def prepare(self, force=False):
-        """A method to put a job's application into a prepared state. Returns 
+        """A method to put a job's application into a prepared state. Returns
         True on success.
 
         The benefits of preparing an application are twofold:
 
         1) The application can be copied from a previously executed job and
            run again over a different input dataset.
-        2) Sharing applications (and their associated files) between jobs will 
+        2) Sharing applications (and their associated files) between jobs will
            optimise disk usage of the Ganga client.
 
         See help(j.application.prepare) for application-specific comments.
@@ -1473,7 +1502,7 @@ class Job(GangaObject):
         from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 
         try:
-            assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
+            assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobJsonList)) and len(self.subjobs) == 0) )
         except AssertionError:
             raise JobManagerError("Number of subjobs in the job is inconsistent so not submitting the job")
 
@@ -1588,7 +1617,7 @@ class Job(GangaObject):
 
             if keep_on_fail:
                 self.updateStatus('failed')
-                
+
             else:
                 # revert to the new status
                 logger.error('%s ... reverting job %s to the new status', err, self.getFQID('.'))
@@ -1602,7 +1631,7 @@ class Job(GangaObject):
             - do not remove debug directory
             - cleanup subjobs
         This method is used as a hook for submitting->new transition
-        @see updateJobStatus() 
+        @see updateJobStatus()
         """
 
         # notify monitoring-services
@@ -2054,7 +2083,7 @@ class Job(GangaObject):
 
         if len(self._stored_subjobs_proxy) != len(self.subjobs):
 
-            if isType(self.subjobs, SubJobXMLList):
+            if isType(self.subjobs, SubJobJsonList):
                 subjob_slice.objects = self.subjobs
                 #self._stored_subjobs_proxy = _wrap(self._stored_subjobs_proxy)
             elif isType(self.subjobs, (list, GangaList)):
@@ -2178,7 +2207,7 @@ class Job(GangaObject):
 
     def splitterCopy(self, other_job, _ignore_atts=None):
         """
-        A method for copying the job object. This is a copy of the generic GangaObject method with 
+        A method for copying the job object. This is a copy of the generic GangaObject method with
         some checks removed for maximum speed. This should therefore be used with great care!
         """
 

@@ -42,13 +42,23 @@ def checkUDocker(location='~'):
     """Check whether UDocker is installed and the current user has right to access
 
         Return value: True or False"""
-
+    # check for linked udocker
+    nullOutput = open(os.devnull, 'wb')
+    try:
+        returnCode = subprocess.call(["udocker", "--help"], stdout=nullOutput, stderr=nullOutput)
+        if returnCode == 0 : return True
+    except:
+        pass 
+    # check for local udocker
     fname = os.path.join(os.path.expanduser(location),"udocker")
     nullOutput = open(os.devnull, 'wb')
     if (os.path.isfile(fname)):
-        returnCode = subprocess.call([fname, "ps"], stdout=nullOutput, stderr=nullOutput)
-        if (returnCode == 0):
-            return True
+        try:
+            returnCode = subprocess.call([fname, "ps"], stdout=nullOutput, stderr=nullOutput)
+            if (returnCode == 0):
+                return True
+        except:
+            pass
     return False
 
 
@@ -81,4 +91,3 @@ def installUdocker(location='~'):
     if (returnCode != 0):
         raise OSError('Error installing uDocker')
     print('UDocker Successfully installed')
-

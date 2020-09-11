@@ -1,7 +1,7 @@
 try:
-    from unittest.mock import patch
+    from unittest.mock import patch, call
 except ImportError:
-    from mock import patch
+    from mock import patch, call
 import unittest
 
 from GangaCore.Utility.Virtualization import checkUDocker
@@ -23,4 +23,4 @@ class TestCheckUDocker(unittest.TestCase):
         mock_is_file.sideeffect = [True]
         mock_subprocess_call.side_effect = [1]
         assert(checkUDocker() == False)
-        mock_subprocess_call.assert_called_once()
+        assert(mock_subprocess_call.call_count==2)

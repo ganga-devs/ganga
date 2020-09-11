@@ -183,7 +183,7 @@ def shutdown():
     try:
         if 'prep' in started_registries:
             registry = getRegistry('prep')
-            registry.shutdown()
+            registry.shutdown(kill=False)
             # in case this is called repeatedly, only call shutdown once
             started_registries.remove(registry.name)
     except Exception as err:
@@ -191,16 +191,21 @@ def shutdown():
         logger.error("Failed to Shutdown prep Repository!!! please check for stale lock files")
         logger.error("Trying to shutdown cleanly regardless")
 
-    for registry in getRegistries():
+    for itr, registry in enumerate(all_registries):
         thisName = registry.name
         try:
             if not thisName in started_registries:
                 continue
             # in case this is called repeatedly, only call shutdown once
             started_registries.remove(thisName)
-            registry.shutdown()  # flush and release locks
+            if itr == len(all_registries)-1:
+                registry.shutdown(kill=True)  # flush and release locks
+            else:
+                registry.shutdown(kill=False)  # flush and release locks
+
         except Exception as x:
-            logger.error("Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
+            raise x
+            logger.error("[X] Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
             logger.error("%s" % x)
             logger.error("Trying to Shutdown cleanly regardless")
 

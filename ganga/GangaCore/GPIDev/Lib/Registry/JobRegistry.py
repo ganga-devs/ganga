@@ -5,24 +5,26 @@
 # $Id: JobRegistry.py,v 1.1.2.1 2009-07-24 13:39:39 ebke Exp $
 ##########################################################################
 
-#from GangaCore.Utility.external.ordereddict import oDict
+import GangaCore.Utility.logging
+from GangaCore.GPIDev.Lib.Job.Job import Job
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
 
-from GangaCore.Core.exceptions import GangaException
-from GangaCore.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher
-
-from GangaCore.GPIDev.Base.Proxy import stripProxy, isType
-
-import GangaCore.Utility.logging
-
-from GangaCore.GPIDev.Lib.Job.Job import Job
-
-from .RegistrySlice import RegistrySlice
-
-from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
-
 # display default values for job list
-from .RegistrySlice import config
+from .RegistrySlice import RegistrySlice, config
+from .RegistrySliceProxy import RegistrySliceProxy, _unwrap, _wrap
+
+from GangaCore.Core.GangaRepository.Registry import (
+    RegistryAccessError, RegistryFlusher, RegistryKeyError
+)
+
+if getConfig('Configuration')["repositorytype"] in ["Database", "CentralDatabase"]:
+    from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
+else:
+    from GangaCore.Core.GangaRepository.Registry import Registry
+
 
 logger = GangaCore.Utility.logging.getLogger()
 
@@ -106,8 +108,10 @@ class JobRegistry(Registry):
             return this_job.status in ["new"]
 
         def _killJob(this_job):
-            logger.warning("Auto-Failing job in bad state: %s was %s" % (this_job.getFQID('.'), this_job.status))
-            logger.warning("To try this job again resubmit or use a backend.reset()")
+            logger.warning("Auto-Failing job in bad state: %s was %s" %
+                           (this_job.getFQID('.'), this_job.status))
+            logger.warning(
+                "To try this job again resubmit or use a backend.reset()")
             this_job.force_status('failed')
 
         reverse_job_list = list(self._objects.keys())
@@ -123,11 +127,12 @@ class JobRegistry(Registry):
                 if num_loaded == 5:
                     continue
                 try:
-                    num_loaded+=1
+                    num_loaded += 1
                     self._load(v)
                     logger.debug("Loaded job: %s" % v.getFQID('.'))
                 except RegistryLockError:
-                    logger.debug("Failed to load job, it's potentially being used by another ganga sesion")
+                    logger.debug(
+                        "Failed to load job, it's potentially being used by another ganga sesion")
                     continue
                 if v.subjobs:
                     haveKilled = False
@@ -138,7 +143,8 @@ class JobRegistry(Registry):
                     if not haveKilled:
                         if v.status == 'submitting':
                             v.updateStatus("submitted")
-                        logger.warning("Job status re-updated after potential force-close")
+                        logger.warning(
+                            "Job status re-updated after potential force-close")
                         v.updateMasterJobStatus()
                 else:
                     _killJob(v)
@@ -146,17 +152,17 @@ class JobRegistry(Registry):
                 if num_checked == 5:
                     continue
                 try:
-                    num_checked+=1
+                    num_checked += 1
                     self._load(v)
                     logger.debug("Loaded job: %s" % v.getFQID('.'))
                 except RegistryLockError:
-                    logger.debug("Failed to load job, it's potentially being used by another ganga sesion")
+                    logger.debug(
+                        "Failed to load job, it's potentially being used by another ganga sesion")
                     continue
 
-
-    def shutdown(self):
+    def shutdown(self, kill):
         self.flush_thread.join()
-        super(JobRegistry, self).shutdown()
+        super(JobRegistry, self).shutdown(kill=kill)
 
     def getJobTree(self):
         return self.jobtree
@@ -169,6 +175,7 @@ class JobRegistry(Registry):
             logger.debug("Exception in _remove: %s" % str(err))
             pass
 
+
 class JobRegistrySlice(RegistrySlice):
 
     def __init__(self, name):
@@ -179,11 +186,14 @@ class JobRegistrySlice(RegistrySlice):
         bg = Background()
         try:
             status_colours = config['jobs_status_colours']
-            self.status_colours = dict([(k, eval(v, {'fx': fx, 'fg': fg, 'bg': bg})) for k, v in status_colours.items()])
+            self.status_colours = dict(
+                [(k, eval(v, {'fx': fx, 'fg': fg, 'bg': bg})) for k, v in status_colours.items()])
         except Exception as x:
-            logger.warning('configuration problem with colour specification: "%s"', str(x))
+            logger.warning(
+                'configuration problem with colour specification: "%s"', str(x))
             status_colours = config.options['jobs_status_colours'].default_value
-            self.status_colours = dict([(k, eval(v, {'fx': fx, 'fg': fg, 'bg': bg})) for k, v in status_colours.items()])
+            self.status_colours = dict(
+                [(k, eval(v, {'fx': fx, 'fg': fg, 'bg': bg})) for k, v in status_colours.items()])
         self.fx = fx
         self._proxyClass = JobRegistrySliceProxy
 
@@ -229,29 +239,35 @@ class JobRegistrySlice(RegistrySlice):
                     return _wrap(self.objects[int(this_id)])
                 except KeyError:
                     if self.name == 'templates':
-                        raise RegistryKeyError('Template %d not found' % this_id)
+                        raise RegistryKeyError(
+                            'Template %d not found' % this_id)
                     else:
                         raise RegistryKeyError('Job %d not found' % this_id)
             elif this_id.count('.') == 1 and id.split('.')[0].isdigit() and this_id.split('.')[1].isdigit():
                 ids = this_id.split(".")
             else:
                 import fnmatch
-                jlist = [j for j in self.objects if fnmatch.fnmatch(j.name, this_id)]
+                jlist = [j for j in self.objects if fnmatch.fnmatch(
+                    j.name, this_id)]
                 if len(jlist) == 1:
                     return _wrap(jlist[0])
                 return jobSlice(jlist)
         else:
-            raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
+            raise RegistryAccessError(
+                'Expected a job id: int, (int,int), or "int.int"')
 
         if not len(ids) in [1, 2]:
-            raise RegistryAccessError('Too many ids in the access tuple, 2-tuple (job,subjob) only supported')
+            raise RegistryAccessError(
+                'Too many ids in the access tuple, 2-tuple (job,subjob) only supported')
 
         try:
             ids = [int(this_id) for this_id in ids]
         except TypeError:
-            raise RegistryAccessError('Expeted a job id: int, (int,int), or "int.int"')
+            raise RegistryAccessError(
+                'Expeted a job id: int, (int,int), or "int.int"')
         except ValueError:
-            raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
+            raise RegistryAccessError(
+                'Expected a job id: int, (int,int), or "int.int"')
 
         try:
             j = self.objects[ids[0]]
@@ -265,7 +281,8 @@ class JobRegistrySlice(RegistrySlice):
             try:
                 return _wrap(j.subjobs[ids[1]])
             except IndexError:
-                raise RegistryKeyError('Subjob %s not found' % ('.'.join([str(_id) for _id in ids])))
+                raise RegistryKeyError('Subjob %s not found' % (
+                    '.'.join([str(_id) for _id in ids])))
         else:
             return _wrap(j)
 
@@ -354,6 +371,7 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(stripProxy(self).__getitem__(_unwrap(x)))
 
+
 def jobSlice(joblist):
     """create a 'JobSlice' from a list of jobs
     example: jobSlice([j for j in jobs if j.name.startswith("T1:")])"""
@@ -362,4 +380,3 @@ def jobSlice(joblist):
     return _wrap(this_slice)
 
 # , "Create a job slice from a job list") exported to the Runtime bootstrap
-

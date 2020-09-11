@@ -4,6 +4,7 @@ import re
 import inspect
 import getpass
 import subprocess
+from GangaCore.Utility.Config import get_unique_name, get_unique_port
 from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours
 
 # Global Variable to enable Job Sharing mechanism required in GANGA SWAN INTEGRATION.
@@ -961,3 +962,31 @@ reg_config.addOption('DisableLoadCheck', True, 'Disable the checking of recent b
 cred_config = makeConfig('Credentials', 'This configures the credentials singleton')
 cred_config.addOption('CleanDelay', 1, 'Seconds between auto-clean of credentials when proxy externally destroyed')
 cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on disk')
+
+# ------------------------------------------------
+# Database
+db_config = makeConfig("DatabaseConfiguration", "Selection of database for ganga")
+# db_config.addOption("container_rc", expandvars(
+#     None, '~/gangadir/container.rc'), "The location of container.rc file")
+db_config.addOption("controller", "docker",
+                    "Database Controller [Native, Docker, uDocker, Singularity]")
+db_config.addOption("baseImage", "mongo", "Docker Image for the database")
+# db_config.addOption("containerName", container_name, "the identifier used to tag the docker container")
+db_config.addOption("username", "default", "username")
+db_config.addOption("password", "default", "password")
+db_config.addOption("host", "localhost", "host")
+# db_config.addOption("port", port, "port")
+# db_config.addOption("dbname", username, "name of database")
+
+# ------------------------------------------------
+# CentralDatabase, add option to interpret username
+db_config = makeConfig("CentralDatabaseConfiguration",
+                       "Selection of central database for ganga")
+db_config.addOption("database", "NotImplementedError",
+                    "others have not been implemented yet")
+db_config.addOption("containerName", "NotImplementedError", "the identifier used to tag the docker container")
+db_config.addOption("username", "NotImplementedError", "username")
+db_config.addOption("password", "NotImplementedError", "password")
+db_config.addOption("host", "NotImplementedError", "host")
+db_config.addOption("port", "NotImplementedError", "port")
+db_config.addOption("dbname", "NotImplementedError", "name of database")
