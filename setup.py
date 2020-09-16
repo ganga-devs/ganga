@@ -72,6 +72,7 @@ class RunTestsCommand(Command):
 
 pythonPackages = find_packages('./')
 pythonPackages.append('ganga/GangaRelease')
+pythonPackages.append('ganga/GangaGUI')
 
 setup(name='ganga',
       description='Job management tool',
