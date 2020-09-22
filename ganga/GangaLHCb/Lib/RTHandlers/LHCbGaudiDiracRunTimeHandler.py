@@ -52,8 +52,11 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
-        data_str = 'import os\n'
-        data_str += 'execfile(\'data.py\')\n'
+        data_str = ''
+
+        if job.inputdata:
+            data_str = 'import os\n'
+            data_str += 'execfile(\'data.py\')\n'
 
         if hasattr(job, '_splitter_data'):
             data_str += job._splitter_data
