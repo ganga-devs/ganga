@@ -72,6 +72,7 @@ class RunTestsCommand(Command):
 
 pythonPackages = find_packages('./')
 pythonPackages.append('ganga/GangaRelease')
+pythonPackages.append('ganga/GangaGUI')
 
 setup(name='ganga',
       description='Job management tool',
@@ -81,8 +82,8 @@ setup(name='ganga',
       author='Ganga Developers',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',
-      scripts=['bin/ganga'],
-      package_dir={'ganga':'ganga', 'GangaRelease':'ganga/GangaRelease'},
+      scripts=['bin/ganga', 'bin/ganga-gui'],
+      package_dir={'ganga':'ganga', 'GangaRelease':'ganga/GangaRelease', 'GangaGUI':'ganga/GangaGUI'},
       packages=pythonPackages,
       install_requires=[
           'ipython>=5.0.0',
@@ -111,7 +112,7 @@ setup(name='ganga',
           'Programming Language :: Python :: 3.6',
       ],
       include_package_data=True,
-      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh', 'tools/ganga-cvmfs-install-dev.sh']},
+      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh', 'tools/ganga-cvmfs-install-dev.sh'], 'GangaGUI':['gui/templates/*.html', 'gui/static/css/main.css', 'gui/static/js/*.js']},
       cmdclass={
           'tests': RunTestsCommand,
       },
