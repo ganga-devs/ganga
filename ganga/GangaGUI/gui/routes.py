@@ -1820,7 +1820,7 @@ def ping_internal():
 
         print("Internal API server not online (mostly because Ganga is booting up), retrying...")
         trials += 1
-        if trials > 10:
+        if trials > 20:
             return False
 
 
