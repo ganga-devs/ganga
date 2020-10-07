@@ -48,7 +48,7 @@ sys.path.insert(0, os.path.join(os.getcwd(), '_python'))
 ###WN_INPUTFILES###
 
 ###WN_INPUTDATA###
- 
+
 for key, value in ###JOBCONFIG_ENV###.items():
    os.environ[ key ] = value
 
