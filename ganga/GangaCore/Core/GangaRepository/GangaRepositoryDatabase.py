@@ -869,8 +869,6 @@ class GangaRepositoryLocal(GangaRepository):
         """get_session_list()
         Tries to determine the other sessions that are active and returns an informative string for each of them.
         """
-        # import psutil
-        # return [str(proc) for proc in psutil.process_iter() if proc.name() == 'ganga' and proc.pid != os.getpid()]
         return self.sessionlock.get_other_sessions()
 
 

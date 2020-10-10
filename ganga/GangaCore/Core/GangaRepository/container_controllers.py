@@ -3,7 +3,6 @@
 import os
 import time
 import docker
-import psutil
 import subprocess
 
 from GangaCore.Utility import logging
@@ -38,6 +37,45 @@ class ContainerCommandError(Exception):
         return f"[{self.controller}]: Errored with {self.message}"
 
 
+def mongo_processes():
+    """
+    Lists all the running processes on the system
+    """
+    status_command = "ps -aux | grep mongod"
+    output = subprocess.Popen(
+        ['ps', 'aux'],
+        stdout=subprocess.PIPE
+    ).stdout.readlines()
+    output = [i.decode("utf-8") for i in output]
+    headers = [h for h in ' '.join(output[0].strip().split()).split() if h]
+    raw_data = map(
+        lambda s:
+        s.strip().split(None, len(headers) - 1), output[1:]
+    )
+    procs = [dict(zip(headers, r)) for r in raw_data]
+
+    # check if the program is related to mongo
+    mongo_procs = [proc for proc in procs if "mongo" in proc["COMMAND"]]
+    for idx in range(len(mongo_procs)):
+        mongo_procs[idx]["environ"] = get_proc_environ(mongo_procs[idx]["PID"])
+
+    return mongo_procs
+
+
+def get_proc_environ(pid):
+    """
+    Get environ information from the proc/pid/environ
+    """
+    output = subprocess.Popen(
+        ["cat", f"/proc/{pid}/environ"],
+        stdout=subprocess.PIPE
+    ).stdout.readlines()
+    output = [i.decode("utf-8") for i in output]
+
+    return " ".join(output)
+
+
+
 def checkNative():
     """
     Check if the mongo database is instanlled locally
@@ -55,6 +93,7 @@ def checkNative():
         return True
     return False
 
+
 def get_database_config(gangadir):
     """
     Generate the requried variables for database config
@@ -62,13 +101,14 @@ def get_database_config(gangadir):
 
     """
     values_to_copy = ["controller", "host",
-                        "baseImage", "username", "password"]
+                      "baseImage", "username", "password"]
     logger = getLogger()
     config = dict([
         (key, getConfig("DatabaseConfiguration")[key])
         for key in values_to_copy
     ])
-    container_config_loc = os.path.join(getConfig("Configuration")['gangadir'], "container.rc")
+    container_config_loc = os.path.join(getConfig("Configuration")[
+                                        'gangadir'], "container.rc")
 
     if gangadir:
         container_config_loc = os.path.join(gangadir, "container.rc")
@@ -117,25 +157,19 @@ def mongod_exists(controller, cname=None):
             f"Not Implemented for controller of type: {controller}"
         )
 
-    procs = [proc for proc in psutil.process_iter() if proc.name() == "mongod"]
+    all_procs = mongo_processes()
+    procs = [proc for proc in all_procs]
     for proc in procs:
-        proc_dict = proc.as_dict()
-        if "environ" in proc_dict and proc_dict["environ"]:
-            if controller == "udocker":
-                if (
-                    cname
-                    and "container_names" in proc_dict["environ"]
-                    and proc_dict["environ"]["container_names"] == cname
-                ):
-                    return proc
-                if ["container_uuid", "container_root", "container_names"] in list(
-                    proc_dict["environ"].keys()
-                ):
-                    return proc
-            elif controller == "singularity":
-                if "SINGULARITY_CONTAINER" in proc_dict["environ"]:
-                    if proc_dict["environ"]["SINGULARITY_CONTAINER"] == cname:
-                        return proc
+        if controller == "udocker":
+            if (
+                cname
+                and "container_names" in proc["environ"]
+                and cname in proc["environ"]
+            ):
+                return proc
+        elif controller == "singularity":
+            if "SINGULARITY_CONTAINER" in proc["environ"] and cname in proc["environ"]:
+                return proc
     return None
 
 
@@ -249,21 +283,14 @@ def singularity_handler(database_config, action, gangadir):
                                     f"Singularity container could not start because of: {log['attr']['error']}")
                 except:
                     pass
-                finally:
-                    print(f"The avail processes are: {[proc for proc in psutil.process_iter() if proc.name() == 'mongod']}")
-                    raise ContainerCommandError(
-                        message="For more information check the logs at $GANGADIR/logs/mongod-ganga.log",
-                        controller="singularity"
-                    )
             logger.info(
                 f"Singularity gangaDB started on port: {database_config['port']}"
             )
     elif action == "quit":
         proc_status = mongod_exists(controller="singularity", cname=sif_file)
-        # if proc_status is not None or errored:
-        if proc_status is not None and proc_status.status() != "terminated":
+        if proc_status is not None:
             logger.debug(
-                f"mongod process killed was: {proc_status}", proc_status.status(), )
+                f"mongod process killed was: {proc_status}")
             logger.debug("stopping singularity container using: ",
                          stop_container)
             proc = subprocess.Popen(
