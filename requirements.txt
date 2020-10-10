@@ -9,4 +9,3 @@ coverage
 pygments
 pymongo
 docker
-psutil
