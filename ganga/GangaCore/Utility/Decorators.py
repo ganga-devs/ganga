@@ -49,7 +49,7 @@ def repeat_while_none(max=5, first=0.1, multiplier=2, message='Waiting'):
                 ret = func(*args, **kwargs)
                 if ret is not None:
                     break
-                logger.info(ret)
+                logger.info(message)
                 time.sleep(multiplier*i)
             return ret
         return wrapper_repeat
