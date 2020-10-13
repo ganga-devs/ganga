@@ -2,6 +2,7 @@
 
 import os
 import time
+import sys
 import docker
 import subprocess
 import gdown
@@ -172,7 +173,7 @@ def mongod_exists(controller, cname=None):
                 return proc
     return None
 
-@repeat_while_none(message='Waiting for mongod database to start')
+@repeat_while_none(max=10, message='Waiting for mongod database to start')
 def mongod_exists_wait(controller, cname=None):
     return mongod_exists(controller, cname)
 
@@ -271,7 +272,7 @@ def singularity_handler(database_config, action, gangadir):
 
             if proc_status is None:
                 # reading the logs from the file
-                logger.error('Problem finding singularity process')
+                logger.fatal('Problem finding singularity process')
                 try:
                     import json
                     err_string = open(
@@ -284,6 +285,7 @@ def singularity_handler(database_config, action, gangadir):
                                     f"Singularity container could not start because of: {log['attr']['error']}")
                 except:
                     pass
+                sys.exit(1)
             logger.info(
                 f"Singularity gangaDB started on port: {database_config['port']}"
             )
