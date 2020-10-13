@@ -4,6 +4,7 @@ import os
 import time
 import docker
 import subprocess
+import gdown
 
 from GangaCore.Utility import logging
 from GangaCore.Utility.Config import getConfig
@@ -179,17 +180,12 @@ def download_mongo_sif(path):
     """
     Download and save the mongo.sif file in the path
     """
-    import gdown  # download the required sif file
+    os.makedirs(path, exist_ok=True)
     url = 'https://cernbox.cern.ch/index.php/s/fv37NbLf24FpoWY/download'
-    output = 'mongo.sif'
-    gdown.download(url, output, quiet=False)
+    fname = os.path.join(path, 'mongo.sif')
 
-    import shutil  # copy the files from repository to testing directory
-    shutil.copy(
-        src="mongo.sif",
-        dst=path
-    )
-
+    gdown.download(url, fname, quiet=False)
+    
 
 def create_mongodir(gangadir):
     """
