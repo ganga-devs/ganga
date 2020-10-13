@@ -101,7 +101,8 @@ setup(name='ganga',
           'Flask-SocketIO>=4.3.1',
           'eventlet>=0.26.1',
           "docker",
-          "pymongo"
+          "pymongo",
+          "gdown"
       ],
       extras_require={
           'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],
