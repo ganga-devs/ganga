@@ -14,7 +14,7 @@ from GangaCore.Utility.Virtualization import (
     checkSingularity, installUdocker
 )
 from GangaCore.Utility.Config import get_unique_name, get_unique_port
-
+from GangaCore.Utility.Decorators import repeat_while_none
 
 logger = logging.getLogger()
 UDOCKER_LOC = os.path.expanduser(getConfig("Configuration")["UDockerlocation"])
@@ -145,7 +145,6 @@ def get_database_config(gangadir):
 
     return config
 
-
 def mongod_exists(controller, cname=None):
     """
     Check of `mongod` process is running on the system
@@ -172,6 +171,9 @@ def mongod_exists(controller, cname=None):
                 return proc
     return None
 
+@repeat_while_none(message='Waiting for mongod database to start')
+def mongod_exists_wait(controller, cname=None):
+    return mongod_exists(controller, cname)
 
 def download_mongo_sif(path):
     """
@@ -258,7 +260,7 @@ def singularity_handler(database_config, action, gangadir):
         proc_status = mongod_exists(controller="singularity", cname=sif_file)
         if proc_status is None:
             logger.debug(
-                "starting singularity container using command: ", start_container)
+                f"Starting singularity container using command: {start_container}")
             proc = subprocess.Popen(
                 start_container,
                 shell=True,
@@ -266,11 +268,12 @@ def singularity_handler(database_config, action, gangadir):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            time.sleep(1)  # give a second for the above command to propagate
-            proc_status = mongod_exists(
+            proc_status = mongod_exists_wait(
                 controller="singularity", cname=sif_file)
+
             if proc_status is None:
                 # reading the logs from the file
+                logger.error('Problem finding singularity process')
                 try:
                     import json
                     err_string = open(
@@ -364,8 +367,7 @@ def udocker_handler(database_config, action, gangadir):
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            time.sleep(2)  # give a second for the above ommand to propagate
-            proc_status = mongod_exists(
+            proc_status = mongod_exists_wait(
                 controller="udocker", cname=database_config["containerName"]
             )
             if proc_status is None:
