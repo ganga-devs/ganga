@@ -237,13 +237,13 @@ def singularity_handler(database_config, action, gangadir):
         # )
 
     bind_loc = create_mongodir(gangadir=gangadir)
-    start_container = f"""singularity run \
+    start_container = f"""env MONGO_SIF={sif_file} singularity run \
     --bind {bind_loc}:/data \
     {sif_file} mongod \
     --port {database_config['port']} \
     --logpath {gangadir}/logs/mongod-ganga.log"""
 
-    stop_container = f"""singularity run \
+    stop_container = f"""env MONGO_SIF={sif_file} singularity run \
     --bind {bind_loc}:/data \
     {sif_file} mongod --port {database_config['port']} --shutdown"""
 
