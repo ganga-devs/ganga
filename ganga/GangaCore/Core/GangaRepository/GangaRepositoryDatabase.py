@@ -42,6 +42,8 @@ from GangaCore.Core.GangaRepository.DStreamer import (
     DatabaseError,
 )
 
+from GangaCore.Utility.Decorators import repeat_while_none
+
 # Simple Patch to avoid SubJobJsonList not found in internal error
 allPlugins.add(SubJobJsonList, "internal", "SubJobJsonList")
 
@@ -472,31 +474,26 @@ class GangaRepositoryLocal(GangaRepository):
                 raise NotImplementedError(
                     "Call function to save master index here.")
 
+    @repeat_while_none(max=10, message='Waiting for Mongo DB to reply')
     def _read_master_cache(self):
         """Reads the index document from the database
         """
         logger.debug("Reading the MasterCache")
-        # try:
-        master_cache = self.connection.index.find(
-            filter={"category": self.registry.name, "master": -1}
-        )  # loading masters so.
-        if master_cache:
-            for cache in master_cache:
-                self.index_load(this_id=cache["id"], item=cache)
-            return dict([(_["id"], True) for _ in master_cache])
-        else:
-            logger.debug(
-                "No master index information exists, new/blank repository startup is assumed"
-            )
-            return {}
-        # except pymongo.errors.ServerSelectionTimeoutError as e:
-        #     # raise e
-        #     import sys
-        #     logger.info(
-        #         "Mongod could not start, please check the log at $GANGADIR/data/daemon-mongod.log")
-        #     self.container_controller(
-        #         database_config=self.database_config, action="quit", errored=True)
-        #     sys.exit()
+        try:
+            master_cache = self.connection.index.find(
+                filter={"category": self.registry.name, "master": -1}
+            )  # loading masters so.
+            if master_cache:
+                for cache in master_cache:
+                    self.index_load(this_id=cache["id"], item=cache)
+                return dict([(_["id"], True) for _ in master_cache])
+            else:
+                logger.debug(
+                    "No master index information exists, new/blank repository startup is assumed"
+                )
+                return {}
+        except pymongo.errors.ServerSelectionTimeoutError as e:
+            return None
 
     def _clear_stored_cache(self):
         """
