@@ -173,7 +173,7 @@ def mongod_exists(controller, cname=None):
                 return proc
     return None
 
-@repeat_while_none(max=10, message='Waiting for mongod database to start')
+@repeat_while_none(max=10, message='Waiting for Mongo DB to start')
 def mongod_exists_wait(controller, cname=None):
     return mongod_exists(controller, cname)
 
