@@ -285,7 +285,7 @@ def singularity_handler(database_config, action, gangadir):
     if not has_correct_hash:
         import sys
         logger.fatal((
-            "sif_file does not match the expected hash." +
+            f"sif_file at {sif_file} does not match the expected hash." +
             " Delete it to automatically download the correct file."
         ))
         sys.exit(1)
