@@ -48,9 +48,9 @@ if not _after_bootstrap:
     configLHCb.addOption('LocalSite', '', dscrpt)
 
     dscrpt = 'Files from these services will go to the output sandbox (unless \
-    overridden by the user in a specific job via the Job.outputdata field). Files \
+    overridden by the user in a specific job via the Job.outputfiles field). Files \
     from all other known handlers will go to output data (unless overridden by \
-    the user in a specific job via the Job.outputsandbox field).'
+    the user in a specific job via the Job.outputfiles field).'
     configLHCb.addOption('outputsandbox_types',
                          ['CounterSummarySvc', 'NTupleSvc',
                           'HistogramPersistencySvc', 'MicroDSTStream',
