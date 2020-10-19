@@ -77,7 +77,6 @@ def get_proc_environ(pid):
     return " ".join(output)
 
 
-
 def checkNative():
     """
     Check if the mongo database is instanlled locally
@@ -147,6 +146,7 @@ def get_database_config(gangadir):
 
     return config
 
+
 def mongod_exists(controller, cname=None):
     """
     Check of `mongod` process is running on the system
@@ -173,9 +173,35 @@ def mongod_exists(controller, cname=None):
                 return proc
     return None
 
+
 @repeat_while_none(max=10, message='Waiting for Mongo DB to start')
 def mongod_exists_wait(controller, cname=None):
     return mongod_exists(controller, cname)
+
+
+def check_sif_file_hash(path):
+    """Check the hash of the sif file used by singularity
+    Args:
+        path (str): Location of the sif file
+    """
+    import hashlib
+
+    DEF_HASH = "a3833a7eb669f21f27de130495e2e1ba"
+
+    m = hashlib.md5()
+    hashfile = open(path, "rb")
+    while True:
+        data = hashfile.read(4*1024*1024)
+        if not data:
+            break
+        m.update(data)
+    hashedMd5 = m.hexdigest()
+
+    if DEF_HASH == hashedMd5:
+        return True
+    else:
+        return False
+
 
 def download_mongo_sif(path):
     """
@@ -186,7 +212,7 @@ def download_mongo_sif(path):
     fname = os.path.join(path, 'mongo.sif')
 
     gdown.download(url, fname, quiet=False)
-    
+
 
 def create_mongodir(gangadir):
     """
@@ -254,6 +280,15 @@ def singularity_handler(database_config, action, gangadir):
         raise Exception("Singularity seems to not be installed on the system.")
     if action not in ["start", "quit"]:
         raise NotImplementedError(f"Illegal Opertion on container")
+
+    has_correct_hash = check_sif_file_hash(sif_file)
+    if not has_correct_hash:
+        import sys
+        logger.fatal((
+            f"sif_file at {sif_file} does not match the expected hash." +
+            " Delete it to automatically download the correct file."
+        ))
+        sys.exit(1)
 
     if action == "start":
         proc_status = mongod_exists(controller="singularity", cname=sif_file)
