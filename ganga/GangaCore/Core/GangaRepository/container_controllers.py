@@ -320,6 +320,7 @@ def singularity_handler(database_config, action, gangadir):
                                     f"Singularity container could not start because of: {log['attr']['error']}")
                 except:
                     pass
+                import sys
                 sys.exit(1)
             logger.info(
                 f"Singularity gangaDB started on port: {database_config['port']}"
