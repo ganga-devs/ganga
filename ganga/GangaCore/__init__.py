@@ -29,7 +29,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '8.4.1'
+_gangaVersion = '8.4.2'
 _development = True
 
 # store a path to Ganga libraries
@@ -113,7 +113,7 @@ conf_config.addOption('ReleaseNotes', True, 'Flag to print out the relevent subs
 conf_config.addOption('used_versions_path', '~/.cache/Ganga/', 'Path to the directory to store the file listing the used ganga versions')
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
                  'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=GangaCore.Utility.Config.expandvars)
-conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
+conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML, Database')
 conf_config.addOption('lockingStrategy', 'UNIX', 'Type of locking strategy which can be used. UNIX or FIXED . default = UNIX')
 conf_config.addOption('workspacetype', 'LocalFilesystem',
                  'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
@@ -969,7 +969,7 @@ db_config = makeConfig("DatabaseConfiguration", "Selection of database for ganga
 # db_config.addOption("container_rc", expandvars(
 #     None, '~/gangadir/container.rc'), "The location of container.rc file")
 db_config.addOption("controller", "docker",
-                    "Database Controller [Native, Docker, uDocker, Singularity]")
+                    "Database Controller [native, docker, udocker, singularity]")
 db_config.addOption("baseImage", "mongo", "Docker Image for the database")
 # db_config.addOption("containerName", container_name, "the identifier used to tag the docker container")
 db_config.addOption("username", "default", "username")
