@@ -268,6 +268,7 @@ def singularity_handler(database_config, action, gangadir):
     singularity --quiet run \
     --bind {bind_loc}:/data \
     {sif_file} mongod \
+    --nojournal
     --port {database_config['port']} \
     --logpath {gangadir}/logs/mongod-ganga.log"""
 
@@ -366,7 +367,7 @@ def udocker_handler(database_config, action, gangadir):
     start_container = f"""udocker run \
     --volume={bind_loc}/db:/data/db \
     --publish={database_config['port']}:27017 \
-    {database_config['containerName']} --logpath mongod-ganga.log
+    {database_config['containerName']} --logpath mongod-ganga.log --nojournal
     """
 
     if not checkUDocker():
