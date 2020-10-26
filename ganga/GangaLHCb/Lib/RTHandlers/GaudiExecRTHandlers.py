@@ -724,11 +724,12 @@ def flush_streams(pipe):
     '''
     with pipe.stdout or pipe.stderr:
         if pipe.stdout:
-            for next_line in iter(pipe.stdout.readline, b''):
+            for next_line in iter(pipe.stdout.readline, ''):
                 print("%s" % next_line, file=sys.stdout, end='')
                 sys.stdout.flush()
+            pipe.stdout.close()
         if pipe.stderr:
-            for next_line in iter(pipe.stderr.readline, b''):
+            for next_line in iter(pipe.stderr.readline, ''):
                 print("%s" % next_line, file=sys.stderr, end='')
                 sys.stderr.flush()
 
@@ -757,7 +758,7 @@ if __name__ == '__main__':
 
     # Execute the actual command on the WN
     # NB os.system caused the entire stream to be captured before being streamed in some cases
-    pipe = subprocess.Popen('###COMMAND###'+' '+' '.join(sys.argv[1:]), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    pipe = subprocess.Popen('###COMMAND###'+' '+' '.join(sys.argv[1:]), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
 
     # Flush the stdout/stderr as the process is running correctly
     flush_streams(pipe)
