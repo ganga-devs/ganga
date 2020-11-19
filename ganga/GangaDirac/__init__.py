@@ -68,6 +68,7 @@ if not _after_bootstrap:
 
     configDirac.addOption('statusmapping', {'Checking': 'submitted',
                                             'Completed': 'running',
+                                            'Completing': 'running',
                                             'Deleted': 'failed',
                                             'Done': 'completed',
                                             'Failed': 'failed',
