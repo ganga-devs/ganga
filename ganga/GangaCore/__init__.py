@@ -990,3 +990,7 @@ db_config.addOption("password", "NotImplementedError", "password")
 db_config.addOption("host", "NotImplementedError", "host")
 db_config.addOption("port", "NotImplementedError", "port")
 db_config.addOption("dbname", "NotImplementedError", "name of database")
+
+google_config = makeConfig('Google','This controls the OAuth client used for connecting to Google')
+google_config.addOption("client_id", "", "The client ID of the Oauth client that you have created yourself")
+google_config.addOption("client_secret", "", "The client secret of the Oauth client that you have created yourself")
