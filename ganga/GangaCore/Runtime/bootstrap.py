@@ -1092,7 +1092,10 @@ under certain conditions; type license() for details.
                     setConfigOption('PollThread','forced_shutdown_policy', 'timeout')
                 from GangaCore.Core.GangaThread import GangaThreadPool
                 GangaThreadPool.shutdown_policy = 'batch'
+                scriptdir = os.path.abspath(os.path.dirname(script))
+                sys.path.insert(0,scriptdir)
                 exec(compile(open(script).read(), script, 'exec'), local_ns)
+                sys.path.remove(scriptdir)
             else:
                 logger.error("'%s' not found" % self.args[0])
                 logger.info("Searched in path %s" % path)
