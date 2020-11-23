@@ -137,7 +137,19 @@ class ColourFormatter(logging.Formatter, object):
         else:
             self.markup = ColourText.NoMarkup()
 
+class SafeRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    """
+    Derives from the RotatingFileHandler but ensures that if access to file is lost, it will just silently
+    continue.
+    """
+    
+    def __init__(self, *args, **kwargs):
+        logging.handlers.RotatingFileHandler.__init__(self, *args, **kwargs)
 
+    def handleError(self, record):
+        private_logger.error('Error writing to the log file.')
+
+            
 def _set_formatter(handler, this_format=None):
     """ Set the formatter for this handler. 1 formatter per handler.
     Precdence in deciding which format to use
@@ -166,7 +178,7 @@ def _make_file_handler(logfile, logfile_size):
             # This guarantees the logfile exists before we setup the handler, we've seen strange intermittent bugs if this isn't done
             with open(logfile, 'w'):
                 pass
-            new_file_handler = logging.handlers.RotatingFileHandler(logfile, maxBytes=logfile_size, backupCount=1)
+            new_file_handler = SafeRotatingFileHandler(logfile, maxBytes=logfile_size, backupCount=1)
         except IOError as x:
             private_logger.error('Cannot open the log file: %s', str(x))
             return
