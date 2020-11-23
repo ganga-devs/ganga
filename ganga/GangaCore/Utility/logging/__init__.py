@@ -433,12 +433,14 @@ def _getLogger(name=None, modulename=None):
 
         _allLoggers[name] = logger
 
-        if name in config:
+        if _global_level:
+            level = _global_level
+        elif name in config:
             level = config[name]
         elif 'Ganga' in config:
             level = config['Ganga']
         else:
-            level = _global_level or 'INFO'
+            level = 'INFO'
 
         _set_log_level(logger, level)
 
