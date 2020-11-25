@@ -12,18 +12,16 @@ RUN groupadd -r ganga -g 1000 && \
 # Set the working directory to ganga home directory
 WORKDIR /home/ganga
 
+# Install pip, virtualenv and ganga
+RUN python3 -m pip install --upgrade pip setuptools wheel && \
+    python3 -m pip install "PySocks!=1.5.7,>=1.5.6" && \
+    python3 -m pip install -e git+https://github.com/ganga-devs/ganga.git@$ganga_version#egg=ganga
+
 # Specify the user to execute all commands below
 USER ganga
 
-# Install pip, virtualenv and ganga
-RUN python3 -m venv ganga_env && \
-    . ~/ganga_env/bin/activate && \
-    python3 -m pip install --upgrade pip setuptools wheel && \
-    python3 -m pip install "PySocks!=1.5.7,>=1.5.6" && \
-    python3 -m pip install -e git+https://github.com/ganga-devs/ganga.git@$ganga_version#egg=ganga && \
-    yes | ganga -g && \
+RUN yes | ganga -g && \
     mkdir -p ~/.cache/Ganga && \
     echo $ganga_version >  ~/.cache/Ganga/.used_versions
 
-ENTRYPOINT . ~/ganga_env/bin/activate && \
-           /bin/bash
+ENTRYPOINT /bin/bash
