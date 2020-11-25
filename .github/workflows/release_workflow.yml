@@ -29,7 +29,8 @@ jobs:
         echo "::set-env name=VERSION::${VERSION}"
         sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
         sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ganga/GangaCore/__init__.py
-        git add ./setup.py ganga/GangaCore/__init__.py
+        sed --in-place "s/^ARG ganga_version=.*/ARG ganga_version='${VERSION}'/g" ganga/GangaCore/Dockerfile
+        git add ./setup.py ganga/GangaCore/__init__.py ganga/GangaCore/Dockerfile
         git commit -m "Setting version number constants"
     - name: Commit release notes
       run: |

@@ -2,7 +2,7 @@ FROM centos:7
 LABEL maintainer "Ulrik Egede <ulrik.egede@monash.edu>"
 ARG ganga_version=8.4.2
 
-RUN yum install -y wget python3
+RUN yum -y update && yum install -y wget git python3
 
 # Add the user UID:1000, GID:1000, home at /home/ganga
 RUN groupadd -r ganga -g 1000 && \
@@ -18,9 +18,12 @@ USER ganga
 # Install pip, virtualenv and ganga
 RUN python3 -m venv ganga_env && \
     . ~/ganga_env/bin/activate && \
-    python3 -m pip install ganga==$ganga_version && \
+    python3 -m pip install --upgrade pip setuptools wheel && \
+    python3 -m pip install "PySocks!=1.5.7,>=1.5.6" && \
+    python3 -m pip install -e git+https://github.com/ganga-devs/ganga.git@$ganga_version#egg=ganga && \
     yes | ganga -g && \
-    echo $ganga_version > ~/gangadir/.used_versions
+    mkdir -p ~/.cache/Ganga && \
+    echo $ganga_version >  ~/.cache/Ganga/.used_versions
 
 ENTRYPOINT . ~/ganga_env/bin/activate && \
            /bin/bash
