@@ -197,20 +197,13 @@ def _set_log_level(logger, value):
 
     global _global_level
 
-    if _global_level is not None:
-        value = _global_level
-
-    # convert a string "DEBUG" into enum object logging.DEBUG
-    def _string2level(name):
-        if hasattr(logging, name):
-            return getattr(logging, name)
-
     try:
-        logger.setLevel(_string2level(value))
+        logger.setLevel(value)
         return value
     except AttributeError as err:
         logger.error('Attribute Error: %s', str(err))
-        logger.warning('possible configuration error: invalid level value (%s), using default level', value)
+        logger.warning('possible configuration error: invalid level value (%s), using default level',
+                       _global_level or logging.INFO)
         return None
 
 
@@ -263,8 +256,7 @@ def post_config_handler(opt, value):
     if private_logger is not None:
         private_logger.info('setting loglevel: %s %s', opt, value)
 
-    if _set_log_level is not None and getLogger is not None:
-        _set_log_level(getLogger(opt), value)
+    _set_log_level(getLogger(opt), value)
 
 
 config.attachUserHandler(None, post_config_handler)
@@ -431,7 +423,7 @@ def _getLogger(name=None, modulename=None):
     if name is None:
         name = _guess_module_logger_name(modulename)
 
-    if name.split('.')[0] != 'Ganga' and name != 'Ganga':
+    if not name.startswith('Ganga'):
         name = 'GangaCore.' + name
 
     if name in _allLoggers:
@@ -441,11 +433,16 @@ def _getLogger(name=None, modulename=None):
 
         _allLoggers[name] = logger
 
-        if name in config:
-            thisConfig = config[name]
-            _set_log_level(logger, thisConfig)
+        if _global_level:
+            level = _global_level
+        elif name in config:
+            level = config[name]
+        elif 'Ganga' in config:
+            level = config['Ganga']
         else:
-            logger.setLevel(_global_level or logging.INFO)
+            level = 'INFO'
+
+        _set_log_level(logger, level)
 
         return logger
 
