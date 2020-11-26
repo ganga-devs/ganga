@@ -1009,6 +1009,8 @@ under certain conditions; type license() for details.
         logger = getLogger("run")
         logger.debug("Entering run")
 
+        sys.path.insert(0,'')
+
         if self.options.webgui == True:
             from GangaGUI.start import start_gui
             start_gui()
