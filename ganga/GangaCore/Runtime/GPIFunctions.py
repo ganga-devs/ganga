@@ -1,3 +1,5 @@
+import sys
+import os.path
 import runpy
 from GangaCore.GPI import *
 
@@ -112,4 +114,7 @@ def runfile(path_to_file):
     """
     if not isinstance(path_to_file, str):
         raise ValueError("path_to_file must be a string containing the path to the file to be executed. ")
+    scriptdir = os.path.abspath(os.path.dirname(path_to_file))
+    sys.path.insert(0,scriptdir)
     runpy.run_path(path_to_file, init_globals=globals())
+    sys.path.remove(scriptdir)
