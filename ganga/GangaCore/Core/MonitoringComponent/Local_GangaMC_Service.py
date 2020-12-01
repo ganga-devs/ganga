@@ -580,11 +580,7 @@ class JobRegistry_Monitor(GangaThread):
             # synchronize the main loop since we can get disable requests
             with self.__mainLoopCond:
 
-                log.debug("steps: %s" % str(self.steps))
-                log.debug("%s" % str(self.registry_slice))
-
-                log.debug("Monitoring loop __mainLoopCond")
-                log.debug('Monitoring loop lock acquired. Running loop')
+                log.debug('Monitoring loop lock acquired. Running loop: Steps %s' % str(self.steps))
                 # we are blocked here while the loop is disabled
                 while not self.enabled and self.steps <= 0:
                     log.debug("Not enabled")
