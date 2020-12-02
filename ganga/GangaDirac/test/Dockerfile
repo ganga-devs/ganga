@@ -5,7 +5,7 @@ ARG BUILD_ID
 FROM gangacoretest:${BRANCH_NAME}-${BUILD_ID}
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 ARG VO
-ARG DIRAC_VERSION=v6r22p15
+ARG DIRAC_VERSION=v7r1p17
 # Make directory for the incoming secrets (robot cert/key)
 WORKDIR /
 RUN mkdir -p /root/.globus
@@ -18,7 +18,7 @@ WORKDIR /dirac_ui
 # workdir doesn't seem to be working properly
 RUN wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
 RUN chmod u+x dirac-install
-RUN ./dirac-install -r ${DIRAC_VERSION} -i 27 -g v14r11
+RUN ./dirac-install -r ${DIRAC_VERSION}
 RUN --mount=type=secret,id=usercert,dst=/root/.globus/usercert.pem,readonly  --mount=type=secret,id=userkey,dst=/root/.globus/userkey.pem,readonly . /dirac_ui/bashrc && dirac-proxy-init -x
 RUN . /dirac_ui/bashrc && dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
 RUN --mount=type=secret,id=usercert,dst=/root/.globus/usercert.pem,readonly  --mount=type=secret,id=userkey,dst=/root/.globus/userkey.pem,readonly . /dirac_ui/bashrc && dirac-proxy-init -g ${VO}_user -M
