@@ -35,7 +35,7 @@ jobs:
     - name: Commit release notes
       run: |
         ! read -rd"\n" REL_ID BODY < <(curl --request GET --url ${GITHUB_API_URL}/repos/${{ github.repository }}/releases/tags/${VERSION} | jq -r '.id, .body')
-        echo "::set-env name=REL_ID::${REL_ID}"
+        echo "REL_ID=${REL_ID}" >> $GITHUB_ENV
         echo "${BODY}" > ganga/GangaRelease/ReleaseNotes-${VERSION}
         git add ganga/GangaRelease/ReleaseNotes-${VERSION}
         git commit -m "Creating release notes for version ${VERSION}"
@@ -68,7 +68,7 @@ jobs:
       - name: Checkout re-tagged version
         run: |
           VERSION=$(basename ${GITHUB_REF})
-          echo "::set-env name=VERSION::${VERSION}"
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
           git checkout ${VERSION}
       - name: Create Deployment
         run: |
@@ -78,7 +78,7 @@ jobs:
                            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
                            --header 'content-type: application/json' \
                            --data "$DATA" | jq -r '.statuses_url'`
-          echo "::set-env name=STATUS_URL::${STATUS_URL}"
+          echo "STATUS_URL=${STATUS_URL}" >> $GITHUB_ENV
       - name: Deploy to PyPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
