@@ -114,7 +114,7 @@ jobs:
         cd ~/dirac_ui
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
         chmod u+x dirac-install
-        DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[6]r.*[^\\]]" | grep -m1 -v -e "pre"`
+        DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
         ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
         source ~/dirac_ui/bashrc
         dirac-proxy-init -x
@@ -153,7 +153,7 @@ jobs:
         cd ~/dirac_ui
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
         chmod u+x dirac-install
-        DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[6]r.*[^\\]]" | grep -m1 -v -e "pre"`
+        DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
         ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
         source ~/dirac_ui/bashrc
         dirac-proxy-init -x
@@ -238,7 +238,7 @@ jobs:
         cd ~/dirac_ui
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
         chmod u+x dirac-install
-        DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[6]r.*[^\\]]" | grep -m1 -v -e "pre"`
+        DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
         ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
         source ~/dirac_ui/bashrc
         dirac-proxy-init -x
