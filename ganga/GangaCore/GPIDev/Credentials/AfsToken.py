@@ -51,7 +51,7 @@ class AfsTokenInfo(ICredentialInfo):
             CredentialRenewalError: If the renewal process returns a non-zero value
         """
 
-        command = 'kinit'
+        command = 'kinit && aklog'
 
         process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdoutdata, stderrdata = process.communicate(getpass('Kerberos password: ').encode())
