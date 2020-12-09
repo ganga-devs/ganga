@@ -93,6 +93,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: Set up Python 3
       run: yum install -y python3
+    - name: Install git
+      run: yum install -y git
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
@@ -132,6 +134,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: Set up Python 3
       run: yum install -y python3
+    - name: Install git
+      run: yum install -y git
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
@@ -210,6 +214,8 @@ jobs:
       image: centos:7
       options: --privileged
     steps:
+    - name: Install git
+      run: yum install -y git
     - name: Install CVM-FS
       run: |
         yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
