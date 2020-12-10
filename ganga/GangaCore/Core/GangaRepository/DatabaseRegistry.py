@@ -97,11 +97,6 @@ def makeRepository(registry):
         return GangaRepositoryLocal(registry)
     elif registry.type in ["CentralDatabase"]:
         raise NotImplementedError(f"The registry {registry.type} has not been implemented")
-        # from GangaCore.Core.GangaRepository.GangaRepositoryCentral import GangaRepositoryLocal
-        # return GangaRepositoryLocal(registry)
-    elif registry.type in ["SQLite"]:
-        from GangaCore.Core.GangaRepository.GangaRepositorySQLite import GangaRepositorySQLite
-        return GangaRepositorySQLite(registry)
     elif registry.type in ["Transient"]:
         from GangaCore.Core.GangaRepository.GangaRepository import GangaRepository
         return GangaRepository(registry)
