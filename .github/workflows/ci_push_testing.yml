@@ -93,6 +93,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: Set up Python 3
       run: yum install -y python3
+    - name: Install git
+      run: yum install -y git
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
@@ -115,6 +117,7 @@ jobs:
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
         chmod u+x dirac-install
         DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
+        DIRAC_VERSION=v7r1p19
         ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
         source ~/dirac_ui/bashrc
         dirac-proxy-init -x
@@ -132,6 +135,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: Set up Python 3
       run: yum install -y python3
+    - name: Install git
+      run: yum install -y git
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
@@ -154,6 +159,7 @@ jobs:
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
         chmod u+x dirac-install
         DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
+        DIRAC_VERSION=v7r1p19
         ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
         source ~/dirac_ui/bashrc
         dirac-proxy-init -x
@@ -210,6 +216,8 @@ jobs:
       image: centos:7
       options: --privileged
     steps:
+    - name: Install git
+      run: yum install -y git
     - name: Install CVM-FS
       run: |
         yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
@@ -239,6 +247,7 @@ jobs:
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
         chmod u+x dirac-install
         DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
+        DIRAC_VERSION=v7r1p19
         ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
         source ~/dirac_ui/bashrc
         dirac-proxy-init -x
