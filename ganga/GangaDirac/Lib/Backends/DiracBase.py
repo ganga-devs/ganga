@@ -16,7 +16,7 @@ from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaCore.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
 from GangaCore.GPIDev.Lib.Job.Job import Job
 from GangaCore.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError, GangaDiskSpaceError
-from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs
+from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs, getReplicas
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
@@ -823,16 +823,19 @@ class DiracBase(IBackend):
                 logger.warning(e)
 
         #First collate the LFNs and see if all replicas are available
-        lfns = self.getOutputDataLFNs()
-        if names:
-            tempLFNs = [_lfn for _lfn in lfns for _name in names  if _name in _lfn]
-            lfns = tempLFNs
-        reps = execute('getReplicas(%s)' % str(lfns), cred_req=self.credential_requirements)
-        if not len(reps['Successful'].keys()) == len(lfns):
+        lfns = []
+        if j.subjobs:
+            for sj in j.subjobs:
+                lfns.extend([f.lfn for f in outputfiles_iterator(sj, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
+        else:
+            lfns.extend([f.lfn for f in outputfiles_iterator(j, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
+
+        reps = getReplicas(lfns)
+        if not len(reps.keys()) == len(set(lfns)):
             if ignoreMissing:
                 logger.warning("Not all LFNs in the outputdata have available replicas. ignoreMissing=True so proceeding anyway!")
             else:
-                raise GangaDiracError("Not all LFNs in the outputdata have available replicas and ignoreMissing=False!")
+                raise GangaDiracError("Not all LFNs in the outputdata have available replicas and ignoreMissing=False! lns: %s, reps: %s" %(lfns, reps))
 
         suceeded = []
         if j.subjobs:
@@ -843,11 +846,11 @@ class DiracBase(IBackend):
 
         #Check we have successfully downloaded everything
         successes = [x for x in suceeded if x is not None]
-        if not len(lfns)==len(success):
+        if not len(lfns)==len(successes):
             if ignoreMissing:
                 logger.warning("Not all files downloaded successfully! ignoreMissing=True")
             else:
-                raise GangaDiracError("Not all files downloaded successfully and ignoreMissing=False! Check your gangadir for missing files!")
+                raise GangaDiracError("Not all files downloaded successfully and ignoreMissing=False! Check your gangadir for missing files! len lfns: %s, len success: %s" % (lfns, successes))
 
         return successes
 

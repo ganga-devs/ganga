@@ -204,3 +204,16 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
     return myURLs
 
 exportToGPI('getAccessURLs', getAccessURLs, 'Functions')
+
+def getReplicas(lfns, credential_requirements=None):
+    """
+    Return a dict of files and their replicas.
+    lfns can be a string or a list
+    """
+    reps = execute('getReplicas(%s)' % str(lfns), cred_req=credential_requirements)
+    if isinstance(lfns, list) and not len(reps['Successful'].keys()) == len(lfns):
+        logger.warning("Not successfully found a replica for all files! The following failed: %s" % reps['Failed'].keys())
+        
+    return reps['Successful']
+
+exportToGPI('getReplicas', getReplicas, 'Functions')
