@@ -842,14 +842,14 @@ class DiracBase(IBackend):
             suceeded.extend([download(f, j, False) for f in outputfiles_iterator(j, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
 
         #Check we have successfully downloaded everything
-        success = [x for x in suceeded if x is not None]
+        successes = [x for x in suceeded if x is not None]
         if not len(lfns)==len(success):
             if ignoreMissing:
                 logger.warning("Not all files downloaded successfully! ignoreMissing=True")
             else:
                 raise GangaDiracError("Not all files downloaded successfully and ignoreMissing=False! Check your gangadir for missing files!")
 
-        return [x for x in suceeded if x is not None]
+        return successes
 
     def getOutputDataLFNs(self):
         """Retrieve the list of LFNs assigned to outputdata"""
