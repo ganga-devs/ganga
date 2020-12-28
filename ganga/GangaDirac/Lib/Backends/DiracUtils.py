@@ -205,11 +205,21 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
 
 exportToGPI('getAccessURLs', getAccessURLs, 'Functions')
 
-def getReplicas(lfns, credential_requirements=None):
+def getReplicas(inSet, credential_requirements=None):
     """
     Return a dict of files and their replicas.
-    lfns can be a string or a list
+    lfns can be a string, a list or something with 
     """
+    #Start off with some checks
+    lfns = []
+    if isinstance(inSet, str):
+        lfns = [inSet]
+    elif isinstance(inSet, list):
+        lfns = inSet
+    elif hasattr(inSet, 'getLFNs'):
+            lfns = inSet.getLFNs()
+    else:
+        raise GangaDiracError('You must supply, an LFN as a string, a list of LFNs or a GangaDataset with getLFNs() implemented')
     reps = execute('getReplicas(%s)' % str(lfns), cred_req=credential_requirements)
     if isinstance(lfns, list) and not len(reps['Successful'].keys()) == len(lfns):
         logger.warning("Not successfully found a replica for all files! The following failed: %s" % reps['Failed'].keys())
