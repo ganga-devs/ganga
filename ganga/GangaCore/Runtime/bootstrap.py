@@ -1233,12 +1233,13 @@ under certain conditions; type license() for details.
         banner = exit_msg = ''
         cfg.TerminalInteractiveShell.prompts_class = GangaPrompt
         cfg.TerminalInteractiveShell.banner1 = banner
-        # Import the embed function
-#        from IPython.terminal.embed import InteractiveShellEmbed
+        # Setting up the confirmation of exit on Ctrl+D this prompt annoys some users(developers)
+        from GangaCore.Utility.Config.Config import getConfig
+        config = getConfig('Configuration')
+        cfg.InteractiveShell.confirm_exit = config['confirm_exit']
 
         from IPython import start_ipython, get_ipython
         """
-        ipshell = InteractiveShellEmbed(config=cfg, banner1=banner, exit_msg=exit_msg)
         ipshell.events.register("post_execute", ganga_prompt)
 
         # Add our custom error handler to ignore stack traces for GangaExceptions
@@ -1253,14 +1254,6 @@ under certain conditions; type license() for details.
         from GangaCore.Runtime.IPythonMagic import GangaMagics
         ipshell.register_magics(GangaMagics)
 
-        # Setting up the confirmation of exit on Ctrl+D this prompt annoys some users(developers)
-        from GangaCore.Utility.Config.Config import getConfig
-        config = getConfig('Configuration')
-        ipshell.confirm_exit = config['confirm_exit']
-
-        # Launch embedded shell
-        from GangaCore import GPI
-        ipshell(local_ns=local_ns, module=GangaCore.GPI)
         """
 
         start_ipython(argv = [], user_ns = local_ns, local_ns=local_ns, module=GangaCore.GPI, config = cfg)
