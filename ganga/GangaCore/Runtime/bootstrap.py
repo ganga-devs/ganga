@@ -1232,10 +1232,12 @@ under certain conditions; type license() for details.
         cfg.PlainTextFormatter.pprint = True
         banner = exit_msg = ''
         cfg.TerminalInteractiveShell.prompts_class = GangaPrompt
-
+        cfg.TerminalInteractiveShell.banner1 = banner
         # Import the embed function
-        from IPython.terminal.embed import InteractiveShellEmbed
+#        from IPython.terminal.embed import InteractiveShellEmbed
 
+        from IPython import start_ipython, get_ipython
+        """
         ipshell = InteractiveShellEmbed(config=cfg, banner1=banner, exit_msg=exit_msg)
         ipshell.events.register("post_execute", ganga_prompt)
 
@@ -1259,8 +1261,9 @@ under certain conditions; type license() for details.
         # Launch embedded shell
         from GangaCore import GPI
         ipshell(local_ns=local_ns, module=GangaCore.GPI)
+        """
 
-
+        start_ipython(argv = [], user_ns = local_ns, local_ns=local_ns, module=GangaCore.GPI, config = cfg)
     @staticmethod
     def ganga_prompt(_=None):
         #Flush the logging
