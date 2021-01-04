@@ -351,6 +351,12 @@ def test_removeOutputData(db):
 def test_getOutputData(db, tmpdir):
     from GangaDirac.Lib.Files.DiracFile import DiracFile
 
+    def fake_replicas(lfns):
+        return_dict = {}
+        for _lfn in lfns:
+            return_dict[_lfn] = '/local'
+        return return_dict
+
     j = Job()
     j.id = 0
     j.backend = db
@@ -384,6 +390,7 @@ def test_getOutputData(db, tmpdir):
         return test_files
 
     with patch('GangaDirac.Lib.Backends.DiracBase.outputfiles_iterator', fake_outputfiles_iterator):
+      with patch('GangaDirac.Lib.Backends.DiracBase.getReplicas', fake_replicas):
 
         # master jobs
         #######################

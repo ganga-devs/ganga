@@ -16,7 +16,7 @@ from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaCore.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
 from GangaCore.GPIDev.Lib.Job.Job import Job
 from GangaCore.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError, GangaDiskSpaceError
-from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs
+from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs, getReplicas
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
@@ -783,7 +783,7 @@ class DiracBase(IBackend):
             outputfiles_foreach(j, DiracFile, lambda x: clearFileInfo(x))
 
     @require_disk_space
-    def getOutputData(self, outputDir=None, names=None, force=False):
+    def getOutputData(self, outputDir=None, names=None, force=False, ignoreMissing = False):
         """Retrieve data stored on SE to dir (default=job output workspace).
         If names=None, then all outputdata is downloaded otherwise names should
         be a list of files to download. If force=True then data will be redownloaded
@@ -798,6 +798,7 @@ class DiracBase(IBackend):
             outputDir (str): This string represents the output dir where the sandbox is to be placed
             names (list): list of names which match namePatterns in the outputfiles
             force (bool): Force the download out data potentially overwriting existing objects
+            ignoreMissing(bool): Carry on even if not all files are available or successfully downloaded. Use with extreme caution
         """
         j = self.getJobObject()
         if outputDir is not None and not os.path.isdir(outputDir):
@@ -821,6 +822,21 @@ class DiracBase(IBackend):
             except (GangaDiracError, GangaFileError) as e:
                 logger.warning(e)
 
+        #First collate the LFNs and see if all replicas are available
+        lfns = []
+        if j.subjobs:
+            for sj in j.subjobs:
+                lfns.extend([f.lfn for f in outputfiles_iterator(sj, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
+        else:
+            lfns.extend([f.lfn for f in outputfiles_iterator(j, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
+
+        reps = getReplicas(lfns)
+        if not len(reps.keys()) == len(set(lfns)):
+            if ignoreMissing:
+                logger.warning("Not all LFNs in the outputdata have available replicas. ignoreMissing=True so proceeding anyway!")
+            else:
+                raise GangaDiracError("Not all LFNs in the outputdata have available replicas and ignoreMissing=False! lns: %s, reps: %s" %(lfns, reps))
+
         suceeded = []
         if j.subjobs:
             for sj in j.subjobs:
@@ -828,7 +844,15 @@ class DiracBase(IBackend):
         else:
             suceeded.extend([download(f, j, False) for f in outputfiles_iterator(j, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
 
-        return [x for x in suceeded if x is not None]
+        #Check we have successfully downloaded everything
+        successes = [x for x in suceeded if x is not None]
+        if not len(lfns)==len(successes):
+            if ignoreMissing:
+                logger.warning("Not all files downloaded successfully! ignoreMissing=True")
+            else:
+                raise GangaDiracError("Not all files downloaded successfully and ignoreMissing=False! Check your gangadir for missing files! len lfns: %s, len success: %s" % (lfns, successes))
+
+        return successes
 
     def getOutputDataLFNs(self):
         """Retrieve the list of LFNs assigned to outputdata"""
