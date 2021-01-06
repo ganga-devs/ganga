@@ -268,8 +268,8 @@ def singularity_handler(database_config, action, gangadir):
     singularity --quiet run \
     --bind {bind_loc}:/data \
     {sif_file} mongod \
-    --port {database_config['port']} \
-    --logpath {gangadir}/logs/mongod-ganga.log"""
+    --port {database_config['port']}  \
+    --logpath /tmp/masmith/mongod-ganga.log"""
 
     stop_container = f"""env MONGO_SIF={sif_file} \
     singularity --quiet run \
@@ -293,7 +293,7 @@ def singularity_handler(database_config, action, gangadir):
     if action == "start":
         proc_status = mongod_exists(controller="singularity", cname=sif_file)
         if proc_status is None:
-            logger.debug(
+            logger.info(
                 f"Starting singularity container using command: {start_container}")
             proc = subprocess.Popen(
                 start_container,
