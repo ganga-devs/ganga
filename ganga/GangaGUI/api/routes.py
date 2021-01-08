@@ -528,7 +528,7 @@ def jobs_statistics():
 
     try:
         # Store statistics
-        for stat in ["new", "running", "completed", "failed", "killed"]:
+        for stat in ["new", "running", "completed", "failed", "killed", "completed_frozen", "failed_frozen"]:
             statistics[stat] = len(jobs.select(status=stat))
 
     except Exception as err:

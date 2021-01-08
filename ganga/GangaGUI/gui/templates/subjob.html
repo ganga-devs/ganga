@@ -27,6 +27,14 @@
                     </div>
                 </div>
             </div>
+           <div class="col-md-6">
+                <div class="d-flex my-2">
+		    <a href="#" id="btn-freeze" data-id="{{ job_info.get('id') }}" class="btn btn-primary w-100">Freeze
+                        Job</a>
+                    <a href="#" id="btn-unfreeze" data-id="{{ job_info.get('id') }}" class="btn btn-warning mx-2 w-100">UnFreeze
+                        Job</a>
+                </div>
+
             <div class="col-md-6">
                 <div class="d-flex my-2">
                     <a href="#" class="btn btn-info mr-1 w-100" data-toggle="modal" data-target="#stdout-modal">Peek
