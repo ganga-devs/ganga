@@ -1841,7 +1841,7 @@ def start_ganga(internal_port: int, args: str = ""):
         ganga_env = os.environ.copy()
         ganga_env["WEB_CLI"] = "True"
         ganga_env["INTERNAL_PORT"] = str(internal_port)
-        subprocess.run(f"/afs/cern.ch/user/m/masmith/gangatest_python3/bin/ganga --webgui {args}", shell=True, env=ganga_env)
+        subprocess.run(f"ganga --webgui {args}", shell=True, env=ganga_env)
     else:
         # This is the parent process fork. Store fd (connected to the child’s controlling terminal) and child pid
         gui.config["FD"] = fd
