@@ -1681,6 +1681,11 @@ class Job(GangaObject):
 
         if getConfig('Output')['AutoRemoveFilesWithJob']:
             logger.info('Removing all output data of types %s' % getConfig('Output')['AutoRemoveFileTypes'])
+
+            #First use the backend's method if appropriate for maximum speed
+            if hasattr(j.backend, 'removeOutputData'):
+                j.backend.removeOutputData(getConfig('Output')['AutoRemoveFileTypes'])
+
             def removeFiles(this_file):
                 if getName(this_file) in getConfig('Output')['AutoRemoveFileTypes'] and hasattr(this_file, '_auto_remove'):
                     this_file._auto_remove()

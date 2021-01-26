@@ -751,12 +751,15 @@ class DiracBase(IBackend):
 
         return True
 
-    def removeOutputData(self):
+    def removeOutputData(self, fileType = 'DiracFile'):
         """
         Remove all the LFNs associated with this job.
         """
         # Note when the API can accept a list for removeFile I will change
         # this.
+        if not fileType=='DiracFile':
+            return False
+
         j = self.getJobObject()
         logger.info("Removing all DiracFile output for job %s" % j.id)
         lfnsToRemove = []
