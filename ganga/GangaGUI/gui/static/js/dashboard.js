@@ -88,7 +88,7 @@ function unpinHandler(e) {
 function refreshStatistics() {
 
     // Status category
-    const statuses = ['new', 'running', 'completed', 'completed_frozen', 'failed', 'failed_frozen', 'killed'];
+    const statuses = ['new', 'running', 'completed', 'failed', 'killed'];
 
     // Get status card nodes
     const statCards = statuses.map((stat) => document.querySelector(`#stat-${stat}`));
