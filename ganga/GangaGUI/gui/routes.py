@@ -82,7 +82,9 @@ def load_user(user_id):
 status_color = {
     "new": "info",
     "completed": "success",
+    "completed_frozen" : "success",
     "failed": "danger",
+    "failed_frozen" : "danger",
     "running": "primary",
     "submitted": "secondary",
     "killed": "warning"

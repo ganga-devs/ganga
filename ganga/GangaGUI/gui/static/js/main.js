@@ -19,7 +19,9 @@ let notificationCount = 0;
 const statusColor = {
     'new': 'info',
     'completed': 'success',
+    'completed_frozen': 'success',
     'failed': 'danger',
+    'failed_frozen': 'danger',
     'running': 'primary',
     'submitted': 'secondary',
     'killed': 'warning'

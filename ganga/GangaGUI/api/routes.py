@@ -530,6 +530,10 @@ def jobs_statistics():
         # Store statistics
         for stat in ["new", "running", "completed", "failed", "killed"]:
             statistics[stat] = len(jobs.select(status=stat))
+            if stat == "completed":
+                statistics[stat] += len(jobs.select(status="completed_frozen"))
+            elif stat == "failed":
+                statistics[stat] += len(jobs.select(status="failed_frozen"))
 
     except Exception as err:
         return jsonify({"success": False, "message": str(err)}), 400

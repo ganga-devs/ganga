@@ -19,6 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnKill =  document.querySelector('#btn-kill');
     btnKill.addEventListener('click', killHandler);
 
+    // Add event listener to freeze button
+    const btnFreeze = document.querySelector('#btn-freeze');
+    btnFreeze.addEventListener('click', freezeHandler);
+
+    // Add event listener to unfreeze button
+    const btnUnFreeze = document.querySelector('#btn-unfreeze');
+    btnUnFreeze.addEventListener('click', unfreezeHandler);
+
     // Add event listener to remove button
     const btnRemove =  document.querySelector('#btn-remove');
     btnRemove.addEventListener('click', removeHandler);
@@ -117,7 +125,7 @@ function submitHandler(e) {
 }
 
 
-// Handles submitting of the job
+// Handles killing of the job
 function killHandler(e) {
 
     // Prevent default behaviour
@@ -131,8 +139,36 @@ function killHandler(e) {
 
 }
 
+// Handles freezing of the job
+function freezeHandler(e) {
 
-// Handles submitting of the job
+    // Prevent default behaviour
+    e.preventDefault();
+
+    // Get job id from the copy button dataset
+    const jobId = e.target.dataset.id;
+
+    // Execute freeze action
+    executeAction(jobId, 'freeze');
+
+}
+
+// Handles unfreezing of the job
+function unfreezeHandler(e) {
+
+    // Prevent default behaviour
+    e.preventDefault();
+
+    // Get job id from the copy button dataset
+    const jobId = e.target.dataset.id;
+
+    // Execute unfreeze action
+    executeAction(jobId, 'unfreeze');
+
+}
+
+
+// Handles removing of the job
 function removeHandler(e) {
 
     // Prevent default behaviour
