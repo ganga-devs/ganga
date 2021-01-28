@@ -213,7 +213,7 @@ class Job(GangaObject):
                                      'outputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects decorating what have to be done with the output files after job is completed "),
                                      'non_copyable_outputfiles': GangaFileItem(defvalue=[], hidden=1, sequence=1, doc="list of file objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
                                      'id': SimpleItem('', protected=1, comparable=0, doc='unique Ganga job identifier generated automatically'),
-                                     'status': SimpleItem('new', protected=1, checkset='_checkset_status', doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"', copyable=False),
+                                     'status': SimpleItem('new', protected=1, checkset='_checkset_status', doc='current state of the job, one of "new", "submitted", "running", "completed", "completed_frozen", "failed_frozen", "killed", "unknown", "incomplete"', copyable=False),
                                      'name': SimpleItem('', doc='optional label which may be any combination of ASCII characters', typelist=[str]),
                                      'inputdir': SimpleItem(getter="getStringInputDir", defvalue=None, transient=1, protected=1, comparable=0, load_default=0, optional=1, copyable=0, typelist=[str], doc='location of input directory (file workspace)'),
                                      'outputdir': SimpleItem(getter="getStringOutputDir", defvalue=None, transient=1, protected=1, comparable=0, load_default=0, optional=1, copyable=0, typelist=[str], doc='location of output directory (file workspace)'),
@@ -234,7 +234,7 @@ class Job(GangaObject):
 
     _category = 'jobs'
     _name = 'Job'
-    _exportmethods = ['prepare', 'unprepare', 'submit', 'remove', 'kill',
+    _exportmethods = ['prepare', 'unprepare', 'submit', 'remove', 'kill', 'freeze', 'unfreeze',
                       'resubmit', 'peek', 'force_status', 'runPostProcessors', 'returnSubjobStatuses']
 
     default_registry = 'jobs'
@@ -568,11 +568,15 @@ class Job(GangaObject):
         'failed': Transitions(State('removed', 'j.remove()'),
                               State('submitting', 'j.resubmit()'),
                               State('completed', hook='postprocess_hook'),
-                              State('submitted', 'j.resubmit()')),
+                              State('submitted', 'j.resubmit()'),
+                              State('failed_frozen', 'j.freeze()')),
         'completed': Transitions(State('removed', 'j.remove()'),
                                  State('failed', 'j.fail()'),
                                  State('submitting', 'j.resubmit()'),
-                                 State('submitted', 'j.resubmit()')),
+                                 State('submitted', 'j.resubmit()'),
+                                 State('completed_frozen', 'j.freeze()')),
+        'completed_frozen': Transitions(State('completed', 'j.unfreeze()')),
+        'failed_frozen': Transitions(State('failed', 'j.unfreeze()')),
         'incomplete': Transitions(State('removed', 'j.remove()')),
         'unknown': Transitions(State('removed', 'forced remove')),
         'template': Transitions(State('removed'))
@@ -778,7 +782,7 @@ class Job(GangaObject):
         else:
             stats = [sj.status for sj in self.subjobs]
 
-        return "%s/%s/%s/%s" % (stats.count('running'), stats.count('failed') + stats.count('killed'), stats.count('completing'), stats.count('completed'))
+        return "%s/%s/%s/%s" % (stats.count('running'), stats.count('failed')+stats.count('failed_frozen') + stats.count('killed'), stats.count('completing'), stats.count('completed')+stats.count('completed_frozen'))
 
     def updateMasterJobStatus(self):
         """
@@ -1859,6 +1863,22 @@ class Job(GangaObject):
         except JobStatusError as x:
             logger.error(x)
             raise x
+
+    def freeze(self):
+        if self.status == 'completed':
+            self.updateStatus('completed_frozen', update_master=False)
+        elif self.status == 'failed':
+            self.updateStatus('failed_frozen', update_master=False)
+        else:
+            raise JobError('Cannot freeze a job in %s state' % self.status)
+
+    def unfreeze(self):
+        if self.status == 'completed_frozen':
+            self.updateStatus('completed',update_master=False)
+        elif self.status == 'failed_frozen':
+            self.updateStatus('failed',update_master=False)
+        else:
+            raise JobError('Cannot unfreeze job in %s state' % self.status)
 
     def kill(self):
         """Kill the job. Raise JobError exception on error.

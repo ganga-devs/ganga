@@ -37,6 +37,13 @@
                         (stderr)</a>
                 </div>
                 <div class="d-flex my-2">
+                    <a href="#" id="btn-freeze" data-id="{{ job_info.get('id') }}" class="btn btn-primary w-100">Freeze
+                        Job</a>
+                    <a href="#" id="btn-unfreeze" data-id="{{ job_info.get('id') }}" class="btn btn-warning mx-2 w-100">UnFreeze
+                        Job</a>
+                </div>
+
+                <div class="d-flex my-2">
                     <a href="#" id="btn-submit" data-id="{{ job_info.get('id') }}" class="btn btn-primary w-100">Submit
                         Job</a>
                     <a href="#" id="btn-kill" data-id="{{ job_info.get('id') }}" class="btn btn-warning mx-2 w-100">Kill

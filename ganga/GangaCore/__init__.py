@@ -877,7 +877,9 @@ disp_config.addOption('jobs_status_colours',
                   'submitted': 'fg.orange',
                   'running': 'fg.green',
                   'completed': 'fg.blue',
-                  'failed': 'fg.red'
+                  'failed': 'fg.red',
+                  'completed_frozen' : 'fg.boldgrey',
+                  'failed_frozen' : 'fg.boldgrey'
                   },
                  'colours for jobs status')
 
