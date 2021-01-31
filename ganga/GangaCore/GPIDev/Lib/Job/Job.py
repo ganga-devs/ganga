@@ -1683,12 +1683,22 @@ class Job(GangaObject):
             logger.info(msg)
             raise JobError(msg)
 
+        # incomplete or unknown jobs may not have valid application or backend
+        # objects
+        if this_job_status not in ['incomplete', 'unknown']:
+            backend_obj = lazyLoadJobBackend(self)
+            application_obj = lazyLoadJobApplication(self)
+            
         if getConfig('Output')['AutoRemoveFilesWithJob']:
             logger.info('Removing all output data of types %s' % getConfig('Output')['AutoRemoveFileTypes'])
 
             #First use the backend's method if appropriate for maximum speed
-            if hasattr(j.backend, 'removeOutputData'):
-                j.backend.removeOutputData(getConfig('Output')['AutoRemoveFileTypes'])
+            if backend_obj is not None:
+                if hasattr(backend_obj, 'removeOutputData'):
+                    backend_obj.removeOutputData(getConfig('Output')['AutoRemoveFileTypes'])
+            else:
+                if hasattr(self.backend, 'removeOutputData'):
+                    self.backend.removeOutputData(getConfig('Output')['AutoRemoveFileTypes'])
 
             def removeFiles(this_file):
                 if getName(this_file) in getConfig('Output')['AutoRemoveFileTypes'] and hasattr(this_file, '_auto_remove'):
@@ -1726,9 +1736,6 @@ class Job(GangaObject):
             # tell the backend that the job was removed
             # this is used by Remote backend to remove the jobs remotely
             # bug #44256: Job in state "incomplete" is impossible to remove
-
-            backend_obj = lazyLoadJobBackend(self)
-            application_obj = lazyLoadJobApplication(self)
 
             if backend_obj is not None:
                 if hasattr(backend_obj, 'remove'):
