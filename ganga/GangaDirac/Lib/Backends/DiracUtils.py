@@ -227,3 +227,28 @@ def getReplicas(inSet, credential_requirements=None):
     return reps['Successful']
 
 exportToGPI('getReplicas', getReplicas, 'Functions')
+
+
+def removeLFNs(lfns, credential_requirements=None):
+    """
+    Remove a list o lfns from Dirac storage
+    """
+    #Start off with some checks
+    lfns = []
+    if isinstance(inSet, str):
+        lfns = [inSet]
+    elif isinstance(inSet, list):
+        lfns = inSet
+    elif hasattr(inSet, 'getLFNs'):
+            lfns = inSet.getLFNs()
+    else:
+        raise GangaDiracError('You must supply, an LFN as a string, a list of LFNs or a GangaDataset with getLFNs() implemented')
+
+    res = execute('removeFile(%s)' % str(lfns), cred_req=credential_requirements)
+    if isinstance(lfns, list) and not len(reps['Successful'].keys()) == len(lfns):
+        logger.warning("Not successfully removed all files! The following failed: %s" % reps['Failed'].keys())
+        
+    return reps['Successful']
+
+exportToGPI('removeLFNs', removeLFNs, 'Functions')
+
