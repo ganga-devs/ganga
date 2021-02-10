@@ -1,0 +1,21 @@
+**************************************************************************************************************
+8.4.5 (2021/02/10)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaCore
+--------------------------------------------------------------------------------------------------------------
+* Improve job.remove() to use the backend's removeOutputData method if available #1835
+* Add frozen job state to prevent job resubmission. Jobs or subjobs can be frozen/unfrozen with j.freeze() or j.unfreeze() #1834
+* Change IPython shell start. Fixes issues with inbuilt functions and globals (i.e. any()) #1832
+* Clean up old sqlite registry code #1829
+* Add aklog to AFS token creation #1827
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* added removeLFNs helper function to GPI to remove a list of LFNs from Dirac storage #1835
+* added getReplicas helper function to GPI to a dict of files and replicas for a provided list of LFNs #1830
+* Improve getOutputData method to check that all files have available replicas and all downloads are successful #1830
+
+**************************************************************************************************************
