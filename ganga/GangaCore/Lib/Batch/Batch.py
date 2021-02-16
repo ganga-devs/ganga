@@ -173,6 +173,9 @@ class Batch(IBackend):
             tmp_name = job.name
             if isType(self, PBS):
                 tmp_name = tmp_name.replace(" ", "_")
+            # SGE doesn't like names with colons
+            if isType(self, SGE):
+                tmp_name = tmp_name.replace(":", "-")
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)
 
