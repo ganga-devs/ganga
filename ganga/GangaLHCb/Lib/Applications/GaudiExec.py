@@ -158,6 +158,7 @@ class GaudiExec(IPrepareApp):
         'autoDBtags' :  SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
+        'run_args' :    SimpleItem(defvalue = [], typelist=[list], doc='A list of arguments to pass to the lb-run script at run time. i.e. --quiet'),
         'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
 
         # Prepared job object
