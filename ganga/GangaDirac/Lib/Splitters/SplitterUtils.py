@@ -5,6 +5,7 @@ from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaCore.Utility.Config import getConfig
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaCore.Utility.logging import getLogger
+from GangaCore.GPIDev.Credentials import require_credential
 logger = getLogger()
 
 
@@ -18,7 +19,7 @@ def igroup(iterable, num, leftovers=False):
             return
         yield iterable[i: i + num]
 
-
+@require_credential
 def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     """
     Generator that yields a datasets for dirac split jobs

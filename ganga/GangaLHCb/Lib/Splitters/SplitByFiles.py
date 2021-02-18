@@ -126,7 +126,6 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("Returning new subjob")
         return j
 
-    @require_credential
     def _splitter(self, job, inputdata):
         """
         This is the main method used in splitting by inputdata for Dirac backends

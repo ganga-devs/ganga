@@ -4,6 +4,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
+from GangaCore.GPIDev.Credentials import require_credential
 logger = getLogger()
 
 
@@ -17,7 +18,7 @@ def igroup(iterable, num, leftovers=False):
             return
         yield iterable[i: i + num]
 
-
+@require_credential
 def DiracSizeSplitter(inputs, filesPerJob, maxSize, ignoremissing):
     """
     Generator that yields a datasets for LHCbdirac split jobs by size

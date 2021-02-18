@@ -5,6 +5,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaCore.GPIDev.Credentials import require_credential
 from copy import deepcopy
 import random
 import time
@@ -399,7 +400,7 @@ def updateLFNData(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
 
 
 # Actually Do the work of the splitting
-
+@require_credential
 def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, bannedSites=[]):
     """
     Generator that yields a datasets for dirac split jobs
