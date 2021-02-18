@@ -817,7 +817,7 @@ class DiracBase(IBackend):
                         os.mkdir(output_dir)
                 dirac_file.localDir = output_dir
             if os.path.exists(os.path.join(dirac_file.localDir, os.path.basename(dirac_file.lfn))) and not force:
-                return
+                return dirac_file.lfn
             try:
                 dirac_file.get()
                 return dirac_file.lfn

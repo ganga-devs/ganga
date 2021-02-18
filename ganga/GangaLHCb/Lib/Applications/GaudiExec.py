@@ -124,6 +124,14 @@ class GaudiExec(IPrepareApp):
     Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace with 'execfile'
     The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before executing this one.
 
+    If you want an argument after the run command then use the 'run_args' option. It takes a list of the arguments to use. For example
+
+        j.application.run_args = ['--quiet']
+
+    Makes the command
+        
+        ./run --quiet gaudirun.py optionsFile.py
+
     =================
     Get job metadata:
     =================
@@ -158,6 +166,7 @@ class GaudiExec(IPrepareApp):
         'autoDBtags' :  SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
+        'run_args' :    SimpleItem(defvalue = [], typelist=[list], doc='A list of arguments to pass to the lb-run script at run time. i.e. --quiet'),
         'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
 
         # Prepared job object
