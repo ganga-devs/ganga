@@ -465,6 +465,10 @@ lsf_config.addOption('postexecute', tempstr, "String contains commands executing
 lsf_config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
 lsf_config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
+# illegal substring substition in job names
+lsf_config.addOption('jobnamesubstitution', [], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
+
+
 # ------------------------------------------------
 # PBS
 pbs_config = makeConfig('PBS', 'internal PBS command line interface')
@@ -508,6 +512,10 @@ pbs_config.addOption('jobnameopt', 'N', "String contains option name for name of
 pbs_config.addOption('timeout', 600,
                  'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
+# illegal substring substition in job names
+pbs_config.addOption('jobnamesubstitution', ['[\s]', '_'], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
+
+
 # ------------------------------------------------
 # SGE
 sge_config = makeConfig('SGE', 'internal SGE command line interface')
@@ -549,6 +557,9 @@ sge_config.addOption('preexecute', 'os.chdir(os.environ["TMPDIR"])\nos.environ["
 sge_config.addOption('postexecute', '', "String contains commands executing before submiting job to queue")
 sge_config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
 sge_config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+
+# illegal substring substition in job names
+sge_config.addOption('jobnamesubstitution', ['[\s:]', '_'], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
 
 # ------------------------------------------------
 # Slurm
@@ -619,6 +630,10 @@ slurm_config.addOption('postexecute', tempstr,
 slurm_config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
 slurm_config.addOption('timeout', 600,
                        'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+
+# illegal substring substition in job names
+slurm_config.addOption('jobnamesubstitution', [], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
+
 
 # ------------------------------------------------
 # Mergers
