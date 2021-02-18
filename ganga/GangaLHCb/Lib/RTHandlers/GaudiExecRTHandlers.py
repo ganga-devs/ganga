@@ -173,7 +173,12 @@ def prepareCommand(app):
 
     sourceEnv = app.getWNEnvScript(isLbEnv)
 
-    run_cmd = ' export ganga_jobid=%s && ./run ' % app.getJobObject().fqid
+    #Get the options for the run script
+    run_args = ''
+    for _arg in app.run_args:
+        run_args += ' %s ' % _arg
+
+    run_cmd = ' export ganga_jobid=%s && ./run %s ' % (app.getJobObject().fqid, run_args)
 
     if not app.useGaudiRun:
         full_cmd = sourceEnv + run_cmd + 'python %s' % app.getWrapperScriptName()
