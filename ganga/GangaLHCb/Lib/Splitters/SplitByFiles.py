@@ -126,7 +126,6 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("Returning new subjob")
         return j
 
-    @require_credential
     def _splitter(self, job, inputdata):
         """
         This is the main method used in splitting by inputdata for Dirac backends
@@ -159,6 +158,22 @@ class SplitByFiles(GaudiInputDataSplitter):
             self.persistency = None
             self.XMLCatalogueSlice = None
 
+        isDirac = False
+        if stripProxy(job.backend).__module__.find('Dirac') > 0 or all(isinstance(this_file, DiracFile) for this_file in indata):
+            isDirac = True
+
+        if isDirac:
+            return self._dirac_splitter(job, indata)
+
+        else:
+            logger.debug("Calling Parent Splitter as not on Dirac")
+            return super(SplitByFiles, self)._splitter(job, indata)
+
+    @require_credential
+    def _dirac_splitter(self, job, indata):
+        """
+        Method in case we are dealing with Dirac things
+        """
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
             bannedSites = []
             if 'BannedSites' in job.backend.settings:
@@ -201,18 +216,15 @@ class SplitByFiles(GaudiInputDataSplitter):
             logger.debug("outdata: %s " % str(outdata))
             return outdata
         #If we are not running the jobs on Dirac but are using DiracFiles we want some of the same checks
-        elif all(isinstance(this_file, DiracFile) for this_file in indata):
+        else:
             from GangaDirac.Lib.Splitters.OfflineGangaDiracSplitter import OfflineGangaDiracSplitter
             outdata = OfflineGangaDiracSplitter(indata,
                                               self.filesPerJob,
                                               self.maxFiles,
                                               self.ignoremissing)
             return outdata
-        else:
-            logger.debug("Calling Parent Splitter as not on Dirac")
-            return super(SplitByFiles, self)._splitter(job, indata)
 
-    @require_credential
+
     def split(self, job):
         """
         This is the main method which will split the given job
