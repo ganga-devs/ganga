@@ -160,9 +160,6 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         isDirac = False
         if stripProxy(job.backend).__module__.find('Dirac') > 0 or all(isinstance(this_file, DiracFile) for this_file in indata):
-            isDirac = True
-
-        if isDirac:
             return self._dirac_splitter(job, indata)
 
         else:
