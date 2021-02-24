@@ -182,7 +182,7 @@ class Batch(IBackend):
             queue_option = queue_option + " " + self.extraopts
 
         if jobnameopt and job.name != '':
-            tmp_name = self._getLegalJobName()
+            tmp_name = self._getLegalJobName(job)
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)
 
