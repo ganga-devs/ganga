@@ -119,6 +119,19 @@ class Batch(IBackend):
 
     command = classmethod(command)
 
+    def _getLegalJobName(self, job):
+        tmp_name = job.name
+        # if jobnamesubstitution is set and not empty, then transform the job
+        # name to conform to requirements
+        if 'jobnamesubstitution' in self.config:
+            job_name_sub_cfg = self.config['jobnamesubstitution']
+            if len(job_name_sub_cfg) == 2:
+                tmp_name = re.sub(*job_name_sub_cfg, tmp_name)
+            elif not len(job_name_sub_cfg) == 0:
+                # list is not empty, and not of length 2
+                logger.warning("jobnamesubstitution should be a list of length 2. Skipping job name substitution.")
+        return tmp_name
+
     def submit(self, jobconfig, master_input_sandbox):
         global re
         job = self.getJobObject()
@@ -169,10 +182,7 @@ class Batch(IBackend):
             queue_option = queue_option + " " + self.extraopts
 
         if jobnameopt and job.name != '':
-            # PBS doesn't like names with spaces
-            tmp_name = job.name
-            if isType(self, PBS):
-                tmp_name = tmp_name.replace(" ", "_")
+            tmp_name = self._getLegalJobName(job)
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)
 
@@ -268,9 +278,7 @@ class Batch(IBackend):
 
         if jobnameopt and job.name != '':
             # PBS doesn't like names with spaces
-            tmp_name = job.name
-            if isType(self, PBS):
-                tmp_name = tmp_name.replace(" ", "_")
+            tmp_name = self._getLegalJobName(job)
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)
 
