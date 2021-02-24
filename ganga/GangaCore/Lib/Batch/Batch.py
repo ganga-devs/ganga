@@ -91,7 +91,7 @@ class Batch(IBackend):
     backend.extraopts = '-t 07:14:12:59' #Killed if not finished by 14 July before 1 pm
     """
     _schema = Schema(Version(1, 0), {'queue': SimpleItem(defvalue='', doc='queue name as defomed in your local Batch installation'),
-                                     'extraopts': SimpleItem(defvalue='', doc='extra options for Batch. See help(Batch) for more details'),
+                                     'extraopts': SimpleItem(defvalue='', changable_at_resubmit=1, doc='extra options for Batch. See help(Batch) for more details'),
                                      'id': SimpleItem(defvalue='', protected=1, copyable=0, doc='Batch id of the job'),
                                      'exitcode': SimpleItem(defvalue=None, typelist=[int, None], protected=1, copyable=0, doc='Process exit code'),
                                      'status': SimpleItem(defvalue='', protected=1, hidden=1, copyable=0, doc='Batch status of the job'),
