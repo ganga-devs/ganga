@@ -110,7 +110,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         # ' '.join([str(arg) for arg in app.args]),
                                         EXE_ARG_STR='',
                                         EXE_LOG_FILE='Ganga_Executable.log',
-                                        ENVIRONMENT=None,  # app.env,
+                                        ENVIRONMENT=app.env,
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),
