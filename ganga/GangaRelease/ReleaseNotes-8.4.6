@@ -1,0 +1,22 @@
+**************************************************************************************************************
+8.4.6 (2021/03/03)
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaCore
+--------------------------------------------------------------------------------------------------------------
+* Substitute illegal parts of job name strings in batch backends. For example, deals with spaces in SGE job names. #1839, #1854 
+* Make sure MassStorageFile WN script returns string stdout and stderr. #1841
+* Allow batch extraopts to be changed at resubmission. #1845 
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* getOutputData() ignores already downloaded files instead of raising an exception. #1843 
+* Fix for passing of Executable environment variables to Dirac. #1859 
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Add 'runArgs' to GaudiExec. A list of arguments to be run after the './run' command, i.e. './run --quiet' . #1846
+* Fix to SplitByFiles such that submission with only local or batch backend and files will not need a DiracProxy. #1851 
+* Fix to LHCbTask delete_chain_input to force MassStorageFile removal without prompt for user input #1856
