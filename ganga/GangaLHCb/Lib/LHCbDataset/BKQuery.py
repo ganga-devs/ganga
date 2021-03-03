@@ -188,7 +188,6 @@ RecoToDST-07/90000000/DST" ,
         isMC = False
         if 'MC' == self.path.split('/')[1]:
             isMC = True
-            print('isMC')
         if isMC and self.check_archived and not self.ignore_archived:
             logger.debug('Detected an MC data set. Checking if it has been archived')
             all_reps = get_result("getReplicas(%s)" % files, 'Get replica error.', credential_requirements=self.credential_requirements)
