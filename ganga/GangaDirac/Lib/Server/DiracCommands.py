@@ -404,7 +404,11 @@ def getServicePorts():
     ''' Get the service ports from the DiracAdmin based upon the Dirac config'''
     return DiracAdmin().getServicePorts()
 
-
+@diracCommand
+def isSEArchive(se):
+    ''' Ask if the specified SE is for archive '''
+    from DIRAC.DataManagementSystem.Utilities.DMSHelpers import DMSHelpers
+    return DMSHelpers().isSEArchive(se)
 
 @diracCommand
 def getSitesForSE(se):
