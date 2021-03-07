@@ -188,7 +188,7 @@ RecoToDST-07/90000000/DST" ,
         isMC = False
         if 'MC' == self.path.split('/')[1]:
             isMC = True
-        if isMC and self.check_archived and not self.ignore_archived:
+        if isMC and self.check_archived:
             logger.debug('Detected an MC data set. Checking if it has been archived')
             all_reps = get_result("getReplicas(%s)" % files, 'Get replica error.', credential_requirements=self.credential_requirements)
             if 'Successful' in all_reps:
@@ -202,8 +202,10 @@ RecoToDST-07/90000000/DST" ,
                 if not is_archived:
                     all_archived = False
                     break
-            if all_archived:
+            if all_archived and not self.ignore_archived:
                 raise GangaDiracError("All the files are only available on archive SEs. It is likely the data set has been archived. Contact data management to request that it be staged")
+            elif all_archived:
+                logger.warning("All the files are only available on archive SEs. It is likely the data set has been archived. Contact data management to request that it be staged")
 
         if compressed:
             ds = LHCbCompressedDataset(files)
