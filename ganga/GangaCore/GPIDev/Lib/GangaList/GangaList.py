@@ -533,13 +533,18 @@ class GangaList(GangaObject):
         self.checkReadOnly()
         return addProxy(self.pop(index))
 
-    def remove(self, obj):
+    def remove(self, obj=None):
         """
         Remove a given object from a list
         Args:
             obj (unknown): Remove this object from the list if it exists
+        If no argument given then all objects are removed.
         """
-        self._list.remove(self.strip_proxy(obj))
+        if obj:
+            self._list.remove(self.strip_proxy(obj))
+        else:
+            for _o in self._list:
+                self._list.remove(self.strip_proxy(_o))
 
     def _export_remove(self, obj):
         """
