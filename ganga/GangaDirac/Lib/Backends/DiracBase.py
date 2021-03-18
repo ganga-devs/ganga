@@ -109,7 +109,7 @@ class DiracBase(IBackend):
         'diracOpts': SimpleItem(defvalue='',
                                 doc='DIRAC API commands to add the job definition script. Only edit '
                                 'if you *really* know what you are doing'),
-        'settings': SimpleItem(defvalue={'CPUTime': 14 * 86400},
+        'settings': SimpleItem(defvalue={'CPUTime': 1000000},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'minProcessors': SimpleItem(defvalue=1,
                                     typelist=[int],
