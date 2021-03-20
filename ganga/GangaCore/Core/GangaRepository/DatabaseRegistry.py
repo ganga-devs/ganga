@@ -230,7 +230,7 @@ class RegistryFlusher(GangaThread):
                     return
             # This will trigger a flush on all dirty objects in the repo,
             # It will lock all objects dirty as a result of the nature of the flush command
-            logger.debug('Auto-flushing: %s', self.registry.name)
+            
             if regConf['EnableAutoFlush']:
                 self.registry.flush_all()
         logger.debug("Auto-Flusher shutting down for Registry: %s" %
