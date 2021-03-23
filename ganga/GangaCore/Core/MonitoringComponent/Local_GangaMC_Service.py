@@ -643,18 +643,14 @@ class JobRegistry_Monitor(GangaThread):
             return
 
         for cbHookFunc in self.callbackHookDict.keys():
-
-            log.debug("\n\nProcessing Function: %s" % cbHookFunc)
-
             if cbHookFunc in self.callbackHookDict:
                 cbHookEntry = self.callbackHookDict[cbHookFunc][1]
             else:
                 log.debug("Monitoring KeyError: %s" % str(cbHookFunc))
                 continue
 
-            log.debug("cbHookEntry.enabled: %s" % str(cbHookEntry.enabled))
-            log.debug("(time.time() - cbHookEntry._lastRun): %s" % str((time.time() - cbHookEntry._lastRun)))
-            log.debug("cbHookEntry.timeout: %s" % str(cbHookEntry.timeout))
+            
+            
 
             if cbHookEntry.enabled and (time.time() - cbHookEntry._lastRun) >= cbHookEntry.timeout:
                 log.debug("Running monitoring callback hook function %s(**%s)" %(cbHookFunc, cbHookEntry.argDict))
