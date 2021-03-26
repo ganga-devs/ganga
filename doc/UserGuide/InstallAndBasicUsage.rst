@@ -30,9 +30,12 @@ it will take all the command line options that the normal ganga script takes.
 PyPI Install
 ^^^^^^^^^^^^
 (Recommended)
-You can also install directly from PyPI using:
 
-``pip install ganga``
+For upgrading pip to the latest version use:
+``python3 -m pip install --upgrade pip setuptools wheel``
+
+You can also install directly from PyPI using:
+``python3 -m pip install ganga``
 
 If you don't have System Administrator rights or just want to do a private install then it can be beneficial to
 run using a ``virtualenv``:
@@ -47,8 +50,6 @@ run using a ``virtualenv``:
     pip install ganga
 
 To install pip locally if it's not on your system and you don't have admin access please consult: https://pip.pypa.io/en/stable/installing/
-
-With introduction Ganga GUI, new dependencies are included. ``pip install ganga`` installs all the requirements required for running all the functionalities currently availble for Ganga.
 
 Now each time you want to use Ganga in a new shell, you have to activate the virtual environment:
 
