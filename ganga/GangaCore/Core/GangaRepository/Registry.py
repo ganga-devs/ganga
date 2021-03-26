@@ -314,7 +314,7 @@ class Registry(object):
         Args:
             this_id (int): This is the key of an object in the object dictionary
         """
-        logger.debug("__getitem__")
+    
         # Is this an Incomplete Object?
         if this_id in self._incomplete_objects:
             return IncompleteObject(self, this_id)

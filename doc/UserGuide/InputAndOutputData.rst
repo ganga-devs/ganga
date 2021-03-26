@@ -98,8 +98,8 @@ Ganga provides several File types for accessing data from various sources. To fi
 LocalFile
 ^^^^^^^^^
 
-This is a basic file type that refers to a file on the submission host that Ganga runs on. As in input file,
-it will pick up the file and send it with you job, as an output file it will be returned with your job and put in
+This is a basic file type that refers to a file on the submission host that Ganga runs on. As an input file,
+it will pick up the file and send it with your job, as an output file it will be returned with your job and put in
 the ``j.outputdir`` directory.
 
 DiracFile
