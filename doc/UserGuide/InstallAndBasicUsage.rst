@@ -29,10 +29,13 @@ it will take all the command line options that the normal ganga script takes.
 
 PyPI Install
 ^^^^^^^^^^^^
+(Recommended)
+
+For upgrading pip to the latest version use:
+``python3 -m pip install --upgrade pip setuptools wheel``
 
 You can also install directly from PyPI using:
-
-``pip install ganga``
+``python3 -m pip install ganga``
 
 If you don't have System Administrator rights or just want to do a private install then it can be beneficial to
 run using a ``virtualenv``:
