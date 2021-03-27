@@ -496,13 +496,9 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         j = app.getJobObject()
         for file_ in j.inputfiles:
             if isinstance(file_, DiracFile):
-                try:
-                    if file_.getReplicas():
-                        continue
-                    else:
+                if not file_.getReplicas():
                         raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % file_.lfn)
-                except GangaFileError as err:
-                    raise err
+
         all_opts_files = app.getOptsFiles(True)
         for opts_file in all_opts_files:
             if isinstance(opts_file, DiracFile):

@@ -102,13 +102,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
                 for name in this_file.getFilenameList():
                     inputsandbox.append(File(abspath(expanduser(name))))
             if isinstance(this_file, DiracFile):
-                try:
-                    if this_file.getReplicas():
-                        continue
-                    else:
-                        raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % this_file.lfn)
-                except GangaFileError as err:
-                    raise err                   
+                if not this_file.getReplicas():
+                    raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % this_file.lfn)
 
         lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
         # NOTE special case for replicas: replicate string must be empty for no
