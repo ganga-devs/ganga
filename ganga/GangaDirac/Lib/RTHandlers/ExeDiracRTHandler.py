@@ -89,11 +89,13 @@ class ExeDiracRTHandler(IRuntimeHandler):
         logger.debug("Script is: %s" % str(contents))
 
         from os.path import abspath, expanduser
-
         for this_file in job.inputfiles:
             if isinstance(this_file, LocalFile):
                 for name in this_file.getFilenameList():
                     inputsandbox.append(File(abspath(expanduser(name))))
+            if isinstance(this_file, DiracFile):
+                if not this_file.getReplicas():
+                    raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % this_file.lfn)
 
         dirac_outputfiles = dirac_outputfile_jdl(outputfiles, config['RequireDefaultSE'])
 

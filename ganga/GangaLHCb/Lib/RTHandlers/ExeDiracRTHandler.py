@@ -11,7 +11,7 @@ from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
 from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.Core.exceptions import ApplicationConfigurationError, GangaFileError
 from GangaCore.GPIDev.Lib.File import File, FileBuffer
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
@@ -101,6 +101,9 @@ class ExeDiracRTHandler(IRuntimeHandler):
             if isinstance(this_file, LocalFile):
                 for name in this_file.getFilenameList():
                     inputsandbox.append(File(abspath(expanduser(name))))
+            if isinstance(this_file, DiracFile):
+                if not this_file.getReplicas():
+                    raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % this_file.lfn)
 
         lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
         # NOTE special case for replicas: replicate string must be empty for no
