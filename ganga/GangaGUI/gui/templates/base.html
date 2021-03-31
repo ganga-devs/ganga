@@ -107,7 +107,7 @@
 
         {# Web CLI Container #}
         <div id="cli-container"
-             style="display: none; position: fixed; bottom: 0; left: 0; height: 50vh; width: 100%; z-index: 50; box-shadow: 0 -2px 6px rgba(0,0,0,0.30);"
+             style="position: fixed; bottom: 0; left: 0; height: 50vh; width: 100%; z-index: 50; box-shadow: 0 -2px 6px rgba(0,0,0,0.30);"
              class="rounded-top overflow-hidden">
             <div class="d-flex justify-content-end align-items-center mt-2 px-2" style="position: absolute; top: 0; right:0;">
                 <a href="{{ url_for('serve_cli') if session['WEB_CLI'] == True }}" target="_blank"
@@ -128,7 +128,7 @@
 <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 {# JS file specific to web cli mode#}
-<script defer src="{{ url_for('static', filename='js/slidecli.js') if session['WEB_CLI'] == True else '#' }}"></script>
+<script src="{{ url_for('static', filename='js/slidecli.js') if session['WEB_CLI'] == True else '#' }}"></script>
 
 {% block footer %}{% endblock footer %}
 
