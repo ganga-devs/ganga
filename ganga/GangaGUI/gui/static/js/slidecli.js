@@ -11,6 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // Show/Hide CLI
 let cliOpen = false;
 function toggleCli() {
-    document.querySelector('#cli-container').style['display'] = cliOpen ? 'none' : 'initial';
+    document.querySelector('#cli-container').style['visibility'] = cliOpen ? 'hidden' : 'initial';
     cliOpen = !cliOpen;
 }
