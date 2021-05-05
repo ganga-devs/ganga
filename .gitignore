@@ -1,5 +1,6 @@
 *.pyc
 *.pyo
+*.swp
 *~
 __pycache__
 python/ganga.egg-info
