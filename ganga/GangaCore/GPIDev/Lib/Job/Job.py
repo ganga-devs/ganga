@@ -1400,16 +1400,19 @@ class Job(GangaObject):
         self._storedJobMasterConfig = None
         self._storedAppMasterConfig = None
 
-    def _doSplitting(self):
+    def _doSplitting(self, splitter=None):
         # Temporary polution of Atlas stuff to (almost) transparently switch
         # from Panda to Jedi
         rjobs = None
+
+        if splitter is None:
+            splitter = self.splitter
 
         if getName(self.backend) == "Jedi" and self.splitter:
             logger.error("You should not use a splitter with the Jedi backend. The splitter will be ignored.")
             self.splitter = None
             rjobs = [self]
-        elif self.splitter: # and self.master is None:
+        elif splitter and self.master is None:
             fqid = self.getFQID('.')
 
             # App Configuration
@@ -1421,15 +1424,17 @@ class Job(GangaObject):
 
             logger.info("Splitting Job: %s" % fqid)
 
-            subjobs = self.splitter.validatedSplit(self)
+            subjobs = splitter.validatedSplit(self)
             if subjobs:
+                # EBKE changes
                 if not isType(self.subjobs, (list, GangaList)):
+                    i=0
                     self.subjobs = GangaList()
+                else:
+                    i=len(self.subjobs)
                 # print "*"*80
                 # subjobs[0].printTree(sys.stdout)
 
-                # EBKE changes
-                i = 0
                 # bug fix for #53939 -> first set id of the subjob and then append to self.subjobs
                 #self.subjobs = subjobs
                 # for j in self.subjobs:
@@ -1995,14 +2000,10 @@ class Job(GangaObject):
             self.backend = backend
 
         if splitter is not None:
-            #self.splitter = splitter
             rjobs=self.master._doSplitting(splitter)
-
-            print("Subjobs: " + str(self.subjobs))
-            #self.subjobs = rjobs
-
-            for sjob in self.subjobs:
-                sjob.submit()
+            for sjob in rjobs: 
+                if sjob.status == 'new':
+                    sjob.submit()
 
             return
 
@@ -2219,6 +2220,7 @@ class Job(GangaObject):
         elif attr == 'comment':
 
             super(Job, self).__setattr__(attr, value)
+
 
         elif attr == 'backend':
 
