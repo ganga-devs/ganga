@@ -209,6 +209,7 @@ class Job(GangaObject):
                                      'time': ComponentItem('jobtime', defvalue=JobTime(), protected=1, comparable=0, doc='provides timestamps for status transitions'),
                                      'application': ComponentItem('applications', defvalue=Executable(), doc='specification of the application to be executed'),
                                      'backend': ComponentItem('backends', defvalue=Localhost(), doc='specification of the resources to be used (e.g. batch system)'),
+                                     'splitter': ComponentItem('splitters', defvalue=None, changable_at_resubmit=1, load_default=0, optional=1, doc='optional splitter'),
                                      'inputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will act as input files for a job"),
                                      'outputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects decorating what have to be done with the output files after job is completed "),
                                      'non_copyable_outputfiles': GangaFileItem(defvalue=[], hidden=1, sequence=1, doc="list of file objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
@@ -219,7 +220,6 @@ class Job(GangaObject):
                                      'outputdir': SimpleItem(getter="getStringOutputDir", defvalue=None, transient=1, protected=1, comparable=0, load_default=0, optional=1, copyable=0, typelist=[str], doc='location of output directory (file workspace)'),
                                      'inputdata': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                      'outputdata': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, copyable=_outputfieldCopyable(), doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
-                                     'splitter': ComponentItem('splitters', defvalue=None, load_default=0, optional=1, doc='optional splitter'),
                                      'subjobs': ComponentItem('jobs', defvalue=GangaList(), sequence=1, protected=1, load_default=0, copyable=0, comparable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
                                      'master': ComponentItem('jobs', getter="_getMasterJob", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, doc='master job', visitable=0),
                                      'postprocessors': ComponentItem('postprocessor', defvalue=MultiPostProcessor(), doc='list of postprocessors to run after job has finished'),
@@ -1934,7 +1934,7 @@ class Job(GangaObject):
         finally:
             pass  # job._registry.cache_writers_mutex.release()
 
-    def resubmit(self, backend=None):
+    def resubmit(self, backend=None, splitter=None):
         """Resubmit a failed or completed job.  A backend object may
         be specified to change some submission parameters (which
         parameters may be effectively changed depends on a
@@ -1948,14 +1948,14 @@ class Job(GangaObject):
         Note: it is not possible to change the type of the backend in this way.
 
         """
-        return self._resubmit(backend=backend)
+        return self._resubmit(backend=backend, splitter=splitter)
 
     def auto_resubmit(self):
         """ Private method used for auto resubmit functionality by the monitoring loop.
         """
         return self._resubmit(auto_resubmit=True)
 
-    def _resubmit(self, backend=None, auto_resubmit=False):
+    def _resubmit(self, backend=None, splitter=None, auto_resubmit=False):
         """ Internal implementation of resubmit which handles the publically accessible resubmit() method proper as well
         as the auto_resubmit use case used in the monitoring loop.
         """
@@ -1993,7 +1993,12 @@ class Job(GangaObject):
             raise JobError(msg)
 
         if backend is not None:
-            backend = backend
+            self.backend = backend
+
+        if splitter is not None:
+            self.splitter = splitter
+
+
 
         # do not allow to change the backend type
         if backend and not isType(self.backend, type(backend)):
@@ -2006,6 +2011,9 @@ class Job(GangaObject):
         # the extra backend argument
         if backend == self.backend:
             backend = None
+
+        if splitter == self.splitter:
+            splitter = None
 
         # check if the backend supports extra 'backend' argument for
         # master_resubmit()
@@ -2027,6 +2035,9 @@ class Job(GangaObject):
 
         if backend:
             check_changability(self.backend, backend)
+
+        if splitter:
+            check_changability(self.splitter, splitter)
 
         oldstatus = self.status
 
