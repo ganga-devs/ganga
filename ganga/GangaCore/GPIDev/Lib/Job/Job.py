@@ -1405,6 +1405,7 @@ class Job(GangaObject):
         # from Panda to Jedi
         rjobs = None
 
+        custom_splitter = splitter is not None
         if splitter is None:
             splitter = self.splitter
 
@@ -1412,7 +1413,7 @@ class Job(GangaObject):
             logger.error("You should not use a splitter with the Jedi backend. The splitter will be ignored.")
             self.splitter = None
             rjobs = [self]
-        elif splitter and self.master is None:
+        elif custom_splitter or (splitter and self.master is None):
             fqid = self.getFQID('.')
 
             # App Configuration
@@ -2000,7 +2001,7 @@ class Job(GangaObject):
             self.backend = backend
 
         if splitter is not None:
-            rjobs=self.master._doSplitting(splitter)
+            rjobs=self._doSplitting(splitter)
             for sjob in rjobs: 
                 if sjob.status == 'new':
                     sjob.submit()
