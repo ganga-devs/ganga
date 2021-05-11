@@ -287,7 +287,6 @@ jobs:
       with:
         go-version: '^1.16.4' # The Go version to download (if necessary) and use.
       id: go
-      run: go version
 
     - name: Check out code for the container build
       uses: actions/checkout@v1
