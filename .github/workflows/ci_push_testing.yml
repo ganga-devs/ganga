@@ -281,11 +281,13 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
 
-    - name: Set up Go 1.12
-      uses: actions/setup-go@v1
+    - name: Set up Go 1.16.4
+      uses: actions/checkout@v2
+      uses: actions/setup-go@v2
       with:
-        go-version: 1.12
+        go-version: '^1.16.4' # The Go version to download (if necessary) and use.
       id: go
+      run: go version
 
     - name: Check out code for the container build
       uses: actions/checkout@v1
@@ -310,7 +312,7 @@ jobs:
         mkdir -p $GOPATH/src/github.com/sylabs && \
         cd $GOPATH/src/github.com/sylabs && \
         wget -qO- https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz | \
-        tar xzv && \
+        tar xz && \
         cd singularity && \
         ./mconfig -p /usr/local && \
         make -C builddir && \
