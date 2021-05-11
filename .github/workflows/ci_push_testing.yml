@@ -282,7 +282,6 @@ jobs:
     steps:
 
     - name: Set up Go 1.16.4
-    - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
       with:
         go-version: '^1.16.4' # The Go version to download (if necessary) and use.
