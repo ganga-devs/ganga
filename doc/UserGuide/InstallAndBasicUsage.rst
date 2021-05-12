@@ -31,14 +31,7 @@ PyPI Install
 ^^^^^^^^^^^^
 (Recommended)
 
-For upgrading pip to the latest version use:
-``python3 -m pip install --upgrade pip setuptools wheel``
-
-You can also install directly from PyPI using:
-``python3 -m pip install ganga``
-
-If you don't have System Administrator rights or just want to do a private install then it can be beneficial to
-run using a ``virtualenv``:
+The best is to install inside a virtual environment
 
 .. code-block:: bash
 
@@ -46,8 +39,12 @@ run using a ``virtualenv``:
     python3 -m venv gangaenv
     cd gangaenv/
     . bin/activate
+
+    # Update installation tools to latest and greatest
+    python3 -m pip install --upgrade pip setuptools wheel
+
     # Install Ganga 
-    pip install ganga
+    python3 -m pip install ganga
 
 To install pip locally if it's not on your system and you don't have admin access please consult: https://pip.pypa.io/en/stable/installing/
 
@@ -59,20 +56,8 @@ Now each time you want to use Ganga in a new shell, you have to activate the vir
     . bin/activate
     ganga
 
-Alternatively if you want you can install Ganga using pip to your local user environment (not recommended if you have many python projects/libraries around)
-
-``pip install ganga --user``
-
-
 From Github
 ^^^^^^^^^^^
-
-You can always install Ganga's most recent commit at the time of writing by running 
-
-``pip install -e git+git://github.com/ganga-devs/ganga.git#egg=ganga``
-
-If you don't have System Administrator rights or just want to do a private install then it can be beneficial to
-run using a ``virtualenv``:
 
 .. code-block:: bash
 
@@ -80,9 +65,16 @@ run using a ``virtualenv``:
     python3 -m venv gangaenv
     cd gangaenv/
     . bin/activate
-    # Install Ganga 
-    pip install -e git+git://github.com/ganga-devs/ganga.git#egg=ganga
 
+    # Update installation tools to latest and greatest
+    python3 -m pip install --upgrade pip setuptools wheel
+
+    # Clone Ganga 
+    git clone git@github.com:ganga-devs/ganga.git
+
+    # Install dependencies
+    cd ganga
+    python3 -m pip install -e .
 
 Starting Ganga
 --------------
