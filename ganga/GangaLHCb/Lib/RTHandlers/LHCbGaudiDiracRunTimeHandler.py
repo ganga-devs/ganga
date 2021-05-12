@@ -163,6 +163,15 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         lhcb_dirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 
+        #If we are doing virtualisation with a CVMFS location, check it is available
+        if job.virtualization and isinstance(job.virtualization.image, str):
+            if 'cvmfs' == job.virtualization.image.split('/')[1]:
+                tag_location = '/'+job.virtualization.image.split('/')[1]+'/'+job.virtualization.image.split('/')[2]+'/'
+                if 'Tag' in job.backend.settings:
+                    job.backend.settings['Tag'].append(tag_location)
+                else:
+                    job.backend.settings['Tag'] = [tag_location]
+
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release
         # NOTE special case for replicas: replicate string must be empty for no
