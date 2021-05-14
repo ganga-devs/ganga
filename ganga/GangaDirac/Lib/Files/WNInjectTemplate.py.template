@@ -21,11 +21,11 @@ def uploadFile(file_name, lfn_base, compress=False, wildcard=''):
             '###LOCATIONSFILE_NAME###' : ###LOCATIONSFILE###.name
             }
 
-    for k, v in replace_dict.iteritems():
+    for k, v in replace_dict.items():
         upload_script = upload_script.replace(str(k), str(v))
 
     p = subprocess.Popen('''python -c "import sys;exec(sys.stdin.read())"''', shell=True,\
-            env=dirac_env, stdin=subprocess.PIPE).communicate(upload_script)
+            env=dirac_env, stdin=subprocess.PIPE, universal_newlines=True).communicate(upload_script)
     
     return p
 
