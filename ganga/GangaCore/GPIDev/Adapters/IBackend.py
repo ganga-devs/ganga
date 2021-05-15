@@ -127,8 +127,8 @@ class IBackend(GangaObject):
         """
         from GangaCore.Utility.logging import log_user_exception
 
-        logger.info("SubJobConfigs: %s" % len(subjobconfigs))
-        logger.info("rjobs: %s" % len(rjobs))
+        logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
+        logger.debug("rjobs: %s" % len(rjobs))
         assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
 
         incomplete = 0
