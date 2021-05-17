@@ -1568,6 +1568,8 @@ class Job(GangaObject):
             r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig)
 
             if not r:
+                for sj in rjobs:
+                    mJobs.subjobs.remove(sj)
                 raise JobManagerError('error during submit')
 
             mJob.updateStatus('submitted')
