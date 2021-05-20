@@ -38,7 +38,7 @@ class Notifier(IPostProcessor):
         * job has failed but do not have auto resubmit
         * job has not failed but verbose is set to true
         """
-        if len(job.subjobs) or (newstatus == 'failed' and job.do_auto_resubmit is False) or (newstatus != 'failed' and self.verbose is True):
+        if len(job.subjobs)==0 or (newstatus == 'failed' and job.do_auto_resubmit is False) or (newstatus != 'failed' and self.verbose is True):
             return self.email(job, newstatus)
         return True
 
