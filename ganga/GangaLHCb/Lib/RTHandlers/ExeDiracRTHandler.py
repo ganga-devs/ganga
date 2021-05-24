@@ -105,6 +105,15 @@ class ExeDiracRTHandler(IRuntimeHandler):
                 if not this_file.getReplicas():
                     raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % this_file.lfn)
 
+        #If we are doing virtualisation with a CVMFS location, check it is available
+        if job.virtualization and isinstance(job.virtualization.image, str):
+            if 'cvmfs' == job.virtualization.image.split('/')[1]:
+                tag_location = '/'+job.virtualization.image.split('/')[1]+'/'+job.virtualization.image.split('/')[2]+'/'
+                if 'Tag' in job.backend.settings:
+                    job.backend.settings['Tag'].append(tag_location)
+                else:
+                    job.backend.settings['Tag'] = [tag_location]
+
         lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
