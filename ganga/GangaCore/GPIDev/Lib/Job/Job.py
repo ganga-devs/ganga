@@ -1566,12 +1566,12 @@ class Job(GangaObject):
             # submit the job
             # master_submit has been written as the interface which ganga
             # should call, not submit directly
-
-            r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig)
-
+            print('about to master submit')
+            r = mJob.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig)
+            print('returned: ', r)
             if not r:
                 for sj in rjobs:
-                    mJobs.subjobs.remove(sj)
+                    mJob.subjobs.remove(sj)
                 raise JobManagerError('error during submit')
 
             mJob.updateStatus('submitted')
