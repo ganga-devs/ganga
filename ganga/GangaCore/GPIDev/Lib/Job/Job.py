@@ -1531,7 +1531,6 @@ class Job(GangaObject):
             logger.info('submitting %s subjobs', len(rjobs))
         
             # Output Files
-            # validate the output files
             for this_job in rjobs:
                 (validOutputFiles, errorMsg) = this_job.validateOutputfilesOnSubmit()
                 if not validOutputFiles:
@@ -1546,14 +1545,9 @@ class Job(GangaObject):
             logger.debug("Job Configuration, Job %s:" % self.getFQID('.'))
 
             # prepare the master job with the correct runtime handler
-            # Calls rtHandler.master_prepare if it hasn't already been called by the master job or by self
-            # Only stored as transient if the master_prepare successfully
-            # completes
             jobmasterconfig = self._getJobMasterConfig()
 
             # prepare the subjobs with the runtime handler
-            # Calls the rtHandler.prepare if it hasn't already been called by the master job or by self
-            # Only stored as a transient if the prepare successfully completes
             jobsubconfig = self._getJobSubConfig(rjobs)
             logger.debug("# jobsubconfig: %s" % len(jobsubconfig))
 
@@ -1564,21 +1558,14 @@ class Job(GangaObject):
             self.monitorPrepare_hook(jobsubconfig)
 
             # submit the job
-            # master_submit has been written as the interface which ganga
-            # should call, not submit directly
-            print('about to master submit')
             r = mJob.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig)
-            print('returned: ', r)
             if not r:
                 for sj in rjobs:
                     mJob.subjobs.remove(sj)
                 raise JobManagerError('error during submit')
 
             mJob.updateStatus('submitted')
-            # make sure that the status change goes to the repository, NOTE:
-            # this commit is redundant if updateStatus() is used on the line
-            # above
-
+            #Freeze the split job and add comments for info
             self.freeze()
             self.comment = self.comment + ' - has been resplit'
             for _r in rjobs:
