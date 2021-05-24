@@ -1236,7 +1236,7 @@ class Job(GangaObject):
                 appsubconfig = [j.application.configure(appmasterconfig)[1] for j in subjobs]
 
         else:
-            if len(subjobs)>1:
+            if isinstance(subjobs, GangaList) and len(subjobs)>1:
                 appsubconfig = self._storedAppSubConfig
                 if appsubconfig is None or len(appsubconfig) == 0:
                     appmasterconfig = self._getMasterAppConfig()
