@@ -797,6 +797,7 @@ class Condor(IBackend):
     updateMonitoringInformation = \
         staticmethod(updateMonitoringInformation)
 
+    def peek(self, filename=None, command=None):
         job = self.getJobObject()
 
         if not self.id:
