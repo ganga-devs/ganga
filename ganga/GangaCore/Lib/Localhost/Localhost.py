@@ -40,17 +40,62 @@ class Localhost(IBackend):
                                      'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Hostname where the job was submitted.'),
                                      'wrapper_pid': SimpleItem(defvalue=-1, protected=1, copyable=0, hidden=1, doc='(internal) process id of the execution wrapper'),
                                      'nice': SimpleItem(defvalue=0, doc='adjust process priority using nice -n command'),
-                                     'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel')
+                                     'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel'),
+                                     'batch_submit': SimpleItem(defvalue=None, typelist=[int, None], doc='Runs a specific number of subjobs at a time')
                                      })
     _category = 'backends'
     _name = 'Local'
 
     def __init__(self):
         super(Localhost, self).__init__()
+        
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig,keep_going=False):
+        """
+        Runs the subjobs batch wise. To use the batch submit feature, specify the batch number(batch_submit) before j.submit()
+        j.backend.batch_submit= 2 (or any number)
+        """
+        if not self.batch_submit is None:
+            master_input_sandbox = self.master_prepare(masterjobconfig)
+            logger.info("Processing of %s subjobs" % len(subjobconfigs))
+            batch=self.batch_submit
+            for i in range(0,len(subjobconfigs),self.batch_submit):
+                logger.info("submitting %d subjobs to Local backend" % self.batch_submit)
+                for j in range(i,batch):
+                    if j > len(subjobconfigs):
+                        break
+                    if j == len(subjobconfigs):
+                        try:
+                            stripProxy(rjobs[j].info).increment()
+                            break
+                        except IndexError:
+                            logger.info("Processing Complete")
+                            break
+                    fqid = rjobs[j].getFQID('.')
+                    logger.info("submitting job %s to Local backend", fqid)
+                    try:
+                        b = stripProxy(rjobs[j].backend)
+                        rjobs[j].updateStatus('submitting')
+                        if b.submit(subjobconfigs[j], master_input_sandbox):
+                            rjobs[j].updateStatus('submitted')
+                            stripProxy(rjobs[j].info).increment()
+                        else:
+                            if handleError(IncompleteJobSubmissionError(fqid, 'submission failed')):
+                                raise IncompleteJobSubmissionError(fqid, 'submission failed')
+                    except Exception as x:
+                        rjobs[j].updateStatus('new')
+                        if isType(x, GangaException):
+                            logger.error("%s" % x)
+                            log_user_exception(logger, debug=True)
+                        else:
+                            log_user_exception(logger, debug=False)
+                        raise IncompleteJobSubmissionError(fqid, 'submission failed')
+                batch+=self.batch_submit    
+            return 1        
 
-    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
-        """ Overload master_submit to avoid parallel submission with Interactive backend"""
-        return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, self.force_parallel)
+        else:
+            return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, self.force_parallel)
+
+
 
     def submit(self, jobconfig, master_input_sandbox):
         prepared = self.preparejob(jobconfig, master_input_sandbox)
