@@ -800,8 +800,9 @@ class Condor(IBackend):
     def peek(self, filename=None, command=None):
         job = self.getJobObject()
 
-        
-                    
+        if job.subjobs:
+            peekStatus= False
+            logger.error("Master Job does not have a peek status.")                
 
         idElementList = job.backend.id.split("#")
         if 3 == len(idElementList):
@@ -814,21 +815,19 @@ class Condor(IBackend):
 
         status, output = subprocess.getstatusoutput(peekCommand)
 
-
         if (status != 0):
             logger.warning \
                 ("Return code '%s' peek job '%s' - Condor id '%s'" %
                  (str(status), job.id, job.backend.id))
             logger.warning("Tried command: '%s'" % peekCommand)
             logger.warning("Command output: '%s'" % output)
+            peekStatus= False
         else:
             logger.info(output)
+            peekStatus = True
 
-        peekStatus = True
-        if job.subjobs:
-            peekStatus= False
-            logger.error("Master Job does not have a peek status.")
-
+        
+        
         return peekStatus
 
 #_________________________________________________________________________
