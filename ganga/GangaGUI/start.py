@@ -4,6 +4,8 @@ import uuid
 import random
 import requests
 import subprocess
+import socket
+from contextlib import closing
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.Utility.logging import getLogger
 from GangaGUI.gui.routes import gui, db
@@ -43,9 +45,16 @@ class APIServerThread(GangaThread):
         if res.status_code == 200:
             return True
         return False
+    
+    
+def free_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
 
 
-def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port: int = 5000,
+def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = free_port(), internal_port: int = free_port(),
               password: str = None, only_internal: bool = False):
     """
     Start GUI Flask App on a Gunicorn server and API Flask App on a GangaThread
