@@ -797,4 +797,37 @@ class Condor(IBackend):
     updateMonitoringInformation = \
         staticmethod(updateMonitoringInformation)
 
+    def peek(self, filename=None, command=None):
+        job = self.getJobObject()
+
+        if job.subjobs:
+            peekStatus= False
+            logger.error("Master Job does not have a peek status.")                
+
+        idElementList = job.backend.id.split("#")
+        if 3 == len(idElementList):
+            if idElementList[1].find(".") != -1:
+                peekCommand = f"condor_tail -f -name {idElementList[0]} {idElementList[1]}"
+            else:
+                peekCommand = f"condor_tail -f -name {idElementList[0]} {idElementList[1]}"
+        else:
+            peekCommand = f"condor_tail -f {idElementList[0]}"
+
+        status, output = subprocess.getstatusoutput(peekCommand)
+
+        if (status != 0):
+            logger.warning \
+                ("Return code '%s' peek job '%s' - Condor id '%s'" %
+                 (str(status), job.id, job.backend.id))
+            logger.warning("Tried command: '%s'" % peekCommand)
+            logger.warning("Command output: '%s'" % output)
+            peekStatus= False
+        else:
+            logger.info(output)
+            peekStatus = True
+
+        
+        
+        return peekStatus
+
 #_________________________________________________________________________
