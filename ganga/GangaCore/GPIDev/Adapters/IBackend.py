@@ -239,15 +239,17 @@ class IBackend(GangaObject):
         """
         from GangaCore.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
         from GangaCore.GPIDev.Lib.File.File import File, ShareDir
-
+        print('master prepare')
         job = self.getJobObject()
-
         create_sandbox = job.createInputSandbox
         if self._packed_input_sandbox:
+            print('createPackedInputSandbox')
             create_sandbox = job.createPackedInputSandbox
-
+        print('created')
         if masterjobconfig:
+            print('is masterjobconfig')
             if hasattr(job.application, 'is_prepared') and isType(job.application.is_prepared, ShareDir):
+                print('hasattr is prpared')
                 sharedir_pred = lambda f: f.name.find(job.application.is_prepared.name) > -1
                 sharedir_files = filter(sharedir_pred, masterjobconfig.getSandboxFiles())
                 nonsharedir_files = itertools.filterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())

@@ -1225,7 +1225,7 @@ class Job(GangaObject):
 
         if subjobs is None:
             subjobs = GangaList()
-
+        
         appsubconfig = []
         if self.master is None:
             #   I am the master Job
@@ -1236,16 +1236,16 @@ class Job(GangaObject):
                 appsubconfig = [j.application.configure(appmasterconfig)[1] for j in subjobs]
 
         else:
-            if isinstance(subjobs, GangaList) and len(subjobs)>1:
+            if isinstance(subjobs, list) and len(subjobs)>1:
                 appsubconfig = self._storedAppSubConfig
-                if appsubconfig is None or len(appsubconfig) == 0:
+                if appsubconfig is None or len(appsubconfig) == 0 or len(appsubconfig) != len(self.subjobs):
                     appmasterconfig = self._getMasterAppConfig()
                     logger.debug("Job %s Calling application.configure %s times" % (self.getFQID('.'), len(self.subjobs)))
                     appsubconfig = [j.application.configure(appmasterconfig)[1] for j in subjobs]
             else:
                 #   I am a sub-job, lets just generate our own config
                 appsubconfig = self._storedAppSubConfig
-                if appsubconfig is None or len(appsubconfig) == 0:
+                if appsubconfig is None or len(appsubconfig) == 0 :
                     appmasterconfig = self._getMasterAppConfig()
                     logger.debug("Job %s Calling application.configure 1 times" % self.getFQID('.'))
                     appsubconfig = [self.application.configure(appmasterconfig)[1]]
@@ -1322,10 +1322,12 @@ class Job(GangaObject):
         else:
             #   I am a sub-job, lets calculate my config
             if len(subjobs) > 1:
+                print('where I should be')
                 rtHandler = self._getRuntimeHandler()
-                appmasterconfig = self._getMasterAppConfig()
-                jobmasterconfig = self._getJobMasterConfig()
+                appmasterconfig = self.master._getMasterAppConfig()
+                jobmasterconfig = self.master._getJobMasterConfig()
                 appsubconfig = self._getAppSubConfig(subjobs)
+                print('length appsubconfig: ', len(appsubconfig))
                 logger.debug("Job %s Calling rtHandler.prepare %s times" % (self.getFQID('.'), len(self.subjobs)))
                 logger.info("Preparing subjobs")
                 #Make an empty list
@@ -1343,7 +1345,7 @@ class Job(GangaObject):
         self._storedJobSubConfig = jobsubconfig
 
         logger.debug("jobsubconfig: %s" % jobsubconfig)
-
+        print('length of jbsubconfig: ', len(jobsubconfig))
         return jobsubconfig
 
     def _getRuntimeHandler(self):
@@ -1545,7 +1547,9 @@ class Job(GangaObject):
             logger.debug("Job Configuration, Job %s:" % self.getFQID('.'))
 
             # prepare the master job with the correct runtime handler
-            jobmasterconfig = self._getJobMasterConfig()
+            # remove any saved config to ensure the new job scripts get made
+            mJob._storedJobMasterConfig = None
+            jobmasterconfig = mJob._getJobMasterConfig()
 
             # prepare the subjobs with the runtime handler
             jobsubconfig = self._getJobSubConfig(rjobs)
