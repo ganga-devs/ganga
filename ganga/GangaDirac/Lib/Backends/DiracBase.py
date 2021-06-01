@@ -227,9 +227,7 @@ class DiracBase(IBackend):
         dirac_cmd = """execfile(\'%s\')""" % myscript
         submitFailures = {}
         try:
-            print('trying: ', myscript)
             result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True, new_subprocess = True)
-            print('result: ', result)
         except GangaDiracError as err:
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
             logger.error(err_msg)
@@ -245,7 +243,6 @@ class DiracBase(IBackend):
         #Now put the list of Dirac IDs into the subjobs and get them monitored:
         if len(j.subjobs)>0:
             for jobNo in result.keys():
-                print('setting info: ', jobNo)
                 sjNo = jobNo.split('.')[1]
                 #If we get an int we have a DIRAC ID so job submitted
                 if isinstance(result[jobNo], int):
@@ -262,31 +259,24 @@ class DiracBase(IBackend):
                     j.subjobs[int(sjNo)].updateStatus('failed')
                     submitFailures.update({jobNo : 'DIRAC error!'})
         else:
-            print('else')
             result_id = list(result.keys())[0]
-            print('result_id: ', result_id)
             if isinstance(result[result_id], int):
-                print('setting backend id')
                 j.backend.id = result[result_id]
                 j.updateStatus('submitted')
                 j.time.timenow('submitted')
-                print('about to increment info')
                 stripProxy(j.info).increment()
-                print('strip proxy')
             elif isinstance(result[result_id], str):
                 j.updateStatus('failed')
                 submitFailures.update({result_id: result[result_id]})
             else:
                 j.updateStatus('failed')
                 submitFailures.update({result_id: 'DIRAC error!'})
-        print('check failures')
         #Check that every subjob got submitted ok
         if len(submitFailures) > 0:
             for sjNo in submitFailures.keys():
                 logger.error('Job submission failed for job %s : %s' % (sjNo, submitFailures[sjNo]))
             raise GangaDiracError("Some subjobs failed to submit! Check their status!")
             return 0
-        print('about to return')
         return 1 
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
@@ -299,8 +289,8 @@ class DiracBase(IBackend):
             return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
 
         #Otherwise use the block submit. Much of this is copied from IBackend
-        logger.info("SubJobConfigs: %s" % len(subjobconfigs))
-        logger.info("rjobs: %s" % len(rjobs))
+        logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
+        logger.debug("rjobs: %s" % len(rjobs))
 
         if rjobs and len(subjobconfigs) != len(rjobs):
             raise BackendError("The number of subjob configurations does not match the number of subjobs!")
@@ -356,13 +346,11 @@ class DiracBase(IBackend):
                 logger.info("Submitting job")
             else:
                 logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
-                print('hello')
             try:
                 #Either do the submission in parallel with threads or sequentially
                 if parallel_submit:
                     getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename, nSubjobs, keep_going))
                 else:
-                    print('about t block submit')
                     self._block_submit(dirac_script_filename, nSubjobs, keep_going)
 
                 while not self._subjob_status_check(rjobs, nPerProcess, i):

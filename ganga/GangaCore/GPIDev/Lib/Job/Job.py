@@ -1322,12 +1322,10 @@ class Job(GangaObject):
         else:
             #   I am a sub-job, lets calculate my config
             if len(subjobs) > 1:
-                print('where I should be')
                 rtHandler = self._getRuntimeHandler()
                 appmasterconfig = self.master._getMasterAppConfig()
                 jobmasterconfig = self.master._getJobMasterConfig()
                 appsubconfig = self._getAppSubConfig(subjobs)
-                print('length appsubconfig: ', len(appsubconfig))
                 logger.debug("Job %s Calling rtHandler.prepare %s times" % (self.getFQID('.'), len(self.subjobs)))
                 logger.info("Preparing subjobs")
                 #Make an empty list
@@ -1345,7 +1343,6 @@ class Job(GangaObject):
         self._storedJobSubConfig = jobsubconfig
 
         logger.debug("jobsubconfig: %s" % jobsubconfig)
-        print('length of jbsubconfig: ', len(jobsubconfig))
         return jobsubconfig
 
     def _getRuntimeHandler(self):
