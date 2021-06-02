@@ -807,11 +807,11 @@ class Condor(IBackend):
         idElementList = job.backend.id.split("#")
         if 3 == len(idElementList):
             if idElementList[1].find(".") != -1:
-                peekCommand = f"condor_tail -f -name {idElementList[0]} {idElementList[1]}"
+                peekCommand = f"condor_tail -maxbytes 1000000 -name {idElementList[0]} {idElementList[1]}"
             else:
-                peekCommand = f"condor_tail -f -name {idElementList[0]} {idElementList[1]}"
+                peekCommand = f"condor_tail -maxbytes 1000000 -name {idElementList[0]} {idElementList[1]}"
         else:
-            peekCommand = f"condor_tail -f {idElementList[0]}"
+            peekCommand = f"condor_tail -maxbytes 1000000  {idElementList[0]}"
 
         status, output = subprocess.getstatusoutput(peekCommand)
 
