@@ -32,8 +32,8 @@ After the job and been submitted and finished, the output of each of the subjobs
 
 See the section :doc:`PostProcessors` for how we can merge the output into a single file.
 
-ArgSplitter:
-------------
+ArgSplitter
+-----------
 
 For a job that is using an `Executable` application, it is very common that you want to run it multiple times with a different set of arguments (like a random number seed). The `ArgSplitter` can do exactly that. For each of the subjobs created, it will replace the arguments fot he job with one from the array of array of arguments provided to the splitter. So
 
@@ -136,3 +136,6 @@ Sometimes a job that has been split will have some of the subjobs failing. This 
          8.1 | completed       |                               |
          8.2 | completed       |              - resplit of 8.0 |
          8.3 | completed       |              - resplit of 8.0 |
+
+
+Any splitter can be used for the resplitting. The subjob that was the origin of the resplit is clearly marked as seen above.
