@@ -123,6 +123,7 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = free_port(), interna
     # Display necessary information to the user
     logger.info(f"GUI Login Details: user='{gui_user.user}', password='{gui_password}'")
     logger.info(f"You can now access the GUI at http://{gui_host}:{gui_port}")
+    logger.info(f"The internal port for flask server using ganga thread is http://{gui_host}:{internal_port}")
     logger.info(
         f"If on a remote system you may need to set up port forwarding to reach the web server. This can be done with 'ssh -D {gui_port} <remote-ip>' from a terminal.")
 
