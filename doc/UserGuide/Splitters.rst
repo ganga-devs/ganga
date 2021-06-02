@@ -138,4 +138,4 @@ Sometimes a job that has been split will have some of the subjobs failing. This 
          8.3 | completed       |              - resplit of 8.0 |
 
 
-Any splitter can be used forthe resplitting. The subjob that was the origin of the replit is clearly marked as seen above.
+Any splitter can be used for the resplitting. The subjob that was the origin of the replit is clearly marked as seen above.
