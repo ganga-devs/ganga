@@ -16,6 +16,7 @@ from GangaCore.Core.GangaRepository import getRegistry
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from GangaCore.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Objects import Node, synchronised
 from GangaCore.GPIDev.Base.Proxy import addProxy, getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
@@ -235,7 +236,7 @@ class Job(GangaObject):
     _category = 'jobs'
     _name = 'Job'
     _exportmethods = ['prepare', 'unprepare', 'submit', 'remove', 'kill', 'freeze', 'unfreeze',
-                      'resubmit', 'peek', 'force_status', 'runPostProcessors', 'returnSubjobStatuses']
+                      'resubmit', 'peek', 'force_status', 'runPostProcessors', 'returnSubjobStatuses', 'resplit']
 
     default_registry = 'jobs'
 
@@ -1224,7 +1225,7 @@ class Job(GangaObject):
 
         if subjobs is None:
             subjobs = GangaList()
-
+        
         appsubconfig = []
         if self.master is None:
             #   I am the master Job
@@ -1235,12 +1236,19 @@ class Job(GangaObject):
                 appsubconfig = [j.application.configure(appmasterconfig)[1] for j in subjobs]
 
         else:
-            #   I am a sub-job, lets just generate our own config
-            appsubconfig = self._storedAppSubConfig
-            if appsubconfig is None or len(appsubconfig) == 0:
-                appmasterconfig = self._getMasterAppConfig()
-                logger.debug("Job %s Calling application.configure 1 times" % self.getFQID('.'))
-                appsubconfig = [self.application.configure(appmasterconfig)[1]]
+            if isinstance(subjobs, list) and len(subjobs)>1:
+                appsubconfig = self._storedAppSubConfig
+                if appsubconfig is None or len(appsubconfig) == 0 or len(appsubconfig) != len(self.subjobs):
+                    appmasterconfig = self._getMasterAppConfig()
+                    logger.debug("Job %s Calling application.configure %s times" % (self.getFQID('.'), len(self.subjobs)))
+                    appsubconfig = [j.application.configure(appmasterconfig)[1] for j in subjobs]
+            else:
+                #   I am a sub-job, lets just generate our own config
+                appsubconfig = self._storedAppSubConfig
+                if appsubconfig is None or len(appsubconfig) == 0 :
+                    appmasterconfig = self._getMasterAppConfig()
+                    logger.debug("Job %s Calling application.configure 1 times" % self.getFQID('.'))
+                    appsubconfig = [self.application.configure(appmasterconfig)[1]]
 
         self._storedAppSubConfig = appsubconfig
 
@@ -1313,17 +1321,28 @@ class Job(GangaObject):
 
         else:
             #   I am a sub-job, lets calculate my config
-            rtHandler = self._getRuntimeHandler()
-            appmasterconfig = self._getMasterAppConfig()
-            jobmasterconfig = self._getJobMasterConfig()
-            appsubconfig = self._getAppSubConfig(self)
-            logger.debug("Job %s Calling rtHandler.prepare once for self" % self.getFQID('.'))
-            jobsubconfig = [rtHandler.prepare(self.application, appsubconfig[0], appmasterconfig, jobmasterconfig)]
+            if len(subjobs) > 1:
+                rtHandler = self._getRuntimeHandler()
+                appmasterconfig = self.master._getMasterAppConfig()
+                jobmasterconfig = self.master._getJobMasterConfig()
+                appsubconfig = self._getAppSubConfig(subjobs)
+                logger.debug("Job %s Calling rtHandler.prepare %s times" % (self.getFQID('.'), len(self.subjobs)))
+                logger.info("Preparing subjobs")
+                #Make an empty list
+                jobsubconfig = [None]*len(subjobs)
+                jobsubconfig = [rtHandler.prepare(sub_job.application, sub_conf, appmasterconfig, jobmasterconfig) for (sub_job, sub_conf) in zip(subjobs, appsubconfig)]
+               
+            else:
+                rtHandler = self._getRuntimeHandler()
+                appmasterconfig = self._getMasterAppConfig()
+                jobmasterconfig = self._getJobMasterConfig()
+                appsubconfig = self._getAppSubConfig(self)
+                logger.debug("Job %s Calling rtHandler.prepare once for self" % self.getFQID('.'))
+                jobsubconfig = [rtHandler.prepare(self.application, appsubconfig[0], appmasterconfig, jobmasterconfig)]
 
         self._storedJobSubConfig = jobsubconfig
 
         logger.debug("jobsubconfig: %s" % jobsubconfig)
-
         return jobsubconfig
 
     def _getRuntimeHandler(self):
@@ -1456,6 +1475,104 @@ class Job(GangaObject):
             rjobs = [self]
 
         return rjobs
+
+    def resplit(self, new_splitter):
+        """
+        Resplit a subjob into new subjobs and submit them. Will put this subjob into a frozen state and add a note
+        to the comment. Will return an error if attempted on a master job.
+        """
+        if not isinstance(new_splitter, ISplitter):
+            raise JobError("resplit not provided with a splitter!")
+        if not self.master:
+            raise JobError("You can only resplit subjobs!")
+        if not self.status in ['completed', 'failed']:
+            raise JobError("You can only resplit subjobs in the failed or completed status!")
+
+        mJob = self.master
+        rjobs = None
+        fqid = self.getFQID('.')
+
+        # App Configuration
+        logger.debug("App Configuration, Job %s:" % fqid)
+
+        # The App is configured first as information in the App may be
+        # needed by the Job Splitter
+        appmasterconfig = self._getMasterAppConfig()
+
+        logger.info("Re-splitting Job: %s" % fqid)
+
+        self.splitter = new_splitter
+
+        rjobs = self.splitter.validatedSplit(self)
+        if not rjobs:
+            raise SplitterError("Splitter '%s' failed to produce any subjobs from re-splitting. Aborting submit" % (getName(self.splitter),))
+
+        index = len(mJob.subjobs)
+
+        logger.debug('First index of new jobs: %s' % index)
+        if rjobs:
+            if not isType(mJob.subjobs, (list, GangaList)):
+                    mJob.subjobs = GangaList()
+            i = index
+            for sj in rjobs:
+                sj.info.uuid = str(uuid.uuid4())
+                sj.status = 'new'
+                sj.time.timenow('new')
+                sj.id = i
+                i += 1
+                mJob.subjobs.append(sj)
+
+            cfg = GangaCore.Utility.Config.getConfig('Configuration')
+            for j in rjobs:
+                if cfg['autoGenerateJobWorkspace']:
+                    j._init_workspace()
+
+            logger.info('submitting %s subjobs', len(rjobs))
+        
+            # Output Files
+            for this_job in rjobs:
+                (validOutputFiles, errorMsg) = this_job.validateOutputfilesOnSubmit()
+                if not validOutputFiles:
+                    raise JobError(errorMsg)
+
+            # configure the application of each subjob
+            appsubconfig = self._getAppSubConfig(rjobs)
+            if appsubconfig is not None:
+                logger.debug("# appsubconfig: %s" % len(appsubconfig))
+
+            # Job Configuration
+            logger.debug("Job Configuration, Job %s:" % self.getFQID('.'))
+
+            # prepare the master job with the correct runtime handler
+            # remove any saved config to ensure the new job scripts get made
+            mJob._storedJobMasterConfig = None
+            jobmasterconfig = mJob._getJobMasterConfig()
+
+            # prepare the subjobs with the runtime handler
+            jobsubconfig = self._getJobSubConfig(rjobs)
+            logger.debug("# jobsubconfig: %s" % len(jobsubconfig))
+
+            # Submission
+            logger.debug("Submitting to a backend, Job %s:" % self.getFQID('.'))
+
+            # notify monitoring-services
+            self.monitorPrepare_hook(jobsubconfig)
+
+            # submit the job
+            r = mJob.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig)
+            if not r:
+                for sj in rjobs:
+                    mJob.subjobs.remove(sj)
+                raise JobManagerError('error during submit')
+
+            mJob.updateStatus('submitted')
+            #Freeze the split job and add comments for info
+            self.freeze()
+            self.comment = self.comment + ' - has been resplit'
+            for _r in rjobs:
+                _r.comment = _r.comment + ' - resplit of %s' % self.getFQID('.')
+            self._getRegistry()._flush([mJob])
+            return 1
 
     def submit(self, keep_going=None, keep_on_fail=None, prepare=False):
         """Submits a job. Return true on success.
@@ -2122,7 +2239,10 @@ class Job(GangaObject):
                 subjob_slice = stripProxy(self._stored_subjobs_proxy)
                 #First clear the dictionary
                 if subjob_slice.objects:
-                    del subjob_slice.objects[:]
+                    if isinstance(subjob_slice.objects, dict):
+                        subjob_slice.objects.clear()
+                    else:
+                        del subjob_slice.objects[:]
                 #Not put the objects back in
                 for sj in self.subjobs:
                     subjob_slice.objects[sj.id] = sj
