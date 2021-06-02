@@ -105,3 +105,34 @@ The ``GangaDatasetSplitter`` is provided as an easy way of splitting over a numb
 
 
 If you check the output you will see the list of files that each subjob was given using ``j.subjobs()`` as above.
+
+Resplitting a job
+-----------------
+Sometimes a job that has been split will have some of the subjobs failing. This might for example be due to that they run out of CPU time and are required to be split into smaller units. To support this, it is possible to apply a new splitter to a subjob which is in the ``completed`` or ``failed`` state. In the example below can be seen how the first subjob is subsequently split into a further two subjobs. 
+
+.. code-block:: python
+    j = Job(splitter=ArgSplitter(args=[ [0],[0] ]))
+    j.submit()
+
+    # wait for jobs to complete
+    j.subjobs
+    
+    Registry Slice: jobs(8).subjobs (2 objects)
+    --------------
+        fqid |    status       |                       comment |
+    -------------------------------------------------------
+         8.0 | completed       |                               |
+         8.1 | completed       |                               |
+    
+    j.subjobs(0).resplit(ArgSplitter(args=[ [1], [1] ]))
+
+    # wait for jobs to complete
+    j.subjobs
+    
+    --------------
+        fqid |    status       |                       comment |
+    -------------------------------------------------------
+         8.0 |completed_failed |            - has been resplit |
+         8.1 | completed       |                               |
+         8.2 | completed       |              - resplit of 8.0 |
+         8.3 | completed       |              - resplit of 8.0 |
