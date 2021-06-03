@@ -7,6 +7,7 @@ job but keeps track of all their status, etc. individually. There are two main s
 Core which are detailed below. You can see which splitter are available with
 
 .. code-block:: python
+
     Ganga In [1]: plugins('splitters')
     Ganga Out [1]: 
     ['ArgSplitter',
@@ -39,6 +40,7 @@ ArgSplitter
 For a job that is using an `Executable` application, it is very common that you want to run it multiple times with a different set of arguments (like a random number seed). The `ArgSplitter` can do exactly that. For each of the subjobs created, it will replace the arguments fot he job with one from the array of array of arguments provided to the splitter. So
 
 .. code-block:: python
+
     j = Job()
     j.splitter=ArgSplitter(args=[['Hello 1'], ['Hello 2']])
 
@@ -134,7 +136,7 @@ Sometimes a job that has been split will have some of the subjobs failing. This 
     --------------
         fqid |    status       |                       comment |
     -------------------------------------------------------
-         8.0 |completed_failed |            - has been resplit |
+         8.0 |completed_frozen |            - has been resplit |
          8.1 | completed       |                               |
          8.2 | completed       |              - resplit of 8.0 |
          8.3 | completed       |              - resplit of 8.0 |
