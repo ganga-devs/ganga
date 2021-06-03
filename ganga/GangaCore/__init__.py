@@ -424,6 +424,7 @@ condor_config = makeConfig('Condor', 'Settings for Condor Batch system')
 
 condor_config.addOption('query_global_queues', True,
                  "Query global condor queues, i.e. use '-global' flag")
+condor_config.addOption('MaxBytes', "1000000", 'Max bytes option for peek option for Condor backend ')
 
 # ------------------------------------------------
 # LSF
