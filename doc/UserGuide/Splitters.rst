@@ -28,6 +28,7 @@ Using the prime factorisation example from the Tutorial plugin (:doc:`TutorialPl
 After the job and been submitted and finished, the output of each of the subjobs will be available. Remember that ganga is just a standard Python prompt, so we can use standard Python syntax
 
 .. code-block:: python
+
     for js in j.subjobs: js.peek('stdout','cat')
 
 See the section :doc:`PostProcessors` for how we can merge the output into a single file.
@@ -111,6 +112,7 @@ Resplitting a job
 Sometimes a job that has been split will have some of the subjobs failing. This might for example be due to that they run out of CPU time and are required to be split into smaller units. To support this, it is possible to apply a new splitter to a subjob which is in the ``completed`` or ``failed`` state. In the example below can be seen how the first subjob is subsequently split into a further two subjobs. 
 
 .. code-block:: python
+
     j = Job(splitter=ArgSplitter(args=[ [0],[0] ]))
     j.submit()
 
