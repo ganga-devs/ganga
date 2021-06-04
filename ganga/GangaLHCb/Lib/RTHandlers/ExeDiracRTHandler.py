@@ -100,6 +100,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
         for this_file in job.inputfiles:
             if isinstance(this_file, LocalFile):
                 for name in this_file.getFilenameList():
+                    if not os.path.exists(abspath(expanduser(name))):
+                        raise GangaFileError("LocalFile input file %s does not exist!" % name)
                     inputsandbox.append(File(abspath(expanduser(name))))
             if isinstance(this_file, DiracFile):
                 if not this_file.getReplicas():
