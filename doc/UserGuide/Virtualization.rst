@@ -27,6 +27,7 @@ The Singularity class can be used for either Singularity or Docker images. It re
 For Singularity images you provide the image name and tag from Singularity hub like
 
 .. code-block:: python
+
     j=Job()
     j.application=Executable(exe=File('my/full/path/to/executable'))
     j.virtualization = Singularity("shub://image:tag")
@@ -36,30 +37,35 @@ Notice how the executable is given as a ``File`` object. This ensures that it is
 The container can also be provided as a Docker image from a repository. The default repository is Docker hub. 
 
 .. code-block:: python
+
     j.virtualization = Singularity("docker://gitlab-registry.cern.ch/lhcb-core/lbdocker/centos7-build:v3")
     j.virtualization = Docker("docker://fedora:latest")   
 
 Another option is to provide a ``GangaFile`` Object which points to a singularity file. In that case the singularity image file will be copied to the worker node. The first example is with an image located on some shared disk. This will be effective for running on a local backend or a batch system with a shared disk system.
 
 .. code-block:: python
+
     imagefile = SharedFile('myimage.sif', locations=['/my/full/path/myimage.sif'])
     j.virtualization = Singularity(image= imagefile)
 
 while a second example is with an image located in the Dirac Storage Element. This will be effective when using the Dirac backend.
 
 .. code-block:: python
+
     imagefile = DiracFile('myimage.sif', lfn=['/some/lfn/path'])
     j.virtualization = Singularity(image= imagefile)
   
 If the image is a private image, the username and password of the deploy token can be given like the example below. Look inside Gitlab setting for how to set this up. The token will only need access to the images and nothing else.
 
 .. code-block:: python
+
     j.virtualization.tokenuser = 'gitlab+deploy-token-123'
     j.virtualization.tokenpassword = 'gftrh84dgel-245^ghHH'
 
 Directories can be mounted from the host to the container using key-value pairs to the mounts option. If the directory is not vailable on the host, a warning will be written to stderr of the job and no mount will be attempted.
 
 .. code-block:: python
+
     j.virtualization.mounts = {'/cvmfs':'/cvmfs'}
 
 By default the container is started in singularity with the ``--nohome`` option. Extra options can be provided through the ``options`` attribute. See the Singularity documentation for what is possible.
@@ -70,6 +76,7 @@ You can define a docker container by providing an image name and tag. Using that
 the image from the docker hub. 
 
 .. code-block:: python
+
     j=Job()
     j.virtualization = Docker("image:tag")
 

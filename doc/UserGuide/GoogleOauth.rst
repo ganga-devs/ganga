@@ -21,6 +21,7 @@ Click on the "+ CREATE CREDENTIALS" button at the top of the screen, then select
 Choose an application type of "Desktop app" if you using a Google account or "Other" if you using a GSuite account and click "Create". (the default name is fine)
 
 It will show you a client ID and client secret. These values, you should store in your `~/.gangarc` file
+
 .. code-block:: python
 
     [Google]
