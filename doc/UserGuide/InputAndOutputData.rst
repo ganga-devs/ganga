@@ -135,6 +135,7 @@ Ganga won't retrieve the output to the submission node so if you need it locally
 Often it might be better to simply stream the data from its remote destination. You can get th ``URL`` for this as
 
 .. code-block:: python
+
     j.outputfiles[0].accessURL()
 
     
@@ -180,6 +181,7 @@ Only files created by Ganga can be deleted (or restored after deletion).
 To download files previously uploaded by ganga, use the `get` method:
 
 .. code-block:: python
+
     # consider "mydata.txt" file was previously uploaded by ganga
     j = GangaFile("mydata.txt")
     j.localDir = "~/temp" # folder where the file should be downloaded
