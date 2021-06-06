@@ -5,6 +5,7 @@ import GangaCore.Utility.logic
 import GangaCore.Utility.util
 
 from GangaCore.GPIDev.Lib.File import FileBuffer
+from multiprocessing.dummy import Pool 
 
 import os
 import os.path
@@ -40,7 +41,8 @@ class Localhost(IBackend):
                                      'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Hostname where the job was submitted.'),
                                      'wrapper_pid': SimpleItem(defvalue=-1, protected=1, copyable=0, hidden=1, doc='(internal) process id of the execution wrapper'),
                                      'nice': SimpleItem(defvalue=0, doc='adjust process priority using nice -n command'),
-                                     'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel')
+                                     'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel'),
+                                     'batch_submit': SimpleItem(defvalue=None, typelist=[int, None], doc='Runs a specific number of jobs at a time')
                                      })
     _category = 'backends'
     _name = 'Local'
@@ -48,9 +50,37 @@ class Localhost(IBackend):
     def __init__(self):
         super(Localhost, self).__init__()
 
-    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
-        """ Overload master_submit to avoid parallel submission with Interactive backend"""
-        return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, self.force_parallel)
+    def _batch_submit(self, sj, sc, master_input_sandbox, logger):
+        b = sj.backend
+        fqid = sj.getFQID('.')
+        try:
+            sj.updateStatus('submitting')
+            if b.submit(sc, master_input_sandbox):
+                sj.updateStatus('submitted')
+                sj.info.increment()
+                return 1
+            else:
+                raise IncompleteJobSubmissionError(fqid, 'submission failed')
+        except Exception as err:
+            logger.error("Batch Submission Failed: %s" % err)
+            return 0
+    
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig,keep_going=False):
+        """
+        Runs a specific number of jobs at a time. 
+        """
+        if not self.batch_submit is None:
+            master_input_sandbox = self.master_prepare(masterjobconfig)
+            logger.info("Batch Processing of %s subjobs" % len(subjobconfigs))
+            pool = Pool(self.batch_submit)
+            for sc, sj in zip(subjobconfigs, rjobs):
+                pool.apply_async(self._batch_submit, (sj, sc, master_input_sandbox, logger,))
+            pool.close()
+            pool.join()
+            return 1       
+        else:
+            return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, self.force_parallel)
+        
 
     def submit(self, jobconfig, master_input_sandbox):
         prepared = self.preparejob(jobconfig, master_input_sandbox)
