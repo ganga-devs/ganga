@@ -805,7 +805,6 @@ class Condor(IBackend):
         if job.subjobs:
             logger.error("Master Job does not have a peek status.")
             peekStatus= False
-        name
         idElementList = job.backend.id.split("#")
         name_of_file=""
         if filename:
