@@ -799,21 +799,24 @@ class Condor(IBackend):
 
     def peek(self, filename=None, command=None):
         job = self.getJobObject()
-
+        
         queryCommand= " ".join\
             (["-maxbytes" if getConfig("MaxBytes") else "1000000"])
         if job.subjobs:
             logger.error("Master Job does not have a peek status.")
             peekStatus= False
-
+        name
         idElementList = job.backend.id.split("#")
+        name_of_file=""
+        if filename:
+            name_of_file=filename
         if 3 == len(idElementList):
             if idElementList[1].find(".") != -1:
-                peekCommand = f"condor_tail {queryCommand} -name {idElementList[0]} {idElementList[1]}"
+                peekCommand = f"condor_tail {queryCommand} -name {idElementList[0]} {idElementList[1]} {name_of_file}"
             else:
-                peekCommand = f"condor_tail {queryCommand} -name {idElementList[0]} {idElementList[1]}"
+                peekCommand = f"condor_tail {queryCommand} -name {idElementList[0]} {idElementList[1]} {name_of_file}"
         else:
-            peekCommand = f"condor_tail {queryCommand} {idElementList[0]}"
+            peekCommand = f"condor_tail {queryCommand} {idElementList[0]} {name_of_file}"
 
         status, output = subprocess.getstatusoutput(peekCommand)
 
