@@ -797,4 +797,39 @@ class Condor(IBackend):
     updateMonitoringInformation = \
         staticmethod(updateMonitoringInformation)
 
+    def peek(self, filename=None, command=None):
+        job = self.getJobObject()
+        
+        queryCommand= " ".join\
+            (["-maxbytes" if getConfig("MaxBytes") else "1000000"])
+        if job.subjobs:
+            logger.error("Master Job does not have a peek status.")
+            peekStatus= False
+        idElementList = job.backend.id.split("#")
+        name_of_file=""
+        if filename:
+            name_of_file=filename
+        if 3 == len(idElementList):
+            if idElementList[1].find(".") != -1:
+                peekCommand = f"condor_tail {queryCommand} -name {idElementList[0]} {idElementList[1]} {name_of_file}"
+            else:
+                peekCommand = f"condor_tail {queryCommand} -name {idElementList[0]} {idElementList[1]} {name_of_file}"
+        else:
+            peekCommand = f"condor_tail {queryCommand} {idElementList[0]} {name_of_file}"
+
+        status, output = subprocess.getstatusoutput(peekCommand)
+
+        if (status != 0):
+            logger.warning \
+                ("Return code '%s' peek job '%s' - Condor id '%s'" %
+                 (str(status), job.id, job.backend.id))
+            logger.warning("Tried command: '%s'" % peekCommand)
+            logger.warning("Command output: '%s'" % output)
+            peekStatus= False
+        else:
+            logger.info(output)
+            peekStatus = True
+
+        return peekStatus
+
 #_________________________________________________________________________
