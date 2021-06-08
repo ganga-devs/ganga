@@ -10,9 +10,8 @@ class TestInstallUDocker(unittest.TestCase):
     @patch('subprocess.call')
     def test_installUDocker_success(self, mock_subprocess_call):
         mock_subprocess_call.side_effect = [0, 0]
-        dir = tempfile.mkdtemp()
-        installUdocker(dir)
-        shutil.rmtree(dir)
+        with tempfile.TemporaryDirectory() as dir:
+            installUdocker(dir)
         assert(mock_subprocess_call.call_count == 2)
 
     @patch('GangaCore.Utility.Virtualization.open')
