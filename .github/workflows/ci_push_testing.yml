@@ -325,9 +325,7 @@ jobs:
         curl -L https://github.com/indigo-dc/udocker/releases/download/v1.3.0/udocker-${UDOCKER_VERSION}.tar.gz > udocker-${UDOCKER_VERSION}.tar.gz
         tar xzf ./udocker-${UDOCKER_VERSION}.tar.gz
         ./udocker/udocker install
-    - name: uDocker Linking Binary
-      # run: sudo ln -s ./udocker /bin
-      run: sudo ln -s $PWD/udocker/udocker /bin
+        export PATH=$PATH:$PWD/udocker
 
     - name: uDocker Download MongoDB
       run: udocker pull mongo:latest
