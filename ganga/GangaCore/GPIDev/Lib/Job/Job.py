@@ -2034,7 +2034,8 @@ class Job(GangaObject):
                         for jobs in self.getJobObject().subjobs:
                             # added this 10/8/2009 - now only kills subjobs
                             # which aren't finished.
-                            if jobs.status not in ['failed', 'killed', 'completed']:
+                            if jobs.status not in ['failed', 'killed', 'completed',
+                                                   'failed_frozen', 'completed_frozen']:
                                 jobs.updateStatus('killed', transition_update=transition_update)
                     self.updateStatus('killed', transition_update=transition_update)
                     #
