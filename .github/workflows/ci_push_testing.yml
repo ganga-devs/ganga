@@ -325,10 +325,11 @@ jobs:
         curl -L https://github.com/indigo-dc/udocker/releases/download/v1.3.0/udocker-${UDOCKER_VERSION}.tar.gz > udocker-${UDOCKER_VERSION}.tar.gz
         tar xzf ./udocker-${UDOCKER_VERSION}.tar.gz
         ./udocker/udocker install
-        export PATH=$PATH:$PWD/udocker
 
     - name: uDocker Download MongoDB
-      run: udocker pull mongo:latest
+      run: |
+        export PATH=$PATH:$PWD/udocker
+        udocker pull mongo:latest
 
     - name: Docker Download MongoDB
       run: docker pull mongo:latest
@@ -343,7 +344,9 @@ jobs:
         pip3 install -e .[dev]
         pip3 install pymongo pytest gdown
     - name: Test Container Controllers
-      run: python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core ganga/GangaCore/test/gangaDB/db_controllers/TestContainerHandler.py
+      run: |
+        export PATH=$PATH:$PWD/udocker
+        python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core ganga/GangaCore/test/gangaDB/db_controllers/TestContainerHandler.py
       env:
         # To force usage of docker controller
         GANGA_GITHUB_HOST: False
