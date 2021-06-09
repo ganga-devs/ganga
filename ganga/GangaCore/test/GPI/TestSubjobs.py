@@ -40,9 +40,6 @@ class TestSubjobs(GangaUnitTest):
         j.backend = Local()
         j.submit()
 
-        sleep_until_state(j, None, 'running')
-        assert j.status == 'running'
-
         j.subjobs(0).kill()
         assert j.subjobs(0).status == 'killed'
         assert j.subjobs(1).status != 'killed'
