@@ -1741,6 +1741,32 @@ def plugin_endpoint(current_api_user, plugin_name: str):
 
     return jsonify(plugin_info)
 
+# QueuesAPI
+@gui.route("/api/queue", methods=["GET"])
+def queue_api(current_api_user):
+    from GangaCore.Core.GangaThread.WorkerThreads import _global_queues as queues
+    user_threadpool=[]
+    monitoring_threadpool=[]
+    name_user=[]
+    name_monitor=[]
+    user_condtion=[]
+    monitor_condition=[]
+    user_timeout=[]
+    monitor_timeout=[]
+    for elem in queues._user_threadpool.get_queue():
+        user_threadpool.append(elem)
+    for elem in queues._monitoring_threadpool.get_queue():
+        monitoring_threadpool.append(elem)
+    for u, m in zip(queues._user_threadpool.worker_status(), queues._monitoring_threadpool.worker_status()):
+        name_user.append(u[0])
+        name_monitor.append(m[0])
+        user_condtion.append(u[1])
+        monitor_condition.append(m[1])
+        user_timeout.append(u[2])
+        monitor_timeout.append(m[2])
+    return name_user, name_monitor, user_condtion, monitor_condition, user_timeout, monitor_timeout, user_threadpool, monitoring_threadpool
+
+
 
 # ******************** Helper Functions ******************** #
 
