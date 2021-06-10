@@ -801,7 +801,7 @@ class Condor(IBackend):
         job = self.getJobObject()
         
         queryCommand= " ".join\
-            (["-maxbytes" if getConfig("MaxBytes") else "1000000"])
+            (["-maxbytes", "%s" %  getConfig("Condor")["MaxBytes"]])
         if job.subjobs:
             logger.error("Master Job does not have a peek status.")
             peekStatus= False
