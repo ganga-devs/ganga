@@ -54,7 +54,7 @@ def free_port():
         return s.getsockname()[1]
 
 
-def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = free_port(), internal_port: int = free_port(),
+def start_gui(*, gui_host: str = "127.0.0.1", gui_port: int = free_port(), internal_port: int = free_port(),
               password: str = None, only_internal: bool = False):
     """
     Start GUI Flask App on a Gunicorn server and API Flask App on a GangaThread
@@ -68,7 +68,7 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = free_port(), interna
     Returns (host, port, user, password)
     Accepts "gui_host", "gui_port", "internal_port" and "password" as arguments.
 
-    By default the "gui_host" is set to "0.0.0.0". It means GUI will be accessible over the network.
+    By default the "gui_host" is set to "127.0.0.1". It means GUI will be accessible over the network.
     In order to make to accessible only inside the local machine, please set the host to "localhost" as in start_gui(gui_host="localhost").
 
     "gui_port" can be set to any free port available (default is 5500)
@@ -88,10 +88,10 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = free_port(), interna
     If the "password" is not specified, a random 7 character AlphaNumeric password is auto generated.
 
     Example Usage:
-    start_gui() -> will return ("0.0.0.0", 5500, "GangaGUIAdmin", "RNDPASS")
-    start_gui(password="mypassword") -> will return ("0.0.0.0", 5500, "GangaGUIAdmin", "mypassword")
-    start_gui(host="0.0.0.0", password="mypassword") -> will return ("0.0.0.0", 5500, "GangaGUIAdmin", "mypassword")
-    start_gui(host="0.0.0.0", port=1234, password="mypassword") -> ("0.0.0.0", 1234, "GangaGUIAdmin", "mypassword")
+    start_gui() -> will return ("127.0.0.1", 5500, "GangaGUIAdmin", "RNDPASS")
+    start_gui(password="mypassword") -> will return ("127.0.0.1", 5500, "GangaGUIAdmin", "mypassword")
+    start_gui(host="127.0.0.1", password="mypassword") -> will return ("127.0.0.1", 5500, "GangaGUIAdmin", "mypassword")
+    start_gui(host="127.0.0.1", port=1234, password="mypassword") -> ("127.0.0.1", 1234, "GangaGUIAdmin", "mypassword")
     """
 
     global api_server, gui_server
