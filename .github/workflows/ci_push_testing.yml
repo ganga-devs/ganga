@@ -84,6 +84,28 @@ jobs:
     - name: Test with pytest
       run: python3 -m pytest --cov-report term-missing --cov ganga/GangaGUI ganga/GangaGUI/test
 
+  condor-unit:
+    name: Condor
+    needs: lint
+    runs-on: ubuntu-latest
+    container: htcondor/mini:el7
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3
+      run: yum install -y python3
+    - name: Install git
+      run: yum install -y git
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install -e .[dev]
+    -name: Start Condor
+      run: |
+        /start.sh > start.stdout &
+        sleep 30
+    - name: Test with pytest
+      run: python3 -m pytest --cov-report term-missing --cov GangaCore/Lib/Batch ganga/GangaCore/test/Condor
+      
   dirac-unit:
     name: GangaDirac Unit
     needs: lint
@@ -384,29 +406,4 @@ jobs:
         GANGA_GITHUB_HOST: True
         MONGODB_HOST: mongodb
         MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
-'''
-  condor-unit:
-    name: Condor tests
-    needs: lint
-    runs-on: ubuntu-latest
-    container: centos:7
-    steps:
-      - uses: actions/checkout@v1
-      - name: Set up Python 3
-        run: yum install -y python3
-      - name: Install git
-        run: yum install -y git
-      - name: Install dependencies
-        run: |
-          python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m pip install -e .[dev]
-      -name: Install Condor
-        run: |
-          yum install -y condor
-          yum condor_master
-      - name: Test with pytest
-        env:
-          GANGA_CONFIG_FILE: ~/.gangarc
-        run: python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Lib/Condor ganga/GangaCore/Lib/Condor/test
-'''
 
