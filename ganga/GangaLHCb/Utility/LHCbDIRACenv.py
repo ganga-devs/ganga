@@ -36,7 +36,7 @@ def store_dirac_environment():
     lbVersion = LooseVersion(requestedVersion).version
     try:
         # we check if a real version (e.g. v9r2, or v9r3p13 or v10r12-pre9) is requested
-        if isinstance(lbVersion[1], int) and isinstance(lbVersion[3], int):
+        if "prod" in requestedVersion or isinstance(lbVersion[1], int) and isinstance(lbVersion[3], int):
             logger.warn("Specific version is requested (%s), please consider removing it!", requestedVersion)
             diracversion = requestedVersion
         else:
