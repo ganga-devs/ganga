@@ -105,7 +105,7 @@ jobs:
         sleep 30
         condor_status
     - name: Test with pytest
-      run: python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Lib/Batch ganga/GangaCore/test/Condor
+      run: su submituser -l -s /bin/python3 -- -m pytest --cov-report term-missing --cov ganga/GangaCore/Lib/Condor ganga/GangaCore/test/Condor
       
   dirac-unit:
     name: GangaDirac Unit
