@@ -451,7 +451,7 @@ class Condor(IBackend):
             "wrapperFile.write( '%s\\n' % \' \'.join(execmd) )",
             "wrapperFile.write( 'exit ${?}\\n' )",
             "wrapperFile.close()",
-            "os.chmod( wrapperName, 0755 )",
+            "os.chmod( wrapperName, 0o755 )",
             "result = os.system( './%s' % wrapperName )",
             "os.remove( wrapperName )",
             "",
