@@ -84,7 +84,7 @@ jobs:
     - name: Test with pytest
       run: python3 -m pytest --cov-report term-missing --cov ganga/GangaGUI ganga/GangaGUI/test
 
-  condor-unit:
+  condor:
     name: Condor
     needs: lint
     runs-on: ubuntu-latest
@@ -106,8 +106,10 @@ jobs:
         condor_status
     - name: Test with pytest
       run: |
-        find /root -exec chmod og+r {} \;
-        su submituser -l -s /bin/ln -- -s /root/ganga .
+        pwd
+        ls -r
+        find ganga -exec chown submituser:submituser {} \;
+        mv ganga ~submituser
         su submituser -l -s /bin/python3 -- -m pytest --cov-report term-missing --cov ganga/GangaCore/Lib/Condor ganga/GangaCore/test/Condor
       
   dirac-unit:
