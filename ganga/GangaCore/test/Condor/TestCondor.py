@@ -2,33 +2,30 @@ from GangaCore.testlib.monitoring import run_until_completed
 from GangaCore.testlib.monitoring import run_until_state
 
 
-def test_job_create(gpi):
+def test_job_a_create(gpi):
     j = gpi.Job(backend=gpi.Condor())
 
-def test_job_kill(gpi):
+def test_job_b_completed(gpi):
+    j = gpi.Job(backend=gpi.Condor())
+    j.submit()
+    assert run_until_completed(j)
+
+def test_job_c_failed(gpi):
+    j = gpi.Job(backend=gpi.Condor())
+    j.application.exe = 'exit'
+    j.application.args = [1]
+    j.submit()
+    assert run_until_state(j, 'failed', 60, ['new', 'killed', 'unknown', 'removed', 'completed'])
+
+def test_job_d_kill(gpi):
 
     j = gpi.Job(backend=gpi.Condor())
     j.application.exe = 'sleep'
     j.application.args = [120]
 
     j.submit()
-    assert run_until_state(j, 'running', timeout=60)
+    assert run_until_state(j, 'running', 60, ['new', 'killed', 'failed', 'unknown', 'removed', 'completed'])
 
     j.kill()
-    assert run_until_state(j, 'killed', timeout=60)
+    assert run_until_state(j, 'killed', 60, ['new', 'failed', 'unknown', 'removed', 'completed'])
 
-def test_job_submit(gpi):
-    j = gpi.Job(backend=gpi.Condor())
-    j.submit()
-
-def test_job_completed(gpi):
-    j = gpi.Job(backend=gpi.Condor())
-    j.submit()
-    assert run_until_completed(j)
-
-def test_job_failed(gpi):
-    j = gpi.Job(backend=gpi.Condor())
-    j.application.exe = 'exit'
-    j.application.args = [1]
-    j.submit()
-    assert run_until_state(j, 'failed', timeout=60)
