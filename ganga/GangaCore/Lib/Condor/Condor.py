@@ -295,6 +295,11 @@ class Condor(IBackend):
         status, output = subprocess.getstatusoutput(killCommand)
 
         if (status != 0):
+            if 3 == len(idElementList):
+                killCommand = "condor_rm %s" % (idElementList[1])
+                status, output = subprocess.getstatusoutput(killCommand)
+
+        if (status != 0):
             logger.warning\
                 ("Return code '%s' killing job '%s' - Condor id '%s'" %
                  (str(status), job.id, job.backend.id))
@@ -635,7 +640,10 @@ class Condor(IBackend):
                             exitCode = '-1'
 
                         if exitCode.isdigit():
-                            jobStatus = "completed"
+                            if exitCode=='0':
+                                jobStatus = "completed"
+                            else:
+                                jobStatus = 'failed'
                         else:
                             # Some filesystems/setups have the file created but empty - only worry if it's been 10mins
                             # since we first checked the file

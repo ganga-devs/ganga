@@ -15,7 +15,7 @@ def test_job_c_failed(gpi):
     j.application.exe = 'exit'
     j.application.args = [1]
     j.submit()
-    assert run_until_state(j, 'failed', 60, ['new', 'killed', 'unknown', 'removed', 'completed'])
+    assert run_until_state(j, 'failed', 300, ['new', 'killed', 'unknown', 'removed', 'completed'])
 
 def test_job_d_kill(gpi):
 
@@ -24,8 +24,8 @@ def test_job_d_kill(gpi):
     j.application.args = [120]
 
     j.submit()
-    assert run_until_state(j, 'running', 60, ['new', 'killed', 'failed', 'unknown', 'removed', 'completed'])
+    assert run_until_state(j, 'running', 300, ['new', 'killed', 'failed', 'unknown', 'removed', 'completed'])
 
     j.kill()
-    assert run_until_state(j, 'killed', 60, ['new', 'failed', 'unknown', 'removed', 'completed'])
+    assert run_until_state(j, 'killed', 300, ['new', 'failed', 'unknown', 'removed', 'completed'])
 
