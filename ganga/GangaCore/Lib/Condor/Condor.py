@@ -434,7 +434,7 @@ class Condor(IBackend):
             "",
             "exePath = '%s'" % exeString,
             "if os.path.isfile( '%s' ):" % os.path.basename(exeString),
-            "   os.chmod( '%s', 0755)" % os.path.basename(exeString),
+            "   os.chmod( '%s', 0o755)" % os.path.basename(exeString),
             "wrapperName = '%s_bash_wrapper.sh'" % wrapperName,
             "wrapperFile = open( wrapperName, 'w' )",
             "wrapperFile.write( '#!/bin/bash\\n' )",
