@@ -100,10 +100,21 @@ class ExeDiracRTHandler(IRuntimeHandler):
         for this_file in job.inputfiles:
             if isinstance(this_file, LocalFile):
                 for name in this_file.getFilenameList():
+                    if not os.path.exists(abspath(expanduser(name))):
+                        raise GangaFileError("LocalFile input file %s does not exist!" % name)
                     inputsandbox.append(File(abspath(expanduser(name))))
             if isinstance(this_file, DiracFile):
                 if not this_file.getReplicas():
                     raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % this_file.lfn)
+
+        #If we are doing virtualisation with a CVMFS location, check it is available
+        if job.virtualization and isinstance(job.virtualization.image, str):
+            if 'cvmfs' == job.virtualization.image.split('/')[1]:
+                tag_location = '/'+job.virtualization.image.split('/')[1]+'/'+job.virtualization.image.split('/')[2]+'/'
+                if 'Tag' in job.backend.settings:
+                    job.backend.settings['Tag'].append(tag_location)
+                else:
+                    job.backend.settings['Tag'] = [tag_location]
 
         lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
         # NOTE special case for replicas: replicate string must be empty for no
@@ -119,7 +130,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         # ' '.join([str(arg) for arg in app.args]),
                                         EXE_ARG_STR='',
                                         EXE_LOG_FILE='Ganga_Executable.log',
-                                        ENVIRONMENT=None,  # app.env,
+                                        ENVIRONMENT=app.env,  # app.env,
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),

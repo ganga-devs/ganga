@@ -228,7 +228,6 @@ class DiracBase(IBackend):
         submitFailures = {}
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True, new_subprocess = True)
-
         except GangaDiracError as err:
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
             logger.error(err_msg)
@@ -272,14 +271,12 @@ class DiracBase(IBackend):
             else:
                 j.updateStatus('failed')
                 submitFailures.update({result_id: 'DIRAC error!'})
-
         #Check that every subjob got submitted ok
         if len(submitFailures) > 0:
             for sjNo in submitFailures.keys():
                 logger.error('Job submission failed for job %s : %s' % (sjNo, submitFailures[sjNo]))
             raise GangaDiracError("Some subjobs failed to submit! Check their status!")
             return 0
-
         return 1 
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
@@ -349,7 +346,6 @@ class DiracBase(IBackend):
                 logger.info("Submitting job")
             else:
                 logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
-
             try:
                 #Either do the submission in parallel with threads or sequentially
                 if parallel_submit:

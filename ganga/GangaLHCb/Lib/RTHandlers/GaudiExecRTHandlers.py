@@ -165,13 +165,7 @@ def prepareCommand(app):
             raise ApplicationConfigurationError("The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                                 getName(opts_file))
 
-    #Check if this was checked out with LbEnv or not
-    isLbEnv = False
-    with open(app.directory+'/Makefile', "r") as makefile:
-        if 'LbEnv' in makefile.read():
-            isLbEnv = True
-
-    sourceEnv = app.getWNEnvScript(isLbEnv)
+    sourceEnv = app.getWNEnvScript(True)
 
     #Get the options for the run script
     run_args = ''
@@ -641,6 +635,15 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         # This code deals with the outputfiles as outputsandbox and outputdata for us
         lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
+
+        #If we are doing virtualisation with a CVMFS location, check it is available
+        if job.virtualization and isinstance(job.virtualization.image, str):
+            if 'cvmfs' == job.virtualization.image.split('/')[1]:
+                tag_location = '/'+job.virtualization.image.split('/')[1]+'/'+job.virtualization.image.split('/')[2]+'/'
+                if 'Tag' in job.backend.settings:
+                    job.backend.settings['Tag'].append(tag_location)
+                else:
+                    job.backend.settings['Tag'] = [tag_location]
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication

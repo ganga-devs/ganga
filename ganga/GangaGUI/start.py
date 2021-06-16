@@ -4,6 +4,8 @@ import uuid
 import random
 import requests
 import subprocess
+import socket
+from contextlib import closing
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.Utility.logging import getLogger
 from GangaGUI.gui.routes import gui, db
@@ -43,9 +45,16 @@ class APIServerThread(GangaThread):
         if res.status_code == 200:
             return True
         return False
+    
+    
+def free_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
 
 
-def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port: int = 5000,
+def start_gui(*, gui_host: str = "127.0.0.1", gui_port: int = free_port(), internal_port: int = free_port(),
               password: str = None, only_internal: bool = False):
     """
     Start GUI Flask App on a Gunicorn server and API Flask App on a GangaThread
@@ -59,7 +68,7 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
     Returns (host, port, user, password)
     Accepts "gui_host", "gui_port", "internal_port" and "password" as arguments.
 
-    By default the "gui_host" is set to "0.0.0.0". It means GUI will be accessible over the network.
+    By default the "gui_host" is set to "127.0.0.1". It means GUI will be accessible over the network.
     In order to make to accessible only inside the local machine, please set the host to "localhost" as in start_gui(gui_host="localhost").
 
     "gui_port" can be set to any free port available (default is 5500)
@@ -79,10 +88,10 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
     If the "password" is not specified, a random 7 character AlphaNumeric password is auto generated.
 
     Example Usage:
-    start_gui() -> will return ("0.0.0.0", 5500, "GangaGUIAdmin", "RNDPASS")
-    start_gui(password="mypassword") -> will return ("0.0.0.0", 5500, "GangaGUIAdmin", "mypassword")
-    start_gui(host="0.0.0.0", password="mypassword") -> will return ("0.0.0.0", 5500, "GangaGUIAdmin", "mypassword")
-    start_gui(host="0.0.0.0", port=1234, password="mypassword") -> ("0.0.0.0", 1234, "GangaGUIAdmin", "mypassword")
+    start_gui() -> will return ("127.0.0.1", 5500, "GangaGUIAdmin", "RNDPASS")
+    start_gui(password="mypassword") -> will return ("127.0.0.1", 5500, "GangaGUIAdmin", "mypassword")
+    start_gui(host="127.0.0.1", password="mypassword") -> will return ("127.0.0.1", 5500, "GangaGUIAdmin", "mypassword")
+    start_gui(host="127.0.0.1", port=1234, password="mypassword") -> ("127.0.0.1", 1234, "GangaGUIAdmin", "mypassword")
     """
 
     global api_server, gui_server
@@ -114,6 +123,7 @@ def start_gui(*, gui_host: str = "0.0.0.0", gui_port: int = 5500, internal_port:
     # Display necessary information to the user
     logger.info(f"GUI Login Details: user='{gui_user.user}', password='{gui_password}'")
     logger.info(f"You can now access the GUI at http://{gui_host}:{gui_port}")
+    logger.info(f"The internal port for flask server using ganga thread is http://{gui_host}:{internal_port}")
     logger.info(
         f"If on a remote system you may need to set up port forwarding to reach the web server. This can be done with 'ssh -D {gui_port} <remote-ip>' from a terminal.")
 

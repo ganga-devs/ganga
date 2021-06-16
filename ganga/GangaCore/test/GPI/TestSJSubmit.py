@@ -195,3 +195,35 @@ class TestSJSubmit(GangaUnitTest):
 
         # Test that this works when resubmitOnlyFailedSubjobs = False
 
+
+    def test_f_testResplit(self):
+        from GangaCore.GPI import Job, Local
+        from GangaTest.Framework.utils import (sleep_until_completed,
+                                               sleep_until_state)
+        from GangaCore.GPIDev.Lib.Job.Job import JobError
+        
+        j=Job()
+        j.splitter = self._getSplitter()
+        j.backend = Local()
+        j.submit()
+        sleep_until_completed(j)
+
+        # Resplit of completed subjob
+        j.subjobs(0).resplit(self._getSplitter())
+        sleep_until_completed(j)
+        assert j.subjobs(0).status == 'completed_frozen'
+        assert len(j.subjobs) == 2*TestSJSubmit.n_subjobs
+
+        # Resplit of failed subjob
+        j.subjobs(1).force_status('failed', force=True)
+        j.subjobs(1).resplit(self._getSplitter())
+        sleep_until_completed(j)
+        
+        assert j.subjobs(1).status == 'failed_frozen'
+        assert len(j.subjobs) == 3*TestSJSubmit.n_subjobs
+
+        # Failure to resplit subjob in status new
+        j.subjobs(2)._impl.status='new'
+        self.assertRaises(JobError, j.subjobs(2).resplit, self._getSplitter())
+        assert len(j.subjobs) == 3*TestSJSubmit.n_subjobs
+        
