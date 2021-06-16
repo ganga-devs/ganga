@@ -28,7 +28,7 @@ def test_job_completed(gpi):
 
 def test_job_failed(gpi):
     j = gpi.Job(backend=gpi.Condor())
-    j.submit()
     j.application.exe = 'exit'
     j.application.args = [1]
+    j.submit()
     assert run_until_state(j, 'failed', timeout=60)
