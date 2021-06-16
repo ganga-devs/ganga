@@ -14,7 +14,7 @@ import datetime
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, session, send_file
+from flask import Flask, request, make_response, jsonify, render_template, flash, redirect, url_for, session, send_file
 from flask_login import login_user, login_required, logout_user, current_user, UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -1766,7 +1766,21 @@ def queue_api(current_api_user):
         monitor_timeout.append(m[2])
     return name_user, name_monitor, user_condtion, monitor_condition, user_timeout, monitor_timeout, user_threadpool, monitoring_threadpool
 
+@gui.route('api/data', methods=["GET", "POST"])
+def data():
+    from GangaCore.Core.GangaThread.WorkerThreads import _global_queues as queues
+    user_condition = []
+    for u, m in zip(queues._user_threadpool.worker_status(), queues._monitoring_threadpool.worker_status()):
+        user_condition.append(u[1])
+    count=0
+    for i in range(len(user_condition)):
+        if user_condition[i]=="idle":
+            count+=1
 
+    dat = [time() * 1000, (len(user_condition)-count)]
+    response = make_response(json.dumps(dat))
+    response.content_type = 'application/json'
+    return response
 
 # ******************** Helper Functions ******************** #
 
