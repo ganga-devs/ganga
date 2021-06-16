@@ -310,7 +310,7 @@ class Condor(IBackend):
     def cdfPreamble(self, jobconfig, master_input_sandbox):
         """Prepare the cdf arguments that are common to all jobs so go at the start"""
 
-        wrapperScriptStr = '#!/bin/sh\n./$1'
+        wrapperScriptStr = '#!/bin/sh\n./$1\n'
         self.getJobObject().getInputWorkspace().writefile(FileBuffer("condorWrapper", wrapperScriptStr))
 
         cdfDict = \
@@ -400,8 +400,7 @@ class Condor(IBackend):
         wrapperName = "_".join(["Ganga", str(job.id), name])
 
         commandList = [
-            "#!/usr/bin/env python2",
-            "from __future__ import print_function",
+            "#!/usr/bin/env python3",
             "# Condor job wrapper created by Ganga",
             "# %s" % (time.strftime("%c")),
             "",
