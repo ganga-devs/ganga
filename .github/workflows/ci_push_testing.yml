@@ -103,6 +103,7 @@ jobs:
       run: |
         /start.sh > start.stdout &
         sleep 30
+        condor_status
     - name: Test with pytest
       run: python3 -m pytest --cov-report term-missing --cov GangaCore/Lib/Batch ganga/GangaCore/test/Condor
       
