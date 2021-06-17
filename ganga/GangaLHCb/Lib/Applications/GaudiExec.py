@@ -443,6 +443,9 @@ class GaudiExec(IPrepareApp):
         """
         Return the script which wraps the running command in a correct environment
         """
+        j = self.getJobObject()
+        if j.virtualization:
+            return 'singularity exec -e --bind /cvmfs %s bash -c " source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (j.virtualization.image, self.platform)
         if isLbEnv:
             return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
         else:
@@ -477,6 +480,12 @@ class GaudiExec(IPrepareApp):
         if not path.isdir(self.directory):
             raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
+        j = self.getJobObject()
+        virtual_command = ""
+        if j.virtualization:
+            print('using virtualization')
+            virtual_command = 'singularity exec -e --bind /cvmfs %s bash -c "' % j.virtualization.image
+
         #Check if this was checked out with LbEnv or not
         isLbEnv = False
         with open(self.directory+'/Makefile', "r") as makefile:
@@ -485,16 +494,20 @@ class GaudiExec(IPrepareApp):
 
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False, mode = "w")
 
+        print(self.getEnvScript(True))
+
         cmd_file.write("#!/bin/bash")
         cmd_file.write("\n")
         cmd_file.write(self.getEnvScript(isLbEnv))
         cmd_file.write(cmd)
+        if j.virtualization:
+            cmd_file.write('"')
         cmd_file.flush()
         cmd_file.close()
         st = os_stat(cmd_file.name)
         chmod(cmd_file.name, st.st_mode | stat.S_IEXEC)
 
-        logger.debug("Running: %s" % cmd_file.name)
+        logger.info("Running: %s" % cmd_file.name)
 
         # I would have preferred to execute all commands against inside `./run` so we have some sane behaviour
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
@@ -503,6 +516,8 @@ class GaudiExec(IPrepareApp):
             initialCommand = 'export CMTCONFIG=%s && source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
             if isLbEnv:
                 initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && make' % (self.platform)
+            if j.virtualization:
+                initialCommand = virtual_command + initialCommand + '"'
             rc, stdout, stderr = _exec_cmd(initialCommand, self.directory)
             if rc != 0:
                 logger.error("Failed to perform initial make on a Cmake based project")
@@ -520,7 +535,7 @@ class GaudiExec(IPrepareApp):
             logger.error("StdOut: %s" % str(stdout.decode()))
             raise GangaException("Failed to Execute command")
 
-        unlink(cmd_file.name)
+#        unlink(cmd_file.name)
 
         return rc, stdout, stderr
 
