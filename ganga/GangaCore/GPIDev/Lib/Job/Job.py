@@ -782,7 +782,6 @@ class Job(GangaObject):
             stats = self.subjobs.getAllSJStatus()
         else:
             stats = [sj.status for sj in self.subjobs]
-
         return "%s/%s/%s/%s" % (stats.count('running'), stats.count('failed')+stats.count('failed_frozen') + stats.count('killed'), stats.count('completing'), stats.count('completed')+stats.count('completed_frozen'))
 
     def updateMasterJobStatus(self):
@@ -1491,10 +1490,8 @@ class Job(GangaObject):
         mJob = self.master
         rjobs = None
         fqid = self.getFQID('.')
-
         # App Configuration
         logger.debug("App Configuration, Job %s:" % fqid)
-
         # The App is configured first as information in the App may be
         # needed by the Job Splitter
         appmasterconfig = self._getMasterAppConfig()
@@ -1510,9 +1507,24 @@ class Job(GangaObject):
         index = len(mJob.subjobs)
 
         logger.debug('First index of new jobs: %s' % index)
+        cache = []
         if rjobs:
-            if not isType(mJob.subjobs, (list, GangaList)):
-                    mJob.subjobs = GangaList()
+            # If we are loading the job from disk we need
+            # to turn it into a list to append new subjobs
+            if isType(mJob.subjobs, SubJobJsonList):
+                cache = mJob.subjobs.values()
+                stats = mJob.subjobs.getAllSJStatus()
+                mJob.subjobs = cache
+                i = 0
+                #Fix the statuses
+                for _sj in mJob.subjobs:
+                    _sj.status = stats[i]
+                    i = i+1
+            elif not isType(mJob.subjobs, (list, GangaList)):
+                temp_list = GangaList()
+                for _sj in mJob.subjobs:
+                    temp_list.append(_sj)
+                mJob.subjobs = temp_list
             i = index
             for sj in rjobs:
                 sj.info.uuid = str(uuid.uuid4())
@@ -1553,7 +1565,7 @@ class Job(GangaObject):
             logger.debug("# jobsubconfig: %s" % len(jobsubconfig))
 
             # Submission
-            logger.debug("Submitting to a backend, Job %s:" % self.getFQID('.'))
+            logger.debug("Submitting to a backend, resplit of Job %s:" % self.getFQID('.'))
 
             # notify monitoring-services
             self.monitorPrepare_hook(jobsubconfig)
@@ -1571,7 +1583,8 @@ class Job(GangaObject):
             self.comment = self.comment + ' - has been resplit'
             for _r in rjobs:
                 _r.comment = _r.comment + ' - resplit of %s' % self.getFQID('.')
-            self._getRegistry()._flush([mJob])
+            mJob.info.increment()
+            mJob._getRegistry()._flush([mJob.subjobs])
             return 1
 
     def submit(self, keep_going=None, keep_on_fail=None, prepare=False):
