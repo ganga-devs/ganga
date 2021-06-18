@@ -155,7 +155,7 @@ def test__common_submit(tmpdir, db, mocker):
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=12345) as execute:
         assert db._common_submit(name)
 
-        execute.assert_called_once_with("execfile('%s')" % name, cred_req=mocker.ANY)
+        execute.assert_called_once_with("exec(open('%s'))" % name, cred_req=mocker.ANY)
 
         assert db.id == 12345, 'id not set'
 
