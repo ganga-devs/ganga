@@ -4,9 +4,10 @@ import os
 import errno
 import socket
 import traceback
+import six
 HOST = 'localhost'  # Standard loopback interface address (localhost)
 PORT = int(sys.argv[1])        # Port to listen on
-rand_hash = raw_input() 
+rand_hash = six.moves.input()
 import time
 #We have to define an output function as a placeholder here.
 def output(data):
@@ -28,7 +29,7 @@ class socketWrapper(object):
     def read(self):
         cmd = ''
         while end_trans not in cmd:
-            data = self._socket.recv(1024)
+            data = self._socket.recv(1024).decode()
             if not data:
                 cmd = '###BROKEN###'
                 break
@@ -54,7 +55,7 @@ while True:
         cmd = sock.read()
         #Here we define the output method to just send the output of the diracCommand wrapper.
         def output(data):
-            conn.sendall(repr(data))
+            conn.sendall(repr(data).encode())
 
         if cmd=='close-connection':
             conn.shutdown(socket.SHUT_RDWR)
@@ -65,6 +66,7 @@ while True:
             conn.shutdown(socket.SHUT_RDWR)
             conn.close()
             break
+
         try:
             print(eval(cmd))
         except:
@@ -74,7 +76,7 @@ while True:
                 print("Exception raised executing command (cmd) '%s'\n" % cmd)
                 print(traceback.format_exc())
 
-        conn.sendall('###END-TRANS###')
+        conn.sendall(b'###END-TRANS###')
     #Catch the timeout and exit
     except socket.timeout:
         break
