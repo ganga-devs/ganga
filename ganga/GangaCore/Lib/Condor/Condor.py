@@ -295,6 +295,11 @@ class Condor(IBackend):
         status, output = subprocess.getstatusoutput(killCommand)
 
         if (status != 0):
+            if 3 == len(idElementList):
+                killCommand = "condor_rm %s" % (idElementList[1])
+                status, output = subprocess.getstatusoutput(killCommand)
+
+        if (status != 0):
             logger.warning\
                 ("Return code '%s' killing job '%s' - Condor id '%s'" %
                  (str(status), job.id, job.backend.id))
@@ -310,7 +315,7 @@ class Condor(IBackend):
     def cdfPreamble(self, jobconfig, master_input_sandbox):
         """Prepare the cdf arguments that are common to all jobs so go at the start"""
 
-        wrapperScriptStr = '#!/bin/sh\n./$1'
+        wrapperScriptStr = '#!/bin/sh\n./$1\n'
         self.getJobObject().getInputWorkspace().writefile(FileBuffer("condorWrapper", wrapperScriptStr))
 
         cdfDict = \
@@ -400,8 +405,7 @@ class Condor(IBackend):
         wrapperName = "_".join(["Ganga", str(job.id), name])
 
         commandList = [
-            "#!/usr/bin/env python2",
-            "from __future__ import print_function",
+            "#!/usr/bin/env python3",
             "# Condor job wrapper created by Ganga",
             "# %s" % (time.strftime("%c")),
             "",
@@ -430,7 +434,7 @@ class Condor(IBackend):
             "",
             "exePath = '%s'" % exeString,
             "if os.path.isfile( '%s' ):" % os.path.basename(exeString),
-            "   os.chmod( '%s', 0755)" % os.path.basename(exeString),
+            "   os.chmod( '%s', 0o755)" % os.path.basename(exeString),
             "wrapperName = '%s_bash_wrapper.sh'" % wrapperName,
             "wrapperFile = open( wrapperName, 'w' )",
             "wrapperFile.write( '#!/bin/bash\\n' )",
@@ -447,7 +451,7 @@ class Condor(IBackend):
             "wrapperFile.write( '%s\\n' % \' \'.join(execmd) )",
             "wrapperFile.write( 'exit ${?}\\n' )",
             "wrapperFile.close()",
-            "os.chmod( wrapperName, 0755 )",
+            "os.chmod( wrapperName, 0o755 )",
             "result = os.system( './%s' % wrapperName )",
             "os.remove( wrapperName )",
             "",
@@ -636,7 +640,10 @@ class Condor(IBackend):
                             exitCode = '-1'
 
                         if exitCode.isdigit():
-                            jobStatus = "completed"
+                            if exitCode=='0':
+                                jobStatus = "completed"
+                            else:
+                                jobStatus = 'failed'
                         else:
                             # Some filesystems/setups have the file created but empty - only worry if it's been 10mins
                             # since we first checked the file
