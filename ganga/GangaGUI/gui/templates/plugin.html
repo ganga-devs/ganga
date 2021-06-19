@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container-fluid px-md-5">
+        <h3>Docstring - {{ plugin_info.get('name') }}</h3>
+        <hr>
+        <div class="row">
+            <div class="col">
+                <pre class="border rounded p-2 p-md-3">
+                {{ plugin_info.get('docstring') }}
+            </pre>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

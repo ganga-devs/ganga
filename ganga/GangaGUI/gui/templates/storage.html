@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    
+    <h3 class="text-gray-900">Storage</h3>
+    <div class="row mt-3">
+        <div class="col">
+            <form method=post enctype=multipart/form-data>
+                <div class="input-group mb-3">
+                    <div class="custom-file">
+                        <input type="file" name="storagefile" class="custom-file-input" id="storagefile-input">
+                        <label class="custom-file-label" id="storagefile-input-label" for="storagefile-input"
+                                aria-describedby="storagefileInputAddon">Choose file</label>
+                    </div>
+                    <div class="input-group-append">
+                        <input class="input-group-text" id="storagefileInputAddon" type=submit value=Upload>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <hr class="my-0 mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <p class=" my-0 py-0 d-inline text-gray-900"><b>Current location:</b> {{ abs_path }}</p>
+        <div>
+            <a class="btn btn-primary btn-sm" href="{{ url_for('storage_page', path=back_path) }}">Go
+                    back</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <table class="table table-striped table-bordered text-center table-responsive-sm">
+                <thead>
+                <tr>
+                    <th class="align-middle" scope="col">Type</th>
+                    <th class="align-middle" scope="col">Name</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for file_info in files_info %}
+                    <tr>
+                        <th class="align-middle px-3 font-weight-normal"
+                            style="width: 1%">{{ 'Directory' if file_info.get('directory') else 'File' }}</th>
+                        <td class="align-middle text-left"><a
+                            href="{{ (request.path + '/' if request.path != '/' else '') + file_info.get('file') }}"
+                            class="btn-link">{{ file_info.get('file') }}</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+   
+{% endblock content %}
+
+{% block footer %}
+    <script>
+
+        // Add event listener to update the runfile label to the selected file
+        storagefileInput = document.querySelector('#storagefile-input');
+        storagefileInput.addEventListener('change', updateStorageFilename);
+
+        // For updating the storage upload input label to the filename of selected file
+        function updateStorageFilename(e) {
+
+            // Upload Input
+            const storagefileInput = e.target;
+
+            // Label to be update
+            const storagefileLabel = document.querySelector("#storagefile-input-label");
+
+            // Update label
+            storagefileLabel.innerHTML = storagefileInput.files[0].name;
+        }
+
+    </script>
+{% endblock footer %}
