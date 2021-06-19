@@ -1519,7 +1519,6 @@ class Job(GangaObject):
                 for _sj in mJob.subjobs:
                     _sj.status = stats[i]
                     _sj.id = i
-                    print('id: ', _sj.id)
                     i = i+1
             elif not isType(mJob.subjobs, (list, GangaList)):
                 temp_list = GangaList()
