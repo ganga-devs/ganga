@@ -540,6 +540,69 @@ def jobs_statistics():
 
     return jsonify(statistics)
 
+# Queue Information
+@internal.route("/internal/queue", methods=["GET"])
+def queue_api():
+
+    from GangaCore.Core.GangaThread.WorkerThreads import _global_queues as queues
+
+    queues_info=[]
+    com="idle"
+    for elem in queues._user_threadpool.get_queue():
+        user_queue={}
+        user_queue["user_threadpool"]=str(elem).strip("'<>() ").replace('\'', '\"')
+        queues_info.append(user_queue)
+
+    for elem in queues._monitoring_threadpool.get_queue():
+        monitor_queue={}
+        monitor_queue["monitoring_threadpool"]=str(elem).strip("'<>() ").replace('\'', '\"')
+        queues_info.append(monitor_queue)
+
+    for u, m in zip(queues._user_threadpool.worker_status(), queues._monitoring_threadpool.worker_status()):
+        queue_info={}
+        queue_info["name_user"]=str(u[0]).strip("'<>() ").replace('\'', '\"')
+        queue_info["name_monitor"]=str(m[0]).strip("'<>() ").replace('\'', '\"')
+
+        if u[1] is None:
+            queue_info["user_condition"]=str(com).strip("'<>() ").replace('\'', '\"')
+        elif u[1] is not None:
+            queue_info["user_condition"]=str(u[1]).strip("'<>() ").replace('\'', '\"')
+        if m[1] is None:
+            queue_info["monitor_condition"]=str(com).strip("'<>() ").replace('\'', '\"')
+        elif m[1] is not None:
+            queue_info["monitor_condition"]=str(m[1]).strip("'<>() ").replace('\'', '\"')
+        
+        queue_info["user_timeout"]=str(u[2]).strip("'<>() ").replace('\'', '\"')
+        queue_info["monitor_timeout"]=str(m[2]).strip("'<>() ").replace('\'', '\"')
+        queues_info.append(queue_info)
+        
+    return jsonify(queues_info)
+
+@internal.route("/internal/queue/data", methods=["GET", "POST"])
+def queue_chart_api():
+
+    from GangaCore.Core.GangaThread.WorkerThreads import _global_queues as queues
+    cdata = []
+    com="idle"
+    for u, m in zip(queues._user_threadpool.worker_status(), queues._monitoring_threadpool.worker_status()):
+        c_info={}
+        if u[1] is None:
+            c_info["user_condition"]=str(com).strip("'<>() ").replace('\'', '\"')
+        elif u[1] is not None:
+            c_info["user_condition"]=str(u[1]).strip("'<>() ").replace('\'', '\"')
+        cdata.append(c_info)
+        
+
+    count=0
+    for i in range(len(cdata)):
+        if cdata[i]==com:
+            count+=1
+
+    dat = [time() * 1000, (len(cdata)-count)]
+    response = make_response(json.dumps(dat))
+    response.content_type = 'application/json'
+    return response
+
 
 # Incomplete jobs ids
 @internal.route("/internal/jobs/incomplete-ids", methods=["GET"])
