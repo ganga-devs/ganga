@@ -1,6 +1,7 @@
 import json
 import io
 from itertools import chain
+from time import time
 from flask import jsonify, request
 from GangaGUI.api import internal
 
