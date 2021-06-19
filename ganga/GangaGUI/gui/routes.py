@@ -812,6 +812,19 @@ def credentials_page():
 
     return render_template('credentials.html', credential_info_list=credentials_info)
 
+@gui.route("/queue", methods=["GET"])
+@login_required
+def queue_page():
+    """
+    Displays queues information
+    """
+    try:
+        queue_info = query_internal_api("/internal/queue", "get")
+    except Exception as err:
+        flash(str(err), "danger")
+        return redirect(url_for("dashboard"))
+
+    return render_template('queue.html', queue_info_list=queue_info)
 
 # Plugins view
 @gui.route('/plugins')
@@ -1505,6 +1518,28 @@ def jobs_statistics_endpoint(current_api_user):
 
     return jsonify(statistics)
 
+@gui.route("/api/queue", methods=["GET"])
+@token_required
+def queue_endpoint(current_api_user):
+
+    try:
+        queue_info = query_internal_api("/internal/queue", "get")
+
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(queue_info)
+
+@gui.route("/api/queue/chart", methods=["GET","POST"])
+def queue_chart_endpoint():
+
+    try:
+        chart_info = query_internal_api("/internal/queue/data", "get")
+
+    except Exception as err:
+        return jsonify({"success": False, "message": str(err)}), 400
+
+    return jsonify(chart_info)
 
 # Job incomplete ids API - GET Method
 @gui.route("/api/jobs/incomplete_ids", methods=["GET"])
