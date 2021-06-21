@@ -1,0 +1,28 @@
+**************************************************************************************************************
+8.5.0 (2021/06/21)
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaCore
+--------------------------------------------------------------------------------------------------------------
+* Bugfix for notifiers #1895
+* Add resplit for subjobs #1891, #1918 , #1921 
+* Add check that inputfiles exist for Executable applications #1905 
+* Improve finding of free port for starting flask server for the GUI #1902 
+* Added peek for the Condor backend using codor_tail #1901, #1912 
+* Limit number of concurrent local jobs running. Number set with batchsize attribute #1907 
+* Change GUI to use localhost #1914 
+* Added Condor testing framework and update run time scripts #1906 
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Bugfix for Executable to set the environment #1896  
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Bugfix for DiracFile WN upload script and python 3 #1889 
+* Set Dirac tag automatically when using virtualisation with image on CVMFS #1887 
+* Update to use Dirac with python 3 #1920 , #1892 
+
+**************************************************************************************************************
