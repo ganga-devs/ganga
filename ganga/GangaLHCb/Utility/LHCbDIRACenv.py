@@ -53,5 +53,5 @@ def store_dirac_environment():
     except (OSError, IOError, TypeError):
         logger.error("Unable to store LHCbDirac environment")
         raise PluginError
-    logger.info("Using LHCbDirac version {requestedVersion}")
+    logger.info(f"Using LHCbDirac version {requestedVersion}")
     os.environ['GANGADIRACENVIRONMENT'] = fname
