@@ -243,3 +243,19 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("split_return: %s" % split_return)
         return split_return
 
+
+class SplitByFilesAndDownload(SplitByFiles):
+    '''Split by files and add the DiracFiles in the subjob's inputdata
+    to their inputfiles so they're downloaded to the job's working dir.'''
+
+    _name = 'SplitByFilesAndDownload'
+    _schema = SplitByFiles._schema
+    
+    def _create_subjob(self, job, dataset):
+        '''Create the subjob with the given dataset and add DiracFiles
+        to the subjob's inputfiles.'''
+        sj = super(SplitByFilesAndDownload, self)._create_subjob(job, dataset)
+        for f in sj.inputdata:
+            if hasattr(f, 'lfn'):
+                sj.inputfiles.append(f)
+        return sj
