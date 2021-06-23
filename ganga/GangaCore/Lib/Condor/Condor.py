@@ -764,7 +764,7 @@ class Condor(IBackend):
 
         for l in f:
             splitLine = l.split()
-            if checkstr == splitLine[0]:
+            if len(splitLine)>0 and checkstr == splitLine[0]:
                 if not self._condorDateFormat:
                     self.setCondorDateFormat(splitLine[2])
                 condorDate=self.getCondorDate(splitLine[2], splitLine[3])
