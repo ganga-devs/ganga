@@ -183,7 +183,7 @@ class DiracBase(IBackend):
         self.extraInfo = None
         self.statusInfo = ''
         j.been_queued = False
-        dirac_cmd = """execfile(\'%s\')""" % dirac_script
+        dirac_cmd = """exec(open(\'%s\').read())""" % dirac_script
 
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements)
@@ -224,7 +224,7 @@ class DiracBase(IBackend):
         self.extraInfo = None
         self.statusInfo = ''
         j.been_queued = False
-        dirac_cmd = """execfile(\'%s\')""" % myscript
+        dirac_cmd = """exec(open(\'%s\').read())""" % myscript
         submitFailures = {}
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True, new_subprocess = True)

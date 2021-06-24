@@ -104,11 +104,11 @@ def getDBtagsFromLFN( lfn ):
     conddb = ''
     if res['OK']: # there should probably also be an 'else' for cases where no information could be retrieved 
         val = res['Value']
-	steps = val['Steps']
-	last_step = steps[-1] # the tags are taken from the last step of production
-	dddb = last_step[4]
-	conddb = last_step[5]
-	return dddb, conddb
+        steps = val['Steps']
+        last_step = steps[-1] # the tags are taken from the last step of production
+        dddb = last_step[4]
+        conddb = last_step[5]
+        return dddb, conddb
     else:
         res = {'OK': False, 'Message': 'Error getting DB tags!'}
 
