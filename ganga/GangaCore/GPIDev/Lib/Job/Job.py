@@ -1483,7 +1483,7 @@ class Job(GangaObject):
             raise JobError("resplit not provided with a splitter!")
         if not self.master:
             raise JobError("You can only resplit subjobs!")
-        if not self.status in ['completed', 'failed']:
+        if not self.status in ['completed', 'failed', 'killed']:
             raise JobError("You can only resplit subjobs in the failed or completed status!")
 
         mJob = self.master
