@@ -19,6 +19,7 @@ import time
 import datetime
 import re
 import htcondor
+import classad
 
 import GangaCore.Utility.logging
 import GangaCore.Utility.Virtualization
@@ -441,6 +442,7 @@ class Condor(IBackend):
 
     def updateMonitoringInformation(jobs):
 
+        #First collate jobs and Condor IDs
         jobDict = {}
         for job in jobs:
             if job.backend.id:
@@ -451,39 +453,42 @@ class Condor(IBackend):
         if not idList:
             return
 
-        queryCommand = " ".join\
-            ([
-                "condor_q -global" if getConfig(
-                    "Condor")["query_global_queues"] else "condor_q",
-                "-format \"%s \" GlobalJobId",
-                "-format \"%s \" RemoteHost",
-                "-format \"%d \" JobStatus",
-                "-format \"%f\\n\" RemoteUserCpu"
-            ])
-        status, output = subprocess.getstatusoutput(queryCommand)
-        if 0 != status:
-            logger.error("Problem retrieving status for Condor jobs")
-            return
+        #Now gather together cluster IDs and process IDs
+        id_dict = {}
+        for _j in jobs:
+            idStringList = _j.backend.id.split(".")
+            this_cluster_id = idStringList[0]
+            this_proc_id = idStringList[1]
+            if this_cluster_id in id_dict.keys():
+                id_dict[this_cluster_id].append(this_proc_id)
+            else:
+                id_dict[this_cluster_id] = [this_proc_id]
+    
+        #Now make a filtering string for the scheduler
+        expr_tree = classad.ExprTree("false")
+        for _cl in id_dict.keys():
+            cl_expr = classad.ExprTree("ClusterID == %s" % _cl)
+            pr_expr_str = "ProcID == %s" % id_dict[_cl][0]
+            for _proc in id_dict[_cl][1:]:
+                pr_expr_str = pr_expr_str + " || ProcID == %s" % _proc
+            pr_expr = classad.ExprTree(pr_expr_str)
+            cl_expr = cl_expr.and_(pr_expr)
+            expr_tree = expr_tree.or_(cl_expr)
 
-        if ("All queues are empty" == output):
-            infoList = []
-        else:
-            infoList = output.split("\n")
-
+        #Now query the scheduler with or job list
+        schedd = htcondor.Schedd()
+        stati = schedd.query(constraint = expr_tree, projection = ["ClusterId", "ProcId", "JobStatus", "RemoteUserCpu","AllRemoteHosts"])
         allDict = {}
-        for infoString in infoList:
-            tmpList = infoString.split()
-            id, host, status, cputime = ("", "", "", "")
-            if 3 == len(tmpList):
-                if not 'Failure' in tmpList[0]:
-                    id, status, cputime = tmpList
-            if 4 == len(tmpList):
-                id, host, status, cputime = tmpList
-            if id:
-                allDict[id] = {}
-                allDict[id]["status"] = Condor.statusDict[status]
-                allDict[id]["cputime"] = cputime
-                allDict[id]["host"] = host
+        for _stat in stati:
+            this_id = str(_stat['ClusterId']) + '.' + str(_stat['ProcId'])
+            allDict[this_id] = {}
+            allDict[this_id]["status"] = Condor.statusDict[str(_stat["JobStatus"])]
+            allDict[this_id]["cputime"] = _stat["RemoteUserCpu"]
+            if "AllRemoteHosts" in _stat.keys():
+                allDict[this_id]["host"] = _stat["AllRemoteHosts"]
+            else:
+                allDict[this_id]["host"] = ""
+
 
         fg = Foreground()
         fx = Effects()
@@ -491,31 +496,17 @@ class Condor(IBackend):
                           'running': fg.green,
                           'completed': fg.blue}
 
+
         for id in idList:
 
             printStatus = False
-            if jobDict[id].status == "killed":
+            if id in  jobDict[id].status == "killed":
                 continue
-
-            localId = id.split("#")[-1]
-            globalId = id
-
-            if globalId == localId:
-                queryCommand = " ".join\
-                    ([
-                        "condor_q -global" if getConfig(
-                            "Condor")["query_global_queues"] else "condor_q",
-                        "-format \"%s\" GlobalJobId",
-                        id
-                    ])
-                status, output = subprocess.getstatusoutput(queryCommand)
-                if 0 == status:
-                    globalId = output
-
-            if globalId in allDict.keys():
-                status = allDict[globalId]["status"]
-                host = allDict[globalId]["host"]
-                cputime = allDict[globalId]["cputime"]
+            #If the queried job is still in the queue system:
+            if id in allDict.keys():
+                status = allDict[id]["status"]
+                host = allDict[id]["host"]
+                cputime = allDict[id]["cputime"]
                 if status != jobDict[id].backend.status:
                     printStatus = True
                     stripProxy(jobDict[id])._getSessionLock()
@@ -527,6 +518,7 @@ class Condor(IBackend):
                     if jobDict[id].backend.actualCE != host:
                         jobDict[id].backend.actualCE = host
                 jobDict[id].backend.cputime = cputime
+            #Otherwise look a bit harder at the logs to see where it ended up
             else:
                 jobDict[id].backend.status = ""
                 outDir = jobDict[id].getOutputWorkspace().getPath()
