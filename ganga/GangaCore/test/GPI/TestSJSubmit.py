@@ -29,7 +29,7 @@ class TestSJSubmit(GangaUnitTest):
         j = Job()
         j.application.exe = "sleep"
         j.splitter = self._getSplitter()
-        j.backend = Local()
+        j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
 
         # Test we can submit a job and we're going to check the sj are created
@@ -142,7 +142,7 @@ class TestSJSubmit(GangaUnitTest):
 
         j=Job()
         j.splitter = self._getSplitter()
-        j.backend = Local()
+        j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
 
         from GangaTest.Framework.utils import sleep_until_completed
@@ -204,7 +204,7 @@ class TestSJSubmit(GangaUnitTest):
         
         j=Job()
         j.splitter = self._getSplitter()
-        j.backend = Local()
+        j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
         sleep_until_completed(j)
 
