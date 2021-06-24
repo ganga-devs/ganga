@@ -216,41 +216,35 @@ class Condor(IBackend):
                          or False otherwise"""
 
         job = self.getJobObject()
+        idList = []
+        is_master = False
+        #Are we in the master job? If so kill everything.
+        if job.subjobs:
+            is_master = True
+            idList = job.subjobs[0].backend.id.split(".")
+        else:
+            idList = self.id.split(".")
 
-        if not self.id:
-            logger.warning("Job %s not running" % job.id)
+        cluster_id = idList[0]
+        proc_id = idList[1]
+
+        schedd = htcondor.Schedd()
+        result = {}
+        if is_master:
+            result = schedd.act(htcondor.JobAction.Remove, "ClusterID=={}".format(cluster_id))
+        else:
+            result = schedd.act(htcondor.JobAction.Remove, "ClusterID=={} && ProcID=={}".format(cluster_id, proc_id))
+        
+        if result['TotalError'] > 0:
             return False
 
-        idElementList = job.backend.id.split("#")
-        if 3 == len(idElementList):
-            if idElementList[1].find(".") != -1:
-                killCommand = "condor_rm -name %s %s" % \
-                    (idElementList[0], idElementList[1])
-            else:
-                killCommand = "condor_rm -name %s %s" % \
-                    (idElementList[0], idElementList[2])
+        if is_master:
+            for _sj in job.subjobs:
+                _sj.backend.status = 'Removed'
         else:
-            killCommand = "condor_rm %s" % (idElementList[0])
+            self.status = 'Removed'
 
-        status, output = subprocess.getstatusoutput(killCommand)
-
-        if (status != 0):
-            if 3 == len(idElementList):
-                killCommand = "condor_rm %s" % (idElementList[1])
-                status, output = subprocess.getstatusoutput(killCommand)
-
-        if (status != 0):
-            logger.warning\
-                ("Return code '%s' killing job '%s' - Condor id '%s'" %
-                 (str(status), job.id, job.backend.id))
-            logger.warning("Tried command: '%s'" % killCommand)
-            logger.warning("Command output: '%s'" % output)
-            logger.warning("Anyway continuing with job removal")
-
-        job.backend.status = "Removed"
-        killStatus = True
-
-        return killStatus
+        return True
 
     def cdfPreamble(self, jobconfig, master_input_sandbox):
         """Prepare the cdf arguments that are common to all jobs so go at the start. Returns a dict"""
