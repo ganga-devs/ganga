@@ -122,9 +122,6 @@ class Condor(IBackend):
         with schedd.transaction() as txn:
             stati = this_job.queue_with_itemdata(txn, itemdata = iter(sjDict))
 
-        print('stati: ', stati)
-        print('stati cluster: ', stati.cluster())
-
         cluster_id = stati.cluster()
         process_id = stati.first_proc()
         if not len(rjobs) == stati.num_procs():
