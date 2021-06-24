@@ -87,6 +87,7 @@ setup(name='ganga',
       packages=pythonPackages,
       install_requires=[
           'ipython>=5.0.0',
+          'jedi==0.17.2',
           'httplib2>=0.8',
           'absl-py>=0.1.2',
           'google-api-python-client',
