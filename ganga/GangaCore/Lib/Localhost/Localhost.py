@@ -428,21 +428,6 @@ class Localhost(IBackend):
                 traceback.print_exc()
                 raise x
 
-            # check if the exit code of the wrapper script is available (non-blocking check)
-            # if the wrapper script exited with non zero this is an error
-            try:
-                ws = os.waitpid(stripProxy(j.backend).wrapper_pid, os.WNOHANG)
-                if not GangaCore.Utility.logic.implies(ws[0] != 0, ws[1] == 0):
-                    logger.critical('wrapper script for job %s exit with code %d', str(j.getFQID('.')), ws[1])
-                    logger.critical('report this as a bug at https://github.com/ganga-devs/ganga/issues/')
-                    j.updateStatus('failed')
-            except OSError as x:
-                if x.errno != errno.ECHILD:
-                    logger.warning('cannot do waitpid for %d: %s', stripProxy(j.backend).wrapper_pid, str(x))
-
-            # if the exit code was collected for the application get the exit
-            # code back
-
             if not exitcode is None:
                 # status file indicates that the application finished
                 j.backend.exitcode = exitcode
