@@ -14,7 +14,7 @@ import datetime
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, session, send_file
+from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, session, send_file, make_response
 from flask_login import login_user, login_required, logout_user, current_user, UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -1533,13 +1533,11 @@ def queue_endpoint(current_api_user):
 @gui.route("/api/queue/chart", methods=["GET","POST"])
 def queue_chart_endpoint():
 
-    try:
-        chart_info = query_internal_api("/internal/queue/data", "get")
-
-    except Exception as err:
-        return jsonify({"success": False, "message": str(err)}), 400
-
-    return jsonify(chart_info)
+    
+    chart_info = query_internal_api("/internal/queue/data", "get")
+    response = make_response(json.dumps(chart_info))
+    response.content_type = 'application/json'
+    return response
 
 # Job incomplete ids API - GET Method
 @gui.route("/api/jobs/incomplete_ids", methods=["GET"])
