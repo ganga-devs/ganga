@@ -9,12 +9,8 @@ from os.path import dirname, join, isdir
 
 def mp_worker(name):
     print(f'START: {name} '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())))
-    subprocess.run(['python3', name])
+    subprocess.run(['python3', name], preexec_fn=os.setsid)
 
-# Make sure that the wrapper (spawned process) is detached from Ganga session
-# the process will not receive Control-C signals
-os.setsid()
-        
 workdir = ###WORKDIR###
 batch_size = ###BATCHSIZE###
 subjoblist = ###SUBJOBLIST###

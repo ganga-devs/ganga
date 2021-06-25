@@ -130,7 +130,7 @@ class Localhost(IBackend):
 
     def run(self, scriptpath):
         try:
-            process = subprocess.Popen(["python3", scriptpath, 'subprocess'], stdin=subprocess.DEVNULL)
+            process = subprocess.Popen(["python3", scriptpath, 'subprocess'], stdin=subprocess.DEVNULL, preexec_fn=os.setsid)
         except OSError as x:
             logger.error('cannot start a job process: %s', str(x))
             return 0

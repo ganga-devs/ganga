@@ -7,10 +7,6 @@ import subprocess
 import tarfile
 import time
 
-# Make sure that the wrapper (spawned process) is detached from Ganga session
-# the process will not receive Control-C signals
-os.setsid()
-
 ###########################################################################################
 
 ###INLINEMODULES###
