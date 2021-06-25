@@ -6,6 +6,8 @@ import datetime
 import time
 import inspect
 import multiprocessing
+import uuid
+import shutil
 
 from pathlib import Path
 from os.path import join, dirname, abspath, isdir, isfile
@@ -36,7 +38,7 @@ class Localhost(IBackend):
                                      'exitcode': SimpleItem(defvalue=None, typelist=[int, None], protected=1, copyable=0, doc='Process exit code.'),
                                      'workdir': SimpleItem(defvalue='', protected=1, copyable=0, doc='Working directory.'),
                                      'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Hostname where the job was submitted.'),
-                                     'wrapper_pid': SimpleItem(defvalue=-1, protected=1, copyable=0, hidden=1, doc='(internal) process id of the execution wrapper'),
+                                     'wrapper_pid': SimpleItem(defvalue=-1, typelist=['int', 'list'], protected=1, copyable=0, hidden=1, doc='(internal) process id(s) of the execution wrapper(s)'),
                                      'nice': SimpleItem(defvalue=0, doc='adjust process priority using nice -n command'),
                                      'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel'),
                                      'batchsize': SimpleItem(defvalue=-1, typelist=[int], doc='Run a maximum of this number of subjobs in parallel. If value is negative use number of available CPUs')
@@ -46,12 +48,9 @@ class Localhost(IBackend):
 
     def __init__(self):
         super(Localhost, self).__init__()
-    
-    def master_submit(self, rjobs, subjobconfigs, masterjobconfig,keep_going=False):
 
-        rcode = IBackend.master_submit(self, rjobs, subjobconfigs,
-                                       masterjobconfig, keep_going, self.force_parallel)
 
+    def prepare_master_script(self, rjobs):
         job = self.getJobObject()
         wrkspace = job.getInputWorkspace()
         if not job.splitter is None:
@@ -65,26 +64,34 @@ class Localhost(IBackend):
                                                             'LocalHostExec_batch.py.template')
             script = FileUtils.loadScript(script_location, '')
             script = script.replace('###BATCHSIZE###', str(bs))
+            script = script.replace('###SUBJOBLIST###', str([str(sj.id) for sj in rjobs]))
             script = script.replace('###WORKDIR###', repr(dirname(dirname(wrkspace.getPath()))))
 
-            wrkspace.writefile(FileBuffer('__jobscript__', script), executable=1)
+            scriptname = f'__jobscript__{uuid.uuid4()}' 
+            wrkspace.writefile(FileBuffer(scriptname, script), executable=1)
+        else:
+            scriptname = '__jobscript__'
+        return wrkspace.getPath(scriptname)
 
-        scriptPath = wrkspace.getPath('__jobscript__')
+    
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig,keep_going=False):
+
+        rcode = super().master_submit(rjobs, subjobconfigs,
+                                      masterjobconfig, keep_going, self.force_parallel)
+
+        scriptPath = self.prepare_master_script(rjobs)
         self.run(scriptPath)
         
         return 1
 
+    
     def submit(self, jobconfig, master_input_sandbox):
         job = self.getJobObject()
         prepared = self.preparejob(jobconfig, master_input_sandbox)
         self.actualCE = GangaCore.Utility.util.hostname()
         return 1
 
-    
-    def resubmit(self):
-        job = self.getJobObject()
-        import shutil
-
+    def cleanworkdir(self):
         if self.workdir == '':
             import tempfile
             self.workdir = tempfile.mkdtemp(dir=config['location'])
@@ -102,6 +109,23 @@ class Localhost(IBackend):
             if not isdir(self.workdir):
                 logger.error('cannot make the workdir %s, %s', self.workdir, str(x))
                 return 0
+
+    def master_resubmit(self, rjobs):
+        scriptPath = self.prepare_master_script(rjobs)
+        for sj in rjobs:
+            sj.updateStatus('submitted')
+        self.run(scriptPath)
+
+        master = self.getJobObject().master
+        if master is not None:
+            master.updateMasterJobStatus()
+
+        return 1
+        
+        
+    def resubmit(self):
+        self.cleanworkdir()
+        job = self.getJobObject()
         return self.run(job.getInputWorkspace().getPath('__jobscript__'))
 
     def run(self, scriptpath):
@@ -110,8 +134,15 @@ class Localhost(IBackend):
         except OSError as x:
             logger.error('cannot start a job process: %s', str(x))
             return 0
-        self.wrapper_pid = process.pid
-        self.actualCE = GangaCore.Utility.util.hostname()
+        oldid = self.wrapper_pid
+        if type(oldid) == int:
+            oldid = [oldid]
+            if oldid[0] == -1:
+                self.wrapper_pid = [process.pid]
+                self.actualCE = GangaCore.Utility.util.hostname()
+                return 1
+
+        self.wrapper_pid = oldid+[process.pid]
         return 1
 
     def peek(self, filename="", command=""):
@@ -274,47 +305,58 @@ class Localhost(IBackend):
 
         return scriptPath
 
-    def kill(self):
-        import os
-        import signal
 
+    def master_kill(self):
         job = self.getJobObject()
 
-        if self.wrapper_pid < 0:
-            # Subjob in submitted stage. Use __syslog__ file to indicate that it shouldn't start
-            Path(join(job.getOutputWorkspace().getPath(), '__syslog__')).touch()
+        # Kill the wrapper that manages the subjobs if it is a master job
+        if len(job.subjobs):
+            self.kill()
+
+        return super().master_kill()
+    
+    def kill(self):
+        job = self.getJobObject()
+
+        pids = self.wrapper_pid
+        if type(pids) == int:
+            pids = [pids]
+
+        if pids[0] < 0:
             return 1
-        
-        ok = True
-        try:
-            # kill the wrapper script
-            # bugfix: #18178 - since wrapper script sets a new session and new
-            # group, we can use this to kill all processes in the group
-            os.kill(-self.wrapper_pid, signal.SIGKILL)
-        except OSError as x:
-            logger.warning('while killing wrapper script for job %s: pid=%d, %s', job.getFQID('.'), self.wrapper_pid, str(x))
-            ok = False
 
-        # waitpid to avoid zombies
-        try:
-            ws = os.waitpid(self.wrapper_pid, 0)
-        except OSError as x:
-            logger.warning('problem while waitpid %s: %s', job.getFQID('.'), x)
+        for wrapper_pid in pids:
+            
+            try:
+                groupid = os.getpgid(wrapper_pid)
+                logger.debug(f"Wrapper for {job.getFQID('.')} has gid {groupid} and pid {self.wrapper_pid}")
+                subprocess.run(['kill', '-9', f'-{groupid}'])
+            except OSError as x:
+                logger.warning('While killing wrapper script for job %s: pid=%d, %s', job.getFQID('.'), self.wrapper_pid, str(x))
 
+            # waitpid to avoid zombies. This always returns an error
+            try:
+                ws = os.waitpid(wrapper_pid, 0)
+            except OSError:
+                pass
+
+        self.wrapper_pid = -1
+            
         from GangaCore.Utility.files import recursive_copy
 
-        for fn in ['stdout', 'stderr', '__syslog__']:
-            try:
-                recursive_copy(
-                    join(self.workdir, fn), job.getOutputWorkspace().getPath())
-            except Exception as x:
-                logger.info('problem retrieving %s: %s', fn, x)
+        if self.workdir:
+            for fn in ['stdout', 'stderr', '__syslog__']:
+                try:
+                    recursive_copy(
+                        join(self.workdir, fn), job.getOutputWorkspace().getPath())
+                except Exception as x:
+                    logger.info('problem retrieving %s: %s', fn, x)
 
-        self.remove_workdir()
+            self.remove_workdir()
         return 1
 
     def remove_workdir(self):
-        if config['remove_workdir']:
+        if config['remove_workdir'] and self.workdir:
             import shutil
             try:
                 logger.debug("removing: %s" % self.workdir)

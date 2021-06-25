@@ -7,20 +7,9 @@ import subprocess
 import tarfile
 import time
 
-# FIXME: print as DEBUG: to __syslog__ file
-#print(sys.path)
-#print(os.environ['PATH'])
-#print(sys.version)
-
-# bugfix #13314 : make sure that the wrapper (spawned process) is detached from Ganga session
+# Make sure that the wrapper (spawned process) is detached from Ganga session
 # the process will not receive Control-C signals
-# using fork  and doing setsid() before  exec would probably  be a bit
-# better (to avoid  slim chance that the signal  is propagated to this
-# process before setsid is reached)
-# this is only enabled if the first argument is 'subprocess' in order to enable
-# running this script by hand from outside ganga (which is sometimes useful)
-if len(sys.argv)>1 and sys.argv[1] == 'subprocess':
-    os.setsid()
+os.setsid()
 
 ###########################################################################################
 
