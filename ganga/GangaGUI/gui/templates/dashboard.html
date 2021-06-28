@@ -99,10 +99,18 @@
 
                             {# Job name #}
                             {{ j.get('id') + '. ' + j.get('name') if j.get('name').strip() != '' else j.get('id') + '. '+ 'Unnamed Job' }}
+                            
+                            
+                            {% if j.get('subjobs') != '0' %}
+                                <span class="badge badge-pill">
+                                     Subjobs
+                                </span>
+                                
+                            {% endif %} 
                             <span id="job-id-{{ j.get('id') }}-status"
-                                    class="badge badge-{{ status_color[j.get('status')] }} badge-pill">
+                                class="badge badge-{{ status_color[j.get('status')] }} badge-pill">
                                 {{ j.get('status') }}
-                            </span>
+                            </span>   
                         </a>
                         {# Job info after uncollapsing #}
                         <div id="collapse-job-id-{{ j.get('id') }}"
@@ -111,6 +119,7 @@
                             <div class="card-body">
                                 <p class="m-0 p-0">fqid: {{ j.get('fqid') }}</p>
                                 <p class="m-0 p-0">subjobs: {{ j.get('subjobs') }}</p>
+                                <p class="m-0 p-0">Job Status: {{ j.get('status') }}</p>
                                 <p class="m-0 p-0">
                                     application: {{ (j.get('application')|string).split('(')[0] }}
                                 </p>
@@ -120,13 +129,23 @@
                                 <p class="m-0 p-0" id="subjob-statuses-job-id-{{ j.get('id') }}">
                                     subjobs statuses: {{ j.get('subjob_statuses') }}
                                 </p>
+                                
+                               
                                 <a href="{{ url_for('job_page', job_id=j.get('id')) }}"
                                     class="btn btn-sm btn-primary mt-3">
-                                    View Job
+                                    Job Info
                                 </a>
+                                
+                                {% if j.get('subjobs') != '0' %}
+                                    <a href="{{ url_for('subjobs_page', job_id=j.get('id')) }}"
+                                        class="btn btn-sm btn-primary mt-3">
+                                        Subjobs Info
+                                    </a>
+                                {% endif %} 
                                 <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-copy">
                                     Copy Job
                                 </a>
+                                <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-unpin">Unpin Job</a>
                             </div>
                         </div>
                     {% endfor %}
@@ -149,10 +168,18 @@
                             aria-controls="collapse-pinned-job-id-{{ j.get('id') }}">
                             {# Job name #}
                             {{ j.get('id') + '. ' + j.get('name') if j.get('name').strip() != '' else j.get('id') + '. '+ 'Unnamed Job' }}
+                            {% if j.get('subjobs') != '0' %}
+                                <span id="job-id-{{ j.get('id') }}-status"
+                                    class="badge badge-pill">
+                                     Subjobs
+                                </span>
+                                
+                            {% endif %} 
                             <span id="pinned-job-id-{{ j.get('id') }}-status"
                                 class="badge badge-{{ status_color[j.get('status')] }} badge-pill">
                                 {{ j.get('status') }}
                             </span>
+
                         </a>
                         {# Job info when uncollapsed #}
                         <div id="collapse-pinned-job-id-{{ j.get('id') }}"
@@ -170,8 +197,15 @@
                                 <p class="m-0 p-0" id="subjob-statuses-pinned-job-id-{{ j.get('id') }}">subjobs statuses: {{ j.get('subjob_statuses') }}</p>
                                 <a href="{{ url_for('job_page', job_id=j.get('id')) }}"
                                     class="btn btn-sm btn-primary mt-3">
-                                    View Job
+                                    Job Info
                                 </a>
+                                {% if j.get('subjobs') != '0' %}
+                                    <a href="{{ url_for('subjobs_page', job_id=j.get('id')) }}"
+                                        class="btn btn-sm btn-primary mt-3">
+                                        Subjobs Info
+                                    </a>
+                                {% endif %} 
+
                                 <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-copy">
                                     Copy Job
                                 </a>
@@ -191,4 +225,5 @@
 
 {% block footer %}
     <script defer src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
 {% endblock footer %}
