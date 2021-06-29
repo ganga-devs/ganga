@@ -109,7 +109,7 @@ class Condor(IBackend):
 
         master_input_sandbox = self.master_prepare(masterjobconfig)
         #Get the dict of common things
-        cdfDict = self.cdfPreamble(masterjobconfig, master_input_sandbox)
+        cdfDict = self.cdfPreamble(masterjobconfig)
         #Now set up the things for each job. It needs to be a list of dictionaries
         sjDict = []
         for sc, sj in zip(subjobconfigs, rjobs):
@@ -142,9 +142,6 @@ class Condor(IBackend):
             Return value: True if job is resubmitted successfully,
                           or False otherwise"""
 
-        # First a flag in case our job is a subjob submitted with old ganga.
-
-        old = False
         job = self.getJobObject()
 
         # Is this a subjob?
@@ -163,50 +160,39 @@ class Condor(IBackend):
             os.remove(outDir)
         os.mkdir(outDir)
 
-        # Determine path to job's Condor Description File
-        cdfpath = os.path.join(inpDir, "__cdf__")
-        # If there are subjobs but no __cdf__ in the input folder, check the subjob's in case of submission from old Ganga.
-        if not os.path.exists(cdfpath) and job.master:
-            cdfpath = os.path.join(job.getInputWorkspace().getPath(), "__cdf__")
-            old = True
-        if not os.path.exists(cdfpath):
-                raise BackendError('Condor', 'No "__cdf__" found in j.inputdir')
+        masterjobconfig = job._getJobMasterConfig()
+        master_input_sandbox = job.inputsandbox
+        rjobs = [job]
+        subjobconfigs = job._getJobSubConfig(rjobs)
 
-        #If this is a subjob submitted with new ganga we need to write a new cdf file from the original
-        if job.master and not old:
-            # Read old script
-            with open(cdfpath, 'r') as f:
-                script = f.read()
-            # Is the subjob we want in there?
-            if not ("#jobNo: %s" % job.fqid) in script:
-                raise BackendError('Condor', 'Subjob not found in original __cdf__ script.')
+        #Get the dict of common things
+        cdfDict = self.cdfPreamble(masterjobconfig)
+        #Now set up the things for each job. It needs to be a list of dictionaries
+        sjDict = []
+        for sc, sj in zip(subjobconfigs, rjobs):
+            sj.updateStatus('submitting')
+            sjDict.append(self.prepareSubjob(sj, sc, master_input_sandbox))
 
-            #First pick up the preamble
-            start = "# Condor Description File created by Ganga"
-            stop = "# End preamble"
-            newScript = re.compile(r'%s.*?%s' % (start, stop),re.S).search(script).group(0)
-            newScript += '\n'
-            #Now pick up the subjob
-            sjStart = "#jobNo: %s" % job.fqid
-            sjEnd = "queue"
-            newScript += re.compile(r'%s.*?%s' % (sjStart, sjEnd),re.S).search(script).group(0)
-            # Save new script
-            new_script_filename = os.path.join(job.getInputWorkspace().getPath(), '__cdf__')
-            with open(new_script_filename, 'w') as f:
-                f.write(newScript)
-            cdfpath = new_script_filename
+        #Put the common job dictionary into the HTCondor Submit object
+        this_job = htcondor.Submit(cdfDict)
+        #Now setup the submission
+        schedd = htcondor.Schedd()
+        with schedd.transaction() as txn:
+            stati = this_job.queue_with_itemdata(txn, itemdata = iter(sjDict))
 
-        # Resubmit job
-        if os.path.exists(cdfpath):
-            status = self.submit_cdf(cdfpath)
-        else:
-            logger.warning\
-                ("No Condor Description File for job '%s' found in '%s'" %
-                 (str(job.id), inpDir))
-            logger.warning("Resubmission failed")
-            status = False
+        cluster_id = stati.cluster()
+        process_id = stati.first_proc()
+        if not len(rjobs) == stati.num_procs():
+            raise BackendError('Condor', 'Some subjobs failed to submit! Check their status!')
 
-        return status
+        for sj in rjobs:
+            sj.backend.id = '%s.%s' % (cluster_id, process_id)
+            sj.updateStatus('submitted')
+            sj.time.timenow('submitted')
+            stripProxy(sj.info).increment()
+            process_id = process_id + 1
+
+        return 1
 
     def kill(self):
         """Kill running job.
@@ -247,7 +233,7 @@ class Condor(IBackend):
 
         return True
 
-    def cdfPreamble(self, jobconfig, master_input_sandbox):
+    def cdfPreamble(self, jobconfig):
         """Prepare the cdf arguments that are common to all jobs so go at the start. Returns a dict"""
 
         wrapperScriptStr = '#!/bin/sh\n./$1\n'
