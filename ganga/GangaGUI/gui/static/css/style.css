@@ -36,10 +36,32 @@ html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting:before,
+table.dataTable thead .sorting_asc:after,
+table.dataTable thead .sorting_asc:before,
+table.dataTable thead .sorting_asc_disabled:after,
+table.dataTable thead .sorting_asc_disabled:before,
+table.dataTable thead .sorting_desc:after,
+table.dataTable thead .sorting_desc:before,
+table.dataTable thead .sorting_desc_disabled:after,
+table.dataTable thead .sorting_desc_disabled:before {
+bottom: .5em;
+}
 
 
 footer, header , nav {
   display: block;
+}
+.sort:hover {
+  background-color:#f3f3f3;
+}
+
+.sort.asc > i.material-icons::after {
+  content: "arrow_drop_up";
+}
+.sort.desc > i.material-icons::after {
+  content: "arrow_drop_down";
 }
 
 body {
