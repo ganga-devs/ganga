@@ -596,7 +596,8 @@ def queue_chart_api():
 
     count=0
     for i in range(len(cdata)):
-        if cdata['user_condition'] == com:
+        flag=cdata[0]
+        if flag["user_condition"] == com:
             count+=1
 
     dat = [time() * 1000, (len(cdata)-count)]
