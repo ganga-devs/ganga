@@ -170,7 +170,7 @@ class GaudiExec(IPrepareApp):
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
         'run_args' :    SimpleItem(defvalue = [], typelist=[list], doc='A list of arguments to pass to the lb-run script at run time. i.e. --quiet'),
         'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
-        'nMakeCores':   SimpleItem(defvalue=configLHCb['nMakeCores'], doc='Number of cores to be provided via the "-j" option to the "make" command when building the ganga-input-sandbox'),
+        'nMakeCores':   SimpleItem(defvalue=1, doc='Number of cores to be provided via the "-j" option to the "make" command when building the ganga-input-sandbox'),
         
         # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
