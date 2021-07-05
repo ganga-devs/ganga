@@ -77,6 +77,8 @@ if not _after_bootstrap:
     defaultPlatform = guessPlatform()
     configLHCb.addOption('defaultPlatform', defaultPlatform, 'The default platform for applications to use')
 
+    configLHCb.addOption('nMakeCores', 1, 'Number of cores to use when making GaudiExec applications')
+
 def _store_root_version():
     if 'ROOTSYS' in os.environ:
         vstart = os.environ['ROOTSYS'].find('ROOT/') + 5
