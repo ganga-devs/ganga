@@ -77,6 +77,7 @@
                 <th class="align-middle" scope="col">Application</th>
                 <th class="align-middle" scope="col">Backend</th>
                 <th class="align-middle" scope="col">Action</th>
+                <th class="align-middle" scope="col">Subjobs Info</th>
             </tr>
             </thead>
             <tbody class="list">
@@ -91,6 +92,16 @@
                     <td class="align-middle text-break">{{ (j.get('backend')|string).split('(')[0] }}</td>
                     <td class="align-middle"><a href="{{ url_for('job_page', job_id=j.get('id')) }}"
                                                     class="btn btn-sm btn-primary">Job Info</a></td>
+                    {% if j.get('subjobs') != '0' %}
+                        <td class="align-middle text-break"><a href="{{ url_for('subjobs_page', job_id=j.get('id')) }}"
+                                        class="btn btn-sm btn-primary mt-3">
+                                        Subjobs Info({{ j.get('subjobs') }})
+                                    </a></td>
+                    {% else %}
+
+                        <td class="align-middle text-break">No Subjobs</td>       
+                    {% endif %} 
+
                 </tr>
             {% endfor %}
             </tbody>
