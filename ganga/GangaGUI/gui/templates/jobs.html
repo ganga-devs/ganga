@@ -5,6 +5,16 @@
     <div class="col">
         <h3 class="text-gray-900">Jobs Repository</h3>
         <hr>
+        <div class="row">
+            <div class="form-group col-md-9">
+                <label for="search" class="text-gray-900">Search Job</label>
+                <input type="text" id="SearchJob" class="form-control" placeholder="Search Job">
+            </div>
+            <div class="form-group col-md-3">
+                <label class="d-none d-md-block" for="filter-button">&nbsp;</label>
+                <button id="SearchButton" type="submit" class="btn btn-block btn-primary">Search</button>
+            </div>
+        </div>
         <form class="mb-4 mb-md-0" action="{{ url_for('jobs_page', page=current_page) }}" method="post">
             <div class="form-row">
                 <div class="col-md-2">
@@ -106,11 +116,15 @@
 {% block footer %}
     <script type="text/javascript">
         $(document).ready(function () {
-        $('#dtBasicExample').DataTable({
+        var table= $('#dtBasicExample').DataTable({
             "paging": false,
-            "info": false,
-            "searching": false
-});
+            "dom": '<"top"i>rt<"bottom"><"clear">',
+            "info": false
+
+            });
+        $('#SearchButton').on( 'keyup click', function () {
+            table.search($('#SearchJob').val()).draw();
+        });
         $('.dataTables_length').addClass('bs-select');
         });
         
