@@ -77,7 +77,6 @@
                 <th class="align-middle" scope="col">Application</th>
                 <th class="align-middle" scope="col">Backend</th>
                 <th class="align-middle" scope="col">Action</th>
-                <th class="align-middle" scope="col">Subjobs Info</th>
             </tr>
             </thead>
             <tbody class="list">
@@ -87,7 +86,15 @@
                     <td class="align-middle"><span id="job-id-{{j.id}}-status"
                         class="badge badge-{{ status_color[j.get('status')] }} badge-pill">{{ j.get('status') }}</span></td>
                     <td class="align-middle">{{ j.get('name') if (j.get('name')|string).strip() != '' else 'Unnamed Job' }}</td>
-                    <td class="align-middle">{{ j.get('subjobs') }}</td>
+                    {% if j.get('subjobs') != '0' %}
+                        <td class="align-middle text-break"><a href="{{ url_for('subjobs_page', job_id=j.get('id')) }}"
+                                        class="btn btn-sm btn-primary mt-3">
+                                        Subjobs Info({{ j.get('subjobs') }})
+                                    </a></td>
+                    {% else %}
+
+                        <td class="align-middle text-break">0</td>       
+                    {% endif %} 
                     <td class="align-middle text-break">{{ (j.get('application')|string).split('(')[0] }}</td>
                     <td class="align-middle text-break">{{ (j.get('backend')|string).split('(')[0] }}</td>
                     <td class="align-middle"><a href="{{ url_for('job_page', job_id=j.get('id')) }}"
