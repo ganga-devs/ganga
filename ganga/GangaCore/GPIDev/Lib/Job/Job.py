@@ -1580,7 +1580,6 @@ class Job(GangaObject):
 
             mJob.updateStatus('submitted')
             #Freeze the split job and add comments for info
-#            mJob.subjobs[self_index].freeze()
             self.comment = self.comment + ' - has been resplit'
             mJob.subjobs[self_index].comment = mJob.subjobs[self_index].comment + ' - has been resplit'
             for _r in rjobs:
