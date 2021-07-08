@@ -219,6 +219,7 @@ class TestSJSubmit(GangaUnitTest):
         print('D', time.time())
         assert j.subjobs(0).status == 'completed_frozen'
         assert len(j.subjobs) == 2*TestSJSubmit.n_subjobs
+        assert 'has been resplit' in j.subjobs(0).comment
 
         # Resplit of failed subjob
         j.subjobs(1).force_status('failed', force=True)
