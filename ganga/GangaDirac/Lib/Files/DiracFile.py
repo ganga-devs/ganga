@@ -284,10 +284,13 @@ class DiracFile(IGangaFile):
 
         return "DiracFile(namePattern='%s', lfn='%s', localDir='%s')" % (self.namePattern, self.lfn, self.localDir)
 
-    def getSubFiles(self):
+    def getSubFiles(self, process_wildcards = False):
         """
         Returns the subfiles for this instance
         """
+        if process_wildcards:
+            self.processWildcardMatches()
+
         if self.lfn:
             self.setLocation()
         return self.subfiles

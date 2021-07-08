@@ -29,7 +29,7 @@ class TestSJSubmit(GangaUnitTest):
         j = Job()
         j.application.exe = "sleep"
         j.splitter = self._getSplitter()
-        j.backend = Local()
+        j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
 
         # Test we can submit a job and we're going to check the sj are created
@@ -142,7 +142,7 @@ class TestSJSubmit(GangaUnitTest):
 
         j=Job()
         j.splitter = self._getSplitter()
-        j.backend = Local()
+        j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
 
         from GangaTest.Framework.utils import sleep_until_completed
@@ -201,29 +201,43 @@ class TestSJSubmit(GangaUnitTest):
         from GangaTest.Framework.utils import (sleep_until_completed,
                                                sleep_until_state)
         from GangaCore.GPIDev.Lib.Job.Job import JobError
+
+        import time
         
         j=Job()
         j.splitter = self._getSplitter()
-        j.backend = Local()
+        j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
-        sleep_until_completed(j)
+        print('A', time.time())
+        sleep_until_completed(j, timeout=20, verbose=True)
+        print('B', time.time())
 
         # Resplit of completed subjob
         j.subjobs(0).resplit(self._getSplitter())
-        sleep_until_completed(j)
+        print('C', time.time())
+        sleep_until_completed(j, timeout=20, verbose=True)
+        print('D', time.time())
         assert j.subjobs(0).status == 'completed_frozen'
         assert len(j.subjobs) == 2*TestSJSubmit.n_subjobs
+        assert 'has been resplit' in j.subjobs(0).comment
 
         # Resplit of failed subjob
         j.subjobs(1).force_status('failed', force=True)
+        print('E', time.time())
         j.subjobs(1).resplit(self._getSplitter())
-        sleep_until_completed(j)
+        print('F', time.time())
+        sleep_until_completed(j, timeout=20, verbose=True)
+        print('G', time.time())
         
         assert j.subjobs(1).status == 'failed_frozen'
         assert len(j.subjobs) == 3*TestSJSubmit.n_subjobs
 
         # Failure to resplit subjob in status new
+        print('H', time.time())
         j.subjobs(2)._impl.status='new'
+        print('I', time.time())
         self.assertRaises(JobError, j.subjobs(2).resplit, self._getSplitter())
+        print('J', time.time())
         assert len(j.subjobs) == 3*TestSJSubmit.n_subjobs
+        print('K', time.time())
         

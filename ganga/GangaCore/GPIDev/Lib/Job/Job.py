@@ -1483,8 +1483,8 @@ class Job(GangaObject):
             raise JobError("resplit not provided with a splitter!")
         if not self.master:
             raise JobError("You can only resplit subjobs!")
-        if not self.status in ['completed', 'failed']:
-            raise JobError("You can only resplit subjobs in the failed or completed status!")
+        if not self.status in ['completed', 'failed', 'killed']:
+            raise JobError("You can only resplit subjobs in the failed, killed or completed status!")
 
         mJob = self.master
         rjobs = None
@@ -1496,6 +1496,7 @@ class Job(GangaObject):
         appmasterconfig = self._getMasterAppConfig()
 
         logger.info("Re-splitting Job: %s" % fqid)
+        self.freeze()
         self_index = self.id
         self.splitter = new_splitter
 
@@ -1579,8 +1580,8 @@ class Job(GangaObject):
 
             mJob.updateStatus('submitted')
             #Freeze the split job and add comments for info
-            mJob.subjobs[self_index].freeze()
             self.comment = self.comment + ' - has been resplit'
+            mJob.subjobs[self_index].comment = mJob.subjobs[self_index].comment + ' - has been resplit'
             for _r in rjobs:
                 _r.comment = _r.comment + ' - resplit of %s' % self.getFQID('.')
             self.info.increment()
