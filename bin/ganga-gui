@@ -20,8 +20,8 @@ from ganga.GangaGUI.gui.routes import start_web_cli
 # Command line options
 parser = argparse.ArgumentParser(
     description="Start Ganga GUI with integrated Ganga CLI. This will also start a Ganga session with the arguments passed as a string to --ganga-args flag.")
-parser.add_argument('--host', action='store', dest='host', default='127.0.0.1',
-                    help='Host to start the server on. Default is 127.0.0.1')
+parser.add_argument('--host', action='store', dest='host', default='0.0.0.0',
+                    help='Host to start the server on. Default is 0.0.0.0')
 parser.add_argument('--port', action='store', dest='port', default=5500,
                     help='Port to start the web gui server on. Default is 5500.')
 parser.add_argument('--internal-port', action='store', dest='internal_port', default=5000,
