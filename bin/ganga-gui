@@ -8,6 +8,8 @@ import argparse
 import sys
 import os
 
+
+
 # Insert the path to Ganga itself - this is required for the installations without pip
 exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
 gangaDir = os.path.join(os.path.dirname(exeDir), 'ganga')
@@ -18,8 +20,8 @@ from ganga.GangaGUI.gui.routes import start_web_cli
 # Command line options
 parser = argparse.ArgumentParser(
     description="Start Ganga GUI with integrated Ganga CLI. This will also start a Ganga session with the arguments passed as a string to --ganga-args flag.")
-parser.add_argument('--host', action='store', dest='host', default='0.0.0.0',
-                    help='Host to start the server on. Default is 0.0.0.0')
+parser.add_argument('--host', action='store', dest='host', default='127.0.0.1',
+                    help='Host to start the server on. Default is 127.0.0.1')
 parser.add_argument('--port', action='store', dest='port', default=5500,
                     help='Port to start the web gui server on. Default is 5500.')
 parser.add_argument('--internal-port', action='store', dest='internal_port', default=5000,
@@ -42,3 +44,4 @@ log_output = not args.quiet
 # Start the web cli - this will also start a Ganga Session
 start_web_cli(host=web_cli_host, port=web_cli_port, internal_port=internal_server_port, ganga_args=ganga_args,
               log_output=log_output)
+

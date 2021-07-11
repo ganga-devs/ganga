@@ -1,0 +1,1 @@
+ganga-gui & disown

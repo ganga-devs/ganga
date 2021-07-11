@@ -12,6 +12,8 @@ import pty
 import sys
 import datetime
 from functools import wraps
+
+
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, session, send_file, make_response
@@ -109,7 +111,7 @@ def initial_run():
     """
 
     global actions, plugins
-
+`
     # Start ganga if WEB_CLI mode is True
     if gui.config['WEB_CLI'] is True:
         start_ganga(gui.config['INTERNAL_PORT'], args=gui.config["GANGA_ARGS"])
@@ -1922,7 +1924,7 @@ def start_web_cli(host: str, port: int, internal_port: int, log_output=True, gan
     gui.config["INTERNAL_PORT"] = internal_port
     gui.config["WEB_CLI"] = True
     gui.config["GANGA_ARGS"] = ganga_args
-    socketio.run(gui, host=host, port=port, log_output=log_output)  # TODO
+    socketio.run(gui, host=host, port=port)  # TODO
 
 
 # ******************** Shutdown Function ******************** #
