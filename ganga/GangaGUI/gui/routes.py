@@ -111,7 +111,7 @@ def initial_run():
     """
 
     global actions, plugins
-`
+
     # Start ganga if WEB_CLI mode is True
     if gui.config['WEB_CLI'] is True:
         start_ganga(gui.config['INTERNAL_PORT'], args=gui.config["GANGA_ARGS"])
