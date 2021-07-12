@@ -27,7 +27,7 @@ class TestCustomMerger(GangaUnitTest):
 
         for i in range(2):
 
-            j = Job(application=Executable(), backend=Local())
+            j = Job(application=Executable(), backend=Local(batchsize=10))
 
             scriptString = '''
             #!/bin/sh

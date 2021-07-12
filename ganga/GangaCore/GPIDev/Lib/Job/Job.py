@@ -599,7 +599,6 @@ class Job(GangaObject):
         Such default transitions do not have hooks.
         """
         # For debugging to trace Failures and such
-
         fqid = self.getFQID('.')
         initial_status = self.status
         logger.debug('attempt to change job %s status from "%s" to "%s"', fqid, initial_status, newstatus)
@@ -1484,8 +1483,8 @@ class Job(GangaObject):
             raise JobError("resplit not provided with a splitter!")
         if not self.master:
             raise JobError("You can only resplit subjobs!")
-        if not self.status in ['completed', 'failed']:
-            raise JobError("You can only resplit subjobs in the failed or completed status!")
+        if not self.status in ['completed', 'failed', 'killed']:
+            raise JobError("You can only resplit subjobs in the failed, killed or completed status!")
 
         mJob = self.master
         rjobs = None
@@ -1497,7 +1496,8 @@ class Job(GangaObject):
         appmasterconfig = self._getMasterAppConfig()
 
         logger.info("Re-splitting Job: %s" % fqid)
-
+        self.freeze()
+        self_index = self.id
         self.splitter = new_splitter
 
         rjobs = self.splitter.validatedSplit(self)
@@ -1519,6 +1519,7 @@ class Job(GangaObject):
                 #Fix the statuses
                 for _sj in mJob.subjobs:
                     _sj.status = stats[i]
+                    _sj.id = i
                     i = i+1
             elif not isType(mJob.subjobs, (list, GangaList)):
                 temp_list = GangaList()
@@ -1579,12 +1580,12 @@ class Job(GangaObject):
 
             mJob.updateStatus('submitted')
             #Freeze the split job and add comments for info
-            self.freeze()
             self.comment = self.comment + ' - has been resplit'
+            mJob.subjobs[self_index].comment = mJob.subjobs[self_index].comment + ' - has been resplit'
             for _r in rjobs:
                 _r.comment = _r.comment + ' - resplit of %s' % self.getFQID('.')
-            mJob.info.increment()
-            mJob._getRegistry()._flush([mJob.subjobs])
+            self.info.increment()
+            self._getRegistry()._flush([mJob.subjobs])
             return 1
 
     def submit(self, keep_going=None, keep_on_fail=None, prepare=False):

@@ -23,11 +23,11 @@ class TestQueuedSJSubmit(object):
         assert num_threads == global_num_threads
 
     def test_b_SetupJobs(self):
-        from GangaCore.GPI import Job, jobs, Executable, ArgSplitter
+        from GangaCore.GPI import Job, jobs, Executable, ArgSplitter, Local
 
         for i in range(global_num_jobs):
             print('creating job', end=' ')
-            j = Job(splitter=ArgSplitter(args=[[0], [1], [2]]))
+            j = Job(backend=Local(batchsize=3), splitter=ArgSplitter(args=[[0], [1], [2]]))
             print(j.id)
 
         print('job len:', len(jobs))
