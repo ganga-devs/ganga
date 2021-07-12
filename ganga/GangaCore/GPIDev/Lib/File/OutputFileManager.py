@@ -84,7 +84,7 @@ def getInputFilesPatterns(job):
     # if GangaDataset is used, check if they want the inputfiles transferred
     inputfiles_list = copy.deepcopy(job.inputfiles if job.inputfiles else [])
     from GangaCore.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
-    if not job.subjobs and job.inputdata and isType(job.inputdata, GangaDataset):
+    if not job.subjobs and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
 
     if job.virtualization and isinstance(job.virtualization.image, IGangaFile):
@@ -204,7 +204,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
         Args: job(Job) This is the job which we're testing for inputfiles """
         if job.inputfiles is not None and len(job.inputfiles) != 0:
             return True
-        if job.inputdata is not None and isinstance(job.inputdata, GangaDataset):
+        if job.inputdata is not None and isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
             return True
         if job.virtualization and isinstance(job.virtualization.image, IGangaFile):
             return True
@@ -229,7 +229,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
         inputfiles_list = job.inputfiles
 
     if job.inputdata:
-        if job.inputdata and isType(job.inputdata, GangaDataset):
+        if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
             for _f in job.inputdata:
                 try:
                     if not _f.accessURL():
@@ -238,7 +238,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
                     inputfiles_list.append(_f)
 
     elif job.master is not None:
-        if job.master.inputdata and isType(job.master.inputdata, GangaDataset):
+        if job.master.inputdata and isType(job.master.inputdata, GangaDataset) and job.master.inputdata.treat_as_inputfiles:
             for _f in job.master.inputdata:
                 try:
                     if not _f.accessURL():

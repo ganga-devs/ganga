@@ -31,7 +31,7 @@ def test_basic_timestamps_local(gpi):
 
     # With Subjobs -------
 
-    j = gpi.Job()
+    j = gpi.Job(backend=gpi.Local(batchsize=3))
 
     j.splitter = 'ArgSplitter'
     j.splitter.args = [[],[],[]]
@@ -72,7 +72,7 @@ def test_basic_timestamps_local(gpi):
 
 def test_duration_local(gpi):
 
-    j = gpi.Job()
+    j = gpi.Job(backend=gpi.Local(batchsize=3))
     j.splitter = 'ArgSplitter'
     j.splitter.args = [[],[],[]]
 
@@ -116,7 +116,7 @@ def test_basic_timestamps_copy_local(gpi):
 
     # With Subjobs -------
 
-    j3 = gpi.Job()
+    j3 = gpi.Job(backend=gpi.Local(batchsize=3))
 
     j3.splitter='ArgSplitter'
     j3.splitter.args=[[],[],[]]
@@ -207,7 +207,7 @@ def test_statetime_local(gpi):
 
     # Job 4 of 6 (With subjobs) -------
 
-    j = gpi.Job()
+    j = gpi.Job(backend=gpi.Local(batchsize=3))
     j.application.exe='sleep'
     j.splitter='ArgSplitter'
     j.splitter.args=[[10],[10],[10]]
@@ -220,7 +220,7 @@ def test_statetime_local(gpi):
 
     # Job 5 of 6 (With subjobs) -------
 
-    j_comp = gpi.Job()
+    j_comp = gpi.Job(backend=gpi.Local(batchsize=3))
 
     j_comp.application.exe='sleep'
     j_comp.splitter='ArgSplitter'
@@ -244,7 +244,7 @@ def test_statetime_local(gpi):
 
     # Job 6 of 6 (With subjobs) -------
 
-    j_fail = gpi.Job()
+    j_fail = gpi.Job(backend=gpi.Local(batchsize=3))
     j_fail.splitter='ArgSplitter'
     j_fail.splitter.args=[[],[],[]]
     j_fail.application.exe='sleep'
@@ -279,7 +279,7 @@ def test_timestamp_details_local(gpi):
 
     # With Subjobs -------
 
-    j = gpi.Job()
+    j = gpi.Job(backend=gpi.Local(batchsize=3))
     j.splitter='ArgSplitter'
     j.splitter.args=[[],[],[]]
     j.submit()
@@ -293,7 +293,7 @@ def test_subjobs_stamporder_local(gpi):
 
     from GangaTest.Framework.utils import sleep_until_completed
 
-    j = gpi.Job()
+    j = gpi.Job(backend=gpi.Local(batchsize=3))
     j.splitter='ArgSplitter'
     j.splitter.args=[[],[],[]]
     j.submit()
@@ -345,7 +345,7 @@ def test_new_subjob_not_overwrite_local(gpi):
     from GangaTest.Framework.utils import sleep_until_completed
     import datetime
 
-    j = gpi.Job()
+    j = gpi.Job(backend=gpi.Local(batchsize=3))
 
     t_new_1 = j.time.new()
     t1 = datetime.datetime.now()
