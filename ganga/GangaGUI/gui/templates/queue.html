@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div class="h3 mb-0 text-gray-800">Queues</div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ganga User Threads</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped table-bordered text-center table-responsive-sm">
+                        <thead>
+                            <tr>
+                                <th class="align-middle" scope="col">Name</th>
+                                <th class="align-middle" scope="col">Command</th>
+                                <th class="align-middle" scope="col">Timeout</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for q in queue_info_list %}
+                            <tr>
+                                <td class="align-middle" scope="row">{{ q['name_user'] }}</td>
+                                <td class="align-middle">{{ q['user_condition'] }}</td>
+                                <td class="align-middle">{{ q['user_timeout'] }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ganga Monitoring Threads</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped table-bordered text-center table-responsive-sm">
+                        <thead>
+                            <tr>
+                                <th class="align-middle" scope="col">Name</th>
+                                <th class="align-middle" scope="col">Command</th>
+                                <th class="align-middle" scope="col">Timeout</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for m in queue_info_list %}
+                            <tr>
+                                <td class="align-middle" scope="row">{{ m['name_monitor'] }}</td>
+                                <td class="align-middle">{{ m['monitor_condition'] }}</td>
+                                <td class="align-middle">{{ m['monitor_timeout'] }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ganga User Queue</h6>
+                </div>
+                <div class="card-body">
+                    {% for uq in queue_info_list %}
+                        <p>{{ uq['user_threadpool'] }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ganga Monitoring Queue</h6>
+                </div>
+                <div class="card-body">
+                    {% for mq in queue_info_list %}
+                        <p>{{ mq['monitoring_threadpool'] }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="container-fluid" id="data-container">
+
+        </div>
+    </div>
+    <div class="row mt-4">
+            <div class="col-lg"></div>
+    </div>
+   
+{% endblock content %}
+{% block footer %}
+    <script>
+        var chart;
+
+        function requestData()
+        {
+            // Ajax call to get the Data from Flask
+            var requests = $.get('/api/queue/chart');
+
+
+            var tm = requests.done(function (result)
+            {
+                var series = chart.series[0],
+                    shift = series.data.length > 20;
+
+                // add the point
+                chart.series[0].addPoint(result, true, shift);
+
+                // call it again after one second
+                setTimeout(requestData, 2000);
+            });
+        }
+
+        $(document).ready(function() {
+            chart = new Highcharts.Chart({
+                chart: {
+                    renderTo: 'data-container',
+                    defaultSeriesType: 'spline',
+                    events: {
+                        load: requestData
+                    }
+                },
+                title: {
+                    text: 'Queue'
+                },
+                xAxis: {
+                    type: 'datetime',
+                    tickPixelInterval: 150,
+                    maxZoom: 20 * 1000
+                },
+                yAxis: {
+                    minPadding: 0.2,
+                    maxPadding: 0.2,
+                    title: {
+                        text: 'Worker_Threads',
+                        margin: 80
+                    }
+                },
+                series: [{
+                    name: 'Time',
+                    data: []
+                }]
+            });
+
+        });
+    </script>
+{% endblock footer %}
