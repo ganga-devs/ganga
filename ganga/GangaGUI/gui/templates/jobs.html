@@ -93,8 +93,8 @@
                     <td class="align-middle"><a href="{{ url_for('job_page', job_id=j.get('id')) }}"
                                                     class="btn btn-sm btn-primary">Job Info</a></td>
                     {% if j.get('subjobs') != '0' %}
-                        <td class="align-middle text-break"><a href="{{ url_for('subjobs_page', job_id=j.get('id')) }}"
-                                        class="btn btn-sm btn-primary mt-3">
+                        <td class="align-middle"><a href="{{ url_for('subjobs_page', job_id=j.get('id')) }}"
+                                        class="btn btn-sm btn-primary">
                                         Subjobs Info({{ j.get('subjobs') }})
                                     </a></td>
                     {% else %}
