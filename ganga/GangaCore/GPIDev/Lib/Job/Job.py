@@ -565,7 +565,8 @@ class Job(GangaObject):
         'killed': Transitions(State('removed', 'j.remove()'),
                               State('failed', 'j.fail()'),
                               State('submitting', 'j.resubmit()'),
-                              State('submitted', 'j.resubmit()')),
+                              State('submitted', 'j.resubmit()'),
+                              State('failed_frozen', 'j.freeze()')),
         'failed': Transitions(State('removed', 'j.remove()'),
                               State('submitting', 'j.resubmit()'),
                               State('completed', hook='postprocess_hook'),
@@ -2005,7 +2006,7 @@ class Job(GangaObject):
     def freeze(self):
         if self.status == 'completed':
             self.updateStatus('completed_frozen', update_master=False)
-        elif self.status == 'failed':
+        elif self.status in ['failed', 'killed']:
             self.updateStatus('failed_frozen', update_master=False)
         else:
             raise JobError('Cannot freeze a job in %s state' % self.status)
