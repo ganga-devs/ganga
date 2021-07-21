@@ -107,6 +107,10 @@ class Condor(IBackend):
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
 
+        col = htcondor.Collector()
+        credd = htcondor.Credd()
+        credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
+
         master_input_sandbox = self.master_prepare(masterjobconfig)
         #Get the dict of common things
         cdfDict = self.cdfPreamble(masterjobconfig)
