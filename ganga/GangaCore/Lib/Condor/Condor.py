@@ -107,6 +107,7 @@ class Condor(IBackend):
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
 
+        #Get the credential into the scheduler
         col = htcondor.Collector()
         credd = htcondor.Credd()
         credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
@@ -258,7 +259,8 @@ class Condor(IBackend):
                 'stream_output': 'false',
                 'stream_error': 'false',
                 'getenv': self.getenv,
-                'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(),'condorWrapper')
+                'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(),'condorWrapper'),
+                'MY.SendCredential': 'True' #Send the credentials for shared filesystems
             }
 
         # extend with additional cdf options
