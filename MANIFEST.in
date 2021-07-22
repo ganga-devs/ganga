@@ -4,3 +4,4 @@ recursive-include ganga *.py.template *.ipynb *.INI *.ini
 recursive-include ganga/GangaRelease ReleaseNotes*
 recursive-include ganga/GangaGUI/gui *.html *.css *.js
 recursive-include doc *
+recursive-include doc/_static *.svg
