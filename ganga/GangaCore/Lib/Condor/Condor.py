@@ -34,7 +34,8 @@ from GangaCore.Core.exceptions import BackendError
 from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Lib.File import File
 from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
-
+from GangaCore.GPIDev.Credentials import credential_store
+from GangaCore.GPIDev.Credentials.AfsToken import AfsToken
 from GangaCore.GPIDev.Lib.File.OutputFileManager import getWNCodeForInputdataListCreation
 
 
@@ -110,7 +111,8 @@ class Condor(IBackend):
         #Get the credential into the scheduler
         col = htcondor.Collector()
         credd = htcondor.Credd()
-        credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
+        if credential_store.matches(AfsToken()):
+            credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
 
         master_input_sandbox = self.master_prepare(masterjobconfig)
         #Get the dict of common things
@@ -259,10 +261,11 @@ class Condor(IBackend):
                 'stream_output': 'false',
                 'stream_error': 'false',
                 'getenv': self.getenv,
-                'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(),'condorWrapper'),
-                'MY.SendCredential': 'True' #Send the credentials for shared filesystems
+                'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(),'condorWrapper')
             }
-
+        #Send the credentials for shared filesystems
+        if credential_store.matches(AfsToken()):
+            cdfDict['MY.SendCredential'] = 'True'
         # extend with additional cdf options
         cdfDict.update(self.cdf_options)
 
