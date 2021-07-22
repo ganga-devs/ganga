@@ -715,17 +715,11 @@ class Condor(IBackend):
         if job.subjobs:
             logger.error("Master Job does not have a peek status.")
             peekStatus= False
-        idElementList = job.backend.id.split("#")
         name_of_file=""
         if filename:
             name_of_file=filename
-        if 3 == len(idElementList):
-            if idElementList[1].find(".") != -1:
-                peekCommand = f"condor_tail {queryCommand} -name {idElementList[0]} {idElementList[1]} {name_of_file}"
-            else:
-                peekCommand = f"condor_tail {queryCommand} -name {idElementList[0]} {idElementList[1]} {name_of_file}"
-        else:
-            peekCommand = f"condor_tail {queryCommand} {idElementList[0]} {name_of_file}"
+        job_id = job.backend.id
+        peekCommand = f"condor_tail {queryCommand} {job_id} {name_of_file}"
 
         status, output = subprocess.getstatusoutput(peekCommand)
 
