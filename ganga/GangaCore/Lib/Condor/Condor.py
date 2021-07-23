@@ -472,15 +472,17 @@ class Condor(IBackend):
 
         #Now query the scheduler with or job list
         schedd = htcondor.Schedd()
-        stati = schedd.query(constraint = expr_tree, projection = ["ClusterId", "ProcId", "JobStatus", "RemoteUserCpu","AllRemoteHosts"])
+        stati = schedd.query(constraint = expr_tree, projection = ["ClusterId", "ProcId", "JobStatus", "RemoteUserCpu","RemoteHost"])
+#        stati = schedd.query(constraint = expr_tree)
+        print('stati: ', stati)
         allDict = {}
         for _stat in stati:
             this_id = str(_stat['ClusterId']) + '.' + str(_stat['ProcId'])
             allDict[this_id] = {}
             allDict[this_id]["status"] = Condor.statusDict[str(_stat["JobStatus"])]
             allDict[this_id]["cputime"] = _stat["RemoteUserCpu"]
-            if "AllRemoteHosts" in _stat.keys():
-                allDict[this_id]["host"] = _stat["AllRemoteHosts"]
+            if "RemoteHost" in _stat.keys():
+                allDict[this_id]["host"] = _stat["RemoteHost"]
             else:
                 allDict[this_id]["host"] = ""
 
