@@ -104,7 +104,8 @@ setup(name='ganga',
           'eventlet>=0.26.1',
           "docker",
           "pymongo",
-          "gdown"
+          "gdown",
+          "htcondor"
       ],
       extras_require={
           'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],
