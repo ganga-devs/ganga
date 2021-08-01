@@ -978,7 +978,7 @@ def storage_page(path):
 @gui.route("/cli")
 @login_required
 def serve_cli():
-    return render_template("cli.html")
+    return render_template("cli2.html")
 
 
 # Establish a websocket connection from the frontend to the server
