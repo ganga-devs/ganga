@@ -58,11 +58,11 @@ ROOT = os.path.dirname(__file__)
 logger = logging.getLogger('webrtcterm')
 
 async def index(request):
-    content = open(os.path.join(ROOT, 'static','templates', 'webrtcterm.html'), 'r').read()
+    content = open(os.path.join(ROOT, 'static', 'templates', 'webrtcterm.html'), 'r').read()
     return web.Response(content_type='text/html', text=content)
 
 async def javascript(request):
-    content = open(os.path.join(ROOT, 'static', 'js' , 'webrtcterm.js'), 'r').read()
+    content = open(os.path.join(ROOT, 'static', 'js', 'webrtcterm.js'), 'r').read()
     return web.Response(content_type='application/javascript', text=content)
 
 async def css(request):
