@@ -370,6 +370,16 @@ def runfile_page():
 
     return render_template("runfile.html", title="Runfile")
 
+#code-editor
+@gui.route("/editor", methods=["GET", "POST"])
+@login_required
+def editor_page():
+    """
+    Runs the code editor in the GUI
+    """
+    return render_template("editor.html", title="Code Editor")
+
+
 
 # Templates view
 @gui.route("/templates", methods=["GET", "POST"])
