@@ -190,7 +190,7 @@ def getOutputDataInfo(id, pipe_out=True):
                 continue
             rp = dirac.getReplicas(lfn)
             if rp.get('OK', False) and lfn in rp.get('Value', {'Successful': {}})['Successful']:
-                ret[file_name]['LOCATIONS'] = rp['Value']['Successful'][lfn].keys()
+                ret[file_name]['LOCATIONS'] = list(rp['Value']['Successful'][lfn])
     return ret
 
 
