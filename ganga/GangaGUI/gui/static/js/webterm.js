@@ -1,20 +1,22 @@
 "use strict";
 
-// peer connection
-var pc = null;
-// data channel
-var dc = null, dcInterval = null;
-// terminal
-var terminal = null;
-
 window.onload = () => {
-    terminal = new Terminal("screen", 80, 24);
+    let terminal = new Terminal("screen", 80, 24);
+
+    let socket;
+    function connect() {
+        socket = new WebSocket(`ws://${window.location.host}/ws`);
+        socket.onmessage = e => terminal.update(JSON.parse(e.data));
+        socket.onclose = () => setTimeout(connect, 5000)
+    }
+
+    connect();
 
     const element = document.getElementById("terminal");
     element.onkeydown = e => {
         let message = keyToMessage(e);
         if (message !== null) {
-            dc.send(message);
+            socket.send(message);
             e.preventDefault();
             return false;
         }
@@ -22,12 +24,10 @@ window.onload = () => {
     element.onkeypress = e => {
         let message = keyToMessage(e);
         if (message !== null) {
-            dc.send(message);
+            socket.send(message);
         }
     };
     element.focus()
-
-    start()
 };
 
 class Terminal {
@@ -194,100 +194,3 @@ const CONTROL_N = {
     8: "\u007f",
     9: "\u0039",
 };
-
-function createPeerConnection() {
-    var config = {
-        sdpSemantics: 'unified-plan'
-    };
-
-    config.iceServers = [{urls: ['stun:stun.l.google.com:19302']}];
-
-    var pc = new RTCPeerConnection(config);
-
-    // register some listeners to help debugging
-    pc.addEventListener('icegatheringstatechange', function() {
-        console.log('iceGatherringState => ' + pc.iceGatheringState);
-    }, false);
-
-    pc.addEventListener('iceconnectionstatechange', function() {
-        console.log('iceConnectionState => ' + pc.iceConnectionState);
-    }, false);
-
-    pc.addEventListener('signalingstatechange', function() {
-        console.log('signalingState => ' + pc.signalingState);
-    }, false);
-
-    return pc;
-}
-
-function negotiate() {
-    return pc.createOffer().then(function(offer) {
-        return pc.setLocalDescription(offer);
-    }).then(function() {
-        // wait for ICE gathering to complete
-        return new Promise(function(resolve) {
-            if (pc.iceGatheringState === 'complete') {
-                resolve();
-            } else {
-                function checkState() {
-                    if (pc.iceGatheringState === 'complete') {
-                        pc.removeEventListener('icegatheringstatechange', checkState);
-                        resolve();
-                    }
-                }
-                pc.addEventListener('icegatheringstatechange', checkState);
-            }
-        });
-    }).then(function() {
-        var offer = pc.localDescription;
-
-        return fetch('/offer', {
-            body: JSON.stringify({
-                sdp: offer.sdp,
-                type: offer.type
-            }),
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            method: 'POST'
-        });
-    }).then(function(response) {
-        return response.json();
-    }).then(function(answer) {
-        return pc.setRemoteDescription(answer);
-    }).catch(function(e) {
-        alert(e);
-    });
-}
-
-function start() {
-
-    pc = createPeerConnection();
-
-    var time_start = null;
-
-    function current_stamp() {
-        if (time_start === null) {
-            time_start = new Date().getTime();
-            return 0;
-        } else {
-            return new Date().getTime() - time_start;
-        }
-    }
-
-    dc = pc.createDataChannel('data');
-    dc.onclose = function() {
-        console.log('datachannel - close\n');
-    };
-    dc.onopen = function() {
-        console.log('datachannel - open\n');
-    };
-    dc.onmessage = function(evt) {
-        console.log('datachannel - message\n');
-
-        terminal.update(JSON.parse(evt.data));
-    };
-
-    negotiate();
-
-}
