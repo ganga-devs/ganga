@@ -11,6 +11,7 @@ import subprocess
 import pty
 import sys
 import datetime
+import webterm
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -978,7 +979,7 @@ def storage_page(path):
 @gui.route("/cli")
 @login_required
 def serve_cli():
-    return render_template("cli2.html")
+    return render_template("cli.html")
 
 
 # Establish a websocket connection from the frontend to the server
