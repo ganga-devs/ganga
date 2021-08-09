@@ -1,2 +1,2 @@
 ganga-gui & disown 
-python webterm.py & disown
+python webterm.py </dev/null &>/dev/null &
