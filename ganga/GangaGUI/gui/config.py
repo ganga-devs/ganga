@@ -8,7 +8,6 @@ from GangaCore import getConfig
 gangadir = getConfig("Configuration")["gangadir"]
 ganga_logfile = getConfig("Logging")["_logfile"]
 gangarc_file = getConfig("System")["GANGA_CONFIG_FILE"]
-os.chmod(gangadir, 0o777)
 gui_dir = os.path.join(gangadir, "gui")
 
 # Make GUI folder if doesn't exist
