@@ -22,7 +22,6 @@ import os
 import pty
 import shlex
 import signal
-import webbrowser
 from pathlib import Path
 
 import aiohttp
