@@ -7,6 +7,7 @@ from GangaCore import getConfig
 # Directories
 gangadir = getConfig("Configuration")["gangadir"]
 ganga_logfile = getConfig("Logging")["_logfile"]
+gangarc_file = getConfig("System")["GANGA_CONFIG_FILE"]
 gui_dir = os.path.join(gangadir, "gui")
 
 # Make GUI folder if doesn't exist
@@ -32,11 +33,14 @@ class Config(object):
     GUI_FOLDER = gui_dir
     LOGS_FOLDER = os.path.join(gui_dir, "logs")
     STORAGE_FOLDER = os.path.join(gui_dir, "storage")
+    
 
     # Logs config
     ACCESS_LOG = os.path.join(LOGS_FOLDER, "gui_access.log")
     ERROR_LOG = os.path.join(LOGS_FOLDER, "gui_error.log")
+    GANGA_RC = gangarc_file
     GANGA_LOG = os.path.expanduser(ganga_logfile)
+    
 
     # Web CLI related config
     WEB_CLI = False
