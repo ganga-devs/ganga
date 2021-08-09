@@ -259,6 +259,22 @@ def config_page():
 
     return render_template("config.html", title="Config", full_config_info=full_config_info, config_info=config_info)
 
+#Edit gangarc
+@gui.route("/config_edit",methods=["GET", "POST"])
+@login_required
+def edit_config_page():
+    """
+    Edit gangarc file from the GUI
+    """
+    gui_rc = gui.config["GANGA_RC"]
+    with open(gui_rc, "rt") as f:
+        ganga_config = f.read()
+    if request.method == 'POST':
+        config_ganga = request.form['config-data']
+        with open(gui_rc, 'w') as f1:
+            f1.write(str(config_ganga))
+    return render_template("config_edit.html", title="Edit gangarc", ganga_config=ganga_config)
+
 
 # Create view
 @gui.route("/create", methods=["GET", "POST"])
