@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+
+"""
+Starts Ganga GUI with integrated terminal
+"""
+import sys
+import os
+
+
+exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
+gangaDir = os.path.join(os.path.dirname(exeDir), 'ganga')
+sys.path.insert(0, gangaDir)
+
+

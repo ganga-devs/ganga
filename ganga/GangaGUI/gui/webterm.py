@@ -22,6 +22,7 @@ import os
 import pty
 import shlex
 import signal
+import webbrowser
 from pathlib import Path
 
 import aiohttp
@@ -132,5 +133,6 @@ if __name__ == "__main__":
     app.router.add_static("/", Path(__file__).parent / "static",
                           show_index=True)
     app.on_shutdown.append(on_shutdown)
+    webbrowser.open_new_tab("http://localhost:8080/index.html")
 
     web.run_app(app)

@@ -11,7 +11,6 @@ window.onload = () => {
     }
 
     connect();
-
     const element = document.getElementById("terminal");
     element.onkeydown = e => {
         let message = keyToMessage(e);
@@ -22,6 +21,7 @@ window.onload = () => {
         }
     };
     element.onkeypress = e => {
+    console.log(element.onkeypress);
         let message = keyToMessage(e);
         if (message !== null) {
             socket.send(message);

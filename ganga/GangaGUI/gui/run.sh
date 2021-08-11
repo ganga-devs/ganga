@@ -1,2 +1,3 @@
-ganga-gui & disown 
-python webterm.py </dev/null &>/dev/null &
+python3 webterm.py </dev/null &>/dev/null &
+sleep 20
+python3 autotype.py
