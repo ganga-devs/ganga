@@ -1922,7 +1922,7 @@ def start_web_cli(host: str, port: int, internal_port: int, log_output=True, gan
     gui.config["INTERNAL_PORT"] = internal_port
     gui.config["WEB_CLI"] = True
     gui.config["GANGA_ARGS"] = ganga_args
-    socketio.run(gui, host=host, port=port, log_output=log_output)  # TODO
+    socketio.run(gui, host=host, port=port)  # TODO
 
 
 # ******************** Shutdown Function ******************** #
