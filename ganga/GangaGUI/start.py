@@ -9,6 +9,7 @@ from contextlib import closing
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.Utility.logging import getLogger
 from GangaGUI.gui.routes import gui, db
+from GangaGUI import guistate
 from GangaGUI.api import internal
 from GangaGUI.gui.routes import User
 
@@ -17,13 +18,6 @@ logger = getLogger()
 
 # Directory just level up from GangaGUI
 ganga_package_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-# Global API Server, will run in Ganga thread pool
-api_server = None
-
-# Global GUI Server, will start gunicorn server using subprocess.popen
-gui_server = None
-
 
 # GangaThread for Internal API Flask server
 class APIServerThread(GangaThread):
@@ -94,8 +88,6 @@ def start_gui(*, gui_host: str = "127.0.0.1", gui_port: int = free_port(), inter
     start_gui(host="127.0.0.1", port=1234, password="mypassword") -> ("127.0.0.1", 1234, "GangaGUIAdmin", "mypassword")
     """
 
-    global api_server, gui_server
-
     # For when it is called by ganga-gui binary for starting the integrated terminal
     if os.environ.get('WEB_CLI') is not None or only_internal is not False:
 
@@ -105,6 +97,7 @@ def start_gui(*, gui_host: str = "127.0.0.1", gui_port: int = free_port(), inter
 
         # Start internal API server, it is always be meant for internal use by the GUI server
         api_server = APIServerThread("GangaGUIAPI", "localhost", internal_port)
+        guistate.set_api_server(api_server)
         api_server.start()
 
         return True
@@ -114,11 +107,13 @@ def start_gui(*, gui_host: str = "127.0.0.1", gui_port: int = free_port(), inter
 
     # Start internal API server, it is always be meant for internal use by the GUI server
     api_server = APIServerThread("GangaGUIAPI", "localhost", internal_port)
+    guistate.set_api_server(api_server)
     api_server.start()
 
     # Start GUI server
     gui_server = start_gui_server(gui_host=gui_host, gui_port=gui_port, internal_port=internal_port,
                                   package_dir=ganga_package_dir)
+    guistate.set_gui_server(gui_server)
 
     # Display necessary information to the user
     logger.info(f"GUI Login Details: user='{gui_user.user}', password='{gui_password}'")
@@ -133,16 +128,14 @@ def start_gui(*, gui_host: str = "127.0.0.1", gui_port: int = free_port(), inter
 def stop_gui():
     """Stop API Flask server on a GangaThread and the GUI Flask server running on a Gunicorn server"""
 
-    global api_server, gui_server
-
-    if api_server is not None:
-        if api_server.shutdown():
-            api_server = None
+    if guistate.get_api_server() is not None:
+        if guistate.get_api_server().shutdown():
+            guistate.set_api_server(None)
         else:
             raise Exception("Error in shutting down the API server.")
 
-    if gui_server is not None:
-        gui_server.terminate()
+    if guistate.get_gui_server() is not None:
+        guistate.get_gui_server().terminate()
 
 
 # ******************** Helper Functions ******************** #
