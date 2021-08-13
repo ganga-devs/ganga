@@ -58,8 +58,9 @@ def _unprotected_ganga_exitfuncs():
     setConfigOption('Configuration', 'DiskIOTimeout', 1)
 
     # Stop APIServerThread - GangaGUI
-    from GangaGUI.start import stop_gui, api_server
-    if api_server is not None:
+    from GangaGUI import guistate
+    if guistate.get_api_server() is not None:
+        from GangaGUI.start import stop_gui
         try:
             stop_gui()
         except Exception as err:
