@@ -877,7 +877,7 @@ def read_ini_files(filenames, system_vars):
                     value = cc.get(sec, name, raw=True)
                     #raise err
 
-                for localvar in re.finditer('\\$\{[^${}]*\}', value):
+                for localvar in re.finditer('\\$\\{[^${}]*\\}', value):
                     localvarstripped = re.sub(r'[^\w]', '', localvar.group(0))
                     try:
                         value = value.replace(localvar.group(0), cc.get(sec, localvarstripped))
@@ -909,7 +909,7 @@ def read_ini_files(filenames, system_vars):
                 from GangaCore.Utility.Config import expandgangasystemvars
                 value = expandgangasystemvars(None, value)
                 # check for the use of environment vars
-                re.search('\\$\{[^${}]*\}', value)     # matches on ${...}
+                re.search('\\$\\{[^${}]*\\}', value)     # matches on ${...}
                 for envvar in re.finditer('\\$\\$[^${}]*\\$\\$', value):
                     # yeah, if the same variable appears more than once, we'll look it up in the
                     # environment more than once too...but that's not too

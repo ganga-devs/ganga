@@ -459,7 +459,7 @@ def filefilter(fn):
   # FILTER OUT Batch INTERNAL INPUT/OUTPUT FILES:
   # 10 digits . any number of digits . err or out
   import re
-  internals = re.compile(r'\\d{10}\.\\d+.(out|err)')
+  internals = re.compile(r'\\d{10}\\.\\d+.(out|err)')
   return internals.match(fn) or fn == '.Batch.start'
 '''
 lsf_config.addOption('postexecute', tempstr, "String contains commands executing before submiting job to queue")
