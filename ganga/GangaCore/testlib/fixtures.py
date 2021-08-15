@@ -21,7 +21,7 @@ def gangadir(request):
     return os.path.join(_getGangaPath(), ganga_test_dir_name, request.module.__name__)
 
 
-@pytest.yield_fixture(scope='module')
+@pytest.fixture(scope='module')
 def wipe_gangadir(request):
     """
     Wipe the gangadir for the test at the beginning of the test
@@ -30,7 +30,7 @@ def wipe_gangadir(request):
     yield
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def gpi(request, wipe_gangadir):
     """
     Provide the ganga GPI and runtime to the test.
