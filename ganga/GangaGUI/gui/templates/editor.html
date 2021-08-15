@@ -121,10 +121,46 @@
       return x;
   }</div>
   <hr class="my-2">
-  <div class="d-flex justify-content-center">
-              <button class="btn btn-primary" type="submit" id="save">Save</button>
-  </div>
 
-  <script defer src="{{ url_for('static', filename='js/editor.js') }}"></script>
+  <div class="d-flex justify-content-center">
+    <form name="saveAs">
+        <div class="form-row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <input type="text" name="fname" class="form-control" placeholder="Filename">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <button class="btn btn-primary" type="submit" id="save">Save As</button>            </div>
+            </div>
+        </div>
+    </form>
+
+              
+  </div>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+  <script src="//ajaxorg.github.io/ace-builds/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+  <script defer src="{{ url_for('static', filename='js/FileSaver.js') }}"></script>
+
+
+  <script type="text/javascript">
+    var editor = ace.edit("editor");
+    editor.getSession().setUseWorker(false);
+    editor.setTheme("ace/theme/monokai");
+    editor.getSession().setMode("ace/mode/javascript");
+  
+    $('#mode').on('change', function (ev) {
+        var mode = $('option:selected').attr('value');
+        editor.getSession().setMode(mode);
+    });
+
+  
+    document.getElementById("save").addEventListener("click", ()=>{
+    let filename = document.forms["saveAs"]["fname"].value;
+    var file = new File([editor.getValue()], filename , {type: "text/plain;charset=utf-8"});
+    saveAs(file);
+    });
+  </script>
 
 {% endblock content %}
