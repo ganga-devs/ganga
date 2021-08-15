@@ -276,11 +276,11 @@ def edit_config_page():
         flash(".gangarc Edited", "success")
         with open(gui_rc, "rt") as f2:
             ganga_config = f2.read()
-    return render_template("config_edit.html", title="Edit gangarc", ganga_config=ganga_config))
+    return render_template("config_edit.html", title="Edit gangarc", ganga_config=ganga_config)
     
 @login_required
 # Create view
-@gui.route("/create", methods=["GET", "POST"]
+@gui.route("/create", methods=["GET", "POST"])
 def create_page():
     """
     Handles create route of the GUI.
