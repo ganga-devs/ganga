@@ -57,13 +57,14 @@ class Terminal:
         return json.dumps({"c": (cursor.x, cursor.y), "lines": lines})
 
 
-def open_terminal(command="bash", columns=80, lines=24):
+def open_terminal(columns=80, lines=24):
     p_pid, master_fd = pty.fork()
     if p_pid == 0:  # Child.
         argv = shlex.split(command)
         env = dict(TERM="linux", LC_ALL="en_GB.UTF-8",
                    COLUMNS=str(columns), LINES=str(lines))
-        os.execvpe(argv[0], argv, env)
+        env = {**os.environ, **env}
+        os.execvpe("bash", ['bash', '-c', 'ganga --webgui'], env)
 
     # File-like object for I/O with the child process aka command.
     p_out = os.fdopen(master_fd, "w+b", 0)
