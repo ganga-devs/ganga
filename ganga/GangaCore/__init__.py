@@ -29,7 +29,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '8.4.5'
+_gangaVersion = '8.5.1'
 _development = True
 
 # store a path to Ganga libraries
@@ -438,7 +438,7 @@ lsf_config.addOption('queue_name', 'LSB_QUEUE', "Name of environment with queue 
 lsf_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 lsf_config.addOption('submit_str', 'cd %s; bsub %s %s %s %s', "String used to submit job to queue")
-lsf_config.addOption('submit_res_pattern', '^Job <(?P<id>\d*)> is submitted to .*queue <(?P<queue>\S*)>',
+lsf_config.addOption('submit_res_pattern', '^Job <(?P<id>\\d*)> is submitted to .*queue <(?P<queue>\\S*)>',
                  "String pattern for replay from the submit command")
 
 lsf_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
@@ -446,7 +446,7 @@ lsf_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for definin
 
 lsf_config.addOption('kill_str', 'bkill %s', "String used to kill job")
 lsf_config.addOption('kill_res_pattern',
-                 '(^Job <\d+> is being terminated)|(Job <\d+>: Job has already finished)|(Job <\d+>: No matching job found)',
+                 '(^Job <\\d+> is being terminated)|(Job <\\d+>: Job has already finished)|(Job <\\d+>: No matching job found)',
                  "String pattern for replay from the kill command")
 
 tempstr = '''
@@ -459,7 +459,7 @@ def filefilter(fn):
   # FILTER OUT Batch INTERNAL INPUT/OUTPUT FILES:
   # 10 digits . any number of digits . err or out
   import re
-  internals = re.compile(r'\d{10}\.\d+.(out|err)')
+  internals = re.compile(r'\\d{10}\\.\\d+.(out|err)')
   return internals.match(fn) or fn == '.Batch.start'
 '''
 lsf_config.addOption('postexecute', tempstr, "String contains commands executing before submiting job to queue")
@@ -481,7 +481,7 @@ pbs_config.addOption('queue_name', 'PBS_QUEUE', "Name of environment with queue 
 pbs_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 pbs_config.addOption('submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
-pbs_config.addOption('submit_res_pattern', '^(?P<id>\d*)\.pbs\s*',
+pbs_config.addOption('submit_res_pattern', '^(?P<id>\\d*)\.pbs\\s*',
                  "String pattern for replay from the submit command")
 
 pbs_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
@@ -514,7 +514,7 @@ pbs_config.addOption('timeout', 600,
                  'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 # illegal substring substition in job names
-pbs_config.addOption('jobnamesubstitution', ['[\s]', '_'], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
+pbs_config.addOption('jobnamesubstitution', ['[\\s]', '_'], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
 
 
 # ------------------------------------------------
@@ -531,14 +531,14 @@ sge_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config va
 # the batch job (ie the same as the default behaviour on LSF at CERN)
 sge_config.addOption('submit_str', 'cd %s; qsub -cwd -S /usr/bin/python -V %s %s %s %s',
                  "String used to submit job to queue")
-sge_config.addOption('submit_res_pattern', 'Your job (?P<id>\d+) (.+)',
+sge_config.addOption('submit_res_pattern', 'Your job (?P<id>\\d+) (.+)',
                  "String pattern for replay from the submit command")
 
 sge_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
 sge_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
 
 sge_config.addOption('kill_str', 'qdel %s', "String used to kill job")
-sge_config.addOption('kill_res_pattern', '(has registered the job +\d+ +for deletion)|(denied: job +"\d+" +does not exist)',
+sge_config.addOption('kill_res_pattern', '(has registered the job +\\d+ +for deletion)|(denied: job +"\\d+" +does not exist)',
                  "String pattern for replay from the kill command")
 
 # From the SGE man page on qsub
@@ -560,7 +560,7 @@ sge_config.addOption('jobnameopt', 'N', "String contains option name for name of
 sge_config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 # illegal substring substition in job names
-sge_config.addOption('jobnamesubstitution', ['[\s:]', '_'], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
+sge_config.addOption('jobnamesubstitution', ['[\\s:]', '_'], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
 
 # ------------------------------------------------
 # Slurm
@@ -574,7 +574,7 @@ slurm_config.addOption('queue_name', 'SLURM_JOB_PARTITION', "Name of environment
 slurm_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 slurm_config.addOption('submit_str', 'cd %s; sbatch %s %s %s %s', "String used to submit job to partition")
-slurm_config.addOption('submit_res_pattern', '^Submitted batch job (?P<id>\d+)\s*',
+slurm_config.addOption('submit_res_pattern', '^Submitted batch job (?P<id>\\d+)\\s*',
                        "String pattern for replay from the submit command")
 
 slurm_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")

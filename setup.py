@@ -101,10 +101,10 @@ setup(name='ganga',
           'Flask-Login>=0.5.0',
           'Flask-SocketIO==4.3.1',
           'SQLAlchemy==1.3.19',
-          'eventlet>=0.26.1',
           "docker",
           "pymongo",
-          "gdown"
+          "gdown",
+          "htcondor"
       ],
       extras_require={
           'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],

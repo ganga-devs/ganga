@@ -18,6 +18,12 @@ import shutil
 import time
 import datetime
 import re
+#Import htcondor but suppress warnings in case it is not set up on this system
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import htcondor
+    import classad
 
 import GangaCore.Utility.logging
 import GangaCore.Utility.Virtualization
@@ -32,7 +38,8 @@ from GangaCore.Core.exceptions import BackendError
 from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Lib.File import File
 from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
-
+from GangaCore.GPIDev.Credentials import credential_store
+from GangaCore.GPIDev.Credentials.AfsToken import AfsToken
 from GangaCore.GPIDev.Lib.File.OutputFileManager import getWNCodeForInputdataListCreation
 
 
@@ -105,95 +112,40 @@ class Condor(IBackend):
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
 
+        #Get the credential into the scheduler
+        col = htcondor.Collector()
+        credd = htcondor.Credd()
+        if credential_store.matches(AfsToken()):
+            credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
+
         master_input_sandbox = self.master_prepare(masterjobconfig)
-        cdfString = self.cdfPreamble(masterjobconfig, master_input_sandbox)
+        #Get the dict of common things
+        cdfDict = self.cdfPreamble(masterjobconfig)
+        #Now set up the things for each job. It needs to be a list of dictionaries
+        sjDict = []
         for sc, sj in zip(subjobconfigs, rjobs):
             sj.updateStatus('submitting')
-            cdfString +=  self.prepareSubjob(sj, sc, master_input_sandbox)
-            cdfString += '\n\n'
-        self.getJobObject().getInputWorkspace().writefile(FileBuffer("__cdf__", cdfString))
+            sjDict.append(self.prepareSubjob(sj, sc, master_input_sandbox))
 
-        stati = self.submit_cdf(os.path.join(self.getJobObject().getInputWorkspace().getPath(),"__cdf__"))
-        submitFailures = []
-        for sj in rjobs:
-            if str(sj.id) in stati:
-                sj.backend.id = stati[str(sj.id)]
-                sj.updateStatus('submitted')
-                sj.time.timenow('submitted')
-                stripProxy(sj.info).increment()
-            else:
-                sj.updateStatus('failed')
-                submitFailures.append(sj.id)
+        #Put the common job dictionary into the HTCondor Submit object
+        this_job = htcondor.Submit(cdfDict)
+        #Now setup the submission
+        schedd = htcondor.Schedd()
+        with schedd.transaction() as txn:
+            stati = this_job.queue_with_itemdata(txn, itemdata = iter(sjDict))
 
-        if len(submitFailures) > 0:
-            for sjNo in submitFailures:
-                logger.error('Job submission failed for job %s : %s' % (self.getJobObject().id, sjNo))
+        cluster_id = stati.cluster()
+        process_id = stati.first_proc()
+        if not len(rjobs) == stati.num_procs():
             raise BackendError('Condor', 'Some subjobs failed to submit! Check their status!')
-            return 0
+
+        for sj in rjobs:
+            sj.backend.id = '%s.%s' % (cluster_id, process_id)
+            sj.updateStatus('submitted')
+            sj.time.timenow('submitted')
+            stripProxy(sj.info).increment()
+            process_id = process_id + 1
         return 1
-
-    def submit_cdf(self, cdfpath=""):
-        """Submit Condor Description File with multiple jobs
-
-            Argument other than self:
-               cdfpath - path to Condor Description File to be submitted
-
-            Return value: True if job is submitted successfully,
-                          or False otherwise"""
-
-        hasSubjobs = False
-        if len(self.getJobObject().subjobs)>0:
-            hasSubjobs = True
-
-        commandList = ["condor_submit -v"]
-        if self.spool:
-            commandList.extend("-spool")
-        commandList.extend(self.submit_options)
-        commandList.append(cdfpath)
-        commandString = " ".join(commandList)
-
-        status, output = subprocess.getstatusoutput(commandString)
-
-        self.id = ""
-        returnIDs = {}
-        if 0 != status:
-            logger.error\
-                ("Tried submitting job with command: '%s'" % commandString)
-            logger.error("Return code: %s" % str(status))
-            logger.error("Condor output:")
-            logger.error(output)
-        else:
-            #Construct a dict of the submission output for each job
-            tmpList = output.split("\n")
-            jobsDict = {}
-            localID = 0
-            idString = ''
-            for item in tmpList:
-                #Go through the lines until we find the local ID and add it to the dict
-                if 1 + item.find("** Proc"):
-                    localID = item.strip(":").split()[2]
-                    jobsDict[str(localID)] = {}
-                    idString += str(localID) + ' '
-                    continue
-                #If we have found the local ID add the subsequent lines to the dict for that localID
-                if localID != 0 and ' = ' in item:
-                    jobsDict[str(localID)][item.split(' = ')[0]] = item.split(' = ')[1]
-
-            #Get the global ids. This should come back as a big long string, ids separated by spaces
-            queryCommand = " ".join\
-                        (["condor_q -format \"%s \" GlobalJobId", idString])
-            qstatus, qoutput = subprocess.getstatusoutput(queryCommand)
-            queries = idString.rstrip().split(' ')
-            returns = qoutput.rstrip().split(' ')
-            localToGlobal = list(zip(queries, returns))
-            for q in localToGlobal:
-                sjIndex = jobsDict[q[0]]['Iwd'].split('/').index(str(self.getJobObject().id))
-                if hasSubjobs:
-                    sjIndex = sjIndex+1
-                sjNo = jobsDict[q[0]]['Iwd'].split('/')[sjIndex]
-                returnIDs[sjNo] = q[1]
-
-        return returnIDs
 
     def resubmit(self):
         """Resubmit job that has already been configured. We have to do something a little different if this is a subjob.
@@ -201,9 +153,6 @@ class Condor(IBackend):
             Return value: True if job is resubmitted successfully,
                           or False otherwise"""
 
-        # First a flag in case our job is a subjob submitted with old ganga.
-
-        old = False
         job = self.getJobObject()
 
         # Is this a subjob?
@@ -222,50 +171,39 @@ class Condor(IBackend):
             os.remove(outDir)
         os.mkdir(outDir)
 
-        # Determine path to job's Condor Description File
-        cdfpath = os.path.join(inpDir, "__cdf__")
-        # If there are subjobs but no __cdf__ in the input folder, check the subjob's in case of submission from old Ganga.
-        if not os.path.exists(cdfpath) and job.master:
-            cdfpath = os.path.join(job.getInputWorkspace().getPath(), "__cdf__")
-            old = True
-        if not os.path.exists(cdfpath):
-                raise BackendError('Condor', 'No "__cdf__" found in j.inputdir')
+        masterjobconfig = job._getJobMasterConfig()
+        master_input_sandbox = job.inputsandbox
+        rjobs = [job]
+        subjobconfigs = job._getJobSubConfig(rjobs)
 
-        #If this is a subjob submitted with new ganga we need to write a new cdf file from the original
-        if job.master and not old:
-            # Read old script
-            with open(cdfpath, 'r') as f:
-                script = f.read()
-            # Is the subjob we want in there?
-            if not ("#jobNo: %s" % job.fqid) in script:
-                raise BackendError('Condor', 'Subjob not found in original __cdf__ script.')
+        #Get the dict of common things
+        cdfDict = self.cdfPreamble(masterjobconfig)
+        #Now set up the things for each job. It needs to be a list of dictionaries
+        sjDict = []
+        for sc, sj in zip(subjobconfigs, rjobs):
+            sj.updateStatus('submitting')
+            sjDict.append(self.prepareSubjob(sj, sc, master_input_sandbox))
 
-            #First pick up the preamble
-            start = "# Condor Description File created by Ganga"
-            stop = "# End preamble"
-            newScript = re.compile(r'%s.*?%s' % (start, stop),re.S).search(script).group(0)
-            newScript += '\n'
-            #Now pick up the subjob
-            sjStart = "#jobNo: %s" % job.fqid
-            sjEnd = "queue"
-            newScript += re.compile(r'%s.*?%s' % (sjStart, sjEnd),re.S).search(script).group(0)
-            # Save new script
-            new_script_filename = os.path.join(job.getInputWorkspace().getPath(), '__cdf__')
-            with open(new_script_filename, 'w') as f:
-                f.write(newScript)
-            cdfpath = new_script_filename
+        #Put the common job dictionary into the HTCondor Submit object
+        this_job = htcondor.Submit(cdfDict)
+        #Now setup the submission
+        schedd = htcondor.Schedd()
+        with schedd.transaction() as txn:
+            stati = this_job.queue_with_itemdata(txn, itemdata = iter(sjDict))
 
-        # Resubmit job
-        if os.path.exists(cdfpath):
-            status = self.submit_cdf(cdfpath)
-        else:
-            logger.warning\
-                ("No Condor Description File for job '%s' found in '%s'" %
-                 (str(job.id), inpDir))
-            logger.warning("Resubmission failed")
-            status = False
+        cluster_id = stati.cluster()
+        process_id = stati.first_proc()
+        if not len(rjobs) == stati.num_procs():
+            raise BackendError('Condor', 'Some subjobs failed to submit! Check their status!')
 
-        return status
+        for sj in rjobs:
+            sj.backend.id = '%s.%s' % (cluster_id, process_id)
+            sj.updateStatus('submitted')
+            sj.time.timenow('submitted')
+            stripProxy(sj.info).increment()
+            process_id = process_id + 1
+
+        return 1
 
     def kill(self):
         """Kill running job.
@@ -276,44 +214,38 @@ class Condor(IBackend):
                          or False otherwise"""
 
         job = self.getJobObject()
+        idList = []
+        is_master = False
+        #Are we in the master job? If so kill everything.
+        if job.subjobs:
+            is_master = True
+            idList = job.subjobs[0].backend.id.split(".")
+        else:
+            idList = self.id.split(".")
 
-        if not self.id:
-            logger.warning("Job %s not running" % job.id)
+        cluster_id = idList[0]
+        proc_id = idList[1]
+
+        schedd = htcondor.Schedd()
+        result = {}
+        if is_master:
+            result = schedd.act(htcondor.JobAction.Remove, "ClusterID=={}".format(cluster_id))
+        else:
+            result = schedd.act(htcondor.JobAction.Remove, "ClusterID=={} && ProcID=={}".format(cluster_id, proc_id))
+        
+        if result['TotalError'] > 0:
             return False
 
-        idElementList = job.backend.id.split("#")
-        if 3 == len(idElementList):
-            if idElementList[1].find(".") != -1:
-                killCommand = "condor_rm -name %s %s" % \
-                    (idElementList[0], idElementList[1])
-            else:
-                killCommand = "condor_rm -name %s %s" % \
-                    (idElementList[0], idElementList[2])
+        if is_master:
+            for _sj in job.subjobs:
+                _sj.backend.status = 'Removed'
         else:
-            killCommand = "condor_rm %s" % (idElementList[0])
+            self.status = 'Removed'
 
-        status, output = subprocess.getstatusoutput(killCommand)
+        return True
 
-        if (status != 0):
-            if 3 == len(idElementList):
-                killCommand = "condor_rm %s" % (idElementList[1])
-                status, output = subprocess.getstatusoutput(killCommand)
-
-        if (status != 0):
-            logger.warning\
-                ("Return code '%s' killing job '%s' - Condor id '%s'" %
-                 (str(status), job.id, job.backend.id))
-            logger.warning("Tried command: '%s'" % killCommand)
-            logger.warning("Command output: '%s'" % output)
-            logger.warning("Anyway continuing with job removal")
-
-        job.backend.status = "Removed"
-        killStatus = True
-
-        return killStatus
-
-    def cdfPreamble(self, jobconfig, master_input_sandbox):
-        """Prepare the cdf arguments that are common to all jobs so go at the start"""
+    def cdfPreamble(self, jobconfig):
+        """Prepare the cdf arguments that are common to all jobs so go at the start. Returns a dict"""
 
         wrapperScriptStr = '#!/bin/sh\n./$1\n'
         self.getJobObject().getInputWorkspace().writefile(FileBuffer("condorWrapper", wrapperScriptStr))
@@ -335,7 +267,9 @@ class Condor(IBackend):
                 'getenv': self.getenv,
                 'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(),'condorWrapper')
             }
-
+        #Send the credentials for shared filesystems
+        if credential_store.matches(AfsToken()):
+            cdfDict['MY.SendCredential'] = 'True'
         # extend with additional cdf options
         cdfDict.update(self.cdf_options)
 
@@ -349,22 +283,14 @@ class Condor(IBackend):
         if self.globus_rsl:
             cdfDict['globus_rsl'] = self.globus_rsl
 
-        cdfList = [
-            "# Condor Description File created by Ganga",
-            "# %s" % (time.strftime("%c")),
-            ""]
-        for key, value in cdfDict.items():
-            cdfList.append("%s = %s" % (key, value))
-        cdfList.append(self.requirements.convert())
-        cdfString = "\n".join(cdfList)
-
-        cdfString += "\n# End preamble"
-
-        return cdfString
+        return cdfDict
 
 
     def prepareSubjob(self, job, jobconfig, master_input_sandbox):
-        """Prepare a Condor description string for a subjob"""
+        """
+        Prepare a Condor description string for a subjob
+        This returns a dictionary with info specific to the subjobs
+        """
 
         virtualization = job.virtualization
 
@@ -511,20 +437,11 @@ class Condor(IBackend):
         if outfileString:
             cdfDict['transfer_output_files'] = outfileString
 
-        cdfList = [
-            "\n#jobNo: %s " % job.getFQID('.'),
-            ""]
-
-        for key, value in cdfDict.items():
-            cdfList.append("%s = %s" % (key, value))
-        cdfList.append(self.requirements.convert())
-        cdfList.append("queue")
-        cdfString = "\n".join(cdfList)
-
-        return cdfString
+        return cdfDict
 
     def updateMonitoringInformation(jobs):
 
+        #First collate jobs and Condor IDs
         jobDict = {}
         for job in jobs:
             if job.backend.id:
@@ -535,39 +452,43 @@ class Condor(IBackend):
         if not idList:
             return
 
-        queryCommand = " ".join\
-            ([
-                "condor_q -global" if getConfig(
-                    "Condor")["query_global_queues"] else "condor_q",
-                "-format \"%s \" GlobalJobId",
-                "-format \"%s \" RemoteHost",
-                "-format \"%d \" JobStatus",
-                "-format \"%f\\n\" RemoteUserCpu"
-            ])
-        status, output = subprocess.getstatusoutput(queryCommand)
-        if 0 != status:
-            logger.error("Problem retrieving status for Condor jobs")
-            return
+        #Now gather together cluster IDs and process IDs
+        id_dict = {}
+        for _j in jobs:
+            idStringList = _j.backend.id.split(".")
+            this_cluster_id = idStringList[0]
+            this_proc_id = idStringList[1]
+            if this_cluster_id in id_dict.keys():
+                id_dict[this_cluster_id].append(this_proc_id)
+            else:
+                id_dict[this_cluster_id] = [this_proc_id]
+    
+        #Now make a filtering string for the scheduler
+        expr_tree = classad.ExprTree("false")
+        for _cl in id_dict.keys():
+            cl_expr = classad.ExprTree("ClusterID == %s" % _cl)
+            pr_expr_str = "ProcID == %s" % id_dict[_cl][0]
+            for _proc in id_dict[_cl][1:]:
+                pr_expr_str = pr_expr_str + " || ProcID == %s" % _proc
+            pr_expr = classad.ExprTree(pr_expr_str)
+            cl_expr = cl_expr.and_(pr_expr)
+            expr_tree = expr_tree.or_(cl_expr)
 
-        if ("All queues are empty" == output):
-            infoList = []
-        else:
-            infoList = output.split("\n")
+        #Now query the scheduler with or job list
+        schedd = htcondor.Schedd()
+        stati = schedd.query(constraint = expr_tree, projection = ["ClusterId", "ProcId", "JobStatus", "RemoteUserCpu","RemoteHost"])
 
         allDict = {}
-        for infoString in infoList:
-            tmpList = infoString.split()
-            id, host, status, cputime = ("", "", "", "")
-            if 3 == len(tmpList):
-                if not 'Failure' in tmpList[0]:
-                    id, status, cputime = tmpList
-            if 4 == len(tmpList):
-                id, host, status, cputime = tmpList
-            if id:
-                allDict[id] = {}
-                allDict[id]["status"] = Condor.statusDict[status]
-                allDict[id]["cputime"] = cputime
-                allDict[id]["host"] = host
+        for _stat in stati:
+            this_id = str(_stat['ClusterId']) + '.' + str(_stat['ProcId'])
+            allDict[this_id] = {}
+            allDict[this_id]["status"] = Condor.statusDict[str(_stat["JobStatus"])]
+            allDict[this_id]["cputime"] = _stat["RemoteUserCpu"]
+            if "RemoteHost" in _stat.keys():
+                allDict[this_id]["host"] = _stat["RemoteHost"]
+            else:
+                allDict[this_id]["host"] = ""
+
 
         fg = Foreground()
         fx = Effects()
@@ -575,31 +496,17 @@ class Condor(IBackend):
                           'running': fg.green,
                           'completed': fg.blue}
 
+
         for id in idList:
 
             printStatus = False
-            if jobDict[id].status == "killed":
+            if id in  jobDict[id].status == "killed":
                 continue
-
-            localId = id.split("#")[-1]
-            globalId = id
-
-            if globalId == localId:
-                queryCommand = " ".join\
-                    ([
-                        "condor_q -global" if getConfig(
-                            "Condor")["query_global_queues"] else "condor_q",
-                        "-format \"%s\" GlobalJobId",
-                        id
-                    ])
-                status, output = subprocess.getstatusoutput(queryCommand)
-                if 0 == status:
-                    globalId = output
-
-            if globalId in allDict.keys():
-                status = allDict[globalId]["status"]
-                host = allDict[globalId]["host"]
-                cputime = allDict[globalId]["cputime"]
+            #If the queried job is still in the queue system:
+            if id in allDict.keys():
+                status = allDict[id]["status"]
+                host = allDict[id]["host"]
+                cputime = allDict[id]["cputime"]
                 if status != jobDict[id].backend.status:
                     printStatus = True
                     stripProxy(jobDict[id])._getSessionLock()
@@ -611,6 +518,7 @@ class Condor(IBackend):
                     if jobDict[id].backend.actualCE != host:
                         jobDict[id].backend.actualCE = host
                 jobDict[id].backend.cputime = cputime
+            #Otherwise look a bit harder at the logs to see where it ended up
             else:
                 jobDict[id].backend.status = ""
                 outDir = jobDict[id].getOutputWorkspace().getPath()
@@ -812,17 +720,11 @@ class Condor(IBackend):
         if job.subjobs:
             logger.error("Master Job does not have a peek status.")
             peekStatus= False
-        idElementList = job.backend.id.split("#")
         name_of_file=""
         if filename:
             name_of_file=filename
-        if 3 == len(idElementList):
-            if idElementList[1].find(".") != -1:
-                peekCommand = f"condor_tail {queryCommand} -name {idElementList[0]} {idElementList[1]} {name_of_file}"
-            else:
-                peekCommand = f"condor_tail {queryCommand} -name {idElementList[0]} {idElementList[1]} {name_of_file}"
-        else:
-            peekCommand = f"condor_tail {queryCommand} {idElementList[0]} {name_of_file}"
+        job_id = job.backend.id
+        peekCommand = f"condor_tail {queryCommand} {job_id} {name_of_file}"
 
         status, output = subprocess.getstatusoutput(peekCommand)
 
