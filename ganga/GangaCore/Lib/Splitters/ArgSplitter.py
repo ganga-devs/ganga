@@ -45,10 +45,26 @@ class ArgSplitter(ISplitter):
     subjob 1 : AAA  1
     subjob 2 : BBB  2
     subjob 3 : CCC  3
+
+    You can specify that the arguments from the splitter be appended to the
+    arguments from the application in case you have many common application
+    arguments. This is done by setting 'append = True'. For example:
+
+    j = Job()
+    j.application.args = ['AAA', 'BBB']
+    j.splitter = ArgSplitter(args=[[1],[2],[3]], append=True)
+
+    creates 3 subjobs with application arguments
+
+    subjob 1 : AAA BBB 1
+    subjob 2 : AAA BBB 2
+    subjob 3 : AAA BBB 3
+
 """
     _name = "ArgSplitter"
     _schema = Schema(Version(1, 0), {
-        'args': SimpleItem(defvalue=[], typelist=[list, GangaList], sequence=1, doc='A list of lists of arguments to pass to script')
+        'args': SimpleItem(defvalue=[], typelist=[list, GangaList], sequence=1, doc='A list of lists of arguments to pass to script'),
+        'append': SimpleItem(defvalue=False, typelist=[bool], doc='Append the subjob args to the existing application ones rather than replace them')
     })
 
     def split(self, job):
@@ -60,9 +76,15 @@ class ArgSplitter(ISplitter):
             # Add new arguments to subjob
             app = copy.deepcopy(job.application)
             if hasattr(app, 'args'):
-                app.args = arg
+                if self.append:
+                    app.args.extend(arg)
+                else:
+                    app.args = arg
             elif hasattr(app, 'extraArgs'):
-                app.extraArgs = arg
+                if self.append:
+                    app.args.extend(arg)
+                else:
+                    app.extraArgs = arg
             else:
                 raise SplitterError('Application has neither args or extraArgs in its schema') 
                     
