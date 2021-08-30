@@ -116,6 +116,7 @@
     <option value="ace/mode/yaml">yaml</option>
   </select>
   <hr class="my-2">
+  <div id="file-content" style="display: none;"></div>
   <div id="editor">function hello(items) { 
       var x = "Hello World!"; 
       return x;
@@ -134,8 +135,16 @@
                 <div class="form-group">
                     <button class="btn btn-primary" type="submit" id="save">Save As</button>            </div>
             </div>
+           
         </div>
     </form>
+   
+        <div class="custom-file fileOpen">
+                        <input type="file" id="file-input" placeholder="Upload a file" class="open custom-file-input" />
+                        <label class="custom-file-label" id="loadfile-input-label" for="loadfile-input"
+                                   aria-describedby="loadfileInputAddon">Choose file</label>
+                    </div>
+     
 
               
   </div>
@@ -145,22 +154,60 @@
 
 
   <script type="text/javascript">
-    var editor = ace.edit("editor");
-    editor.getSession().setUseWorker(false);
-    editor.setTheme("ace/theme/monokai");
-    editor.getSession().setMode("ace/mode/javascript");
-  
-    $('#mode').on('change', function (ev) {
-        var mode = $('option:selected').attr('value');
-        editor.getSession().setMode(mode);
+   
+        var editor = ace.edit("editor");
+        editor.getSession().setUseWorker(false);
+        editor.setTheme("ace/theme/monokai");
+        editor.getSession().setMode("ace/mode/javascript");
+
+        $('#mode').on('change', function (ev) {
+            var mode = $('option:selected').attr('value');
+            editor.getSession().setMode(mode);
+        });
+
+    function readSingleFile(e) {
+      var file = e.target.files[0];
+      if (!file) {
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var contents = e.target.result;
+        displayContents(contents);
+      };
+      reader.readAsText(file);
+    }
+
+    function displayContents(contents) {
+      var element = document.getElementById('file-content');
+      element.innerText = contents;
+      initAceEditor()
+    }
+
+    document.getElementById('file-input')
+      .addEventListener('change', readSingleFile, false);
+
+
+    function initAceEditor() {
+
+        editor.setFontSize("15px") ;
+        editor.setPrintMarginColumn(false);
+        editor.setValue($("#file-content").text());
+        editor.setOptions({
+        maxLines: 20
     });
 
-  
-    document.getElementById("save").addEventListener("click", ()=>{
-    let filename = document.forms["saveAs"]["fname"].value;
-    var file = new File([editor.getValue()], filename , {type: "text/plain;charset=utf-8"});
-    saveAs(file);
+    $("#btn-save").click( function() {
+      var text = editor.getValue();
+      var orgFileName = (document.getElementById("file-input").files[0].name);
+      var filename = orgFileName;
+      var blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+      saveAs(blob, filename);
     });
+
+    }
+
+
   </script>
 
 {% endblock content %}
