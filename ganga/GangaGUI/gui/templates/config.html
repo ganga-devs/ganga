@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div class="h3 mb-0 text-gray-800"></div>
+        <a href="{{ url_for('edit_config_page') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">Edit gangarc</a>
+    </div>
    
     <form method="post">
         <div class="form-row">

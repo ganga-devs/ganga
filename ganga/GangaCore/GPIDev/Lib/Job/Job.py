@@ -1510,31 +1510,30 @@ class Job(GangaObject):
         logger.debug('First index of new jobs: %s' % index)
         cache = []
         if rjobs:
-            # If we are loading the job from disk we need
-            # to turn it into a list to append new subjobs
-            if isType(mJob.subjobs, SubJobJsonList):
-                cache = mJob.subjobs.values()
-                stats = mJob.subjobs.getAllSJStatus()
-                mJob.subjobs = cache
-                i = 0
-                #Fix the statuses
-                for _sj in mJob.subjobs:
-                    _sj.status = stats[i]
-                    _sj.id = i
-                    i = i+1
-            elif not isType(mJob.subjobs, (list, GangaList)):
-                temp_list = GangaList()
-                for _sj in mJob.subjobs:
-                    temp_list.append(_sj)
-                mJob.subjobs = temp_list
+            new_dict = {}
             i = index
             for sj in rjobs:
                 sj.info.uuid = str(uuid.uuid4())
                 sj.status = 'new'
                 sj.time.timenow('new')
                 sj.id = i
+                new_dict[i] = sj
                 i += 1
-                mJob.subjobs.append(sj)
+            if isType(mJob.subjobs, SubJobJsonList):
+                #If we have loaded subjobs from disk, append then new jobs to the SubJobXMLList
+                mJob.subjobs.appendJobs(new_dict, mJob)
+            elif not isType(mJob.subjobs, (list, GangaList)):
+                #If we don't have a GangaList, turn the subjobs into one and append the new ones
+                temp_list = GangaList()
+                for _sj in mJob.subjobs:
+                    temp_list.append(_sj)
+                temp_list.extend(new_dict.items())
+                mJob.subjobs = temp_list
+            elif isType(mJob.subjobs, (list, GangaList)):
+                #If the jobs are already a list, append the new ones
+                mJob.subjobs.extend(new_dict.values())
+            else:
+                raise SplitterError("Resplit failed. The subjobs are not an XMLList or a GangaList. Contact the Ganga developers")
 
             cfg = GangaCore.Utility.Config.getConfig('Configuration')
             for j in rjobs:
@@ -1582,10 +1581,8 @@ class Job(GangaObject):
             mJob.updateStatus('submitted')
             #Freeze the split job and add comments for info
             self.comment = self.comment + ' - has been resplit'
-            mJob.subjobs[self_index].comment = mJob.subjobs[self_index].comment + ' - has been resplit'
             for _r in rjobs:
                 _r.comment = _r.comment + ' - resplit of %s' % self.getFQID('.')
-            self.info.increment()
             self._getRegistry()._flush([mJob.subjobs])
             return 1
 
