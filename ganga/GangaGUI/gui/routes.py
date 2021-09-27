@@ -259,7 +259,30 @@ def config_page():
 
     return render_template("config.html", title="Config", full_config_info=full_config_info, config_info=config_info)
 
+# Edit job
+@gui.route("/editor/<int:job_id>/edit", methods=["GET", "POST"])
+@login_required
+def job_editor(job_id: int):
+    """
+    Show the exported job text on the GUI for it to be edited and submit. Will create a new job after submission.
+    :param job_id: int
+    """
+    loadfile_path = os.path.join(gui.config["UPLOAD_FOLDER"], "loadfile.txt")
+    export_path = os.path.join(gui.config["UPLOAD_FOLDER"], "export.txt")
 
+   
+
+    try:
+        response_info = query_internal_api(f"/internal/jobs/{job_id}/export", "get", params={"path": export_path})
+        with open(export_path) as f:
+            exported_data = f.read()
+
+    except Exception as err:
+        flash(str(err), "danger")
+        return redirect(url_for("job_page", job_id=job_id))
+
+    return render_template("editor_job.html", title=f"Edit Job {job_id}", job_id=job_id, exported_data=exported_data)
+    
 # Create view
 @gui.route("/create", methods=["GET", "POST"])
 @login_required
@@ -377,7 +400,13 @@ def editor_page():
     """
     Runs the code editor in the GUI
     """
-    return render_template("editor.html", title="Code Editor")
+    recent_jobs_info = []
+    try:
+        recent_jobs_info = query_internal_api("/internal/jobs/recent", "get")
+    except Exception as err:
+        # Flash the error in the GUI
+        flash(str(err), "danger")
+    return render_template("editor.html", title="Code Editor",recent_jobs_info=recent_jobs_info)
 
 
 
