@@ -7,7 +7,7 @@
       #editor {
         position: relative;
         height:400px;
-        width: 1000px
+        width: 400px
     }
     </style>
 
@@ -115,12 +115,52 @@
     <option value="ace/mode/xquery">xquery</option>
     <option value="ace/mode/yaml">yaml</option>
   </select>
+  
+        
   <hr class="my-2">
+
   <div id="file-content" style="display: none;"></div>
-  <div id="editor">function hello(items) { 
-      var x = "Hello World!"; 
-      return x;
-  }</div>
+  <div class="row">
+    <div class="col-md-6">
+ 
+      <div id="editor">function hello(items) { 
+          var x = "Hello World!"; 
+          return x;
+      }</div>
+    </div>
+   <div class="col-md-6">
+            
+            <div class="accordion" id="recent-jobs">
+                <div class="list-group">
+                    {% for j in recent_jobs_info|reverse %}
+                        <a href="#" id="job-id-{{ j.get('id') }}"
+                            class="recent-job list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last }}"
+                            data-id="{{ j.get('id') }}"
+                            data-toggle="collapse"
+                            data-target="#collapse-job-id-{{ j.get('id') }}"
+                            aria-expanded="true"
+                            aria-controls="collapse-job-id-{{ j.get('id') }}">
+
+                            {# Job name #}
+                            {{ j.get('id') + '. ' + j.get('name') if j.get('name').strip() != '' else j.get('id') + '. '+ 'Unnamed Job' }}
+                            </a>
+                        {# Job info after uncollapsing #}
+                        <div id="collapse-job-id-{{ j.get('id') }}"
+                                class="collapse border-left border-right {{ 'border-bottom rounded-bottom' if loop.last }}"
+                            data-parent="#recent-jobs">
+                            <div class="card-body">
+                                <p class="m-0 p-0">fqid: {{ j.get('fqid') }}</p>
+                                <a href="{{ url_for('job_editor', job_id=j.get('id')) }}"
+                                    class="btn btn-sm btn-primary mt-3">
+                                    Edit Job
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
   <hr class="my-2">
 
   <div class="d-flex justify-content-center">
