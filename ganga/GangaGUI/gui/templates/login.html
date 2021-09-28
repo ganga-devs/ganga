@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta Tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    
+   
+
+    <!-- Title -->
+    <title>{{ title + ' - Ganga GUI' if title else 'Ganga GUI' }}</title>
+
+    
+</head>
+<body id="page-top">
+    <div id="wrapper">
+        
+
+        <div id="content-wrapper" class="d-flex flex-column">
+            <div id="content">
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item dropdown no-arrow">
+                            <img width="150" height="42" src="{{ url_for('static', filename='img/logo.svg') }}">
+                        </li>
+                    </ul>
+                </nav>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} btn-block" style="border-radius: 0" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+           
+                
+                
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-11 col-md-6 justify-content-center">
+
+                            <div class="row pb-4 pt-3 pr-2 pl-2 justify-content-center border rounded">
+                                <h3 class="p-0 m-0"><b>LOGIN</b></h3>
+                                <!-- Login form -->
+                                <div class="col-12">
+                                    <p id="error" class="mb-2 text-center text-danger"></p>
+                                    <form id="login-form" method="post">
+                                        <div class="form-group">
+                                            <select name="username" id="username" class="custom-select" required>
+                                                <!-- Create options using the users available in the database -->
+                                                {% for user in users %}
+                                                <option value="{{ user.user }}">{{ user.user }} (Role={{ user.role }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="password" id="password" class="form-control" name="password"
+                                                   placeholder="Enter Password"
+                                                   required>
+                                        </div>
+                                        <button id="btn-submit" class="btn btn-block btn-primary">Submit</button>
+                                    </form>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        </div>
+           
+
+      
+    </div> 
+
+    
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+   
+
+  
+
+<!-- Javascript files -->
+<script defer src="{{ url_for('static', filename='js/login.js') }}"></script>
+
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+
+
+
+
+</body>
+</html>

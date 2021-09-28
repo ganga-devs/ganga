@@ -91,7 +91,7 @@ class Batch(IBackend):
     backend.extraopts = '-t 07:14:12:59' #Killed if not finished by 14 July before 1 pm
     """
     _schema = Schema(Version(1, 0), {'queue': SimpleItem(defvalue='', doc='queue name as defomed in your local Batch installation'),
-                                     'extraopts': SimpleItem(defvalue='', doc='extra options for Batch. See help(Batch) for more details'),
+                                     'extraopts': SimpleItem(defvalue='', changable_at_resubmit=1, doc='extra options for Batch. See help(Batch) for more details'),
                                      'id': SimpleItem(defvalue='', protected=1, copyable=0, doc='Batch id of the job'),
                                      'exitcode': SimpleItem(defvalue=None, typelist=[int, None], protected=1, copyable=0, doc='Process exit code'),
                                      'status': SimpleItem(defvalue='', protected=1, hidden=1, copyable=0, doc='Batch status of the job'),
@@ -118,6 +118,19 @@ class Batch(IBackend):
         return rc, soutfile
 
     command = classmethod(command)
+
+    def _getLegalJobName(self, job):
+        tmp_name = job.name
+        # if jobnamesubstitution is set and not empty, then transform the job
+        # name to conform to requirements
+        if 'jobnamesubstitution' in self.config:
+            job_name_sub_cfg = self.config['jobnamesubstitution']
+            if len(job_name_sub_cfg) == 2:
+                tmp_name = re.sub(*job_name_sub_cfg, tmp_name)
+            elif not len(job_name_sub_cfg) == 0:
+                # list is not empty, and not of length 2
+                logger.warning("jobnamesubstitution should be a list of length 2. Skipping job name substitution.")
+        return tmp_name
 
     def submit(self, jobconfig, master_input_sandbox):
         global re
@@ -169,10 +182,7 @@ class Batch(IBackend):
             queue_option = queue_option + " " + self.extraopts
 
         if jobnameopt and job.name != '':
-            # PBS doesn't like names with spaces
-            tmp_name = job.name
-            if isType(self, PBS):
-                tmp_name = tmp_name.replace(" ", "_")
+            tmp_name = self._getLegalJobName(job)
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)
 
@@ -268,9 +278,7 @@ class Batch(IBackend):
 
         if jobnameopt and job.name != '':
             # PBS doesn't like names with spaces
-            tmp_name = job.name
-            if isType(self, PBS):
-                tmp_name = tmp_name.replace(" ", "_")
+            tmp_name = self._getLegalJobName(job)
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)
 

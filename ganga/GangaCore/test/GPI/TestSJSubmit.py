@@ -29,7 +29,7 @@ class TestSJSubmit(GangaUnitTest):
         j = Job()
         j.application.exe = "sleep"
         j.splitter = self._getSplitter()
-        j.backend = Local()
+        j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
 
         # Test we can submit a job and we're going to check the sj are created
@@ -61,13 +61,13 @@ class TestSJSubmit(GangaUnitTest):
 
         jobs(0).resubmit()
 
-        # Test that resubmitting a job with SubJobXMLList subjobs doesn't stall
+        # Test that resubmitting a job with SubJobJsonList subjobs doesn't stall
         # Test them with all subjobs completed and resubmitOnlyFailedSubjobs = True
 
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(jobs(0))
 
-        # Test that resubmitting a subjob from SubJobXMLList that subjob doesn't stall
+        # Test that resubmitting a subjob from SubJobJsonList that subjob doesn't stall
         jobs(0).subjobs(0).resubmit()
 
         jobs(0).subjobs(0).force_status('failed', force=True)
@@ -101,7 +101,7 @@ class TestSJSubmit(GangaUnitTest):
 
         from GangaCore.GPI import jobs
 
-        # Test that resubmitting a job with SubJobXMLList subjobs doesn't stall
+        # Test that resubmitting a job with SubJobJsonList subjobs doesn't stall
         # Test them with all subjobs completed and resubmitOnlyFailedSubjobs = False
 
         jobs(0).resubmit()
@@ -109,7 +109,7 @@ class TestSJSubmit(GangaUnitTest):
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(jobs(0))
 
-        # Test that resubmitting a subjob from SubJobXMLList that subjob doesn't stall
+        # Test that resubmitting a subjob from SubJobJsonList that subjob doesn't stall
         jobs(0).subjobs(0).resubmit()
 
         jobs(0).subjobs(0).force_status('failed', force=True)
@@ -142,7 +142,7 @@ class TestSJSubmit(GangaUnitTest):
 
         j=Job()
         j.splitter = self._getSplitter()
-        j.backend = Local()
+        j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
 
         from GangaTest.Framework.utils import sleep_until_completed
@@ -195,3 +195,49 @@ class TestSJSubmit(GangaUnitTest):
 
         # Test that this works when resubmitOnlyFailedSubjobs = False
 
+
+    def test_f_testResplit(self):
+        from GangaCore.GPI import Job, Local
+        from GangaTest.Framework.utils import (sleep_until_completed,
+                                               sleep_until_state)
+        from GangaCore.GPIDev.Lib.Job.Job import JobError
+
+        import time
+        
+        j=Job()
+        j.splitter = self._getSplitter()
+        j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
+        j.submit()
+        print('A', time.time())
+        sleep_until_completed(j, timeout=20, verbose=True)
+        print('B', time.time())
+
+        # Resplit of completed subjob
+        j.subjobs(0).resplit(self._getSplitter())
+        print('C', time.time())
+        sleep_until_completed(j, timeout=20, verbose=True)
+        print('D', time.time())
+        assert j.subjobs(0).status == 'completed_frozen'
+        assert len(j.subjobs) == 2*TestSJSubmit.n_subjobs
+        assert 'has been resplit' in j.subjobs(0).comment
+
+        # Resplit of failed subjob
+        j.subjobs(1).force_status('failed', force=True)
+        print('E', time.time())
+        j.subjobs(1).resplit(self._getSplitter())
+        print('F', time.time())
+        sleep_until_completed(j, timeout=20, verbose=True)
+        print('G', time.time())
+        
+        assert j.subjobs(1).status == 'failed_frozen'
+        assert len(j.subjobs) == 3*TestSJSubmit.n_subjobs
+
+        # Failure to resplit subjob in status new
+        print('H', time.time())
+        j.subjobs(2)._impl.status='new'
+        print('I', time.time())
+        self.assertRaises(JobError, j.subjobs(2).resplit, self._getSplitter())
+        print('J', time.time())
+        assert len(j.subjobs) == 3*TestSJSubmit.n_subjobs
+        print('K', time.time())
+        

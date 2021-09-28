@@ -1,6 +1,7 @@
 import copy
 import os
 import pickle
+from GangaCore import _gangaVersion
 from GangaCore.Core.exceptions import BackendError
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
@@ -51,8 +52,11 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
-        data_str = 'import os\n'
-        data_str += 'execfile(\'data.py\')\n'
+        data_str = ''
+
+        if job.inputdata:
+            data_str = 'import os\n'
+            data_str += 'execfile(\'data.py\')\n'
 
         if hasattr(job, '_splitter_data'):
             data_str += job._splitter_data
@@ -159,6 +163,15 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         lhcb_dirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 
+        #If we are doing virtualisation with a CVMFS location, check it is available
+        if job.virtualization and isinstance(job.virtualization.image, str):
+            if 'cvmfs' == job.virtualization.image.split('/')[1]:
+                tag_location = '/'+job.virtualization.image.split('/')[1]+'/'+job.virtualization.image.split('/')[2]+'/'
+                if 'Tag' in job.backend.settings:
+                    job.backend.settings['Tag'].append(tag_location)
+                else:
+                    job.backend.settings['Tag'] = [tag_location]
+
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release
         # NOTE special case for replicas: replicate string must be empty for no
@@ -181,12 +194,15 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         OUTPUT_PATH="",
                                         SETTINGS=diracAPI_script_settings(job.application),
                                         DIRAC_OPTS=job.backend.diracOpts,
+                                        MIN_PROCESSORS=job.backend.minProcessors,
+                                        MAX_PROCESSORS=job.backend.maxProcessors,
                                         PLATFORM=app.platform,
                                         REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
                                         ANCESTOR_DEPTH=ancestor_depth,
                                         ## This is to be modified in the final 'submit' function in the backend
                                         ## The backend also handles the inputfiles DiracFiles ass appropriate
-                                        INPUT_SANDBOX='##INPUT_SANDBOX##'
+                                        INPUT_SANDBOX='##INPUT_SANDBOX##',
+                                        GANGA_VERSION=_gangaVersion,
                                         )
         logger.debug("prepare: LHCbGaudiDiracRunTimeHandler")
 

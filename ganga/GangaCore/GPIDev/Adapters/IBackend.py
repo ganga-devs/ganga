@@ -4,29 +4,31 @@
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ##########################################################################
 
-from GangaCore.Core.exceptions import GangaKeyError, IncompleteJobSubmissionError
-from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList
-from GangaCore.GPIDev.Base import GangaObject
-from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
-from GangaCore.GPIDev.Lib.Dataset import GangaDataset
-from GangaCore.GPIDev.Schema import Schema, Version
-from GangaCore.GPIDev.Credentials import credential_store, needed_credentials
-
-import GangaCore.Utility.logging
-
-from GangaCore.Utility.logic import implies
-
-from GangaCore.Core.exceptions import GangaException, IncompleteJobSubmissionError
-
-import os
 import itertools
+import os
 import time
 from collections import defaultdict
 
-from GangaCore.Core.GangaThread.WorkerThreads import getQueues
+import GangaCore.Utility.logging
+from GangaCore.Utility.logic import implies
+from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.Utility.Config import getConfig
+from GangaCore.GPIDev.Schema import Schema, Version
+from GangaCore.GPIDev.Lib.Dataset import GangaDataset
+from GangaCore.Core.GangaThread.WorkerThreads import getQueues
+from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
+from GangaCore.GPIDev.Credentials import credential_store, needed_credentials
+from GangaCore.Core.exceptions import (
+    GangaException, GangaKeyError, IncompleteJobSubmissionError
+    )
 
 logger = GangaCore.Utility.logging.getLogger()
+config = getConfig('Configuration')
+
+if config["repositorytype"] == "Database":
+    from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
+else:
+    from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList as SubJobJsonList
 
 class IBackend(GangaObject):
 
@@ -237,13 +239,10 @@ class IBackend(GangaObject):
         """
         from GangaCore.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
         from GangaCore.GPIDev.Lib.File.File import File, ShareDir
-
         job = self.getJobObject()
-
         create_sandbox = job.createInputSandbox
         if self._packed_input_sandbox:
             create_sandbox = job.createPackedInputSandbox
-
         if masterjobconfig:
             if hasattr(job.application, 'is_prepared') and isType(job.application.is_prepared, ShareDir):
                 sharedir_pred = lambda f: f.name.find(job.application.is_prepared.name) > -1
@@ -443,7 +442,7 @@ class IBackend(GangaObject):
                 #logger.info("Looking for sj")
                 monitorable_subjob_ids = []
 
-                if isType(j.subjobs, SubJobXMLList):
+                if isType(j.subjobs, SubJobJsonList):
                     cache = j.subjobs.getAllCachedData()
                     for sj_id in range(0,len(j.subjobs)):
                         if cache[sj_id]['status'] in ['submitted', 'running']:
@@ -568,4 +567,3 @@ def group_jobs_by_backend_credential(jobs):
             logger.debug('Required credential %s is missing', cred_req)
             needed_credentials.add(cred_req)
     return list(jobs_by_credential.values())
-

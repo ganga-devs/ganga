@@ -4,7 +4,25 @@ import os.path
 
 ## from Config import getConfigDict
 
-# here are some useful option filters
+def get_unique_port():
+    """
+    Obtain a free TCP port from the OS
+    """
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(("", 0))
+    s.listen(1)
+    port = s.getsockname()[1]
+    s.close()
+    return port
+
+
+def get_unique_name():
+    """
+    Obtain a unique identifier for the user
+    """
+    import uuid
+    return str(uuid.uuid1()).replace("-", "_")
 
 
 def expandvars(c, v):

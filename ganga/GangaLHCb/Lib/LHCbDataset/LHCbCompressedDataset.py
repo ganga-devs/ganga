@@ -33,6 +33,7 @@ class LHCbCompressedFileSet(GangaObject):
     schema['lfn_prefix'] = SimpleItem(defvalue = None, typelist = ['str', None], doc = 'The common starting path of the LFN')
     schema['suffixes'] = SimpleItem(defvalue = [], typelist = [GangaList, 'str'], sequence=1, doc = 'The individual end of each LFN')
     _schema = Schema(Version(3, 0), schema)
+    _category = 'gangafiles'
     _exportmethods = ['__len__', 'getLFNs', 'getLFN']
     def __init__(self, files=None, lfn_prefix=None):
         super(LHCbCompressedFileSet, self).__init__()
@@ -88,6 +89,7 @@ class LHCbCompressedDataset(GangaDataset):
     schema['XMLCatalogueSlice'] = GangaFileItem(defvalue=None, doc='Use contents of file rather than generating catalog.')
     schema['persistency'] = SimpleItem(defvalue=None, typelist=['str', 'type(None)'], doc='Specify the dataset persistency technology')
     schema['credential_requirements'] = ComponentItem('CredentialRequirement', defvalue=None)
+    schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
     schema['depth'] = SimpleItem(defvalue = 0, doc='Depth')
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
@@ -141,7 +143,6 @@ class LHCbCompressedDataset(GangaDataset):
         self.files._setParent(self)
         self.persistency = persistency
         self.current = 0
-        self.total = self._totalNFiles()
         logger.debug("Dataset Created")
 
 
@@ -168,7 +169,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def __len__(self):
         '''Redefine the __len__ function'''
-        return self.total
+        return self._totalNFiles()
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
@@ -215,7 +216,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def __next__(self):
         '''Fix the iterator'''
-        if self.current == self.total:
+        if self.current == self._totalNFiles():
             raise StopIteration
         else:
             self.current += 1
@@ -224,7 +225,6 @@ class LHCbCompressedDataset(GangaDataset):
     def addSet(self, newSet):
         '''Add a new FileSet to the dataset'''
         self.files.append(newSet)
-        self.total = self._totalNFiles()
 
     def getFileNames(self):
         'Returns a list of the names of all files stored in the dataset'
@@ -263,7 +263,6 @@ class LHCbCompressedDataset(GangaDataset):
             self.files.append(LHCbCompressedFileSet(other))
         else:
             logger.error("Cannot add object of type %s to an LHCbCompressedDataset" % type(other))
-        self.total = self._totalNFiles()
 
     def getLFNs(self):
         '''Returns a list of all LFNs (by name) stored in the dataset.'''

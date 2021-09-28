@@ -95,9 +95,6 @@ def makeRepository(registry):
     if registry.type in ["LocalXML", "LocalPickle"]:
         from GangaCore.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal
         return GangaRepositoryLocal(registry)
-    elif registry.type in ["SQLite"]:
-        from GangaCore.Core.GangaRepository.GangaRepositorySQLite import GangaRepositorySQLite
-        return GangaRepositorySQLite(registry)
     elif registry.type in ["Transient"]:
         from GangaCore.Core.GangaRepository.GangaRepository import GangaRepository
         return GangaRepository(registry)
@@ -317,7 +314,7 @@ class Registry(object):
         Args:
             this_id (int): This is the key of an object in the object dictionary
         """
-        logger.debug("__getitem__")
+    
         # Is this an Incomplete Object?
         if this_id in self._incomplete_objects:
             return IncompleteObject(self, this_id)
@@ -652,7 +649,7 @@ class Registry(object):
         pass
 
     @synchronised_complete_lock
-    def shutdown(self):
+    def shutdown(self, kill=None):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         from GangaCore.Utility.logging import getLogger
         logger = getLogger()

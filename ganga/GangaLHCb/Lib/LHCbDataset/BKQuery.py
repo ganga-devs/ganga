@@ -12,6 +12,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaCore.Utility.logging import getLogger
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset, LHCbCompressedDataset
+from GangaLHCb.Lib.Backends.Dirac import filterLFNsBySE
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -93,6 +94,8 @@ RecoToDST-07/90000000/DST" ,
     docstr = 'Selection criteria: Runs, ProcessedRuns, NotProcessed (only works for type="RunsByDate")'
     schema['selection'] = SimpleItem(defvalue='', doc=docstr)
     schema['credential_requirements'] = ComponentItem('CredentialRequirement', defvalue='DiracProxy')
+    schema['check_archived'] = SimpleItem(defvalue=True, typelist=['bool'], doc = 'Check if the data set is archived')
+    schema['ignore_archived'] = SimpleItem(defvalue=False, typelist=['bool'], doc = 'Return the data set, even if all the LFNs are archived')
     _schema = Schema(Version(1, 2), schema)
     _category = 'query'
     _name = "BKQuery"
@@ -144,7 +147,7 @@ RecoToDST-07/90000000/DST" ,
         return {'OK': False, 'Value': metadata}
 
     @require_credential
-    def getDataset(self, compressed = True):
+    def getDataset(self, compressed = True, SE = None):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
             return None
@@ -175,7 +178,34 @@ RecoToDST-07/90000000/DST" ,
         if not type(files) is list:
             files = list(files.keys())
 
+        if SE:
+            tempFiles = filterLFNsBySE(files, SE)
+            files = tempFiles
+
         logger.debug("Creating dataset")
+
+        #If we think this is an MC request check to see if the data set has been archived.
+        isMC = False
+        if 'MC' == self.path.split('/')[1]:
+            isMC = True
+        if isMC and self.check_archived:
+            logger.debug('Detected an MC data set. Checking if it has been archived')
+            all_reps = get_result("getReplicas(%s)" % files, 'Get replica error.', credential_requirements=self.credential_requirements)
+            if 'Successful' in all_reps:
+                all_ses = set([])
+                for _lfn, _repz in all_reps['Successful'].items():
+                    all_ses.update(_repz.keys())
+
+            all_archived = True
+            for _se in all_ses:
+                is_archived = get_result("isSEArchive('%s')" % _se, 'Check archive error.', credential_requirements=self.credential_requirements)
+                if not is_archived:
+                    all_archived = False
+                    break
+            if all_archived and not self.ignore_archived:
+                raise GangaDiracError("All the files are only available on archive SEs. It is likely the data set has been archived. Contact data management to request that it be staged")
+            elif all_archived:
+                logger.warning("All the files are only available on archive SEs. It is likely the data set has been archived. Contact data management to request that it be staged")
 
         if compressed:
             ds = LHCbCompressedDataset(files)

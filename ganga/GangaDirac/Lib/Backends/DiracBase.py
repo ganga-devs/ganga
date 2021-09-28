@@ -10,15 +10,17 @@ import datetime
 import shutil
 import tempfile
 import math
+from functools import wraps
 from collections import defaultdict
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaCore.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
 from GangaCore.GPIDev.Lib.Job.Job import Job
-from GangaCore.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError
-from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs
+from GangaCore.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError, GangaDiskSpaceError
+from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs, getReplicas
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+from GangaCore.Utility.util import require_disk_space
 from GangaCore.Utility.ColourText import getColour
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger, log_user_exception
@@ -67,6 +69,16 @@ class DiracBase(IBackend):
     # settings can be set at any time but are only 'respected' during
     # submit and resubmit.
 
+    # Submitting a job for several processors:
+    You can request multiple processors with the minProcessors and maxProcessors attributes
+    These set the minimum and maximum allowed number of processors for your job
+    A job such as:
+    j.backend.minProcessors = 2
+    j.backend.minProcessors = 3
+    would request 2 processors.
+    Note that setting minProcessors to be more than 1 greatly reduces the number
+    of possible sites that your job can run at as multi core resources are rare.
+
     """
 
     dirac_monitoring_is_active = True
@@ -97,8 +109,14 @@ class DiracBase(IBackend):
         'diracOpts': SimpleItem(defvalue='',
                                 doc='DIRAC API commands to add the job definition script. Only edit '
                                 'if you *really* know what you are doing'),
-        'settings': SimpleItem(defvalue={'CPUTime': 14 * 86400},
+        'settings': SimpleItem(defvalue={'CPUTime': 1000000},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
+        'minProcessors': SimpleItem(defvalue=1,
+                                    typelist=[int],
+                                    doc='Minimum number of processors the job needs'),
+        'maxProcessors': SimpleItem(defvalue=1,
+                                    typelist=[int],
+                                    doc='Maximum number of processors the job needs'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
         'blockSubmit' : SimpleItem(defvalue=True, 
                                doc='Shall we use the block submission?'),
@@ -165,7 +183,7 @@ class DiracBase(IBackend):
         self.extraInfo = None
         self.statusInfo = ''
         j.been_queued = False
-        dirac_cmd = """execfile(\'%s\')""" % dirac_script
+        dirac_cmd = """exec(open(\'%s\').read())""" % dirac_script
 
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements)
@@ -206,11 +224,10 @@ class DiracBase(IBackend):
         self.extraInfo = None
         self.statusInfo = ''
         j.been_queued = False
-        dirac_cmd = """execfile(\'%s\')""" % myscript
+        dirac_cmd = """exec(open(\'%s\').read())""" % myscript
         submitFailures = {}
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True, new_subprocess = True)
-
         except GangaDiracError as err:
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
             logger.error(err_msg)
@@ -254,14 +271,12 @@ class DiracBase(IBackend):
             else:
                 j.updateStatus('failed')
                 submitFailures.update({result_id: 'DIRAC error!'})
-
         #Check that every subjob got submitted ok
         if len(submitFailures) > 0:
             for sjNo in submitFailures.keys():
                 logger.error('Job submission failed for job %s : %s' % (sjNo, submitFailures[sjNo]))
             raise GangaDiracError("Some subjobs failed to submit! Check their status!")
             return 0
-
         return 1 
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
@@ -331,7 +346,6 @@ class DiracBase(IBackend):
                 logger.info("Submitting job")
             else:
                 logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
-
             try:
                 #Either do the submission in parallel with threads or sequentially
                 if parallel_submit:
@@ -711,6 +725,7 @@ class DiracBase(IBackend):
             logger.error("No peeking available for Dirac job '%i'.", self.id)
 
     @require_credential
+    @require_disk_space
     def getOutputSandbox(self, outputDir=None, unpack=True):
         """Get the outputsandbox for the job object controlling this backend
         Args:
@@ -732,12 +747,15 @@ class DiracBase(IBackend):
 
         return True
 
-    def removeOutputData(self):
+    def removeOutputData(self, fileType = 'DiracFile'):
         """
         Remove all the LFNs associated with this job.
         """
         # Note when the API can accept a list for removeFile I will change
         # this.
+        if not fileType=='DiracFile':
+            return False
+
         j = self.getJobObject()
         logger.info("Removing all DiracFile output for job %s" % j.id)
         lfnsToRemove = []
@@ -763,7 +781,8 @@ class DiracBase(IBackend):
         else:
             outputfiles_foreach(j, DiracFile, lambda x: clearFileInfo(x))
 
-    def getOutputData(self, outputDir=None, names=None, force=False):
+    @require_disk_space
+    def getOutputData(self, outputDir=None, names=None, force=False, ignoreMissing = False):
         """Retrieve data stored on SE to dir (default=job output workspace).
         If names=None, then all outputdata is downloaded otherwise names should
         be a list of files to download. If force=True then data will be redownloaded
@@ -778,6 +797,7 @@ class DiracBase(IBackend):
             outputDir (str): This string represents the output dir where the sandbox is to be placed
             names (list): list of names which match namePatterns in the outputfiles
             force (bool): Force the download out data potentially overwriting existing objects
+            ignoreMissing(bool): Carry on even if not all files are available or successfully downloaded. Use with extreme caution
         """
         j = self.getJobObject()
         if outputDir is not None and not os.path.isdir(outputDir):
@@ -793,13 +813,28 @@ class DiracBase(IBackend):
                         os.mkdir(output_dir)
                 dirac_file.localDir = output_dir
             if os.path.exists(os.path.join(dirac_file.localDir, os.path.basename(dirac_file.lfn))) and not force:
-                return
+                return dirac_file.lfn
             try:
                 dirac_file.get()
                 return dirac_file.lfn
             # should really make the get method throw if doesn't suceed. todo
             except (GangaDiracError, GangaFileError) as e:
                 logger.warning(e)
+
+        #First collate the LFNs and see if all replicas are available
+        lfns = []
+        if j.subjobs:
+            for sj in j.subjobs:
+                lfns.extend([f.lfn for f in outputfiles_iterator(sj, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
+        else:
+            lfns.extend([f.lfn for f in outputfiles_iterator(j, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
+
+        reps = getReplicas(lfns)
+        if not len(reps.keys()) == len(set(lfns)):
+            if ignoreMissing:
+                logger.warning("Not all LFNs in the outputdata have available replicas. ignoreMissing=True so proceeding anyway!")
+            else:
+                raise GangaDiracError("Not all LFNs in the outputdata have available replicas and ignoreMissing=False! lns: %s, reps: %s" %(lfns, reps))
 
         suceeded = []
         if j.subjobs:
@@ -808,7 +843,15 @@ class DiracBase(IBackend):
         else:
             suceeded.extend([download(f, j, False) for f in outputfiles_iterator(j, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
 
-        return [x for x in suceeded if x is not None]
+        #Check we have successfully downloaded everything
+        successes = [x for x in suceeded if x is not None]
+        if not len(lfns)==len(successes):
+            if ignoreMissing:
+                logger.warning("Not all files downloaded successfully! ignoreMissing=True")
+            else:
+                raise GangaDiracError("Not all files downloaded successfully and ignoreMissing=False! Check your gangadir for missing files! len lfns: %s, len success: %s" % (lfns, successes))
+
+        return successes
 
     def getOutputDataLFNs(self):
         """Retrieve the list of LFNs assigned to outputdata"""
@@ -969,6 +1012,7 @@ class DiracBase(IBackend):
         # malformed job output?
 
     @staticmethod
+    @require_disk_space
     def _internal_job_finalisation(job, updated_dirac_status):
         """
         This method performs the main job finalisation
@@ -1143,10 +1187,16 @@ class DiracBase(IBackend):
                     break
                 DiracBase._internal_job_finalisation(job, updated_dirac_status)
                 break
+
+            except GangaDiskSpaceError as err:
+                #If the user runs out of disk space for the job to completing so its not monitored any more. Print a helpful message.
+                job.force_status('failed')
+                raise GangaDiskSpaceError("Cannot finalise job %s. No disk space available! Clear some space and the do j.backend.reset() to try again." % job.getFQID('.'))
+
             except Exception as err:
 
                 logger.warning("An error occured finalising job: %s" % job.getFQID('.'))
-                logger.warning("Attemting again (%s of %s) after %s-sec delay" % (str(count), str(limit), str(sleep_length)))
+                logger.warning("Attempting again (%s of %s) after %s-sec delay" % (str(count), str(limit), str(sleep_length)))
                 if count == limit:
                     logger.error("Unable to finalise job %s after %s retries due to error:\n%s" % (job.getFQID('.'), str(count), str(err)))
                     job.force_status('failed')
@@ -1187,6 +1237,7 @@ class DiracBase(IBackend):
             getQueues()._monitoring_threadpool.add_function(DiracBase.finalise_jobs_thread_func, (jobSlice, downloadSandbox))
 
     @staticmethod
+    @require_disk_space
     def finalise_jobs_thread_func(jobSlice, downloadSandbox = True):
         """
         Finalise the jobs given. This downloads the output sandboxes, gets the final Dirac statuses, completion times etc.

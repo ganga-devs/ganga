@@ -4,6 +4,7 @@ from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
 from GangaCore.GPIDev.Lib.Tasks.CoreUnit import CoreUnit
+from GangaCore.GPIDev.Lib.Tasks.TaskChainInput import TaskChainInput
 from GangaCore.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
 from GangaCore.GPIDev.Lib.Job.Job import Job
 from GangaCore.GPIDev.Base.Proxy import stripProxy, getName, isType
@@ -110,6 +111,8 @@ class CoreTransform(ITransform):
                     unit.name = "Unit %d" % len(self.units)
                     unit.inputdata = GangaDataset(
                         files=filelist[fid:fid + self.files_per_unit])
+                    unit.inputdata.treat_as_inputfiles = self.inputdata[
+                        0].treat_as_inputfiles
 
                     fid += self.files_per_unit
 
@@ -159,5 +162,6 @@ class CoreTransform(ITransform):
         unit = CoreUnit()
         unit.name = "Unit %d" % len(self.units)
         unit.inputdata = GangaDataset(files=flist)
+        unit.inputdata.treat_as_inputfiles = self.chaindata_as_inputfiles
 
         return unit

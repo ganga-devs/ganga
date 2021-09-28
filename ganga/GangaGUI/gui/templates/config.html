@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div class="h3 mb-0 text-gray-800"></div>
+        <a href="{{ url_for('edit_config_page') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">Edit gangarc</a>
+    </div>
+   
+    <form method="post">
+        <div class="form-row">
+            <div class="form-group col-md-9">
+                <select class="form-control custom-select" name="section">
+                    <option selected value="">Select Config</option>
+                    {% for s in full_config_info %}
+                        <option value="{{ s.get('name') }}">{{ s.get('name') }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-3">
+                <button type="submit" class="btn btn-block btn-primary">Show Config</button>
+            </div>
+        </div>
+    </form>
+    <hr class="my-1 mb-3 mt-3">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="accordion" id="config">
+                <div class="list-group">
+                    {% for section in config_info %}
+                        <a href="#"
+                            class="list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last }}"
+                            data-toggle="collapse"
+                            data-target="#collapse-config-{{ section.get('name') }}" aria-expanded="true"
+                            aria-controls="collapse-config-{{ section.get('name') }}">
+                            {{ section.get('name') }}
+                        </a>
+                        <div id="collapse-config-{{ section.get('name') }}"
+                            class="collapse border-left border-right {{ 'border-bottom rounded-bottom' if loop.last }}"
+                            data-parent="#config">
+                            <div class="card-body">
+                                <h3 class="font-weight-normal mb-n2 pb-2">{{ section.get('name') }}</h3>
+                                <small class="text-muted">{{ section.get('docstring') }}</small>
+                                <table class="table table-striped table-bordered text-center mt-2 table-responsive-sm">
+                                    <thead>
+                                    <tr>
+                                        <th class="align-middle" scope="col">ID</th>
+                                        <th class="align-middle" style="width: 70%;" scope="col">Option Name</th>
+                                        <th class="align-middle" style="width: 25%;" scope="col">Effective Value
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for option in section.get('options') %}
+                                        <tr>
+                                            <th class="align-middle" scope="row">{{ loop.index }}</th>
+                                            <td class="align-middle text-left">{{ option.get('name') }}<br><small
+                                                class="text-muted">{{ option.get('docstring') }}</small>
+                                            </td>
+                                            <td class="align-middle text-break">{{ option.get('value') }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+{% endblock content %}

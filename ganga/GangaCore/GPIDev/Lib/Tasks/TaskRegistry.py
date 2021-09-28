@@ -4,7 +4,7 @@ import traceback
 import sys
 import GangaCore.GPIDev.Lib.Registry.RegistrySlice
 from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
-from GangaCore.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError, RegistryFlusher
+from GangaCore.Core.GangaRepository.Registry import RegistryError, RegistryKeyError, RegistryAccessError, RegistryFlusher
 from GangaCore.GPIDev.Base.Proxy import stripProxy, getName, isType
 from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours, status_colours, fgcol
 
@@ -13,6 +13,12 @@ logger = getLogger()
 
 from GangaCore.Utility.Config import getConfig
 config = getConfig('Tasks')
+
+if getConfig('Configuration')["repositorytype"] in ["Database", "CentralDatabase"]:
+    from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
+else:
+    from GangaCore.Core.GangaRepository.Registry import Registry
+
 
 markup = ANSIMarkup()
 str_run = markup("run", overview_colours["running"])
@@ -124,9 +130,9 @@ class TaskRegistry(Registry):
         self.flush_thread = RegistryFlusher(self, 'TaskRegistryFlusher')
         self.flush_thread.start()
 
-    def shutdown(self):
+    def shutdown(self, kill):
         self.flush_thread.join()
-        super(TaskRegistry, self).shutdown()
+        super(TaskRegistry, self).shutdown(kill=kill)
 
     def stop(self):
         if self._main_thread is not None:

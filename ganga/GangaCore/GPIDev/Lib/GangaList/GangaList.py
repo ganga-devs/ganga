@@ -533,13 +533,18 @@ class GangaList(GangaObject):
         self.checkReadOnly()
         return addProxy(self.pop(index))
 
-    def remove(self, obj):
+    def remove(self, obj=None):
         """
         Remove a given object from a list
         Args:
             obj (unknown): Remove this object from the list if it exists
+        If no argument given then all objects are removed.
         """
-        self._list.remove(self.strip_proxy(obj))
+        if obj:
+            self._list.remove(self.strip_proxy(obj))
+        else:
+            for _o in self._list:
+                self._list.remove(self.strip_proxy(_o))
 
     def _export_remove(self, obj):
         """
@@ -669,6 +674,46 @@ class GangaList(GangaObject):
                 visitor.componentAttribute(self, name, getattr(self, name), item['sequence'])
 
         visitor.nodeEnd(self)
+
+    # TODO: Remove the @synchronised, once locks are removed altogether
+    @synchronised
+    def to_json(self):
+        """
+        - A simple attribute: will not have the to_json function and thus we have to manually assign the value
+        - A componenet attribute: will have the to_json function and thus we can automatically generate the json dict for that and then assin it 
+        """
+
+        import datetime
+        from GangaCore.GPIDev.Base.Proxy import isType
+        from GangaCore.Core.GangaRepository.DStreamer import JsonDumper
+
+        node_info = {
+            "type": self._schema.name,
+            "version": f"{self._schema.version.major}.{self._schema.version.minor}",
+            "category": self._schema.category
+        }
+        if self._schema is None:
+            return node_info
+
+        for name, item in self._schema.allItems():
+            value = getattr(self, name)
+            # print(name)
+            if name == "_list":
+                temp_val = []
+                for val in value:
+                    # print("\t", val, type(val))
+                    if hasattr(val, "to_json"):
+                        temp_val.append(val.to_json())
+                    else:
+                        temp_val.append(val)
+                node_info[name] = temp_val
+            elif item['visitable']:
+                if hasattr(value, "to_json"):
+                    node_info[name] = (value.to_json())
+                else:
+                    node_info[name] = (value)
+
+        return node_info
 
     def _setFlushed(self):
         """Set flushed like the Node but do the _list by hand to avoid problems"""

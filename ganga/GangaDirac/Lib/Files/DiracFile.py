@@ -284,10 +284,13 @@ class DiracFile(IGangaFile):
 
         return "DiracFile(namePattern='%s', lfn='%s', localDir='%s')" % (self.namePattern, self.lfn, self.localDir)
 
-    def getSubFiles(self):
+    def getSubFiles(self, process_wildcards = False):
         """
         Returns the subfiles for this instance
         """
+        if process_wildcards:
+            self.processWildcardMatches()
+
         if self.lfn:
             self.setLocation()
         return self.subfiles
@@ -843,7 +846,7 @@ class DiracFile(IGangaFile):
         download_script = FileUtils.loadScript(script_location, '')
 
         script = """\n
-download_script='''\n###DOWNLOAD_SCRIPT###'''
+download_script=b'''\n###DOWNLOAD_SCRIPT###'''
 import subprocess
 dirac_env=###DIRAC_ENV###
 subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=True, env=dirac_env, stdin=subprocess.PIPE).communicate(download_script)

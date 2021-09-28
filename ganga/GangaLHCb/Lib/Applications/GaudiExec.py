@@ -105,6 +105,8 @@ class GaudiExec(IPrepareApp):
 
     prepare_cmake_app(myApp, myVer, myPath, myGetpack)
 
+    The argument 'nMakeCores' allows to set the number of cores allowed for make-ing the ganga-input-sandbox (default = 1). 
+
     =============
     How it works:
     =============
@@ -123,6 +125,14 @@ class GaudiExec(IPrepareApp):
 
     Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace with 'execfile'
     The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before executing this one.
+
+    If you want an argument after the run command then use the 'run_args' option. It takes a list of the arguments to use. For example
+
+        j.application.run_args = ['--quiet']
+
+    Makes the command
+        
+        ./run --quiet gaudirun.py optionsFile.py
 
     =================
     Get job metadata:
@@ -158,8 +168,10 @@ class GaudiExec(IPrepareApp):
         'autoDBtags' :  SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
+        'run_args' :    SimpleItem(defvalue = [], typelist=[list], doc='A list of arguments to pass to the lb-run script at run time. i.e. --quiet'),
         'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
-
+        'nMakeCores':   SimpleItem(defvalue=1, doc='Number of cores to be provided via the "-j" option to the "make" command when building the ganga-input-sandbox'),
+        
         # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
@@ -523,7 +535,7 @@ class GaudiExec(IPrepareApp):
         """
         logger.info("Make-ing target '%s'     (This may take a few minutes depending on the size of your project)" % GaudiExec.build_target)
         # Up to the user to run something like make clean... (Although that would avoid some potential CMake problems)
-        self.execCmd('make %s' % GaudiExec.build_target)
+        self.execCmd('make {0} -j{1}'.format(GaudiExec.build_target, self.nMakeCores))
 
         targetPath = path.join(self.directory, 'build.%s' % self.platform, 'ganga')
         if not path.isdir(targetPath):

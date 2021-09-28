@@ -2,7 +2,6 @@ import json
 import os
 from os.path import join, expanduser
 from optparse import OptionValueError
-from distutils.version import LooseVersion
 
 from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache
 import GangaCore.Utility.Config
@@ -29,27 +28,16 @@ def store_dirac_environment():
     platform = 'x86_64-slc6-gcc49-opt'
 
     requestedVersion = GangaCore.Utility.Config.getConfig('LHCb')['LHCbDiracVersion']
-    # by default the version is 'prod', and in this case we need to resolve the actual version
-    # if a specific version is requested, then we can simply try to determine its environment
 
-    # this returns a list, like ['prod'] or ['v', 9, 'r', 3, 'p', 19]
-    lbVersion = LooseVersion(requestedVersion).version
-    try:
-        # we check if a real version (e.g. v9r2, or v9r3p13 or v10r12-pre9) is requested
-        if isinstance(lbVersion[1], int) and isinstance(lbVersion[3], int):
-            logger.warn("Specific version is requested (%s), please consider removing it!", requestedVersion)
-            diracversion = requestedVersion
-        else:
-            diracversion = 'prod'
-    except IndexError:  # here we assume 'prod', and honestly nothing else should be here.
-        diracversion = 'prod'
+    if not requestedVersion == 'prod':
+        logger.warn(f"Specific DIRAC version ({requestedVersion}) is set in the [LHCb]LHCbDiracVersion configuration parameter. Unless you really know what you are doing, this should not be done.")
 
     fdir = join(expanduser("~/.cache/Ganga/GangaLHCb"), platform)
-    fname = join(fdir, diracversion)
+    fname = join(fdir, requestedVersion)
 
     cmd = (
         '. /cvmfs/lhcb.cern.ch/lib/LbEnv &>/dev/null && '
-        f'lb-dirac {diracversion} python -c "import json, os; print(json.dumps(dict(os.environ)))"'
+        f'lb-dirac {requestedVersion} python -c "import json, os; print(json.dumps(dict(os.environ)))"'
     )
     env = execute(cmd, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
 
@@ -57,13 +45,13 @@ def store_dirac_environment():
         try:
             env = json.loads(env)
         except Exception:
-            logger.error("LHCbDirac version %s does not exist", diracversion)
-            raise OptionValueError("LHCbDirac version {version} does not exist".format(version=diracversion))
+            logger.error(f"LHCbDirac version {requestedVersion} does not exist")
+            raise OptionValueError(f"LHCbDirac version {requestedVersion} does not exist")
     try:
         write_env_cache(env, fname)
-        logger.debug("Storing new LHCbDirac environment (%s:%s)", str(diracversion), str(platform))
+        logger.debug(f"Storing new LHCbDirac environment ({requestedVersion}:{platform})")
     except (OSError, IOError, TypeError):
         logger.error("Unable to store LHCbDirac environment")
         raise PluginError
-    logger.info("Using LHCbDirac version %s", diracversion)
+    logger.info(f"Using LHCbDirac version {requestedVersion}")
     os.environ['GANGADIRACENVIRONMENT'] = fname

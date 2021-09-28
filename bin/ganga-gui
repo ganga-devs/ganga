@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+"""
+Starts Ganga GUI with integrated terminal
+"""
+
+import argparse
+import sys
+import os
+
+# Insert the path to Ganga itself - this is required for the installations without pip
+exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
+gangaDir = os.path.join(os.path.dirname(exeDir), 'ganga')
+sys.path.insert(0, gangaDir)
+
+from ganga.GangaGUI.gui.routes import start_web_cli
+
+# Command line options
+parser = argparse.ArgumentParser(
+    description="Start Ganga GUI with integrated Ganga CLI. This will also start a Ganga session with the arguments passed as a string to --ganga-args flag.")
+parser.add_argument('--host', action='store', dest='host', default='0.0.0.0',
+                    help='Host to start the server on. Default is 0.0.0.0')
+parser.add_argument('--port', action='store', dest='port', default=5500,
+                    help='Port to start the web gui server on. Default is 5500.')
+parser.add_argument('--internal-port', action='store', dest='internal_port', default=5000,
+                    help='Port to start internal API server on, which is used by web gui server internally to communicate with Ganga. Default is 5000.')
+parser.add_argument('--quiet', action='store_true', default=False,
+                    help='Disables logging of GUI server output to the stdout.')
+parser.add_argument('--ganga-args', action='store', dest='ganga_args', default="",
+                    help="Arguments to pass to ganga. Pass arguments as a string. Arguments must start with a space, or use an equals. Eg. --ganga-args ' --very-quiet' or --ganga-args='--very-quiet'")
+
+# Parse command line arguments
+args = parser.parse_args()
+
+# Parse command line arguments
+web_cli_host = args.host
+web_cli_port = int(args.port)
+internal_server_port = int(args.internal_port)
+ganga_args = args.ganga_args
+log_output = not args.quiet
+
+# Start the web cli - this will also start a Ganga Session
+start_web_cli(host=web_cli_host, port=web_cli_port, internal_port=internal_server_port, ganga_args=ganga_args,
+              log_output=log_output)

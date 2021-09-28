@@ -7,6 +7,7 @@ import random
 import threading
 import uuid
 import shutil
+from GangaCore import _gangaVersion
 from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException, GangaFileError
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -164,15 +165,14 @@ def prepareCommand(app):
             raise ApplicationConfigurationError("The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                                 getName(opts_file))
 
-    #Check if this was checked out with LbEnv or not
-    isLbEnv = False
-    with open(app.directory+'/Makefile', "r") as makefile:
-        if 'LbEnv' in makefile.read():
-            isLbEnv = True
+    sourceEnv = app.getWNEnvScript(True)
 
-    sourceEnv = app.getWNEnvScript(isLbEnv)
+    #Get the options for the run script
+    run_args = ''
+    for _arg in app.run_args:
+        run_args += ' %s ' % _arg
 
-    run_cmd = ' export ganga_jobid=%s && ./run ' % app.getJobObject().fqid
+    run_cmd = ' export ganga_jobid=%s && ./run %s ' % (app.getJobObject().fqid, run_args)
 
     if not app.useGaudiRun:
         full_cmd = sourceEnv + run_cmd + 'python %s' % app.getWrapperScriptName()
@@ -486,6 +486,24 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
 
+        #First check the remote options or inputfiles exist
+        j = app.getJobObject()
+        for file_ in j.inputfiles:
+            if isinstance(file_, DiracFile):
+                if not file_.getReplicas():
+                        raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % file_.lfn)
+
+        all_opts_files = app.getOptsFiles(True)
+        for opts_file in all_opts_files:
+            if isinstance(opts_file, DiracFile):
+                try:
+                    if opts_file.getReplicas():
+                        continue
+                    else:
+                        raise GangaFileError("DiracFile options file with LFN %s has no replicas" % opts_file.lfn)
+                except GangaFileError as err:
+                    raise  err
+
         if app.autoDBtags and not app.getJobObject().inputdata[0].lfn.startswith('/lhcb/MC/'):
             logger.warning("This doesn't look like MC! Not automatically adding db tags.")
             app.autoDBtags = False
@@ -559,7 +577,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         """
         cred_req = app.getJobObject().backend.credential_requirements
         check_creds(cred_req)
-
         # NB this needs to be removed safely
         # Get the inputdata and input/output sandbox in a sorted way
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
@@ -571,7 +588,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         job = app.getJobObject()
 
         # We can support inputfiles and opts_file here. Locally should be submitted once, remotely can be referenced.
-
         all_opts_files = app.getOptsFiles(True)
 
         for opts_file in all_opts_files:
@@ -620,6 +636,15 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         # This code deals with the outputfiles as outputsandbox and outputdata for us
         lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 
+        #If we are doing virtualisation with a CVMFS location, check it is available
+        if job.virtualization and isinstance(job.virtualization.image, str):
+            if 'cvmfs' == job.virtualization.image.split('/')[1]:
+                tag_location = '/'+job.virtualization.image.split('/')[1]+'/'+job.virtualization.image.split('/')[2]+'/'
+                if 'Tag' in job.backend.settings:
+                    job.backend.settings['Tag'].append(tag_location)
+                else:
+                    job.backend.settings['Tag'] = [tag_location]
+
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
         dirac_script = script_generator(lhcbdiracAPI_script_template(),
@@ -641,11 +666,14 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
                                         PLATFORM=app.platform,
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
+                                        MIN_PROCESSORS=job.backend.minProcessors,
+                                        MAX_PROCESSORS=job.backend.maxProcessors,
                                         REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
                                         INPUT_SANDBOX=repr([f for f in inputsandbox]),
+                                        GANGA_VERSION=_gangaVersion,
                                         )
 
         # NB
@@ -700,11 +728,12 @@ def flush_streams(pipe):
     '''
     with pipe.stdout or pipe.stderr:
         if pipe.stdout:
-            for next_line in iter(pipe.stdout.readline, b''):
+            for next_line in iter(pipe.stdout.readline, ''):
                 print("%s" % next_line, file=sys.stdout, end='')
                 sys.stdout.flush()
+            pipe.stdout.close()
         if pipe.stderr:
-            for next_line in iter(pipe.stderr.readline, b''):
+            for next_line in iter(pipe.stderr.readline, ''):
                 print("%s" % next_line, file=sys.stderr, end='')
                 sys.stderr.flush()
 
@@ -733,7 +762,7 @@ if __name__ == '__main__':
 
     # Execute the actual command on the WN
     # NB os.system caused the entire stream to be captured before being streamed in some cases
-    pipe = subprocess.Popen('###COMMAND###'+' '+' '.join(sys.argv[1:]), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    pipe = subprocess.Popen('###COMMAND###'+' '+' '.join(sys.argv[1:]), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
 
     # Flush the stdout/stderr as the process is running correctly
     flush_streams(pipe)

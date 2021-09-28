@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta Tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/css/dataTables.bootstrap4.min.css" integrity="sha512-PT0RvABaDhDQugEbpNMwgYBCnGCiTZMh9yOzUsJHDgl/dMhD9yjHAwoumnUk3JydV3QTcIkNDuN40CJxik5+WQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Include Handlebars from a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+
+    <!-- Title -->
+    <title>{{ title + ' - Ganga GUI' if title else 'Ganga GUI' }}</title>
+
+    <!-- Head Block -->
+    {% block head %}{% endblock head %}
+</head>
+<body id="page-top">
+    <div id="wrapper">
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ url_for('dashboard') }}">
+                <div class="sidebar-brand-text mx-3">Dashboard</div>
+            </a>
+            <hr class="sidebar-divider my-0">
+
+            <li class="nav-item {{ 'active' if request.path == url_for('create_page') }}">
+                <a class="nav-link" href="{{ url_for('create_page') }}">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Create</span>
+             </a>
+            </li>
+            <li class="nav-item {{ 'active' if request.path == url_for('jobs_page') }}">
+               <a class="nav-link" href="{{ url_for('jobs_page') }}">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Jobs</span>
+                </a>
+            </li>
+            <li class="nav-item {{ 'active' if request.path == url_for('credentials_page') }}">
+               <a class="nav-link" href="{{ url_for('credentials_page') }}">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Credentials</span>
+                </a>
+            </li>
+            <li class="nav-item {{ 'active' if request.path == url_for('plugins_page') }}">
+               <a class="nav-link" href="{{ url_for('plugins_page') }}">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Plugins</span>
+                </a>
+            </li>
+            <li class="nav-item {{ 'active' if request.path == url_for('config_page') }}">
+               <a class="nav-link" href="{{ url_for('config_page') }}">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Config</span>
+                </a>
+            </li>
+            <li class="nav-item {{ 'active' if request.path == url_for('queue_page') }}">
+               <a class="nav-link" href="{{ url_for('queue_page') }}">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Queue</span>
+                </a>
+            </li>
+            <li class="nav-item">
+               <a class="nav-link btn-cli {{ 'd-none' if session['WEB_CLI'] == False }}" href="#">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>CLI</span>
+                </a>
+            </li>
+            <li class="nav-item">
+               <a class="nav-link" href="http://ganga.readthedocs.io" target="_blank">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Help</span>
+                </a>
+            </li>
+            <li class="nav-item nav-down">
+               <a class="nav-link" id="btn-logout" href="#">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+            <li class="nav-item">
+               <a class="nav-link" href="{{ url_for('shutdown') }}">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Shutdown</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseSetting"
+                    aria-expanded="true" aria-controls="collapseSetting">
+                    <i class="fas fa-fw fa-wrench"></i>
+                    <span>Settings</span>
+                </a>
+                <div id="collapseSetting" class="collapse" aria-labelledby="headingUtilities"
+                    data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item" href="{{ url_for('logs_page') }}">Logs</a>
+                        <a class="collapse-item" href="{{ url_for('runfile_page') }}">Quick Run</a>
+                        <a class="collapse-item" href="{{ url_for('storage_page') }}">Storage Pod</a>
+                        
+                    </div>
+                </div>
+            </li>
+            <hr class="sidebar-divider d-none d-md-block">
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+        </ul>
+
+        <div id="content-wrapper" class="d-flex flex-column">
+            <div id="content">
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item dropdown no-arrow">
+                            <img width="150" height="42" src="{{ url_for('static', filename='img/logo.svg') }}">
+                        </li>
+                    </ul>
+                </nav>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} btn-block" style="border-radius: 0" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+                
+                
+            <div class="container-fluid">
+                <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                    <div class="h3 mb-0 text-gray-800"></div>
+                    <a href="#" data-toggle="modal" data-target="#refreshModal" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i class="fas fa-cog fa-sm text-white-50"></i> Refresh</a>
+                </div>
+
+                {% block content %}{% endblock content %}
+            </div>
+        </div>
+           
+
+        <div id="cli-container"
+             style="display: none; position: fixed; bottom: 0; left: 0; height: 50vh; width: 100%; z-index: 50; box-shadow: 0 -2px 6px rgba(0,0,0,0.30);"
+             class="rounded-top overflow-hidden">
+            <div class="d-flex justify-content-end align-items-center mt-2 px-2" style="position: absolute; top: 0; right:0;">
+                <a href="{{ url_for('serve_cli') if session['WEB_CLI'] == True }}" target="_blank"
+                  class="btn btn-primary btn-sm text-white" style="cursor: pointer">Open in New Tab</a>
+                <a class="btn btn-danger btn-sm text-white btn-cli ml-2" style="cursor: pointer">Hide</a>
+            </div>
+            <iframe src="{{ url_for('serve_cli') if session['WEB_CLI'] == True }}" id="cli-iframe" title="Web CLI" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>   
+    </div> 
+
+    
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+    <div class="modal fade" id="refreshModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Refresh</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                <div class="form-group col-md-12 align-items-right">
+                <label for="refresh-interval" class="small text-muted">Refresh:</label>
+                <select id="refresh-interval" class="custom-select">
+                    <option value="1000">1</option>
+                    <option value="2000">2</option>
+                    <option value="5000" selected>5</option>
+                    <option value="10000">10</option>
+                    <option value="30000">30</option>
+                    <option value="60000">60</option>
+                    <option value="120000">120</option>
+                </select>
+                </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  
+
+{# JavaScript files #}
+<script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/style.js') }}"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.21/js/jquery.dataTables.min.js" integrity="sha512-BkpSL20WETFylMrcirBahHfSnY++H2O1W+UnEEO4yNIl+jI2+zowyoGJpbtk6bx97fBXf++WJHSSK2MV4ghPcg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/highcharts-more.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+
+
+{# JS file specific to web cli mode#}
+<script defer src="{{ url_for('static', filename='js/slidecli.js') if session['WEB_CLI'] == True else '#' }}"></script>
+
+{% block footer %}{% endblock footer %}
+
+
+
+
+</body>
+</html>

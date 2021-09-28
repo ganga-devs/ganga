@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    
+    <h3 class="text-gray-900">Runfile</h3>
+    <hr class="my-2">
+    <form method="post">
+        <div class="form-group">
+            <label for="runfile" class="text-gray-900">Write python script below which will be executed using the runfile function.</label>
+            <textarea class="form-control" id="runfile" name="runfile-data" rows="20"></textarea>
+        </div>
+        <div class="d-flex justify-content-center">
+            <button class="btn btn-primary" type="submit">Execute</button>
+        </div>
+    </form>
+    
+{% endblock content %}

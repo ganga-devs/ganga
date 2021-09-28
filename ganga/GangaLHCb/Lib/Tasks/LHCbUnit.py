@@ -8,6 +8,7 @@ from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 from GangaCore.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
 from GangaCore.Utility.logging import getLogger
+from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
 
 logger = getLogger()
 
@@ -111,7 +112,11 @@ class LHCbUnit(IUnit):
 
                 logger.warning(
                     "Removing chain inputdata file '%s'..." % fname)
-                f.remove()
+                #Have to force MassStorageFiles as it asks a question otherwise
+                if isinstance(f, MassStorageFile):
+                    f.remove(force = True)
+                else:
+                    f.remove()
 
         super(LHCbUnit, self).updateStatus(status)
 

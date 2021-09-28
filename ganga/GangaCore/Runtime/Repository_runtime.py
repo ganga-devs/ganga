@@ -1,7 +1,7 @@
 """
 Internal initialization of the repositories.
 """
-
+import re
 from pipes import quote
 import os.path
 from GangaCore.Utility.Config import getConfig, setConfigOption
@@ -9,7 +9,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.files import expandfilename, fullpath
 from GangaCore.Core.GangaRepository import getRegistries
 from GangaCore.Core.GangaRepository import getRegistry
-from GangaCore.Core.exceptions import GangaException
+from GangaCore.Core.exceptions import GangaException, GangaDiskSpaceError
 
 config = getConfig('Configuration')
 logger = getLogger()
@@ -23,14 +23,14 @@ def requiresAfsToken():
 
 def getLocalRoot():
     # Get the local top level directory for the Repo
-    if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
+    if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle']:
         return os.path.join(expandfilename(config['gangadir'], True), 'repository', config['user'], config['repositorytype'])
     else:
         return ''
 
 def getLocalWorkspace():
     # Get the local top level dirtectory for the Workspace
-    if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
+    if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle']:
         return os.path.join(expandfilename(config['gangadir'], True), 'workspace', config['user'], config['repositorytype'])
     else:
         return ''
@@ -77,7 +77,7 @@ def checkDiskQuota():
         try:
             global partition_warning
             global partition_critical
-            quota_percent = output.split('%')[0]
+            quota_percent = re.findall(b'(\\d+)%',output)[0]
             if int(quota_percent) >= partition_warning:
                 logger.warning("WARNING: You're running low on disk space, Ganga may stall on launch or fail to download job output")
                 logger.warning("WARNING: Please free some disk space on: %s" % data_partition)
@@ -86,11 +86,11 @@ def checkDiskQuota():
                 logger.error("To prevent repository corruption and data loss we won't start GangaCore.")
                 logger.error("Either set your config variable 'force_start' in .gangarc to enable starting and ignore this check.")
                 logger.error("Or, make sure you have more than %s percent free disk space on: %s" %(100-partition_critical, data_partition))
-                raise GangaException("Not Enough Disk Space!!!")
+                raise GangaDiskSpaceError("Not Enough Disk Space!!!")
         except GangaException as err:
             raise
         except Exception as err:
-            logger.debug("Error checking disk partition: %s" % err)
+            logger.error("Error checking disk partition: %s" % err)
 
     return
 
@@ -183,7 +183,7 @@ def shutdown():
     try:
         if 'prep' in started_registries:
             registry = getRegistry('prep')
-            registry.shutdown()
+            registry.shutdown(kill=False)
             # in case this is called repeatedly, only call shutdown once
             started_registries.remove(registry.name)
     except Exception as err:
@@ -191,16 +191,21 @@ def shutdown():
         logger.error("Failed to Shutdown prep Repository!!! please check for stale lock files")
         logger.error("Trying to shutdown cleanly regardless")
 
-    for registry in getRegistries():
+    for itr, registry in enumerate(all_registries):
         thisName = registry.name
         try:
             if not thisName in started_registries:
                 continue
             # in case this is called repeatedly, only call shutdown once
             started_registries.remove(thisName)
-            registry.shutdown()  # flush and release locks
+            if itr == len(all_registries)-1:
+                registry.shutdown(kill=True)  # flush and release locks
+            else:
+                registry.shutdown(kill=False)  # flush and release locks
+
         except Exception as x:
-            logger.error("Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
+            raise x
+            logger.error("[X] Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
             logger.error("%s" % x)
             logger.error("Trying to Shutdown cleanly regardless")
 

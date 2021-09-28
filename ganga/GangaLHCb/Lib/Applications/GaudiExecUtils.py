@@ -105,9 +105,9 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
         makedirs(full_path)
 
     #First guess a suitable platform for checking out the application
-    verStat, verOut, verErr = _exec_cmd('source /cvmfs/lhcb.cern.ch/lib/LbEnv && lb-sdb-query listPlatforms %s %s' % (myApp, myVer), full_path)
+    verStat, verOut, verErr = _exec_cmd('source /cvmfs/lhcb.cern.ch/lib/LbEnv && lb-run --list-platforms %s/%s' % (myApp, myVer), full_path)
     if verStat != 0 or len(verOut.decode().split('\n'))==0:
-        logger.error("lb-sdb-query listPlatforms %s %s failed!" % (myApp, myVer))
+        logger.error("lb-run --list-platforms %s/%s failed!" % (myApp, myVer))
         raise ApplicationPrepareError(verErr)
 
     platformToUse = verOut.decode().split('\n')[-2]

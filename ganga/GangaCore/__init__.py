@@ -4,6 +4,7 @@ import re
 import inspect
 import getpass
 import subprocess
+from GangaCore.Utility.Config import get_unique_name, get_unique_port
 from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours
 
 # Global Variable to enable Job Sharing mechanism required in GANGA SWAN INTEGRATION.
@@ -28,7 +29,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '8.3.1'
+_gangaVersion = '8.5.1'
 _development = True
 
 # store a path to Ganga libraries
@@ -112,7 +113,7 @@ conf_config.addOption('ReleaseNotes', True, 'Flag to print out the relevent subs
 conf_config.addOption('used_versions_path', '~/.cache/Ganga/', 'Path to the directory to store the file listing the used ganga versions')
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
                  'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=GangaCore.Utility.Config.expandvars)
-conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
+conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML, Database')
 conf_config.addOption('lockingStrategy', 'UNIX', 'Type of locking strategy which can be used. UNIX or FIXED . default = UNIX')
 conf_config.addOption('workspacetype', 'LocalFilesystem',
                  'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
@@ -423,6 +424,7 @@ condor_config = makeConfig('Condor', 'Settings for Condor Batch system')
 
 condor_config.addOption('query_global_queues', True,
                  "Query global condor queues, i.e. use '-global' flag")
+condor_config.addOption('MaxBytes', "1000000", 'Set maximum bytes to display with peek()')
 
 # ------------------------------------------------
 # LSF
@@ -436,7 +438,7 @@ lsf_config.addOption('queue_name', 'LSB_QUEUE', "Name of environment with queue 
 lsf_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 lsf_config.addOption('submit_str', 'cd %s; bsub %s %s %s %s', "String used to submit job to queue")
-lsf_config.addOption('submit_res_pattern', '^Job <(?P<id>\d*)> is submitted to .*queue <(?P<queue>\S*)>',
+lsf_config.addOption('submit_res_pattern', '^Job <(?P<id>\\d*)> is submitted to .*queue <(?P<queue>\\S*)>',
                  "String pattern for replay from the submit command")
 
 lsf_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
@@ -444,7 +446,7 @@ lsf_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for definin
 
 lsf_config.addOption('kill_str', 'bkill %s', "String used to kill job")
 lsf_config.addOption('kill_res_pattern',
-                 '(^Job <\d+> is being terminated)|(Job <\d+>: Job has already finished)|(Job <\d+>: No matching job found)',
+                 '(^Job <\\d+> is being terminated)|(Job <\\d+>: Job has already finished)|(Job <\\d+>: No matching job found)',
                  "String pattern for replay from the kill command")
 
 tempstr = '''
@@ -457,12 +459,16 @@ def filefilter(fn):
   # FILTER OUT Batch INTERNAL INPUT/OUTPUT FILES:
   # 10 digits . any number of digits . err or out
   import re
-  internals = re.compile(r'\d{10}\.\d+.(out|err)')
+  internals = re.compile(r'\\d{10}\\.\\d+.(out|err)')
   return internals.match(fn) or fn == '.Batch.start'
 '''
 lsf_config.addOption('postexecute', tempstr, "String contains commands executing before submiting job to queue")
 lsf_config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
 lsf_config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+
+# illegal substring substition in job names
+lsf_config.addOption('jobnamesubstitution', [], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
+
 
 # ------------------------------------------------
 # PBS
@@ -475,7 +481,7 @@ pbs_config.addOption('queue_name', 'PBS_QUEUE', "Name of environment with queue 
 pbs_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 pbs_config.addOption('submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
-pbs_config.addOption('submit_res_pattern', '^(?P<id>\d*)\.pbs\s*',
+pbs_config.addOption('submit_res_pattern', '^(?P<id>\\d*)\.pbs\\s*',
                  "String pattern for replay from the submit command")
 
 pbs_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
@@ -507,6 +513,10 @@ pbs_config.addOption('jobnameopt', 'N', "String contains option name for name of
 pbs_config.addOption('timeout', 600,
                  'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
+# illegal substring substition in job names
+pbs_config.addOption('jobnamesubstitution', ['[\\s]', '_'], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
+
+
 # ------------------------------------------------
 # SGE
 sge_config = makeConfig('SGE', 'internal SGE command line interface')
@@ -521,14 +531,14 @@ sge_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config va
 # the batch job (ie the same as the default behaviour on LSF at CERN)
 sge_config.addOption('submit_str', 'cd %s; qsub -cwd -S /usr/bin/python -V %s %s %s %s',
                  "String used to submit job to queue")
-sge_config.addOption('submit_res_pattern', 'Your job (?P<id>\d+) (.+)',
+sge_config.addOption('submit_res_pattern', 'Your job (?P<id>\\d+) (.+)',
                  "String pattern for replay from the submit command")
 
 sge_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
 sge_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
 
 sge_config.addOption('kill_str', 'qdel %s', "String used to kill job")
-sge_config.addOption('kill_res_pattern', '(has registered the job +\d+ +for deletion)|(denied: job +"\d+" +does not exist)',
+sge_config.addOption('kill_res_pattern', '(has registered the job +\\d+ +for deletion)|(denied: job +"\\d+" +does not exist)',
                  "String pattern for replay from the kill command")
 
 # From the SGE man page on qsub
@@ -549,6 +559,9 @@ sge_config.addOption('postexecute', '', "String contains commands executing befo
 sge_config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
 sge_config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
+# illegal substring substition in job names
+sge_config.addOption('jobnamesubstitution', ['[\\s:]', '_'], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
+
 # ------------------------------------------------
 # Slurm
 slurm_config = makeConfig('Slurm', 'internal Slurm command line interface')
@@ -561,7 +574,7 @@ slurm_config.addOption('queue_name', 'SLURM_JOB_PARTITION', "Name of environment
 slurm_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 slurm_config.addOption('submit_str', 'cd %s; sbatch %s %s %s %s', "String used to submit job to partition")
-slurm_config.addOption('submit_res_pattern', '^Submitted batch job (?P<id>\d+)\s*',
+slurm_config.addOption('submit_res_pattern', '^Submitted batch job (?P<id>\\d+)\\s*',
                        "String pattern for replay from the submit command")
 
 slurm_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
@@ -618,6 +631,10 @@ slurm_config.addOption('postexecute', tempstr,
 slurm_config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
 slurm_config.addOption('timeout', 600,
                        'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+
+# illegal substring substition in job names
+slurm_config.addOption('jobnamesubstitution', [], "A list containing (1) a regular expression used to substitute illegal substrings in a job name, and (2) the substring to replace such occurences with.")
+
 
 # ------------------------------------------------
 # Mergers
@@ -876,7 +893,9 @@ disp_config.addOption('jobs_status_colours',
                   'submitted': 'fg.orange',
                   'running': 'fg.green',
                   'completed': 'fg.blue',
-                  'failed': 'fg.red'
+                  'failed': 'fg.red',
+                  'completed_frozen' : 'fg.boldgrey',
+                  'failed_frozen' : 'fg.boldgrey'
                   },
                  'colours for jobs status')
 
@@ -961,3 +980,35 @@ reg_config.addOption('DisableLoadCheck', True, 'Disable the checking of recent b
 cred_config = makeConfig('Credentials', 'This configures the credentials singleton')
 cred_config.addOption('CleanDelay', 1, 'Seconds between auto-clean of credentials when proxy externally destroyed')
 cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on disk')
+
+# ------------------------------------------------
+# Database
+db_config = makeConfig("DatabaseConfiguration", "Selection of database for ganga")
+# db_config.addOption("container_rc", expandvars(
+#     None, '~/gangadir/container.rc'), "The location of container.rc file")
+db_config.addOption("controller", "docker",
+                    "Database Controller [native, docker, udocker, singularity]")
+db_config.addOption("baseImage", "mongo", "Docker Image for the database")
+# db_config.addOption("containerName", container_name, "the identifier used to tag the docker container")
+db_config.addOption("username", "default", "username")
+db_config.addOption("password", "default", "password")
+db_config.addOption("host", "localhost", "host")
+# db_config.addOption("port", port, "port")
+# db_config.addOption("dbname", username, "name of database")
+
+# ------------------------------------------------
+# CentralDatabase, add option to interpret username
+db_config = makeConfig("CentralDatabaseConfiguration",
+                       "Selection of central database for ganga")
+db_config.addOption("database", "NotImplementedError",
+                    "others have not been implemented yet")
+db_config.addOption("containerName", "NotImplementedError", "the identifier used to tag the docker container")
+db_config.addOption("username", "NotImplementedError", "username")
+db_config.addOption("password", "NotImplementedError", "password")
+db_config.addOption("host", "NotImplementedError", "host")
+db_config.addOption("port", "NotImplementedError", "port")
+db_config.addOption("dbname", "NotImplementedError", "name of database")
+
+google_config = makeConfig('Google','This controls the OAuth client used for connecting to Google')
+google_config.addOption("client_id", "", "The client ID of the Oauth client that you have created yourself")
+google_config.addOption("client_secret", "", "The client secret of the Oauth client that you have created yourself")

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    
+    {# Quick Statistics Section #}
+    <h3 class="text-gray-800">Quick Statistics</h3>
+    <div class="row">
+
+            
+        <div class="col-lg mb-4">
+        {# Statistics Card - New #}
+            <div class="card border-left-primary shadow h-100 py-2 mx-auto">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">NEW</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ quick_statistics.get('new') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg mb-4">
+        {# Statistics Card - Running #}
+            <div class="card border-left-success shadow h-100 py-2 mx-auto">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">RUNNING</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ quick_statistics.get('running') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg mb-4">
+        {# Statistics Card - Completed #}
+            <div class="card border-left-info shadow h-100 py-2 mx-auto">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">COMPLETED</div>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{ quick_statistics.get('completed') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> 
+
+        <div class="col-lg mb-4">
+        {# Statistics Card - Failed #}
+            <div class="card border-left-warning shadow h-100 py-2 mx-auto">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">FAILED</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ quick_statistics.get('failed') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg mb-4">
+        {# Statistics Card - Killed #}
+            <div class="card border-left-danger shadow h-100 py-2 mx-auto">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">KILLED</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ quick_statistics.get('killed') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        {# Recent Jobs Section #}
+        <div class="col-md-6">
+            <h3 class="text-gray-900">Recent Jobs</h3>
+            <div class="accordion" id="recent-jobs">
+                <div class="list-group">
+                    {% for j in recent_jobs_info|reverse %}
+                        <a href="#" id="job-id-{{ j.get('id') }}"
+                            class="recent-job list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last }}"
+                            data-id="{{ j.get('id') }}"
+                            data-toggle="collapse"
+                            data-target="#collapse-job-id-{{ j.get('id') }}"
+                            aria-expanded="true"
+                            aria-controls="collapse-job-id-{{ j.get('id') }}">
+
+                            {# Job name #}
+                            {{ j.get('id') + '. ' + j.get('name') if j.get('name').strip() != '' else j.get('id') + '. '+ 'Unnamed Job' }}
+                            
+                            
+                            {% if j.get('subjobs') != '0' %}
+                                <span class="badge badge-pill">
+                                     Subjobs
+                                </span>
+                                
+                            {% endif %} 
+                            <span id="job-id-{{ j.get('id') }}-status"
+                                class="badge badge-{{ status_color[j.get('status')] }} badge-pill">
+                                {{ j.get('status') }}
+                            </span>   
+                        </a>
+                        {# Job info after uncollapsing #}
+                        <div id="collapse-job-id-{{ j.get('id') }}"
+                                class="collapse border-left border-right {{ 'border-bottom rounded-bottom' if loop.last }}"
+                            data-parent="#recent-jobs">
+                            <div class="card-body">
+                                <p class="m-0 p-0">fqid: {{ j.get('fqid') }}</p>
+                                <p class="m-0 p-0">subjobs: {{ j.get('subjobs') }}</p>
+                                <p class="m-0 p-0">Job Status: {{ j.get('status') }}</p>
+                                <p class="m-0 p-0">
+                                    application: {{ (j.get('application')|string).split('(')[0] }}
+                                </p>
+                                <p class="m-0 p-0">backend: {{ (j.get('backend')|string).split('(')[0] }}</p>
+                                <p class="m-0 p-0">backend.actualCE: {{ j.get('backend.actualCE') }}</p>
+                                <p class="m-0 p-0">comment: {{ j.get('comment') }}</p>
+                                <p class="m-0 p-0" id="subjob-statuses-job-id-{{ j.get('id') }}">
+                                    subjobs statuses: {{ j.get('subjob_statuses') }}
+                                </p>
+                                
+                               
+                                <a href="{{ url_for('job_page', job_id=j.get('id')) }}"
+                                    class="btn btn-sm btn-primary mt-3">
+                                    Job Info
+                                </a>
+                                
+                                {% if j.get('subjobs') != '0' %}
+                                    <a href="{{ url_for('subjobs_page', job_id=j.get('id')) }}"
+                                        class="btn btn-sm btn-primary mt-3">
+                                        Subjobs Info
+                                    </a>
+                                {% endif %} 
+                                <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-copy">
+                                    Copy Job
+                                </a>
+                                <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-unpin">Unpin Job</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {# Pinned Jobs Section #}
+        <div class="col-md-6 mt-3 mt-md-0">
+            <h3 class="text-gray-900">Pinned Jobs</h3>
+            <div class="accordion" id="pinned-jobs">
+                <div class="list-group">
+                    {% for j in pinned_jobs_info|reverse %}
+                        <a href="#" id="job-id-{{ j.get('id') }}"
+                            class="pinned-job list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last }}"
+                            data-id="{{ j.get('id') }}"
+                            data-toggle="collapse"
+                            data-target="#collapse-pinned-job-id-{{ j.get('id') }}"
+                            aria-expanded="true"
+                            aria-controls="collapse-pinned-job-id-{{ j.get('id') }}">
+                            {# Job name #}
+                            {{ j.get('id') + '. ' + j.get('name') if j.get('name').strip() != '' else j.get('id') + '. '+ 'Unnamed Job' }}
+                            {% if j.get('subjobs') != '0' %}
+                                <span id="job-id-{{ j.get('id') }}-status"
+                                    class="badge badge-pill">
+                                     Subjobs
+                                </span>
+                                
+                            {% endif %} 
+                            <span id="pinned-job-id-{{ j.get('id') }}-status"
+                                class="badge badge-{{ status_color[j.get('status')] }} badge-pill">
+                                {{ j.get('status') }}
+                            </span>
+
+                        </a>
+                        {# Job info when uncollapsed #}
+                        <div id="collapse-pinned-job-id-{{ j.get('id') }}"
+                            class="collapse border-left border-right {{ 'border-bottom rounded-bottom' if loop.last }}"
+                            data-parent="#pinned-jobs">
+                            <div class="card-body">
+                                <p class="m-0 p-0">fqid: {{ j.get('fqid') }}</p>
+                                <p class="m-0 p-0">subjobs: {{ j.get('subjobs') }}</p>
+                                <p class="m-0 p-0">
+                                    application: {{ (j.get('application')|string).split('(')[0] }}
+                                </p>
+                                <p class="m-0 p-0">backend: {{ (j.get('backend')|string).split('(')[0] }}</p>
+                                <p class="m-0 p-0">backend.actualCE: {{ j.get('backend.actualCE') }}</p>
+                                <p class="m-0 p-0">comment: {{ j.get('comment') }}</p>
+                                <p class="m-0 p-0" id="subjob-statuses-pinned-job-id-{{ j.get('id') }}">subjobs statuses: {{ j.get('subjob_statuses') }}</p>
+                                <a href="{{ url_for('job_page', job_id=j.get('id')) }}"
+                                    class="btn btn-sm btn-primary mt-3">
+                                    Job Info
+                                </a>
+                                {% if j.get('subjobs') != '0' %}
+                                    <a href="{{ url_for('subjobs_page', job_id=j.get('id')) }}"
+                                        class="btn btn-sm btn-primary mt-3">
+                                        Subjobs Info
+                                    </a>
+                                {% endif %} 
+
+                                <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-copy">
+                                    Copy Job
+                                </a>
+                                <a href="#" data-id="{{ j.get('id') }}" class="btn btn-sm btn-primary mt-3 btn-unpin">Unpin Job</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-lg"></div>
+    </div>
+    
+{% endblock content %}
+
+{% block footer %}
+    <script defer src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+{% endblock footer %}

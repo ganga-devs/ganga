@@ -1,11 +1,3 @@
-
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from fnmatch import fnmatch
-from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-from GangaCore.Core.exceptions import GangaFileError
-from GangaCore.Utility.logging import getLogger
-from GangaCore.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
-from GangaCore.Utility.Config import getConfig
 import re
 import copy
 import glob
@@ -13,14 +5,24 @@ import os
 import pickle
 import stat
 import logging
+import base64
+
+from fnmatch import fnmatch
+
 import GangaCore.Utility.Config
+
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.Core.exceptions import GangaFileError
+from GangaCore.Utility.logging import getLogger
+from GangaCore.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
+from GangaCore.Utility.Config import getConfig
 
 logger = getLogger()
 regex = re.compile(r'[*?\[\]]')
 
 
 class GoogleFile(IGangaFile):
-
     """
     The GoogleFile outputfile type allows for files to be directly uploaded, downloaded, removed and restored from the GoogleDrive service.
     It can be used as part of a job to output data directly to GoogleDrive, or standalone through the Ganga interface.
@@ -40,6 +42,8 @@ class GoogleFile(IGangaFile):
                  g.put()                               ### The put() method uploads the file to GoogleDrive directly
 
     The GoogleFile outputfile is also compatible with the Dirac backend, making outputfiles from Dirac-run jobs upload directly to GoogleDrive.
+
+    The first time GoogleFile is used for upload or download, an interactive process will start to get authenticated.
     """
 
     _schema = Schema(Version(1, 1),
@@ -82,31 +86,44 @@ class GoogleFile(IGangaFile):
 
             creds = None
 
+            client_secret_encrypted = "VEJ1WFBhbzZ1dXk4amNYcnlYUG82V3Nq"
+            googleconfig = getConfig('Google')
+            client_id = googleconfig['client_id']
+            client_secret = googleconfig['client_secret']
+            
             account_details = {
                 "installed": {
                     "project_id": "ganga-file-uploader",
                     "token_uri": "https://oauth2.googleapis.com/token",
                     "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                     "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                    "client_secret": "-hvpFfe29n5jhUxAXZFlqxxw",
                     "client_id": "893863581947-l7cqdtsa6q9dn8d3cb1lplqsj9odgqia.apps.googleusercontent.com",
                     "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]
                 }
             }
 
+            oauth = account_details['installed']
+            if client_id != "":
+                oauth['client_id'] = client_id
+            if client_secret != "":
+                oauth['client_secret'] = client_secret
+            
             # If there are no (valid) credentials available, let the user log in.
             if not os.path.exists(self.cred_path):
                 if not creds or not creds.valid:
                     if creds and creds.expired and creds.refresh_token:
-                        creds.refresh(Request())
                         logger.info(
                             'Enter you accound details in the browser window prompted')
+                        creds.refresh(Request())
                     else:
-                            flow = InstalledAppFlow.from_client_config(
-                                account_details, 
-                                SCOPES
-                            )                        
-                            creds = flow.run_local_server(port=0)
+                        if not 'client_secret' in account_details['installed']:
+                            logger.warning('If you continue here, you will use the default Oauth client of Ganga. It is recommended to create your own Oauth client and let Ganga use that one. See https://ganga.readthedocs.io/en/latest/UserGuide/GoogleOauth.html for details.')
+                            oauth['client_secret'] = base64.b64decode(client_secret_encrypted).decode("utf-8")
+                        flow = InstalledAppFlow.from_client_config(
+                            account_details, 
+                            SCOPES
+                        )                        
+                        creds = flow.run_local_server(port=0)
 
                     # Save the credentials for the next run
                     with open(self.cred_path, 'wb') as token:

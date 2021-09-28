@@ -1,28 +1,28 @@
-from GangaCore.GPIDev.Adapters.IBackend import IBackend
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+import os
+import re
+import errno
+import subprocess
+import datetime
+import time
+import inspect
+import multiprocessing
+import uuid
+import shutil
+
+from pathlib import Path
+from os.path import join, dirname, abspath, isdir, isfile
 
 import GangaCore.Utility.logic
 import GangaCore.Utility.util
-
-from GangaCore.GPIDev.Lib.File import FileBuffer
-
-import os
-import os.path
-import re
-import errno
-
-import subprocess
-
-import datetime
-import time
-
 import GangaCore.Utility.logging
-
 import GangaCore.Utility.Config
-
 import GangaCore.Utility.Virtualization
 
+from GangaCore.GPIDev.Adapters.IBackend import IBackend
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
+from GangaCore.GPIDev.Lib.File import FileBuffer
+from GangaCore.GPIDev.Lib.File import FileUtils
 
 logger = GangaCore.Utility.logging.getLogger()
 config = GangaCore.Utility.Config.getConfig('Local')
@@ -38,9 +38,10 @@ class Localhost(IBackend):
                                      'exitcode': SimpleItem(defvalue=None, typelist=[int, None], protected=1, copyable=0, doc='Process exit code.'),
                                      'workdir': SimpleItem(defvalue='', protected=1, copyable=0, doc='Working directory.'),
                                      'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Hostname where the job was submitted.'),
-                                     'wrapper_pid': SimpleItem(defvalue=-1, protected=1, copyable=0, hidden=1, doc='(internal) process id of the execution wrapper'),
+                                     'wrapper_pid': SimpleItem(defvalue=-1, typelist=['int', 'list'], protected=1, copyable=0, hidden=1, doc='(internal) process id(s) of the execution wrapper(s)'),
                                      'nice': SimpleItem(defvalue=0, doc='adjust process priority using nice -n command'),
-                                     'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel')
+                                     'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel'),
+                                     'batchsize': SimpleItem(defvalue=-1, typelist=[int], doc='Run a maximum of this number of subjobs in parallel. If value is negative use number of available CPUs')
                                      })
     _category = 'backends'
     _name = 'Local'
@@ -48,19 +49,49 @@ class Localhost(IBackend):
     def __init__(self):
         super(Localhost, self).__init__()
 
-    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
-        """ Overload master_submit to avoid parallel submission with Interactive backend"""
-        return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, self.force_parallel)
 
-    def submit(self, jobconfig, master_input_sandbox):
-        prepared = self.preparejob(jobconfig, master_input_sandbox)
-        self.run(prepared)
+    def prepare_master_script(self, rjobs):
+        job = self.getJobObject()
+        wrkspace = job.getInputWorkspace()
+        if not job.splitter is None:
+            bs = self.batchsize
+            if (bs < 0):
+                bs = multiprocessing.cpu_count()
+                logger.info(f'Will run up to {bs} subjobs in parallel')
+
+
+            script_location = join(dirname(abspath(inspect.getfile(inspect.currentframe()))),
+                                                            'LocalHostExec_batch.py.template')
+            script = FileUtils.loadScript(script_location, '')
+            script = script.replace('###BATCHSIZE###', str(bs))
+            script = script.replace('###SUBJOBLIST###', str([str(sj.id) for sj in rjobs]))
+            script = script.replace('###WORKDIR###', repr(dirname(dirname(wrkspace.getPath()))))
+
+            scriptname = f'__jobscript__{uuid.uuid4()}' 
+            wrkspace.writefile(FileBuffer(scriptname, script), executable=1)
+        else:
+            scriptname = '__jobscript__'
+        return wrkspace.getPath(scriptname)
+
+    
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig,keep_going=False):
+
+        rcode = super().master_submit(rjobs, subjobconfigs,
+                                      masterjobconfig, keep_going, self.force_parallel)
+
+        scriptPath = self.prepare_master_script(rjobs)
+        self.run(scriptPath)
+        
         return 1
 
-    def resubmit(self):
+    
+    def submit(self, jobconfig, master_input_sandbox):
         job = self.getJobObject()
-        import shutil
+        prepared = self.preparejob(jobconfig, master_input_sandbox)
+        self.actualCE = GangaCore.Utility.util.hostname()
+        return 1
 
+    def cleanworkdir(self):
         if self.workdir == '':
             import tempfile
             self.workdir = tempfile.mkdtemp(dir=config['location'])
@@ -75,19 +106,43 @@ class Localhost(IBackend):
         try:
             os.mkdir(self.workdir)
         except Exception as x:
-            if not os.path.isdir(self.workdir):
+            if not isdir(self.workdir):
                 logger.error('cannot make the workdir %s, %s', self.workdir, str(x))
                 return 0
+
+    def master_resubmit(self, rjobs):
+        scriptPath = self.prepare_master_script(rjobs)
+        for sj in rjobs:
+            sj.updateStatus('submitted')
+        self.run(scriptPath)
+
+        master = self.getJobObject().master
+        if master is not None:
+            master.updateMasterJobStatus()
+
+        return 1
+        
+        
+    def resubmit(self):
+        self.cleanworkdir()
+        job = self.getJobObject()
         return self.run(job.getInputWorkspace().getPath('__jobscript__'))
 
     def run(self, scriptpath):
         try:
-            process = subprocess.Popen(["python2", scriptpath, 'subprocess'], stdin=subprocess.DEVNULL)
+            process = subprocess.Popen(["python3", scriptpath, 'subprocess'], stdin=subprocess.DEVNULL, preexec_fn=os.setsid)
         except OSError as x:
             logger.error('cannot start a job process: %s', str(x))
             return 0
-        self.wrapper_pid = process.pid
-        self.actualCE = GangaCore.Utility.util.hostname()
+        oldid = self.wrapper_pid
+        if type(oldid) == int:
+            oldid = [oldid]
+            if oldid[0] == -1:
+                self.wrapper_pid = [process.pid]
+                self.actualCE = GangaCore.Utility.util.hostname()
+                return 1
+
+        self.wrapper_pid = oldid+[process.pid]
         return 1
 
     def peek(self, filename="", command=""):
@@ -104,7 +159,7 @@ class Localhost(IBackend):
         """
         job = self.getJobObject()
         topdir = self.workdir.rstrip(os.sep)
-        path = os.path.join(topdir, filename).rstrip(os.sep)
+        path = join(topdir, filename).rstrip(os.sep)
         job.viewFile(path=path, command=command)
         return None
 
@@ -133,7 +188,7 @@ class Localhost(IBackend):
             return None
 
         try:
-            p = os.path.join(j.outputdir, '__jobstatus__')
+            p = join(j.outputdir, '__jobstatus__')
             logger.debug("Opening output file at: %s", p)
             f = open(p)
         except IOError:
@@ -164,8 +219,8 @@ class Localhost(IBackend):
         j = self.getJobObject()
         # check for file. if it's not there don't bother calling getSateTime
         # (twice!)
-        p = os.path.join(j.outputdir, '__jobstatus__')
-        if not os.path.isfile(p):
+        p = join(j.outputdir, '__jobstatus__')
+        if not isfile(p):
             logger.error('unable to open file %s', p)
             return None
 
@@ -183,7 +238,6 @@ class Localhost(IBackend):
         import GangaCore.Core.Sandbox as Sandbox
         from GangaCore.GPIDev.Lib.File import File
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
-        import inspect
 
         virtualization = job.virtualization
 
@@ -211,8 +265,7 @@ class Localhost(IBackend):
         import tempfile
         workdir = tempfile.mkdtemp(dir=config['location'])
 
-        import inspect
-        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
+        script_location = join(dirname(abspath(inspect.getfile(inspect.currentframe()))),
                                                         'LocalHostExec.py.template')
 
         from GangaCore.GPIDev.Lib.File import FileUtils
@@ -252,50 +305,67 @@ class Localhost(IBackend):
 
         return scriptPath
 
-    def kill(self):
-        import os
-        import signal
 
+    def master_kill(self):
         job = self.getJobObject()
 
-        ok = True
-        try:
-            # kill the wrapper script
-            # bugfix: #18178 - since wrapper script sets a new session and new
-            # group, we can use this to kill all processes in the group
-            os.kill(-self.wrapper_pid, signal.SIGKILL)
-        except OSError as x:
-            logger.warning('while killing wrapper script for job %s: pid=%d, %s', job.getFQID('.'), self.wrapper_pid, str(x))
-            ok = False
+        # Kill the wrapper that manages the subjobs if it is a master job
+        if len(job.subjobs):
+            self.kill()
 
-        # waitpid to avoid zombies
-        try:
-            ws = os.waitpid(self.wrapper_pid, 0)
-        except OSError as x:
-            logger.warning('problem while waitpid %s: %s', job.getFQID('.'), x)
+        return super().master_kill()
+    
+    def kill(self):
+        job = self.getJobObject()
 
+        pids = self.wrapper_pid
+        if type(pids) == int:
+            pids = [pids]
+
+        if pids[0] < 0:
+            return 1
+
+        for wrapper_pid in pids:
+            
+            try:
+                groupid = os.getpgid(wrapper_pid)
+                logger.debug(f"Wrapper for {job.getFQID('.')} has gid {groupid} and pid {self.wrapper_pid}")
+                subprocess.run(['kill', '-9', f'-{groupid}'])
+            except OSError as x:
+                logger.warning('While killing wrapper script for job %s: pid=%d, %s', job.getFQID('.'), self.wrapper_pid, str(x))
+
+            # waitpid to avoid zombies. This always returns an error
+            try:
+                ws = os.waitpid(wrapper_pid, 0)
+            except OSError:
+                pass
+
+        self.wrapper_pid = -1
+            
         from GangaCore.Utility.files import recursive_copy
 
-        for fn in ['stdout', 'stderr', '__syslog__']:
-            try:
-                recursive_copy(
-                    os.path.join(self.workdir, fn), job.getOutputWorkspace().getPath())
-            except Exception as x:
-                logger.info('problem retrieving %s: %s', fn, x)
+        if self.workdir:
+            for fn in ['stdout', 'stderr', '__syslog__']:
+                try:
+                    recursive_copy(
+                        join(self.workdir, fn), job.getOutputWorkspace().getPath())
+                except Exception as x:
+                    logger.info('problem retrieving %s: %s', fn, x)
 
-        self.remove_workdir()
+            self.remove_workdir()
         return 1
 
     def remove_workdir(self):
-        if config['remove_workdir']:
+        if config['remove_workdir'] and self.workdir:
             import shutil
             try:
-                logger.info("removing: %s" % self.workdir)
+                logger.debug("removing: %s" % self.workdir)
                 shutil.rmtree(self.workdir)
             except OSError as x:
                 logger.warning('problem removing the workdir %s: %s', str(self.id), str(x))
                 shutil.rmtree(self.workdir, ignore_errors=True)
 
+                
     @staticmethod
     def updateMonitoringInformation(jobs):
 
@@ -311,17 +381,25 @@ class Localhost(IBackend):
             else:
                 return int(m.group('exitcode'))
 
-        def get_pid(f):
+            
+        def get_pids(f):
             import re
             with open(f) as statusfile:
                 stat = statusfile.read()
-            m = re.compile(r'^PID: (?P<pid>\d*)', re.M).search(stat)
+            m_pid = re.compile(r'^PID: (?P<pid>\d*)', re.M).search(stat)
+            m_wrapper = re.compile(r'^WRAPPER: (?P<pid>\d*)', re.M).search(stat)
 
-            if m is None:
-                return None
-            else:
-                return int(m.group('pid'))
+            pid = None
+            wrapper = None
+            
+            if m_pid:
+                pid = int(m_pid.group('pid'))
+            if m_wrapper:
+                wrapper = int(m_wrapper.group('pid'))
+                
+            return pid, wrapper
 
+        
         logger.debug('local ping: %s', str(jobs))
 
         for j in jobs:
@@ -329,9 +407,11 @@ class Localhost(IBackend):
 
             # try to get the application exit code from the status file
             try:
-                statusfile = os.path.join(outw.getPath(), '__jobstatus__')
+                statusfile = join(outw.getPath(), '__jobstatus__')
                 if j.status == 'submitted':
-                    pid = get_pid(statusfile)
+                    pid, wrapper_pid = get_pids(statusfile)
+                    if wrapper_pid:
+                        j.backend.wrapper_pid = wrapper_pid
                     if pid:
                         j.backend.id = pid
                         #logger.info('Local job %s status changed to running, pid=%d',j.getFQID('.'),pid)
@@ -347,24 +427,6 @@ class Localhost(IBackend):
                 import traceback
                 traceback.print_exc()
                 raise x
-
-            # check if the exit code of the wrapper script is available (non-blocking check)
-            # if the wrapper script exited with non zero this is an error
-            try:
-                ws = os.waitpid(stripProxy(j.backend).wrapper_pid, os.WNOHANG)
-                if not GangaCore.Utility.logic.implies(ws[0] != 0, ws[1] == 0):
-                    # FIXME: for some strange reason the logger DOES NOT LOG (checked in python 2.3 and 2.5)
-                    # print 'logger problem', logger.name
-                    # print 'logger',logger.getEffectiveLevel()
-                    logger.critical('wrapper script for job %s exit with code %d', str(j.getFQID('.')), ws[1])
-                    logger.critical('report this as a bug at https://github.com/ganga-devs/ganga/issues/')
-                    j.updateStatus('failed')
-            except OSError as x:
-                if x.errno != errno.ECHILD:
-                    logger.warning('cannot do waitpid for %d: %s', stripProxy(j.backend).wrapper_pid, str(x))
-
-            # if the exit code was collected for the application get the exit
-            # code back
 
             if not exitcode is None:
                 # status file indicates that the application finished

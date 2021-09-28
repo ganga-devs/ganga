@@ -1,5 +1,5 @@
 #!/bin/bash
-source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh
+source /cvmfs/lhcb.cern.ch/lib/LbEnv
 export GANGA_CONFIG_PATH=GangaLHCb/LHCb.ini
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cvmfs/sft.cern.ch/lcg/releases/LCG_97python3/Python/3.7.6/x86_64-centos7-gcc9-opt/lib
 /cvmfs/sft.cern.ch/lcg/releases/LCG_97python3/Python/3.7.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv venv

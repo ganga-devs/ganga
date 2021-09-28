@@ -46,7 +46,7 @@ class FakeShell(object):
         pass
 
 
-@pytest.yield_fixture(scope='function')
+@pytest.fixture(scope='function')
 def fake_shell(mocker):
     s = mocker.patch('GangaCore.GPIDev.Credentials.VomsProxy.VomsProxyInfo.shell', FakeShell())
     mocker.patch('GangaCore.GPIDev.Adapters.ICredentialInfo.os.path.exists', return_value=True)

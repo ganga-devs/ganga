@@ -99,7 +99,7 @@ else:
         else:
             print('Requested directory %s is not available and no bind will be made to container' % k)
     options = options + virtualization_options
-    execmd = [binary, '--quiet', 'run', '--rm', '--nosysdirs', '--volume', workdir+":"+"/work_dir"] + options + [virtualization_image] + execmd
+    execmd = [binary, '--quiet', 'run', '--rm', '--volume', workdir+":"+"/work_dir"] + options + [virtualization_image] + execmd
 
 """
         script = script.replace('###VIRTUALIZATION###',extra)

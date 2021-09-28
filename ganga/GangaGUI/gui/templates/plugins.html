@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    
+    <h3 class="text-gray-900">Plugins</h3>
+    <hr>
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="accordion" id="config">
+                <div class="list-group">
+                    {% for category in plugins_info %}
+                        
+                        <a href="#"
+                            class="list-group-item d-flex justify-content-between font-weight-medium align-items-center list-group-item-action {{ 'rounded-bottom' if loop.last }}"
+                            data-toggle="collapse"
+                            data-target="#collapse-plugin-{{ category }}" aria-expanded="true"
+                            aria-controls="collapse-plugin-{{ category }}">
+                            {{ category }}
+                        </a>
+                        <div id="collapse-plugin-{{ category }}"
+                            class="collapse border-left border-right {{ 'border-bottom rounded-bottom' if loop.last }}"
+                            data-parent="#config">
+                            <div class="card-body">
+                                <ul>
+                                    {% for plugin in plugins_info[category] %}
+                                        <li><a href="{{ url_for('plugin_page', plugin_name=plugin) }}">{{ plugin }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+         
+    
+{% endblock content %}
+

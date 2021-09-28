@@ -5,6 +5,25 @@ Ganga can be instructed to do many things after a job completes. Each object can
 field of the ``Job`` object and they will be carried out in order. The available Post-Processing options are
 detailed below:
 
+Try it out
+----------
+When using the prime factorisation example from the Tutorial plugin (:doc:`TutorialPlugin`) it was not satisfactory that the individual prime factors were distributed over different files. A simple ``TextMerger`` can collate the numbers into a single file.
+
+.. code-block:: python
+
+    j = Job(application = PrimeFactorizer(number=268709474635016474894472456), \
+            inputdata = PrimeTableDataset(table_id_lower=1, table_id_upper=30), \
+            splitter = PrimeFactorizerSplitter(numsubjobs=10), \
+	    postprocessors = TextMerger(files=['factors.dat']))
+
+When the job has finished, there will now be a single file that we can look at
+
+.. code-block:: python
+
+    j.peek('factors.dat')
+
+See below for how a ``CustomMerger`` could be used to provide a more unified output.
+
 Mergers
 -------
 

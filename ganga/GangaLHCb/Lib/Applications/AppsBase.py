@@ -225,8 +225,8 @@ class AppName(Gaudi):
             except Exception as err:
                 logger.debug("path Error:\n%s" % str(err))
                 debug_dir = tempfile.mkdtemp()
-
-            messages = err.message.split('###SPLIT###')
+            err_message = err.args[0]
+            messages = err_message.split('###SPLIT###')
             if len(messages) is 2:
                 stdout = open(debug_dir + '/gaudirun.stdout', 'w')
                 stderr = open(debug_dir + '/gaudirun.stderr', 'w')
@@ -239,7 +239,7 @@ class AppName(Gaudi):
                       'found in %s and %s respectively . ' % (stdout.name, stderr.name)
             else:
                 f = open(debug_dir + '/gaudirun.out', 'w')
-                f.write(err.message)
+                f.write(err_message)
                 f.close()
                 msg = 'Unable to parse job options! Please check options ' \
                       'files and extraopts. The output from gaudirun.py can be ' \

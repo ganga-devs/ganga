@@ -2,6 +2,7 @@
 import os
 import inspect
 import GangaCore.Utility.Virtualization
+from GangaCore import _gangaVersion
 from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
 from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -88,14 +89,28 @@ class ExeDiracRTHandler(IRuntimeHandler):
         logger.debug("Script is: %s" % str(contents))
 
         from os.path import abspath, expanduser
-
         for this_file in job.inputfiles:
             if isinstance(this_file, LocalFile):
                 for name in this_file.getFilenameList():
+                    if not os.path.exists(abspath(expanduser(name))):
+                        raise GangaFileError("LocalFile input file %s does not exist!" % name)
                     inputsandbox.append(File(abspath(expanduser(name))))
+            if isinstance(this_file, DiracFile):
+                if not this_file.getReplicas():
+                    raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % this_file.lfn)
 
         dirac_outputfiles = dirac_outputfile_jdl(outputfiles, config['RequireDefaultSE'])
 
+        #If we are doing virtualisation with a CVMFS location, check it is available
+        if job.virtualization and isinstance(job.virtualization.image, str):
+            if 'cvmfs' == job.virtualization.image.split('/')[1]:
+                tag_location = '/'+job.virtualization.image.split('/')[1]+'/'+job.virtualization.image.split('/')[2]+'/'
+                if 'Tag' in job.backend.settings:
+                    job.backend.settings['Tag'].append(tag_location)
+                else:
+                    job.backend.settings['Tag'] = [tag_location]
+
+        
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
         dirac_script = script_generator(diracAPI_script_template(),
@@ -109,7 +124,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         # ' '.join([str(arg) for arg in app.args]),
                                         EXE_ARG_STR='',
                                         EXE_LOG_FILE='Ganga_Executable.log',
-                                        ENVIRONMENT=None,  # app.env,
+                                        ENVIRONMENT=app.env,
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),
@@ -117,12 +132,15 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         OUTPUT_PATH="",  # job.fqid,
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
+                                        MIN_PROCESSORS=job.backend.minProcessors,
+                                        MAX_PROCESSORS=job.backend.maxProcessors,
                                         PLATFORM=platform,
                                         REPLICATE='True' if config['ReplicateOutputData'] else '',
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
-                                        INPUT_SANDBOX='##INPUT_SANDBOX##'
+                                        INPUT_SANDBOX='##INPUT_SANDBOX##',
+                                        GANGA_VERSION=_gangaVersion,
                                         )
 
         #logger.info("dirac_script: %s" % dirac_script)

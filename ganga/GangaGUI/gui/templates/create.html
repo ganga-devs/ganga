@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-2 d-flex align-items-center justify-content-between">
+                <h3 class="h3 mb-0 text-gray-900">Load Job</h3>
+            </div>
+            <form method=post enctype=multipart/form-data>
+                <div class="input-group mb-3">
+                    <div class="custom-file">
+                        <input type="file" name="loadfile" class="custom-file-input" id="loadfile-input">
+                        <label class="custom-file-label" id="loadfile-input-label" for="loadfile-input"
+                                   aria-describedby="loadfileInputAddon">Choose file</label>
+                    </div>
+                    <div class="input-group-append">
+                        <input class="input-group-text" id="loadfileInputAddon" type=submit value=Upload>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-2 d-flex align-items-center justify-content-between">
+                <h3 class="h3 mb-0 text-gray-900">Run File</h3><a href="{{ url_for('runfile_page') }}">Quick Create Run File</a>
+            </div>
+            <form method=post enctype=multipart/form-data>
+                <div class="input-group mb-3">
+                    <div class="custom-file">
+                        <input type="file" name="runfile" class="custom-file-input" id="runfile-input">
+                        <label class="custom-file-label" for="runfile-input" id="runfile-input-label"
+                                   aria-describedby="runfileInputAddon">Choose file</label>
+                    </div>
+                    <div class="input-group-append">
+                        <input class="input-group-text" id="runfileInputAddon" type=submit value=Upload>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <hr class="my-3">
+    <div class="mb-2 d-flex align-items-center justify-content-between">
+        <h3 class="h3 mb-0 text-gray-900">From Templates</h3><a href="{{ url_for('templates_page') }}">Explore All Templates</a>
+    </div>
+    <div class="row">
+        {% for t in templates_info %}
+            <div class="col-md-4 mb-4">
+                <div class="card" id="template-card" data-template_id="{{ t.get('id') }}">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ t.get('name') if t.get('name').strip() != '' else 'Unnamed Template' }}</h6>
+                        <hr class="my-1">
+                        <p class="m-0 p-0">id: {{ t.get('id') }}</p>
+                        <p class="m-0 p-0">application: {{ t.get('application').split('(')[0] }}</p>
+                        <p class="m-0 p-0">backend: {{ t.get('backend').split('(')[0] }}</p>
+                        <p class="m-0 p-0">backend.actualCE: {{ t.get('backend.actualCE') }}</p>
+                        <p class="m-0 p-0">comment: {{ t.get('comment') }}</p>
+                        <a href="#" data-id="{{ t.get('id') }}" class="btn btn-sm btn-block btn-primary mt-2 btn-create">
+                                Create
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock content %}
+
+{% block footer %}
+    <script defer src="{{ url_for('static', filename='js/create.js') }}"></script>
+{% endblock footer %}

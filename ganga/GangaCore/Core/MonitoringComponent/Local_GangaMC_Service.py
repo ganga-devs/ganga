@@ -580,11 +580,7 @@ class JobRegistry_Monitor(GangaThread):
             # synchronize the main loop since we can get disable requests
             with self.__mainLoopCond:
 
-                log.debug("steps: %s" % str(self.steps))
-                log.debug("%s" % str(self.registry_slice))
-
-                log.debug("Monitoring loop __mainLoopCond")
-                log.debug('Monitoring loop lock acquired. Running loop')
+                log.debug('Monitoring loop lock acquired. Running loop: Steps %s' % str(self.steps))
                 # we are blocked here while the loop is disabled
                 while not self.enabled and self.steps <= 0:
                     log.debug("Not enabled")
@@ -647,18 +643,14 @@ class JobRegistry_Monitor(GangaThread):
             return
 
         for cbHookFunc in self.callbackHookDict.keys():
-
-            log.debug("\n\nProcessing Function: %s" % cbHookFunc)
-
             if cbHookFunc in self.callbackHookDict:
                 cbHookEntry = self.callbackHookDict[cbHookFunc][1]
             else:
                 log.debug("Monitoring KeyError: %s" % str(cbHookFunc))
                 continue
 
-            log.debug("cbHookEntry.enabled: %s" % str(cbHookEntry.enabled))
-            log.debug("(time.time() - cbHookEntry._lastRun): %s" % str((time.time() - cbHookEntry._lastRun)))
-            log.debug("cbHookEntry.timeout: %s" % str(cbHookEntry.timeout))
+            
+            
 
             if cbHookEntry.enabled and (time.time() - cbHookEntry._lastRun) >= cbHookEntry.timeout:
                 log.debug("Running monitoring callback hook function %s(**%s)" %(cbHookFunc, cbHookEntry.argDict))

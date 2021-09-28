@@ -40,9 +40,6 @@ class TestSubjobs(GangaUnitTest):
         j.backend = Local()
         j.submit()
 
-        sleep_until_state(j, None, 'running')
-        assert j.status == 'running'
-
         j.subjobs(0).kill()
         assert j.subjobs(0).status == 'killed'
         assert j.subjobs(1).status != 'killed'
@@ -81,3 +78,18 @@ class TestSubjobs(GangaUnitTest):
             assert sj.application.args == ['400']
             assert stripProxy(sj)._getRoot() is stripProxy(j)
             assert stripProxy(sj.application)._getRoot() is stripProxy(j)
+
+    def testParallelSubJobs(self):
+        from GangaCore.GPI import Job, ArgSplitter, Local, Executable
+        sleeptime = 5
+        nsubjobs = 20
+        batch = 10
+        j = Job(splitter=ArgSplitter(args=[ [sleeptime] for x in range(nsubjobs)]),
+                application=Executable(exe='sleep'),
+                backend=Local(batchsize=batch))
+        j.submit()
+        import datetime
+        from GangaTest.Framework.utils import sleep_until_completed
+        assert sleep_until_completed(j,60)
+        runtime = j.time.timestamps['backend_final']-j.time.timestamps['backend_running']
+        assert  runtime < datetime.timedelta(seconds=int(nsubjobs*sleeptime/batch + 10))

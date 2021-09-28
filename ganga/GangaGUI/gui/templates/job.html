@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container-fluid px-md-5">
+        <div class="row d-flex justify-content-center align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="card" id="job-info" data-job_id="{{ job_info.get('id') }}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="d-flex align-items-center">
+                                {{ job_info.get('name') if (job_info.get('name')|string).strip() != '' else 'Unnamed Job' }}
+                                <small>
+                                    <span id="job-id-{{ job_info.get('id') }}-status"
+                                          class="badge badge-{{ status_color[job_info.get('status')] }} badge-pill ml-2">{{ job_info.get('status') }}</span>
+                                </small>
+                            </h5>
+                            <div>
+                                <a href="#" id="btn-copy" data-id="{{ job_info.get('id') }}" class="btn btn-sm btn-primary">Copy</a>
+                                <a href="#" id="btn-pin" data-id="{{ job_info.get('id') }}" class="btn btn-sm btn-primary">Pin Job</a>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <p class="m-0 p-0">fqid: {{ job_info.get('fqid') }}</p>
+                        <p class="m-0 p-0">subjobs: {{ job_info.get('subjobs') }}</p>
+                        <p class="m-0 p-0">application: {{ (job_info.get('application')|string).split('(')[0] }}</p>
+                        <p class="m-0 p-0">backend: {{ (job_info.get('backend')|string).split('(')[0] }}</p>
+                        <p class="m-0 p-0">backend.actualCE: {{ job_info.get('backend.actualCE') }}</p>
+                        <p class="m-0 p-0">comment: {{ job_info.get('comment') }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex my-2">
+                    <a href="#" class="btn btn-info mr-1 w-100" data-toggle="modal" data-target="#stdout-modal">Peek
+                        (stdout)</a>
+                    <a href="#" class="btn btn-info ml-1 w-100" data-toggle="modal" data-target="#stderr-modal">Peek
+                        (stderr)</a>
+                </div>
+                <div class="d-flex my-2">
+                    <a href="#" id="btn-freeze" data-id="{{ job_info.get('id') }}" class="btn btn-primary w-100">Freeze
+                        Job</a>
+                    <a href="#" id="btn-unfreeze" data-id="{{ job_info.get('id') }}" class="btn btn-warning mx-2 w-100">UnFreeze
+                        Job</a>
+                </div>
+
+                <div class="d-flex my-2">
+                    <a href="#" id="btn-submit" data-id="{{ job_info.get('id') }}" class="btn btn-primary w-100">Submit
+                        Job</a>
+                    <a href="#" id="btn-kill" data-id="{{ job_info.get('id') }}" class="btn btn-warning mx-2 w-100">Kill
+                        Job</a>
+                    <a href="#" id="btn-remove" data-id="{{ job_info.get('id') }}" class="btn btn-danger w-100">Remove
+                        Job</a>
+                </div>
+                <div class="d-flex my-2">
+                    <a href="#" class="btn btn-dark w-100" data-toggle="modal" data-target="#job-info-modal">Job Info</a>
+                    <a href="{{ url_for('job_edit', job_id=job_info.get('id')) }}" class="btn btn-dark mx-2 w-100">Edit
+                        Job</a>
+                    <a href="{{ url_for('job_export', job_id=job_info.get('id')) }}" class="btn btn-dark w-100">Download</a>
+                </div>
+                <a href="{{ url_for('job_browse', job_id=job_info.get('id')) }}" class="btn btn-block btn-primary">Browse Files</a>
+            </div>
+            <div class="container-fluid mt-4">
+                <div class="row">
+                    <div class="col-md-6 mb-3 d-flex flex-column">
+                        <h3>Job Attributes</h3>
+                        <div class="card flex-grow-1" style="max-height: 500px; overflow: scroll">
+                            <div class="card-body pb-1">
+                                <form>
+                                    <div class="form-group">
+                                        <label for="attribute-select">Select Attribute</label>
+                                        <select data-id="{{ job_info.get('id') }}" class="custom-select"
+                                                id="attribute-select">
+                                            {% for attribute_action in attribute_actions %}
+                                                <option value="{{ attribute_action }}">{{ attribute_action }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </form>
+                                <hr class="my-1">
+                                <pre id="attribute-info-box" class="pt-3"></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h3>Job Actions</h3>
+                        <div class="card">
+                            <div class="card-body">
+                                <div>
+                                    <div class="form-group">
+                                        <label for="action-select">Select Action</label>
+                                        <select class="custom-select" id="action-select">
+                                            <optgroup label="Methods">
+                                                {% for action in method_actions %}
+                                                    <option value="{{ action }}">{{ action }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                            <optgroup label="Attributes">
+                                                {% for action in attribute_actions %}
+                                                    <option value="{{ action }}">{{ action }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="action-argument">Arguments (if any)</label>
+                                        <input type="text" class="form-control" id="action-argument">
+                                    </div>
+                                    <button id="btn-execute" data-id="{{ job_info.get('id') }}"  class="btn btn-primary btn-block">Execute
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col">
+                        <div class="mb-2 d-flex align-items-center justify-content-between">
+                            <h3 class="my-0 d-inline-block">Subjobs</h3><a href="{{ url_for("subjobs_page", job_id=job_info.get('id')) }}">Explore All Subjobs</a>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg">
+                                {# Statistics Card - Running #}
+                                <div class="card mx-auto">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-center">Running</h5>
+                                        <hr class="my-1">
+                                        <h2 class="text-center mb-n2" id="stat-running"></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                {# Statistics Card - Failed + Killed #}
+                                <div class="card mx-auto my-2 my-lg-0">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-center">Failed + Killed</h5>
+                                        <hr class="my-1">
+                                        <h2 class="text-center mb-n2"
+                                            id="stat-failed-killed"></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                {# Statistics Card - Completing #}
+                                <div class="card mx-auto">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-center">Completing</h5>
+                                        <hr class="my-1">
+                                        <h2 class="text-center mb-n2"
+                                            id="stat-completing"></h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg">
+                                {# Statistics Card - Failed #}
+                                <div class="card mx-auto my-2 my-lg-0">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-center">Completed</h5>
+                                        <hr class="my-1">
+                                        <h2 class="text-center mb-n2"
+                                            id="stat-completed"></h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Job Info Modal -->
+    <div class="modal fade" id="job-info-modal" tabindex="-1" role="dialog" aria-labelledby="job-info-modal-label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="job-info-modal-label">Job #{{ job_info.get('id') }} Info</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre>{{ full_print_info if full_print_info != None }}</pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- stdout Modal -->
+    <div class="modal fade" id="stdout-modal" tabindex="-1" role="dialog" aria-labelledby="stdout-modal-label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stdout-modal-label">Job #{{ job_info.get('id') }} stdout {{ " - File does not exist" if stdout == None }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ stdout if stdout != None }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- stderr Modal -->
+    <div class="modal fade" id="stderr-modal" tabindex="-1" role="dialog" aria-labelledby="stderr-modal-label"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stderr-modal-label">Job #{{ job_info.id }} stderr {{ " - File does not exist" if stderr == None }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ stderr if stderr != None }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block footer %}
+    <script defer src="{{ url_for('static', filename='js/job.js') }}"></script>
+{% endblock footer %}

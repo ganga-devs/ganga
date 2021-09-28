@@ -190,7 +190,7 @@ def getOutputDataInfo(id, pipe_out=True):
                 continue
             rp = dirac.getReplicas(lfn)
             if rp.get('OK', False) and lfn in rp.get('Value', {'Successful': {}})['Successful']:
-                ret[file_name]['LOCATIONS'] = rp['Value']['Successful'][lfn].keys()
+                ret[file_name]['LOCATIONS'] = list(rp['Value']['Successful'][lfn])
     return ret
 
 
@@ -261,8 +261,8 @@ def finished_job(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDi
 def finaliseJobs(inputDict, statusmapping, downloadSandbox=True, oversized=True, noJobDir=True):
     ''' A function to get the necessaries to finalise a whole bunch of jobs. Returns a dict of job information and a dict of stati.'''
     returnDict = {}
-    statusList = dirac.getJobStatus(inputDict.keys())
-    for diracID in inputDict.keys():
+    statusList = dirac.getJobStatus(list(inputDict))
+    for diracID in inputDict:
         returnDict[diracID] = {}
         returnDict[diracID]['cpuTime'] = normCPUTime(diracID, pipe_out=False)
         if downloadSandbox:
@@ -367,7 +367,7 @@ def monitorJobs(job_ids, status_mapping, pipe_out=True):
                 state_job_status[update_status] = []
             state_job_status[update_status].append(job_id)
     state_info = {}
-    for this_status, these_jobs in state_job_status.iteritems():
+    for this_status, these_jobs in state_job_status.items():
         state_info[this_status] = getBulkStateTime(these_jobs, this_status, pipe_out=False)
 
     return (status_info, state_info)
@@ -404,7 +404,11 @@ def getServicePorts():
     ''' Get the service ports from the DiracAdmin based upon the Dirac config'''
     return DiracAdmin().getServicePorts()
 
-
+@diracCommand
+def isSEArchive(se):
+    ''' Ask if the specified SE is for archive '''
+    from DIRAC.DataManagementSystem.Utilities.DMSHelpers import DMSHelpers
+    return DMSHelpers().isSEArchive(se)
 
 @diracCommand
 def getSitesForSE(se):
@@ -475,7 +479,7 @@ def listFiles(baseDir, minAge = None):
     emptyDirs = []
 
     while len(activeDirs) > 0:
-        currentDir = activeDirs.pop()	
+        currentDir = activeDirs.pop()
         res = fc.listDirectory(currentDir, withMetaData, timeout = 360)
         if not res['OK']:
             return "Error retrieving directory contents", "%s %s" % ( currentDir, res['Message'] )
@@ -495,7 +499,7 @@ def listFiles(baseDir, minAge = None):
                     fileOK = False
                     if (not withMetaData) or files[filename]['MetaData']['CreationDate'] < cutoffTime:
                         fileOK = True
-		    if not fileOK:
+                    if not fileOK:
                         files.pop(filename)
                 allFiles += sorted(files)
 

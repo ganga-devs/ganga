@@ -7,4 +7,5 @@ pytest-mock
 unittest2
 coverage
 pygments
-mock
+pymongo
+docker

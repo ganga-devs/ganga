@@ -114,6 +114,24 @@ class SubJobXMLList(GangaObject):
         """
         self._cachedJobs = obj
 
+    def appendJobs(self, job_dict, parent):
+        """
+        A method to append jobs to an existing SubJobXMLList
+        Args:
+            job_dict (dict): A dict of integer job keys and job items to append
+            parent : Parent job object
+        """
+        #First check the id is not already in the job cache
+        for k in job_dict.keys():
+            if k in self._cachedJobs.keys():
+                raise RepositoryError("Subjob key %s is already in the subjob XML cache!" % k)
+        #Now set the parent for the new subjobs 
+        for k,v in job_dict.items():
+            v._setParent(parent)
+        #Now add the new subjobs to the SubJobXMLList cache and flush it to disk
+        self._cachedJobs.update(job_dict)
+        self.flush(True)
+
     def isLoaded(self, subjob_id):
         """Has the subjob been loaded? True/False
         Args:
