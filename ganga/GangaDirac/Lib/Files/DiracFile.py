@@ -156,7 +156,7 @@ class DiracFile(IGangaFile):
     _name = "DiracFile"
     _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove', 'removeReplica',
                       "replicate", 'put', 'locations', 'location', 'accessURL',
-                      '_updateRemoteURLs', 'hasMatchedFiles']
+                      '_updateRemoteURLs', 'hasMatchedFiles', 'getSize']
 
     _additional_slots = ['_have_copied', '_remoteURLs', '_storedReplicas']
 
@@ -225,6 +225,18 @@ class DiracFile(IGangaFile):
     def locations(self):
 
         return self.locations
+
+    def getSize(self):
+        """
+        Return the size of the DiracFile.
+        """
+
+        md = self.getMetadata()
+        size = md['Successful'][self.lfn]['Size']
+
+        return size
+
+
 
     def _setLFNnamePattern(self, lfn="", namePattern=""):
 
