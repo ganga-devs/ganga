@@ -32,7 +32,7 @@ class ND280Config:
 
     raw
 
-    module_list              = oaCalib oaRecon oaAnalysis
+    module_list     = oaCalib oaRecon oaAnalysis
 
     An example use:
 
@@ -130,7 +130,8 @@ inputfile =
     raw_options={ 'midas_file':'',
                   'comment':'',
                   'event_select':'',
-                  'module_list':'oaCalib oaRecon oaAnalysis',
+                  'module_list_cmt':'oaCalib oaRecon oaAnalysis',
+                  'module_list_git':'eventCalib eventRecon eventAnalysis',
                   'version_number':'',
                   'inputfile':'',
                   'enable_modules':'',
@@ -149,7 +150,8 @@ inputfile =
 
     cosmicmc_options={   'stage':'base',
                          'nd280ver':'v11r31',
-                         'module_list':'cosmic nd280MC elecSim oaCalibMC oaCosmicTrigger',
+                         'module_list_cmt':'cosmic nd280MC elecSim oaCalibMC oaCosmicTrigger',
+                         'module_list_git':'cosmic nd280Geant4Sim detResponseSim eventCalibMC cosmicTriggerGeant4Sim',
                          'run_number':'0',
                          'subrun':'0',
                          'baseline':'2010-11',
@@ -170,7 +172,8 @@ inputfile =
 
     #### Sand MC
     sandmc_options={'stage':'neutMC',
-                'module_list':'sandPropagate nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
+                'module_list_cmt':'sandPropagate nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
+                'module_list_git':'sandPropagate nd280Geant4Sim detResponseSim eventCalibMC eventRecon eventAnalysis',
                 'neut_setup_script':'REPLACE_NEUTSETUP',
                 'neut_card':'REPLACE_NEUTCARD',
                 'flux_file':'REPLACE_FLUXFILE',
@@ -209,7 +212,8 @@ inputfile =
     sandmc_options_ignore={}
 
     #### MC
-    mc_options={'module_list':'nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
+    mc_options={'module_list_cmt':'nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
+                'module_list_git':'nd280Geant4Sim detResponseSim eventCalibMC eventRecon eventAnalysis',
                 'inputfile':'/lustre/ific.uv.es/sw/t2k.org/nd280Soft/nd280computing/processing_scripts/oa_nt_beam_90210013-0100_3ravbul66rum_numc_000_prod004magnet201011waterb.root',
                 'run_number':'90210000',
                 'subrun':'0',
@@ -256,7 +260,8 @@ inputfile =
                      'genie_paths':'',
                      'random_seed':''}
 
-    gncp_options = {'module_list':'oaCherryPicker nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
+    gncp_options = {'module_list_cmt':'oaCherryPicker nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
+                    'module_list_git':'selectEventSim nd280Geant4Sim detResponseSim eventCalibMC eventRecon eventAnalysis',
                     'run_number':'',
                     'subrun':'',
                     'comment':'',
@@ -282,7 +287,8 @@ inputfile =
     ### Particle Gun options
     pg_options = {'geo_baseline':'2010-02',
                   'p0d_water':'1',
-                  'module_list':'nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
+                  'module_list_cmt':'nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
+                  'module_list_git':'nd280Geant4Sim detResponseSim eventCalibMC eventRecon eventAnalysis',
                   'comment':'',
                   'num_events':'10000',
                   'mc_particle':'mu-',
@@ -352,8 +358,12 @@ inputfile =
 
         ### Software Setup
         configfile += "[software]\n"
-        configfile += "cmtpath = " + self.options['cmtpath'] + "\n"
-        configfile += "cmtroot = " + self.options['cmtroot'] + "\n"
+        if 'cmtpath' in self.options:
+            configfile += "cmtpath = " + self.options['cmtpath'] + "\n"
+
+        if 'cmtroot' in self.options:
+            configfile += "cmtroot = " + self.options['cmtroot'] + "\n"
+
         configfile += "nd280ver = " + self.options['nd280ver'] + "\n\n"
 
         ### File naming
@@ -370,7 +380,11 @@ inputfile =
         configfile += "[configuration]\n"
         if not self.options['midas_file']:
             configfile += "inputfile = " + self.options['inputfile'] + "\n"
-        configfile += "module_list = " + self.options['module_list'] + "\n"
+
+        if self.options['nd280ver'][0] == 'v':
+            configfile += "module_list = " + self.options['module_list_cmt'] + "\n"
+        else:
+            configfile += "module_list = " + self.options['module_list_git'] + "\n"
 
         if self.options['db_time']:
             configfile += "database_rollback_date = " + self.options['db_time'] + "\n"
@@ -445,17 +459,29 @@ inputfile =
 
         ### Software Setup
         configfile += "[software]\n"
-        configfile += "cmtpath = " + self.options['cmtpath'] + "\n"
-        configfile += "cmtroot = " + self.options['cmtroot'] + "\n"
+        if 'cmtpath' in self.options:
+            configfile += "cmtpath = " + self.options['cmtpath'] + "\n"
+
+        if 'cmtroot' in self.options:
+            configfile += "cmtroot = " + self.options['cmtroot'] + "\n"
+
         configfile += "nd280ver = " + self.options['nd280ver'] + "\n\n"
 
         ### Module list
         configfile += "[configuration]\n"
         if self.options['stage'] != 'base':
-            configfile += "module_list = oaRecon oaAnalysis\n"
+            if self.options['nd280ver'][0] == 'v':
+                configfile += "module_list = oaRecon oaAnalysis\n"
+            else:
+                configfile += "module_list = eventRecon eventAnalysis\n"
+
             configfile += "inputfile = " +  self.options['inputfile'] + "\n\n"
+
         else:
-            configfile += "module_list = " + self.options['module_list'] + "\n\n"
+            if self.options['nd280ver'][0] == 'v':
+                configfile += "module_list = " + self.options['module_list_cmt'] + "\n\n"
+            else:
+                configfile += "module_list = " + self.options['module_list_git'] + "\n\n"
 
         ### File naming
         if not  self.options['comment']:
@@ -524,10 +550,13 @@ inputfile =
         ### Module list
         configfile += "[configuration]\n"
         if self.options['stage'] == 'g4anal':
-            configfile += "module_list = sandPropagate nd280MC elecSim oaCalibMC  oaRecon oaAnalysis\n"
+            if self.options['nd280ver'][0] == 'v':
+                configfile += "module_list = sandPropagate nd280MC elecSim oaCalibMC  oaRecon oaAnalysis\n"
+            else:
+                configfile += "module_list = sandPropagate nd280Geant4Sim detResponseSim eventCalibMC  eventRecon eventAnalysis\n"
+
             configfile += "inputfile = " +  self.options['inputfile'] + "\n\n"
         else:
-            #configfile += "module_list = " + self.options['module_list'] + "\n\n"
             configfile += "module_list = neutMC\n\n"
 
         ### File naming
