@@ -36,8 +36,8 @@ class ND280Config:
 
     An example use:
 
-    >>> import ND280Configs
-    >>> cfg = ND280Configs.ND280Config('raw')
+    >>> import GangaND280.ND280Control.ND280Configs as CFG
+    >>> cfg = CFG.ND280Config('raw',{})
     >>> cfg.ListOptions()
 comment = v11r31-wg-bugaboo
 cmtpath = environment
@@ -77,7 +77,7 @@ inputfile =
         self.options_ignore=self.common_options_ignore
 
         if self.cfgtype == 'gnsetup':
-            self.options.update(self.genieSetupt_options)
+            self.options.update(self.genieSetup_options)
             self.options['genie_setup_script']=self.t2ksoftdir + '/GENIE/setup.sh'
         elif self.cfgtype == 'gnmc':
             self.options.update(self.genieMC_options)
@@ -98,7 +98,8 @@ inputfile =
         elif self.cfgtype == 'PG':
             self.options.update(self.pg_options)
         else:
-            raise 'ND280Configs: Not a recognised config type'
+            raise RuntimeError('ND280Configs: {} Not a reconised config type.'.format(self.cfgtype))
+
 
         self.options.update(extra_opts)
 
@@ -337,7 +338,7 @@ inputfile =
             creator = map[self.cfgtype]
             return creator()
         else:
-            raise 'ND280Configs: Not a reconised config type'
+            raise RuntimeError('ND280Configs: {} Not a reconised config type.'.format(self.cfgtype))
 
 
 
@@ -371,7 +372,7 @@ inputfile =
              self.options['comment'] =  self.options['nd280ver']
         configfile += "[filenaming]\n"
         if self.options['inputfile']:
-            logging.info("version_number = " + self.options['version_number'] + "\n")
+            logger.info("version_number = " + self.options['version_number'] + "\n")
             configfile += "version_number = " + self.options['version_number'] + "\n"
         configfile += "comment = " + self.options['comment'] + "\n\n"
 
@@ -446,11 +447,11 @@ inputfile =
     def CreateCosmicMCCF(self):
 
         if not self.CheckOptions():
-            logging.error('Please make sure all options stated above are entered')
+            logger.error('Please make sure all options stated above are entered')
             return ''
 
         if not self.options['stage'] in ['base','fgd','tript','all']:
-            logging.error('"stage" options should be one of',['base','fgd','tript','all'])
+            logger.error('"stage" options should be one of',['base','fgd','tript','all'])
             return ''
 
         configfile = ''
@@ -532,11 +533,11 @@ inputfile =
     def CreateSandMCCF(self):
 
         if not self.CheckOptions():
-            logging.error('Please make sure all options stated above are entered')
+            logger.error('Please make sure all options stated above are entered')
             return ''
 
         if not self.options['stage'] in ['neutMC','g4anal','neutSetup']:
-            logging.error('"stage" options should be one of',['neutMC','g4anal','neutSetup'])
+            logger.error('"stage" options should be one of',['neutMC','g4anal','neutSetup'])
             return ''
 
         configfile = ''
@@ -575,7 +576,7 @@ inputfile =
         if self.options['beam'] == "beamc":
             thisrun += 300000
         else:
-            logging.error("self.beam = " + self.beam + " is not supported!!!")
+            logger.error("self.beam = " + self.beam + " is not supported!!!")
             return ''
 
         if self.options['p0d_water_fill']: # water
