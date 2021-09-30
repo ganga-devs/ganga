@@ -48,17 +48,17 @@ class FileCheckeR(IFileChecker):
             raise PostProcessException('No searchStrings specified, FileCheckeR will do nothing!')
         filepaths = self.findFiles(job)
         if not len(filepaths):
-            raise PostProcessException('None of the files to check exist, FileCheckeR will do nothing!') 
+            raise PostProcessException('None of the files to check exist, FileCheckeR will do nothing!')
         for filepath in filepaths:
             for searchString in self.searchStrings:
                 grepoutput = subprocess.getoutput('grep "%s" %s' % (searchString,filepath))
-                if len(grepoutput) and self.failIfFound is True:            
+                if len(grepoutput) and self.failIfFound is True:
                     logger.info('The string %s has been found in file %s, FileCheckeR will fail job(%s)',searchString,filepath,job.fqid)
                     return self.failure
-                if not len(grepoutput) and self.failIfFound is False:            
+                if not len(grepoutput) and self.failIfFound is False:
                     logger.info('The string %s has not been found in file %s, FileCheckeR will fail job(%s)',searchString,filepath,job.fqid)
                     return self.failure
-        return self.result 
+        return self.result
 
 
 class ND280Kin_Checker(IFileChecker):
@@ -80,7 +80,7 @@ class ND280Kin_Checker(IFileChecker):
         """
 
         logger.info("Checking/moving outputs of run "+job.name)
-        
+
         self.filesMustExist = False
         self.files = ['*.kin']
         filepaths = self.findFiles(job)
@@ -97,17 +97,17 @@ class ND280Kin_Checker(IFileChecker):
 
         logger.info('OK')
         self.move_output(job,ok=True)
-        return True    
+        return True
 
-        
+
     def move_output(self,job,ok=True):
         dest = os.path.join(self.prfx,self.path)
         jout = 'KIN_'+job.name
-            
+
         task = {'*.kin':'kin','*.root':'kin','*.txt':'aux','*.conf':'aux','stdout':'jobOutput'}
         if not ok:
             task = {'*.kin':'errors','*.root':'errors','*.txt':'errors','*.conf':'errors','stdout':'errors'}
-            
+
         for p in list(task.keys()):
             odir = os.path.join(dest,task[p])
 
@@ -160,7 +160,7 @@ class ND280RDP_Checker(IFileChecker):
         self.TRIGTYPE = None
 
         self.range = 1 # if to add 0000X000_0000X999 to paths (yes by default)
-        
+
     def find(self,str):
         return self.line.find(str)>=0
 
@@ -179,7 +179,7 @@ class ND280RDP_Checker(IFileChecker):
         logger.info('Result for %s %s %s %s is: %s, %s, %s, %s, %s' %  (self.RUN,self.SUBRUN,self.TRIGTYPE,self.STAGE,self.site,self.ReturnCode,self.Time,self.EventsIn,self.EventsOut))
 
         if self.range == 0: return # no remote status report for CosMC
-        
+
         if not self.path:
             logger.error("No monitoring info sent because MONDIR is not defined")
             return
@@ -223,7 +223,7 @@ class ND280RDP_Checker(IFileChecker):
             #self.move_outs(job,ok=False)
             #return False
             raise PostProcessException('Site is not given')
-            
+
         # finds .log file
         self.files = ['*.log']
         filepaths = self.findFiles(job)
@@ -259,7 +259,7 @@ class ND280RDP_Checker(IFileChecker):
 
         logger.info("Starting to scan file "+filename)
         logger.info("for run %s, subrun %s, type %s" % (self.RUN,self.SUBRUN,self.trig))
-        
+
         inlogf = open(self.logf)
         for self.line in inlogf:
             self.line = self.line.strip('\n')
@@ -279,10 +279,20 @@ class ND280RDP_Checker(IFileChecker):
                 self.send_status()
                 self.InStage = 0
                 break
-            
+
             elif self.find('Starting job for nd280MC'):
                 self.InStage = 1
                 self.STAGE = "nd280MC"
+                logger.info(self.line)
+
+            elif self.find('Starting job for nd280Geant4Sim'):
+                self.InStage = 1
+                self.STAGE = 'nd280Geant4Sim'
+                logger.info(self.line)
+
+            elif self.find('Starting job for detResponseSim'):
+                self.InStage = 1
+                self.STAGE = 'detResponseSim'
                 logger.info(self.line)
 
             elif self.find('Starting job for elecSim'):
@@ -290,22 +300,22 @@ class ND280RDP_Checker(IFileChecker):
                 self.STAGE = "elecSim"
                 logger.info(self.line)
 
-            elif self.find('Starting job for oaCosmicTrigger'):
+            elif self.find('Starting job for oaCosmicTrigger') or self.find('Starting job for cosmicTriggerSim'):
                 self.InStage = 1
                 self.STAGE = "COSMICTRIG"
                 logger.info(self.line)
 
-            elif self.find('Starting job for oaCalib'):
+            elif self.find('Starting job for oaCalib') or self.find('Starting job for eventCalib'):
                 self.InStage = 1
                 self.STAGE = "cali"
                 logger.info(self.line)
 
-            elif self.find('Starting job for oaRecon'):
+            elif self.find('Starting job for oaRecon') or self.find('Starting job for eventRecon'):
                 self.InStage = 1
                 self.STAGE = "reco"
                 logger.info(self.line)
- 
-            elif self.find('Starting job for oaAnalysis'):
+
+            elif self.find('Starting job for oaAnalysis') or self.find('Starting job for eventAnalysis'):
                 self.InStage = 1
                 self.STAGE = "anal"
                 logger.info(self.line)
@@ -411,7 +421,7 @@ class ND280RDP_Checker(IFileChecker):
 
                 elif self.find('Number of events ='):
                     chunks = self.line.split()
-                    if self.STAGE == 'nd280MC':
+                    if self.STAGE == 'nd280MC' or self.STAGE == 'nd280Geant4Sim':
                         self.EventsOut = chunks[5]
 
                 elif self.find('Total number of events processed in Analysis'):
@@ -438,13 +448,13 @@ class ND280RDP_Checker(IFileChecker):
             logger.error("The stage "+self.STAGE+" has not completed succesfully, Error is unknown")
             self.ReturnCode = 0
             self.send_status()
-            
+
         inlogf.close()
         logger.info("Finished scanning the log file. Last check return code posted is "+str(self.ReturnCode))
 
         self.move_output(job)
         return self.ReturnCode == 1
-    
+
     def move_output(self,job,ok=True):
         if ok:
             rang = self.RUN[:5]+'000_'+self.RUN[:5]+'999'
@@ -455,7 +465,7 @@ class ND280RDP_Checker(IFileChecker):
         else:
             dest = os.path.join(self.prfx,self.path)
             jout = 'stdout'
-            
+
         task = {'*_g4mc_*.root':'g4mc','*_elmc_*.root':'elmc','*_cstr_*.root':'cstr',
                 '*_numc_*.root':'numc','*_sand_*.root':'sand',
                 '*_cali_*.root':'cali','*_reco_*.root':'reco','*_anal_*.root':'anal',
@@ -482,4 +492,3 @@ class ND280RDP_Checker(IFileChecker):
                 # for possible transform chain
                 if task[p] == 'cstr' or task[p] == 'numc':
                     os.symlink(os.path.join(odir,os.path.basename(f)),f)
-
