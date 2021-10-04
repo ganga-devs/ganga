@@ -7,7 +7,7 @@
 
 if config.Configuration.Batch == 'PBS':
 
-    import sys,popen2,time
+    import sys,subprocess,time
     # This jobs goes to the default queue. At atlas.fzk.de this is the 'default' queue
     jdef = Job(application=Executable(exe='/bin/sleep',args=['60']))
     jdef.backend=PBS()
@@ -29,7 +29,7 @@ if config.Configuration.Batch == 'PBS':
     time.sleep(2)
     # next check that qstat sees the same queues
     d={} # use a dict for easier access of the id
-    child=popen2.Popen3('qstat')    
+    child=subprocess.Popen('qstat')    
     child.tochild.close()
     out=child.fromchild
     result=-1

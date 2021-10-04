@@ -939,7 +939,7 @@ class LCG(IBackend):
 # 3. invoke monitoring client
 #-----------------------------------------------------
 import os,os.path,shutil,tempfile
-import sys,popen2,time,traceback
+import sys,time,traceback
 import re
 
 #bugfix #36178: subprocess.py crashes if python 2.5 is used
@@ -1033,7 +1033,7 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
 ## stderr/stdout handler
 def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
 
-    import os, threading
+    import os, subprocess, threading
 
     cwd = os.getcwd()
 
@@ -1043,7 +1043,7 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
         ## change to the working directory
         os.chdir(wdir)
 
-        child = popen2.Popen3(cmd,1)
+        child = subprocess.Popen(cmd,1)
         child.tochild.close() # don't need stdin
 
         class PipeThread(threading.Thread):
