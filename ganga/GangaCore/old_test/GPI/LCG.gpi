@@ -2,7 +2,7 @@
 # 
 # create and submit gLite jobs 
 
-import re,sys,popen2,time
+import re,sys,time
 
 # submit a gLite simple job
 j = Job(application=Executable(exe='/bin/echo',args=['Hello World']))

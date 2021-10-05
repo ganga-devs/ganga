@@ -4,7 +4,7 @@
 # LSF specific tests. Only run if LSF is default batch system.
 if config.Configuration.Batch == 'LSF':
 
-    import sys,popen2,time
+    import sys,subprocess,time
     # This jobs goes to the default queue. At cern this is the '8nm' queue
     jdef = Job(application=Executable(exe='/usr/bin/find',args=['/usr/share -atime 1 -print']))
     jdef.backend=LSF()
@@ -31,7 +31,7 @@ if config.Configuration.Batch == 'LSF':
     time.sleep(10)
     # next check that bjobs sees the same queues
     d={} # use a dict for easier access of the id
-    child=popen2.Popen3('bjobs -a')    
+    child=subprocess.Popen('bjobs -a')    
     child.tochild.close()
     child_output=child.fromchild
     result=-1
