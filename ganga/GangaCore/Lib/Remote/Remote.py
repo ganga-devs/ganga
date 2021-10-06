@@ -462,7 +462,7 @@ from __future__ import print_function
 # attempts to kill the given job and returns
 #-----------------------------------------------------
 import os,os.path,shutil,tempfile
-import sys,popen2,time,traceback
+import sys,time,traceback
 
 ############################################################################################
 
@@ -528,7 +528,7 @@ from __future__ import print_function
 # attempts to kill the given job and returns
 #-----------------------------------------------------
 import os,os.path,shutil,tempfile
-import sys,popen2,time,traceback
+import sys,time,traceback
 
 ############################################################################################
 
@@ -583,7 +583,7 @@ from __future__ import print_function
 # attempts to kill the given job and returns
 #-----------------------------------------------------
 import os,os.path,shutil,tempfile
-import sys,popen2,time,traceback
+import sys,time,traceback
 
 ############################################################################################
 
@@ -669,7 +669,7 @@ from __future__ import print_function
 # 3. submit it
 #-----------------------------------------------------
 import os,os.path,shutil,tempfile
-import sys,popen2,time,traceback
+import sys,time,traceback
 import tarfile
 
 ############################################################################################
@@ -820,7 +820,7 @@ from __future__ import print_function
 # outputs some useful job info and exits
 #-----------------------------------------------------
 import os,os.path,shutil,tempfile
-import sys,popen2,time,traceback
+import sys,time,traceback
 
 ############################################################################################
 
