@@ -60,7 +60,6 @@ class Terminal:
 def open_terminal(columns=80, lines=24):
     p_pid, master_fd = pty.fork()
     if p_pid == 0:  # Child.
-        argv = shlex.split(command)
         env = dict(TERM="linux", LC_ALL="en_GB.UTF-8",
                    COLUMNS=str(columns), LINES=str(lines))
         env = {**os.environ, **env}
