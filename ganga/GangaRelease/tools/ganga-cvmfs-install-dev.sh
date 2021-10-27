@@ -4,7 +4,7 @@ cvmfs_server transaction ganga.cern.ch
 
 cd /cvmfs/ganga.cern.ch/Ganga/install/DEV
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cvmfs/sft.cern.ch/lcg/releases/LCG_92python3/Python/3.6.3/x86_64-slc6-gcc62-opt/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cvmfs/sft.cern.ch/lcg/releases/LCG_100/Python/3.8.6/x86_64-centos7-gcc9-opt/lib
 
 . bin/activate
 
