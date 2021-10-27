@@ -14,6 +14,10 @@ pip install --upgrade pip setuptools
 
 pip install git+https://github.com/ganga-devs/ganga.git@$1#egg=ganga[LHCb] 
 
+pip install numpy
+
+pip install pandas
+
 deactivate
 
 rm -f /cvmfs/ganga.cern.ch/Ganga/install/LATEST
