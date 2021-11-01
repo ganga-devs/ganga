@@ -19,7 +19,7 @@ class ArgSplitter(ISplitter):
     """
     Split job by changing the args attribute of the application.
 
-    This splitter only applies to the applications which have args attribute (e.g. Executable, Root), or those
+    This splitter only applies to the applications which have args attribute (e.g. Executable), or those
     with extraArgs (GaudiExec). If an application has both, args takes precedence.
     It is a special case of the GenericSplitter.
 
@@ -34,7 +34,7 @@ class ArgSplitter(ISplitter):
     with 3 different sets of arguments.
 
     s = ArgSplitter(args=[['AAA',1],['BBB',2],['CCC',3]])
-    r = Root(version='5.10.00',script='~/analysis.C')
+    r = Executable(exe = File('myscript.sh'))
     j.Job(application=r, splitter=s)
 
     Notice how each job takes a list of arguments (in this case a list
