@@ -95,7 +95,7 @@ class AppName(Gaudi):
 
         if (not self.package):
             self.package = available_packs(self.appname)
-        if self.appname is 'Vetra':
+        if self.appname == 'Vetra':
             self.lhcb_release_area = os.path.expandvars("$Vetra_release_area")
 
     def postprocess(self):
@@ -202,7 +202,7 @@ class AppName(Gaudi):
         extraopts = ''
         if self.extraopts:
             extraopts += self.extraopts
-            if self.extraopts.find('LHCbApp().XMLSummary') is -1:
+            if self.extraopts.find('LHCbApp().XMLSummary') == -1:
                 extraopts += "\nfrom Gaudi.Configuration import *"
                 extraopts += "\nfrom Configurables import LHCbApp"
                 extraopts += "\nLHCbApp().XMLSummary='summary.xml'"
@@ -227,7 +227,7 @@ class AppName(Gaudi):
                 debug_dir = tempfile.mkdtemp()
             err_message = err.args[0]
             messages = err_message.split('###SPLIT###')
-            if len(messages) is 2:
+            if len(messages) == 2:
                 stdout = open(debug_dir + '/gaudirun.stdout', 'w')
                 stderr = open(debug_dir + '/gaudirun.stderr', 'w')
                 stdout.write(messages[0])
