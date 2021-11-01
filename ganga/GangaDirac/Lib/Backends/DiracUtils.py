@@ -180,7 +180,10 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
     for lf in reps['Successful']:
         for thisSE in reps['Successful'][lf].keys():
             if thisSE not in SEs:
+                if thisSE=='RAL-USER':
+                    continue
                 SEs.append(thisSE)
+    print('length: ',len(SEs))
     myURLs = []
     # If an SE is specified, move it to be the first element in the list to be processed.
     if defaultSE != '':
@@ -193,6 +196,7 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
     # Loop over the possible SEs and get the URLs of the files stored there.
     # Remove the successfully found ones from the list and move on to the next SE.
     for SE in SEs:
+        print('SE: ', SE)
         lfns = remainingLFNs
         thisSEFiles = execute('getAccessURL(%s, "%s", %s)' % (lfns, SE, protocol), cred_req=credential_requirements)['Successful']
         for lfn in thisSEFiles.keys():

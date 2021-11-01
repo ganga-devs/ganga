@@ -52,11 +52,11 @@ class DiracBase(IBackend):
     j = Job(application=app,backend=b)
     j.submit()
 
-    # Run a Root job on the Grid if in LHCb VO
+    # Run an Executable job on the Grid if in LHCb VO
 
-    # Create a Root application object. See Root help text for instructions
+    # Create an Executable application object. See Executable help text for instructions
     # on how to configure this.
-    app = Root()
+    app = Executable()
 
     # Create and submit job to Dirac using default options
     j = Job(application=app,backend=Dirac())
