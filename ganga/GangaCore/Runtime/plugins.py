@@ -24,8 +24,6 @@ import GangaCore.Lib.Splitters
 
 logger.debug("Loading Executable")
 import GangaCore.Lib.Executable
-logger.debug("Loading Root")
-import GangaCore.Lib.Root
 logger.debug("Loading Notebook")
 import GangaCore.Lib.Notebook
 
