@@ -503,9 +503,9 @@ class GaudiExec(IPrepareApp):
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
         if not path.isfile(path.join(self.directory, 'build.%s' %self.platform, 'run')):
-            initialCommand = 'export CMTCONFIG=%s && source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
+            initialCommand = 'export CMTCONFIG=%s && source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && make -j%s' % (self.platform, self.platform, self.nMakeCores)
             if isLbEnv:
-                initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && make' % (self.platform)
+                initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && make -j%s' % (self.platform, self.nMakeCores)
             rc, stdout, stderr = _exec_cmd(initialCommand, self.directory)
             if rc != 0:
                 logger.error("Failed to perform initial make on a Cmake based project")
