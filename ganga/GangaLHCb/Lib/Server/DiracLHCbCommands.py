@@ -39,14 +39,14 @@ def bookkeepingGUI(file):
 
 @diracCommand
 def getDataset(path, dqflag, this_type, start, end, sel):
-    if this_type is 'Path':
+    if this_type == 'Path':
         result = dirac.bkQueryPath(path, dqflag)  # dirac
-    elif this_type is 'RunsByDate':
+    elif this_type == 'RunsByDate':
         result = dirac.bkQueryRunsByDate(path, start, end,
                                              dqflag, sel)  # dirac
-    elif this_type is 'Run':
+    elif this_type == 'Run':
         result = dirac.bkQueryRun(path, dqflag)  # dirac
-    elif this_type is 'Production':
+    elif this_type == 'Production':
         result = dirac.bkQueryProduction(path, dqflag)  # dirac
     else:
         result = {'OK': False, 'Message': 'Unsupported type!'}
