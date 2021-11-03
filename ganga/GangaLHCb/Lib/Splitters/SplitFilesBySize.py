@@ -34,7 +34,7 @@ class SplitFilesBySize(GaudiInputDataSplitter):
                                                    'jobs backend is Dirac')
 
     def _attribute_filter__set__(self, name, value):
-        if name is 'sizePerJob':
+        if name == 'sizePerJob':
             if value > 100:
                 logger.warning('filesPerJob exceeded DIRAC maximum')
                 logger.warning('DIRAC has a maximum dataset limit of 100.')
