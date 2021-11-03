@@ -61,7 +61,7 @@ def fixBKQueryInBox(newCategory='query'):
             f2.close()
 
             newline = ' <class name=\"BKQuery\" version=\"1.2\" category=\"%s\">\n' % newCategory
-            if len(line1) is 1:
+            if len(line1) == 1:
                 lines1[lines1.index(line1[0])] = newline
                 logger.info('backing up old settings...')
                 os.system('cp %s %sX; mv %s~ %s~X' % (path, path, path, path))
@@ -74,7 +74,7 @@ def fixBKQueryInBox(newCategory='query'):
                 f2.close()
                 p = os.path.join(root[:-2], root.split('/')[-1] + '.index')
                 os.system('rm -f %s' % p)
-            elif len(line2) is 1:
+            elif len(line2) == 1:
                 lines2[lines2.index(line2[0])] = newline
                 logger.info('backing up old settings...')
                 os.system('cp %s %sX; mv %s~ %s~X' % (path, path, path, path))
