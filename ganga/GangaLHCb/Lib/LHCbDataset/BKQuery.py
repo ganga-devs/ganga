@@ -112,7 +112,7 @@ RecoToDST-07/90000000/DST" ,
             return None
         if not self.type in ['Path', 'RunsByDate', 'Run', 'Production']:
             raise GangaException('Type="%s" is not valid.' % self.type)
-        if not self.type is 'RunsByDate':
+        if not self.type == 'RunsByDate':
             if self.startDate:
                 msg = 'startDate not supported for type="%s".' % self.type
                 raise GangaException(msg)
