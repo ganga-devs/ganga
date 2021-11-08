@@ -288,3 +288,28 @@ allHandlers.add('Executable', 'Remote', LCGRTHandler)
 allHandlers.add('Executable', 'CREAM', LCGRTHandler)
 allHandlers.add('Executable', 'ARC', LCGRTHandler)
 allHandlers.add('Executable', 'Slurm', RTHandler)
+
+def randomString():
+    """Simple method to generate a random string"""
+    from random import randint
+    from string import ascii_uppercase
+
+    def addToSample(sample, ascii_length):
+        """Basically random.select but python2.2"""
+        a = ascii_uppercase[randint(0, ascii_length - 1)]
+        if not a in sample:
+            sample.append(a)
+        else:
+            # passing by referance
+            addToSample(sample, ascii_length)
+
+    ascii_length = len(ascii_uppercase)
+    sample = []
+    for _ in range(6):
+        addToSample(sample, ascii_length)
+    assert(len(sample) == 6)
+
+    # seed is set to clock during import
+    return ''.join([str(a) for a in sample])
+
+
