@@ -1,5 +1,4 @@
 
-from .LHCbRootDiracRunTimeHandler import LHCbRootDiracRunTimeHandler
 from .LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 from .GaudiExecRTHandlers import GaudiExecRTHandler, GaudiExecDiracRTHandler
 from .ExeDiracRTHandler import ExeDiracRTHandler

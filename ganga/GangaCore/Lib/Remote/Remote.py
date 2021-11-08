@@ -14,7 +14,7 @@ logger = GangaCore.Utility.logging.getLogger()
 
 import inspect
 import os
-from GangaCore.Lib.Root import randomString
+from GangaCore.Lib.Executable import randomString
 
 
 def shutdown_transport(tr):
@@ -49,13 +49,9 @@ class Remote(IBackend):
     j.submit()
 
 
-    E.g. 2 - Root example submitted to PBS backend:
+    E.g. 2 - Hello World example submitted to PBS backend:
 
-    r = Root()
-    r.version = '5.14.00'
-    r.script = 'gengaus.C'
-
-    j = Job(application=r,backend="Remote")
+    j = Job(application=Executable(exe='/bin/echo',args=['Hello World']), backend="Remote")
     j.backend.host = "bluebear.bham.ac.uk"
     j.backend.username = "slatermw"
     j.backend.ganga_cmd = "/bb/projects/Ganga/runGanga"

@@ -14,7 +14,7 @@ from GangaCore.Utility.GridShell import getShell
 from GangaCore.Lib.LCG.GridftpSandboxCache import GridftpFileIndex, GridftpSandboxCache
 
 from GangaCore.Lib.LCG.Utility import get_uuid
-from GangaCore.Lib.Root import randomString
+from GangaCore.Lib.Executable import randomString
 
 # global variables
 logger = getLogger()
