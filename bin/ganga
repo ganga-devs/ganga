@@ -19,9 +19,8 @@
 # This is a Copy/Paste logic which must stay in THIS file
 
 from __future__ import print_function
-import sys
+import sys, os
 
-import os
 
 if 'LBENV_SOURCED' in os.environ.keys():
     #If we are in an LbEnv venv we want to supress the iPython warning
