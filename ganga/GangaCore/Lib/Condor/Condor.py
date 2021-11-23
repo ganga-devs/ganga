@@ -283,6 +283,8 @@ class Condor(IBackend):
         if self.globus_rsl:
             cdfDict['globus_rsl'] = self.globus_rsl
 
+        cdfDict['Requirements'] =  self.requirements.convert()
+
         return cdfDict
 
 
