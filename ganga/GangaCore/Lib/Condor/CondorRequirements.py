@@ -115,7 +115,7 @@ the final requirement is the AND of all elements in the list
         if self.other:
             requirementList.extend(self.other)
 
-        requirementString = "requirements = " + " && ".join(requirementList)
+        requirementString = " && ".join(requirementList)
 
         return requirementString
 
