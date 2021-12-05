@@ -126,6 +126,8 @@ class DiracBase(IBackend):
                                doc='Do you want to download the output sandbox when the job finalises.'),
         'unpackOutputSandbox' : SimpleItem(defvalue=default_unpackOutputSandbox, hidden=True,
                                            doc='Should the output sandbox be unpacked when downloaded.'),
+        'submitWithNewThread' : SimpleItem(defvalue=True,
+                                              doc='Use the continouse Dirac server thread to submit jobs. In general not recommended')
 
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
@@ -227,7 +229,7 @@ class DiracBase(IBackend):
         dirac_cmd = """exec(open(\'%s\').read())""" % myscript
         submitFailures = {}
         try:
-            result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True, new_subprocess = True)
+            result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True, new_subprocess = self.submitWithNewThread)
         except GangaDiracError as err:
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
             logger.error(err_msg)
