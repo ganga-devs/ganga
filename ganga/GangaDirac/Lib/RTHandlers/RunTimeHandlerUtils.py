@@ -1,9 +1,9 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import shutil
-from GangaCore.Core.exceptions import GangaException
+from GangaCore.Core.exceptions import GangaException, GangaFileError
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
-from GangaCore.GPIDev.Lib.File import File, ShareDir
+from GangaCore.GPIDev.Lib.File import File, ShareDir, LocalFile
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.files import expandfilename
@@ -12,6 +12,7 @@ from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
 from GangaCore.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -85,6 +86,13 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
         if len(job.inputsandbox) > 0:
             from GangaCore.GPIDev.Lib.Job import JobError
             raise JobError("InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!")
+        for _f in job.inputfiles:
+            if isinstance(_f, LocalFile):
+                if not os.path.exists(os.path.join(_f.localDir,_f.namePattern)):
+                    raise GangaFileError('Requested LocalFile %s does not exist' % (os.path.join(_f.localDir,_f.namePattern)))
+            elif isinstance(_f, DiracFile):
+                if not _f.getReplicas():
+                    raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % _f.lfn)                
         inputsandbox = []
         fileNames, tmpDir = getInputFilesPatterns(job)
         for filepattern in fileNames:
