@@ -754,7 +754,15 @@ class DiracFile(IGangaFile):
                 storage_elements = [self.defaultSE]
             else:
                 if configDirac['allDiracSE']:
-                    storage_elements = [random.choice(configDirac['allDiracSE'])]
+                    trySEs = list(configDirac['allDiracSE'])
+                    random.shuffle(trySEs)
+                    storage_elements = None
+                    for se in trySEs:
+                        if execute('checkSEStatus("%s", "%s")' % (se, 'Write')):
+                            storage_elements = [se]
+                            break
+                    if not storage_elements:
+                        raise GangaFileError("No SE allowed for Write")
                 else:
                     raise GangaFileError("Can't upload a file without a valid defaultSE or storageSE, please provide one")
         elif isinstance(uploadSE, list):
