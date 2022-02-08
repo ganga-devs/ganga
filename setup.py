@@ -104,7 +104,7 @@ setup(name='ganga',
           "docker",
           "pymongo",
           "gdown",
-          "htcondor"
+#          "htcondor"
       ],
       extras_require={
           'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],
