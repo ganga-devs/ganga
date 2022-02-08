@@ -15,5 +15,5 @@ __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "28 July 2006"
 __version__ = "1.0"
 
-#from .Condor import Condor
-#from .CondorRequirements import CondorRequirements
+from .Condor import Condor
+from .CondorRequirements import CondorRequirements
