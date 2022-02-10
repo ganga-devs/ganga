@@ -8,8 +8,8 @@ from pathlib import Path
 from os.path import dirname, join, isdir
 
 def mp_worker(name):
-    # print(f'START: {name} '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())))
-    subprocess.run(['python3', name], preexec_fn=os.setsid)
+    print(f'START: {name} '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())))
+    subprocess.run([sys.executable, name], start_new_session=True)
 
 workdir = ###WORKDIR###
 batch_size = ###BATCHSIZE###
@@ -37,13 +37,12 @@ sys.stdout=open(join(outdir,'__syslog__'),'w')
 sys.stderr=sys.stdout
 
 print(f'Running with a batch size of {batch_size}')
-if __name__ == '__main__':
-    try:
-        pool = multiprocessing.Pool(batch_size)
-        pool.map(mp_worker, scriptnames_g)
-    finally:
-        pool.close()
-        pool.join()
+try:
+    pool = multiprocessing.Pool(batch_size)
+    pool.map(mp_worker, scriptnames_g)
+finally:
+    pool.close()
+    pool.join()
 
 sys.stdout=sys.__stdout__
 sys.stderr=sys.__stderr__
@@ -51,4 +50,3 @@ sys.stderr=sys.__stderr__
 line='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
 statusfile.writelines(line)
 statusfile.close()
-# sys.exit()
