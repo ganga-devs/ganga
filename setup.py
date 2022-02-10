@@ -74,6 +74,31 @@ pythonPackages = find_packages('./')
 pythonPackages.append('ganga/GangaRelease')
 pythonPackages.append('ganga/GangaGUI')
 
+
+install_requires=[
+    'ipython>=5.0.0',
+    'jedi==0.17.2',
+    'httplib2>=0.8',
+    'absl-py>=0.1.2',
+    'google-api-python-client',
+    'google-auth-httplib2',
+    'google-auth-oauthlib',
+    'requests>=2.23.0',
+    'Flask>=1.1.2',
+    'PyJWT~=1.7.1',
+    'Flask-SQLAlchemy>=2.4.3',
+    'gunicorn>=20.0.4',
+    'Flask-Login>=0.5.0',
+    'Flask-SocketIO==4.3.1',
+    'SQLAlchemy==1.3.19',
+    "docker",
+    "pymongo",
+    "gdown",
+]
+if sys.platform != 'darwin':
+      install_requires.append("htcondor")
+
+
 setup(name='ganga',
       description='Job management tool',
       long_description=readme(),
@@ -85,27 +110,7 @@ setup(name='ganga',
       scripts=['bin/ganga', 'bin/ganga-gui'],
       package_dir={'ganga':'ganga', 'GangaRelease':'ganga/GangaRelease', 'GangaGUI':'ganga/GangaGUI'},
       packages=pythonPackages,
-      install_requires=[
-          'ipython>=5.0.0',
-          'jedi==0.17.2',
-          'httplib2>=0.8',
-          'absl-py>=0.1.2',
-          'google-api-python-client',
-          'google-auth-httplib2',
-          'google-auth-oauthlib',
-          'requests>=2.23.0',
-          'Flask>=1.1.2',
-          'PyJWT~=1.7.1',
-          'Flask-SQLAlchemy>=2.4.3',
-          'gunicorn>=20.0.4',
-          'Flask-Login>=0.5.0',
-          'Flask-SocketIO==4.3.1',
-          'SQLAlchemy==1.3.19',
-          "docker",
-          "pymongo",
-          "gdown",
-#          "htcondor"
-      ],
+      install_requires=install_requires,
       extras_require={
           'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],
           'profiler' : ['memory_profiler'],
