@@ -145,7 +145,7 @@ class GaudiPython(GaudiBase):
         if self.args:
             script += 'import sys\nsys.argv += %s\n' % str(self.args)
         script += "importOptions('data.py')\n"
-        script += "execfile(\'%s\')\n" % name
+        script += "exec(compile(open(\'%s\', \'rb\').read(), \'%s\', \'exec\'))\n" % (name, name)
 
         # add summary.xml
         outputsandbox_temp = XMLPostProcessor._XMLJobFiles()
