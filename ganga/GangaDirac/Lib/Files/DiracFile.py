@@ -787,7 +787,8 @@ class DiracFile(IGangaFile):
                     if not os.path.exists(name):
                         raise GangaFileError('File "%s" must exist!' % name)
 
-            lfn = os.path.join(lfn_base, os.path.basename(this_file))
+            if lfn=='':
+                lfn = os.path.join(lfn_base, os.path.basename(this_file))
 
             d = DiracFile()
             d.namePattern = os.path.basename(name)
