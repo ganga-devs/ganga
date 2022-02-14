@@ -56,7 +56,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         if job.inputdata:
             data_str = 'import os\n'
-            data_str += 'execfile(\'data.py\')\n'
+            data_str += 'exec(compile(open(\'data.py\', "rb").read(), \'data.py\', \'exec\')\n'
 
         if hasattr(job, '_splitter_data'):
             data_str += job._splitter_data
