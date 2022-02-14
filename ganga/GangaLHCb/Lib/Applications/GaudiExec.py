@@ -123,7 +123,7 @@ class GaudiExec(IPrepareApp):
 
         ./run python OptsFileWrapper.py
 
-    Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace with 'execfile'
+    Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace 
     The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before executing this one.
 
     If you want an argument after the run command then use the 'run_args' option. It takes a list of the arguments to use. For example

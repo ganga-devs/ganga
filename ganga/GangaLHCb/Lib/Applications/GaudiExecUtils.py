@@ -35,8 +35,10 @@ for script_file in %s:
     importOptions( script_file )
 
 # Run the command
-execfile('%s')
-""" % (sys_args, options, data_file, repr(script_file[1:]), script_file[0])
+with open("%s", "rb") as _f:
+    code = compile(_f.read(), "%s", "exec")
+exec(code)
+""" % (sys_args, options, data_file, repr(script_file[1:]), script_file[0], script_file[0])
     return wrapper_script
 
 def getTimestampContent():
