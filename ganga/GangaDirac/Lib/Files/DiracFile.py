@@ -789,7 +789,15 @@ class DiracFile(IGangaFile):
 
             if lfn=='':
                 lfn = os.path.join(lfn_base, os.path.basename(this_file))
-
+            if len(os.path.basename(lfn)) > 60:
+                logger.warning('Filename is longer than 60 characters. This may cause problems with Dirac storage. Are you sure you want to continue?')
+                decision = input('y / [n]:')
+                while not (decision.lower() in ['y', 'n', '']):
+                    decision = input('y / [n]:')
+                if decision.lower() == 'y':
+                    pass
+                else:
+                    return
             d = DiracFile()
             d.namePattern = os.path.basename(name)
             d.compressed = self.compressed
