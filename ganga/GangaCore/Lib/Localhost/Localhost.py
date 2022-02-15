@@ -8,6 +8,7 @@ import inspect
 import multiprocessing
 import uuid
 import shutil
+import sys
 
 from pathlib import Path
 from os.path import join, dirname, abspath, isdir, isfile
@@ -130,7 +131,7 @@ class Localhost(IBackend):
 
     def run(self, scriptpath):
         try:
-            process = subprocess.Popen(["python3", scriptpath, 'subprocess'], stdin=subprocess.DEVNULL, preexec_fn=os.setsid)
+            process = subprocess.Popen([sys.executable, scriptpath, 'subprocess'], stdin=subprocess.DEVNULL, start_new_session=True)
         except OSError as x:
             logger.error('cannot start a job process: %s', str(x))
             return 0
