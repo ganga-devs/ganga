@@ -18,12 +18,6 @@ import shutil
 import time
 import datetime
 import re
-#Import htcondor but suppress warnings in case it is not set up on this system
-import warnings
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    import htcondor
-    import classad
 
 import GangaCore.Utility.logging
 import GangaCore.Utility.Virtualization
@@ -42,8 +36,16 @@ from GangaCore.GPIDev.Credentials import credential_store
 from GangaCore.GPIDev.Credentials.AfsToken import AfsToken
 from GangaCore.GPIDev.Lib.File.OutputFileManager import getWNCodeForInputdataListCreation
 
-
 logger = GangaCore.Utility.logging.getLogger()
+
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    try:
+        import htcondor
+        import classad
+    except ModuleNotFoundError:
+        logger.debug("The htcondor module not available for import. This will cause use of the Condor backend to fail.")
 
 
 class Condor(IBackend):
