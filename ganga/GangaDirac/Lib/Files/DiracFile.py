@@ -683,27 +683,11 @@ class DiracFile(IGangaFile):
 
         if self.lfn != "" and force == False and lfn == '':
             logger.warning("Warning you're about to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (self.namePattern, self.lfn))
-            decision = input('y / [n]:')
-            while not (decision.lower() in ['y', 'n'] or decision.lower() == ''):
-                decision = input('y / [n]:')
-
-            if decision.lower() == 'y':
-                pass
-            else:
-                return
 
         if (lfn != '' and self.lfn != '') and force == False:
             logger.warning("Warning you're attempting to put this DiracFile: %s" % self.namePattern)
             logger.warning("It currently has an LFN associated with it: %s" % self.lfn)
-            logger.warning("Do you want to continue and attempt to upload to: %s" % lfn)
-            decision = input('y / [n]:')
-            while not (decision.lower() in ['y', 'n', '']):
-                decision = input('y / [n]:')
-
-            if decision.lower() == 'y':
-                pass
-            else:
-                return
+            logger.warning("Will continue and attempt to upload to: %s" % lfn)
 
         if lfn and os.path.basename(lfn) != self.namePattern:
             logger.warning("Changing namePattern from: '%s' to '%s' during put operation" % (self.namePattern, os.path.basename(lfn)))
@@ -787,7 +771,10 @@ class DiracFile(IGangaFile):
                     if not os.path.exists(name):
                         raise GangaFileError('File "%s" must exist!' % name)
 
-            lfn = os.path.join(lfn_base, os.path.basename(this_file))
+            if lfn=='':
+                lfn = os.path.join(lfn_base, os.path.basename(this_file))
+            if len(os.path.basename(lfn)) > 60:
+                logger.warning('Filename is longer than 60 characters. This may cause problems with Dirac storage.')
 
             d = DiracFile()
             d.namePattern = os.path.basename(name)
