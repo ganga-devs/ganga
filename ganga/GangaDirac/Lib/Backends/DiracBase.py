@@ -1047,12 +1047,12 @@ class DiracBase(IBackend):
 
             output_path = job.getOutputWorkspace().getPath()
 
-            logger.info('Contacting DIRAC for job: %s' % job.fqid)
+            logger.debug('Contacting DIRAC for job: %s' % job.fqid)
             # Contact dirac which knows about the job
             job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = execute("finished_job(%d, '%s', %s, downloadSandbox=%s)" % (job.backend.id, output_path, job.backend.unpackOutputSandbox, job.backend.downloadSandbox), cred_req=job.backend.credential_requirements)
 
             now = time.time()
-            logger.info('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
+            logger.debug('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
 
             #logger.info('Job ' + job.fqid + ' OutputDataInfo: ' + str(file_info_dict))
             #logger.info('Job ' + job.fqid + ' OutputSandbox: ' + str(getSandboxResult))
