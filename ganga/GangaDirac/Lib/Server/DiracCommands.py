@@ -265,7 +265,7 @@ def finaliseJobs(inputDict, downloadSandbox=True, oversized=True, noJobDir=True)
     for diracID in inputDict:
         returnDict[diracID] = {}
         returnDict[diracID]['cpuTime'] = normCPUTime(diracID, pipe_out=False)
-        if downloadSandbox:
+        if downloadSandbox and not statusList['Value'][diracID]['Status'] == 'Killed':
             returnDict[diracID]['outSandbox'] = getOutputSandbox(diracID, inputDict[diracID], oversized, noJobDir, pipe_out=False)
         else:
             returnDict[diracID]['outSandbox'] = None

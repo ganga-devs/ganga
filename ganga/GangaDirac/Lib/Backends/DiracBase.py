@@ -1158,15 +1158,8 @@ class DiracBase(IBackend):
                 job.master.updateMasterJobStatus()
 
             # if requested try downloading outputsandbox anyway
-            if configDirac['failed_sandbox_download']:
-                try:
-                    execute("getOutputSandbox(%d,'%s', %s)" % (job.backend.id, job.getOutputWorkspace().getPath(), job.backend.unpackOutputSandbox), cred_req=job.backend.credential_requirements)
-                except GangaDiracError as err:
-                    if job.backend.status == 'Killed':
-                        #if Dirac killed the job we don't necessarily expect there to be a sandbox so ignore the exception
-                        logger.debug('Job %s killed by Dirac and has no output sandbox' % job.backend.id)
-                    else:
-                        raise err
+            if configDirac['failed_sandbox_download'] and not job.backend.status == 'Killed':
+                execute("getOutputSandbox(%d,'%s', %s)" % (job.backend.id, job.getOutputWorkspace().getPath(), job.backend.unpackOutputSandbox), cred_req=job.backend.credential_requirements)
         else:
             logger.error("Job #%s Unexpected dirac status '%s' encountered" % (job.getFQID('.'), updated_dirac_status))
 
@@ -1266,7 +1259,7 @@ class DiracBase(IBackend):
                 continue
             #If we wanted the sandbox make sure it downloaded OK.
             if downloadSandbox and not returnDict[sj.backend.id]['outSandbox']['OK']:
-                if statusList['Value'][sj.backend.id]['Status']:
+                if statusList['Value'][sj.backend.id]['Status'] == 'Killed':
                     logger.debug("Job %s killed by Dirac and sandbox not downloaded")
                 else:
                     logger.error("Output sandbox error for job %s: %s. Unable to finalise it." % (sj.getFQID(), returnDict[sj.backend.id]['outSandbox']['Message']))
