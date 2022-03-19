@@ -258,7 +258,7 @@ def finished_job(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDi
 
 
 @diracCommand
-def finaliseJobs(inputDict, statusmapping, downloadSandbox=True, oversized=True, noJobDir=True):
+def finaliseJobs(inputDict, downloadSandbox=True, oversized=True, noJobDir=True):
     ''' A function to get the necessaries to finalise a whole bunch of jobs. Returns a dict of job information and a dict of stati.'''
     returnDict = {}
     statusList = dirac.getJobStatus(list(inputDict))
