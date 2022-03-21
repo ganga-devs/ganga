@@ -1158,7 +1158,7 @@ class DiracBase(IBackend):
                 job.master.updateMasterJobStatus()
 
             # if requested try downloading outputsandbox anyway
-            if configDirac['failed_sandbox_download']:
+            if configDirac['failed_sandbox_download'] and not job.backend.status == 'Killed':
                 execute("getOutputSandbox(%d,'%s', %s)" % (job.backend.id, job.getOutputWorkspace().getPath(), job.backend.unpackOutputSandbox), cred_req=job.backend.credential_requirements)
         else:
             logger.error("Job #%s Unexpected dirac status '%s' encountered" % (job.getFQID('.'), updated_dirac_status))
@@ -1248,7 +1248,7 @@ class DiracBase(IBackend):
         for sj in jobSlice:
             inputDict[sj.backend.id] = sj.getOutputWorkspace().getPath()
         statusmapping = configDirac['statusmapping']
-        returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, repr(statusmapping), downloadSandbox), cred_req=jobSlice[0].backend.credential_requirements, new_subprocess = True)
+        returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, downloadSandbox), cred_req=jobSlice[0].backend.credential_requirements, new_subprocess = True)
 
         #Cycle over the jobs and store the info
         for sj in jobSlice:
@@ -1259,9 +1259,12 @@ class DiracBase(IBackend):
                 continue
             #If we wanted the sandbox make sure it downloaded OK.
             if downloadSandbox and not returnDict[sj.backend.id]['outSandbox']['OK']:
-                logger.error("Output sandbox error for job %s: %s. Unable to finalise it." % (sj.getFQID(), returnDict[sj.backend.id]['outSandbox']['Message']))
-                sj.force_status('failed')
-                continue
+                if statusList['Value'][sj.backend.id]['Status'] == 'Killed':
+                    logger.debug("Job %s killed by Dirac and sandbox not downloaded")
+                else:
+                    logger.error("Output sandbox error for job %s: %s. Unable to finalise it." % (sj.getFQID(), returnDict[sj.backend.id]['outSandbox']['Message']))
+                    sj.force_status('failed')
+                    continue
             #Set the CPU time
             sj.backend.normCPUTime = returnDict[sj.backend.id]['cpuTime']
 
@@ -1329,7 +1332,6 @@ class DiracBase(IBackend):
             requeue_jobs (list): This is a list of the jobs which are to be requeued to be finalised
             finalised_statuses (dict): Dict of the Dirac statuses vs the Ganga statuses after running
         """
-
         # requeue existing completed job
         for j in requeue_jobs:
             if j.been_queued:
