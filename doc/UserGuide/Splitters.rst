@@ -37,7 +37,7 @@ See the section :doc:`PostProcessors` for how we can merge the output into a sin
 ArgSplitter
 -----------
 
-For a job that is using an `Executable` application, it is very common that you want to run it multiple times with a different set of arguments (like a random number seed). The `ArgSplitter` can do exactly that. For each of the subjobs created, it will replace the arguments fot he job with one from the array of array of arguments provided to the splitter. So
+For a job that is using an `Executable` application, it is very common that you want to run it multiple times with a different set of arguments (like a random number seed). The `ArgSplitter` can do exactly that. For each of the subjobs created, it will replace the arguments for the job with one from the array of array of arguments provided to the splitter. So
 
 .. code-block:: python
 
