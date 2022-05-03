@@ -12,7 +12,7 @@ import pty
 import sys
 import datetime
 from functools import wraps
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename, safe_join
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, request, jsonify, render_template, flash, redirect, url_for, session, send_file, make_response
 from flask_login import login_user, login_required, logout_user, current_user, UserMixin
@@ -656,7 +656,7 @@ def job_browse(job_id: int, path):
         return redirect(url_for("job_page", job_id=job_id))
 
     # Join the base and the requested path
-    abs_path = os.path.join(job_base_dir, path)
+    abs_path = safe_join(job_base_dir, path)
 
     # URL path variable for going back
     back_path = os.path.dirname(abs_path).replace(job_base_dir, "")
