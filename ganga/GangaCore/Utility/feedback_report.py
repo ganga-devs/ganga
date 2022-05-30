@@ -2,11 +2,12 @@
 import GangaCore.Utility.logging
 from GangaCore.Core.exceptions import GangaFileError
 from GangaCore.Utility.Config import getConfig, ConfigError
-from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
+from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
 from GangaCore.GPIDev.Base.Proxy import stripProxy, addProxy, getName
 
 import gzip
 logger = GangaCore.Utility.logging.getLogger()
+
 
 def _initconfigFeed():
     """Initialize Feedback configuration."""
@@ -22,16 +23,19 @@ def _initconfigFeed():
         # constructor
         logger.debug("Import Error: %s" % err)
         pass
+
+
 _initconfigFeed()
 
-def report(job=None, filetype=GoogleFile):
+
+def report(job=None, filetype=LocalFile):
     """
     Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. 
-    Reports can be provided as the file type indicated by filetype argument which defaults to GoogleFile
+    Reports can be provided as the file type indicated by filetype argument which defaults to LocalFile
 
     example of particular job details submission to GoogleDrive:
         j = Job() # a job defined, which results in an error
-        report(job=j, filetype=GoogleFile) # filetype can take other arguments like LocalFile, DiracFile 
+        report(job=j, filetype=GoogleFile) # Filetype can take other arguments like LocalFile (default), DiracFile 
 
 
     example of standalone submission:
@@ -45,7 +49,6 @@ def report(job=None, filetype=GoogleFile):
     import sys
     import os
     import platform
-
 
     import GangaCore.GPIDev.Lib.Config
     from GangaCore.GPIDev.Base.VPrinter import full_print
@@ -76,25 +79,25 @@ def report(job=None, filetype=GoogleFile):
         for (key, value) in fields.items():
             data[key] = value
         for field_name, file in files.items():
-            file_dict[field_name]=(file, open(file,'rb'))
-        
+            file_dict[field_name] = (file, open(file, 'rb'))
+
         return data, file_dict
 
     def upload(filetype, filename, localdir):
         try:
             from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-            
+
             filetype = stripProxy(filetype)
             assert(issubclass(filetype, IGangaFile))
 
             feedback = filetype(filename)
-            feedback.localDir = localdir 
+            feedback.localDir = localdir
             feedback.put()
 
         except AssertionError as err:
             logger.debug("Err: %s" % err)
             raise GangaFileError(f"filetype {filetype} is not supported")
-        
+
         logger.info(
             f'Your error report was saved as {feedback.accessURL()}.')
         logger.info(
@@ -106,7 +109,7 @@ def report(job=None, filetype=GoogleFile):
         logger.info('Ganga Version : ' + GANGA_VERSION)
         logger.info('Python Version : ' + "%s.%s.%s" %
                     (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-        logger.info('Operation System Version : ' + platform.platform())        
+        logger.info('Operation System Version : ' + platform.platform())
 
         if JOB_REPORT:
             logger.info('Application Name : ' + APPLICATION_NAME)
@@ -122,7 +125,6 @@ def report(job=None, filetype=GoogleFile):
         PYTHON_PATH = ''
 
         return addProxy(feedback)
-
 
     def report_inner(job=None, isJob=False, isTask=False):
 
@@ -290,7 +292,7 @@ def report(job=None, filetype=GoogleFile):
 
                 # this should get the changed values
                 for c in GangaCore.GPIDev.Lib.Config.config:
-                     print(GangaCore.GPIDev.Lib.Config.config[c], file=inputFile)
+                    print(GangaCore.GPIDev.Lib.Config.config[c], file=inputFile)
 
             finally:
                 inputFile.close()
@@ -321,12 +323,12 @@ def report(job=None, filetype=GoogleFile):
             import readline
             try:
                 lastIPythonCommands = ""
-                if readline.get_current_history_length()%20==0 and readline.get_current_history_length()!=0:
+                if readline.get_current_history_length() % 20 == 0 and readline.get_current_history_length() != 0:
                     history_len = 20
                 else:
-                    history_len = readline.get_current_history_length()%20
+                    history_len = readline.get_current_history_length() % 20
                 for i in range(history_len):
-                     lastIPythonCommands+=readline.get_history_item(i + 1)+'\n'
+                    lastIPythonCommands += readline.get_history_item(i + 1)+'\n'
                 writeStringToFile(os.path.join(
                     fullLogDirName, ipythonHistoryFileName), lastIPythonCommands)
             finally:
@@ -694,7 +696,7 @@ def report(job=None, filetype=GoogleFile):
             logger.error(
                 'The report is bigger than 100MB and can not be uploaded')
         else:
-            
+
             filename = resultArchive.split("/")[-1]
             localdir = "/".join(resultArchive.split("/")[:-1])
             return upload(filetype, filename, localdir)
