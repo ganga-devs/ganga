@@ -24,6 +24,9 @@ class TestFeedbackReport(GangaUnitTest):
         self.assertTrue(os.path.exists(outputfile))
         self.assertGreater(os.path.getsize(outputfile), 0)
 
+        if (os.path.exists(outputfile)):
+            os.remove(outputfile)
+
 
 if __name__ == "__main__":
     unittest.main()
