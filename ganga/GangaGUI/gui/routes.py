@@ -1057,7 +1057,7 @@ def generate_token():
     # Verify user and accordingly return the token
     user = User.query.filter_by(user=request_user).first()
     if user and user.verify_password(request_password):
-        token = user.generate_auth_token().decode("UTF-8")
+        token = user.generate_auth_token()
         response_data = {"token": token}
         return jsonify(response_data)
 
