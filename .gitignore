@@ -1,15 +1,64 @@
-*.pyc
-*.pyo
 *~
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Byte-compiled / optimized / DLL files
 __pycache__
-python/ganga.egg-info
-ganga.egg-info
+*.py[cod]
+*$py.class
+
+# Ganga specific
 doc/_build
-.idea
-.vscode
 doc/API/Ganga*
 doc/API/ganga.rst
 doc/API/modules.rst
 doc/GPI/plugins.rst
 doc/GPI/classes.rst
 doc/GPI/functions.rst
+gangadir-testing/
+
+# IDEs
+.idea
+.vscode
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
