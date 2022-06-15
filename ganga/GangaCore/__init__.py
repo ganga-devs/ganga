@@ -818,7 +818,7 @@ if not eosinstalled == 0:
     massStoragePath = ''    
 
 massStorageUploadOptions = {'mkdir_cmd': prefix + ' mkdir', 'cp_cmd':
-                            prefix + ' cp', 'ls_cmd': prefix + ' ls', 'path': massStoragePath}
+                            prefix + ' cp', 'ls_cmd': prefix + ' ls', 'rm_cmd' : prefix + ' rm', 'path': massStoragePath}
 
 massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
