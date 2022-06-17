@@ -497,7 +497,8 @@ class MassStorageFile(IGangaFile):
         else:
             _auto_delete = False
 
-        for i in self.locations:
+        location_list = list(self.locations)
+        for location in location_list:
 
             if not _auto_delete:
 
@@ -505,7 +506,7 @@ class MassStorageFile(IGangaFile):
 
                 while keyin is None:
                     keyin = input(
-                        "Do you want to delete file %s at Location: %s ? [y/n] " % (str(self.namePattern), str(i)))
+                        "Do you want to delete file %s at Location: %s ? [y/n] " % (str(self.namePattern), str(location)))
                     if keyin.lower() == 'y':
                         _delete_this = True
                     elif keyin.lower() == 'n':
@@ -518,8 +519,8 @@ class MassStorageFile(IGangaFile):
 
             if _delete_this:
                 logger.info("Deleting File at Location: %s")
-                self.execSyscmdSubprocess('%s %s' % (rm_cmd, quote(i)))
-                self.locations.pop(i)
+                self.execSyscmdSubprocess('%s %s' % (rm_cmd, quote(location)))
+                self.locations.remove(location)
 
         if removeLocal:
 
