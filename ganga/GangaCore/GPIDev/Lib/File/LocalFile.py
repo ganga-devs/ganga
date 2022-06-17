@@ -28,20 +28,20 @@ logger = GangaCore.Utility.logging.getLogger()
 
 regex = re.compile(r'[*?\[\]]')
 
+
 class LocalFile(IGangaFile):
 
-    """LocalFile represents base class for output files, such as MassStorageFile, LCGSEFile, etc 
+    """LocalFile represents base class for output files, such as MassStorageFile, LCGSEFile, etc
     """
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
                                      'localDir': SimpleItem(defvalue="", doc='local dir where the file is stored, used from get and put methods'),
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
-                                                sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+                                                               sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                      'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
     _exportmethods = ["get", "put", "location", "remove", "accessURL"]
-
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
@@ -54,7 +54,7 @@ class LocalFile(IGangaFile):
         if isinstance(namePattern, str):
             self.namePattern = namePattern
             if localDir:
-            	self.localDir = localDir
+                self.localDir = localDir
         elif isinstance(namePattern, File):
             self.namePattern = path.basename(namePattern.name)
             self.localDir = path.dirname(namePattern.name)
@@ -64,7 +64,6 @@ class LocalFile(IGangaFile):
             self.localDir = path.dirname(namePattern.name)
         else:
             logger.error("Unkown type: %s . Cannot Create LocalFile from this!" % type(namePattern))
-
 
     def __setattr__(self, attr, value):
         """
@@ -90,7 +89,6 @@ class LocalFile(IGangaFile):
                     actual_value = new_value
 
         super(LocalFile, self).__setattr__(attr, actual_value)
-        
 
     def __repr__(self):
         """Get the representation of the file."""
@@ -115,7 +113,7 @@ class LocalFile(IGangaFile):
             fileName = '%s.gz' % self.namePattern
 
         sourceDir = self.getJobObject().outputdir
-        
+
         if self.localDir:
             fileName = path.join(self.localDir, fileName)
 
@@ -214,7 +212,7 @@ class LocalFile(IGangaFile):
                     remove_filename = this_file + "_" + str(time.time()) + '__to_be_deleted_'
                     try:
                         os.rename(this_file, remove_filename)
-                    except Exception as err:
+                    except Exception:
                         logger.warning("Error in first stage of removing file: %s" % this_file)
                         remove_filename = this_file
 
@@ -249,11 +247,11 @@ class LocalFile(IGangaFile):
         """
         # This is useful for placing the LocalFile in a subdir at the end of a job
 
-        #FIXME this method should be written to work with some other parameter than localDir for job outputs but for now this 'works'
+        # FIXME this method should be written to work with some other parameter than localDir for job outputs but for now this 'works'
         if self.localDir:
             try:
                 job = self.getJobObject()
-            except AssertionError as err:
+            except AssertionError:
                 return
 
             # Copy to 'desitnation'
@@ -263,7 +261,7 @@ class LocalFile(IGangaFile):
                     os.makedirs(path.join(job.outputdir, self.localDir))
                 shutil.copy(path.join(job.outputdir, self.namePattern),
                             path.join(job.outputdir, self.localDir, self.namePattern))
-           
+
     def cleanUpClient(self):
         """
         This performs the cleanup method on the client output workspace to remove temporary files
@@ -287,7 +285,6 @@ for f in ###FILELIST###:
 
         return shortScript
 
-
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
 
         cp_template = """
@@ -304,7 +301,7 @@ for f in ###FILELIST###:
 
             this_cp = cp_template
 
-            replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
+            replace_dict = {'###INDENT###': indent, '###CP_COMMAND###': cp_cmd}
 
             for k, v in replace_dict.items():
                 this_cp = this_cp.replace(k, v)
@@ -313,5 +310,3 @@ for f in ###FILELIST###:
             break
 
         return script
-
-

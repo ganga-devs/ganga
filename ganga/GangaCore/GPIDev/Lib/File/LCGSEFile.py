@@ -5,28 +5,28 @@
 # $Id: LCGSEFile.py,v 0.1 2011-02-12 15:40:00 idzhunov Exp $
 ##########################################################################
 
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+import copy
+import os
+import re
 
-from GangaCore.Utility.Config import getConfig
+import GangaCore.Utility.Config
 import GangaCore.Utility.logging
-from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
-logger = GangaCore.Utility.logging.getLogger()
+from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory, getName
+from GangaCore.GPIDev.Credentials import VomsProxy, require_credential
+from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.GridShell import getShell
 
-from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-from GangaCore.GPIDev.Base.Proxy import getName
+logger = GangaCore.Utility.logging.getLogger()
 
-from GangaCore.GPIDev.Credentials import require_credential, VomsProxy
-
-import re
-import os
-import copy
 
 regex = re.compile(r'[*?\[\]]')
 
 
 def getLCGConfig():
     return getConfig('Output')['LCGSEFile']['uploadOptions']
+
 
 class LCGSEFile(IGangaFile):
 
@@ -277,7 +277,7 @@ class LCGSEFile(IGangaFile):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                        'scripts/LCGSEFileWNScript.py.template')
+                                       'scripts/LCGSEFileWNScript.py.template')
 
         from GangaCore.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '###INDENT###')
@@ -305,7 +305,8 @@ class LCGSEFile(IGangaFile):
 
         for location in self.locations:
             destFileName = os.path.join(to_location, self.namePattern)
-            cmd = 'lcg-cp --vo {vo} {remote_path} file:{local_path}'.format(vo=vo, remote_path=location, local_path=destFileName)
+            cmd = 'lcg-cp --vo {vo} {remote_path} file:{local_path}'.format(
+                vo=vo, remote_path=location, local_path=destFileName)
             (exitcode, output, m) = getShell(self.credential_requirements).cmd1(cmd, capture_stderr=True)
 
             if exitcode != 0:
@@ -338,9 +339,9 @@ class LCGSEFile(IGangaFile):
         from fnmatch import fnmatch
 
         if regex.search(self.namePattern):
-            #TODO namePattern shouldn't contain slashes and se_rpath should not contain wildcards
+            # TODO namePattern shouldn't contain slashes and se_rpath should not contain wildcards
             cmd = 'lcg-ls lfn:/grid/{vo}/{se_rpath}'.format(vo=self.credential_requirements.vo, se_rpath=self.se_rpath)
-            exitcode,output,m = getShell(self.credential_requirements).cmd1(cmd, capture_stderr=True)
+            exitcode, output, m = getShell(self.credential_requirements).cmd1(cmd, capture_stderr=True)
 
             for filename in output.split('\n'):
                 if fnmatch(filename, self.namePattern):
@@ -350,7 +351,7 @@ class LCGSEFile(IGangaFile):
 
                     self.subfiles.append(GPIProxyObjectFactory(subfile))
 
+
 # add LCGSEFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate LCGSEFile() objects via config file)
-import GangaCore.Utility.Config
 GangaCore.Utility.Config.config_scope['LCGSEFile'] = LCGSEFile
