@@ -451,7 +451,6 @@ class IBackend(GangaObject):
             logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
             logger.debug("Error: %s" % err)
             blocks_of_size = 5
-
         # Separate different backends implicitly
         simple_jobs = {}
         for j in jobs:
