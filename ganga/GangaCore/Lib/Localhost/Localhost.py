@@ -10,6 +10,7 @@ import uuid
 import shutil
 import sys
 
+from aiofile import async_open
 from pathlib import Path
 from os.path import join, dirname, abspath, isdir, isfile
 
@@ -364,26 +365,24 @@ class Localhost(IBackend):
                 shutil.rmtree(self.workdir, ignore_errors=True)
 
     @staticmethod
-    def updateMonitoringInformation(jobs):
+    async def updateMonitoringInformation(jobs):
 
-        def get_exit_code(f):
-            import re
-            with open(f) as statusfile:
-                stat = statusfile.read()
+        async def read_status_file(path):
+            async with async_open(path) as statusfile:
+                file = await statusfile.read()
+            return file
+
+        def get_exit_code(statusfile):
             m = re.compile(
-                r'^EXITCODE: (?P<exitcode>-?\d*)', re.M).search(stat)
-
+                r'^EXITCODE: (?P<exitcode>-?\d*)', re.M).search(statusfile)
             if m is None:
                 return None
             else:
                 return int(m.group('exitcode'))
 
-        def get_pids(f):
-            import re
-            with open(f) as statusfile:
-                stat = statusfile.read()
-            m_pid = re.compile(r'^PID: (?P<pid>\d*)', re.M).search(stat)
-            m_wrapper = re.compile(r'^WRAPPER: (?P<pid>\d*)', re.M).search(stat)
+        def get_pids(statusfile):
+            m_pid = re.compile(r'^PID: (?P<pid>\d*)', re.M).search(statusfile)
+            m_wrapper = re.compile(r'^WRAPPER: (?P<pid>\d*)', re.M).search(statusfile)
 
             pid = None
             wrapper = None
@@ -402,20 +401,19 @@ class Localhost(IBackend):
 
             # try to get the application exit code from the status file
             try:
-                statusfile = join(outw.getPath(), '__jobstatus__')
+                statusfile_path = join(outw.getPath(), '__jobstatus__')
+                statusfile = await read_status_file(statusfile_path)
+
                 if j.status == 'submitted':
                     pid, wrapper_pid = get_pids(statusfile)
                     if wrapper_pid:
                         j.backend.wrapper_pid = wrapper_pid
                     if pid:
                         j.backend.id = pid
-                        #logger.info('Local job %s status changed to running, pid=%d',j.getFQID('.'),pid)
                         j.updateStatus('running')  # bugfix: 12194
                 exitcode = get_exit_code(statusfile)
-                with open(statusfile) as status_file:
-                    logger.debug('status file: %s %s', statusfile, status_file.read())
             except IOError as x:
-                logger.debug('problem reading status file: %s (%s)', statusfile, str(x))
+                logger.debug('problem reading status file: %s (%s)', statusfile_path, str(x))
                 exitcode = None
             except Exception as x:
                 logger.critical('problem during monitoring: %s', str(x))
@@ -423,7 +421,7 @@ class Localhost(IBackend):
                 traceback.print_exc()
                 raise x
 
-            if not exitcode is None:
+            if exitcode is not None:
                 # status file indicates that the application finished
                 j.backend.exitcode = exitcode
 
@@ -431,10 +429,5 @@ class Localhost(IBackend):
                     j.updateStatus('completed')
                 else:
                     j.updateStatus('failed')
-
-                #logger.info('Local job %s finished with exitcode %d',j.getFQID('.'),exitcode)
-
-                # if j.outputdata:
-                # j.outputdata.fill()
 
                 j.backend.remove_workdir()

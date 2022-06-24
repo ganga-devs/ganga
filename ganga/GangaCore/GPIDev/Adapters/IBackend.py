@@ -4,8 +4,10 @@
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ##########################################################################
 
+import asyncio
 import itertools
 import os
+import threading
 import time
 from collections import defaultdict
 
@@ -109,7 +111,7 @@ class IBackend(GangaObject):
         in the following way:
 
         def master_submit(self,masterjobconfig,subjobconfigs,keep_going):
-           ... 
+           ...
            do_some_processsing_of(masterjobconfig)
            ...
            return IBackend.master_submit(self,subjobconfigs,masterjobconfig,keep_joing)
@@ -415,12 +417,33 @@ class IBackend(GangaObject):
         """
 
         from GangaCore.Core import monitoring_component
-        was_monitoring_running = monitoring_component and monitoring_component.isEnabled(False)
+        was_monitoring_running = monitoring_component and monitoring_component.enabled
 
         logger.debug("Running Monitoring for Jobs: %s" % [j.getFQID('.') for j in jobs])
 
+        def __get_monitorable_subjob_ids(job_main):
+            monitorable_subjob_ids = []
+
+            if isType(job_main.subjobs, SubJobJsonList):
+                cache = job_main.subjobs.getAllCachedData()
+                for sj_id in range(0, len(job_main.subjobs)):
+                    if cache[sj_id]['status'] in ['submitted', 'running']:
+                        if job_main.subjobs.isLoaded(sj_id):
+                            # SJ may have changed from cache in memory
+                            this_sj = job_main.subjobs(sj_id)
+                            if this_sj.status in ['submitted', 'running']:
+                                monitorable_subjob_ids.append(sj_id)
+                        else:
+                            monitorable_subjob_ids.append(sj_id)
+            else:
+                for sj in job_main.subjobs:
+                    if sj.status in ['submitted', 'running']:
+                        monitorable_subjob_ids.append(sj.id)
+
+            return monitorable_subjob_ids
+
         # Only process 10 files from the backend at once
-        #blocks_of_size = 10
+        # blocks_of_size = 10
         poll_config = getConfig('PollThread')
         try:
             blocks_of_size = poll_config['numParallelJobs']
@@ -428,44 +451,16 @@ class IBackend(GangaObject):
             logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
             logger.debug("Error: %s" % err)
             blocks_of_size = 5
+
         # Separate different backends implicitly
         simple_jobs = {}
-
-        multiThreadMon = poll_config['enable_multiThreadMon']
-
-        # FIXME Add some check for (sub)jobs which are in a transient state but
-        # are not locked by an active session of ganga
-
-        queues = getQueues()
-
         for j in jobs:
             # All subjobs should have same backend
             if len(j.subjobs) > 0:
-                #logger.info("Looking for sj")
-                monitorable_subjob_ids = []
-
-                if isType(j.subjobs, SubJobJsonList):
-                    cache = j.subjobs.getAllCachedData()
-                    for sj_id in range(0, len(j.subjobs)):
-                        if cache[sj_id]['status'] in ['submitted', 'running']:
-                            if j.subjobs.isLoaded(sj_id):
-                                # SJ may have changed from cache in memory
-                                this_sj = j.subjobs(sj_id)
-                                if this_sj.status in ['submitted', 'running']:
-                                    monitorable_subjob_ids.append(sj_id)
-                            else:
-                                monitorable_subjob_ids.append(sj_id)
-                else:
-                    for sj in j.subjobs:
-                        if sj.status in ['submitted', 'running']:
-                            monitorable_subjob_ids.append(sj.id)
-
-                #logger.info('Monitoring subjobs: %s', monitorable_subjob_ids)
+                monitorable_subjob_ids = __get_monitorable_subjob_ids(j)
 
                 if not monitorable_subjob_ids:
                     continue
-
-                # logger.info("Dividing")
 
                 monitorable_blocks = []
                 temp_block = []
@@ -483,19 +478,15 @@ class IBackend(GangaObject):
                 for this_block in monitorable_blocks:
 
                     # If the monitoring function was running at the start of the function but has since stopped, break.
-                    if was_monitoring_running and monitoring_component and not monitoring_component.isEnabled(False) or not monitoring_component:
+                    if was_monitoring_running and monitoring_component and not monitoring_component.enabled or not monitoring_component:
                         break
 
                     try:
                         subjobs_to_monitor = []
                         for sj_id in this_block:
                             subjobs_to_monitor.append(j.subjobs[sj_id])
-                        if multiThreadMon:
-                            if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
-                                queues._addSystem(j.backend.updateMonitoringInformation,
-                                                  args=(subjobs_to_monitor,), name="Backend Monitor")
-                        else:
-                            j.backend.updateMonitoringInformation(subjobs_to_monitor)
+
+                        asyncio.create_task(j.backend.updateMonitoringInformation(subjobs_to_monitor))
                     except Exception as err:
                         logger.error("Monitoring Error: %s" % err)
 
@@ -510,27 +501,10 @@ class IBackend(GangaObject):
         if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
-                if multiThreadMon:
-                    if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
-                        queues._addSystem(stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation,
-                                          args=(simple_jobs[this_backend],), name="Backend Monitor")
-                else:
-                    stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(
-                        simple_jobs[this_backend])
+                asyncio.create_task(stripProxy(
+                    simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend]))
 
         logger.debug("Finished Monitoring request")
-
-        if not multiThreadMon:
-            return
-
-        loop = True
-        while loop:
-            for stat in queues._monitoring_threadpool.worker_status():
-                loop = False
-                if stat[0] is not None and stat[0].startswith("Backend Monitor"):
-                    loop = True
-                    break
-            time.sleep(1.)
 
     @staticmethod
     def updateMonitoringInformation(jobs):
