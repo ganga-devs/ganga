@@ -1,22 +1,20 @@
-import re
+import base64
 import copy
 import glob
+import logging
 import os
 import pickle
+import re
 import stat
-import logging
-import base64
-
 from fnmatch import fnmatch
 
 import GangaCore.Utility.Config
-
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
 from GangaCore.Core.exceptions import GangaFileError
-from GangaCore.Utility.logging import getLogger
-from GangaCore.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
+from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
+from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 regex = re.compile(r'[*?\[\]]')
@@ -61,7 +59,7 @@ class GoogleFile(IGangaFile):
                       'id': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
                                        doc='GoogleFile ID assigned to file  on upload to GoogleDrive'),
                       'name': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
-                                                   doc='GoogleFile name of the uploaded file'),
+                                         doc='GoogleFile name of the uploaded file'),
                       'GangaFolderId': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
                                                   doc='GoogleDrive Ganga folder  ID')
                       })
@@ -78,7 +76,7 @@ class GoogleFile(IGangaFile):
                                       'gangadir'], 'googlecreddata.pkl')
 
     def __initializeCred(self):
-        while os.path.isfile(self.cred_path) == False:
+        while os.path.isfile(self.cred_path) is False:
             from google.auth.transport.requests import Request
             from google_auth_oauthlib.flow import InstalledAppFlow
 
@@ -90,7 +88,7 @@ class GoogleFile(IGangaFile):
             googleconfig = getConfig('Google')
             client_id = googleconfig['client_id']
             client_secret = googleconfig['client_secret']
-            
+
             account_details = {
                 "installed": {
                     "project_id": "ganga-file-uploader",
@@ -107,7 +105,7 @@ class GoogleFile(IGangaFile):
                 oauth['client_id'] = client_id
             if client_secret != "":
                 oauth['client_secret'] = client_secret
-            
+
             # If there are no (valid) credentials available, let the user log in.
             if not os.path.exists(self.cred_path):
                 if not creds or not creds.valid:
@@ -116,13 +114,14 @@ class GoogleFile(IGangaFile):
                             'Enter you accound details in the browser window prompted')
                         creds.refresh(Request())
                     else:
-                        if not 'client_secret' in account_details['installed']:
-                            logger.warning('If you continue here, you will use the default Oauth client of Ganga. It is recommended to create your own Oauth client and let Ganga use that one. See https://ganga.readthedocs.io/en/latest/UserGuide/GoogleOauth.html for details.')
+                        if 'client_secret' not in account_details['installed']:
+                            logger.warning(
+                                'If you continue here, you will use the default Oauth client of Ganga. It is recommended to create your own Oauth client and let Ganga use that one. See https://ganga.readthedocs.io/en/latest/UserGuide/GoogleOauth.html for details.')
                             oauth['client_secret'] = base64.b64decode(client_secret_encrypted).decode("utf-8")
                         flow = InstalledAppFlow.from_client_config(
-                            account_details, 
+                            account_details,
                             SCOPES
-                        )                        
+                        )
                         creds = flow.run_local_server(port=0)
 
                     # Save the credentials for the next run
@@ -169,7 +168,7 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().deleteCredentials()
         """
-        if os.path.isfile(self.cred_path) == True:
+        if os.path.isfile(self.cred_path) is True:
             os.remove(self.cred_path)
             logger.info('GoogleDrive credentials deleted')
             return None
@@ -183,6 +182,7 @@ class GoogleFile(IGangaFile):
             targetPath (str): Target path where the file is copied to
         """
         import io
+
         from googleapiclient.http import MediaIoBaseDownload
 
         dir_path = targetPath
@@ -240,10 +240,11 @@ class GoogleFile(IGangaFile):
 
     def download_file_from_drive(self, service, fileid, filepath, filename=None):
         import io
+
         from googleapiclient.http import MediaIoBaseDownload
 
         # if file name is not known, we first get the file's name
-        if filename == None:
+        if filename is None:
             name_request = service.files().get(fileId=fileid).execute()
             fname = name_request['name']
             filename = os.path.join(filepath, fname)
@@ -281,7 +282,7 @@ class GoogleFile(IGangaFile):
             search_result = service.files().list(
                 q=f"'{self.GangaFolderId}' in parents",
                 spaces='drive'
-            ).execute() 
+            ).execute()
 
             if search_result['files']:
                 for _file in search_result['files']:
@@ -291,14 +292,15 @@ class GoogleFile(IGangaFile):
                             service, _file['id'], dir_path, None
                         )
                 if files_found is False:
-                    raise GangaFileError(f"No files with pattern: {self.namePattern} were found in Ganga Folder of your Google Drive. Ganga can only see files that was uploded by Ganga itself.")
+                    raise GangaFileError(
+                        f"No files with pattern: {self.namePattern} were found in Ganga Folder of your Google Drive. Ganga can only see files that was uploded by Ganga itself.")
             else:
-                raise GangaFileError(f"Ganga Folder of your Google Drive is empty/non-existent")
+                raise GangaFileError("Ganga Folder of your Google Drive is empty/non-existent")
         else:
             search_result = service.files().list(
                 q=f"name = '{self.namePattern}' and parents in '{self.GangaFolderId}'",
                 spaces='drive'
-            ).execute() 
+            ).execute()
 
             if search_result['files']:
                 for _file in search_result['files']:
@@ -306,13 +308,15 @@ class GoogleFile(IGangaFile):
                         service, _file['id'], dir_path, self.namePattern
                     )
             else:
-                raise GangaFileError(f"File: {self.namePattern} not found in Ganga Folder of your Google Drive. Ganga can only see files that was uploded by Ganga itself.")
+                raise GangaFileError(
+                    f"File: {self.namePattern} not found in Ganga Folder of your Google Drive. Ganga can only see files that was uploded by Ganga itself.")
 
     def put(self):
         """
         Postprocesses (upload) output file to the desired destination from the client
         """
         import hashlib
+
         from googleapiclient.http import MediaFileUpload
 
         service = self._setup_service()
@@ -417,7 +421,7 @@ class GoogleFile(IGangaFile):
             self.id = file['id']
             self.name = file_metadata['name']
             return
-            
+
         return GPIProxyObjectFactory(self.subfiles[:])
 
     def remove(self, permanent=False):
@@ -439,20 +443,19 @@ class GoogleFile(IGangaFile):
 
         However, this will make the file unrestorable
         """
-        from googleapiclient.errors import HttpError 
+        from googleapiclient.errors import HttpError
         service = self._setup_service()
 
         # Wildcard procedure
         if regex.search(self.namePattern) is not None:
             for f in self.subfiles:
-                if permanent == True:
+                if permanent:
                     try:
                         service.files().delete(fileId=f.id).execute()
                         f.downloadURL = ''
                         logger.info(
                             'File \'%s\' permanently deleted from GoogleDrive' % f.name)
-                    except HttpError as error:
-                        # print 'An error occurred: %s' % error
+                    except HttpError:
                         logger.info(
                             'File \'%s\' deletion failed, or file already deleted' % f.name)
                 else:
@@ -464,19 +467,19 @@ class GoogleFile(IGangaFile):
                         ).execute()
                         logger.info(
                             'File \'%s\' removed from GoogleDrive, added to trash' % f.name)
-                    except HttpError as error:
+                    except HttpError:
                         # print 'An error occurred: %s' % error
                         logger.info(
                             'File \'%s\' removal failed, or file already removed' % f.name)
 
         # Non-wildcard request
         else:
-            if permanent == True:
+            if permanent:
                 try:
                     service.files().delete(fileId=self.id).execute()
                     self.downloadURL = ''
                     logger.info('File permanently deleted from GoogleDrive')
-                except HttpError as error:
+                except HttpError:
                     logger.info(
                         'File deletion failed, or file already deleted')
             else:
@@ -487,7 +490,7 @@ class GoogleFile(IGangaFile):
                         body={"trashed": True}
                     ).execute()
                     logger.info('File removed from GoogleDrive, added to trash')
-                except HttpError as error:
+                except HttpError:
                     logger.info('File removal failed, or file already removed')
                 return None
 
@@ -497,7 +500,7 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().restore()
         """
-        from googleapiclient.errors import HttpError 
+        from googleapiclient.errors import HttpError
 
         service = self._setup_service()
 
@@ -508,10 +511,10 @@ class GoogleFile(IGangaFile):
                     service.files().update(
                         fileId=f.id,
                         body={"trashed": False}
-                    ).execute()                 
+                    ).execute()
                     logger.info(
                         'File \'%s\' restored to GoogleDrive' % f.name)
-                except HttpError as error:
+                except HttpError:
                     # print 'An error occurred: %s' % error
                     logger.info(
                         'File \'%s\' restore failed, or file does not exist on GoogleDrive' % f.name)
@@ -524,11 +527,10 @@ class GoogleFile(IGangaFile):
                     body={"trashed": False}
                 ).execute()
                 logger.info(
-                        'File \'%s\' restored to GoogleDrive' % self.name)
-            except HttpError as error:
-                # print 'An error occurred: %s' % error
+                    'File \'%s\' restored to GoogleDrive' % self.name)
+            except HttpError:
                 logger.info(
-                        'File \'%s\' restore failed, or file does not exist on GoogleDrive' % self.name)
+                    'File \'%s\' restore failed, or file does not exist on GoogleDrive' % self.name)
             return None
 
     def _check_Ganga_folder(self):
@@ -537,7 +539,7 @@ class GoogleFile(IGangaFile):
         """
         service = self._setup_service()
 
-        # grabing all the folders in root folder of gdrive 
+        # grabing all the folders in root folder of gdrive
         results = service.files().list(
             pageSize=10, fields="nextPageToken, files(id, name)"
         ).execute()
@@ -546,7 +548,7 @@ class GoogleFile(IGangaFile):
         for _file in items:
             if _file['name'] == 'Ganga':
                 self.GangaFolderId = _file['id']
-                
+
         if not self.GangaFolderId:
             body = {
                 'name': 'Ganga',
@@ -561,7 +563,7 @@ class GoogleFile(IGangaFile):
         Sets up the GoogleDrive service for other methods
         """
         from googleapiclient.discovery import build
-        if self.__initialized == False:
+        if self.__initialized is False:
             self.__initializeCred()
         with open(self.cred_path, "rb") as nput:
             credentials = pickle.load(nput)
@@ -584,5 +586,6 @@ class GoogleFile(IGangaFile):
             # note stripProxy wont work on class types that aren't instances
             return isinstance(self, to_match._impl)
         return to_match == self
+
 
 GangaCore.Utility.Config.config_scope['GoogleFile'] = GoogleFile
