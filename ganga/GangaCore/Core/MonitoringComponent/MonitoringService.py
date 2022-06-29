@@ -12,10 +12,10 @@ log = getLogger()
 
 
 class AsyncMonitoringService(GangaThread):
-    def __init__(self, loop, registry_slice=None):
+    def __init__(self, registry_slice=None):
         GangaThread.__init__(self, name="AsyncMonitoringService")
         self.daemon = True
-        self.loop = loop
+        self.loop = asyncio.new_event_loop()
         self.enabled = False
         self.alive = True
         self.registry_slice = registry_slice

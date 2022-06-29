@@ -28,7 +28,7 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     """
     # Must do some Ganga imports here to avoid circular importing
     from GangaCore import GANGA_SWAN_INTEGRATION
-    # from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor
+    from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor
     from GangaCore.Core.MonitoringComponent.MonitoringService import AsyncMonitoringService
     from GangaCore.Utility.Config import getConfig
     from GangaCore.Runtime.GPIexport import exportToInterface
@@ -36,10 +36,9 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     from GangaCore.Utility.logging import getLogger
     global monitoring_component
 
-    # The asyncio monitoring loop implementation to use
-    aioloop = asyncio.new_event_loop()
     # start the monitoring loop
-    monitoring_component = AsyncMonitoringService(loop=aioloop, registry_slice=reg_slice)
+    monitoring_component = AsyncMonitoringService(registry_slice=reg_slice)
+    # monitoring_component = JobRegistry_Monitor(registry_slice=reg_slice)
     monitoring_component.start()
 
     # override the default monitoring autostart value with the setting from interactive session
