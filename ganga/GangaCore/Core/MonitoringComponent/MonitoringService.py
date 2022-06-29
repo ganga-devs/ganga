@@ -28,7 +28,8 @@ class AsyncMonitoringService(GangaThread):
         self.loop.run_forever()
 
     def _check_active_backends(self, job_slice=None):
-        print(f'Checking active backends, thread {get_ident()}')
+        if not self.enabled:
+            return
         active_backends = {}
 
         if job_slice is not None:
@@ -65,12 +66,17 @@ class AsyncMonitoringService(GangaThread):
         summary += '}'
 
         for backend, these_jobs in active_backends.items():
-            print(f"Updating active_backends: {summary}")
             backend_obj = these_jobs[0].backend
             stripProxy(backend_obj).master_updateMonitoringInformation(these_jobs)
         self.loop.call_later(POLL_RATE, self._check_active_backends)
 
+    def _cleanup_scheduled_tasks(self):
+        scheduled_tasks = [task for task in asyncio.all_tasks(self.loop) if task is not asyncio.current_task(self.loop)]
+        for task in scheduled_tasks:
+            task.cancel()
+
     def stop(self):
         self.alive = False
         self.enabled = False
-        self.loop.call_soon(self.loop.stop)
+        self._cleanup_scheduled_tasks()
+        self.loop.stop()
