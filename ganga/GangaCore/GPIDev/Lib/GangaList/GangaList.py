@@ -352,6 +352,9 @@ class GangaList(GangaObject):
             return makeGangaList(self._list.__getitem__(index))
         return self._list.__getitem__(index)
 
+    def __class_getitem__(cls, *args, **kwargs):
+        return cls
+
     def _export___getitem__(self, index):
         return addProxy(self.__getitem__(index))
 
