@@ -30,7 +30,8 @@ def store_dirac_environment():
     requestedVersion = GangaCore.Utility.Config.getConfig('LHCb')['LHCbDiracVersion']
 
     if not requestedVersion == 'prod':
-        logger.warn(f"Specific DIRAC version ({requestedVersion}) is set in the [LHCb]LHCbDiracVersion configuration parameter. Unless you really know what you are doing, this should not be done.")
+        logger.warn(
+            f"Specific DIRAC version ({requestedVersion}) is set in the [LHCb]LHCbDiracVersion configuration parameter. Unless you really know what you are doing, this should not be done.")
 
     fdir = join(expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = join(fdir, requestedVersion)

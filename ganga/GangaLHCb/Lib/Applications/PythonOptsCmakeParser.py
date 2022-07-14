@@ -7,8 +7,9 @@ from GangaCore.Core.exceptions import ApplicationConfigurationError
 from GangaCore.Utility.files import expandfilename
 logger = GangaCore.Utility.logging.getLogger()
 
-## Due to a bug in Gaudi at some point we need this equivalence here: see #204
+# Due to a bug in Gaudi at some point we need this equivalence here: see #204
 DataObjectDescriptorCollection = str
+
 
 class PythonOptsCmakeParser(object):
 
@@ -28,9 +29,9 @@ class PythonOptsCmakeParser(object):
 
         logger.info("Started parsing input Data file")
 
-        tmp_pkl = tempfile.NamedTemporaryFile(suffix='.pkl', mode = "rb+")
-        tmp_py = tempfile.NamedTemporaryFile(suffix='.py', mode = "rb+")
-        py_opts = tempfile.NamedTemporaryFile(suffix='.py', mode = "w")
+        tmp_pkl = tempfile.NamedTemporaryFile(suffix='.pkl', mode="rb+")
+        tmp_py = tempfile.NamedTemporaryFile(suffix='.py', mode="rb+")
+        py_opts = tempfile.NamedTemporaryFile(suffix='.py', mode="w")
         py_opts.write(self._join_opts_files())
         py_opts.flush()
         gaudirun = './run gaudirun.py -n -v -o %s %s' % (tmp_py.name, py_opts.name)
@@ -40,7 +41,6 @@ class PythonOptsCmakeParser(object):
 
         rc, stdout, m = self.app.execCmd(gaudirun)
 
-    
         if stdout.decode().find('Gaudi.py') >= 0:
             msg = 'The version of gaudirun.py required for your application is not supported.'
             raise ValueError(None, msg)
@@ -122,4 +122,3 @@ class PythonOptsCmakeParser(object):
             with open(expandfilename(name), 'r') as this_file:
                 joined_py_opts += this_file.read()
         return joined_py_opts
-

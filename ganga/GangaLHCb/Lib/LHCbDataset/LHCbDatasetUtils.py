@@ -36,7 +36,8 @@ def strToDataFile(name, allowNone=True):
         if allowNone:
             return None
         else:
-            raise GangaException( "Cannot construct file object: %s" % str(name) )
+            raise GangaException("Cannot construct file object: %s" % str(name))
+
 
 def getDataFile(file_):
     if isType(file_, DiracFile):

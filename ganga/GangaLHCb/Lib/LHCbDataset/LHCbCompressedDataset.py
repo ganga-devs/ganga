@@ -21,6 +21,7 @@ logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+
 class LHCbCompressedFileSet(GangaObject):
     '''A class for handling sets of files. This stores the common start of the lfns,
     a list of all the non-common ends and a list of the metadata for each file.
@@ -30,11 +31,13 @@ class LHCbCompressedFileSet(GangaObject):
     '''
 
     schema = {}
-    schema['lfn_prefix'] = SimpleItem(defvalue = None, typelist = ['str', None], doc = 'The common starting path of the LFN')
-    schema['suffixes'] = SimpleItem(defvalue = [], typelist = [GangaList, 'str'], sequence=1, doc = 'The individual end of each LFN')
+    schema['lfn_prefix'] = SimpleItem(defvalue=None, typelist=['str', None], doc='The common starting path of the LFN')
+    schema['suffixes'] = SimpleItem(defvalue=[], typelist=[GangaList, 'str'],
+                                    sequence=1, doc='The individual end of each LFN')
     _schema = Schema(Version(3, 0), schema)
     _category = 'gangafiles'
     _exportmethods = ['__len__', 'getLFNs', 'getLFN']
+
     def __init__(self, files=None, lfn_prefix=None):
         super(LHCbCompressedFileSet, self).__init__()
         if lfn_prefix:
@@ -85,12 +88,16 @@ class LHCbCompressedDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of DiracFile objects'
-    schema['files'] = SimpleItem(defvalue=[], typelist=[LHCbCompressedFileSet], sequence=1, doc='A list of lists of the file suffixes')
-    schema['XMLCatalogueSlice'] = GangaFileItem(defvalue=None, doc='Use contents of file rather than generating catalog.')
-    schema['persistency'] = SimpleItem(defvalue=None, typelist=['str', 'type(None)'], doc='Specify the dataset persistency technology')
+    schema['files'] = SimpleItem(defvalue=[], typelist=[LHCbCompressedFileSet],
+                                 sequence=1, doc='A list of lists of the file suffixes')
+    schema['XMLCatalogueSlice'] = GangaFileItem(
+        defvalue=None, doc='Use contents of file rather than generating catalog.')
+    schema['persistency'] = SimpleItem(defvalue=None, typelist=['str', 'type(None)'],
+                                       doc='Specify the dataset persistency technology')
     schema['credential_requirements'] = ComponentItem('CredentialRequirement', defvalue=None)
-    schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
-    schema['depth'] = SimpleItem(defvalue = 0, doc='Depth')
+    schema['treat_as_inputfiles'] = SimpleItem(
+        defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
+    schema['depth'] = SimpleItem(defvalue=0, doc='Depth')
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
     _name = "LHCbCompressedDataset"
@@ -99,58 +106,57 @@ class LHCbCompressedDataset(GangaDataset):
                       'getLFNs', 'getFullFileNames', 'getFullDataset', 'hasLFNs',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata', 'getMetadata',
-                      'getLuminosity', 'getEvtStat', 'getRunNumbers', 'isEmpty', 'getPFNs'] 
+                      'getLuminosity', 'getEvtStat', 'getRunNumbers', 'isEmpty', 'getPFNs']
 
-    def __init__(self, files=None, metadata = None, persistency=None, depth=0, fromRef=False):
+    def __init__(self, files=None, metadata=None, persistency=None, depth=0, fromRef=False):
         super(LHCbCompressedDataset, self).__init__()
         self.files = []
-        #if files is an LHCbDataset
+        # if files is an LHCbDataset
 
         if files and isType(files, GangaLHCb.Lib.LHCbDataset.LHCbDataset):
             newset = LHCbCompressedFileSet(files.getLFNs())
             self.files.append(newset)
-        #if files is an LHCbCompressedDataset
+        # if files is an LHCbCompressedDataset
         if files and isType(files, LHCbCompressedDataset):
             self.files.extend(files.files)
-        #if files is just a string
+        # if files is just a string
         if files and isType(files, str):
             newset = LHCbCompressedFileSet(files)
             self.files.append(newset)
-        #if files is a single DiracFile
+        # if files is a single DiracFile
         if files and isType(files, DiracFile):
             newset = LHCbCompressedFileSet(files.lfn)
             self.files.append(newset)
-        #if files is a single LHCbCompressedFileSet
+        # if files is a single LHCbCompressedFileSet
         if files and isType(files, LHCbCompressedFileSet):
             self.files.append(files)
-        #if files is a list
+        # if files is a list
         if files and isType(files, [list, GangaList]):
-            #Is it a list of strings? Then it may have been produced from the BKQuery so pass along the metadata as well
+            # Is it a list of strings? Then it may have been produced from the BKQuery so pass along the metadata as well
             if isType(files[0], str):
                 newset = LHCbCompressedFileSet(files)
                 self.files.append(newset)
-            #Is it a list of DiracFiles?
+            # Is it a list of DiracFiles?
             if isType(files[0], DiracFile):
                 lfns = []
                 for _df in files:
                     lfns.append(_df.lfn)
                 newset = LHCbCompressedFileSet(lfns)
                 self.files.append(newset)
-            #Is it a list of file sets?
+            # Is it a list of file sets?
             if isType(files[0], LHCbCompressedFileSet):
-                    self.files.extend(files)
+                self.files.extend(files)
 
         self.files._setParent(self)
         self.persistency = persistency
         self.current = 0
         logger.debug("Dataset Created")
 
-
     def _location(self, i):
         '''Figure out where a file of index i is. Returns the subset no and the location within that subset'''
         setNo = 0
         fileTotal = 0
-        while fileTotal < i+1 and setNo < len(self.files):
+        while fileTotal < i + 1 and setNo < len(self.files):
             fileTotal += len(self.files[setNo])
             setNo += 1
         if fileTotal < i:
@@ -174,19 +180,19 @@ class LHCbCompressedDataset(GangaDataset):
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
         if type(i) == type(slice(0)):
-            #We construct a list of all LFNs first. Not the most efficient but it allows us to use the standard slice machinery
+            # We construct a list of all LFNs first. Not the most efficient but it allows us to use the standard slice machinery
             newLFNs = self.getLFNs()[i]
-            #We define these here for future speed
+            # We define these here for future speed
             indexLen = len(newLFNs)
-            #Now pull out the prefixes/suffixes
+            # Now pull out the prefixes/suffixes
             setNo = 0
             step = 1
-            #If we are going backwards start at the end
+            # If we are going backwards start at the end
             if i.step and i.step < 0:
                 step = -1
-                setNo = len(self.files)-1
+                setNo = len(self.files) - 1
             currentPrefix = None
-            #Iterate over the LFNs and find out where it came from
+            # Iterate over the LFNs and find out where it came from
             ds = LHCbCompressedDataset()
             tempList = []
             j = 0
@@ -201,12 +207,13 @@ class LHCbCompressedDataset(GangaDataset):
                     tempList = []
             ds.addSet(LHCbCompressedFileSet(tempList))
         else:
-            #Figure out where the file lies
+            # Figure out where the file lies
             setNo, setLocation = self._location(i)
             if setNo < 0 or i >= self._totalNFiles():
                 logger.error("Unable to retrieve file %s. It is larger than the dataset size" % i)
                 return None
-            ds = DiracFile(lfn = self.files[setNo].getLFN(setLocation), credential_requirements = self.credential_requirements)
+            ds = DiracFile(lfn=self.files[setNo].getLFN(setLocation),
+                           credential_requirements=self.credential_requirements)
         return ds
 
     def __iter__(self):
@@ -220,7 +227,7 @@ class LHCbCompressedDataset(GangaDataset):
             raise StopIteration
         else:
             self.current += 1
-            return self[self.current-1]
+            return self[self.current - 1]
 
     def addSet(self, newSet):
         '''Add a new FileSet to the dataset'''
@@ -235,7 +242,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def getFilenameList(self):
         'Return a list of filenames to be created as input.txt on the WN. These will be the PFNs'
-        #We know these are DiracFiles so collate the LFNs and get the accessURLs together
+        # We know these are DiracFiles so collate the LFNs and get the accessURLs together
         from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
         fileList = getAccessURLs(self.getLFNs())
         return fileList
@@ -305,7 +312,7 @@ class LHCbCompressedDataset(GangaDataset):
 
     def isEmpty(self):
         '''Does this contain files'''
-        return not len(self)>0
+        return not len(self) > 0
 
     def hasLFNs(self):
         '''Does it contain LFNs'''
@@ -319,15 +326,15 @@ class LHCbCompressedDataset(GangaDataset):
         'Returns all file names with LFN prepended.'
         names = []
         for _lfn in self.getLFNs():
-                names.append('LFN:%s' % _lfn)
+            names.append('LFN:%s' % _lfn)
         return names
 
     def getFullDataset(self):
         '''Returns an LHCb dataset'''
-        ds = GangaLHCb.Lib.LHCbDataset.LHCbDataset(persistency = self.persistency)
+        ds = GangaLHCb.Lib.LHCbDataset.LHCbDataset(persistency=self.persistency)
         lfns = self.getLFNs()
         for _lfn in lfns:
-            ds.extend(DiracFile(lfn = _lfn))
+            ds.extend(DiracFile(lfn=_lfn))
         return ds
 
     def getCatalog(self, site=''):
@@ -389,7 +396,7 @@ class LHCbCompressedDataset(GangaDataset):
                     break
             sdatasetsnew += '\n        '
             sdatasetsold += '\n        '
-            #f is always a DiracFile
+            # f is always a DiracFile
             sdatasetsnew += """ \"LFN:%s\",""" % _f
             sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (_f, dtype_str)
 
@@ -417,7 +424,7 @@ class LHCbCompressedDataset(GangaDataset):
             else:
                 return snew + sdatasetsnew + sold + sdatasetsold
 
-    def _checkOtherFiles(self, other ):
+    def _checkOtherFiles(self, other):
         if isType(other, GangaList) or isType(other, []):
             other_files = other
         elif isType(other, LHCbCompressedDataset):
@@ -469,8 +476,8 @@ class LHCbCompressedDataset(GangaDataset):
 
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '
-        logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
+        logger.info(
+            "Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
         b = get_result(cmd, 'Error removing getting metadata.')
         return b
-

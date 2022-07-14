@@ -48,7 +48,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         if job.inputdata:
             if not job.splitter:
                 if len(job.inputdata) > 100:
-                    raise BackendError("Dirac", "You're submitting a job to Dirac with no splitter and more than 100 files, please add a splitter and try again!")
+                    raise BackendError(
+                        "Dirac", "You're submitting a job to Dirac with no splitter and more than 100 files, please add a splitter and try again!")
 
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
@@ -102,10 +103,14 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
             from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
             fileTransform = allComponentFilters['gangafiles']
-            outdata_files = [fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)]
-            job.non_copyable_outputfiles.extend([output_file for output_file in outdata_files if not isType(output_file, DiracFile)])
-            outbox_files = [fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)]
-            job.non_copyable_outputfiles.extend([outbox_file for outbox_file in outbox_files if not isType(outbox_file, DiracFile)])
+            outdata_files = [fileTransform(this_file, None)
+                             for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)]
+            job.non_copyable_outputfiles.extend(
+                [output_file for output_file in outdata_files if not isType(output_file, DiracFile)])
+            outbox_files = [fileTransform(this_file, None)
+                            for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)]
+            job.non_copyable_outputfiles.extend(
+                [outbox_file for outbox_file in outbox_files if not isType(outbox_file, DiracFile)])
 
             outputsandbox.extend([f.namePattern for f in job.non_copyable_outputfiles])
 
@@ -122,7 +127,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                 elif isType(f, str):
                     input_data.append(f)
                 else:
-                    raise ApplicationConfigurationError("Don't know How to handle anythig other than DiracFiles or strings to LFNs!")
+                    raise ApplicationConfigurationError(
+                        "Don't know How to handle anythig other than DiracFiles or strings to LFNs!")
 
         commandline = "python ./gaudipython-wrapper.py"
         if is_gaudi_child(app):
@@ -163,10 +169,11 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         lhcb_dirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 
-        #If we are doing virtualisation with a CVMFS location, check it is available
+        # If we are doing virtualisation with a CVMFS location, check it is available
         if job.virtualization and isinstance(job.virtualization.image, str):
             if 'cvmfs' == job.virtualization.image.split('/')[1]:
-                tag_location = '/'+job.virtualization.image.split('/')[1]+'/'+job.virtualization.image.split('/')[2]+'/'
+                tag_location = '/' + \
+                    job.virtualization.image.split('/')[1] + '/' + job.virtualization.image.split('/')[2] + '/'
                 if 'Tag' in job.backend.settings:
                     job.backend.settings['Tag'].append(tag_location)
                 else:
@@ -199,8 +206,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         PLATFORM=app.platform,
                                         REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
                                         ANCESTOR_DEPTH=ancestor_depth,
-                                        ## This is to be modified in the final 'submit' function in the backend
-                                        ## The backend also handles the inputfiles DiracFiles ass appropriate
+                                        # This is to be modified in the final 'submit' function in the backend
+                                        # The backend also handles the inputfiles DiracFiles ass appropriate
                                         INPUT_SANDBOX='##INPUT_SANDBOX##',
                                         GANGA_VERSION=_gangaVersion,
                                         )

@@ -42,7 +42,8 @@ class LHCbDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
+    schema['files'] = GangaFileItem(
+        defvalue=[], typelist=['str', 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0, doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'
@@ -50,7 +51,8 @@ class LHCbDataset(GangaDataset):
     docstr = 'Specify the dataset persistency technology'
     schema['persistency'] = SimpleItem(
         defvalue=None, typelist=['str', 'type(None)'], doc=docstr)
-    schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
+    schema['treat_as_inputfiles'] = SimpleItem(
+        defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
     _name = "LHCbDataset"
@@ -112,7 +114,7 @@ class LHCbDataset(GangaDataset):
 
         # Feel free to turn this on again for debugging but it's potentially quite expensive
         #logger.debug( "Creating dataset with:\n%s" % self.files )
-        
+
         logger.debug("Assigned files")
 
         self.persistency = persistency
@@ -171,7 +173,7 @@ class LHCbDataset(GangaDataset):
             if not isDiracFile(f):
                 continue
             try:
-                result = f.replicate( destSE=destSE )
+                result = f.replicate(destSE=destSE)
             except Exception as err:
                 msg = 'Replication error for file %s (will retry in a bit).' % f.lfn
                 logger.warning(msg)
@@ -180,7 +182,7 @@ class LHCbDataset(GangaDataset):
 
         for f in retry_files:
             try:
-                result = f.replicate( destSE=destSE )
+                result = f.replicate(destSE=destSE)
             except Exception as err:
                 msg = '2nd replication attempt failed for file %s. (will not retry)' % f.lfn
                 logger.warning(msg)
@@ -191,7 +193,8 @@ class LHCbDataset(GangaDataset):
         already in the dataset.'''
         from GangaCore.GPIDev.Base import ReadOnlyObjectError
         if self._parent is not None and self._parent._readonly():
-            raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, getName(self)))
+            raise ReadOnlyObjectError(
+                'object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, getName(self)))
 
         _external_files = []
 
@@ -226,7 +229,7 @@ class LHCbDataset(GangaDataset):
             if _file is None:
                 _file = this_f
             if not isinstance(_file, IGangaFile):
-                raise GangaException('Cannot extend LHCbDataset based on this object type: %s' % type(_file) )
+                raise GangaException('Cannot extend LHCbDataset based on this object type: %s' % type(_file))
             myName = _file.namePattern
             from GangaDirac.Lib.Files.DiracFile import DiracFile
             if isType(_file, DiracFile):
@@ -373,7 +376,7 @@ class LHCbDataset(GangaDataset):
             else:
                 return snew + sdatasetsnew + sold + sdatasetsold
 
-    def _checkOtherFiles(self, other ):
+    def _checkOtherFiles(self, other):
         if isType(other, GangaList) or isType(other, []):
             other_files = LHCbDataset(other).getFileNames()
         elif isType(other, [LHCbDataset, GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset]):
@@ -388,7 +391,7 @@ class LHCbDataset(GangaDataset):
         '''
         returnDict = {}
         for _f in self.files:
-            if hasattr(_f, 'lfn'):               
+            if hasattr(_f, 'lfn'):
                 returnDict[_f.lfn] = _f
             else:
                 returnDict[_f.namePattern] = _f
@@ -401,7 +404,7 @@ class LHCbDataset(GangaDataset):
         returnDict = {}
         if isType(other, [LHCbDataset, GangaLHCb.Lib.LHCbDataset.LHCbCompressedDataset]):
             for _f in other.files:
-                if hasattr(_f, 'lfn'):               
+                if hasattr(_f, 'lfn'):
                     returnDict[_f.lfn] = _f
                 else:
                     returnDict[_f.namePattern] = _f
@@ -419,7 +422,6 @@ class LHCbDataset(GangaDataset):
             raise GangaException("Unkown type for difference")
 
         return returnDict
-
 
     def difference(self, other):
         '''Returns a new data set w/ files in this that are not in other.'''
@@ -478,12 +480,14 @@ class LHCbDataset(GangaDataset):
 
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '
-        logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
+        logger.info(
+            "Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
         b = get_result(cmd, 'Error getting metadata.')
         return b
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
 
 from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
@@ -526,10 +530,12 @@ def string_datafile_shortcut_lhcb(name, item):
                 raise x
     return None
 
+
 allComponentFilters['gangafiles'] = string_datafile_shortcut_lhcb
 
 # Name of this method set in the GPIComponentFilters section of the
 # Core... either overload this default or leave it
+
 
 def string_dataset_shortcut(files, item):
     from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
@@ -551,7 +557,7 @@ def string_dataset_shortcut(files, item):
     else:
         return None  # used to be c'tors, but shouldn't happen now
 
+
 allComponentFilters['datasets'] = string_dataset_shortcut
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-

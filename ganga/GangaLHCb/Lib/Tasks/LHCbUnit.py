@@ -12,6 +12,7 @@ from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
 
 logger = getLogger()
 
+
 class LHCbUnit(IUnit):
     _schema = Schema(Version(1, 0), dict(list(IUnit._schema.datadict.items()) + list({
         'input_datset_index': SimpleItem(defvalue=-1, protected=1, hidden=1, doc='Index of input dataset from parent Transform', typelist=["int"]),
@@ -112,9 +113,9 @@ class LHCbUnit(IUnit):
 
                 logger.warning(
                     "Removing chain inputdata file '%s'..." % fname)
-                #Have to force MassStorageFiles as it asks a question otherwise
+                # Have to force MassStorageFiles as it asks a question otherwise
                 if isinstance(f, MassStorageFile):
-                    f.remove(force = True)
+                    f.remove(force=True)
                 else:
                     f.remove()
 

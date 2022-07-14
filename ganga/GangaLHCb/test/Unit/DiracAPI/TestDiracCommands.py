@@ -97,7 +97,8 @@ echo '%s' > removeFile.dst
     """
     api_script = dedent(api_script)
 
-    final_submit_script = api_script.replace('###EXE_SCRIPT###', exe_path_name).replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name))
+    final_submit_script = api_script.replace('###EXE_SCRIPT###', exe_path_name).replace(
+        '###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name))
     confirm = execute(final_submit_script, return_raw_dict=True)
     if not isinstance(confirm, dict):
         raise RuntimeError('Problem submitting job\n{0}'.format(confirm))
@@ -259,26 +260,32 @@ class TestDiracCommands(object):
         assert confirm['OK'], 'getReplicas command not executed successfully'
 
     def test_getAccessURL(self, dirac_job):
-        confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn, cred_req=dirac_job.cred_req, return_raw_dict=True)
+        confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn,
+                          cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'getReplicas command not executed successfully'
         SE = random.choice(list(confirm['Value']['Successful'][dirac_job.get_file_lfn].keys()))
-        accessResult = execute('getAccessURL("%s", "%s")' % (dirac_job.get_file_lfn, SE), cred_req=dirac_job.cred_req, return_raw_dict = True)
+        accessResult = execute('getAccessURL("%s", "%s")' % (dirac_job.get_file_lfn, SE),
+                               cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(accessResult)
         assert accessResult['OK'], 'getAccessURL command not executed successfully'
-        accessResultProtocol = execute('getAccessURL("%s", "%s", %s)' % (dirac_job.get_file_lfn, SE, ['xroot']), cred_req=dirac_job.cred_req, return_raw_dict = True)
+        accessResultProtocol = execute('getAccessURL("%s", "%s", %s)' % (dirac_job.get_file_lfn, SE, [
+                                       'xroot']), cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(accessResultProtocol)
         assert accessResultProtocol['OK'], 'getAccessURL command with protocol not executed successfully'
-        assert ('root://' in accessResultProtocol['Value']['Successful'][dirac_job.get_file_lfn]), 'URL does not start with root protocol'
+        assert ('root://' in accessResultProtocol['Value']['Successful']
+                [dirac_job.get_file_lfn]), 'URL does not start with root protocol'
 
     def test_replicateFile(self, dirac_job, dirac_sites):
 
         for new_location in dirac_sites:
-            confirm = execute('replicateFile("%s","%s","")' % (dirac_job.get_file_lfn, new_location), return_raw_dict=True)
+            confirm = execute('replicateFile("%s","%s","")' %
+                              (dirac_job.get_file_lfn, new_location), return_raw_dict=True)
             logger.info(confirm)
             if not confirm['OK']:
                 continue  # If we couldn't add the file, try the next site
-            confirm = execute('removeReplica("%s","%s")' % (dirac_job.get_file_lfn, new_location), return_raw_dict=True)
+            confirm = execute('removeReplica("%s","%s")' %
+                              (dirac_job.get_file_lfn, new_location), return_raw_dict=True)
             logger.info(confirm)
             assert confirm['OK'], 'Command not executed successfully'
             break  # Once we found a working site, stop looking
@@ -335,9 +342,9 @@ class TestDiracCommands(object):
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
-
     def test_bkQueryDict(self, dirac_job):
-        confirm = execute('bkQueryDict({"FileType":"Path","ConfigName":"LHCb","ConfigVersion":"Collision09","EventType":"10","ProcessingPass":"Real Data","DataTakingConditions":"Beam450GeV-VeloOpen-MagDown"})', return_raw_dict=True)
+        confirm = execute(
+            'bkQueryDict({"FileType":"Path","ConfigName":"LHCb","ConfigVersion":"Collision09","EventType":"10","ProcessingPass":"Real Data","DataTakingConditions":"Beam450GeV-VeloOpen-MagDown"})', return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'bkQuery command not executed successfully'
 
@@ -352,7 +359,8 @@ class TestDiracCommands(object):
         assert confirm['OK'], 'Command not executed successfully'
 
     def test_getDataset(self, dirac_job):
-        confirm = execute('getDataset("LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data/RecoToDST-07/10/DST","","Path","","","")', return_raw_dict=True)
+        confirm = execute(
+            'getDataset("LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data/RecoToDST-07/10/DST","","Path","","","")', return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
@@ -364,9 +372,11 @@ class TestDiracCommands(object):
     def test_getInputDataCatalog(self, dirac_job):
         confirm = execute('getInputDataCatalog("%s","","")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['Message'].startswith('Failed to access') or confirm['Message'].startswith('Exception during construction'), 'Command not executed successfully'
+        assert confirm['Message'].startswith('Failed to access') or confirm['Message'].startswith(
+            'Exception during construction'), 'Command not executed successfully'
 
     def test_getLHCbInputDataCatalog(self, dirac_job):
         confirm = execute('getLHCbInputDataCatalog("%s",0,"","")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['Message'].startswith('Failed to access') or confirm['Message'].startswith('Exception during construction'), 'Command not executed successfully'
+        assert confirm['Message'].startswith('Failed to access') or confirm['Message'].startswith(
+            'Exception during construction'), 'Command not executed successfully'

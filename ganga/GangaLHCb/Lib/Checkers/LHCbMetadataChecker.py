@@ -76,4 +76,3 @@ class LHCbMetaDataChecker(MetaDataChecker):
             except:
                 raise PostProcessException("The metadata value j.xmldatanumbers was not defined")
         return eval(self.expression)
-

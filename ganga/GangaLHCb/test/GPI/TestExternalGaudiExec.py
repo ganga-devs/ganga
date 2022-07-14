@@ -13,7 +13,8 @@ from GangaCore.GPIDev.Base.Proxy import stripProxy
 
 def latestLbDevVersion(app):
     import subprocess
-    pipe = subprocess.Popen('lb-dev %s -l' % app, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+    pipe = subprocess.Popen('lb-dev %s -l' % app, shell=True, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
     stdout, stderr = pipe.communicate()
     return stdout.split()[0]
 
@@ -152,7 +153,7 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         FileBuffer('testfile.py', 'print("ThisIsATest")').create(myOpts)
 
-        j.application.options=[LocalFile(myOpts)]
+        j.application.options = [LocalFile(myOpts)]
 
         return j
 

@@ -61,7 +61,7 @@ class SplitByFiles(GaudiInputDataSplitter):
                                       doc='name of the backend algorithm to use for splitting',
                                       typelist=['str'], protected=1, visitable=0),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
-        })
+    })
 
     _exportmethods = ['split']
 
@@ -112,7 +112,8 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("Creating new Job in Splitter")
         j = Job()
         logger.debug("Copying From Job")
-        j.splitterCopy(stripProxy(job), ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles', 'fqid', 'outputdir', 'master', 'merger', 'metadata', 'been_queued', 'parallel_submit', 'inputdir', 'non_copyable_outputfiles', 'id','status'])
+        j.splitterCopy(stripProxy(job), ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles', 'fqid', 'outputdir',
+                       'master', 'merger', 'metadata', 'been_queued', 'parallel_submit', 'inputdir', 'non_copyable_outputfiles', 'id', 'status'])
         logger.debug("Unsetting Splitter")
         j.splitter = None
         logger.debug("Setting InputData")
@@ -120,8 +121,8 @@ class SplitByFiles(GaudiInputDataSplitter):
             newDs = LHCbCompressedDataset(datatmp[:])
         else:
             newDs = LHCbDataset(files=datatmp[:],
-                                  persistency=self.persistency,
-                                  depth=self.depth)
+                                persistency=self.persistency,
+                                depth=self.depth)
         j.inputdata = newDs
         logger.debug("Returning new subjob")
         return j
@@ -212,15 +213,14 @@ class SplitByFiles(GaudiInputDataSplitter):
 
             logger.debug("outdata: %s " % str(outdata))
             return outdata
-        #If we are not running the jobs on Dirac but are using DiracFiles we want some of the same checks
+        # If we are not running the jobs on Dirac but are using DiracFiles we want some of the same checks
         else:
             from GangaDirac.Lib.Splitters.OfflineGangaDiracSplitter import OfflineGangaDiracSplitter
             outdata = OfflineGangaDiracSplitter(indata,
-                                              self.filesPerJob,
-                                              self.maxFiles,
-                                              self.ignoremissing)
+                                                self.filesPerJob,
+                                                self.maxFiles,
+                                                self.ignoremissing)
             return outdata
-
 
     def split(self, job):
         """
@@ -242,4 +242,3 @@ class SplitByFiles(GaudiInputDataSplitter):
         split_return = super(SplitByFiles, self).split(job)
         logger.debug("split_return: %s" % split_return)
         return split_return
-
