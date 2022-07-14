@@ -1,4 +1,8 @@
-import os, system, time, datetime, subprocess
+import os
+import system
+import time
+import datetime
+import subprocess
 from GangaCore.Utility.Config import getConfig
 
 config = getConfig('Configuration')
@@ -14,14 +18,14 @@ EqualsPoint = -1
 for i in range(len(Data)):
     if (Data[i] == '-'):
         EqualsPoint = i
-        
+
 if (EqualsPoint != -1):
-    LogTime = Data[:(EqualsPoint-1)].strip()
-    ProcessID = int(Data[(EqualsPoint+1):].strip())
-    LogTime = datetime.datetime(*(time.strptime(LogTime,"%H:%M:%S %j %y"))[0:5])
+    LogTime = Data[:(EqualsPoint - 1)].strip()
+    ProcessID = int(Data[(EqualsPoint + 1):].strip())
+    LogTime = datetime.datetime(*(time.strptime(LogTime, "%H:%M:%S %j %y"))[0:5])
     MaxTime = datetime.datetime().now() - datetime.timedelta(minutes=30)
 if (LogTime < Maxtime):
-    os.kill(ProcessID,"")
-    cmd = "ganga --config="+gangapath+"/GangaTest/Lib/TestRobot/TESTROBOT.ini robot run"
+    os.kill(ProcessID, "")
+    cmd = "ganga --config=" + gangapath + "/GangaTest/Lib/TestRobot/TESTROBOT.ini robot run"
     subprocess.popen(cmd)
 f.close()
