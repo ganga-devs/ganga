@@ -17,6 +17,7 @@ from GangaCore.GPIDev.Base.Proxy import getName
 
 logger = getLogger()
 
+
 class PrimeFactorizer(IPrepareApp):
     """
     PrimeFactorizer application -- factorize any arbitrary number into prime numbers.
@@ -105,7 +106,7 @@ class PrimeFactorizer(IPrepareApp):
                 logger.debug("exe is a string so no copying")
             elif not os.path.exists(source):
                 logger.debug("Error copying exe: %s to input workspace" %
-                            str(source))
+                             str(source))
             else:
                 try:
                     parent_job = self.getJobObject()
@@ -135,7 +136,7 @@ class RTHandler(IRuntimeHandler):
         from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         c = StandardJobConfig(app.exe, app.inputs, app.args, app.outputs, app.envs)
-       
+
         return c
 
 
@@ -145,8 +146,9 @@ class LCGRTHandler(IRuntimeHandler):
 
         c = LCGJobConfig(app.exe, app.inputs, app.args, app.outputs, app.envs)
         c.monitoring_svc = mc['GangaTutorial']
-        
+
         return c
+
 
 allHandlers.add('PrimeFactorizer', 'LSF', RTHandler)
 allHandlers.add('PrimeFactorizer', 'Local', RTHandler)
@@ -160,6 +162,7 @@ allHandlers.add('PrimeFactorizer', 'Batch', RTHandler)
 
 ##############################################################
 # handler for NG
+
 
 class NGRTHandler(IRuntimeHandler):
 

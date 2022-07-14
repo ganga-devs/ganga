@@ -27,7 +27,8 @@ from __future__ import print_function
 # If URL (http address) is given, then file is downloaded and unzipped first.
 #
 
-import sys, os
+import sys
+import os
 import requests
 
 NUMBER = int(sys.argv[1])
@@ -38,11 +39,13 @@ factors = []
 
 currDir = os.path.dirname(os.path.abspath(__file__))
 
+
 def download_url(url, save_path, chunk_size=128):
     r = requests.get(url, stream=True, verify=False)
     with open(save_path, 'wb') as fd:
         for chunk in r.iter_content(chunk_size=chunk_size):
             fd.write(chunk)
+
 
 n = NUMBER
 
@@ -52,8 +55,8 @@ for pfn in pfns:
     if pfn.find('http://') != -1 or pfn.find('https://') != -1:
         download_url(pfn, os.path.join(currDir, os.path.basename(pfn)))
         pfn = os.path.basename(pfn)
-        os.system('unzip %s'%pfn)
-        pfn = os.path.splitext(pfn)[0]+'.txt'
+        os.system('unzip %s' % pfn)
+        pfn = os.path.splitext(pfn)[0] + '.txt'
 
     pf = open(pfn)
 
@@ -69,16 +72,16 @@ for pfn in pfns:
 
         for p in primes:
             k = 0
-            while n%p == 0:
+            while n % p == 0:
                 k += 1
                 n //= p
 
-            if k>0:
-                factors.append((p,k))
-    
+            if k > 0:
+                factors.append((p, k))
+
         line = pf.readline()
 
-print('Prime factors:',factors)
+print('Prime factors:', factors)
 
 # check if all prime factors have been found
 import math
@@ -90,10 +93,10 @@ for f in factors:
 if check == NUMBER:
     print('All prime factors found!')
 else:
-    print('Some prime factors are still to be found. Known factors multiply to',check)
+    print('Some prime factors are still to be found. Known factors multiply to', check)
 
 # write the factors to a data file
 ofn = 'factors.dat'
-of = open(ofn,'w')
+of = open(ofn, 'w')
 of.write(str(factors))
-print('Created data file',ofn)
+print('Created data file', ofn)
