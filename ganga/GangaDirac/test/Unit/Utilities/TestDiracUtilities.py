@@ -18,4 +18,3 @@ def config_files():
 def test_dirac_env():
     env = getDiracEnv()
     assert any(key.startswith('DIRAC') for key in env)
-

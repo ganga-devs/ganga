@@ -18,6 +18,7 @@ import random
 from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
+
 def rand_str():
     import datetime
     import time
@@ -47,7 +48,7 @@ echo "%s" > b.root
         self.filepath = os.path.join(self.root, self.filename)
         logger.info("FilePath: %s" % str(self.filepath))
         #import GangaCore.Core.InternalServices.Coordinator
-        #GangaCore.Core.InternalServices.Coordinator.enableMonitoringService()
+        # GangaCore.Core.InternalServices.Coordinator.enableMonitoringService()
 
     def tearDown(self):
         os.remove(self.filepath)
@@ -78,7 +79,8 @@ echo "%s" > b.root
         j.outputfiles[0].remove()
 
     def test_local_job_put_multiple_files(self):
-        j = Job(application=Executable(exe=File(self.filepath), args=[]), outputfiles=[DiracFile('a.root'), DiracFile('b.root')])
+        j = Job(application=Executable(exe=File(self.filepath), args=[]),
+                outputfiles=[DiracFile('a.root'), DiracFile('b.root')])
         j.submit()
         sleep_until_completed(j)
 
@@ -116,7 +118,8 @@ echo "%s" > b.root
             df.remove()
 
     def test_Dirac_job_put_single_file(self):
-        j = Job(application=Executable(exe=File(self.filepath), args=[]), backend=Dirac(), outputfiles=[DiracFile('a.root')])
+        j = Job(application=Executable(exe=File(self.filepath), args=[]),
+                backend=Dirac(), outputfiles=[DiracFile('a.root')])
         j.submit()
         sleep_until_completed(j)
 
@@ -128,7 +131,8 @@ echo "%s" > b.root
         j.outputfiles[0].remove()
 
     def test_Dirac_job_put_multiple_files(self):
-        j = Job(application=Executable(exe=File(self.filepath), args=[]), backend=Dirac(), outputfiles=[DiracFile('a.root'), DiracFile('b.root')])
+        j = Job(application=Executable(exe=File(self.filepath), args=[]),
+                backend=Dirac(), outputfiles=[DiracFile('a.root'), DiracFile('b.root')])
         j.submit()
         sleep_until_completed(j)
 
@@ -142,7 +146,8 @@ echo "%s" > b.root
             df.remove()
 
     def test_Dirac_job_put_wildcard_files(self):
-        j = Job(application=Executable(exe=File(self.filepath), args=[]), backend=Dirac(), outputfiles=[DiracFile('*.root')])
+        j = Job(application=Executable(exe=File(self.filepath), args=[]),
+                backend=Dirac(), outputfiles=[DiracFile('*.root')])
         j.submit()
         sleep_until_completed(j)
 
@@ -156,7 +161,8 @@ echo "%s" > b.root
             df.remove()
 
     def test_Dirac_job_wildcard_expansion(self):
-        j = Job(application=Executable(exe=File(self.filepath), args=[]), backend=Dirac(), outputfiles=[DiracFile('*.root')])
+        j = Job(application=Executable(exe=File(self.filepath), args=[]),
+                backend=Dirac(), outputfiles=[DiracFile('*.root')])
         j.submit()
         sleep_until_completed(j)
 
@@ -166,4 +172,3 @@ echo "%s" > b.root
         for df in j._impl.outputfiles[0].subfiles:
             self.assertIn(df.namePattern, ['a.root', 'b.root'])
             df.remove()
-

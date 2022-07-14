@@ -67,4 +67,3 @@ while True:
     client_socket.close()
 server_socket.shutdown(socket.SHUT_RDWR)
 server_socket.close()
-

@@ -105,7 +105,7 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
     if fkwargs is None:
         fkwargs = {}
     if fargs is None:
-        fargs =  ()
+        fargs = ()
     output = []
     for f in outputfiles_iterator(job, file_type, selection_pred, include_subfiles):
         output.append(func(f, *fargs, **fkwargs))
@@ -116,7 +116,7 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
 
 def ifilter_chain(selection_pred, *iterables):
     for item in filter(selection_pred,
-                                  itertools.chain(*iterables)):
+                       itertools.chain(*iterables)):
         yield item
 
 
@@ -129,7 +129,8 @@ def for_each(func, *iterables, **kwargs):
                            **kwargs.get('fkwargs', {})))
     return result
 
-def listFiles(baseDir, minAge = None, credential_requirements=None):
+
+def listFiles(baseDir, minAge=None, credential_requirements=None):
     '''
     Return a list of LFNs for files stored on the grid in the argument
     directory and its subdirectories
@@ -148,11 +149,12 @@ def listFiles(baseDir, minAge = None, credential_requirements=None):
     lfns = execute('listFiles("%s", "%s")' % (baseDir, minAge), cred_req=credential_requirements)
     return lfns
 
+
 from GangaCore.Runtime.GPIexport import exportToGPI
 exportToGPI('listFiles', listFiles, 'Functions')
 
 
-def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=None):
+def getAccessURLs(lfns, defaultSE='', protocol='', credential_requirements=None):
     """
     This is a function to get a list of the accessURLs
     for a provided list of lfns. If no defaultSE is provided then one is chosen at random
@@ -160,11 +162,11 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
     protocols for the file accessURL. If left blank the default protocol for the SE will be used by Dirac.
     """
     lfnList = []
-    # Has a list of strings, which are probably lfns been given 
+    # Has a list of strings, which are probably lfns been given
     if all(isinstance(item, str) for item in lfns):
         lfnList = lfns
     else:
-        #If some elements are not strings look for the DiracFiles, separates out the LocalFiles from a job's outputfiles list
+        # If some elements are not strings look for the DiracFiles, separates out the LocalFiles from a job's outputfiles list
         for diracFile in lfns:
             try:
                 lfnList.append(diracFile.lfn)
@@ -194,7 +196,8 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
     # Remove the successfully found ones from the list and move on to the next SE.
     for SE in SEs:
         lfns = remainingLFNs
-        thisSEFiles = execute('getAccessURL(%s, "%s", %s)' % (lfns, SE, protocol), cred_req=credential_requirements)['Successful']
+        thisSEFiles = execute('getAccessURL(%s, "%s", %s)' % (lfns, SE, protocol),
+                              cred_req=credential_requirements)['Successful']
         for lfn in thisSEFiles.keys():
             myURLs.append(thisSEFiles[lfn])
             remainingLFNs.remove(lfn)
@@ -203,28 +206,33 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
             break
     return myURLs
 
+
 exportToGPI('getAccessURLs', getAccessURLs, 'Functions')
+
 
 def getReplicas(inSet, credential_requirements=None):
     """
     Return a dict of files and their replicas.
     lfns can be a string, a list or something with 
     """
-    #Start off with some checks
+    # Start off with some checks
     lfns = []
     if isinstance(inSet, str):
         lfns = [inSet]
     elif isinstance(inSet, list):
         lfns = inSet
     elif hasattr(inSet, 'getLFNs'):
-            lfns = inSet.getLFNs()
+        lfns = inSet.getLFNs()
     else:
-        raise GangaDiracError('You must supply, an LFN as a string, a list of LFNs or a GangaDataset with getLFNs() implemented')
+        raise GangaDiracError(
+            'You must supply, an LFN as a string, a list of LFNs or a GangaDataset with getLFNs() implemented')
     reps = execute('getReplicas(%s)' % str(lfns), cred_req=credential_requirements)
     if isinstance(lfns, list) and not len(reps['Successful'].keys()) == len(lfns):
-        logger.warning("Not successfully found a replica for all files! The following failed: %s" % reps['Failed'].keys())
-        
+        logger.warning("Not successfully found a replica for all files! The following failed: %s" %
+                       reps['Failed'].keys())
+
     return reps['Successful']
+
 
 exportToGPI('getReplicas', getReplicas, 'Functions')
 
@@ -233,22 +241,23 @@ def removeLFNs(lfns, credential_requirements=None):
     """
     Remove a list o lfns from Dirac storage
     """
-    #Start off with some checks
+    # Start off with some checks
     lfns = []
     if isinstance(inSet, str):
         lfns = [inSet]
     elif isinstance(inSet, list):
         lfns = inSet
     elif hasattr(inSet, 'getLFNs'):
-            lfns = inSet.getLFNs()
+        lfns = inSet.getLFNs()
     else:
-        raise GangaDiracError('You must supply, an LFN as a string, a list of LFNs or a GangaDataset with getLFNs() implemented')
+        raise GangaDiracError(
+            'You must supply, an LFN as a string, a list of LFNs or a GangaDataset with getLFNs() implemented')
 
     res = execute('removeFile(%s)' % str(lfns), cred_req=credential_requirements)
     if isinstance(lfns, list) and not len(reps['Successful'].keys()) == len(lfns):
         logger.warning("Not successfully removed all files! The following failed: %s" % reps['Failed'].keys())
-        
+
     return reps['Successful']
 
-exportToGPI('removeLFNs', removeLFNs, 'Functions')
 
+exportToGPI('removeLFNs', removeLFNs, 'Functions')

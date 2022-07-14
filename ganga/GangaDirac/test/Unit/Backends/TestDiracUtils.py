@@ -57,7 +57,8 @@ j.somethingelse('other')
         get_parametric_datasets(error_script1.splitlines())
     with pytest.raises(BackendError):
         get_parametric_datasets(error_script2.splitlines())
-    assert get_parametric_datasets(script.splitlines()) == [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']], 'parametric dataset not correctly extracted'
+    assert get_parametric_datasets(script.splitlines()) == [['a', 'b', 'c'], ['d', 'e', 'f'], [
+        'g', 'h', 'i']], 'parametric dataset not correctly extracted'
     assert isinstance(get_parametric_datasets(script.splitlines()), list)
 
 
@@ -95,14 +96,19 @@ def test_outputfiles_iterator():
                        nc_outputfiles=[TestFileB('B2'), TestFileA('A4'),
                                        TestFileB('B3', subfiles=[TestFileB('BS2'), TestFileB('BS3')]), TestFileB('B4')])
 
-    assert [f.name for f in outputfiles_iterator(test_job, TestFile)] == ['AS1', 'A2', 'BS1', 'A3', 'B2', 'A4', 'BS2', 'BS3', 'B4']
+    assert [f.name for f in outputfiles_iterator(test_job, TestFile)] == [
+        'AS1', 'A2', 'BS1', 'A3', 'B2', 'A4', 'BS2', 'BS3', 'B4']
     assert [f.name for f in outputfiles_iterator(test_job, TestFileA)] == ['AS1', 'A2', 'A3', 'A4']
     assert [f.name for f in outputfiles_iterator(test_job, TestFileB)] == ['BS1', 'B2', 'BS2', 'BS3', 'B4']
 
-    assert [f.name for f in outputfiles_iterator(test_job, TestFile, include_subfiles=False)] == ['A1', 'A2', 'B1', 'A3', 'B2', 'A4', 'B3', 'B4']
-    assert [f.name for f in outputfiles_iterator(test_job, TestFileA, include_subfiles=False)] == ['A1', 'A2', 'A3', 'A4']
-    assert [f.name for f in outputfiles_iterator(test_job, TestFileB, include_subfiles=False)] == ['B1', 'B2', 'B3', 'B4']
+    assert [f.name for f in outputfiles_iterator(test_job, TestFile, include_subfiles=False)] == [
+        'A1', 'A2', 'B1', 'A3', 'B2', 'A4', 'B3', 'B4']
+    assert [f.name for f in outputfiles_iterator(test_job, TestFileA, include_subfiles=False)] == [
+        'A1', 'A2', 'A3', 'A4']
+    assert [f.name for f in outputfiles_iterator(test_job, TestFileB, include_subfiles=False)] == [
+        'B1', 'B2', 'B3', 'B4']
 
     assert [f.name for f in outputfiles_iterator(test_job, TestFile, selection_pred=pred_a)] == ['A2']
     assert [f.name for f in outputfiles_iterator(test_job, TestFile, selection_pred=pred_b)] == ['BS2']
-    assert [f.name for f in outputfiles_iterator(test_job, TestFile, selection_pred=pred_b, include_subfiles=False)] == []
+    assert [f.name for f in outputfiles_iterator(
+        test_job, TestFile, selection_pred=pred_b, include_subfiles=False)] == []

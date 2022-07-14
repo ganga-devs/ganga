@@ -85,14 +85,16 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
     else:
         if len(job.inputsandbox) > 0:
             from GangaCore.GPIDev.Lib.Job import JobError
-            raise JobError("InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!")
+            raise JobError(
+                "InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!")
         for _f in job.inputfiles:
             if isinstance(_f, LocalFile):
-                if not os.path.exists(os.path.join(_f.localDir,_f.namePattern)):
-                    raise GangaFileError('Requested LocalFile %s does not exist' % (os.path.join(_f.localDir,_f.namePattern)))
+                if not os.path.exists(os.path.join(_f.localDir, _f.namePattern)):
+                    raise GangaFileError('Requested LocalFile %s does not exist' %
+                                         (os.path.join(_f.localDir, _f.namePattern)))
             elif isinstance(_f, DiracFile):
                 if not _f.getReplicas():
-                    raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % _f.lfn)                
+                    raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % _f.lfn)
         inputsandbox = []
         fileNames, tmpDir = getInputFilesPatterns(job)
         for filepattern in fileNames:
@@ -172,4 +174,3 @@ def script_generator(script_template,
         os.system('chmod +x %s' % outputfile_path)
     return script
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-

@@ -61,13 +61,14 @@ def db():
     yield DiracBase()
     clear_config()
 
+
 @pytest.yield_fixture(scope='function')
 def db_full():
     def mock_disk_space_full_decorator(f):
         @wraps(f)
         def decorated_function(self, *args, **kwargs):
             raise GangaDiskSpaceError("Mock no disk space!")
-        
+
             return f(self, *args, **kwargs)
         return decorated_function
     import GangaCore.Utility.util
@@ -306,6 +307,7 @@ def test_getOutputSandbox(db, mocker):
         assert not db.getOutputSandbox(test_dir), 'didn\'t fail gracefully'
         execute.assert_called_once()
 
+
 def test_removeOutputData(db):
     from GangaDirac.Lib.Files.DiracFile import DiracFile
 
@@ -390,38 +392,38 @@ def test_getOutputData(db, tmpdir):
         return test_files
 
     with patch('GangaDirac.Lib.Backends.DiracBase.outputfiles_iterator', fake_outputfiles_iterator):
-      with patch('GangaDirac.Lib.Backends.DiracBase.getReplicas', fake_replicas):
+        with patch('GangaDirac.Lib.Backends.DiracBase.getReplicas', fake_replicas):
 
-        # master jobs
-        #######################
-        subjob = False
-        assert db.getOutputData() == ['a', 'b', 'c']
-        for f in test_files:
-            if f.lfn in ['a', 'b', 'c']:
-                assert f.localDir == j.getOutputWorkspace().getPath()
-                assert f.check, 42 == "didn't call get"
-            else:
-                assert not hasattr(f, 'localDir')
-                assert not hasattr(f, 'check')
-        assert db.getOutputData(None, ['alpha', 'charlie']) == ['a', 'c']
-        assert db.getOutputData(tmpdir.dirname, ['alpha', 'charlie']) == ['a', 'c']
+            # master jobs
+            #######################
+            subjob = False
+            assert db.getOutputData() == ['a', 'b', 'c']
+            for f in test_files:
+                if f.lfn in ['a', 'b', 'c']:
+                    assert f.localDir == j.getOutputWorkspace().getPath()
+                    assert f.check, 42 == "didn't call get"
+                else:
+                    assert not hasattr(f, 'localDir')
+                    assert not hasattr(f, 'check')
+            assert db.getOutputData(None, ['alpha', 'charlie']) == ['a', 'c']
+            assert db.getOutputData(tmpdir.dirname, ['alpha', 'charlie']) == ['a', 'c']
 
-        # subjobs
-        ########################
-        j.subjobs = [Job(), Job(), Job()]
-        i = 0
-        for sj in j.subjobs:
-            sj._setParent(j)
-            sj.id = i
-            i += 1
+            # subjobs
+            ########################
+            j.subjobs = [Job(), Job(), Job()]
+            i = 0
+            for sj in j.subjobs:
+                sj._setParent(j)
+                sj.id = i
+                i += 1
 
-        subjob = True
-        assert db.getOutputData() == ['a', 'b', 'c'] * 3
-        assert db.getOutputData(None, ['beta']) == ['b'] * 3
-        assert db.getOutputData(tmpdir.dirname, ['alpha', 'charlie']) == ['a', 'c'] * 3
-        for i in range(3):
-            assert os.path.isdir(os.path.join(tmpdir.dirname, '0.%d' % i))
-            os.rmdir(os.path.join(tmpdir.dirname, '0.%d' % i))
+            subjob = True
+            assert db.getOutputData() == ['a', 'b', 'c'] * 3
+            assert db.getOutputData(None, ['beta']) == ['b'] * 3
+            assert db.getOutputData(tmpdir.dirname, ['alpha', 'charlie']) == ['a', 'c'] * 3
+            for i in range(3):
+                assert os.path.isdir(os.path.join(tmpdir.dirname, '0.%d' % i))
+                os.rmdir(os.path.join(tmpdir.dirname, '0.%d' % i))
 
 
 def test_getOutputDataLFNs(db):
@@ -460,6 +462,7 @@ def test_getOutputDataLFNs(db):
         subjob = True
         assert db.getOutputDataLFNs() == ['a', 'b', 'c'] * 3
 
+
 def test_getOutputSandbox_diskFull(db_full, mocker):
     mocker.patch('GangaCore.GPIDev.Credentials.credential_store')
 
@@ -472,8 +475,9 @@ def test_getOutputSandbox_diskFull(db_full, mocker):
     temp_dir = j.getOutputWorkspace().getPath()
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         with pytest.raises(GangaDiskSpaceError) as execinfo:
-            assert not  db_full.getOutputSandbox(), 'didn\'t run'
-            assert str(execinfo.value)=='Mock no disk space!'
+            assert not db_full.getOutputSandbox(), 'didn\'t run'
+            assert str(execinfo.value) == 'Mock no disk space!'
+
 
 def test_getOutputData_diskFull(db_full, tmpdir):
     from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -485,7 +489,7 @@ def test_getOutputData_diskFull(db_full, tmpdir):
 
     with pytest.raises(GangaDiskSpaceError) as execinfo:
         assert not db_full.getOutputData('/false/dir')
-        assert str(execinfo.value)=='Mock no disk space!'
+        assert str(execinfo.value) == 'Mock no disk space!'
 
     #######################
     class TestFile(object):
@@ -518,5 +522,4 @@ def test_getOutputData_diskFull(db_full, tmpdir):
         subjob = False
         with pytest.raises(GangaDiskSpaceError) as execinfo:
             assert not db_full.getOutputData() == ['a', 'b', 'c']
-            assert str(execinfo.value)=='Mock no disk space!'
-
+            assert str(execinfo.value) == 'Mock no disk space!'
