@@ -109,7 +109,7 @@ class GangaList(GangaObject):
 
     _category = 'internal'
     _exportmethods = ['__add__', '__contains__', '__delitem__', '__delslice__', '__eq__', '__ge__',
-                      '__getitem__', '__getslice__', '__gt__', '__iadd__', '__imul__',
+                      '__getitem__','__class_getitem__', '__getslice__', '__gt__', '__iadd__', '__imul__',
                       '__iter__', '__le__', '__len__', '__lt__', '__mul__', '__ne__', '__reversed__', '__radd__', '__rmul__',
                       '__setitem__', '__setslice__', 'append', 'count', 'extend', 'index',
                       'insert', 'pop', 'remove', 'reverse', 'sort', '__hash__', 'get', 'clear']
