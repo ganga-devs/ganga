@@ -13,7 +13,7 @@ c = getConfig('Configuration')
 
 if c['Profile_Memory']:
     from memory_profiler import profile
-    
+
 path = os.path.join(c['gangadir'], 'logs')
 
 
@@ -64,7 +64,7 @@ def mem_profiler(cls, profile_memory=c['Profile_Memory']):
     if not profile_memory:
         pass
     else:
-        file_name = mpath+cls.__name__+timestr+'.log'
+        file_name = mpath + cls.__name__ + timestr + '.log'
         fp = open(file_name, 'w+')
         for key, value in vars(cls).items():
             if callable(value):
@@ -82,7 +82,7 @@ def call_counts(func):
         function_calls[(wrapper.__name__)] = wrapper.calls
         # storing the call counter for each function
         # Need to find a more effiecient way to store
-        with open(ccpath+'call_counter_logs'+timestr+'.json', 'w+') as fp:
+        with open(ccpath + 'call_counter_logs' + timestr + '.json', 'w+') as fp:
             json.dump(function_calls, fp, indent=4)
         return func(*args, **kwargs)
     wrapper.__name__ = func.__name__

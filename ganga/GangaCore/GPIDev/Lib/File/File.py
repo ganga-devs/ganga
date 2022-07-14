@@ -40,6 +40,7 @@ logger = getLogger()
 
 _prepare_lock = threading.RLock()
 
+
 class File(GangaObject):
 
     """Represent the files, both local and remote and provide an interface to transparently get access to them.
@@ -95,7 +96,6 @@ class File(GangaObject):
             actual_value = expandfilename(value)
         super(File, self).__setattr__(attr, actual_value)
 
-
     def _attribute_filter__set__(self, attribName, attribValue):
         if attribName == 'name':
             return expandfilename(attribValue)
@@ -134,9 +134,11 @@ class File(GangaObject):
         file are checked"""
         return self.executable or is_executable(expandfilename(self.name))
 
+
 # add File objects to the configuration scope (i.e. it will be possible to
 # write instatiate File() objects via config file)
 GangaCore.Utility.Config.config_scope['File'] = File
+
 
 def string_file_shortcut_file(v, item):
     if isinstance(v, str):
@@ -145,7 +147,9 @@ def string_file_shortcut_file(v, item):
         return File(v)
     return None
 
+
 allComponentFilters['files'] = string_file_shortcut_file
+
 
 class ShareDir(GangaObject):
 
@@ -157,7 +161,7 @@ class ShareDir(GangaObject):
     """
     _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', getter="_getName", doc='path to the file source'),
                                      'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)'),
-                                     'associated_files': GangaFileItem(defvalue=[], typelist = [str, IGangaFile], doc='A list of files associated with the sharedir')})
+                                     'associated_files': GangaFileItem(defvalue=[], typelist=[str, IGangaFile], doc='A list of files associated with the sharedir')})
 
     _category = 'shareddirs'
     _exportmethods = ['add', 'ls', 'path', 'remove', 'addAssociatedFile', 'listAssociatedFiles']
@@ -256,7 +260,7 @@ class ShareDir(GangaObject):
     def path(self):
         """Get the full path of the ShareDir location"""
         return os.path.join(getSharedPath(), self._getName())
-                
+
     def ls(self):
         """
         Print the contents of the ShareDir
@@ -314,7 +318,7 @@ class ShareDir(GangaObject):
                 tmpobj, errs = from_file(fobj)
                 self.associated_files = tmpobj
 
-    @synchronised 
+    @synchronised
     def addAssociatedFile(self, newFile):
         """ Add an associated file to the ShareDir. Use this method to save
         it to theXML """
@@ -345,7 +349,9 @@ class ShareDir(GangaObject):
         logger.info("Removed: %s" % self.path())
         self.removeAssociatedFiles()
 
+
 GangaCore.Utility.Config.config_scope['ShareDir'] = ShareDir
+
 
 def string_sharedfile_shortcut(v, item):
     if isinstance(v, str):
@@ -353,6 +359,7 @@ def string_sharedfile_shortcut(v, item):
         # but return the implementation object (not proxy)
         return ShareDir(v)
     return None
+
 
 allComponentFilters['shareddirs'] = string_sharedfile_shortcut
 
@@ -374,6 +381,7 @@ def cleanUpShareDirs():
                     os.rmdir(this_dir)
                 except OSError:
                     logger.debug("Failed to remove: %s" % this_dir)
+
 
 exportToGPI('cleanUpShareDirs', cleanUpShareDirs, 'Functions')
 

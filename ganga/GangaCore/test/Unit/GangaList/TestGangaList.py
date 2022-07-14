@@ -50,7 +50,7 @@ class TestGangaList(unittest.TestCase):
 
     @staticmethod
     def _cmp(a, b):
-        return (a > b) - (a < b) 
+        return (a > b) - (a < b)
 
     def setUp(self):
         super(TestGangaList, self).setUp()
@@ -70,8 +70,10 @@ class TestGangaList(unittest.TestCase):
         #assert real_t is hopefully_t
         assert t is new_proxy_t
 
-        self.assertEqual(len(getProxyAttr(self.proxied1, '_list')), len(self.plain1), "Something's wrong with construction")
-        self.assertEqual(len(getProxyAttr(self.proxied2, '_list')), len(self.plain2), "Something's wrong with construction")
+        self.assertEqual(len(getProxyAttr(self.proxied1, '_list')), len(
+            self.plain1), "Something's wrong with construction")
+        self.assertEqual(len(getProxyAttr(self.proxied2, '_list')), len(
+            self.plain2), "Something's wrong with construction")
 
     def testAllListMethodsExported(self):
         """Tests that all methods on list are exposed by GangaList"""
@@ -169,10 +171,13 @@ class TestGangaList(unittest.TestCase):
     def testGE(self):
         """Test __ge__"""
 
-        self.assertEqual((self.plain1 >= self.plain2), (self.proxied1 >= self.proxied2), 'The lists should have the same ge')
-        self.assertEqual((self.plain2 >= self.plain1), (self.proxied2 >= self.proxied1), 'The lists should have the same ge')
+        self.assertEqual((self.plain1 >= self.plain2), (self.proxied1 >=
+                         self.proxied2), 'The lists should have the same ge')
+        self.assertEqual((self.plain2 >= self.plain1), (self.proxied2 >=
+                         self.proxied1), 'The lists should have the same ge')
 
-        self.assertNotEqual((self.proxied1 >= self.proxied2), (self.proxied2 >= self.proxied1), 'The gt should invert correctly')
+        self.assertNotEqual((self.proxied1 >= self.proxied2), (self.proxied2 >=
+                            self.proxied1), 'The gt should invert correctly')
 
     def testGetItem(self):
         """Test __getitem__"""
@@ -186,7 +191,8 @@ class TestGangaList(unittest.TestCase):
         slices = [(0, 0), (0, len(self.plain1))]
 
         for s in slices:
-            self.assertEqual(self.plain1[s[0]:s[1]], self.proxied1[s[0]:s[1]], 'Slices {0} should be the same'.format(s))
+            self.assertEqual(self.plain1[s[0]:s[1]], self.proxied1[s[0]:s[1]],
+                             'Slices {0} should be the same'.format(s))
 
         t = self.plain1[:]
         self.assertIsNot(t, self.plain1, 'Slice should be a copy.')
@@ -199,10 +205,13 @@ class TestGangaList(unittest.TestCase):
     def testGT(self):
         """Test __gt__"""
 
-        self.assertEqual((self.plain1 > self.plain2), (self.proxied1 > self.proxied2), 'The lists should have the same gt')
-        self.assertEqual((self.plain2 > self.plain1), (self.proxied2 > self.proxied1), 'The lists should have the same gt')
+        self.assertEqual((self.plain1 > self.plain2), (self.proxied1 > self.proxied2),
+                         'The lists should have the same gt')
+        self.assertEqual((self.plain2 > self.plain1), (self.proxied2 > self.proxied1),
+                         'The lists should have the same gt')
 
-        self.assertNotEqual((self.proxied1 > self.proxied2), (self.proxied2 > self.proxied1), 'The gt should invert correctly')
+        self.assertNotEqual((self.proxied1 > self.proxied2), (self.proxied2 >
+                            self.proxied1), 'The gt should invert correctly')
 
     def testIAdd(self):
         """Test __iadd__"""
@@ -280,10 +289,13 @@ class TestGangaList(unittest.TestCase):
     def testLE(self):
         """Test __le__"""
 
-        self.assertEqual(self.plain1 <= self.plain2, self.proxied1 <= self.proxied2, 'The lists should have the same le')
-        self.assertEqual(self.plain2 <= self.plain1, self.proxied2 <= self.proxied1, 'The lists should have the same le')
+        self.assertEqual(self.plain1 <= self.plain2, self.proxied1 <=
+                         self.proxied2, 'The lists should have the same le')
+        self.assertEqual(self.plain2 <= self.plain1, self.proxied2 <=
+                         self.proxied1, 'The lists should have the same le')
 
-        self.assertNotEqual(self.proxied1 <= self.proxied2, self.proxied2 <= self.proxied1, 'The le should invert correctly')
+        self.assertNotEqual(self.proxied1 <= self.proxied2, self.proxied2 <=
+                            self.proxied1, 'The le should invert correctly')
 
     def testLen(self):
         """Tests __len__"""
@@ -295,7 +307,8 @@ class TestGangaList(unittest.TestCase):
         self.assertEqual(self.plain1 < self.plain2, self.proxied1 < self.proxied2, 'The lists should have the same lt')
         self.assertEqual(self.plain2 < self.plain1, self.proxied2 < self.proxied1, 'The lists should have the same lt')
 
-        self.assertNotEqual(self.proxied1 < self.proxied2, self.proxied2 < self.proxied1, 'The lt should invert correctly')
+        self.assertNotEqual(self.proxied1 < self.proxied2, self.proxied2 <
+                            self.proxied1, 'The lt should invert correctly')
 
     def testMul(self):
         """Test __mul__"""

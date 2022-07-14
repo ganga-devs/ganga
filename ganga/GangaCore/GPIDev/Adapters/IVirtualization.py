@@ -7,6 +7,7 @@ from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Lib.File.File import File
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 
+
 class IVirtualization(GangaObject):
 
     """
@@ -21,8 +22,8 @@ class IVirtualization(GangaObject):
         'image': SimpleItem(defvalue="", typelist=[str], doc='Link to the container image'),
         'tokenuser': SimpleItem(defvalue="", typelist=[str], doc='Deploy token username'),
         'tokenpassword': SimpleItem(defvalue="", typelist=[str], doc='Deploy token password'),
-        'mounts' : SimpleItem(defvalue={'/cvmfs': '/cvmfs'},
-                               doc='Mounts to attempt from the host system. The key is the directory name on the host, and the value inside the container. If the directory is not available on the host, it will just be silently dropped from the list of mount points.'),
+        'mounts': SimpleItem(defvalue={'/cvmfs': '/cvmfs'},
+                             doc='Mounts to attempt from the host system. The key is the directory name on the host, and the value inside the container. If the directory is not available on the host, it will just be silently dropped from the list of mount points.'),
         'options': SimpleItem(defvalue=[], typelist=[list, GangaList], sequence=1, doc='A list of options to pass onto the virtualization command.')
     })
     _category = 'virtualization'

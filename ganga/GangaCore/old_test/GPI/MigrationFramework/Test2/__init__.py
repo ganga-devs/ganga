@@ -1,3 +1,2 @@
 
-from . import ApplicationMigration
-from . import AttributeMigration
+from . import ApplicationMigration, AttributeMigration

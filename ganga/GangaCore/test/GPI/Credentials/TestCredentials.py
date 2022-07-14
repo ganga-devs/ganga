@@ -16,7 +16,7 @@ def test_voms_proxy_life_cycle(gpi):
 
     # check that we clear the credential store before we do anything else
     credential_store.clear()
-    
+
     assert len(credential_store) == 0
 
     cred = credential_store.create(VomsProxy())

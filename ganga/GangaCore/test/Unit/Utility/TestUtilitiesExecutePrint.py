@@ -42,7 +42,7 @@ def test_execute_output():
 
     # Test printout of pickle dump interpreted correctly
     import time
-    d =  execute('import pickle, time\nprint(pickle.dumps(time.localtime()).decode("latin1"))', shell=False)
+    d = execute('import pickle, time\nprint(pickle.dumps(time.localtime()).decode("latin1"))', shell=False)
     assert hasattr(d, 'tm_mon')
     assert d.tm_mon == time.localtime().tm_mon
 
@@ -61,10 +61,11 @@ def test_execute_output():
     assert isinstance(d2, str)
 
     # Test printout works with the right includes
-    d1 = execute('print(datetime.datetime(2013,12,12))', python_setup='import datetime', eval_includes='import datetime', shell=False)
-    d2 = execute('print(repr(datetime.datetime(2013,12,12)))', python_setup='import datetime', eval_includes='import datetime', shell=False)
+    d1 = execute('print(datetime.datetime(2013,12,12))', python_setup='import datetime',
+                 eval_includes='import datetime', shell=False)
+    d2 = execute('print(repr(datetime.datetime(2013,12,12)))',
+                 python_setup='import datetime', eval_includes='import datetime', shell=False)
     assert not hasattr(d1, 'month')
     assert isinstance(d1, str)
     assert hasattr(d2, 'month')
     assert d2.month == 12
- 

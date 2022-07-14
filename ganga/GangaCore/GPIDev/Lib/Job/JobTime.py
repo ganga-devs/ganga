@@ -1,13 +1,12 @@
 import datetime
 
+import GangaCore.Utility.Config
 from GangaCore.Core.exceptions import GangaTypeError
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Proxy import stripProxy
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
-
-import GangaCore.Utility.Config
-
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.logging import getLogger
+
 GangaCore.Utility.Config.config_scope['datetime'] = datetime
 logger = getLogger(modulename=True)
 

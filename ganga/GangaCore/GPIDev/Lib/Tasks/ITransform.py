@@ -19,6 +19,7 @@ from GangaCore.GPIDev.Lib.File.File import File
 
 logger = getLogger()
 
+
 class ITransform(GangaObject):
     _schema = Schema(Version(1, 0), {
         'status': SimpleItem(defvalue='new', protected=1, copyable=1, doc='Status - running, pause or completed', typelist=[str]),
@@ -40,7 +41,7 @@ class ITransform(GangaObject):
         'inputdata': ComponentItem('datasets', defvalue=[], sequence=1, protected=1, optional=1, load_default=False, doc='Input datasets to run over'),
         'outputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Output dataset template'),
         'inputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will act as input files for a job"),
-        'outputfiles' : GangaFileItem(defvalue=[], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
+        'outputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
         'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1),
         'rebroker_on_job_fail': SimpleItem(defvalue=True, doc='Rebroker if too many minor resubs'),
         'abort_loop_on_submit': SimpleItem(defvalue=True, doc='Break out of the Task Loop after submissions'),
@@ -48,21 +49,21 @@ class ITransform(GangaObject):
         'chain_delay': SimpleItem(defvalue=0, doc='Minutes delay between a required/chained unit completing and starting this one', protected=0, typelist=[int]),
         'submit_with_threads': SimpleItem(defvalue=False, doc='Use Ganga Threads for submission'),
         'max_active_threads': SimpleItem(defvalue=10, doc='Maximum number of Ganga Threads to use. Note that the number of simultaneous threads is controlled by the queue system (default is 5)'),
-        'info' : SimpleItem(defvalue=[],typelist=[str],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
+        'info': SimpleItem(defvalue=[], typelist=[str], protected=1, sequence=1, doc="Info showing status transitions and unit info"),
         'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Transform', typelist=[int]),
-        #'force_single_unit' : SimpleItem(defvalue=False, doc='Force all input data into one Unit'),
+        # 'force_single_unit' : SimpleItem(defvalue=False, doc='Force all input data into one Unit'),
     })
 
     _category = 'transforms'
     _name = 'ITransform'
     _exportmethods = ['addInputData', 'resetUnit', 'setRunLimit', 'getJobs', 'setMinorRunLimit',
                       'setMajorRunLimit', 'getID', 'overview', 'resetUnitsByStatus', 'removeUnusedJobs',
-                      'showInfo', 'showUnitInfo', 'pause', 'n_all', 'n_status' ]
+                      'showInfo', 'showUnitInfo', 'pause', 'n_all', 'n_status']
     _hidden = 0
 
     def showInfo(self):
         """Print out the info in a nice way"""
-        print("\n".join( self.info ))
+        print("\n".join(self.info))
 
     def showUnitInfo(self, uid):
         """Print out the given unit info in a nice way"""
@@ -124,6 +125,8 @@ class ITransform(GangaObject):
 
 
 # Special methods:
+
+
     def __init__(self):
         super(ITransform, self).__init__()
         self.initialize()
@@ -162,7 +165,7 @@ class ITransform(GangaObject):
 # Public methods
     def resetUnit(self, uid):
         """Reset the given unit"""
-        addInfoString( self, "Reseting Unit %i" % ( uid ) )
+        addInfoString(self, "Reseting Unit %i" % (uid))
 
         for u in self.units:
             if u.getID() == uid:
@@ -188,7 +191,7 @@ class ITransform(GangaObject):
                 raise ApplicationConfigurationError(
                     "This transform has not been associated with a task and so there is no ID available")
             self.id = task.transforms.index(self)
-        
+
         return self.id
 
     def run(self, check=True):
@@ -215,16 +218,16 @@ class ITransform(GangaObject):
                 return 0
 
         # report the info for this transform
-        unit_status = { "new":0, "hold":0, "running":0, "completed":0, "bad":0, "recreating":0 }
+        unit_status = {"new": 0, "hold": 0, "running": 0, "completed": 0, "bad": 0, "recreating": 0}
         for unit in self.units:
             unit_status[unit.status] += 1
-         
+
         info_str = "Unit overview: %i units, %i new, %i hold, %i running, %i completed, %i bad. to_sub %i" % (len(self.units), unit_status["new"], unit_status["hold"],
                                                                                                               unit_status["running"], unit_status["completed"],
                                                                                                               unit_status["bad"], self._getParent().n_tosub())
-      
+
         addInfoString(self, info_str)
-                
+
         # ask the unit splitter if we should create any more units given the
         # current data
         self.createUnits()
@@ -390,9 +393,10 @@ class ITransform(GangaObject):
     def addUnitToTRF(self, unit, prev_unit=None):
         """Add a unit to this Transform given the input and output data"""
         if not unit:
-            raise ApplicationConfigurationError("addUnitTOTRF failed for Transform %d (%s): No unit specified" % (self.getID(), self.name))
+            raise ApplicationConfigurationError(
+                "addUnitTOTRF failed for Transform %d (%s): No unit specified" % (self.getID(), self.name))
 
-        addInfoString( self, "Adding Unit to TRF...")
+        addInfoString(self, "Adding Unit to TRF...")
         unit.updateStatus("hold")
         unit.active = True
         if prev_unit:
@@ -434,7 +438,8 @@ class ITransform(GangaObject):
 
         from GangaCore.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
         if isType(self.unit_copy_output, TaskLocalCopy):
-            logger.warning("Default implementation of createUnitCopyOutputDS can't handle datasets of type '%s'" % getName(self.unit_copy_output))
+            logger.warning("Default implementation of createUnitCopyOutputDS can't handle datasets of type '%s'" %
+                           getName(self.unit_copy_output))
             return
 
         # create copies of the Copy Output DS and add Unit name to path

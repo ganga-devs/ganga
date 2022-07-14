@@ -2,6 +2,8 @@ from GangaCore.testlib.decorators import add_config
 from GangaCore.Utility.Config import getConfig, setSessionValuesFromFiles
 
 # Using @add_config create sections C1 & C2 in the config
+
+
 @add_config([('C1', "", ""), ('C2', "", "")])
 def test_config_basic(gpi):
 
@@ -57,8 +59,8 @@ def test_config_hierarchical(gpi):
     # First A.ini is parsed and then B.ini
     # Options in .ini file under the same section must not be repeated
     setSessionValuesFromFiles([os.path.join(currentDir, "A.ini"), os.path.join(currentDir, "B.ini")], system_vars)
-    
-    # assert(c['MY_PATH'] == 'a2:a') # Giving output: 'a2::' - Plausible Explaination: setSessionValuesFromFiles - sets an session value for the given config option and overwrites the existing session value (if any). 
+
+    # assert(c['MY_PATH'] == 'a2:a') # Giving output: 'a2::' - Plausible Explaination: setSessionValuesFromFiles - sets an session value for the given config option and overwrites the existing session value (if any).
     assert(c['YOURPATH'] == 'b2')
     assert(c['PATH'] == 'c2')
     assert(c['MY2PATH'] == 'd2')

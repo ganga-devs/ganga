@@ -44,6 +44,7 @@ class FakeRegistry(object):
 # * lock(ids) (random ids, if return True put into owned_ids)
 # * unlock(ids) (random owned ids, remove from owned_ids)
 
+
 class HammerThread(threading.Thread):
     def __init__(self, _id, repo):
         self.id = _id
@@ -149,7 +150,8 @@ class HammerThread(threading.Thread):
             choices.extend([self.check] * 5)
             choices.extend([self.flush] * 2)
             self.rng.choice(choices)()
-            assert len(self.owned_ids) == len(list(dict(list(zip(self.owned_ids, list(range(len(self.owned_ids)))))).keys()))
+            assert len(self.owned_ids) == len(
+                list(dict(list(zip(self.owned_ids, list(range(len(self.owned_ids)))))).keys()))
             for id in self.owned_ids:
                 assert id in self.repo.objects
         self.done = True
@@ -212,4 +214,3 @@ class testRepository(object):
         self.logger.info(str(self.id) + ' shutdown()')
         self.repo.shutdown()
         self.logger.info(str(self.id) + ' shutdown() done!')
-

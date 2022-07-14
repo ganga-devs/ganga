@@ -1,2 +1,3 @@
 
-from .Schema import Schema, Version, Item, ComponentItem, SimpleItem, SharedItem, FileItem, GangaFileItem
+from .Schema import (ComponentItem, FileItem, GangaFileItem, Item, Schema,
+                     SharedItem, SimpleItem, Version)

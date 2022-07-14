@@ -7,6 +7,7 @@ import pytest
 
 from GangaCore.testlib.GangaUnitTest import start_ganga, stop_ganga, _getGangaPath, ganga_test_dir_name
 
+
 def gangadir(request):
     """
     Return the gangdir that should be used for a given test.

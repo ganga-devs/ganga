@@ -13,7 +13,8 @@ class TestSavannah47814(GangaUnitTest):
         j.application = Executable(exe='ThisScriptDoesNotExist')
         j.submit()
 
-        failed = sleep_until_state(j, 60, state='failed', break_states=['new', 'killed', 'completed', 'unknown', 'removed'])
+        failed = sleep_until_state(j, 60, state='failed', break_states=[
+                                   'new', 'killed', 'completed', 'unknown', 'removed'])
         self.assertTrue(failed, 'Job with illegal script should fail. Instead it went into the state %s' % j.status)
 
         import os.path

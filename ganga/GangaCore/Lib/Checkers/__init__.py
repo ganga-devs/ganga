@@ -1,5 +1,5 @@
 
-from .FileChecker import FileChecker
 from .CustomChecker import CustomChecker
-from .RootFileChecker import RootFileChecker
+from .FileChecker import FileChecker
 from .MetaDataChecker import MetaDataChecker
+from .RootFileChecker import RootFileChecker

@@ -224,8 +224,8 @@ class RegistryFlusher(GangaThread):
         regConf = getConfig('Registry')
         while not self.stopped:
             sleep_period = regConf['AutoFlusherWaitTime']
-            for i in range(sleep_period*sleeps_per_second):
-                time.sleep(1/sleeps_per_second)
+            for i in range(sleep_period * sleeps_per_second):
+                time.sleep(1 / sleeps_per_second)
                 if self.stopped:
                     return
             # This will trigger a flush on all dirty objects in the repo,

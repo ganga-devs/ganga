@@ -22,6 +22,7 @@ from GangaCore.Core.exceptions import GangaTypeError
 
 logger = getLogger(modulename=1)
 
+
 class FileWorkspace(object):
 
     """
@@ -42,8 +43,7 @@ class FileWorkspace(object):
     directory (with a given subpath  which may be an empty string ''),
     i.e.: getPath() resolves to 'top/subpath/*' or 'top/*' """
 
-
-    __slots__=('jobid', 'top', 'subpath', '__removeTrials')
+    __slots__ = ('jobid', 'top', 'subpath', '__removeTrials')
 
     def __init__(self, top, subpath=''):
         self.jobid = None
@@ -154,13 +154,14 @@ class FileWorkspace(object):
                     """
                     self.__removeTrials += 1
                     if self.__removeTrials <= 5:
-                        logger.debug('Cannot delete %s (retry count=%s) ... Will wait a bit and try again' % (self.getPath(), self.__removeTrials))
+                        logger.debug('Cannot delete %s (retry count=%s) ... Will wait a bit and try again' %
+                                     (self.getPath(), self.__removeTrials))
                         time.sleep(0.5)
                         shutil.rmtree(remove_path, ignore_errors=False, onerror=retryRemove)
                     else:
                         exctype, value = excinfo[:2]
                         logger.warning('Cannot delete %s after %s retries due to:  %s:%s (there might some AFS/NSF lock files left over)' %
-                                                                                        (self.getPath(), self.__removeTrials, exctype, value))
+                                       (self.getPath(), self.__removeTrials, exctype, value))
 
                 shutil.rmtree(remove_path, ignore_errors=False, onerror=retryRemove)
                 logger.debug('removed %s', remove_path)

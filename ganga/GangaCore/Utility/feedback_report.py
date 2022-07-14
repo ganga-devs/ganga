@@ -328,7 +328,7 @@ def report(job=None, filetype=LocalFile):
                 else:
                     history_len = readline.get_current_history_length() % 20
                 for i in range(history_len):
-                    lastIPythonCommands += readline.get_history_item(i + 1)+'\n'
+                    lastIPythonCommands += readline.get_history_item(i + 1) + '\n'
                 writeStringToFile(os.path.join(
                     fullLogDirName, ipythonHistoryFileName), lastIPythonCommands)
             finally:

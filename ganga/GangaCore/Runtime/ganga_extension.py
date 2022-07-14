@@ -2,7 +2,7 @@ def error_handler(exception_obj, etype, value, tb, tb_offset=None):
     """
     Error handler for IPython 3.x+ to identify expected Ganga exceptions or unexpected uncaught exceptions from somewhere
     """
-    ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
+    # see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
     from GangaCore.Utility.logging import getLogger
     logger = getLogger()
     #logger.error("%s" % value)
@@ -21,8 +21,9 @@ def error_handler(exception_obj, etype, value, tb, tb_offset=None):
         logger.error("%s" % value)
     return None
 
+
 def ganga_prompt(_=None):
-    #Flush the logging
+    # Flush the logging
     from GangaCore.Utility.logging import flushAtIPythonPrompt
     flushAtIPythonPrompt()
 
@@ -40,6 +41,7 @@ def ganga_prompt(_=None):
             print(prompt)
     except KeyboardInterrupt:
         return
+
 
 def load_ipython_extension(ipython):
     # The `ipython` argument is the currently active `InteractiveShell`

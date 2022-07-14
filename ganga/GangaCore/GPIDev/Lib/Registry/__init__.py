@@ -1,9 +1,9 @@
 
 from GangaCore.Core.GangaRepository import addRegistry
 
-from .PrepRegistry import PrepRegistry
-from .JobRegistry import JobRegistry
 from .BoxRegistry import BoxRegistry
+from .JobRegistry import JobRegistry
+from .PrepRegistry import PrepRegistry
 
 addRegistry(PrepRegistry("prep", "stuff"))
 addRegistry(JobRegistry("jobs", "General Job Registry"))

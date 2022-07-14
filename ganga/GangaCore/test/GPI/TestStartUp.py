@@ -15,21 +15,25 @@ for logFile in glob.glob(os.path.join(homeDir, '.ganga.log*')):
 shutil.rmtree(os.path.join(homeDir, '.ipython-ganga'), ignore_errors=True)
 shutil.rmtree(os.path.join(homeDir, '.gangarc_backups'), ignore_errors=True)
 
+
 def standardSetup():
     """Function to perform standard setup for GangaCore.
     """
 
-    gangaDir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../../ganga'))
+    gangaDir = os.path.abspath(os.path.join(os.path.dirname(
+        os.path.abspath(inspect.getfile(inspect.currentframe()))), '../../ganga'))
 
     sys.path.insert(0, gangaDir)
 
     from GangaCore.PACKAGE import standardSetup
     standardSetup()
 
+
 standardSetup()
 del standardSetup
 
 this_dir = mkdtemp()
+
 
 def testStartUp():
     """ Lets test the startup of Ganga mimicking first launch """
@@ -46,16 +50,17 @@ def testStartUp():
     # No way known to mimic IPython starting up in a simple way
     #assert os.path.isdir(os.path.join(homeDir, '.ipython-ganga'))
 
-    for this_folder in ['repository',]:
+    for this_folder in ['repository', ]:
         assert os.path.isdir(os.path.join(this_dir, this_folder))
 
     from GangaCore.GPI import Job
 
-    j=Job()
+    j = Job()
     j.submit()
 
     for this_folder in ['shared', 'workspace']:
         assert os.path.isdir(os.path.join(this_dir, this_folder))
+
 
 def testShutdown():
     """ Lets just call the shutdown here for safety """
@@ -65,4 +70,3 @@ def testShutdown():
     stop_ganga()
 
     shutil.rmtree(this_dir, ignore_errors=True)
-

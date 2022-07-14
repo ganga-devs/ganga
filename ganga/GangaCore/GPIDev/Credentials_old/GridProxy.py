@@ -160,6 +160,7 @@ class VomsCommand(ICommandSet):
         self.infoOpts = {}
         self.destroyOpts = {}
 
+
 for commandSet in [GridCommand, VomsCommand]:
     registerCommandSet(commandSet)
 
@@ -175,9 +176,11 @@ class GridProxy(ICredential):
 
     _schema = ICredential._schema.inherit_copy()
     _schema.datadict["voms"] = SimpleItem(defvalue="", doc="Virtual organisation managment system information")
-    _schema.datadict["init_opts"] = SimpleItem(defvalue="", doc="String of options to be passed to command for proxy creation")
+    _schema.datadict["init_opts"] = SimpleItem(
+        defvalue="", doc="String of options to be passed to command for proxy creation")
     _schema.datadict["info_refresh_time"] = SimpleItem(defvalue="00:15", doc="Refresh time of proxy info cache")
-    _schema.datadict["maxTry"] = SimpleItem(defvalue=5, doc="Number of password attempts allowed when creating credential")
+    _schema.datadict["maxTry"] = SimpleItem(
+        defvalue=5, doc="Number of password attempts allowed when creating credential")
     _name = "GridProxy"
     _hidden = 1
     _enable_config = 1
@@ -217,12 +220,10 @@ class GridProxy(ICredential):
                 self.command.currentOpts.clear()
             if "voms" in self.command.init_parameters:
                 if self.voms:
-                    self.command.currentOpts\
-                        [self.command.init_parameters['voms']] = self.voms
+                    self.command.currentOpts[self.command.init_parameters['voms']] = self.voms
             if "valid" in self.command.init_parameters:
                 if self.validityAtCreation:
-                    self.command.currentOpts\
-                        [ self.command.init_parameters[ 'valid' ] ] \
+                    self.command.currentOpts[self.command.init_parameters['valid']] \
                         = self.validityAtCreation
             if self.init_opts:
                 self.command.currentOpts[''] = self.init_opts
@@ -395,8 +396,7 @@ class GridProxy(ICredential):
             for optName, optVal in self.command.infoOpts.items():
                 infoList.append("%s %s" % (optName, optVal))
             logger.debug("Executing timeHMS Command: %s" % " ".join(infoList))
-            status, output, message = self.shell.cmd1\
-                (cmd=" ".join(infoList), allowed_exit=allowed_exit_range)
+            status, output, message = self.shell.cmd1(cmd=" ".join(infoList), allowed_exit=allowed_exit_range)
 
             self.addToProxyCache(status, output, "timeleftInHMS")
 
@@ -444,9 +444,8 @@ class GridProxy(ICredential):
 
             if "vo" in self.command.info_parameters:
                 if self.command.info:
-                    infoCommand = " ".join\
-                        ([self.command.info,
-                          self.command.info_parameters["vo"]])
+                    infoCommand = " ".join([self.command.info,
+                                            self.command.info_parameters["vo"]])
             else:
                 infoCommand = self.command.info
 
@@ -499,8 +498,7 @@ class GridProxy(ICredential):
             self.chooseCommandSet()
             infoCommand = " ".join([self.command.info, '-path'])
             logger.debug("Executing cache Command: %s" % infoCommand)
-            status, output, message = self.shell.cmd1\
-                (cmd=infoCommand, allowed_exit=allowed_exit_range)
+            status, output, message = self.shell.cmd1(cmd=infoCommand, allowed_exit=allowed_exit_range)
 
             if not status:
                 path = output
@@ -517,7 +515,7 @@ class GridProxy(ICredential):
 
         # we're OK to use the cache
         if opt in _infoCache and\
-            ( _infoCache[ opt ][ 1 ] > ( time.time() - info_refresh ) ) and\
+            (_infoCache[opt][1] > (time.time() - info_refresh)) and\
                 (_infoCache[opt][1] > os.path.getmtime(path)):
             logger.debug("Returning Cached Value %s" % opt)
             output = _infoCache[opt][0]

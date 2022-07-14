@@ -4,6 +4,7 @@ import os.path
 
 ## from Config import getConfigDict
 
+
 def get_unique_port():
     """
     Obtain a free TCP port from the OS
@@ -39,6 +40,7 @@ def expandgangasystemvars(c, v):
             v = v.replace(option, system[key])
     return v
 
+
 def load_config_files():
     """
     Load the config files as a normal Ganga session would, taking
@@ -63,4 +65,3 @@ def clear_config():
         package._user_handlers = []
         package._session_handlers = []
         package.revertToDefaultOptions()
-

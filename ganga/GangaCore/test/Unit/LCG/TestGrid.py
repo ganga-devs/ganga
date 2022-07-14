@@ -28,7 +28,8 @@ def test_submit(mocker):
     """
     __set_submit_option__ = mocker.patch('GangaCore.Lib.LCG.Grid.__set_submit_option__', return_value='  ')
     mocker.patch('GangaCore.Lib.LCG.Grid.getShell', return_value=Shell)
-    cmd1 = mocker.patch('GangaCore.Utility.GridShell.Shell.cmd1', return_value=(0, 'https://example.com:9000/some_url', False))
+    cmd1 = mocker.patch('GangaCore.Utility.GridShell.Shell.cmd1',
+                        return_value=(0, 'https://example.com:9000/some_url', False))
 
     from GangaCore.Lib.LCG import Grid
     job_url = Grid.submit('/some/path', cred_req=FakeCred())

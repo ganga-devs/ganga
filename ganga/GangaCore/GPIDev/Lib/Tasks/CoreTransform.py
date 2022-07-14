@@ -14,6 +14,7 @@ import re
 
 logger = getLogger()
 
+
 class CoreTransform(ITransform):
     _schema = Schema(Version(1, 0), dict(list(ITransform._schema.datadict.items()) + list({
         'unit_splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter to be used to create the units'),

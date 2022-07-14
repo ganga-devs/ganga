@@ -22,6 +22,7 @@ from GangaCore.Utility.files import expandfilename
 
 config = getConfig("Preparable")
 
+
 class IPrepareApp(IApplication):
 
     """
@@ -78,7 +79,8 @@ class IPrepareApp(IApplication):
         """
         Return the full path of the shared directory where files are placed
         """
-        share_folder = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+        share_folder = os.path.join(expandfilename(getConfig('Configuration')[
+                                    'gangadir']), 'shared', getConfig('Configuration')['user'])
         if isinstance(self.is_prepared, ShareDir):
             return os.path.join(share_folder, self.is_prepared.name)
         else:
@@ -173,12 +175,12 @@ class IPrepareApp(IApplication):
             # the repository
             return digest.hexdigest() == self.hash
 
-    #printTree is only ever run on applications, from within IPrepareApp.py
-    #if you (manually) try to run printTree on anything other than an application, it will not work as expected
-    #see the relevant code in VPrinter to understand why
-    def printTree(self, f=None, sel='preparable' ):
-        ## After fixing some bugs we are left with incompatible job hashes. This should be addressd before removing
-        ## This particular class!
+    # printTree is only ever run on applications, from within IPrepareApp.py
+    # if you (manually) try to run printTree on anything other than an application, it will not work as expected
+    # see the relevant code in VPrinter to understand why
+    def printTree(self, f=None, sel='preparable'):
+        # After fixing some bugs we are left with incompatible job hashes. This should be addressd before removing
+        # This particular class!
         from GangaCore.GPIDev.Base.VPrinterOld import VPrinterOld
         self.accept(VPrinterOld(f, sel))
 
@@ -244,4 +246,3 @@ class IPrepareApp(IApplication):
             # logger.error(self.listShareDirContents(prepared_object.is_prepared.name))
         else:
             self.incrementShareCounter(prepared_object.is_prepared)
-

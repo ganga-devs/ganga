@@ -33,7 +33,7 @@ class TestSavannah32342(GangaUnitTest):
 
     def test_b_Savannah32342(self):
         from GangaCore.GPI import jobs
-        
+
         j = jobs(0)
 
         assert j, 'job should not be null'

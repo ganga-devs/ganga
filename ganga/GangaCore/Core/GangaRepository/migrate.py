@@ -11,7 +11,7 @@ from GangaCore.Core.GangaRepository.DStreamer import (
     EmptyGangaObject,
     index_from_database, index_to_database,
     object_from_database, object_to_database
-    )
+)
 
 from GangaCore.GPIDev.Base.Proxy import getName, addProxy
 from GangaCore.Runtime.Repository_runtime import getLocalRoot
@@ -150,8 +150,6 @@ def get_job_done():
     connection_string = f"mongodb://{HOST}:{PORT}/"
     client = pymongo.MongoClient(connection_string)
     connection = client[database_config['dbname']]
-
-
 
     job_migrate(connection)
     job_metadata_migrate(connection)

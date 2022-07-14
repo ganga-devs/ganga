@@ -1,2 +1,2 @@
 
-from .Config import config, ConfigError, bootstrap
+from .Config import ConfigError, bootstrap, config

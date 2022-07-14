@@ -10,7 +10,8 @@ from GangaCore.testlib.monitoring import run_until_completed
 class TestStdOut(GangaUnitTest):
     def setUp(self):
         super(TestStdOut, self).setUp()
-        from GangaCore.GPI import Job, Executable, Local, File, LocalFile, config
+        from GangaCore.GPI import (Executable, File, Job, Local, LocalFile,
+                                   config)
         from GangaTest.Framework.utils import write_file
 
         config['Mergers']['associate'] = {'stdout': 'RootMerger'}
@@ -47,8 +48,8 @@ class TestStdOut(GangaUnitTest):
 
     def testCanSetStdOutMerge(self):
         from GangaCore.GPI import SmartMerger
-
-        from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
+        from GangaCore.GPIDev.Adapters.IPostProcessor import \
+            PostProcessException
 
         self.runJobSlice()
 

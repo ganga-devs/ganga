@@ -11,7 +11,6 @@ from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
 from GangaCore.GPIDev.Lib.Dataset import GangaDataset
 
 
-
 class GangaDatasetSplitter(ISplitter):
 
     """ Split job based on files given in GangaDataset inputdata field """

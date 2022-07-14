@@ -8,7 +8,7 @@ class TestSubjobs(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts = [ ('TestingFramework', 'AutoCleanup', 'False') ]
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False')]
         super(TestSubjobs, self).setUp(extra_opts=extra_opts)
 
     def testLargeJobSubmission(self):
@@ -84,12 +84,12 @@ class TestSubjobs(GangaUnitTest):
         sleeptime = 5
         nsubjobs = 20
         batch = 10
-        j = Job(splitter=ArgSplitter(args=[ [sleeptime] for x in range(nsubjobs)]),
+        j = Job(splitter=ArgSplitter(args=[[sleeptime] for x in range(nsubjobs)]),
                 application=Executable(exe='sleep'),
                 backend=Local(batchsize=batch))
         j.submit()
         import datetime
         from GangaTest.Framework.utils import sleep_until_completed
-        assert sleep_until_completed(j,60)
-        runtime = j.time.timestamps['backend_final']-j.time.timestamps['backend_running']
-        assert  runtime < datetime.timedelta(seconds=int(nsubjobs*sleeptime/batch + 10))
+        assert sleep_until_completed(j, 60)
+        runtime = j.time.timestamps['backend_final'] - j.time.timestamps['backend_running']
+        assert runtime < datetime.timedelta(seconds=int(nsubjobs * sleeptime / batch + 10))

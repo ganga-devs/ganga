@@ -20,6 +20,7 @@ if getConfig('Configuration')["repositorytype"] in ["Database", "CentralDatabase
 else:
     from GangaCore.Core.GangaRepository.Registry import Registry
 
+
 class BoxMetadataObject(GangaObject):
 
     """Internal object to store names"""
@@ -164,6 +165,7 @@ class BoxRegistry(Registry):
         This allows us to clean up after the ShareDir on shutdown
         """
         super(BoxRegistry, self).shutdown(kill=kill)
+
 
 class BoxRegistrySlice(RegistrySlice):
 

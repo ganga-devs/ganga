@@ -65,8 +65,8 @@ def defaultConfigSectionName(name):
     try:
         return _stored_defaults[name]
     except KeyError:
-       _stored_defaults[name] = 'defaults_' + name  # _Properties
-       return _stored_defaults[name]
+        _stored_defaults[name] = 'defaults_' + name  # _Properties
+        return _stored_defaults[name]
 
 # Schema defines the logical model of the Ganga Public Interface (GPI)
 # for  jobs and  pluggable  job components  such  as applications  and
@@ -93,6 +93,7 @@ def defaultConfigSectionName(name):
 # about name and category of  the schema deepcopy of Schema objects is
 # possible  however   the  _pluginclass  objects   are  shared  unless
 # overriden explicitly.
+
 
 class Schema(object):
     # Schema constructor is used by Ganga plugin developers.
@@ -132,7 +133,8 @@ class Schema(object):
         return list(self.datadict.keys())
 
     def allItems(self):
-        if self.datadict is None: return list(zip())
+        if self.datadict is None:
+            return list(zip())
         return list(zip(list(self.datadict.keys()), list(self.datadict.values())))
 
     def simpleItems(self):
@@ -174,7 +176,8 @@ class Schema(object):
         # create a configuration unit for default values of object properties
         # take the defaults from schema defaults
         _self_name = self.name
-        config = GangaCore.Utility.Config.makeConfig(defaultConfigSectionName(_self_name), "default attribute values for %s objects" % _self_name)
+        config = GangaCore.Utility.Config.makeConfig(defaultConfigSectionName(
+            _self_name), "default attribute values for %s objects" % _self_name)
 
         for name, item in self.allItems():
             # and not item['sequence']: #FIXME: do we need it or not??
@@ -196,7 +199,6 @@ class Schema(object):
                         types.append('dict')
                 config.addOption(name, item['defvalue'], item['doc'], False, typelist=types)
 
-
         def prehook(name, x):
             errmsg = "Cannot set %s=%s in [%s]: " % (name, repr(x), config.name)
 
@@ -207,7 +209,8 @@ class Schema(object):
 
             if item.isA(ComponentItem):
                 if not isinstance(x, str) and not x is None:
-                    raise GangaCore.Utility.Config.ConfigError(errmsg + "only strings and None allowed as a default value of Component Item.")
+                    raise GangaCore.Utility.Config.ConfigError(
+                        errmsg + "only strings and None allowed as a default value of Component Item.")
                 try:
                     self._getDefaultValueInternal(name, x, True)
                 except Exception as err:
@@ -221,7 +224,6 @@ class Schema(object):
 
         config.attachUserHandler(prehook, None)
         config.attachSessionHandler(prehook, None)
-
 
     def getDefaultValue(self, attr, make_copy=True):
         """ Get the default value of a schema item, both simple and component.
@@ -282,8 +284,9 @@ class Schema(object):
                     defvalue = config[attr]
                     from GangaCore.GPIDev.Base.Proxy import isProxy
                     if isProxy(defvalue):
-                        raise GangaException("(1)Proxy found where it shouldn't be in the Config: %s" % stored_attr_key)
-                    ## Just in case a developer puts the proxied object into the default value!
+                        raise GangaException(
+                            "(1)Proxy found where it shouldn't be in the Config: %s" % stored_attr_key)
+                    # Just in case a developer puts the proxied object into the default value!
                     _found_attrs[stored_attr_key] = defvalue
                 else:
                     useDefVal = True
@@ -296,7 +299,7 @@ class Schema(object):
             from GangaCore.GPIDev.Base.Proxy import isProxy
             if isProxy(defvalue):
                 raise GangaException("(2)Proxy found where is shouldn't be in the Config" % stored_attr_key)
-            ## Just in case a developer puts the proxied object into the default value!
+            # Just in case a developer puts the proxied object into the default value!
             _found_attrs[stored_attr_key] = defvalue
 
         # in the checking mode, use the provided value instead
@@ -314,7 +317,8 @@ class Schema(object):
                         try:
                             assert(item['optional'])
                         except AssertionError:
-                            raise SchemaError("This item '%s' is not a sequence, doesn't have a load_default and is not optional. This is unsupported!" % type(item))
+                            raise SchemaError(
+                                "This item '%s' is not a sequence, doesn't have a load_default and is not optional. This is unsupported!" % type(item))
                         return None
 
                 # if a defvalue of a component item is an object (not string) just process it as for SimpleItems (useful for FileItems)
@@ -411,9 +415,9 @@ class Schema(object):
 class Item(object):
     # default values of common metaproperties
     _metaproperties = {'transient': 0, 'protected': 0, 'hidden': 0, 'comparable': 1, 'sequence': 0, 'defvalue': None, 'copyable': 1,
-                        'doc': '', 'visitable': 1, 'checkset': None, 'filter': None, 'strict_sequence': 1, 'summary_print': None,
-                        'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0,
-                        'optional': 0, 'category': 'internal', 'typelist': None, 'load_default': 1}
+                       'doc': '', 'visitable': 1, 'checkset': None, 'filter': None, 'strict_sequence': 1, 'summary_print': None,
+                       'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0,
+                       'optional': 0, 'category': 'internal', 'typelist': None, 'load_default': 1}
 
     __slots__ = ('_meta')
 
@@ -445,7 +449,6 @@ class Item(object):
         what = stripProxy(_what)
         return issubclass(self.__class__, what)
 
-
     def _update(self, kwds, forced=None):
         """ Add new metaproperties/override old values. To be used by derived contructors only.
         'forced' is an (optional) dictionary containing all values which cannot be modified by
@@ -455,7 +458,8 @@ class Item(object):
             # find intersection
             forbidden = [k for k in forced if k in kwds]
             if len(forbidden) > 0:
-                raise GangaTypeError('%s received forbidden (forced) keyword arguments %s' % (self.__class__, forbidden))
+                raise GangaTypeError('%s received forbidden (forced) keyword arguments %s' %
+                                     (self.__class__, forbidden))
             self._meta.update(forced)
 
         self._meta.update(kwds)
@@ -504,8 +508,9 @@ class Item(object):
     def __check(isAllowedType, name, validTypes, input_val):
         if not isAllowedType:
             #import traceback
-            #traceback.print_stack()
-            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, input_val, type(input_val)))
+            # traceback.print_stack()
+            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (
+                name, validTypes, input_val, type(input_val)))
 
     def _check_type(self, val, name, enableGangaList=True):
 
@@ -540,7 +545,8 @@ class Item(object):
 
                 for valItem in val:
                     if not valueTypeAllowed(valItem, validTypes):
-                        raise TypeMismatchError('List entry %s for %s is invalid. Valid types: %s' % (valItem, name, validTypes))
+                        raise TypeMismatchError('List entry %s for %s is invalid. Valid types: %s' %
+                                                (valItem, name, validTypes))
 
                 return
             else:  # Non-sequence
@@ -548,11 +554,13 @@ class Item(object):
                     if isinstance(val, dict):
                         for dKey, dVal in val.items():
                             if not valueTypeAllowed(dKey, validTypes) or not valueTypeAllowed(dVal, validTypes):
-                                raise TypeMismatchError('Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % (dKey, dVal, name, validTypes))
+                                raise TypeMismatchError(
+                                    'Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % (dKey, dVal, name, validTypes))
                     else:  # new value is not a dict
                         if val == []:
                             return
-                        raise TypeMismatchError('Attribute "%s" expects a dictionary. Found: "%s".' % (name, type(val)))
+                        raise TypeMismatchError(
+                            'Attribute "%s" expects a dictionary. Found: "%s".' % (name, type(val)))
                     return
                 else:  # a 'simple' (i.e. non-dictionary) non-sequence value
                     self.__check(valueTypeAllowed(val, validTypes), name, validTypes, val)
@@ -563,12 +571,12 @@ class Item(object):
             logger.warning('type-checking disabled: type information not provided for %s, contact plugin developer', name)
         else:
             if self._meta['sequence']:
-                logger.warning('type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer', name)
+                logger.warning(
+                    'type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer', name)
             else:
 
                 logger.debug("valType: %s defValueType: %s name: %s" % (type(val), type(self._meta['defvalue']), name))
                 self.__check(self.__actualCheck(val, self._meta['defvalue']), name, type(self._meta['defvalue']), val)
-
 
     @staticmethod
     def __actualCheck(val, defVal):
@@ -580,7 +588,7 @@ class Item(object):
             knownLists = (list, tuple)
         from GangaCore.GPIDev.Base.Proxy import isType
         if isType(defVal, knownLists) and isType(val, knownLists):
-                return True
+            return True
         else:
             if type(defVal) == type:
                 return isType(val, type)
@@ -592,7 +600,7 @@ class ComponentItem(Item):
     # schema user of a ComponentItem cannot change the forced values below
     _forced = {}
 
-    __slots__=list()
+    __slots__ = list()
 
     def __init__(self, category, optional=0, load_default=1, **kwds):
         super(ComponentItem, self).__init__()
@@ -607,22 +615,25 @@ class ComponentItem(Item):
             raise SchemaError("ComponentItem has no defvalue, load_default or requirement to be optional")
 
         try:
-            assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self['protected'] and not self['sequence'] and not self['copyable']))
+            assert(implies(self['getter'], self['transient'] and self['defvalue']
+                   is None and self['protected'] and not self['sequence'] and not self['copyable']))
         except AssertionError:
-            raise SchemaError("There is no getter, transient flag or defvalue and the ComponentItem is protected, not a sequence or not copyable. This is not supported")
+            raise SchemaError(
+                "There is no getter, transient flag or defvalue and the ComponentItem is protected, not a sequence or not copyable. This is not supported")
 
     def _describe(self):
         return "'" + self['category'] + "' object," + Item._describe(self)
 
 
-valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, logger)
+def valueTypeAllowed(val, valTypeList): return _valueTypeAllowed(val, valTypeList, logger)
 
-defaultValue='_NOT_A_VALUE_'
+
+defaultValue = '_NOT_A_VALUE_'
 
 
 class SimpleItem(Item):
 
-    __slots__=list()
+    __slots__ = list()
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
         super(SimpleItem, self).__init__()
@@ -641,7 +652,7 @@ class SimpleItem(Item):
 
 class SharedItem(Item):
 
-    __slots__=list()
+    __slots__ = list()
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
         super(SharedItem, self).__init__()
@@ -662,7 +673,7 @@ class SharedItem(Item):
 # defining their metaproperties
 class FileItem(ComponentItem):
 
-    __slots__=list()
+    __slots__ = list()
 
     def __init__(self, **kwds):
         super(FileItem, self).__init__('files')
@@ -690,13 +701,13 @@ if __name__ == '__main__':
 
     dd = {
         'application': ComponentItem(category='applications'),
-        'backend':     ComponentItem(category='backends'),
-        'name':        SimpleItem('', comparable=0),
-        'workdir':     SimpleItem(defvalue=None, type='string', transient=1, protected=1, comparable=0),
-        'status':      SimpleItem(defvalue='new', protected=1, comparable=0),
-        'id':           SimpleItem(defvalue=None, type='string', protected=1, comparable=0),
-        'inputbox':     FileItem(defvalue=[], sequence=1),
-        'outputbox':    FileItem(defvalue=[], sequence=1),
+        'backend': ComponentItem(category='backends'),
+        'name': SimpleItem('', comparable=0),
+        'workdir': SimpleItem(defvalue=None, type='string', transient=1, protected=1, comparable=0),
+        'status': SimpleItem(defvalue='new', protected=1, comparable=0),
+        'id': SimpleItem(defvalue=None, type='string', protected=1, comparable=0),
+        'inputbox': FileItem(defvalue=[], sequence=1),
+        'outputbox': FileItem(defvalue=[], sequence=1),
         'overriden_copyable': SimpleItem(defvalue=None, protected=1, copyable=1),
         'plain_copyable': SimpleItem(defvalue=None, copyable=0)
     }

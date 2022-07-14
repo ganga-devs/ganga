@@ -40,10 +40,12 @@ def getMonitoringClass(mclassname):
 
             try:
                 if not issubclass(monitoring_class, IMonitoringService):
-                    raise MonitoringServiceError('%s is not IMonitoringService subclass while loading %s' % (classname, mclassname))
+                    raise MonitoringServiceError(
+                        '%s is not IMonitoringService subclass while loading %s' % (classname, mclassname))
             except TypeError as err:
                 logger.debug("TypeError1: %s" % str(err))
-                raise MonitoringServiceError('%s (%s) is not IMonitoringService subclass while loading %s' % (classname, str(type(monitoring_class)), mclassname))
+                raise MonitoringServiceError('%s (%s) is not IMonitoringService subclass while loading %s' % (
+                    classname, str(type(monitoring_class)), mclassname))
 
             # store the modname as class variable
             monitoring_class._mod_name = modname
@@ -117,7 +119,7 @@ def getMonitoringObject(job):
     names = [name.strip() for name in findMonitoringClassesName(job).split(',') if name.strip()]
     # get classes, jobs and configs
     monClasses = []
-    for  name in names:
+    for name in names:
         try:
             this_class = getMonitoringClass(name)
         except MonitoringServiceError as err:
@@ -128,4 +130,3 @@ def getMonitoringObject(job):
     jobs = [job] * len(monClasses)
     configs = [monClass.getConfig() for monClass in monClasses]
     return CompositeMonitoringService(monClasses, jobs, configs)
-

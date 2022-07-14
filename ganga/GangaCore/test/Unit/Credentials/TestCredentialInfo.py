@@ -1,11 +1,12 @@
 import pytest
+
 try:
     import unittest.mock as mock
 except ImportError:
     import mock
 
-from GangaCore.GPIDev.Credentials.VomsProxy import VomsProxy, VomsProxyInfo
 from GangaCore.GPIDev.Credentials.AfsToken import AfsToken, AfsTokenInfo
+from GangaCore.GPIDev.Credentials.VomsProxy import VomsProxy, VomsProxyInfo
 
 
 class FakeShell(object):

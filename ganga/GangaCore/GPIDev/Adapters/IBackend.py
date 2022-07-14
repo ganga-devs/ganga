@@ -20,7 +20,7 @@ from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
 from GangaCore.GPIDev.Credentials import credential_store, needed_credentials
 from GangaCore.Core.exceptions import (
     GangaException, GangaKeyError, IncompleteJobSubmissionError
-    )
+)
 
 logger = GangaCore.Utility.logging.getLogger()
 config = getConfig('Configuration')
@@ -29,6 +29,7 @@ if config["repositorytype"] == "Database":
     from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 else:
     from GangaCore.Core.GangaRepository.SubJobXMLList import SubJobXMLList as SubJobJsonList
+
 
 class IBackend(GangaObject):
 
@@ -85,9 +86,9 @@ class IBackend(GangaObject):
     def _successfulSubmit(self, out, sj, incomplete_subjobs):
         if out == 0:
             incomplete_subjobs.append(sj.getFQID('.'))
-            sj.updateStatus('new', update_master = False)
+            sj.updateStatus('new', update_master=False)
         else:
-            sj.updateStatus('submitted', update_master = False)
+            sj.updateStatus('submitted', update_master=False)
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
         """  Submit   the  master  job  and  all   its  subjobs.   The
@@ -166,12 +167,13 @@ class IBackend(GangaObject):
 
                 fqid = sj.getFQID('.')
                 # FIXME would be nice to move this to the internal threads not user ones
-                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger), callback_func = self._successfulSubmit, callback_args = (sj, incomplete_subjobs))
+                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox,
+                                                                                        fqid, logger), callback_func=self._successfulSubmit, callback_args=(sj, incomplete_subjobs))
 
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs:
-                    if sj.status not in ["submitted","failed","completed","running","completing"] and sj.getFQID('.') not in incomplete_subjobs:
+                    if sj.status not in ["submitted", "failed", "completed", "running", "completing"] and sj.getFQID('.') not in incomplete_subjobs:
                         has_submitted = False
                         break
                 return has_submitted
@@ -245,7 +247,7 @@ class IBackend(GangaObject):
             create_sandbox = job.createPackedInputSandbox
         if masterjobconfig:
             if hasattr(job.application, 'is_prepared') and isType(job.application.is_prepared, ShareDir):
-                sharedir_pred = lambda f: f.name.find(job.application.is_prepared.name) > -1
+                def sharedir_pred(f): return f.name.find(job.application.is_prepared.name) > -1
                 sharedir_files = filter(sharedir_pred, masterjobconfig.getSandboxFiles())
                 nonsharedir_files = itertools.filterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
             # ATLAS use bool to bypass the prepare mechanism and some ATLAS
@@ -417,7 +419,7 @@ class IBackend(GangaObject):
 
         logger.debug("Running Monitoring for Jobs: %s" % [j.getFQID('.') for j in jobs])
 
-        ## Only process 10 files from the backend at once
+        # Only process 10 files from the backend at once
         #blocks_of_size = 10
         poll_config = getConfig('PollThread')
         try:
@@ -426,7 +428,7 @@ class IBackend(GangaObject):
             logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
             logger.debug("Error: %s" % err)
             blocks_of_size = 5
-        ## Separate different backends implicitly
+        # Separate different backends implicitly
         simple_jobs = {}
 
         multiThreadMon = poll_config['enable_multiThreadMon']
@@ -437,17 +439,17 @@ class IBackend(GangaObject):
         queues = getQueues()
 
         for j in jobs:
-            ## All subjobs should have same backend
+            # All subjobs should have same backend
             if len(j.subjobs) > 0:
                 #logger.info("Looking for sj")
                 monitorable_subjob_ids = []
 
                 if isType(j.subjobs, SubJobJsonList):
                     cache = j.subjobs.getAllCachedData()
-                    for sj_id in range(0,len(j.subjobs)):
+                    for sj_id in range(0, len(j.subjobs)):
                         if cache[sj_id]['status'] in ['submitted', 'running']:
                             if j.subjobs.isLoaded(sj_id):
-                                ## SJ may have changed from cache in memory
+                                # SJ may have changed from cache in memory
                                 this_sj = j.subjobs(sj_id)
                                 if this_sj.status in ['submitted', 'running']:
                                     monitorable_subjob_ids.append(sj_id)
@@ -463,7 +465,7 @@ class IBackend(GangaObject):
                 if not monitorable_subjob_ids:
                     continue
 
-                #logger.info("Dividing")
+                # logger.info("Dividing")
 
                 monitorable_blocks = []
                 temp_block = []
@@ -490,7 +492,8 @@ class IBackend(GangaObject):
                             subjobs_to_monitor.append(j.subjobs[sj_id])
                         if multiThreadMon:
                             if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
-                                queues._addSystem(j.backend.updateMonitoringInformation, args=(subjobs_to_monitor,), name="Backend Monitor")
+                                queues._addSystem(j.backend.updateMonitoringInformation,
+                                                  args=(subjobs_to_monitor,), name="Backend Monitor")
                         else:
                             j.backend.updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
@@ -512,7 +515,8 @@ class IBackend(GangaObject):
                         queues._addSystem(stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation,
                                           args=(simple_jobs[this_backend],), name="Backend Monitor")
                 else:
-                    stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
+                    stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(
+                        simple_jobs[this_backend])
 
         logger.debug("Finished Monitoring request")
 
@@ -522,10 +526,10 @@ class IBackend(GangaObject):
         loop = True
         while loop:
             for stat in queues._monitoring_threadpool.worker_status():
-                loop = False;
+                loop = False
                 if stat[0] is not None and stat[0].startswith("Backend Monitor"):
-                    loop = True;
-                    break;
+                    loop = True
+                    break
             time.sleep(1.)
 
     @staticmethod

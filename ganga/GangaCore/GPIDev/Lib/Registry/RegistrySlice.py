@@ -19,6 +19,7 @@ logger = getLogger()
 
 config = GangaCore.Utility.Config.getConfig('Display')
 
+
 class RegistrySlice(object):
 
     def __init__(self, name, display_prefix):
@@ -55,7 +56,8 @@ class RegistrySlice(object):
         """
         """
         if not isinstance(keep_going, bool):
-            raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (self.name, keep_going, method))
+            raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
+                self.name, keep_going, method))
         result = []
         for _id in self.objects.keys():
             obj = self.objects[_id]
@@ -93,12 +95,16 @@ class RegistrySlice(object):
             logger.error("'clean' only works on whole registries, e.g. 'jobs.clean()'. Use remove() to delete job slices")
             return False
         if not confirm:
-            logger.warning("You are about to irreversibly delete the WHOLE '%s' registry, without properly cleaning up individual jobs." % (self.objects.name))
+            logger.warning("You are about to irreversibly delete the WHOLE '%s' registry, without properly cleaning up individual jobs." % (
+                self.objects.name))
             if force:
-                logger.warning("You will also cause any other Ganga sessions accessing this repository to shut down their operations")
-                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True,force=True)" % (self.objects.name, self.objects.name))
+                logger.warning(
+                    "You will also cause any other Ganga sessions accessing this repository to shut down their operations")
+                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True,force=True)" % (
+                    self.objects.name, self.objects.name))
             else:
-                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True)" % (self.objects.name, self.objects.name))
+                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True)" % (
+                    self.objects.name, self.objects.name))
             return False
         return self.objects.clean(force)
 
@@ -124,8 +130,8 @@ class RegistrySlice(object):
         this_repr = reprlib.Repr()
         from GangaCore.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
-        ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
-        ## Required to flatten the additional arguments into a flat string in attrs_str
+        # Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
+        # Required to flatten the additional arguments into a flat string in attrs_str
         for a in attrs:
             if isclass(attrs[a]):
                 this_attr = addProxy(attrs[a]())
@@ -147,8 +153,10 @@ class RegistrySlice(object):
             attrs_str += ", %s=\"%s\"" % (a, flat_str)
 
         logger.debug("Attrs_Str: %s" % attrs_str)
-        logger.debug("Constructing slice: %s" % ("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
-        this_slice = self.__class__("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str))
+        logger.debug("Constructing slice: %s" % ("%s.select(minid='%s', maxid='%s'%s)" %
+                     (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
+        this_slice = self.__class__("%s.select(minid='%s', maxid='%s'%s)" % (
+            self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str))
 
         def append(id, obj):
             this_slice.objects[id] = obj
@@ -163,8 +171,8 @@ class RegistrySlice(object):
 
         logger = getLogger()
 
-        ## Loop through attrs to parse possible inputs into instances of a class where appropriate
-        ## Unlike the select method we need to populate this dictionary with instance objects, not str or class
+        # Loop through attrs to parse possible inputs into instances of a class where appropriate
+        # Unlike the select method we need to populate this dictionary with instance objects, not str or class
         for k, v in attrs.items():
             if isclass(v):
                 attrs[k] = v()
@@ -249,9 +257,9 @@ class RegistrySlice(object):
                                 attrvalue = attrs[a]
 
                                 if item.isA(ComponentItem):
-                                    ## TODO we need to distinguish between passing a Class type and a defined class instance
-                                    ## If we passed a class type to select it should look only for classes which are of this type
-                                    ## If we pass a class instance a compartison of the internal attributes should be performed
+                                    # TODO we need to distinguish between passing a Class type and a defined class instance
+                                    # If we passed a class type to select it should look only for classes which are of this type
+                                    # If we pass a class instance a compartison of the internal attributes should be performed
                                     from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
                                     cfilter = allComponentFilters[item['category']]
@@ -319,7 +327,8 @@ class RegistrySlice(object):
                     logger.error('Multiple Matches: Wildcards are allowed for ease of matching, however')
                     logger.error('                  to keep a uniform response only one item may be matched.')
                     logger.error('                  If you wanted a slice, please use the select method')
-                    raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str([x._getRegistry()._getName(x) for x in matches])))
+                    raise RegistryKeyError("Multiple matches for id='%s':%s" % (
+                        this_id, str([x._getRegistry()._getName(x) for x in matches])))
                 if len(matches) < 1:
                     return
                 return addProxy(matches[0])
@@ -448,7 +457,6 @@ class RegistrySlice(object):
             ds += this_format % self._display_columns
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
-
         if hasattr(self.objects, '_private_display'):
             ds += self.objects._private_display(self, this_format, default_width, markup)
 
@@ -476,11 +484,11 @@ class RegistrySlice(object):
                         continue
                     except KeyError as err:
                         logger.debug("_display KeyError: %s" % err)
-                        #pass
+                        # pass
                         if item == "fqid":
                             vals.append(self._get_display_value(obj, item))
                         elif item == 'subjob status':
-                            vals.append('---') #As this is new we don't want to reload everything
+                            vals.append('---')  # As this is new we don't want to reload everything
                         else:
                             vals.append(self._get_display_value(obj, item)[0:width])
                 ds += markup(this_format % tuple(vals), colour)
@@ -491,4 +499,3 @@ class RegistrySlice(object):
 
     def _id(self):
         return id(self)
-

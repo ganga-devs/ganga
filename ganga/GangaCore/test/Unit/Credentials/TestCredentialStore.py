@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 
 import pytest
-
-from GangaCore.GPIDev.Schema import SimpleItem
-from GangaCore.GPIDev.Credentials.CredentialStore import CredentialStore
 from GangaCore.GPIDev.Adapters.ICredentialInfo import ICredentialInfo
-from GangaCore.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
+from GangaCore.GPIDev.Adapters.ICredentialRequirement import \
+    ICredentialRequirement
+from GangaCore.GPIDev.Credentials.CredentialStore import CredentialStore
+from GangaCore.GPIDev.Schema import SimpleItem
 
 
 class FakeCredInfo(ICredentialInfo):

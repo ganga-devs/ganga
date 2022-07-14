@@ -3,13 +3,11 @@ import os.path
 import re
 from urllib.parse import urlparse
 
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
-
+from GangaCore.Core.GangaThread.MTRunner import Algorithm, Data, MTRunner
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
+from GangaCore.Lib.LCG.GridSandboxCache import GridFileIndex, GridSandboxCache
+from GangaCore.Lib.LCG.Utility import get_md5sum, urisplit
 from GangaCore.Utility.GridShell import getShell
-
-from GangaCore.Lib.LCG.GridSandboxCache import GridSandboxCache, GridFileIndex
-from GangaCore.Lib.LCG.Utility import urisplit, get_md5sum
-from GangaCore.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
 gridftp_sandbox_cache_schema_datadict = GridSandboxCache._schema.inherit_copy(
 ).datadict

@@ -2,6 +2,7 @@
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TestSavannah10006(GangaUnitTest):
 
     def setUp(self):
@@ -28,4 +29,3 @@ class TestSavannah10006(GangaUnitTest):
         j = jobs(0)
 
         assert(j.application.modified)
-

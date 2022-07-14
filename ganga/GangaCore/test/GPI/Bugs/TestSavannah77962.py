@@ -6,7 +6,6 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 class TestSavannah77962(GangaUnitTest):
     def test_Savannah77962(self):
         from GangaCore.GPI import Job
-
         # The submit_counter was being incremented by 2 when j.resubmit was called.
         from GangaTest.Framework.utils import sleep_until_completed
 

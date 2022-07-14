@@ -6,6 +6,7 @@ from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaCore.GPIDev.Adapters.IVirtualization import IVirtualization
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
 
+
 class Singularity(IVirtualization):
 
     """
@@ -72,19 +73,19 @@ class Singularity(IVirtualization):
     _name = 'Singularity'
     _schema = IVirtualization._schema.inherit_copy()
     _schema.datadict['image'] = SimpleItem(defvalue="",
-                                           typelist=[str,'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile'],
+                                           typelist=[str, 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile'],
                                            doc='Link to the container image. This can either be a singularity URL or a GangaFile object')
     _schema.datadict['binary'] = SimpleItem(defvalue="singularity",
                                             typelist=[str],
                                             doc='The virtualization binary itself. Can be an absolute path if required.')
-    
+
     def modify_script(self, script, sandbox=False):
         """Overides parent's modify_script function
                     Arguments other than self:
                        script - Script that need to be modified
 
                     Return value: modified script"""
-        
+
         if isinstance(self.image, IGangaFile):
             extra = 'virtualization_image = ' + repr(self.image.namePattern) + '\n'
         else:
@@ -141,5 +142,5 @@ execmd = [virtualization_binary, '-q', 'exec', '--bind',
           workdir+":"+"/work_dir", "--no-home"] + options + [virtualization_image] + execmd   
 
 """
-        script = script.replace('###VIRTUALIZATION###',extra)
+        script = script.replace('###VIRTUALIZATION###', extra)
         return script

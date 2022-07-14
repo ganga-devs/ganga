@@ -4,7 +4,6 @@
 # $Id: TestTransitions.py,v 1.1 2008-07-17 16:41:16 moscicki Exp $
 ##########################################################################
 from GangaCore.GPIDev.Schema import *
-
 from GangaCore.Lib.Executable import Executable, RTHandler
 
 # a list of states we must see otherwise the test fails
@@ -30,9 +29,11 @@ class MockExeApplication(Executable):
 
 
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+
 allHandlers.add('MockExeApplication', 'Local', RTHandler)
 
 from GangaCore.Utility.Plugin import allPlugins
+
 allPlugins.add(MockExeApplication, 'applications', 'MockExeApplication')
 
 from GangaTest.Framework.tests import GangaGPITestCase

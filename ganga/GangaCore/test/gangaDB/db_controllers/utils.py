@@ -1,4 +1,5 @@
 import os
+
 import pymongo
 
 
@@ -49,7 +50,7 @@ def get_host_port():
 
 
 def getNestedList():
-    from GangaCore.GPI import LocalFile, GangaList
+    from GangaCore.GPI import GangaList, LocalFile
     gl = GangaList()
     gl2 = GangaList()
     for i in range(5):

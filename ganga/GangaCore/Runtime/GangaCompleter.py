@@ -34,6 +34,7 @@ def bracket_sanitiser(text, replacement_list=None):
         text = bracket_sanitiser(text, replacement_list)
     return text
 
+
 bracket_replacement_matcher = re.compile('##([0-9]+?)##')
 
 
@@ -58,6 +59,7 @@ def arg_splitter(text, strip_args=True):
                 a = a.replace('##%s##' % r, replacement_list[int(r)])
         args[i] = a
     return args
+
 
 open_method_matcher = re.compile('([a-zA-Z0-9_.]+?)\(.*?')
 
@@ -114,7 +116,7 @@ class GangaCompleter(object):
         # note in python 3 can just do
         # shutil.get_terminal_size
         size_list = subprocess.Popen(
-            ['stty', 'size'], stdout=subprocess.PIPE, stdin = subprocess.DEVNULL).communicate()[0].split()
+            ['stty', 'size'], stdout=subprocess.PIPE, stdin=subprocess.DEVNULL).communicate()[0].split()
         return eval(size_list[0]), eval(size_list[1])
 
     # want to push all colouring into the displayer as then wont mess up text

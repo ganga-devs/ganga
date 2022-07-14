@@ -7,6 +7,7 @@ from GangaCore.testlib.mark import external, requires_cred
 
 from GangaCore.GPIDev.Credentials.VomsProxy import VomsProxy
 
+
 @external
 @requires_cred(VomsProxy(), 'CREAM requires a Voms proxy to submit a job')
 def test_job_kill(gpi):
@@ -25,7 +26,8 @@ def test_job_kill(gpi):
     #    1176      30       1007          587     420 ce01.tier2.hep.manchester.ac.uk:8443/cream-pbs-long
     #
     # Select the CREAM CEs (URL path starts with '/cream') and how many free slots they have
-    ces = re.findall(r'^\s*\d+\s*(?P<free>\d+)\s*\d+\s*\d+\s*\d+\s*(?P<ce>[^:/\s]+uk:\d+/cream.*)$', stdout, re.MULTILINE)
+    ces = re.findall(
+        r'^\s*\d+\s*(?P<free>\d+)\s*\d+\s*\d+\s*\d+\s*(?P<ce>[^:/\s]+uk:\d+/cream.*)$', stdout, re.MULTILINE)
     # Grab the one with the most empty slots
     ce = sorted(ces)[-1][1]
 
@@ -33,4 +35,3 @@ def test_job_kill(gpi):
     j.backend = CREAM(CE=ce)
     j.submit()
     j.kill()
-

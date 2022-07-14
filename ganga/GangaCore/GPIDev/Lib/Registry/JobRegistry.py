@@ -6,19 +6,18 @@
 ##########################################################################
 
 import GangaCore.Utility.logging
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.Core.GangaRepository.Registry import (RegistryAccessError,
+                                                     RegistryFlusher,
+                                                     RegistryKeyError)
+from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaCore.GPIDev.Lib.Job.Job import Job
 from GangaCore.Utility.Config import getConfig
-from GangaCore.Core.exceptions import GangaException
-from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
 
 # display default values for job list
 from .RegistrySlice import RegistrySlice, config
 from .RegistrySliceProxy import RegistrySliceProxy, _unwrap, _wrap
-
-from GangaCore.Core.GangaRepository.Registry import (
-    RegistryAccessError, RegistryFlusher, RegistryKeyError
-)
 
 if getConfig('Configuration')["repositorytype"] in ["Database", "CentralDatabase"]:
     from GangaCore.Core.GangaRepository.DatabaseRegistry import Registry
@@ -180,7 +179,8 @@ class JobRegistrySlice(RegistrySlice):
 
     def __init__(self, name):
         super(JobRegistrySlice, self).__init__(name, display_prefix="jobs")
-        from GangaCore.Utility.ColourText import Foreground, Background, Effects
+        from GangaCore.Utility.ColourText import (Background, Effects,
+                                                  Foreground)
         fg = Foreground()
         fx = Effects()
         bg = Background()

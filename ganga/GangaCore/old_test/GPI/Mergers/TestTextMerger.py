@@ -4,11 +4,13 @@
 # $Id: TestTextMerger.py,v 1.1 2008-07-17 16:41:12 moscicki Exp $
 ##########################################################################
 
-from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file, sleep_until_state
-from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
 import os
 import tempfile
+
+from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
+from GangaTest.Framework.tests import GangaGPITestCase
+from GangaTest.Framework.utils import (file_contains, sleep_until_completed,
+                                       sleep_until_state, write_file)
 
 
 class TestTextMerger(GangaGPITestCase):

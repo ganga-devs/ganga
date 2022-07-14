@@ -11,6 +11,7 @@ except ImportError:
 ganga_test_dir_name = 'gangadir-testing'
 ganga_config_file = '/not/a/file'
 
+
 def _getGangaPath():
     """
     Determine what the path of the Ganga code is based upon where this file is in the repo
@@ -56,6 +57,7 @@ def clear_config():
         package._session_handlers = []
         package.revertToDefaultOptions()
 
+
 _setupGangaPath()
 
 
@@ -67,7 +69,6 @@ def start_ganga(gangadir_for_test, repositorytype="LocalXML", extra_opts=[], ext
         gangadir_for_test (str): This is the directory which the GangaUnitTest is to be run, a new gangadir has been created per test to avoid collisions
         extra_opts (list): A list of tuples which are used to pass command line style options to Ganga
     """
-
 
     import GangaCore.PACKAGE
     GangaCore.PACKAGE.standardSetup()
@@ -98,19 +99,18 @@ def start_ganga(gangadir_for_test, repositorytype="LocalXML", extra_opts=[], ext
     if lhcb_test:
         import getpass
         cred_opts = [('Configuration', 'user', getpass.getuser()),
-                      ('defaults_DiracProxy', 'group', 'lhcb_user')]
+                     ('defaults_DiracProxy', 'group', 'lhcb_user')]
     else:
         cred_opts = [('Configuration', 'user', 'testframework'),
                      ('defaults_DiracProxy', 'group', 'gridpp_user'),
                      ('DIRAC', 'DiracEnvSource', '~/dirac_ui/bashrc')]
 
-    #Sort out eos
+    # Sort out eos
     outputConfig = getConfig('Output')
     outputConfig['MassStorageFile']['uploadOptions']['cp_cmd'] = 'cp'
     outputConfig['MassStorageFile']['uploadOptions']['ls_cmd'] = 'ls'
     outputConfig['MassStorageFile']['uploadOptions']['mkdir_cmd'] = 'mkdir'
     outputConfig['MassStorageFile']['uploadOptions']['path'] = '/tmp'
-
 
     default_opts = [
         ('Configuration', 'RUNTIME_PATH', 'GangaTest'),
@@ -121,7 +121,7 @@ def start_ganga(gangadir_for_test, repositorytype="LocalXML", extra_opts=[], ext
         ('Registry', 'DisableLoadCheck', True),
         ('Queues', 'NumWorkerThreads', 3),
         ('Output', 'MassStorageFile', outputConfig['MassStorageFile']),
-        ]
+    ]
     default_opts += cred_opts
 
     # FIXME Should we need to add the ability to load from a custom .ini file
@@ -319,7 +319,7 @@ class GangaUnitTest(unittest.TestCase):
         gangadir = self.gangadir()
         if not os.path.isdir(gangadir):
             os.makedirs(gangadir)
-        print("\n") # useful when watching stdout from tests
+        print("\n")  # useful when watching stdout from tests
         print("Starting Ganga in: %s" % gangadir)
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts, repositorytype=repositorytype)
         GangaUnitTest._test_dir = gangadir

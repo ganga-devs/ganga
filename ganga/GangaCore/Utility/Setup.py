@@ -72,8 +72,8 @@ class PackageSetup(object):
     def prependPath(self, name, var):
         """ Update environment (os.environ) and prepend a package path to var.
         """
-        import sys
         import os.path
+        import sys
 
         if getExternalHome():
             path = self.getPackagePath2(name, var)
@@ -89,8 +89,8 @@ class PackageSetup(object):
         It assumes that the first item in PYTHONPATH is Ganga, so the package path is added as a second item.
         If set_python_path is True, it will update the PYTHONPATH as well
         """
-        import sys
         import os
+        import sys
 
         if getExternalHome():
 
@@ -126,8 +126,8 @@ class PackageSetup(object):
         """ 
         Update environment (os.environ) and *set* (overwrite) a package path to var.
         """
-        import sys
         import os
+        import sys
 
         if getExternalHome():
             path = self.getPackagePath2(name, var)

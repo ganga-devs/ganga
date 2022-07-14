@@ -238,7 +238,8 @@ class MassStorageFile(IGangaFile):
                 break
 
         if not directoryExists:
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s -p %s' % (mkdir_cmd, quote(massStoragePath)))
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(
+                '%s -p %s' % (mkdir_cmd, quote(massStoragePath)))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr, '2) %s %s' % (mkdir_cmd, massStoragePath))
                 raise GangaException(mystderr)
@@ -438,7 +439,7 @@ class MassStorageFile(IGangaFile):
                 outputfilenameformat = outputFile.outputfilenameformat
 
             massStorageCommands.append(['massstorage', outputFile.namePattern, outputfilenameformat,
-                                        massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'],
+                                        massStorageConfig['mkdir_cmd'], massStorageConfig['cp_cmd'],
                                         massStorageConfig['ls_cmd'], os.path.expanduser(os.path.expandvars(massStorageConfig['path']))])
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),

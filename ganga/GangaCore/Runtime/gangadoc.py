@@ -122,6 +122,7 @@ This is an interactive help. At the prompt type your questions in plain english\
 
         return pydoc.Helper.help(self, request)
 
+
 pydoc.text = TextDoc2()
 pydoc.text._repr_instance.maxstring = 255
 pydoc.text._repr_instance.maxother = 70
@@ -208,6 +209,7 @@ def doc2(thing, title='Python Library Documentation: %s', forceload=0, output=No
         pydoc.pager(title % desc + '\n\n' + pydoc.text.document(object, name))
     except (ImportError, pydoc.ErrorDuringImport) as value:
         logger.error(value)
+
 
 pydoc.doc = doc2
 

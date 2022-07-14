@@ -27,6 +27,7 @@ from GangaCore.Utility.Plugin import allPlugins
 
 from GangaCore.Utility.Profiling import cpu_profiler, mem_profiler, call_counter
 
+
 def _getName(obj):
     """ Return the name of an object based on what we prioritise 
     Name is defined as the first in the list of:
@@ -45,9 +46,11 @@ def _getName(obj):
             except AttributeError:
                 return str(obj)
 
+
 logger = getLogger()
 
 do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data_dict', '_lock', '_proxyObject']
+
 
 def synchronised(f):
     """
@@ -112,7 +115,7 @@ class Node(object, metaclass=abc.ABCMeta):
         if parent is None:
             setattr(self, '_parent', parent)
         else:
-            with parent.const_lock: # This will lock the _new_ root object
+            with parent.const_lock:  # This will lock the _new_ root object
                 setattr(self, '_parent', parent)
             # Finally the new and then old root objects will be unlocked
 
@@ -154,10 +157,10 @@ class Node(object, metaclass=abc.ABCMeta):
                     break
                 return obj
         else:
-                                                    
+
             if cond(obj):
                 return obj
-                                                                                  
+
             escape = False
             while True:
                 parent = obj._getObject()
@@ -268,6 +271,7 @@ def synchronised_set_descriptor(set_function):
     Args:
         set_function (function): Function we intend to wrap with the hard/write lock
     """
+
     def set_decorator(self, obj, type_or_value):
         root_obj = obj._getRoot()
         if obj is None:
@@ -393,9 +397,10 @@ class Descriptor(object):
                 assertion = item['optional'] and (item['category'] != 'internal')
             else:
                 assertion = item['optional']
-            #assert(assertion)
+            # assert(assertion)
             if assertion is False:
-                logger.warning("Item: '%s'. of class type: '%s'. Has a Default value of 'None' but is NOT optional!!!" % (name, type(obj)))
+                logger.warning(
+                    "Item: '%s'. of class type: '%s'. Has a Default value of 'None' but is NOT optional!!!" % (name, type(obj)))
                 logger.warning("Please contact the developers and make sure this is updated!")
             return None
         elif isinstance(v, str):
@@ -417,7 +422,7 @@ class Descriptor(object):
                     new_v = []
                 for elem in v:
                     new_v.append(Descriptor.cloneObject(elem, obj, name))
-                #return new_v
+                # return new_v
             elif not isinstance(v, Node):
                 if isclass(v):
                     new_v = v()
@@ -425,7 +430,8 @@ class Descriptor(object):
                     new_v = v
                 if not isinstance(new_v, Node):
                     logger.error("v: %s" % v)
-                    raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (v, type(v)))
+                    raise GangaException(
+                        "Error: found Object: %s of type: %s expected an object inheriting from Node!" % (v, type(v)))
                 else:
                     new_v = Descriptor.cloneNodeObject(new_v, obj, name)
             else:
@@ -450,11 +456,13 @@ class Descriptor(object):
             if (len_cat > 1) or ((len_cat == 1) and (categories[0] != item['category'])) and item['category'] != 'internal':
                 # we pass on empty lists, as the catagory is yet to be defined
                 from GangaCore.GPIDev.Base.Proxy import GangaAttributeError
-                raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (name, _getName(v), item['category']))
+                raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (
+                    name, _getName(v), item['category']))
         else:
             if v._category not in [item['category'], 'internal'] and item['category'] != 'internal':
                 from GangaCore.GPIDev.Base.Proxy import GangaAttributeError
-                raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' % (name, _getName(v), item['category'], v._category))
+                raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' % (
+                    name, _getName(v), item['category'], v._category))
 
         v_copy = deepcopy(v)
 
@@ -497,11 +505,11 @@ class Descriptor(object):
         # make sure the object is loaded if it's attached to a registry
         obj._loadObject()
 
-        basic=False
+        basic = False
         for i in [int, str, bool, type]:
             if isinstance(val, i):
                 new_value = deepcopy(val)
-                basic=True
+                basic = True
                 break
         if not basic:
             new_value = Descriptor.cleanValue(obj, val, _set_name)
@@ -522,7 +530,7 @@ class Descriptor(object):
 
         item = obj._schema[name]
 
-        ## If the item has been defined as a sequence great, let's continue!
+        # If the item has been defined as a sequence great, let's continue!
         if item['sequence']:
             # These objects are lists
             _preparable = True if item['preparable'] else False
@@ -536,10 +544,10 @@ class Descriptor(object):
                 else:
                     new_val = makeGangaList(val, None, obj, _preparable)
         else:
-            ## Else we need to work out what we've got.
+            # Else we need to work out what we've got.
             if isinstance(item, ComponentItem):
                 if isinstance(val, (list, tuple, GangaList)):
-                    ## Can't have a GangaList inside a GangaList easily so lets not
+                    # Can't have a GangaList inside a GangaList easily so lets not
                     if isinstance(obj, GangaList):
                         new_val = []
                     else:
@@ -569,8 +577,8 @@ class Descriptor(object):
             extra_args (tuple): Contains the name of the attribute being copied and the object which owns the object being copied
         """
 
-        name=extra_args[0]
-        obj=extra_args[1]
+        name = extra_args[0]
+        obj = extra_args[1]
         if isinstance(v, (list, tuple, GangaList)):
             new_v = GangaList()
             for elem in v:
@@ -650,19 +658,21 @@ class ObjectMetaclass(abc.ABCMeta):
             logger.error(s)
             raise GangaValueError(s)
 
-        attrs_to_add = [ attr for attr, item in this_schema.allItems()]
+        attrs_to_add = [attr for attr, item in this_schema.allItems()]
 
         if hasattr(cls, '_additional_slots'):
             attrs_to_add += [_ for _ in cls._additional_slots]
 
-        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject') + tuple(attrs_to_add)
+        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict',
+                         '__dict__', '_proxyObject') + tuple(attrs_to_add)
 
         # If a class has not specified a '_name' then default to using the class '__name__'
         if not cls.__dict__.get('_name'):
             cls._name = name
 
         if this_schema._pluginclass is not None:
-            logger.warning('Possible schema clash in class %s between %s and %s', name, _getName(cls), _getName(this_schema._pluginclass))
+            logger.warning('Possible schema clash in class %s between %s and %s',
+                           name, _getName(cls), _getName(this_schema._pluginclass))
 
         # export visible properties... do not export hidden properties
         # This constructs one Descriptor for each attribute which can be set for this class
@@ -766,7 +776,7 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         """
         self._data_dict = dict.fromkeys(self._schema.datadict)
         for attr, item in self._schema.allItems():
-            ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
+            # If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
             if item.getProperties()['getter'] is None:
                 setattr(self, attr, self._schema.getDefaultValue(attr))
 
@@ -856,7 +866,8 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         # will not throw away information
 
         if not hasattr(_srcobj, '__class__') and not inspect.isclass(_srcobj.__class__):
-            raise GangaValueError("Can't copyFrom a non-class object: %s isclass: %s" % (_srcobj, inspect.isclass(_srcobj)))
+            raise GangaValueError("Can't copyFrom a non-class object: %s isclass: %s" %
+                                  (_srcobj, inspect.isclass(_srcobj)))
 
         if not isinstance(self, _srcobj.__class__) and not isinstance(_srcobj, self.__class__):
             raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (_getName(_srcobj), _getName(self)))
@@ -875,7 +886,7 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
 
         self._actually_copyFrom(_srcobj, _ignore_atts)
 
-        ## Fix some objects losing parent knowledge
+        # Fix some objects losing parent knowledge
         src_dict = srcobj.__dict__
         for key, val in src_dict.items():
             this_attr = getattr(srcobj, key)
@@ -905,7 +916,7 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
                 if isinstance(this_attr, Node) and name not in do_not_copy:
                     if this_attr._getParent() is not self:
                         this_attr._setParent(self)
-            elif not item['copyable']: ## Default of '1' instead of True...
+            elif not item['copyable']:  # Default of '1' instead of True...
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
@@ -1105,13 +1116,13 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         try:
             _timeOut = getConfig('Configuration')['DiskIOTimeout']
         except ConfigError as err:
-            _timeOut = 5. # 5sec hardcoded default
+            _timeOut = 5.  # 5sec hardcoded default
         return _timeOut
 
     def _getSessionLock(self, root=None):
         """Acquires the session lock on this object"""
         if root:
-            r=root
+            r = root
         else:
             r = self._getRoot()
         reg = r._registry
@@ -1159,7 +1170,8 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         if registry is None or self._registry is None:
             self._registry = registry
         elif registry is not self._registry:
-            raise RuntimeError('Cannot set registry of {0} to {1} if one is already set ({2}).'.format(type(self), registry, self._registry))
+            raise RuntimeError('Cannot set registry of {0} to {1} if one is already set ({2}).'.format(
+                type(self), registry, self._registry))
 
     # get the registry for the object by getting the registry associated with
     # the root object (if any)
@@ -1195,7 +1207,7 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
                         continue
                 else:
                     continue
-                ## Avoid attributes the likes of job.master which crawl back up the tree
+                # Avoid attributes the likes of job.master which crawl back up the tree
                 k_props = self._schema[k].getProperties()
                 if not k_props['visitable'] or k_props['transient']:
                     continue
@@ -1231,7 +1243,8 @@ class GangaObject(Node, metaclass=ObjectMetaclass):
         if self._getParent() is not None:
             r = self._getRoot(cond=lambda o: isinstance(o, Job))
             if not isinstance(r, Job):
-                raise AssertionError('No Job associated with object instead root=\'%s\' for \'%s\'' % (repr(r), type(r)))
+                raise AssertionError('No Job associated with object instead root=\'%s\' for \'%s\'' %
+                                     (repr(r), type(r)))
             return r
         elif isinstance(self, Job):
             return self
@@ -1273,7 +1286,8 @@ def string_type_shortcut_filter(val, item):
     """
     if isinstance(val, type('')):
         if item is None:
-            raise GangaValueError('cannot apply default string conversion, probably you are trying to use it in the constructor')
+            raise GangaValueError(
+                'cannot apply default string conversion, probably you are trying to use it in the constructor')
         from GangaCore.Utility.Plugin import allPlugins, PluginManagerError
         try:
             obj = allPlugins.find(item['category'], val)()

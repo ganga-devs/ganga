@@ -1,8 +1,9 @@
-from GangaCore.GPIDev.Base.Proxy import addProxy
-from GangaCore.GPIDev.Schema import Schema, Version
-from GangaCore.GPIDev.Lib.Tasks.IUnit import IUnit
-from GangaCore.GPIDev.Lib.Tasks.common import makeRegisteredJob
 import copy
+
+from GangaCore.GPIDev.Base.Proxy import addProxy
+from GangaCore.GPIDev.Lib.Tasks.common import makeRegisteredJob
+from GangaCore.GPIDev.Lib.Tasks.IUnit import IUnit
+from GangaCore.GPIDev.Schema import Schema, Version
 
 
 class CoreUnit(IUnit):

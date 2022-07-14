@@ -1,2 +1,3 @@
 
-from .Executable import Executable, RTHandler, LCGRTHandler, gLiteRTHandler, randomString
+from .Executable import (Executable, LCGRTHandler, RTHandler, gLiteRTHandler,
+                         randomString)

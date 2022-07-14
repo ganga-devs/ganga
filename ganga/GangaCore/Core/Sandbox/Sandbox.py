@@ -1,12 +1,15 @@
 
+import mimetypes
 import os
 import sys
-import mimetypes
+
 import GangaCore.Utility.logging
+
 logger = GangaCore.Utility.logging.getLogger(modulename=True)
 
-from .WNSandbox import OUTPUT_TARBALL_NAME, PYTHON_DIR
 from GangaCore.Core.exceptions import GangaException, GangaIOError
+
+from .WNSandbox import OUTPUT_TARBALL_NAME, PYTHON_DIR
 
 
 class SandboxError(GangaException):
@@ -37,8 +40,8 @@ def createPackedInputSandbox(sandbox_files, inws, name):
 
     tgzfile = inws.getPath(name)
 
-    import tarfile
     import stat
+    import tarfile
 
     logger.debug("Creating packed Sandbox with %s many sandbox files." % len(sandbox_files))
 
@@ -68,9 +71,9 @@ def createPackedInputSandbox(sandbox_files, inws, name):
     with tarfile.open(tgzfile, 'w:%s' % file_format) as tf:
         tf.dereference = True  # --not needed in Windows
 
-        from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
-        from GangaCore.GPIDev.Lib.File.File import File
         from GangaCore.GPIDev.Base.Proxy import isType
+        from GangaCore.GPIDev.Lib.File.File import File
+        from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
 
         for f in sandbox_files:
             fileobj = None

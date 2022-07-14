@@ -5,7 +5,7 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 class TestSavannah9008(GangaUnitTest):
     def test_Savannah9008(self):
-        from GangaCore.GPI import TestApplication, File
+        from GangaCore.GPI import File, TestApplication
 
         dv1 = TestApplication()
         dv1.optsfile = File('x')

@@ -3,14 +3,13 @@
 import os
 
 import pytest
-
-from GangaTest.Framework.utils import sleep_until_state
-from GangaCore.testlib.monitoring import run_until_state
 from GangaCore.GPIDev.Base.Proxy import addProxy
-
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from .MergerTester import MergerTester
+from GangaCore.testlib.monitoring import run_until_state
+from GangaTest.Framework.utils import sleep_until_state
+
 from .CopySplitter import CopySplitter
+from .MergerTester import MergerTester
 
 CopySplitter = addProxy(CopySplitter)
 MergerTester = addProxy(MergerTester)
@@ -19,7 +18,7 @@ MergerTester = addProxy(MergerTester)
 class TestMergeFailures(GangaUnitTest):
 
     def testMergeThatAlwaysFails(self):
-        from GangaCore.GPI import Job, Executable, Local, LocalFile
+        from GangaCore.GPI import Executable, Job, Local, LocalFile
 
         j = Job()
         j.application = Executable(exe='sh', args=['-c', 'echo foo > out.txt'])
@@ -34,7 +33,7 @@ class TestMergeFailures(GangaUnitTest):
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsIgnoreFailed(self):
-        from GangaCore.GPI import Job, Executable, Local, LocalFile
+        from GangaCore.GPI import Executable, Job, Local, LocalFile
 
         j = Job()
         j.application = Executable(exe='sh', args=['-c', 'echo foo > out.txt'])
@@ -49,7 +48,7 @@ class TestMergeFailures(GangaUnitTest):
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsOverwrite(self):
-        from GangaCore.GPI import Job, Executable, Local, LocalFile
+        from GangaCore.GPI import Executable, Job, Local, LocalFile
 
         j = Job()
         j.application = Executable(exe='sh', args=['-c', 'echo foo > out.txt'])
@@ -64,7 +63,7 @@ class TestMergeFailures(GangaUnitTest):
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsFlagsSet(self):
-        from GangaCore.GPI import Job, Executable, Local, LocalFile
+        from GangaCore.GPI import Executable, Job, Local, LocalFile
 
         j = Job()
         j.application = Executable(exe='sh', args=['-c', 'echo foo > out.txt'])
@@ -80,7 +79,7 @@ class TestMergeFailures(GangaUnitTest):
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeRemoval(self):
-        from GangaCore.GPI import Job, Executable, Local, LocalFile, jobs
+        from GangaCore.GPI import Executable, Job, Local, LocalFile, jobs
 
         # see Savannah 33710
         j = Job()

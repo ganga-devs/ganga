@@ -12,6 +12,7 @@ from GangaTest.Framework.utils import sleep_until_completed
 from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
 from GangaCore.GPIDev.Base.Objects import _getName
 
+
 class TestMassStorageGetPut(GangaUnitTest):
     """Testing the get/put/copyTo methods of MassStorage"""
 
@@ -37,11 +38,11 @@ class TestMassStorageGetPut(GangaUnitTest):
         """
         Configure the MassStorageFile for the test
         """
-        extra_opts=[('PollThread', 'autostart', 'False'),
-                    ('Local', 'remove_workdir', 'False'),
-                    ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', _getName(self.fileClass), self.MassStorageTestConfig),
-                    ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        extra_opts = [('PollThread', 'autostart', 'False'),
+                      ('Local', 'remove_workdir', 'False'),
+                      ('TestingFramework', 'AutoCleanup', 'False'),
+                      ('Output', _getName(self.fileClass), self.MassStorageTestConfig),
+                      ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageGetPut, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
@@ -135,7 +136,7 @@ class TestMassStorageGetPut(GangaUnitTest):
 
         # Test in the case that the object is 'owned' by a Job
 
-        j=Job()
+        j = Job()
         outputdir = stripProxy(j).getOutputWorkspace(create=True).getPath()
         j.outputfiles = self._managed_files
         for file_ in j.outputfiles:
@@ -160,7 +161,7 @@ class TestMassStorageGetPut(GangaUnitTest):
 
         shutil.rmtree(tmpdir, ignore_errors=True)
 
+
 class TestSharedFileGetPut(TestMassStorageGetPut):
     """Testing the get/put/copyTo methods of SharedFile"""
     fileClass = addProxy(SharedFile)
-

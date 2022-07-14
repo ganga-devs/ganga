@@ -13,7 +13,9 @@ from os import listdir, path, stat
 
 logger = getLogger()
 
-##FIXME There has to be a better way of doing this?
+# FIXME There has to be a better way of doing this?
+
+
 class SJXLIterator(object):
     """Class for iterating over SJXMLList, potentially very unstable, dangerous and only supports looping forwards ever"""
 
@@ -27,7 +29,7 @@ class SJXLIterator(object):
         self._mySubJobs = theseSubJobs
         self._myCount = 0
 
-    ## NB becomes __next__ in Python 3.x don't know if Python 2.7 has a wrapper here
+    # NB becomes __next__ in Python 3.x don't know if Python 2.7 has a wrapper here
     def __next__(self):
         if self._myCount < len(self._mySubJobs):
             returnable = self._mySubJobs[self._myCount]
@@ -87,10 +89,10 @@ class SubJobXMLList(GangaObject):
         # Lock to ensure only one load at a time
         self._load_lock = threading.Lock()
 
+    # THIS CLASS MAKES USE OF THE INTERNAL CLASS DICTIONARY ONLY!!!
+    # THIS CLASS DOES NOT MAKE USE OF THE SCHEMA TO STORE INFORMATION AS TRANSIENT OR UNCOPYABLE
+    # THIS CLASS CONTAINS A LOT OF OBJECT REFERENCES WHICH SHOULD NOT BE DEEPCOPIED!!!
 
-    ## THIS CLASS MAKES USE OF THE INTERNAL CLASS DICTIONARY ONLY!!!
-    ## THIS CLASS DOES NOT MAKE USE OF THE SCHEMA TO STORE INFORMATION AS TRANSIENT OR UNCOPYABLE
-    ## THIS CLASS CONTAINS A LOT OF OBJECT REFERENCES WHICH SHOULD NOT BE DEEPCOPIED!!!
     def __deepcopy__(self, memo=None):
         obj = super(SubJobXMLList, self).__deepcopy__(memo)
 
@@ -102,7 +104,7 @@ class SubJobXMLList(GangaObject):
         obj._cached_filenames = copy.deepcopy(self._cached_filenames, memo)
         obj._stored_len = copy.deepcopy(self._stored_len, memo)
 
-        ## Manually define unsafe/uncopyable objects
+        # Manually define unsafe/uncopyable objects
         obj._definedParent = None
         obj._cachedJobs = {}
         return obj
@@ -121,14 +123,14 @@ class SubJobXMLList(GangaObject):
             job_dict (dict): A dict of integer job keys and job items to append
             parent : Parent job object
         """
-        #First check the id is not already in the job cache
+        # First check the id is not already in the job cache
         for k in job_dict.keys():
             if k in self._cachedJobs.keys():
                 raise RepositoryError("Subjob key %s is already in the subjob XML cache!" % k)
-        #Now set the parent for the new subjobs 
-        for k,v in job_dict.items():
+        # Now set the parent for the new subjobs
+        for k, v in job_dict.items():
             v._setParent(parent)
-        #Now add the new subjobs to the SubJobXMLList cache and flush it to disk
+        # Now add the new subjobs to the SubJobXMLList cache and flush it to disk
         self._cachedJobs.update(job_dict)
         self.flush(True)
 
@@ -141,15 +143,15 @@ class SubJobXMLList(GangaObject):
 
     def load_subJobIndex(self):
         """Load the index from all sujobs ynto _subjobIndexData or empty it is an error occurs"""
-        index_file = path.join(self._jobDirectory, self._subjob_master_index_name )
-        if path.isfile( index_file ):
+        index_file = path.join(self._jobDirectory, self._subjob_master_index_name)
+        if path.isfile(index_file):
             index_file_obj = None
             try:
                 from GangaCore.Core.GangaRepository.PickleStreamer import from_file
 
                 try:
-                    index_file_obj = open(index_file, "rb" )
-                    self._subjobIndexData = from_file( index_file_obj )[0]
+                    index_file_obj = open(index_file, "rb")
+                    self._subjobIndexData = from_file(index_file_obj)[0]
                 except IOError as err:
                     self._subjobIndexData = None
                     self._setDirty()
@@ -159,9 +161,9 @@ class SubJobXMLList(GangaObject):
                 else:
                     for subjob_id in self._subjobIndexData:
                         index_data = self._subjobIndexData.get(subjob_id)
-                        ## CANNOT PERFORM REASONABLE DISK CHECKING ON AFS
-                        ## SLOW FILE ACCESS WRITE AND METADATA MEANS FILE DATA DOES NOT MATCH MOD TIME
-                        #if index_data is not None and 'modified' in index_data:
+                        # CANNOT PERFORM REASONABLE DISK CHECKING ON AFS
+                        # SLOW FILE ACCESS WRITE AND METADATA MEANS FILE DATA DOES NOT MATCH MOD TIME
+                        # if index_data is not None and 'modified' in index_data:
                         #    mod_time = index_data['modified']
                         #    disk_location = self.__get_dataFile(str(subjob_id))
                         #    disk_time = stat(disk_location).st_ctime
@@ -173,15 +175,15 @@ class SubJobXMLList(GangaObject):
                         #        new_data = self._registry.getIndexCache( self.__getitem__(subjob_id) )
                         #        self._subjobIndexData[subjob_id] = new_data
                         #        break
-                        #else:
+                        # else:
                         if index_data is None:
                             logger.warning("Cannot find subjob index %s, rebuilding" % subjob_id)
-                            new_data = self._registry.getIndexCache( self.__getitem__(subjob_id) )
+                            new_data = self._registry.getIndexCache(self.__getitem__(subjob_id))
                             self._subjobIndexData[subjob_id] = new_data
                             continue
                         #self._subjobIndexData = {}
             except Exception as err:
-                logger.debug( "Subjob Index file open, error: %s" % err )
+                logger.debug("Subjob Index file open, error: %s" % err)
                 self._subjobIndexData = {}
                 self._setDirty()
             finally:
@@ -200,7 +202,7 @@ class SubJobXMLList(GangaObject):
         """
         try:
             self.__really_writeIndex(ignore_disk)
-        ## Once It's known what te likely exceptions here are they'll be added
+        # Once It's known what te likely exceptions here are they'll be added
         except (IOError,) as err:
             logger.debug("Can't write Index. Moving on as this is not essential to functioning it's a performance bug")
             logger.debug("Error: %s" % err)
@@ -238,7 +240,7 @@ class SubJobXMLList(GangaObject):
             index_file_obj = open(index_file, "wb")
             to_file(all_caches, index_file_obj)
             index_file_obj.close()
-        ## Once I work out what the other exceptions here are I'll add them
+        # Once I work out what the other exceptions here are I'll add them
         except (IOError,) as err:
             logger.debug("cache write error: %s" % err)
 
@@ -255,7 +257,7 @@ class SubJobXMLList(GangaObject):
 
         backup_decision = self._load_backup is True or force_backup is True
 
-        index_str = str(index)+"_"+str(backup_decision)
+        index_str = str(index) + "_" + str(backup_decision)
 
         if index_str in self._cached_filenames:
             return self._cached_filenames[index_str]
@@ -279,7 +281,7 @@ class SubJobXMLList(GangaObject):
             if this_time == last_time:
                 return self._stored_len[1]
 
-        if not path.isdir( self._jobDirectory ):
+        if not path.isdir(self._jobDirectory):
             return 0
 
         subjob_count = SubJobXMLList.countSubJobDirs(self._jobDirectory, self._dataFileName, False)
@@ -340,16 +342,16 @@ class SubJobXMLList(GangaObject):
         # For debugging where this was called from to try and push it to as high a level as possible at runtime
         #print("SJXML Load")
         #import traceback
-        #traceback.print_stack()
-        #print("\n\n\n")
+        # traceback.print_stack()
+        # print("\n\n\n")
         #import sys
-        #sys.exit(-1)
+        # sys.exit(-1)
         job_obj = self.getSafeJob()
         if job_obj is not None:
             fqid = self.getMasterID()
-            logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
+            logger.debug("Loading subjob at: %s for job %s" % (subjob_data, fqid))
         else:
-            logger.debug( "Loading subjob at: %s" % subjob_data )
+            logger.debug("Loading subjob at: %s" % subjob_data)
         sj_file = open(subjob_data, "r")
         return sj_file
 
@@ -401,7 +403,8 @@ class SubJobXMLList(GangaObject):
                 except (XMLFileError, IOError) as x:
                     logger.warning("Error loading XML file: %s" % x)
                     try:
-                        logger.debug("Loading subjob #%s for job #%s from disk, recent changes may be lost" % (index, self.getMasterID()))
+                        logger.debug("Loading subjob #%s for job #%s from disk, recent changes may be lost" %
+                                     (index, self.getMasterID()))
                         subjob_data = self.__get_dataFile(str(index), True)
                         sj_file = self._loadSubJobFromDisk(subjob_data)
                         has_loaded_backup = True
@@ -411,7 +414,7 @@ class SubJobXMLList(GangaObject):
                         if isinstance(x, IOError) and x.errno == errno.ENOENT:
                             raise IOError("Subobject %s not found: %s" % (index, x))
                         else:
-                            raise RepositoryError(self,"IOError on loading subobject %s: %s" % (index, x))
+                            raise RepositoryError(self, "IOError on loading subobject %s: %s" % (index, x))
 
                 from GangaCore.Core.GangaRepository.VStreamer import from_file
 
@@ -421,7 +424,8 @@ class SubJobXMLList(GangaObject):
                 except (IOError, XMLFileError) as err:
 
                     try:
-                        logger.warning("Loading subjob #%s for job #%s from backup, recent changes may be lost" % (index, self.getMasterID()))
+                        logger.warning("Loading subjob #%s for job #%s from backup, recent changes may be lost" % (
+                            index, self.getMasterID()))
                         subjob_data = self.__get_dataFile(str(index), True)
                         sj_file = self._loadSubJobFromDisk(subjob_data)
                         loaded_sj = from_file(sj_file)[0]
@@ -431,7 +435,7 @@ class SubJobXMLList(GangaObject):
                         logger.debug("Err:\n%s" % err)
                         raise
 
-                loaded_sj._setParent( self._definedParent )
+                loaded_sj._setParent(self._definedParent)
                 if has_loaded_backup:
                     loaded_sj._setDirty()
                 else:
@@ -463,7 +467,7 @@ class SubJobXMLList(GangaObject):
             return
         for k in self._cachedJobs:
             if self._cachedJobs[k]._getParent() is not self._definedParent:
-                self._cachedJobs[k]._setParent( parentObj )
+                self._cachedJobs[k]._setParent(parentObj)
 
     def getCachedData(self, index):
         """Get the cached data from the index for one of the subjobs
@@ -475,11 +479,11 @@ class SubJobXMLList(GangaObject):
 
         if index in self._subjobIndexData:
             if self.isLoaded(index):
-                return self._registry.getIndexCache( self.__getitem__(index) )
+                return self._registry.getIndexCache(self.__getitem__(index))
             else:
                 return self._subjobIndexData[index]
         else:
-            return self._registry.getIndexCache( self.__getitem__(index) )
+            return self._registry.getIndexCache(self.__getitem__(index))
 
         return None
 
@@ -490,12 +494,12 @@ class SubJobXMLList(GangaObject):
         if len(self._subjobIndexData) == len(self):
             for i in range(len(self)):
                 if self.isLoaded(i):
-                    cached_data.append( self._registry.getIndexCache( self.__getitem__(i) ) )
+                    cached_data.append(self._registry.getIndexCache(self.__getitem__(i)))
                 else:
-                    cached_data.append( self._subjobIndexData[i] )
+                    cached_data.append(self._subjobIndexData[i])
         else:
             for i in range(len(self)):
-                cached_data.append(self._registry.getIndexCache( self.__getitem__(i) ) )
+                cached_data.append(self._registry.getIndexCache(self.__getitem__(i)))
 
         return cached_data
 
@@ -531,7 +535,7 @@ class SubJobXMLList(GangaObject):
 
         for index in range_limit:
             if index in self._cachedJobs:
-                ## If it ain't dirty skip it
+                # If it ain't dirty skip it
                 if not self._cachedJobs[index]._dirty:
                     continue
 
@@ -541,7 +545,7 @@ class SubJobXMLList(GangaObject):
                 if subjob_obj is subjob_obj._getRoot():
                     raise GangaException(self, "Subjob parent not set correctly in flush.")
 
-                safe_save( subjob_data, subjob_obj, to_file )
+                safe_save(subjob_data, subjob_obj, to_file)
 
         self.write_subJobIndex(ignore_disk)
 
@@ -560,7 +564,7 @@ class SubJobXMLList(GangaObject):
             defult_width (int): default width for a colum as defined in registry slice
             markup (str): This is the markup function used to format the text in the table from registry slice
         """
-        ds=""
+        ds = ""
         for obj_i in self.keys():
 
             cached_data = self.getCachedData(obj_i)
@@ -611,7 +615,7 @@ class SubJobXMLList(GangaObject):
 
         jobDirectoryList = listdir(jobDirectory)
 
-        subjob_count=0
+        subjob_count = 0
         for dir_entry in jobDirectoryList:
             if dir_entry.isdigit():
                 sj_dir = path.join(jobDirectory, dir_entry)
@@ -619,17 +623,17 @@ class SubJobXMLList(GangaObject):
                     if checkDataFiles:
                         data_file_path = path.join(sj_dir, datafileName)
                         if path.isfile(data_file_path):
-                            subjob_count+=1
-                        elif path.isfile(data_file_path+'~'):
+                            subjob_count += 1
+                        elif path.isfile(data_file_path + '~'):
                             logger.warning("Reverting to backup due to missing XML: %s" % data_file_path)
-                            subjob_count+=1
+                            subjob_count += 1
                     else:
-                        subjob_count+=1
+                        subjob_count += 1
 
-        logger.debug("count: %s len: %s" % (subjob_count, len([_folder for _folder in jobDirectoryList if _folder.isdigit()])))
+        logger.debug("count: %s len: %s" % (subjob_count, len(
+            [_folder for _folder in jobDirectoryList if _folder.isdigit()])))
 
         if subjob_count == len([_folder for _folder in jobDirectoryList if _folder.isdigit()]):
             return subjob_count
         else:
             raise GangaException("Missing subjobs data file in %s" % jobDirectory)
-

@@ -14,7 +14,7 @@ class HammerThread(threading.Thread):
         self.owned_ids = []
         self.owned_objs = {}
         self.done = False
-        super(HammerThread, self).__init__()#'HammerThread_%s' % _id)
+        super(HammerThread, self).__init__()  # 'HammerThread_%s' % _id)
         from GangaCore.Utility.logging import getLogger
         self.logger = getLogger(modulename=True)
 
@@ -103,7 +103,8 @@ class HammerThread(threading.Thread):
             self.logger.info('Wanting: %s' % _id)
             assert self.reg[_id].name.startswith('HT')
             if _id in self.owned_ids:
-                assert self.reg[_id].name == 'HT%i' % self.id, '{0} == {1}'.format(self.reg[_id].name, 'HT%i' % self.id)
+                assert self.reg[_id].name == 'HT%i' % self.id, '{0} == {1}'.format(
+                    self.reg[_id].name, 'HT%i' % self.id)
         except KeyError:  # If the object has been deleted in the meantime, it must be gone from the registry
             assert _id not in self.reg.ids()
             self.logger.info(str(self.id) + '  %s deleted after KeyError (as per specification)' % _id)
@@ -160,7 +161,8 @@ class HammerThread(threading.Thread):
             this_choice = self.rng.choice(choices)
             self.logger.debug('\n\n\n\n\n%s) This Choise: %s\n' % (i, this_choice))
             this_choice()
-            assert len(self.owned_ids) == len(list(dict(list(zip(self.owned_ids, list(range(len(self.owned_ids)))))).keys()))
+            assert len(self.owned_ids) == len(
+                list(dict(list(zip(self.owned_ids, list(range(len(self.owned_ids)))))).keys()))
             for _id in self.owned_ids:
                 if _id not in self.reg._objects:
                     self.logger.info('LOCKED ID DELETED: ' + str(_id))
@@ -216,4 +218,3 @@ class testReg(object):
         self.logger.info(str(self.id) + ' shutdown()')
         self.registry.shutdown()
         self.logger.info(str(self.id) + ' shutdown() done!')
-

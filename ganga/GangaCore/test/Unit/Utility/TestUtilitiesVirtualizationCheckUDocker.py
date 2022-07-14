@@ -23,4 +23,4 @@ class TestCheckUDocker(unittest.TestCase):
         mock_is_file.sideeffect = [True]
         mock_subprocess_call.side_effect = [1]
         assert(checkUDocker() == False)
-        assert(mock_subprocess_call.call_count==2)
+        assert(mock_subprocess_call.call_count == 2)

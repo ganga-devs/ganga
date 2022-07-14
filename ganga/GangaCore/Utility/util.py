@@ -120,6 +120,7 @@ def isNestedList(obj):
 
 # ------------------------
 
+
 __executed_frames = {}
 
 
@@ -227,7 +228,8 @@ class GenericWrapper(object):
 
 
 class Proxy(object):
-    __slots__=('_obj',)
+    __slots__ = ('_obj',)
+
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
         self._obj = obj
@@ -239,6 +241,7 @@ class Proxy(object):
 def make_binder(unbounded_method):
     def f(self, *a, **k): return unbounded_method(self._obj, *a, **k)
     return f
+
 
 known_proxy_classes = {}
 
@@ -257,7 +260,9 @@ def proxy(obj, *specials):
         known_proxy_classes[key] = cls
     return cls(obj)
 
-#Decorator to check for disk space
+# Decorator to check for disk space
+
+
 def require_disk_space(method):
     """
     A decorator that checks if disk space is available before executing a command
@@ -265,6 +270,7 @@ def require_disk_space(method):
     """
     from GangaCore.Core.exceptions import GangaDiskSpaceError
     from GangaCore.Runtime.Repository_runtime import checkDiskQuota
+
     @wraps(method)
     def ds_wrapped_method(self, *args, **kwargs):
         try:
@@ -279,6 +285,7 @@ def require_disk_space(method):
 # ------------------------
 # cookbook recipe
 
+
 def importName(modulename, name):
     try:
         module = __import__(modulename, globals(), locals(), [name])
@@ -290,9 +297,9 @@ def importName(modulename, name):
         return vars(module)[name]
     else:
         return None
-    #try:
+    # try:
     #    return vars(module)[name]
-    #except KeyError, err:
+    # except KeyError, err:
     #    import sys
     #    sys.stderr.write("ImportName, KeyError: %s\n" % str(err))
     #    return None

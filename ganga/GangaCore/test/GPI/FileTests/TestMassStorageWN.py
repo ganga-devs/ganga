@@ -11,6 +11,7 @@ from GangaTest.Framework.utils import sleep_until_completed
 from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
 from GangaCore.GPIDev.Base.Objects import _getName
 
+
 class TestMassStorageWN(GangaUnitTest):
     """Testing MassStorage when completing a file"""
 
@@ -39,11 +40,11 @@ class TestMassStorageWN(GangaUnitTest):
         """
         Configure the MassStorageFile for the test
         """
-        extra_opts=[('PollThread', 'autostart', 'False'),
-                    ('Local', 'remove_workdir', 'False'),
-                    ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', _getName(self.fileClass), TestMassStorageWN.MassStorageTestConfig),
-                    ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        extra_opts = [('PollThread', 'autostart', 'False'),
+                      ('Local', 'remove_workdir', 'False'),
+                      ('TestingFramework', 'AutoCleanup', 'False'),
+                      ('Output', _getName(self.fileClass), TestMassStorageWN.MassStorageTestConfig),
+                      ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageWN, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
@@ -86,7 +87,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1)]
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat=self.standardFormat)]
+        j.outputfiles = [MassStorageFile(namePattern='*' + _ext, outputfilenameformat=self.standardFormat)]
         j.submit()
 
         for f in j.outputfiles:
@@ -134,8 +135,8 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageWN.sj_len) ])
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat=self.extendedFormat)]
+        j.splitter = ArgSplitter(args=[[_] for _ in range(0, TestMassStorageWN.sj_len)])
+        j.outputfiles = [MassStorageFile(namePattern='*' + _ext, outputfilenameformat=self.extendedFormat)]
         j.submit()
 
         for f in j.outputfiles:
@@ -180,9 +181,9 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2), LocalFile(file_3)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageWN.sj_len) ])
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat='{jid}/{sjid}/{fname}'),
-                         MassStorageFile(namePattern='*'+_ext2)]
+        j.splitter = ArgSplitter(args=[[_] for _ in range(0, TestMassStorageWN.sj_len)])
+        j.outputfiles = [MassStorageFile(namePattern='*' + _ext, outputfilenameformat='{jid}/{sjid}/{fname}'),
+                         MassStorageFile(namePattern='*' + _ext2)]
         j.submit()
 
     def test_f_MultiUpload(self):
@@ -205,7 +206,7 @@ class TestMassStorageWN(GangaUnitTest):
             output_dir = os.path.join(self.outputFilePath, str(j.id), str(i))
             assert os.path.isdir(output_dir)
             # Checl all of the files were put into storage
-            for file_ in j.inputfiles: 
+            for file_ in j.inputfiles:
                 assert os.path.isfile(os.path.join(output_dir, file_.namePattern))
 
         self.cleanUp()
@@ -224,9 +225,9 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageWN.sj_len) ])
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat=self.customOutputFormat)]
-        
+        j.splitter = ArgSplitter(args=[[_] for _ in range(0, TestMassStorageWN.sj_len)])
+        j.outputfiles = [MassStorageFile(namePattern='*' + _ext, outputfilenameformat=self.customOutputFormat)]
+
         for f in j.outputfiles:
             assert f.outputfilenameformat == self.customOutputFormat
 
@@ -264,4 +265,3 @@ class TestMassStorageWN(GangaUnitTest):
 class TestSharedWN(TestMassStorageWN):
     """Testing SharedFile when completing a file"""
     fileClass = addProxy(SharedFile)
-

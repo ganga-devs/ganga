@@ -1,2 +1,2 @@
 
-from .GangaPlugin import allPlugins, PluginManagerError
+from .GangaPlugin import PluginManagerError, allPlugins

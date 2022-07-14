@@ -13,17 +13,20 @@ from GangaCore.GPIDev.Base.Proxy import getName
 from collections import namedtuple
 
 timeout = getConfig('Queues')['ShutDownTimeout']
-timeout = 0.1 if timeout==None else timeout
+timeout = 0.1 if timeout == None else timeout
 
 logger = getLogger()
-QueueElement = namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
-CommandInput = namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
+QueueElement = namedtuple('QueueElement', ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
+CommandInput = namedtuple('CommandInput', ['command', 'timeout', 'env', 'cwd',
+                          'shell', 'python_setup', 'eval_includes', 'update_env'])
+
+
 class FunctionInput(namedtuple('FunctionInput', ['function', 'args', 'kwargs'])):
     def __gt__(self, other):
         pass
+
     def __lt__(self, other):
         pass
-
 
 
 class WorkerThreadPool(object):
@@ -36,7 +39,7 @@ class WorkerThreadPool(object):
 
     def __init__(self, num_worker_threads=None, worker_thread_prefix='Worker_'):
         if num_worker_threads is None:
-            num_worker_threads=getConfig('Queues')['NumWorkerThreads']
+            num_worker_threads = getConfig('Queues')['NumWorkerThreads']
         self.__queue = queue.PriorityQueue()
         self.__worker_threads = []
 
@@ -85,7 +88,7 @@ class WorkerThreadPool(object):
         # easier to unit test this way though with a dummy thread.
         while not thread.should_stop():
             try:
-                item = self.__queue.get(True,timeout)
+                item = self.__queue.get(True, timeout)
             except queue.Empty:
                 # wait 'timeout' sec then loop again to give shutdown a chance
                 continue
@@ -128,7 +131,8 @@ class WorkerThreadPool(object):
                 if issubclass(type(e), GangaException):
                     logger.error("%s" % e)
                 else:
-                    logger.error("Exception raised executing '%s' in Thread '%s':\n%s" % (thread._command, thread.gangaName, traceback.format_exc()))
+                    logger.error("Exception raised executing '%s' in Thread '%s':\n%s" %
+                                 (thread._command, thread.gangaName, traceback.format_exc()))
                     if item.fallback_func.function is not None:
                         if isinstance(item.fallback_func, FunctionInput):
                             thread._command = getName(item.fallback_func.function)
@@ -137,7 +141,8 @@ class WorkerThreadPool(object):
                                 item.fallback_func.function(e, *item.fallback_func.args, **item.fallback_func.kwargs)
                             except Exception as x:
                                 if not issubclass(type(e), GangaException):
-                                    logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s" % (thread._command, thread.gangaName, traceback.format_exc()))
+                                    logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s" % (
+                                        thread._command, thread.gangaName, traceback.format_exc()))
                                 else:
                                     logger.error("%s" % x)
                         else:
@@ -278,4 +283,3 @@ class WorkerThreadPool(object):
         return
 
 ###################################################################
-

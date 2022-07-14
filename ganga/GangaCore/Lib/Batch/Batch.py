@@ -21,6 +21,8 @@ logger = GangaCore.Utility.logging.getLogger()
 # return (exitcode,soutfile,exeflag)
 # soutfile - path where the stdout/stderr is stored
 # exeflag - 0 if the command failed to execute, 1 if it executed
+
+
 def shell_cmd(cmd, soutfile=None, allowed_exit=[0]):
 
     if not soutfile:
@@ -114,7 +116,8 @@ class Batch(IBackend):
                 'Problem submitting batch job. Maybe your chosen batch system is not available or you have configured it wrongly')
             with open(soutfile) as sout_file:
                 logger.error(sout_file.read())
-                raiseable = BackendError(klass._name, 'It seems that %s commands are not installed properly:%s' % (klass._name, sout_file.readline()))
+                raiseable = BackendError(klass._name, 'It seems that %s commands are not installed properly:%s' % (
+                    klass._name, sout_file.readline()))
         return rc, soutfile
 
     command = classmethod(command)
@@ -171,7 +174,8 @@ class Batch(IBackend):
                 if self.queue:
                     if isType(self, Slurm):
                         if opt == '-p':
-                            logger.warning("option %s is forbidden if partition is defined ( partition = '%s')", opt, self.queue)
+                            logger.warning(
+                                "option %s is forbidden if partition is defined ( partition = '%s')", opt, self.queue)
                             return False
                     elif opt == '-q':
                         logger.warning("option %s is forbidden if queue is defined ( queue = '%s')", opt, self.queue)
@@ -193,7 +197,8 @@ class Batch(IBackend):
         else:
             script_cmd = scriptpath
 
-        command_str = self.config['submit_str'] % (inw.getPath(), queue_option, stderr_option, stdout_option, script_cmd)
+        command_str = self.config['submit_str'] % (
+            inw.getPath(), queue_option, stderr_option, stdout_option, script_cmd)
         self.command_string = command_str
         rc, soutfile = self.command(command_str)
         with open(soutfile) as sout_file:
@@ -208,7 +213,8 @@ class Batch(IBackend):
                 queue = m.group('queue')
                 if self.queue != queue:
                     if self.queue:
-                        logger.warning('you requested queue "%s" but the job was submitted to queue "%s"', self.queue, queue)
+                        logger.warning(
+                            'you requested queue "%s" but the job was submitted to queue "%s"', self.queue, queue)
                         logger.warning('command output \n %s ', sout)
                     else:
                         logger.info('using default queue "%s"', queue)
@@ -266,7 +272,8 @@ class Batch(IBackend):
                 if self.queue:
                     if isType(self, Slurm):
                         if opt == '-p':
-                            logger.warning("option %s is forbidden if partition is defined ( partition = '%s')", opt, self.queue)
+                            logger.warning(
+                                "option %s is forbidden if partition is defined ( partition = '%s')", opt, self.queue)
                             return False
                     elif opt == '-q':
                         logger.warning("option %s is forbidden if queue is defined ( queue = '%s')", opt, self.queue)
@@ -308,7 +315,8 @@ class Batch(IBackend):
                     queue = m.group('queue')
                     if self.queue != queue:
                         if self.queue:
-                            logger.warning('you requested queue "%s" but the job was submitted to queue "%s"', self.queue, queue)
+                            logger.warning(
+                                'you requested queue "%s" but the job was submitted to queue "%s"', self.queue, queue)
                             logger.warning('command output \n %s ', sout)
                         else:
                             logger.info('using default queue "%s"', queue)
@@ -419,35 +427,33 @@ class Batch(IBackend):
 
         virtualization = job.virtualization
 
-        utilFiles= []
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
+        utilFiles = []
+        fileutils = File(inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR)
         utilFiles.append(fileutils)
         if virtualization:
-            virtualizationutils = File( inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
+            virtualizationutils = File(inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR)
             utilFiles.append(virtualizationutils)
 
-        
         sharedfiles = jobconfig.getSharedFiles()
 
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + utilFiles )
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + utilFiles)
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath = job.getOutputWorkspace().getPath()
-        ## FIXME Check this isn't a GangaList
+        # FIXME Check this isn't a GangaList
         outputpatterns = jobconfig.outputbox
         environment = jobconfig.env if not jobconfig.env is None else {}
 
-
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                       'BatchScriptTemplate.py.template')
+                                       'BatchScriptTemplate.py.template')
 
         from GangaCore.GPIDev.Lib.File import FileUtils
         text = FileUtils.loadScript(script_location, '')
 
         if virtualization:
             text = virtualization.modify_script(text)
-        
+
         import GangaCore.Core.Sandbox as Sandbox
         import GangaCore.Utility as Utility
         from GangaCore.Utility.Config import getConfig
@@ -456,32 +462,32 @@ class Batch(IBackend):
 
         replace_dict = {
 
-        '###OUTPUTSANDBOXPOSTPROCESSING###' : getWNCodeForOutputSandbox(job, ['__syslog__'], jobidRepr),
+            '###OUTPUTSANDBOXPOSTPROCESSING###': getWNCodeForOutputSandbox(job, ['__syslog__'], jobidRepr),
 
-        '###OUTPUTUPLOADSPOSTPROCESSING###' : getWNCodeForOutputPostprocessing(job, ''),
+            '###OUTPUTUPLOADSPOSTPROCESSING###': getWNCodeForOutputPostprocessing(job, ''),
 
-        '###DOWNLOADINPUTFILES###' : getWNCodeForDownloadingInputFiles(job, ''),
+            '###DOWNLOADINPUTFILES###': getWNCodeForDownloadingInputFiles(job, ''),
 
-        '###INLINEMODULES###' : inspect.getsource(Sandbox.WNSandbox),
-        '###INLINEHOSTNAMEFUNCTION###' : inspect.getsource(Utility.util.hostname),
-        '###APPSCRIPTPATH###' : repr(appscriptpath),
-        #'###SHAREDINPUTPATH###' : repr(sharedinputpath)),
+            '###INLINEMODULES###': inspect.getsource(Sandbox.WNSandbox),
+            '###INLINEHOSTNAMEFUNCTION###': inspect.getsource(Utility.util.hostname),
+            '###APPSCRIPTPATH###': repr(appscriptpath),
+            # '###SHAREDINPUTPATH###' : repr(sharedinputpath)),
 
-        '###INPUT_SANDBOX###' : repr(subjob_input_sandbox + master_input_sandbox + sharedfiles),
-        '###CREATEINPUTDATALIST###' : getWNCodeForInputdataListCreation(job, ''),
-        '###SHAREDOUTPUTPATH###' : repr(sharedoutputpath),
+            '###INPUT_SANDBOX###': repr(subjob_input_sandbox + master_input_sandbox + sharedfiles),
+            '###CREATEINPUTDATALIST###': getWNCodeForInputdataListCreation(job, ''),
+            '###SHAREDOUTPUTPATH###': repr(sharedoutputpath),
 
-        '###OUTPUTPATTERNS###' : repr(outputpatterns),
-        '###JOBID###' : jobidRepr,
-        '###ENVIRONMENT###' : repr(environment),
-        '###PREEXECUTE###' : self.config['preexecute'],
-        '###POSTEXECUTE###' : self.config['postexecute'],
-        '###JOBIDNAME###' : self.config['jobid_name'],
-        '###QUEUENAME###' : self.config['queue_name'],
-        '###HEARTBEATFREQUENCE###' : self.config['heartbeat_frequency'],
-        '###INPUT_DIR###' : repr(job.getStringInputDir()),
+            '###OUTPUTPATTERNS###': repr(outputpatterns),
+            '###JOBID###': jobidRepr,
+            '###ENVIRONMENT###': repr(environment),
+            '###PREEXECUTE###': self.config['preexecute'],
+            '###POSTEXECUTE###': self.config['postexecute'],
+            '###JOBIDNAME###': self.config['jobid_name'],
+            '###QUEUENAME###': self.config['queue_name'],
+            '###HEARTBEATFREQUENCE###': self.config['heartbeat_frequency'],
+            '###INPUT_DIR###': repr(job.getStringInputDir()),
 
-        '###GANGADIR###' : repr(getConfig('System')['GANGA_PYTHONPATH'])
+            '###GANGADIR###': repr(getConfig('System')['GANGA_PYTHONPATH'])
         }
 
         for k, v in replace_dict.items():
@@ -588,7 +594,8 @@ class Batch(IBackend):
                             'Job %s has disappeared from the batch system.', str(j.getFQID('.')))
                         j.updateStatus('failed')
 
-#_________________________________________________________________________
+# _________________________________________________________________________
+
 
 class LSF(Batch):
 
@@ -603,7 +610,7 @@ class LSF(Batch):
         super(LSF, self).__init__()
 
 
-#_________________________________________________________________________
+# _________________________________________________________________________
 
 class PBS(Batch):
 
@@ -619,7 +626,7 @@ class PBS(Batch):
         super(PBS, self).__init__()
 
 
-#_________________________________________________________________________
+# _________________________________________________________________________
 
 class SGE(Batch):
 
@@ -634,7 +641,8 @@ class SGE(Batch):
     def __init__(self):
         super(SGE, self).__init__()
 
-#_________________________________________________________________________
+# _________________________________________________________________________
+
 
 class Slurm(Batch):
 
@@ -648,4 +656,3 @@ class Slurm(Batch):
 
     def __init__(self):
         super(Slurm, self).__init__()
-

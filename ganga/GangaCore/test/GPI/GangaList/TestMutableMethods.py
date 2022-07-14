@@ -14,6 +14,7 @@ logger = getLogger(modulename=True)
 g_random = random
 g_random.seed(time.time())
 
+
 def completeJob(job):
 
     job._impl.updateStatus('submitting')
@@ -26,14 +27,15 @@ class TestMutableMethods(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts=[('TestingFramework', 'AutoCleanup', 'False')]
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False')]
         super(TestMutableMethods, self).setUp(extra_opts=extra_opts)
 
         from GangaCore.GPI import Job, TestSubmitter, GListApp
 
         self.test_job = Job(application=GListApp(gListComp=[self._makeRandomTFile() for _ in range(10)],
-                                         gList=[self._makeRandomString() for _ in range(10)],
-                                         seq=list(range(10))),backend=TestSubmitter())
+                                                 gList=[self._makeRandomString() for _ in range(10)],
+                                                 seq=list(range(10))), backend=TestSubmitter())
+
     def _makeRandomString(self):
         global g_random
         str_len = g_random.randint(3, 10)
@@ -323,8 +325,8 @@ class TestMutableMethods(GangaUnitTest):
 
         g = GangaList()
         l = []
-        print(('"'+str(g)+'"'))
-        print(('"'+str(l)+'"'))
+        print(('"' + str(g) + '"'))
+        print(('"' + str(l) + '"'))
         print((l == g))
         assert str(l) == str(g), 'Empty lists should print the same'
 
@@ -356,4 +358,3 @@ class TestMutableMethods(GangaUnitTest):
         sio = io.StringIO()
         full_print(g, sio)
         assert g_string == str(sio.getvalue()).rstrip(), 'Orphaned lists should full_print'
-

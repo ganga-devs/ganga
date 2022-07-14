@@ -20,6 +20,7 @@ from GangaCore.GPIDev.Base.Proxy import getName
 
 logger = getLogger()
 
+
 class GangaRepository(object):
 
     """ GangaRepository is the base class for repository backend implementations.
@@ -146,6 +147,8 @@ class GangaRepository(object):
 
 
 # Optional but suggested functions
+
+
     def get_lock_session(self, id):
         """get_lock_session(id)
         Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
@@ -178,7 +181,7 @@ class GangaRepository(object):
             category (str): This is the category the object belongs to
             classname (str): This is the name of the class of the object which is used to construct it
         """
-        compound_name = str(category+"_"+classname)
+        compound_name = str(category + "_" + classname)
         if compound_name not in self._found_classes:
             cls = allPlugins.find(category, classname)
             self._found_classes[compound_name] = cls
@@ -316,4 +319,3 @@ class GangaRepositoryTransient(object):
             obj (GangaObject): object we want to know if it's in memory or not
         """
         return True
-

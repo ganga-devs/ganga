@@ -40,9 +40,11 @@ global_start_time = None
 # The JobAction class encapsulates a function, its arguments and its post result action
 # based on what is defined as a successful run of the function.
 
+
 class JobAction(object):
 
-    __slots__ = ('function', 'args', 'kwargs', 'success', 'callback_Success', 'callback_Failure', 'thread', 'description')
+    __slots__ = ('function', 'args', 'kwargs', 'success', 'callback_Success',
+                 'callback_Failure', 'thread', 'description')
 
     def __init__(self, function, args=(), kwargs={},
                  success=(True, ),
@@ -58,12 +60,14 @@ class JobAction(object):
         self.thread = None
         self.description = ''
 
+
 def getNumAliveThreads():
     num_currently_running_command = 0
     for this_thread in ThreadPool:
         if this_thread._currently_running_command:
             num_currently_running_command += 1
     return num_currently_running_command
+
 
 def checkHeartBeat(global_count):
 
@@ -81,14 +85,16 @@ def checkHeartBeat(global_count):
                 and this_thread._currently_running_command is True\
                 and global_count < max_warnings:
 
-            log.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %(thread_name, str(dead_time)))
+            log.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %
+                        (thread_name, str(dead_time)))
             log.warning("Thread is attempting to execute: %s" % this_thread._running_cmd)
             log.warning("With arguments: (%s)" % str(this_thread._running_args))
 
-            ## Add at least 5sec here to avoid spamming the user non-stop that a monitoring thread has locked up almost entirely
-            ## You'll get a message at most once per 5sec or less if the Monitoring is busy/asleep
+            # Add at least 5sec here to avoid spamming the user non-stop that a monitoring thread has locked up almost entirely
+            # You'll get a message at most once per 5sec or less if the Monitoring is busy/asleep
             heartbeat_times[thread_name] += 5.
-            global_count+=1
+            global_count += 1
+
 
 class MonitoringWorkerThread(GangaThread):
 
@@ -162,6 +168,7 @@ class MonitoringWorkerThread(GangaThread):
 
 # Create the thread pool
 
+
 def _makeThreadPool(threadPoolSize=THREAD_POOL_SIZE, daemonic=True):
     global ThreadPool, global_start_time, heartbeat_times
     global_start_time = time.time()
@@ -179,10 +186,10 @@ def _makeThreadPool(threadPoolSize=THREAD_POOL_SIZE, daemonic=True):
     if heartbeat_times is not None:
         heartbeat_times = None
 
-    heartbeat_times = defaultdict( lambda: global_start_time )
+    heartbeat_times = defaultdict(lambda: global_start_time)
 
     for i in range(THREAD_POOL_SIZE):
-        thread_name = "MonitoringWorker_%s_%s" % (str(i), str(int(time.time()*1000)))
+        thread_name = "MonitoringWorker_%s_%s" % (str(i), str(int(time.time() * 1000)))
         t = MonitoringWorkerThread(name=thread_name)
         ThreadPool.append(t)
         t.start()
@@ -232,6 +239,7 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
 
 # purge Qin
 
+
 def _purge_actions_queue():
     """
     Purge Qin: consume the current queued actions 
@@ -247,6 +255,7 @@ def _purge_actions_queue():
                 Qin.put(action)
         except queue.Empty:
             break
+
 
 if config['autostart_monThreads'] is True:
     _makeThreadPool()
@@ -312,7 +321,7 @@ class UpdateDict(object):
             return
         if timeoutMax is None:
             timeoutMax = config['default_backend_poll_rate']
-        #log.debug("*----addEntry()")
+        # log.debug("*----addEntry()")
 
         backend = getName(backendObj)
         if backend in self.table:
@@ -321,7 +330,8 @@ class UpdateDict(object):
             self.table[backend] = _DictEntry(backendObj, set(jobList), threading.RLock(), timeoutMax)
             # queue to get processed
             Qin.put(JobAction(backendCheckingFunction, self.table[backend].updateActionTuple()))
-            log.debug("**Adding %s to new %s backend entry." % ([stripProxy(x).getFQID('.') for x in jobList], backend))
+            log.debug("**Adding %s to new %s backend entry." %
+                      ([stripProxy(x).getFQID('.') for x in jobList], backend))
             return True
 
         # backend is in Qin waiting to be processed. Increase it's list of jobs
@@ -329,20 +339,24 @@ class UpdateDict(object):
         # number of update requests.
         # i.e. It's like getting a friend in the queue to pay for your
         # purchases as well! ;p
-        log.debug("*: backend=%s, isOwner=%s, joblist=%s, queue=%s" % (backend, lock._is_owned(), [x.id for x in jobList], Qin.qsize()))
+        log.debug("*: backend=%s, isOwner=%s, joblist=%s, queue=%s" %
+                  (backend, lock._is_owned(), [x.id for x in jobList], Qin.qsize()))
         if lock.acquire(False):
             try:
                 jSetSize = len(jSet)
-                log.debug("Lock acquire successful. Updating jSet %s with %s." % ([stripProxy(x).getFQID('.') for x in jSet], [stripProxy(x).getFQID('.') for x in jobList]))
+                log.debug("Lock acquire successful. Updating jSet %s with %s." %
+                          ([stripProxy(x).getFQID('.') for x in jSet], [stripProxy(x).getFQID('.') for x in jobList]))
                 jSet.update(jobList)
                 # If jSet is empty it was cleared by an update action
                 # i.e. the queue does not contain an update action for the
                 # particular backend any more.
                 if jSetSize:  # jSet not cleared
-                    log.debug("%s backend job set exists. Added %s to it." % (backend, [stripProxy(x).getFQID('.') for x in jobList]))
+                    log.debug("%s backend job set exists. Added %s to it." %
+                              (backend, [stripProxy(x).getFQID('.') for x in jobList]))
                 else:
                     Qin.put(JobAction(backendCheckingFunction, self.table[backend].updateActionTuple()))
-                    log.debug("Added new %s backend update action for jobs %s." % (backend, [stripProxy(x).getFQID('.') for x in self.table[backend].updateActionTuple()[1]]))
+                    log.debug("Added new %s backend update action for jobs %s." % (
+                        backend, [stripProxy(x).getFQID('.') for x in self.table[backend].updateActionTuple()[1]]))
 
             except Exception as err:
                 log.error("addEntry error: %s" % str(err))
@@ -350,7 +364,7 @@ class UpdateDict(object):
                 lock.release()
 
             log.debug("**: backend=%s, isOwner=%s, joblist=%s, queue=%s" %
-                    (backend, lock._is_owned(), [stripProxy(x).getFQID('.') for x in jobList], Qin.qsize()))
+                      (backend, lock._is_owned(), [stripProxy(x).getFQID('.') for x in jobList], Qin.qsize()))
             return True
 
     def clearEntry(self, backend):
@@ -414,11 +428,13 @@ def autoKill_if_required(jobList_fromset):
     for j in jobList_fromset:
         if j.master:
             # Check for max number of resubmissions
-            n_completed = len([sj for sj in j.master.subjobs if (sj.status == 'completed' or sj.status == 'completing')])
+            n_completed = len([sj for sj in j.master.subjobs if (
+                sj.status == 'completed' or sj.status == 'completing')])
             n_failed = len([sj for sj in j.master.subjobs if sj.status == 'failed'])
 
             if n_completed == 0 and n_failed >= config['autoKillThreshold'] and not config['autoKillThreshold'] == -1:
-                log.warning('Killing job %d as too many subjobs have failed with no successful completions. Please check your options!' % j.master.id)
+                log.warning(
+                    'Killing job %d as too many subjobs have failed with no successful completions. Please check your options!' % j.master.id)
                 j.master.auto_kill()
         else:
             # Check for max number of resubmissions
@@ -426,8 +442,10 @@ def autoKill_if_required(jobList_fromset):
             n_failed = len([sj for sj in j.subjobs if sj.status == 'failed'])
 
             if n_completed == 0 and n_failed >= config['autoKillThreshold'] and not config['autoKillThreshold'] == -1:
-                log.warning('Killing job %d as too many subjobs have failed with no successful completions. Please check your options!' % j.id)
+                log.warning(
+                    'Killing job %d as too many subjobs have failed with no successful completions. Please check your options!' % j.id)
                 j.auto_kill()
+
 
 def resubmit_if_required(jobList_fromset):
     for j in jobList_fromset:
@@ -491,12 +509,13 @@ def get_jobs_in_bunches(jobList_fromset, blocks_of_size=5, stripProxies=True):
 
 class JobRegistry_Monitor(GangaThread):
     """Job monitoring service thread."""
-    
+
     uPollRate = 1.
     minPollRate = 1.
     global_count = 0
 
-    __slots__ = ('registry_slice', '__sleepCounter', '__updateTimeStamp', 'progressCallback', 'callbackHookDict', 'clientCallbackDict', 'alive', 'enabled', 'steps', 'activeBackends', 'updateJobStatus', 'errors', 'updateDict_ts', '__mainLoopCond', '__cleanUpEvent', '__monStepsTerminatedEvent', 'stopIter', '_runningNow')
+    __slots__ = ('registry_slice', '__sleepCounter', '__updateTimeStamp', 'progressCallback', 'callbackHookDict', 'clientCallbackDict', 'alive', 'enabled', 'steps',
+                 'activeBackends', 'updateJobStatus', 'errors', 'updateDict_ts', '__mainLoopCond', '__cleanUpEvent', '__monStepsTerminatedEvent', 'stopIter', '_runningNow')
 
     def __init__(self, registry_slice):
         GangaThread.__init__(self, name="JobRegistry_Monitor")
@@ -525,11 +544,13 @@ class JobRegistry_Monitor(GangaThread):
         # Add credential checking to monitoring loop
         for afsToken in credential_store.get_all_matching_type(AfsToken()):
             log.debug("Setting callback hook for %s" % afsToken.location)
-            self.setCallbackHook(JobRegistry_Monitor.makeCredCheckJobInsertor, {'thisMonitor': self, 'credObj': afsToken}, True, timeout=config['creds_poll_rate'])
+            self.setCallbackHook(JobRegistry_Monitor.makeCredCheckJobInsertor, {
+                                 'thisMonitor': self, 'credObj': afsToken}, True, timeout=config['creds_poll_rate'])
 
         # Add low disk-space checking to monitoring loop
         log.debug("Setting callback hook for disk space checking")
-        self.setCallbackHook(JobRegistry_Monitor.diskSpaceCheckJobInsertor, {'thisMonitor': self}, True, timeout=config['diskspace_poll_rate'])
+        self.setCallbackHook(JobRegistry_Monitor.diskSpaceCheckJobInsertor, {
+                             'thisMonitor': self}, True, timeout=config['diskspace_poll_rate'])
 
         # synch objects
         # main loop mutex
@@ -547,7 +568,7 @@ class JobRegistry_Monitor(GangaThread):
         if GANGA_SWAN_INTEGRATION:
             self.newly_discovered_jobs = []
 
-    def isEnabled( self, useRunning = True ):
+    def isEnabled(self, useRunning=True):
         if useRunning:
             return self.enabled or self.__isInProgress() and not self.steps
         else:
@@ -649,12 +670,9 @@ class JobRegistry_Monitor(GangaThread):
                 log.debug("Monitoring KeyError: %s" % str(cbHookFunc))
                 continue
 
-            
-            
-
             if cbHookEntry.enabled and (time.time() - cbHookEntry._lastRun) >= cbHookEntry.timeout:
-                log.debug("Running monitoring callback hook function %s(**%s)" %(cbHookFunc, cbHookEntry.argDict))
-                #self.callbackHookDict[cbHookFunc][0](**cbHookEntry.argDict)
+                log.debug("Running monitoring callback hook function %s(**%s)" % (cbHookFunc, cbHookEntry.argDict))
+                # self.callbackHookDict[cbHookFunc][0](**cbHookEntry.argDict)
                 try:
 
                     if 'self' in cbHookEntry.argDict:
@@ -677,7 +695,6 @@ class JobRegistry_Monitor(GangaThread):
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config['base_poll_rate']
 
-    
     def reloadJob(self, i):
         """
         Reload a Job from disk.
@@ -757,7 +774,8 @@ class JobRegistry_Monitor(GangaThread):
                 # situation if it is not
                 from GangaCore.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
                 if not isType(m_jobs, RegistrySlice):
-                    log.warning('runMonitoring: jobs argument must be a registry slice such as a result of jobs.select() or jobs[i1:i2]')
+                    log.warning(
+                        'runMonitoring: jobs argument must be a registry slice such as a result of jobs.select() or jobs[i1:i2]')
                     return False
 
                 #self.registry_slice = m_jobs
@@ -853,10 +871,10 @@ class JobRegistry_Monitor(GangaThread):
             log.info("Some tasks are still running on Monitoring Loop")
             log.info("Please wait for them to finish to avoid data corruption")
 
-        #while self._runningNow is True:
+        # while self._runningNow is True:
         #    time.sleep(0.5)
 
-        #if was_enabled:
+        # if was_enabled:
         #    log.info("Monitoring Loop has stopped")
 
         _purge_actions_queue()
@@ -903,13 +921,13 @@ class JobRegistry_Monitor(GangaThread):
 
         # ---->
         # wait for all worker threads to finish
-        #self.__awaitTermination()
+        # self.__awaitTermination()
         # join the worker threads
         _purge_actions_queue()
         stop_and_free_thread_pool(fail_cb, max_retries)
         ###log.info( 'Monitoring component stopped successfully!' )
 
-        #while self._runningNow is True:
+        # while self._runningNow is True:
         #    time.sleep(0.5)
 
         JobRegistry_Monitor.global_count = 0
@@ -955,10 +973,11 @@ class JobRegistry_Monitor(GangaThread):
         func_name = getName(func)
         log.debug('Setting Callback hook function %s.' % func_name)
         log.debug('arg dict: %s' % str(argDict))
-        #if 'self' not in argDict:
+        # if 'self' not in argDict:
         #    argDict['self'] = self
         if func_name in self.callbackHookDict:
-            log.debug('Replacing existing callback hook function %s with %s' % (str(self.callbackHookDict[func_name]), func_name))
+            log.debug('Replacing existing callback hook function %s with %s' %
+                      (str(self.callbackHookDict[func_name]), func_name))
         self.callbackHookDict[func_name] = [func, CallbackHookEntry(argDict=argDict, enabled=enabled, timeout=timeout)]
 
     def removeCallbackHook(self, func):
@@ -987,7 +1006,8 @@ class JobRegistry_Monitor(GangaThread):
 
     def runClientCallbacks(self):
         for clientFunc in self.clientCallbackDict:
-            log.debug('Running client callback hook function %s(**%s).' % (clientFunc, self.clientCallbackDict[clientFunc]))
+            log.debug('Running client callback hook function %s(**%s).' %
+                      (clientFunc, self.clientCallbackDict[clientFunc]))
             clientFunc(**self.clientCallbackDict[clientFunc])
 
     def setClientCallback(self, clientFunc, argDict):
@@ -1007,7 +1027,7 @@ class JobRegistry_Monitor(GangaThread):
     def __defaultActiveBackendsFunc(self, jobSlice=None):
         log.debug("__defaultActiveBackendsFunc")
         active_backends = {}
-        
+
         if GANGA_SWAN_INTEGRATION:
             # Detect new Jobs from other sessions
             new_jobs = stripProxy(self.registry_slice).objects.repository.update_index(True, True)
@@ -1027,7 +1047,7 @@ class JobRegistry_Monitor(GangaThread):
                 j = stripProxy(self.registry_slice(i))
 
                 job_status = lazyLoadJobStatus(j)
-                
+
                 if GANGA_SWAN_INTEGRATION:
                     # Load those Jobs from disk which are in new state to check if they are submitted
                     # in other sessions
@@ -1051,7 +1071,7 @@ class JobRegistry_Monitor(GangaThread):
         for backend, these_jobs in active_backends.items():
             summary += '"' + str(backend) + '" : ['
             for this_job in these_jobs:
-                summary += str(stripProxy(this_job).id) + ', '#getFQID('.')) + ', '
+                summary += str(stripProxy(this_job).id) + ', '  # getFQID('.')) + ', '
             summary += '], '
         summary += '}'
         log.debug("Returning active_backends: %s" % summary)
@@ -1073,7 +1093,7 @@ class JobRegistry_Monitor(GangaThread):
             # print alljobList_fromset
             #masterJobList_fromset = IList(filter(lambda x: (x.master is not None) and (x.status in ['submitting']), jobListSet), self.stopIter)
 
-            #FIXME We've lost IList and the above method for adding a job which is in a submitted state looks like one that didn't work
+            # FIXME We've lost IList and the above method for adding a job which is in a submitted state looks like one that didn't work
             # Come back and fix this once 6.1.3 is out. We can drop features for functionalist here as the lazy loading is fixed in this release
             # rcurrie
             alljobList_fromset = list([x for x in jobListSet if x.status in ['submitting', 'submitted', 'running']])
@@ -1085,7 +1105,8 @@ class JobRegistry_Monitor(GangaThread):
             # print jobList_fromset
             self.updateDict_ts.clearEntry(getName(backendObj))
             try:
-                log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
+                log.debug("[Update Thread %s] Updating %s with %s." %
+                          (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
 
                 tested_backends = []
 
@@ -1105,7 +1126,7 @@ class JobRegistry_Monitor(GangaThread):
                     return
 
                 block_size = config['numParallelJobs']
-                all_job_bunches = get_jobs_in_bunches(jobList_fromset, blocks_of_size = block_size )
+                all_job_bunches = get_jobs_in_bunches(jobList_fromset, blocks_of_size=block_size)
 
                 bunch_size = 0
                 for bunch in all_job_bunches:
@@ -1120,27 +1141,27 @@ class JobRegistry_Monitor(GangaThread):
                         log.debug("NOT enabled, breaking loop")
                         break
 
-                    ### This tries to loop over ALL jobs in 'this_job_list' with the maximum amount of redundancy to keep
-                    ### going and attempting to update all (sub)jobs if some fail
-                    ### ALL ERRORS AND EXCEPTIONS ARE REPORTED VIA log.error SO NO INFORMATION IS LOST/IGNORED HERE!
+                    # This tries to loop over ALL jobs in 'this_job_list' with the maximum amount of redundancy to keep
+                    # going and attempting to update all (sub)jobs if some fail
+                    # ALL ERRORS AND EXCEPTIONS ARE REPORTED VIA log.error SO NO INFORMATION IS LOST/IGNORED HERE!
                     job_ids = ''
                     for this_job in this_job_list:
-                        job_ids += ' %s' % str(this_job.id) 
+                        job_ids += ' %s' % str(this_job.id)
                     log.debug("Updating Jobs: %s" % job_ids)
                     try:
                         stripProxy(backendObj).master_updateMonitoringInformation(this_job_list)
                     except Exception as err:
                         #raise err
                         log.debug("Err: %s" % str(err))
-                        ## We want to catch ALL of the exceptions
-                        ## This would allow us to continue in the case of errors due to bad job/backend combinations
+                        # We want to catch ALL of the exceptions
+                        # This would allow us to continue in the case of errors due to bad job/backend combinations
                         if err not in all_exceptions:
                             all_exceptions.append(err)
 
                 if all_exceptions != []:
                     for err in all_exceptions:
                         log.error("Monitoring Error: %s" % str(err))
-                    ## We should be raising exceptions no matter what
+                    # We should be raising exceptions no matter what
                     raise all_exceptions[0]
 
                 autoKill_if_required(jobList_fromset)
@@ -1159,9 +1180,9 @@ class JobRegistry_Monitor(GangaThread):
             # FIXME THIS RETURNS A REGISTRYSLICE OBJECT NOT A REGISTRY, IS THIS CORRECT? SHOULD WE FLUSH
             # COMMENTING OUT AS IT SIMPLY WILL NOT RUN/RESOLVE!
             # this concerns me - rcurrie
-            #self.registry_slice._flush(jobList_fromset)  # Optimisation required!
+            # self.registry_slice._flush(jobList_fromset)  # Optimisation required!
 
-            #for this_job in jobList_fromset:
+            # for this_job in jobList_fromset:
             #    stripped_job = stripProxy(this_job)
             #    stripped_job._getRegistry()._flush([stripped_job])
 
@@ -1213,7 +1234,6 @@ class JobRegistry_Monitor(GangaThread):
             summary = str([stripProxy(x).getFQID('.') for x in jList])
             log.debug("jList: %s" % str(summary))
 
-
     def makeUpdateJobStatusFunction(self, makeActiveBackendsFunc=None, jobSlice=None):
         log.debug("makeUpdateJobStatusFunction")
         if makeActiveBackendsFunc is None:
@@ -1222,7 +1242,8 @@ class JobRegistry_Monitor(GangaThread):
         if self.updateJobStatus is not None:
             self.removeCallbackHook(self.updateJobStatus)
         self.updateJobStatus = self._checkActiveBackends
-        self.setCallbackHook(self._checkActiveBackends, {'thisMonitor': self, 'activeBackendsFunc': makeActiveBackendsFunc, 'jobSlice': jobSlice}, True)
+        self.setCallbackHook(self._checkActiveBackends, {
+                             'thisMonitor': self, 'activeBackendsFunc': makeActiveBackendsFunc, 'jobSlice': jobSlice}, True)
         log.debug("Returning")
         return self.updateJobStatus
 
@@ -1244,8 +1265,8 @@ class JobRegistry_Monitor(GangaThread):
             try:
                 Qin.put(_action)
             except Exception as err:
-               log.debug("makeCred Err: %s" % str(err))
-               cb_Failure("Put _action failure: %s" % str(_action), "unknown", True )
+                log.debug("makeCred Err: %s" % str(err))
+                cb_Failure("Put _action failure: %s" % str(_action), "unknown", True)
         return credCheckJobInsertor
 
     def makeCredChecker(self, credObj):
@@ -1273,7 +1294,8 @@ class JobRegistry_Monitor(GangaThread):
 
         def cb_Failure():
             thisMonitor.disableCallbackHook(thisMonitor.diskSpaceCheckJobInsertor)
-            thisMonitor._handleError('Available disk space checking failed and it has been disabled!', 'DiskSpaceChecker', False)
+            thisMonitor._handleError(
+                'Available disk space checking failed and it has been disabled!', 'DiskSpaceChecker', False)
 
         log.debug('Inserting disk space checking function to Qin.')
         _action = JobAction(function=Coordinator._diskSpaceChecker,
@@ -1297,7 +1319,7 @@ class JobRegistry_Monitor(GangaThread):
     def _handleError(self, x, backend_name, show_traceback):
         def log_error():
             log.error('Problem in the monitoring loop: %s', str(x))
-            #if show_traceback:
+            # if show_traceback:
             #    log.error("exception: ", exc_info=1)
             #    #log_unknown_exception()
             #    import traceback
@@ -1338,7 +1360,7 @@ def getStackTrace():
                         status = status + "      " + function_name + " @ " + filename + " # " + str(line) + "\n"
 
             status = status + "\n"
-        ## CANNOT CONVERT TO A STRING!!!
+        # CANNOT CONVERT TO A STRING!!!
         #log.info("Queue", str(Qin.queue))
         log.debug("Trace: %s" % str(status))
         return status
@@ -1346,4 +1368,3 @@ def getStackTrace():
         print("Err: %s" % str(err))
     finally:
         pass
-

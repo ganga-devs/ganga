@@ -1,4 +1,5 @@
-import textwrap, re
+import textwrap
+import re
 
 import GangaCore.Utility.logging
 
@@ -14,6 +15,7 @@ logger = GangaCore.Utility.logging.getLogger()
 # The interface of this class should resemble the regular dictionary
 # interface.
 
+
 class ConfigDescriptor(object):
 
     def __init__(self, name):
@@ -25,6 +27,7 @@ class ConfigDescriptor(object):
 
     def __set__(self, obj, val):
         stripProxy(obj).setUserValue(self._name, val)
+
 
 class ConfigProxy(object):
 
@@ -92,16 +95,16 @@ class ConfigProxy(object):
         p = re.compile(r'[\.\w]*\.')
         for o in opts:
             sio.write(levels[stripProxy(self).getEffectiveLevel(
-                o)] + '   ' + markup(o, name_colour) + ' = ' + markup(p.sub('',repr(stripProxy(self)[o])), value_colour) + '\n')
+                o)] + '   ' + markup(o, name_colour) + ' = ' + markup(p.sub('', repr(stripProxy(self)[o])), value_colour) + '\n')
             sio.write(textwrap.fill(markup(stripProxy(self).options[o].docstring.strip(
             ), docstring_colour), width=80, initial_indent=INDENT, subsequent_indent=INDENT) + '\n')
             typelist = stripProxy(self).options[o].typelist
             if not typelist:
                 typedesc = 'Type: ' + \
-                    p.sub('',str(type(stripProxy(self).options[o].default_value)))
+                    p.sub('', str(type(stripProxy(self).options[o].default_value)))
             else:
                 typedesc = 'Allowed types: ' + \
-                    str([p.sub('',str(t)) for t in typelist])
+                    str([p.sub('', str(t)) for t in typelist])
             sio.write(markup(INDENT + typedesc, docstring_colour) + '\n')
             filter = stripProxy(self).options[o].filter
             if filter:
@@ -190,6 +193,7 @@ class MainConfigProxy(object):
                 '%-*s : %s' % (maxcol, p, markup(stripProxy(self)[p].docstring.split('\n')[0], fg.boldgrey)) + '\n')
         return sio.getvalue()
 
+
 # GPI config singleton.
 config = MainConfigProxy()
 
@@ -267,7 +271,8 @@ def config_file_as_text(interactive):
                         except AttributeError as err:
                             pass
                     if interactive:
-                        yes = input('The config option %s %s with value %s in your old .gangarc is not the default. Do you want to copy it to the new .gangarc file ([y]/n) ?\n' % (sect.name, o, value))
+                        yes = input(
+                            'The config option %s %s with value %s in your old .gangarc is not the default. Do you want to copy it to the new .gangarc file ([y]/n) ?\n' % (sect.name, o, value))
                     else:
                         yes = 'y'
                     text += '#%s = %s\n' % (o, def_value)

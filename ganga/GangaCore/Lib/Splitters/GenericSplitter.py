@@ -7,9 +7,9 @@
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
 from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
-
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.logging import getLogger
+
 logger = getLogger()
 
 

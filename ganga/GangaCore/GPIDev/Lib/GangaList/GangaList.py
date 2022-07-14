@@ -93,7 +93,7 @@ class GangaListIter(object):
 
     """Simple wrapper around the listiterator"""
 
-    __slots__=('it',)
+    __slots__ = ('it',)
 
     def __init__(self, it):
         self.it = it
@@ -104,6 +104,7 @@ class GangaListIter(object):
 
     def __iter__(self):
         return self
+
 
 class GangaList(GangaObject):
 
@@ -118,7 +119,7 @@ class GangaList(GangaObject):
     _name = 'GangaList'
     _schema = Schema(Version(1, 0), {'_list': SimpleItem(defvalue=[], doc='The raw list', hidden=1, category='internal'),
                                      '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
-                                    })
+                                     })
     _enable_config = 1
 
     _additional_slots = ['_is_a_ref']
@@ -147,7 +148,7 @@ class GangaList(GangaObject):
         """
         return all([isProxy(l) for l in _list])
 
-    ## Attempt to prevent raw assignment of _list causing Proxied objects to get inside the GangaList
+    # Attempt to prevent raw assignment of _list causing Proxied objects to get inside the GangaList
     def _attribute_filter__set__(self, name, value):
         logger.debug("GangaList filter")
         if name == "_list":
@@ -452,10 +453,10 @@ class GangaList(GangaObject):
         self.__setslice__(start, end, obj_list)
 
     def __repr__(self):
-        #logger.info("__repr__")
-        #return self.toString()
+        # logger.info("__repr__")
+        # return self.toString()
         #import traceback
-        #traceback.print_stack()
+        # traceback.print_stack()
         containsObj = False
         for elem in self._list:
             if isinstance(elem, GangaObject):
@@ -465,10 +466,10 @@ class GangaList(GangaObject):
             return self.toString()
         else:
             return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
-        #return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
+        # return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
 
     def __str__(self):
-        #logger.info("__str__")
+        # logger.info("__str__")
         return self.toString()
 
     def append(self, obj, my_filter=True):
@@ -485,6 +486,7 @@ class GangaList(GangaObject):
             self._list.append(stripped_e)
         elif isType(elem, list_objs):
             new_list = []
+
             def my_append(_obj):
                 if isType(_obj, GangaObject):
                     stripped_o = stripProxy(_obj)
@@ -724,4 +726,3 @@ class GangaList(GangaObject):
         super(GangaList, self)._setFlushed()
 
 # export to GPI moved to the Runtime bootstrap
-

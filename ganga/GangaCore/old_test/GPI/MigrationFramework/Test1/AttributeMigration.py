@@ -4,8 +4,8 @@
 # $Id: AttributeMigration.py,v 1.1 2008-07-17 16:41:13 moscicki Exp $
 ###############################################################################
 
-from GangaCore.GPIDev.Schema import *
 from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
 
 
 class TestAttribute(GangaObject):

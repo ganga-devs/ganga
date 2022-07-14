@@ -58,8 +58,7 @@ class FileChecker(IFileChecker):
                                 return self.failure
                             stringFound = True
                 if not stringFound and self.failIfFound is False:
-                    logger.info('The string %s has not been found in file %s, FileChecker will fail job(%s)', searchString, filepath, job.fqid)
+                    logger.info('The string %s has not been found in file %s, FileChecker will fail job(%s)',
+                                searchString, filepath, job.fqid)
                     return self.failure
         return self.result
-
-

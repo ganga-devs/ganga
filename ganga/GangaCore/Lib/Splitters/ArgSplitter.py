@@ -72,7 +72,7 @@ class ArgSplitter(ISplitter):
         subjobs = []
 
         for arg in self.args:
-            j = self.createSubjob(job,['application'])
+            j = self.createSubjob(job, ['application'])
             # Add new arguments to subjob
             app = copy.deepcopy(job.application)
             if hasattr(app, 'args'):
@@ -86,8 +86,8 @@ class ArgSplitter(ISplitter):
                 else:
                     app.extraArgs = arg
             else:
-                raise SplitterError('Application has neither args or extraArgs in its schema') 
-                    
+                raise SplitterError('Application has neither args or extraArgs in its schema')
+
             j.application = app
             logger.debug('Arguments for split job is: ' + str(arg))
             subjobs.append(stripProxy(j))

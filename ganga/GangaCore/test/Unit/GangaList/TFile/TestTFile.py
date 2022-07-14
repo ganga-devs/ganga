@@ -5,11 +5,12 @@ from . import TFile
 
 TFile = addProxy(TFile)
 
+
 class TestTFile(unittest.TestCase):
 
     @staticmethod
     def _cmp(a, b):
-        return (a > b) - (a < b)         
+        return (a > b) - (a < b)
 
     def testEqualityName(self):
         t1 = TFile(name='foo')

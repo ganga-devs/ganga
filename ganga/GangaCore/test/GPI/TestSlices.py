@@ -6,7 +6,7 @@ def test_slices_operations(gpi):
     gpi.jobs.remove()
 
     j1 = gpi.Job()
-    j1.application = gpi.Executable(exe='/usr/bin/env', args=['sleep','5'])
+    j1.application = gpi.Executable(exe='/usr/bin/env', args=['sleep', '5'])
     j2 = j1.copy()
     j3 = j1.copy()
 
@@ -33,8 +33,10 @@ def test_slices_operations(gpi):
     assert(len(gpi.jobs) == 0)
 
 # Test slice copy
+
+
 def test_slice_copy(gpi):
-    
+
     # Clear registry before starting the test
     gpi.jobs.remove()
 
@@ -55,9 +57,11 @@ def test_slice_copy(gpi):
 
     # check if slice is submitted succesfully
     for j in s:
-        assert j.status in ['submitted','running','completed']
+        assert j.status in ['submitted', 'running', 'completed']
 
 # Test job ids in jobs registry
+
+
 def test_ids_in_slice(gpi):
 
     # Clear registry before starting the test
@@ -72,13 +76,15 @@ def test_ids_in_slice(gpi):
 
     # Function to test if consecutive created jobs have consecutive IDs
     def test_ids(reg):
-        assert reg.ids() == [first,first+1,first+2,first+3]
+        assert reg.ids() == [first, first + 1, first + 2, first + 3]
 
     test_ids(gpi.jobs)
     test_ids(gpi.jobs.select())
     test_ids(gpi.jobs[:])
 
 # Test select attribute of slice
+
+
 def test_slice_select_attributes(gpi):
 
     from GangaCore.Core.exceptions import GangaAttributeError
@@ -97,24 +103,23 @@ def test_slice_select_attributes(gpi):
 
     # Attribute does not exist raise GangaAttributeError
     try:
-        gpi.jobs.select(some_applications = gpi.Executable())
+        gpi.jobs.select(some_applications=gpi.Executable())
         assert False, "should raise GangaAttributeError"
     except GangaAttributeError:
         pass
 
     # All these are equivalent, only a class of the object is compared
-    s = gpi.jobs.select(application = gpi.Executable())
+    s = gpi.jobs.select(application=gpi.Executable())
     assert len(s) == len(gpi.jobs)
 
-    s = gpi.jobs.select(application = gpi.Executable)
+    s = gpi.jobs.select(application=gpi.Executable)
     assert len(s) == len(gpi.jobs)
 
-    s = gpi.jobs.select(application = 'Executable')
+    s = gpi.jobs.select(application='Executable')
     assert len(s) == len(gpi.jobs)
 
     # Test select attribute against backend of above created jobs
-    s = gpi.jobs.select(backend = gpi.Local)
+    s = gpi.jobs.select(backend=gpi.Local)
     assert j1 in s
     assert j3 in s
     assert j2 not in s
-

@@ -30,6 +30,7 @@ from GangaCore.GPIDev.Credentials import require_credential, credential_store, n
 from GangaCore.GPIDev.Credentials.VomsProxy import VomsProxy
 config = getConfig('LCG')
 
+
 def __cream_resolveOSBList__(job, jdl):
 
     osbURIList = []
@@ -147,7 +148,7 @@ class CREAM(IBackend):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
 
         elif self.sandboxcache._name == 'GridftpSandboxCache':
-            #If the copy command is set in the config then use it.
+            # If the copy command is set in the config then use it.
             if config['CreamCopyCommand']:
                 self.sandboxcache.copyCommand = config['CreamCopyCommand']
 
@@ -790,8 +791,8 @@ sys.exit(0)
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
-        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
+        fileutils = File(inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR)
+        packed_files = jobconfig.getSandboxFiles() + [fileutils]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox
@@ -1212,8 +1213,8 @@ sys.exit(0)
             # If the credential is not valid or doesn't exist then skip it
             cred = credential_store.get(cred_req)
             if not cred or not cred.is_valid():
-                    needed_credentials.add(cred_req)
-                    continue
+                needed_credentials.add(cred_req)
+                continue
             # Create a ``Grid`` for each credential requirement and request the relevant jobs through it
             info = Grid.cream_status(job_ids, cred_req)
             jobInfoDict.update(info)
@@ -1326,5 +1327,5 @@ sys.exit(0)
         else:
             logger.warning('Unexpected job status "%s"', self.status)
 
-logger = getLogger()
 
+logger = getLogger()

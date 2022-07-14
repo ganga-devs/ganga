@@ -18,4 +18,3 @@ def setupGanga(argv=sys.argv, interactive=True):
     GangaCore.Runtime._prog.initEnvironment()
     GangaCore.Runtime._prog.bootstrap(GangaCore.Runtime._prog.interactive)
     GangaCore.Runtime._prog.new_user_wizard(interactive)
-

@@ -14,6 +14,7 @@ from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 
 logger = getLogger()
 
+
 def object_to_database(j, document, master, ignore_subs=[]):
     """Save GangaObject in database
 
@@ -139,6 +140,7 @@ class EmptyGangaObject(GangaObject):
 class DockerIncessableError(GangaException):
     message = "raise this error, when the database timeout passes"
     pass
+
 
 class DatabaseError(GangaException):
     def __init__(self, excpt, message):

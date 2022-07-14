@@ -8,6 +8,7 @@ from GangaCore.testlib.monitoring import run_until_completed
 def test_job_create(gpi):
     j = gpi.Job()
 
+
 def test_job_kill(gpi):
 
     j = gpi.Job()
@@ -16,7 +17,7 @@ def test_job_kill(gpi):
     def cannot_kill(j):
         try:
             j.kill()
-            return False,"should raise JobError"
+            return False, "should raise JobError"
         except:
             return True
 
@@ -39,6 +40,7 @@ def test_job_completed(gpi):
     j = gpi.Job()
     j.submit()
     assert run_until_completed(j)
+
 
 def test_job_assignment(gpi):
     """Test assignment of all job properties"""
@@ -139,7 +141,6 @@ def test_job_copy(gpi):
     assert j2.application.exe == "echo"
 
 
-   
 def test_job_equality(gpi):
     """Check that copies of Jobs are equal to each other"""
     j = gpi.Job()
@@ -152,7 +153,7 @@ def test_job_equality(gpi):
 
 
 def test_job_naming_iteration(gpi):
-    
+
     gpi.jobs.remove()
 
     s1 = gpi.Job(name="SameName")
@@ -165,8 +166,8 @@ def test_job_naming_iteration(gpi):
     # 2 items in slice
     SameName_jobs = gpi.jobs.select(name="SameName")
 
-    assert s1 in SameName_jobs 
-    assert s2 in SameName_jobs 
+    assert s1 in SameName_jobs
+    assert s2 in SameName_jobs
 
     # 1 item in slice
     assert (d1 in gpi.jobs.select(name="DifferentName"))

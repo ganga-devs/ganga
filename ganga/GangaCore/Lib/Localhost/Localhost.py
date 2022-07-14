@@ -28,6 +28,7 @@ from GangaCore.GPIDev.Lib.File import FileUtils
 logger = GangaCore.Utility.logging.getLogger()
 config = GangaCore.Utility.Config.getConfig('Local')
 
+
 class Localhost(IBackend):
 
     """Run jobs in the background on local host.
@@ -50,7 +51,6 @@ class Localhost(IBackend):
     def __init__(self):
         super(Localhost, self).__init__()
 
-
     def prepare_master_script(self, rjobs):
         job = self.getJobObject()
         wrkspace = job.getInputWorkspace()
@@ -60,32 +60,29 @@ class Localhost(IBackend):
                 bs = multiprocessing.cpu_count()
                 logger.info(f'Will run up to {bs} subjobs in parallel')
 
-
             script_location = join(dirname(abspath(inspect.getfile(inspect.currentframe()))),
-                                                            'LocalHostExec_batch.py.template')
+                                   'LocalHostExec_batch.py.template')
             script = FileUtils.loadScript(script_location, '')
             script = script.replace('###BATCHSIZE###', str(bs))
             script = script.replace('###SUBJOBLIST###', str([str(sj.id) for sj in rjobs]))
             script = script.replace('###WORKDIR###', repr(dirname(dirname(wrkspace.getPath()))))
 
-            scriptname = f'__jobscript__{uuid.uuid4()}' 
+            scriptname = f'__jobscript__{uuid.uuid4()}'
             wrkspace.writefile(FileBuffer(scriptname, script), executable=1)
         else:
             scriptname = '__jobscript__'
         return wrkspace.getPath(scriptname)
 
-    
-    def master_submit(self, rjobs, subjobconfigs, masterjobconfig,keep_going=False):
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
 
         rcode = super().master_submit(rjobs, subjobconfigs,
                                       masterjobconfig, keep_going, self.force_parallel)
 
         scriptPath = self.prepare_master_script(rjobs)
         self.run(scriptPath)
-        
+
         return 1
 
-    
     def submit(self, jobconfig, master_input_sandbox):
         job = self.getJobObject()
         prepared = self.preparejob(jobconfig, master_input_sandbox)
@@ -122,8 +119,7 @@ class Localhost(IBackend):
             master.updateMasterJobStatus()
 
         return 1
-        
-        
+
     def resubmit(self):
         self.cleanworkdir()
         job = self.getJobObject()
@@ -131,7 +127,8 @@ class Localhost(IBackend):
 
     def run(self, scriptpath):
         try:
-            process = subprocess.Popen([sys.executable, scriptpath, 'subprocess'], stdin=subprocess.DEVNULL, start_new_session=True)
+            process = subprocess.Popen([sys.executable, scriptpath, 'subprocess'],
+                                       stdin=subprocess.DEVNULL, start_new_session=True)
         except OSError as x:
             logger.error('cannot start a job process: %s', str(x))
             return 0
@@ -143,7 +140,7 @@ class Localhost(IBackend):
                 self.actualCE = GangaCore.Utility.util.hostname()
                 return 1
 
-        self.wrapper_pid = oldid+[process.pid]
+        self.wrapper_pid = oldid + [process.pid]
         return 1
 
     def peek(self, filename="", command=""):
@@ -242,11 +239,11 @@ class Localhost(IBackend):
 
         virtualization = job.virtualization
 
-        utilFiles= []
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
+        utilFiles = []
+        fileutils = File(inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR)
         utilFiles.append(fileutils)
         if virtualization:
-            virtualizationutils = File( inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
+            virtualizationutils = File(inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR)
             utilFiles.append(virtualizationutils)
         sharedfiles = jobconfig.getSharedFiles()
 
@@ -259,7 +256,7 @@ class Localhost(IBackend):
             logger.warning('increasing process priority is often not allowed, your job may fail due to this')
 
         sharedoutputpath = job.getOutputWorkspace().getPath()
-        ## FIXME DON'T just use the blind list here, request the list of files to be in the output from a method.
+        # FIXME DON'T just use the blind list here, request the list of files to be in the output from a method.
         outputpatterns = jobconfig.outputbox
         environment = dict() if jobconfig.env is None else jobconfig.env
 
@@ -267,7 +264,7 @@ class Localhost(IBackend):
         workdir = tempfile.mkdtemp(dir=config['location'])
 
         script_location = join(dirname(abspath(inspect.getfile(inspect.currentframe()))),
-                                                        'LocalHostExec.py.template')
+                               'LocalHostExec.py.template')
 
         from GangaCore.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '')
@@ -278,8 +275,8 @@ class Localhost(IBackend):
         from GangaCore.Utility.Config import getConfig
         jobidRepr = repr(job.getFQID('.'))
 
-
-        script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
+        script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(
+            job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
         script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, ''))
         script = script.replace('###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, ''))
         script = script.replace('###CREATEINPUTDATALIST###', getWNCodeForInputdataListCreation(job, ''))
@@ -306,7 +303,6 @@ class Localhost(IBackend):
 
         return scriptPath
 
-
     def master_kill(self):
         job = self.getJobObject()
 
@@ -315,7 +311,7 @@ class Localhost(IBackend):
             self.kill()
 
         return super().master_kill()
-    
+
     def kill(self):
         job = self.getJobObject()
 
@@ -327,13 +323,14 @@ class Localhost(IBackend):
             return 1
 
         for wrapper_pid in pids:
-            
+
             try:
                 groupid = os.getpgid(wrapper_pid)
                 logger.debug(f"Wrapper for {job.getFQID('.')} has gid {groupid} and pid {self.wrapper_pid}")
                 subprocess.run(['kill', '-9', f'-{groupid}'])
             except OSError as x:
-                logger.warning('While killing wrapper script for job %s: pid=%d, %s', job.getFQID('.'), self.wrapper_pid, str(x))
+                logger.warning('While killing wrapper script for job %s: pid=%d, %s',
+                               job.getFQID('.'), self.wrapper_pid, str(x))
 
             # waitpid to avoid zombies. This always returns an error
             try:
@@ -342,7 +339,7 @@ class Localhost(IBackend):
                 pass
 
         self.wrapper_pid = -1
-            
+
         from GangaCore.Utility.files import recursive_copy
 
         if self.workdir:
@@ -366,7 +363,6 @@ class Localhost(IBackend):
                 logger.warning('problem removing the workdir %s: %s', str(self.id), str(x))
                 shutil.rmtree(self.workdir, ignore_errors=True)
 
-                
     @staticmethod
     def updateMonitoringInformation(jobs):
 
@@ -382,7 +378,6 @@ class Localhost(IBackend):
             else:
                 return int(m.group('exitcode'))
 
-            
         def get_pids(f):
             import re
             with open(f) as statusfile:
@@ -392,15 +387,14 @@ class Localhost(IBackend):
 
             pid = None
             wrapper = None
-            
+
             if m_pid:
                 pid = int(m_pid.group('pid'))
             if m_wrapper:
                 wrapper = int(m_wrapper.group('pid'))
-                
+
             return pid, wrapper
 
-        
         logger.debug('local ping: %s', str(jobs))
 
         for j in jobs:
@@ -444,4 +438,3 @@ class Localhost(IBackend):
                 # j.outputdata.fill()
 
                 j.backend.remove_workdir()
-

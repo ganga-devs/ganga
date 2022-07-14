@@ -3,16 +3,18 @@ from GangaTutorial.Lib.PrimeFactorizer import PrimeFactorizer
 from GangaTutorial.Lib.PrimeTableDataset import PrimeTableDataset
 from GangaTutorial.Lib.PrimeFactorizerSplitter import PrimeFactorizerSplitter
 from GangaCore.Runtime.GPIexport import exportToGPI
-import os, GangaTutorial
+import os
+import GangaTutorial
 
 # Exporting TUTDIR to GPI
 TUTDIR = os.path.dirname(GangaTutorial.__file__)
-exportToGPI("TUTDIR",TUTDIR,"Objects")
+exportToGPI("TUTDIR", TUTDIR, "Objects")
+
 
 class TestGangaTutorial(GangaUnitTest):
 
     def test_ganga_tutorial(self):
-        
+
         from GangaCore.GPI import Job
 
         j = Job()
@@ -23,7 +25,7 @@ class TestGangaTutorial(GangaUnitTest):
         j.inputdata.table_id_upper = 1
         j.submit()
 
-        self.assertIn(j.status, ['submitted','running','completed'])
+        self.assertIn(j.status, ['submitted', 'running', 'completed'])
 
     def test_ganga_tutorial_subjobs(self):
 

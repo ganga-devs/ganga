@@ -23,7 +23,8 @@ class TestSetRegistry(GangaUnitTest):
         box.add(j, 'j')
         assert box['j'] is not j, 'Box entries should be cloned on adding'
         assert stripProxy(box['j']) is not stripProxy(j)
-        assert stripProxy(box['j'])._getRegistry() is not stripProxy(j)._getRegistry(), 'Should be BoxRegistry and JobRegistry respectively'
+        assert stripProxy(box['j'])._getRegistry() is not stripProxy(
+            j)._getRegistry(), 'Should be BoxRegistry and JobRegistry respectively'
 
     def test_box(self):
         """

@@ -6,11 +6,12 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaTest.Framework.utils import sleep_until_completed
 from GangaCore.Core.exceptions import ApplicationPrepareError, ProtectedAttributeError
 
+
 class TestNotebook(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts = [ ('TestingFramework', 'AutoCleanup', 'False') ]
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False')]
         super(TestNotebook, self).setUp(extra_opts=extra_opts)
 
     def testPrepareCycle(self):
@@ -44,7 +45,7 @@ class TestNotebook(GangaUnitTest):
             assert False, 'Wrong exception: %s' % err
 
         a.prepare(force=True)
-            
+
     def testAssign(self):
         """Test that assignment works and that properties are protected"""
         from GangaCore.GPI import Job, Notebook
@@ -60,7 +61,7 @@ class TestNotebook(GangaUnitTest):
         except Exception as err:
             assert False, 'Wrong exception: %s' % err
         assert a.version == 999
-        
+
     def testRun(self):
         """
         Run a notebook application and check that it is executed
@@ -71,10 +72,9 @@ class TestNotebook(GangaUnitTest):
 
         testfilename = 'Test.ipynb'
         dir = dirname(abspath(inspect.getfile(inspect.currentframe())))
-        
 
-        j.inputfiles=[LocalFile(join(dir, testfilename))]
-        j.outputfiles=[LocalFile(testfilename)]
+        j.inputfiles = [LocalFile(join(dir, testfilename))]
+        j.outputfiles = [LocalFile(testfilename)]
         j.submit()
         sleep_until_completed(jobs(0))
         assert j.status in ['completed']

@@ -30,7 +30,7 @@ def repeat_while_none(max=5, first=0.1, multiplier=2, message='Waiting'):
     value. It will be called a maximum of 'max' times, will wait for
     'first' seconds before the first call, and then an escalating amount for
     each subsequent call (each 'multiplier' longer)
-    
+
     @repeat_while_none(4, 0.5, 5)
     def test():
         return None
@@ -50,7 +50,7 @@ def repeat_while_none(max=5, first=0.1, multiplier=2, message='Waiting'):
                 if ret is not None:
                     break
                 logger.info(message)
-                time.sleep(multiplier*i)
+                time.sleep(multiplier * i)
             return ret
         return wrapper_repeat
     return real_repeat

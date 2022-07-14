@@ -10,6 +10,7 @@ class TestSavannah13406(GangaUnitTest):
         #config['Configuration']['autoGenerateJobWorkspace'] = True
 
         import os
+
         from GangaCore.GPI import Job, jobs
         jobs.remove()
         j = Job()

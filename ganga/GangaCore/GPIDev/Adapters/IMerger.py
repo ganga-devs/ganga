@@ -15,6 +15,7 @@ from posixpath import curdir, sep, pardir, join, abspath, commonprefix
 
 logger = GangaCore.Utility.logging.getLogger()
 
+
 def relpath(path, start=curdir):
     """Return a relative version of a path"""
     if not path:
@@ -28,8 +29,10 @@ def relpath(path, start=curdir):
         return curdir
     return join(*rel_list)
 
+
 # set the mergers config up
 config = getConfig("Mergers")
+
 
 def getDefaultMergeDir():
     """Gets the default location of the mergers outputdir from the config"""
@@ -152,7 +155,8 @@ class IMerger(IPostProcessor):
 
                 if not len(glob.glob(os.path.join(j.outputdir, f))):
                     if ignorefailed:
-                        logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.', f, j.fqid)
+                        logger.warning(
+                            'The file pattern %s in Job %s was not found. The file will be ignored.', f, j.fqid)
                         continue
                     else:
                         raise PostProcessException('The file pattern %s in Job %s was not found and so the merge can not continue. '

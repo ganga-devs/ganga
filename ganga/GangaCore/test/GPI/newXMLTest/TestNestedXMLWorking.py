@@ -6,6 +6,7 @@ from .utilFunctions import getXMLFile
 
 from os import path, unlink
 
+
 def getNestedList():
     from GangaCore.GPI import LocalFile, GangaList
     gl = GangaList()
@@ -15,6 +16,7 @@ def getNestedList():
     for i in range(5):
         gl2.append(gl)
     return gl2
+
 
 class TestNestedXMLWorking(GangaUnitTest):
 
@@ -29,7 +31,7 @@ class TestNestedXMLWorking(GangaUnitTest):
         self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
 
         from GangaCore.GPI import Job, jobs, ArgSplitter
-        j=Job()
+        j = Job()
         assert len(jobs) == 1
 
         j.splitter = ArgSplitter()
@@ -65,7 +67,7 @@ class TestNestedXMLWorking(GangaUnitTest):
         from GangaCore.GPIDev.Base.Proxy import stripProxy
         raw_j = stripProxy(j)
 
-        ## ANY COMMAND TO LOAD A JOB CAN BE USED HERE
+        # ANY COMMAND TO LOAD A JOB CAN BE USED HERE
         raw_j.printSummaryTree()
 
         has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
@@ -95,12 +97,12 @@ class TestNestedXMLWorking(GangaUnitTest):
 
             ignore_subs = ''
 
-            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file:
+            with NamedTemporaryFile(mode='w', delete=False) as new_temp_file:
 
                 to_file(stripProxy(j), new_temp_file, ignore_subs)
                 new_temp_file.flush()
 
-            with NamedTemporaryFile(mode = 'w', delete=False) as new_temp_file2:
+            with NamedTemporaryFile(mode='w', delete=False) as new_temp_file2:
                 j2 = Job()
                 j2.splitter = ArgSplitter()
                 j2.splitter.args = getNestedList()
@@ -113,4 +115,3 @@ class TestNestedXMLWorking(GangaUnitTest):
 
             unlink(new_temp_file.name)
             unlink(new_temp_file2.name)
-

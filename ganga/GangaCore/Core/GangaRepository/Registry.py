@@ -4,8 +4,8 @@ import functools
 from GangaCore.Utility.logging import getLogger
 
 from GangaCore.Core.exceptions import (GangaException,
-                                   InaccessibleObjectError,
-                                   RepositoryError)
+                                       InaccessibleObjectError,
+                                       RepositoryError)
 
 import time
 import threading
@@ -18,6 +18,7 @@ from GangaCore.GPIDev.Base.Proxy import isType, getName
 from GangaCore.Utility.Config import getConfig
 
 logger = getLogger()
+
 
 class RegistryError(GangaException):
 
@@ -149,7 +150,8 @@ class IncompleteObject(GangaObject):
                 if len(self.registry.repository.lock([self.id])) == 0:
                     errstr = "Could not lock '%s' object #%i!" % (self.registry.name, self.id)
                     try:
-                        errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(self.id)
+                        errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(
+                            self.id)
                     except Exception as err:
                         logger.debug("Remove Lock error: %s" % err)
                     raise RegistryLockError(errstr)
@@ -175,6 +177,7 @@ def synchronised_flush_lock(f):
             return f(self, *args, **kwargs)
     return decorated
 
+
 def synchronised_read_lock(f):
     """
     General read lock for quick functions that won't take a while but won't change anything either
@@ -187,6 +190,7 @@ def synchronised_read_lock(f):
         with self._read_lock:
             return f(self, *args, **kwargs)
     return decorated
+
 
 def synchronised_complete_lock(f):
     """
@@ -201,6 +205,7 @@ def synchronised_complete_lock(f):
             with self._read_lock:
                 return f(self, *args, **kwargs)
     return decorated
+
 
 class RegistryFlusher(GangaThread):
     """
@@ -258,8 +263,8 @@ class RegistryFlusher(GangaThread):
         regConf = getConfig('Registry')
         while not self.stopped:
             sleep_period = regConf['AutoFlusherWaitTime']
-            for i in range(sleep_period*sleeps_per_second):
-                time.sleep(1/sleeps_per_second)
+            for i in range(sleep_period * sleeps_per_second):
+                time.sleep(1 / sleeps_per_second)
                 if self.stopped:
                     return
             # This will trigger a flush on all dirty objects in the repo,
@@ -276,7 +281,8 @@ class Registry(object):
     Base class providing a dict-like locked and lazy-loading interface to a Ganga repository
     """
 
-    __slots__ = ('name', 'doc', '_hasStarted', '_needs_metadata', 'metadata', '_read_lock', '_flush_lock', '_parent', 'repository', '_objects', '_incomplete_objects', 'flush_thread', 'type', 'location')
+    __slots__ = ('name', 'doc', '_hasStarted', '_needs_metadata', 'metadata', '_read_lock', '_flush_lock',
+                 '_parent', 'repository', '_objects', '_incomplete_objects', 'flush_thread', 'type', 'location')
 
     def __init__(self, name, doc):
         """Registry constructor, giving public name and documentation
@@ -314,7 +320,7 @@ class Registry(object):
         Args:
             this_id (int): This is the key of an object in the object dictionary
         """
-    
+
         # Is this an Incomplete Object?
         if this_id in self._incomplete_objects:
             return IncompleteObject(self, this_id)
@@ -398,7 +404,8 @@ class Registry(object):
         try:
             return next(id_ for id_, o in self._objects.items() if o is obj)
         except StopIteration:
-            raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
+            raise ObjectNotInRegistryError(
+                "Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
 
     @synchronised_complete_lock
     def clean(self, force=False):
@@ -415,7 +422,8 @@ class Registry(object):
         if not force:
             other_sessions = self.repository.get_other_sessions()
             if len(other_sessions) > 0:
-                logger.error("The following other sessions are active and have blocked the clearing of the repository: \n * %s" % ("\n * ".join(other_sessions)))
+                logger.error("The following other sessions are active and have blocked the clearing of the repository: \n * %s" %
+                             ("\n * ".join(other_sessions)))
                 return False
         self.repository.reap_locks()
         self.repository.delete(list(self._objects.keys()))
@@ -494,7 +502,7 @@ class Registry(object):
             objs (list): a list of objects to flush
         """
         # Too noisy
-        #logger.debug("_flush")
+        # logger.debug("_flush")
 
         if not isType(objs, (list, tuple, GangaList)):
             objs = [objs]
@@ -617,14 +625,15 @@ class Registry(object):
                     self.metadata = Registry(self.name + ".metadata", "Metadata repository for %s" % self.name)
                     self.metadata.type = self.type
                     self.metadata.location = self.location
-                    setattr(self.metadata, '_parent', self) ## rcurrie Registry has NO '_parent' Object so don't understand this is this used for JobTree?
+                    # rcurrie Registry has NO '_parent' Object so don't understand this is this used for JobTree?
+                    setattr(self.metadata, '_parent', self)
                 logger.debug("metadata startup")
                 self.metadata.startup()
                 t3 = time.time()
-                logger.debug("Startup of %s.metadata took %s sec" % (self.name, t3-t2))
+                logger.debug("Startup of %s.metadata took %s sec" % (self.name, t3 - t2))
 
             logger.debug("repo startup")
-            #self.hasStarted() = True
+            # self.hasStarted() = True
             self.repository.startup()
             t1 = time.time()
             logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
@@ -632,7 +641,7 @@ class Registry(object):
             logger.debug("Logging Repo startup Error: %s" % err)
             self._hasStarted = False
             raise
-        #finally:
+        # finally:
         #    pass
 
         # Now we check the repo for faults and for inconsistent objects
@@ -706,4 +715,3 @@ class Registry(object):
             return False
 
         return self.repository.isObjectLoaded(obj)
-
