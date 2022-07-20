@@ -169,7 +169,8 @@ class Foreground(object):
 
        For good visibility, the bold colours are better."""
 
-    __slots__ = ('normal', 'black', 'red', 'green', 'orange', 'blue', 'magenta', 'cyan', 'white', 'boldgrey', 'boldred', 'boldgreen', 'boldyellow', 'boldblue', 'boldmagenta', 'boldcyan', 'boldwhite')
+    __slots__ = ('normal', 'black', 'red', 'green', 'orange', 'blue', 'magenta', 'cyan', 'white', 'boldgrey',
+                 'boldred', 'boldgreen', 'boldyellow', 'boldblue', 'boldmagenta', 'boldcyan', 'boldwhite')
 
     def __init__(self):
         """Set ANSI codes for defined colours"""
@@ -197,6 +198,8 @@ class Foreground(object):
 colour_objects = {'fg': Foreground(), 'bg': Background(), 'fx': Effects()}
 
 # Some additional helper functions from Tasks package
+
+
 def getColour(name):
     """ Get a colour code from the symbolic name: fg = Foreground(), bg = Background(), fx = Effects()
     The name examples fg.red, fx.normal, bg.white
@@ -204,6 +207,7 @@ def getColour(name):
     """
     x, y = name.split('.')
     return getattr(colour_objects[x], y)
+
 
 cols = {"black": (0, 0), "red": (0, 1), "green": (0, 2), "orange": (0, 3), "blue": (0, 4), "magenta": (0, 5), "cyan": (0, 6), "lgray": (0, 7),
         "dgray": (6, 0), "lred": (6, 1), "lgreen": (6, 2), "yellow": (6, 3), "lblue": (6, 4), "pink": (6, 5), "lcyan": (6, 6), "white": (6, 7)}
@@ -215,6 +219,8 @@ def col(f, b):
 
 def fgcol(f):
     return '\033[%i%im' % (3 + cols[f][0], cols[f][1])
+
+
 # Status and overview colours
 status_colours = {
     'new': "",

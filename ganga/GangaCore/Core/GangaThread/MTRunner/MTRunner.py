@@ -2,12 +2,14 @@
 
 import time
 import traceback
-from threading import Lock
 from queue import Empty
-from .Algorithm import AlgorithmError
+from threading import Lock
+
 from GangaCore.Core.GangaThread.GangaThread import GangaThread
 from GangaCore.Core.GangaThread.MTRunner.Data import DuplicateDataItemError
 from GangaCore.Utility.logging import getLogger
+
+from .Algorithm import AlgorithmError
 
 
 class MTRunnerError(Exception):

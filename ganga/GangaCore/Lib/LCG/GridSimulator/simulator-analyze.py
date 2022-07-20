@@ -5,10 +5,9 @@
 #gridmap_filename = g.gridmap_filename
 #finished_jobs_filename = g.finished_jobs_filename
 
-import sys
 import os.path
 import shelve
-
+import sys
 
 try:
     basedir = sys.argv[1]

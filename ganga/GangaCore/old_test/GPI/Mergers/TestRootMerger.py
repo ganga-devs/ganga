@@ -4,10 +4,11 @@
 # $Id: TestRootMerger.py,v 1.2 2009-03-18 10:46:01 wreece Exp $
 ##########################################################################
 
-from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed, write_file
 import os
 import tempfile
+
+from GangaTest.Framework.tests import GangaGPITestCase
+from GangaTest.Framework.utils import sleep_until_completed, write_file
 
 
 class TestRootMerger(GangaGPITestCase):

@@ -1,9 +1,10 @@
 import os
 import unittest
 
+from GangaCore.Utility.feedback_report import report
+
 from ganga.GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from ganga.GangaCore.testlib.monitoring import run_until_completed
-from GangaCore.Utility.feedback_report import report
 
 # This file tests the 'report' utlity which outputs debugging info.
 

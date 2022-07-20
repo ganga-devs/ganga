@@ -10,7 +10,6 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Core.GangaRepository import getRegistry
 
 
-
 class TestShared(GangaUnitTest):
 
     shared_area_location = None
@@ -25,11 +24,11 @@ class TestShared(GangaUnitTest):
         j = Job()
 
         assert(j.application.is_prepared is None)
-        
+
         j.prepare()
 
         assert(j.application.is_prepared is not None)
-        
+
         TestShared.shared_area_location = j.application.is_prepared.path()
         assert(path.isdir(TestShared.shared_area_location))
 
@@ -40,7 +39,6 @@ class TestShared(GangaUnitTest):
         open(TestShared.b_file_location, 'w').close()
         j.application.is_prepared.associated_files.append(LocalFile(TestShared.a_file_location))
         j.application.is_prepared.associated_files.append(LocalFile(TestShared.b_file_location))
-
 
     def test_B_Persistency(self):
         """
@@ -60,7 +58,6 @@ class TestShared(GangaUnitTest):
             assert (path.join(lf.localDir, lf.namePattern) in [TestShared.a_file_location, TestShared.b_file_location])
             assert (path.isfile(path.join(lf.localDir, lf.namePattern)))
 
-        
     def test_C_Unprepare(self):
         """Make sure that unprepare restore None for the shared area."""
         with patch('builtins.input', return_value='y') as _raw_input:
@@ -77,7 +74,6 @@ class TestShared(GangaUnitTest):
 
             assert(not path.isfile(TestShared.a_file_location))
             assert(not path.isfile(TestShared.b_file_location))
-
 
     def test_D_Cleanup(self):
         """Test that shared area is removed when counter goes to zero"""
@@ -98,7 +94,7 @@ class TestShared(GangaUnitTest):
 
         from GangaCore.GPI import jobs
 
-        j=jobs[-1]
+        j = jobs[-1]
 
         shareRef = getRegistry('prep').getShareRef()
 
@@ -115,7 +111,7 @@ class TestShared(GangaUnitTest):
 
         from GangaCore.GPI import jobs
 
-        j=jobs[-1]
+        j = jobs[-1]
 
         shareRef = getRegistry('prep').getShareRef()
 
@@ -130,7 +126,7 @@ class TestShared(GangaUnitTest):
 
         assert refDict[this_ref] is 1
 
-        j2=jobs[-2].copy()
+        j2 = jobs[-2].copy()
 
         assert refDict[this_ref] is 2
 
@@ -143,4 +139,3 @@ class TestShared(GangaUnitTest):
         assert refDict[this_ref] is 0
 
         assert not path.isdir(this_path)
-

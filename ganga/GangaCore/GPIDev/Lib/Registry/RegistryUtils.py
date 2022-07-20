@@ -1,5 +1,5 @@
-from GangaCore.GPIDev.Lib.Registry.TransientRegistry import TransientRegistry
 from GangaCore.Core.GangaRepository import addRegistry
+from GangaCore.GPIDev.Lib.Registry.TransientRegistry import TransientRegistry
 
 
 def establishNamedTemplates(registryname, filebase, doc='', file_ext='tpl', pickle_files=False):

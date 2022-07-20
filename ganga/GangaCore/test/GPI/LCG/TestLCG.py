@@ -10,6 +10,7 @@ from GangaCore.testlib.monitoring import run_until_completed
 
 from GangaCore.GPIDev.Credentials.VomsProxy import VomsProxy
 
+
 @external
 @requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_job_submit_and_monitor(gpi):
@@ -22,6 +23,7 @@ def test_job_submit_and_monitor(gpi):
     assert j.status != 'new'
     stripProxy(LCG).master_updateMonitoringInformation([stripProxy(j)])
 
+
 @external
 @requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_job_kill(gpi):
@@ -31,6 +33,7 @@ def test_job_kill(gpi):
     j.backend = LCG()
     j.submit()
     j.kill()
+
 
 @requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_submit_kill_resubmit(gpi):
@@ -59,6 +62,7 @@ def test_submit_kill_resubmit(gpi):
 
     with patch('GangaCore.Lib.LCG.Grid.cancel', return_value=True):
         j.kill()
+
 
 @requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_submit_monitor(gpi):
@@ -98,4 +102,3 @@ def test_submit_monitor(gpi):
 
     with patch('GangaCore.Lib.LCG.Grid.cancel', return_value=True):
         j.kill()
-

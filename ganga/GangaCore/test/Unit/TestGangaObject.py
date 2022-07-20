@@ -3,14 +3,13 @@ try:
 except ImportError:
     import unittest
 
+import random
 import threading
 import time
-import random
-
 
 from GangaCore.GPIDev.Base import GangaObject
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from GangaCore.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass
+from GangaCore.GPIDev.Base.Objects import GangaObject, Node, ObjectMetaclass
+from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 
 
 class TestGangaObject(unittest.TestCase):

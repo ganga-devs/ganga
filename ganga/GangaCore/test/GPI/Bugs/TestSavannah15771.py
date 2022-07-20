@@ -5,8 +5,8 @@ class TestSavannah15771(GangaUnitTest):
 
     def test_CondorConfigDefaults(self):
         from GangaCore.GPI import Condor, GangaList
-        from GangaCore.Utility.Config import setConfigOption
         from GangaCore.GPIDev.Base.Proxy import isType
+        from GangaCore.Utility.Config import setConfigOption
 
         setConfigOption('defaults_CondorRequirements', 'other', ['POOL == "General"'])
         setConfigOption('defaults_CondorRequirements', 'opsys', 'print')

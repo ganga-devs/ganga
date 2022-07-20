@@ -6,7 +6,7 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 class TestSavannah13979(GangaUnitTest):
 
     def test_Savannah13979(self):
-        from GangaCore.GPI import Job, Executable, export, load
+        from GangaCore.GPI import Executable, Job, export, load
 
         self.fname = 'test_savannah_13979.ganga'
         j = Job(application=Executable())

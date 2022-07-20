@@ -4,13 +4,12 @@ import os
 import tempfile
 
 import pytest
-
-from GangaTest.Framework.utils import write_file
-from GangaCore.GPIDev.Base.Proxy import addProxy
 from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
-
+from GangaCore.GPIDev.Base.Proxy import addProxy
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.testlib.monitoring import run_until_completed, run_until_state
+from GangaTest.Framework.utils import write_file
+
 from .CopySplitter import CopySplitter
 
 CopySplitter = addProxy(CopySplitter)
@@ -20,7 +19,7 @@ class TestCustomMerger(GangaUnitTest):
 
     def setUp(self):
         super(TestCustomMerger, self).setUp()
-        from GangaCore.GPI import Job, Executable, Local, File, LocalFile
+        from GangaCore.GPI import Executable, File, Job, Local, LocalFile
 
         self.jobslice = []
         self.file_name = 'id_echo.sh'

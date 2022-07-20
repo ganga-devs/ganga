@@ -82,7 +82,7 @@ class Condor(IBackend):
         "globusscheduler": SimpleItem(defvalue="", doc="Globus scheduler to be used (required for Condor-G submission)"),
         "globus_rsl": SimpleItem(defvalue="",
                                  doc="Globus RSL settings (for Condor-G submission)"),
-        "spool" : SimpleItem(defvalue=True, doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd. Required for EOS, see: http://batchdocs.web.cern.ch/batchdocs/troubleshooting/eos_submission.html"),
+        "spool": SimpleItem(defvalue=True, doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd. Required for EOS, see: http://batchdocs.web.cern.ch/batchdocs/troubleshooting/eos_submission.html"),
         "accounting_group": SimpleItem(defvalue='', doc="Provide an accounting group for this job."),
         "cdf_options": SimpleItem(defvalue={}, doc="Additional options to set in the CDF file given by a dictionary")
     })
@@ -114,27 +114,27 @@ class Condor(IBackend):
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
 
-        #Get the credential into the scheduler
+        # Get the credential into the scheduler
         col = htcondor.Collector()
         credd = htcondor.Credd()
         if credential_store.matches(AfsToken()):
             credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
 
         master_input_sandbox = self.master_prepare(masterjobconfig)
-        #Get the dict of common things
+        # Get the dict of common things
         cdfDict = self.cdfPreamble(masterjobconfig)
-        #Now set up the things for each job. It needs to be a list of dictionaries
+        # Now set up the things for each job. It needs to be a list of dictionaries
         sjDict = []
         for sc, sj in zip(subjobconfigs, rjobs):
             sj.updateStatus('submitting')
             sjDict.append(self.prepareSubjob(sj, sc, master_input_sandbox))
 
-        #Put the common job dictionary into the HTCondor Submit object
+        # Put the common job dictionary into the HTCondor Submit object
         this_job = htcondor.Submit(cdfDict)
-        #Now setup the submission
+        # Now setup the submission
         schedd = htcondor.Schedd()
         with schedd.transaction() as txn:
-            stati = this_job.queue_with_itemdata(txn, itemdata = iter(sjDict))
+            stati = this_job.queue_with_itemdata(txn, itemdata=iter(sjDict))
 
         cluster_id = stati.cluster()
         process_id = stati.first_proc()
@@ -178,20 +178,20 @@ class Condor(IBackend):
         rjobs = [job]
         subjobconfigs = job._getJobSubConfig(rjobs)
 
-        #Get the dict of common things
+        # Get the dict of common things
         cdfDict = self.cdfPreamble(masterjobconfig)
-        #Now set up the things for each job. It needs to be a list of dictionaries
+        # Now set up the things for each job. It needs to be a list of dictionaries
         sjDict = []
         for sc, sj in zip(subjobconfigs, rjobs):
             sj.updateStatus('submitting')
             sjDict.append(self.prepareSubjob(sj, sc, master_input_sandbox))
 
-        #Put the common job dictionary into the HTCondor Submit object
+        # Put the common job dictionary into the HTCondor Submit object
         this_job = htcondor.Submit(cdfDict)
-        #Now setup the submission
+        # Now setup the submission
         schedd = htcondor.Schedd()
         with schedd.transaction() as txn:
-            stati = this_job.queue_with_itemdata(txn, itemdata = iter(sjDict))
+            stati = this_job.queue_with_itemdata(txn, itemdata=iter(sjDict))
 
         cluster_id = stati.cluster()
         process_id = stati.first_proc()
@@ -218,7 +218,7 @@ class Condor(IBackend):
         job = self.getJobObject()
         idList = []
         is_master = False
-        #Are we in the master job? If so kill everything.
+        # Are we in the master job? If so kill everything.
         if job.subjobs:
             is_master = True
             idList = job.subjobs[0].backend.id.split(".")
@@ -234,7 +234,7 @@ class Condor(IBackend):
             result = schedd.act(htcondor.JobAction.Remove, "ClusterID=={}".format(cluster_id))
         else:
             result = schedd.act(htcondor.JobAction.Remove, "ClusterID=={} && ProcID=={}".format(cluster_id, proc_id))
-        
+
         if result['TotalError'] > 0:
             return False
 
@@ -267,9 +267,9 @@ class Condor(IBackend):
                 'stream_output': 'false',
                 'stream_error': 'false',
                 'getenv': self.getenv,
-                'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(),'condorWrapper')
+                'executable': os.path.join(self.getJobObject().getInputWorkspace().getPath(), 'condorWrapper')
             }
-        #Send the credentials for shared filesystems
+        # Send the credentials for shared filesystems
         if credential_store.matches(AfsToken()):
             cdfDict['MY.SendCredential'] = 'True'
         # extend with additional cdf options
@@ -285,10 +285,9 @@ class Condor(IBackend):
         if self.globus_rsl:
             cdfDict['globus_rsl'] = self.globus_rsl
 
-        cdfDict['Requirements'] =  self.requirements.convert()
+        cdfDict['Requirements'] = self.requirements.convert()
 
         return cdfDict
-
 
     def prepareSubjob(self, job, jobconfig, master_input_sandbox):
         """
@@ -298,9 +297,9 @@ class Condor(IBackend):
 
         virtualization = job.virtualization
 
-        utilFiles= []
+        utilFiles = []
         if virtualization:
-            virtualizationutils = File( inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
+            virtualizationutils = File(inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR)
             utilFiles.append(virtualizationutils)
 
         inbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + utilFiles)
@@ -397,8 +396,7 @@ class Condor(IBackend):
         if virtualization:
             commandString = virtualization.modify_script(commandString)
 
-        wrapper = job.getInputWorkspace().writefile\
-            (FileBuffer(wrapperName, commandString), executable=1)
+        wrapper = job.getInputWorkspace().writefile(FileBuffer(wrapperName, commandString), executable=1)
 
         infileString = ",".join(infileList)
         outfileString = ",".join(jobconfig.outputbox)
@@ -445,7 +443,7 @@ class Condor(IBackend):
 
     def updateMonitoringInformation(jobs):
 
-        #First collate jobs and Condor IDs
+        # First collate jobs and Condor IDs
         jobDict = {}
         for job in jobs:
             if job.backend.id:
@@ -456,7 +454,7 @@ class Condor(IBackend):
         if not idList:
             return
 
-        #Now gather together cluster IDs and process IDs
+        # Now gather together cluster IDs and process IDs
         id_dict = {}
         for _j in jobs:
             idStringList = _j.backend.id.split(".")
@@ -466,8 +464,8 @@ class Condor(IBackend):
                 id_dict[this_cluster_id].append(this_proc_id)
             else:
                 id_dict[this_cluster_id] = [this_proc_id]
-    
-        #Now make a filtering string for the scheduler
+
+        # Now make a filtering string for the scheduler
         expr_tree = classad.ExprTree("false")
         for _cl in id_dict.keys():
             cl_expr = classad.ExprTree("ClusterID == %s" % _cl)
@@ -478,11 +476,12 @@ class Condor(IBackend):
             cl_expr = cl_expr.and_(pr_expr)
             expr_tree = expr_tree.or_(cl_expr)
 
-        #Now query the scheduler with or job list
+        # Now query the scheduler with or job list
         schedd = htcondor.Schedd()
         stati = []
         try:
-            stati = schedd.query(constraint = expr_tree, projection = ["ClusterId", "ProcId", "JobStatus", "RemoteUserCpu","RemoteHost"])
+            stati = schedd.query(constraint=expr_tree, projection=[
+                                 "ClusterId", "ProcId", "JobStatus", "RemoteUserCpu", "RemoteHost"])
         except htcondor.HTCondorIOError as err:
             logger.debug(err)
 
@@ -497,20 +496,18 @@ class Condor(IBackend):
             else:
                 allDict[this_id]["host"] = ""
 
-
         fg = Foreground()
         fx = Effects()
         status_colours = {'submitted': fg.orange,
                           'running': fg.green,
                           'completed': fg.blue}
 
-
         for id in idList:
 
             printStatus = False
-            if id in  jobDict[id].status == "killed":
+            if id in jobDict[id].status == "killed":
                 continue
-            #If the queried job is still in the queue system:
+            # If the queried job is still in the queue system:
             if id in allDict.keys():
                 status = allDict[id]["status"]
                 host = allDict[id]["host"]
@@ -526,7 +523,7 @@ class Condor(IBackend):
                     if jobDict[id].backend.actualCE != host:
                         jobDict[id].backend.actualCE = host
                 jobDict[id].backend.cputime = cputime
-            #Otherwise look a bit harder at the logs to see where it ended up
+            # Otherwise look a bit harder at the logs to see where it ended up
             else:
                 jobDict[id].backend.status = ""
                 outDir = jobDict[id].getOutputWorkspace().getPath()
@@ -556,7 +553,7 @@ class Condor(IBackend):
                             exitCode = '-1'
 
                         if exitCode.isdigit():
-                            if exitCode=='0':
+                            if exitCode == '0':
                                 jobStatus = "completed"
                             else:
                                 jobStatus = 'failed'
@@ -567,7 +564,7 @@ class Condor(IBackend):
                                 if not jobDict[id].backend._stdout_check_time:
                                     jobDict[id].backend._stdout_check_time = time.time()
 
-                                if (time.time() - jobDict[id].backend._stdout_check_time) < 10*60:
+                                if (time.time() - jobDict[id].backend._stdout_check_time) < 10 * 60:
                                     continue
                                 else:
                                     logger.error("Empty stdout file from job %s after waiting 10mins. Marking job as"
@@ -594,8 +591,7 @@ class Condor(IBackend):
                     preposition = "on"
 
                 if jobDict[id].backend.status:
-                    backendStatus = "".join\
-                        ([" (", jobDict[id].backend.status, ") "])
+                    backendStatus = "".join([" (", jobDict[id].backend.status, ") "])
                 else:
                     backendStatus = ""
 
@@ -615,15 +611,15 @@ class Condor(IBackend):
                Check for the separation character between date elements.
         """
         dateBreakdown = re.findall(r"\d+\D", dateString)
-        numberOfDateElements = len(dateBreakdown)+1
+        numberOfDateElements = len(dateBreakdown) + 1
         if numberOfDateElements > 0:
-            self._condorDateFormat=(numberOfDateElements,dateBreakdown[0][-1])
+            self._condorDateFormat = (numberOfDateElements, dateBreakdown[0][-1])
             if numberOfDateElements > 3 or numberOfDateElements == 1:
                 logger.warning(
                     "setCondorDateFormat number of date elements does not match: '%s'", dateString)
         else:
             logger.warning(
-                    "setCondorDateFormat cannot determine date format: '%s'", dateString)
+                "setCondorDateFormat cannot determine date format: '%s'", dateString)
 
     def getCondorDate(self, dateString, timeString):
         """Helper function to unify the condor date format according to the format obtained in setCondorDateFormat and stored in _condorDateFormat
@@ -632,15 +628,15 @@ class Condor(IBackend):
                If there are only two date elements, the condorLog doesn't tell you the year so we guess the closest one to now.
                The separation character of the year/month/day is unified to the same character for easy parsing.
         """
-        result=dateString
+        result = dateString
         if self._condorDateFormat:
             if self._condorDateFormat[1] != "/":
-                result=result.replace(self._condorDateFormat[1],"/")
+                result = result.replace(self._condorDateFormat[1], "/")
             if self._condorDateFormat[0] == 2:
                 year = datetime.datetime.now().year
-                if datetime.datetime.strptime(str(year)+"/"+result+' '+timeString, "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
+                if datetime.datetime.strptime(str(year) + "/" + result + ' ' + timeString, "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
                     year = year - 1
-                result=str(year)+"/"+result
+                result = str(year) + "/" + result
         return result
 
     def getStateTime(self, status):
@@ -677,14 +673,13 @@ class Condor(IBackend):
             logger.debug('unable to open file %s', p)
             return None
 
-
         for l in f:
             splitLine = l.split()
-            if len(splitLine)>0 and checkstr == splitLine[0]:
+            if len(splitLine) > 0 and checkstr == splitLine[0]:
                 if not self._condorDateFormat:
                     self.setCondorDateFormat(splitLine[2])
-                condorDate=self.getCondorDate(splitLine[2], splitLine[3])
-                timestr = condorDate+' '+splitLine[3]
+                condorDate = self.getCondorDate(splitLine[2], splitLine[3])
+                timestr = condorDate + ' ' + splitLine[3]
                 try:
                     t = datetime.datetime(
                         *(time.strptime(timestr, "%Y/%m/%d %H:%M:%S")[0:6]))
@@ -699,7 +694,6 @@ class Condor(IBackend):
             "Reached the end of getStateTime('%s'). Returning None.", status)
         return None
 
-
     def timedetails(self):
         """Return all available timestamps from this backend.
         """
@@ -713,7 +707,7 @@ class Condor(IBackend):
         s = self.getStateTime('submitted')
         r = self.getStateTime('running')
         c = self.getStateTime('completed')
-        d = {'SUBMIT': s,'START': r, 'STOP': c}
+        d = {'SUBMIT': s, 'START': r, 'STOP': c}
 
         return d
 
@@ -722,31 +716,29 @@ class Condor(IBackend):
 
     def peek(self, filename=None, command=None):
         job = self.getJobObject()
-        
-        queryCommand= " ".join\
-            (["-maxbytes", "%s" %  getConfig("Condor")["MaxBytes"]])
+
+        queryCommand = " ".join(["-maxbytes", "%s" % getConfig("Condor")["MaxBytes"]])
         if job.subjobs:
             logger.error("Master Job does not have a peek status.")
-            peekStatus= False
-        name_of_file=""
+            peekStatus = False
+        name_of_file = ""
         if filename:
-            name_of_file=filename
+            name_of_file = filename
         job_id = job.backend.id
         peekCommand = f"condor_tail {queryCommand} {job_id} {name_of_file}"
 
         status, output = subprocess.getstatusoutput(peekCommand)
 
         if (status != 0):
-            logger.warning \
-                ("Return code '%s' peek job '%s' - Condor id '%s'" %
-                 (str(status), job.id, job.backend.id))
+            logger.warning("Return code '%s' peek job '%s' - Condor id '%s'" %
+                           (str(status), job.id, job.backend.id))
             logger.warning("Tried command: '%s'" % peekCommand)
             logger.warning("Command output: '%s'" % output)
-            peekStatus= False
+            peekStatus = False
         else:
             logger.info(output)
             peekStatus = True
 
         return peekStatus
 
-#_________________________________________________________________________
+# _________________________________________________________________________

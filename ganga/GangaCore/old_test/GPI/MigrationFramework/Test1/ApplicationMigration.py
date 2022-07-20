@@ -4,8 +4,8 @@
 # $Id: ApplicationMigration.py,v 1.1 2008-07-17 16:41:13 moscicki Exp $
 ###############################################################################
 
-from GangaCore.GPIDev.Schema import *
 from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Schema import *
 
 
 class TestApplicationMigration(IApplication):

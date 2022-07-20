@@ -1388,8 +1388,8 @@ sys.exit(0)
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
-        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
+        fileutils = File(inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR)
+        packed_files = jobconfig.getSandboxFiles() + [fileutils]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox
@@ -1565,7 +1565,8 @@ sys.exit(0)
                 # do nothing in this case as it's in the middle of the
                 # corresponding job downloading task
                 return
-            logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.', job.getFQID('.'))
+            logger.warning(
+                'The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.', job.getFQID('.'))
             job.updateStatus('failed')
 
         elif status in ['Submitted', 'Waiting', 'Scheduled', 'Ready', 'Done (Failed)', 'Done(Failed)']:
@@ -1594,7 +1595,8 @@ sys.exit(0)
                 # those jobs should be checked individually as a single job
                 for sj in j.subjobs:
                     if sj.backend.flag == 1 and sj.status in ['submitted', 'running']:
-                        logger.debug('job %s submitted individually. separate it in a different monitoring loop.' % sj.getFQID('.'))
+                        logger.debug(
+                            'job %s submitted individually. separate it in a different monitoring loop.' % sj.getFQID('.'))
                         emulated_bulk_jobs.append(sj)
 
         # invoke normal monitoring method for normal jobs
@@ -1727,8 +1729,8 @@ sys.exit(0)
             # If the credential is not valid or doesn't exist then skip it
             cred = credential_store.get(cred_req)
             if not cred or not cred.is_valid():
-                    needed_credentials.add(cred_req)
-                    continue
+                needed_credentials.add(cred_req)
+                continue
             # Create a ``Grid`` for each credential requirement and request the relevant jobs through it
             status, missing = Grid.status(job_list, cred_req, is_collection=True)
             status_info += status

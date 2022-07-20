@@ -191,7 +191,7 @@ def check_sif_file_hash(path):
     m = hashlib.md5()
     hashfile = open(path, "rb")
     while True:
-        data = hashfile.read(4*1024*1024)
+        data = hashfile.read(4 * 1024 * 1024)
         if not data:
             break
         m.update(data)

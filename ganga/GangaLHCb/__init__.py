@@ -21,6 +21,7 @@ from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
 
 logger = getLogger()
 
+
 def guessPlatform():
     defaultPlatform = 'x86_64-centos7-gcc8-opt'
     cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &> /dev/null && python3 -c "import json, os; print(json.dumps(dict(os.environ.copy())))"'
@@ -76,6 +77,7 @@ if not _after_bootstrap:
 
     defaultPlatform = guessPlatform()
     configLHCb.addOption('defaultPlatform', defaultPlatform, 'The default platform for applications to use')
+
 
 def _store_root_version():
     if 'ROOTSYS' in os.environ:
@@ -161,6 +163,7 @@ def postBootstrapHook():
     else:
         updateCreds()
 
+
 def updateCreds():
     try:
         for group in ('lhcb_user', ):
@@ -220,5 +223,6 @@ class gridProxy(object):
             cred.destroy()
         except KeyError:
             pass
+
 
 exportToGPI('gridProxy', gridProxy, 'Functions')

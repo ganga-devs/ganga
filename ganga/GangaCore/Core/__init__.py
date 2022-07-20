@@ -25,9 +25,10 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     """
     # Must do some Ganga imports here to avoid circular importing
     from GangaCore import GANGA_SWAN_INTEGRATION
-    from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor
-    from GangaCore.Utility.Config import getConfig
+    from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import \
+        JobRegistry_Monitor
     from GangaCore.Runtime.GPIexport import exportToInterface
+    from GangaCore.Utility.Config import getConfig
     from GangaCore.Utility.logging import getLogger
     global monitoring_component
 

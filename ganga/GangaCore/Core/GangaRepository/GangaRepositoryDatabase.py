@@ -151,7 +151,6 @@ class GangaRepositoryLocal(GangaRepository):
         self.printed_explanation = False
         self.lockroot = os.path.join(self.gangadir, "sessions")
 
-
     def startup(self):
         """ Starts a repository and reads in a directory structure.
         Raise RepositoryError"""
@@ -210,7 +209,7 @@ class GangaRepositoryLocal(GangaRepository):
         HOST = self.database_config["host"]
         connection_string = f"mongodb://{HOST}:{PORT}/"
         client = pymongo.MongoClient(
-        connection_string, serverSelectionTimeoutMS=10000)
+            connection_string, serverSelectionTimeoutMS=10000)
         self.connection = client[self.db_name]
 
         self.container_controller = controller_map[self.database_config["controller"]]
@@ -867,7 +866,6 @@ class GangaRepositoryLocal(GangaRepository):
         Tries to determine the other sessions that are active and returns an informative string for each of them.
         """
         return self.sessionlock.get_other_sessions()
-
 
     def clean(self):
         """clean() --> True/False

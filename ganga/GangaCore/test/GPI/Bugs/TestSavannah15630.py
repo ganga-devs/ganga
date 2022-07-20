@@ -5,8 +5,7 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 class TestSavannah15630(GangaUnitTest):
     def test_Savannah15630(self):
-        from GangaCore.GPI import Job, Executable, Local, LocalFile
-
+        from GangaCore.GPI import Executable, Job, Local, LocalFile
         from GangaTest.Framework.utils import sleep_until_completed
         j = Job()
         j.application = Executable(exe='touch', args=['out.dat'])

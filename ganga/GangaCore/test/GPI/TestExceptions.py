@@ -30,7 +30,8 @@ def test_all_exceptions(gpi):
     assert test_str in str(err)
 
     # check the InaccessibleObjectError
-    from GangaCore.Core.exceptions import InaccessibleObjectError, JobManagerError
+    from GangaCore.Core.exceptions import (InaccessibleObjectError,
+                                           JobManagerError)
     from GangaCore.Core.GangaRepository import getRegistry
     err = InaccessibleObjectError(getRegistry('jobs').repository, 0, JobManagerError("My JobManagerError"))
     assert "jobs" in str(err)

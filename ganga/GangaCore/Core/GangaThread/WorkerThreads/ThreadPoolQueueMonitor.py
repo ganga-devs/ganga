@@ -207,7 +207,8 @@ class ThreadPoolQueueMonitor(object):
         """
         if not isinstance(worker_code, collections.abc.Callable):
             logger.error('Only python callable objects can be added to the queue using queues.add()')
-            logger.error('Did you perhaps try to add the return value of the function/method rather than the function/method itself')
+            logger.error(
+                'Did you perhaps try to add the return value of the function/method rather than the function/method itself')
             logger.error('e.g. Incorrect:     queues.add(myfunc()) *NOTE the brackets*')
             logger.error('e.g. Correct  :     queues.add(myfunc)')
             return
@@ -384,4 +385,3 @@ class ThreadPoolQueueMonitor(object):
         self._user_threadpool._start_worker_threads()
         self._monitoring_threadpool._start_worker_threads()
         return
-

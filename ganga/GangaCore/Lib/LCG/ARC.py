@@ -30,6 +30,7 @@ from GangaCore.GPIDev.Base.Proxy import getName
 
 config = getConfig('LCG')
 
+
 class ARC(IBackend):
 
     '''ARC backend - direct job submission to an ARC CE'''
@@ -44,7 +45,7 @@ class ARC(IBackend):
         'exitcode_arc': SimpleItem(defvalue='', protected=1, copyable=0, doc='Middleware exit code'),
         'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='The ARC CE where the job actually runs.'),
         'queue': SimpleItem(defvalue='', typelist=[str], doc='The queue to send the job to.'),
-        'xRSLextras': SimpleItem(defvalue = None, typelist = [dict, None], doc='Extra things to put into the xRSL for submission.'),
+        'xRSLextras': SimpleItem(defvalue=None, typelist=[dict, None], doc='Extra things to put into the xRSL for submission.'),
         'reason': SimpleItem(defvalue='', protected=1, copyable=0, doc='Reason of causing the job status'),
         'workernode': SimpleItem(defvalue='', protected=1, copyable=0, doc='The worker node on which the job actually runs.'),
         'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on ARC CE'),
@@ -106,7 +107,7 @@ class ARC(IBackend):
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'GridftpSandboxCache':
-            #If the copy command is set in the config then use it.
+            # If the copy command is set in the config then use it.
             if config['ArcCopyCommand']:
                 self.sandboxcache.copyCommand = config['ArcCopyCommand']
 
@@ -761,8 +762,8 @@ sys.exit(0)
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
-        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
+        fileutils = File(inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR)
+        packed_files = jobconfig.getSandboxFiles() + [fileutils]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox
@@ -857,15 +858,15 @@ sys.exit(0)
 
         # compose ARC XRSL
         xrsl = {
-            #'VirtualOrganisation' : config['VirtualOrganisation'],
+            # 'VirtualOrganisation' : config['VirtualOrganisation'],
             'executable': os.path.basename(scriptPath),
             'environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
-            #'stdout'                : 'stdout',
-            #'stderr'                : 'stderr',
+            # 'stdout'                : 'stdout',
+            # 'stderr'                : 'stderr',
             'inputFiles': input_sandbox,
             'outputFiles': output_sandbox,
             'queue': self.queue,
-            #'OutputSandboxBaseDestURI': 'gsiftp://localhost'
+            # 'OutputSandboxBaseDestURI': 'gsiftp://localhost'
         }
 
         xrsl['environment'].update({'GANGA_LCG_CE': self.CE})
@@ -1200,8 +1201,8 @@ sys.exit(0)
             # If the credential is not valid or doesn't exist then skip it
             cred = credential_store.get(cred_req)
             if not cred or not cred.is_valid():
-                    needed_credentials.add(cred_req)
-                    continue
+                needed_credentials.add(cred_req)
+                continue
             # Create a ``Grid`` for each credential requirement and request the relevant jobs through it
             info = Grid.arc_status(job_ids, ce_list, cred_req)
             jobInfoDict.update(info)
@@ -1268,7 +1269,6 @@ sys.exit(0)
                 if not Grid.arc_purge_multiple(set(job_ids) & set(jidListForPurge), cred_req):
                     logger.warning("Failed to purge all ARC jobs.")
 
-
     def updateGangaJobStatus(self):
         '''map backend job status to Ganga job status'''
 
@@ -1300,6 +1300,5 @@ sys.exit(0)
         else:
             logger.warning('Unexpected job status "%s"', self.status)
 
+
 logger = getLogger()
-
-

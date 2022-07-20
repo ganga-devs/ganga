@@ -26,6 +26,7 @@ from GangaDirac.BOOT import stopDiracProcess
 # Globals
 logger = getLogger()
 
+
 def register_exitfunc():
     """
     This registers the exit functiona and actually tracks that it's done so,
@@ -34,6 +35,8 @@ def register_exitfunc():
     if not register_exitfunc._has_registered:
         atexit.register(_protected_ganga_exitfuncs)
         register_exitfunc._has_registered = True
+
+
 register_exitfunc._has_registered = False
 
 
@@ -81,7 +84,7 @@ def _unprotected_ganga_exitfuncs():
     try:
         stopDiracProcess()
     except Exception as err:
-        logger.exception("Exception raised while stopping the Dirac process: %s" %err)
+        logger.exception("Exception raised while stopping the Dirac process: %s" % err)
 
     # Stop the tasks system from running
     try:
@@ -156,4 +159,3 @@ def _unprotected_ganga_exitfuncs():
     # show any open files after everything's shutdown
     if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:
         bootstrap.printOpenFiles()
-

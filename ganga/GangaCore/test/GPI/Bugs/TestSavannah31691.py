@@ -31,4 +31,3 @@ class TestSavannah31691(GangaUnitTest):
             assert str(i) in dir_list
 
         assert '0' not in dir_list
-

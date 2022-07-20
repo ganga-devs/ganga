@@ -4,21 +4,24 @@ import os
 from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
+
 def assert_cannot_submit(j):
     from GangaCore.GPIDev.Lib.Job.Job import JobError
     try:
         j.submit()
         assert False, 'submit() should raise JobError'
     except JobError:
-        pass  
+        pass
+
 
 def assert_cannot_kill(j):
-    from GangaCore.GPIDev.Lib.Job.Job import JobError    
+    from GangaCore.GPIDev.Lib.Job.Job import JobError
     try:
         j.kill()
         assert False, 'kill() should raise JobError'
     except JobError:
-        pass  
+        pass
+
 
 def sleep_until_state(j, timeout=None, state='completed', break_states=None, sleep_period=1, verbose=False):
     '''
@@ -36,17 +39,17 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
 
     if timeout is None:
         timeout = config['timeout']
-        
+
     from time import sleep
     from GangaCore.Core import monitoring_component
     from GangaCore.Core.GangaRepository import getRegistryProxy
-    
+
     jobs = getRegistryProxy('jobs')
 
     current_status = None
     while j.status != state and timeout > 0:
         if not monitoring_component.isEnabled():
-            monitoring_component.runMonitoring(jobs=jobs.select(j.id,j.id))
+            monitoring_component.runMonitoring(jobs=jobs.select(j.id, j.id))
         else:
             monitoring_component.alive = True
             monitoring_component.enabled = True
@@ -58,12 +61,12 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
         if current_status is None:
             current_status = j.status
         if type(break_states) == type([]) and j.status in break_states:
-            logger.info("Job finished with status: %s" % j.status )
+            logger.info("Job finished with status: %s" % j.status)
             return False
         sleep(sleep_period)
         timeout -= sleep_period
         logger.debug("Status: %s" % j.status)
-    logger.info("Job finished with status: %s" % j.status )
+    logger.info("Job finished with status: %s" % j.status)
     logger.info("Timeout: %s" % str(timeout))
     try:
         j._getRegistry().updateLocksNow()
@@ -71,13 +74,15 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
         pass
     return j.status == state
 
+
 def sleep_until_completed(j, timeout=None, sleep_period=1, verbose=False):
-    return sleep_until_state(j, timeout, 'completed', ['new','killed','failed','unknown','removed'], verbose=verbose, sleep_period=sleep_period)
+    return sleep_until_state(j, timeout, 'completed', ['new', 'killed', 'failed', 'unknown', 'removed'], verbose=verbose, sleep_period=sleep_period)
+
 
 def is_job_state(j, states=None, break_states=None):
     if states is None:
         states = ['completed']
-    #Allow the completed state to be a list of status.
+    # Allow the completed state to be a list of status.
     if j.status in states:
         return True
     else:
@@ -87,30 +92,39 @@ def is_job_state(j, states=None, break_states=None):
                 return False
         else:
             return False
-            
+
 
 def is_job_finished(j):
     ''' Once the job status has reached the final status, then True. '''
-    return is_job_state(j, ['completed','new','killed','failed','unknown','removed'])
+    return is_job_state(j, ['completed', 'new', 'killed', 'failed', 'unknown', 'removed'])
+
 
 def is_job_completed(j):
-    return is_job_state(j, ['completed'], ['new','killed','failed','unknown','removed']) 
-        
-def file_contains(filename,string):
+    return is_job_state(j, ['completed'], ['new', 'killed', 'failed', 'unknown', 'removed'])
+
+
+def file_contains(filename, string):
     f = open(filename, 'r')
     return f.read().find(string) != -1
 
-def write_file(filename,content):
+
+def write_file(filename, content):
     """ Open,write and close the file descriptor"""
-    f = open(filename,'w')
-    try: return f.write(content)
-    finally: f.close()
+    f = open(filename, 'w')
+    try:
+        return f.write(content)
+    finally:
+        f.close()
+
 
 def read_file(filename):
     """ read the file, and safely close the file at the end"""
     f = open(filename)
-    try: return "\n%s\n" % f.read()
-    finally: f.close()
+    try:
+        return "\n%s\n" % f.read()
+    finally:
+        f.close()
+
 
 import unittest
 failureException = unittest.TestCase.failureException
@@ -118,6 +132,5 @@ failureException = unittest.TestCase.failureException
 try:
     from GangaCore.Utility.Config import getConfig
     config = getConfig('TestingFramework')
-except: # if we are outside Ganga, use a simple dict
-    config={}
-
+except:  # if we are outside Ganga, use a simple dict
+    config = {}

@@ -5,24 +5,21 @@
 # $Id: LocalFile.py,v 0.1 2011-09-29 15:40:00 idzhunov Exp $
 ##########################################################################
 
-import errno
-import re
-import os
-from os import path
 import copy
-import shutil
-from pipes import quote
+import errno
 import glob
-
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-
-from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-
-from GangaCore.GPIDev.Lib.File.File import File
-from GangaCore.GPIDev.Lib.File import FileBuffer
-from GangaCore.Utility.files import expandfilename
+import os
+import re
+import shutil
+from os import path
+from pipes import quote
 
 import GangaCore.Utility.logging
+from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.GPIDev.Lib.File import FileBuffer
+from GangaCore.GPIDev.Lib.File.File import File
+from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from GangaCore.Utility.files import expandfilename
 
 logger = GangaCore.Utility.logging.getLogger()
 

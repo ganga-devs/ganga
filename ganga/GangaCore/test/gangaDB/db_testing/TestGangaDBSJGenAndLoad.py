@@ -1,11 +1,10 @@
 import os
-import utils
+
 import pymongo
-
-from GangaCore.Utility.Config import getConfig
+import utils
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Virtualization import checkDocker
-
 
 testStr = "testFooString"
 testArgs = [[1], [2], [3], [4], [5]]
@@ -25,10 +24,9 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
-        from GangaCore.Utility.Config import getConfig
         # self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
-
-        from GangaCore.GPI import Job, jobs, ArgSplitter
+        from GangaCore.GPI import ArgSplitter, Job, jobs
+        from GangaCore.Utility.Config import getConfig
         j = Job(splitter=ArgSplitter(args=testArgs))
 
         assert len(jobs) == 1
@@ -81,7 +79,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """
         Submit the job and check if the `status` has been updated
         """
-        from GangaCore.GPI import jobs, disableMonitoring, enableMonitoring
+        from GangaCore.GPI import disableMonitoring, enableMonitoring, jobs
 
         disableMonitoring()
 
@@ -145,12 +143,10 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
     def test_f_testJsonContent(self):
         # Check their content
-        from GangaCore.GPI import jobs, Job
-        from GangaCore.GPIDev.Base.Proxy import stripProxy
-
         from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonRepresentation, object_from_database
-        )
+            JsonRepresentation, object_from_database)
+        from GangaCore.GPI import Job, jobs
+        from GangaCore.GPIDev.Base.Proxy import stripProxy
 
         job_json = self.connection.jobs.find_one(
             filter={"id": 0, "master": -1})
@@ -209,13 +205,10 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
     def test_h_testJSONIndex(self):
         # Check index of job
-        from GangaCore.GPI import jobs, Job
-        from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
         from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonRepresentation, object_from_database
-        )
-
-        from GangaCore.GPI import jobs
+            JsonRepresentation, object_from_database)
+        from GangaCore.GPI import Job, jobs
+        from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
 
         j = jobs(0)
 
@@ -243,13 +236,10 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
         # assert len(jobs) == 2
 
-        from GangaCore.GPI import jobs, Job
-        from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
         from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonRepresentation, object_from_database
-        )
-
-        from GangaCore.GPI import jobs
+            JsonRepresentation, object_from_database)
+        from GangaCore.GPI import Job, jobs
+        from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
 
         j = jobs(0)
 

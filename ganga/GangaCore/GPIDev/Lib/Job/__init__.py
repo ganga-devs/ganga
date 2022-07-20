@@ -1,3 +1,3 @@
 
+from .Job import Job, JobError, JobInfo, JobStatusError
 from .MetadataDict import MetadataDict
-from .Job import JobInfo, Job, JobStatusError, JobError

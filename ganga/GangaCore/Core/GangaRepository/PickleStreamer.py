@@ -7,6 +7,7 @@ from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 
+
 def from_file(fobj):
     return (pickle.load(fobj), [])
 

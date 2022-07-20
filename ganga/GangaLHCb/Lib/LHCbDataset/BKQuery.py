@@ -16,6 +16,7 @@ from GangaLHCb.Lib.Backends.Dirac import filterLFNsBySE
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+
 class BKQuery(GangaObject):
 
     '''Class for handling LHCb bookkeeping queries.
@@ -94,8 +95,9 @@ RecoToDST-07/90000000/DST" ,
     docstr = 'Selection criteria: Runs, ProcessedRuns, NotProcessed (only works for type="RunsByDate")'
     schema['selection'] = SimpleItem(defvalue='', doc=docstr)
     schema['credential_requirements'] = ComponentItem('CredentialRequirement', defvalue='DiracProxy')
-    schema['check_archived'] = SimpleItem(defvalue=True, typelist=['bool'], doc = 'Check if the data set is archived')
-    schema['ignore_archived'] = SimpleItem(defvalue=False, typelist=['bool'], doc = 'Return the data set, even if all the LFNs are archived')
+    schema['check_archived'] = SimpleItem(defvalue=True, typelist=['bool'], doc='Check if the data set is archived')
+    schema['ignore_archived'] = SimpleItem(defvalue=False, typelist=['bool'],
+                                           doc='Return the data set, even if all the LFNs are archived')
     _schema = Schema(Version(1, 2), schema)
     _category = 'query'
     _name = "BKQuery"
@@ -122,11 +124,13 @@ RecoToDST-07/90000000/DST" ,
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)
-        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
+        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag,
+                                                             self.type, self.startDate, self.endDate, self.selection)
         from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
         knownLists = [tuple, list, GangaList]
         if isType(self.dqflag, knownLists):
-            cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
+            cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag,
+                                                               self.type, self.startDate, self.endDate, self.selection)
 
         try:
             value = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
@@ -147,7 +151,7 @@ RecoToDST-07/90000000/DST" ,
         return {'OK': False, 'Value': metadata}
 
     @require_credential
-    def getDataset(self, compressed = True, SE = None):
+    def getDataset(self, compressed=True, SE=None):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
             return None
@@ -163,7 +167,8 @@ RecoToDST-07/90000000/DST" ,
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)
-        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
+        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag,
+                                                             self.type, self.startDate, self.endDate, self.selection)
         from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
         knownLists = [tuple, list, GangaList]
         if isType(self.dqflag, knownLists):
@@ -184,13 +189,14 @@ RecoToDST-07/90000000/DST" ,
 
         logger.debug("Creating dataset")
 
-        #If we think this is an MC request check to see if the data set has been archived.
+        # If we think this is an MC request check to see if the data set has been archived.
         isMC = False
         if 'MC' == self.path.split('/')[1]:
             isMC = True
         if isMC and self.check_archived:
             logger.debug('Detected an MC data set. Checking if it has been archived')
-            all_reps = get_result("getReplicas(%s)" % files, 'Get replica error.', credential_requirements=self.credential_requirements)
+            all_reps = get_result("getReplicas(%s)" % files, 'Get replica error.',
+                                  credential_requirements=self.credential_requirements)
             if 'Successful' in all_reps:
                 all_ses = set([])
                 for _lfn, _repz in all_reps['Successful'].items():
@@ -198,14 +204,17 @@ RecoToDST-07/90000000/DST" ,
 
             all_archived = True
             for _se in all_ses:
-                is_archived = get_result("isSEArchive('%s')" % _se, 'Check archive error.', credential_requirements=self.credential_requirements)
+                is_archived = get_result("isSEArchive('%s')" % _se, 'Check archive error.',
+                                         credential_requirements=self.credential_requirements)
                 if not is_archived:
                     all_archived = False
                     break
             if all_archived and not self.ignore_archived:
-                raise GangaDiracError("All the files are only available on archive SEs. It is likely the data set has been archived. Contact data management to request that it be staged")
+                raise GangaDiracError(
+                    "All the files are only available on archive SEs. It is likely the data set has been archived. Contact data management to request that it be staged")
             elif all_archived:
-                logger.warning("All the files are only available on archive SEs. It is likely the data set has been archived. Contact data management to request that it be staged")
+                logger.warning(
+                    "All the files are only available on archive SEs. It is likely the data set has been archived. Contact data management to request that it be staged")
 
         if compressed:
             ds = LHCbCompressedDataset(files)
@@ -251,9 +260,9 @@ class BKQueryDict(GangaObject):
                         'EventType': 'All',
                         'ConfigName': 'All',
                         'ConfigVersion': 'All',
-                        'ProductionID':     0,
-                        'StartRun':     0,
-                        'EndRun':     0,
+                        'ProductionID': 0,
+                        'StartRun': 0,
+                        'EndRun': 0,
                         'DataQuality': 'All'}
 
     schema = {}
@@ -278,7 +287,7 @@ class BKQueryDict(GangaObject):
         try:
             value = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
         except GangaDiracError as err:
-            return {'OK':False, 'Value': {}}
+            return {'OK': False, 'Value': {}}
 
         files = []
         if 'LFNs' in value:

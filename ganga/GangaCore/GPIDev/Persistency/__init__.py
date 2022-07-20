@@ -146,8 +146,7 @@ def fullpath(filename=""):
 
        Return value: String giving absolute path to file
     """
-    filepath = os.path.abspath\
-        (os.path.expandvars(os.path.expanduser(filename)))
+    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filename)))
     return filepath
 
 
@@ -220,4 +219,3 @@ def load(filename="", returnList=True):
         returnValue = objectList
 
     return returnValue
-

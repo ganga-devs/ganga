@@ -10,6 +10,7 @@ from GangaCore.GPIDev.Schema import Schema, Version, ComponentItem
 from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 
+
 class PostProcessException(GangaException):
 
     def __init__(self, x=''):
@@ -156,12 +157,12 @@ def postprocessor_filter(value, item):
         ds = MultiPostProcessor()
         if isinstance(value, list) or isType(value, GangaList):
             for item_ in value:
-            	ds.append(item_)
+                ds.append(item_)
         else:
             ds.append(value)
         return ds
     else:
         raise PostProcessException("j.postprocessors only takes objects of category 'postprocessor'")
 
-allComponentFilters['postprocessor'] = postprocessor_filter
 
+allComponentFilters['postprocessor'] = postprocessor_filter

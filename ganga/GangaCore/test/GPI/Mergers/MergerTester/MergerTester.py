@@ -7,8 +7,8 @@
 from GangaCore.GPIDev.Adapters.IMerger import IMerger
 from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
 from GangaCore.GPIDev.Schema import SimpleItem
-
 from GangaCore.Utility.logging import getLogger
+
 logger = getLogger(modulename=True)
 
 

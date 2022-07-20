@@ -4,9 +4,10 @@ This module contains all the Ganga Core specific exceptions used throughout the 
 
 """
 
+
 class GangaException(Exception):
     """Basic Ganga Exception class"""
-    __slots__=list()
+    __slots__ = list()
 
     def __str__(self):
         """
@@ -20,10 +21,12 @@ class GangaFileError(GangaException):
     This is intended to be thrown as an IGangaFile Error during Runtime
     """
 
+
 class GangaDiskSpaceError(GangaException):
     """
     Specific for issues with running out of disk space
     """
+
 
 class PluginError(GangaException):
     """
@@ -149,6 +152,7 @@ class RepositoryError(GangaException):
         except:
             logger.error("Unable to disable Internal services, they may have already been disabled!")
 
+
 class CredentialsError(GangaException):
     """
     Base class for credential-related errors
@@ -172,6 +176,7 @@ class ExpiredCredentialError(InvalidCredentialError):
     The credential has expired
     """
 
+
 class GangaKeyError(GangaException, KeyError):
     """
     Class used for known Ganga-related KeyError exception (generally to do with Credential Store) that will consequently
@@ -186,6 +191,7 @@ class GangaKeyError(GangaException, KeyError):
         KeyError.__init__(self, *args)
         self.kwds = kwds
 
+
 class GangaTypeError(GangaException, TypeError):
     """
     Class analogous to GangaKeyError. This class wraps TypeError so that users are prevented from seeing stack traces from known good exceptions thrown in Ganga code.
@@ -195,4 +201,3 @@ class GangaTypeError(GangaException, TypeError):
         super(GangaException, self).__init__(args)
         TypeError.__init__(self, *args)
         self.kwds = kwds
-

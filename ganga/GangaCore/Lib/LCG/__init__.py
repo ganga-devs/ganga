@@ -1,10 +1,11 @@
 
-from .LCG import LCG, LCGJobConfig
-from .CREAM import CREAM
 from .ARC import ARC
-from .LCGRequirements import LCGRequirements
-from .GridSandboxCache import GridFileIndex, GridSandboxCache
-from .LCGSandboxCache import LCGFileIndex, LCGSandboxCache
-from .GridftpSandboxCache import GridftpFileIndex, GridftpSandboxCache
+from .CREAM import CREAM
 from .ElapsedTimeProfiler import ElapsedTimeProfiler
-from .LCGOutputDownloader import LCGOutputDownloadTask, LCGOutputDownloadAlgorithm, LCGOutputDownloader
+from .GridftpSandboxCache import GridftpFileIndex, GridftpSandboxCache
+from .GridSandboxCache import GridFileIndex, GridSandboxCache
+from .LCG import LCG, LCGJobConfig
+from .LCGOutputDownloader import (LCGOutputDownloadAlgorithm,
+                                  LCGOutputDownloader, LCGOutputDownloadTask)
+from .LCGRequirements import LCGRequirements
+from .LCGSandboxCache import LCGFileIndex, LCGSandboxCache

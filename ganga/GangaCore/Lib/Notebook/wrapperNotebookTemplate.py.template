@@ -6,7 +6,9 @@ from __future__ import print_function
 # Main
 if __name__ == '__main__':
 
-    import sys, os, re
+    import os
+    import re
+    import sys
     print (sys.version)
 
     print('Unique identifier : ','###UUID###')

@@ -113,7 +113,7 @@ class Remote(IBackend):
 
     _category = "backends"
     _name = "Remote"
-    #_hidden = False # KUBA: temporarily disabled from the public
+    # _hidden = False # KUBA: temporarily disabled from the public
     _port = 22
     _transport = None
     _sftp = None
@@ -284,7 +284,7 @@ print("***_FINISHED_***")
                 num_try = 1000
 
             except Exception as err:
-                logger.debug("Err: %s" %str(err))
+                logger.debug("Err: %s" % str(err))
                 logger.warning("Error when comunicating with remote host. Retrying...")
                 self._transport = None
                 self._sftp = None
@@ -927,4 +927,3 @@ print("***_FINISHED_***")
             j.backend._sftp.remove(j.backend.ganga_dir + script_name)
 
         return None
-

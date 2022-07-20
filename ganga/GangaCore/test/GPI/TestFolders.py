@@ -1,6 +1,5 @@
 
 
-
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 # FIXME: THE TREE SHOULD BE CLEANED IN-BETWEEN TESTS, THIS WILL BE ADDED SOON
@@ -143,4 +142,3 @@ class TestFolders(GangaUnitTest):
         assert(jobtree_copy is jobtree)
         #del jobtree_copy
     # -------------
-

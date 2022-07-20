@@ -22,6 +22,7 @@ class TestAttribute(GangaObject):
 
 
 ######### migration ######################################################
+
     def getMigrationClass(cls, version):
         """This class method returns a (stub) class compatible with the schema <version>.
         Alternatively, it may return a (stub) class with a schema more recent than schema <version>,

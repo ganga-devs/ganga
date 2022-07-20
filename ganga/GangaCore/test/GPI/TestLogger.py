@@ -2,6 +2,8 @@ import logging
 from GangaCore.Utility.logging import getLogger, _formats
 
 # Test if logger works properly
+
+
 def test_logging(gpi):
 
     # Assert False if any error is thrown
@@ -23,6 +25,7 @@ def test_logging(gpi):
     except:
         assert False, "Should not throw any error"
 
+
 def test_message_caching(gpi):
 
     import time
@@ -30,7 +33,7 @@ def test_message_caching(gpi):
     # Assert False if any error is thrown
     try:
         l = getLogger()
-        
+
         def f(name=''):
             for i in range(5):
                 l.warning(name + str(i))
@@ -50,4 +53,3 @@ def test_message_caching(gpi):
         assert True
     except:
         assert False, "Should not throw any error"
-    

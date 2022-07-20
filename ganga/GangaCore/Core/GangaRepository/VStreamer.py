@@ -48,6 +48,7 @@ class XMLFileError(GangaException):
             err = ''
         return "XMLFileError: %s %s" % (self.message, err)
 
+
 def _raw_to_file(j, fobj=None, ignore_subs=[]):
     sio = StringIO()
     vstreamer = VStreamer(out=sio, selection=ignore_subs)
@@ -56,10 +57,11 @@ def _raw_to_file(j, fobj=None, ignore_subs=[]):
     vstreamer.end_root()
     print(sio.getvalue(), file=fobj)
 
+
 def to_file(j, fobj=None, ignore_subs=[]):
-    #used to debug write problems - rcurrie
+    # used to debug write problems - rcurrie
     #_raw_to_file(j, fobj, ignore_subs)
-    #return
+    # return
     _ignore_subs = [ignore_subs] if not isinstance(ignore_subs, list) else ignore_subs
     try:
         _raw_to_file(j, fobj, _ignore_subs)
@@ -83,6 +85,7 @@ def to_file(j, fobj=None, ignore_subs=[]):
 # * AssertionError (corruption: multiple objects in <root>...</root>
 # * Exception (probably corrupted data problem)
 
+
 def _raw_from_file(f):
     # logger.debug('----------------------------')
     ###logger.debug('Parsing file: %s',f.name)
@@ -90,8 +93,9 @@ def _raw_from_file(f):
     obj, errors = Loader().parse(xml_content)
     return obj, errors
 
+
 def from_file(f):
-    #return _raw_from_file(f)
+    # return _raw_from_file(f)
     try:
         return _raw_from_file(f)
     except Exception as err:
@@ -125,7 +129,8 @@ def fastXML(obj, indent='', ignore_subs=''):
         return sl
     elif hasattr(obj, '_data'):
         v = obj._schema.version
-        sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
+        sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' %
+              (getName(obj), v.major, v.minor, obj._category)]
         for attr_name in obj._schema.allItemNames():
             k = attr_name
             o = getattr(obj, k)
@@ -177,7 +182,8 @@ class VStreamer(object):
     def nodeBegin(self, node):
         self.level += 1
         s = node._schema
-        print(self.indent(), '<class name="%s" version="%d.%d" category="%s">' % (s.name, s.version.major, s.version.minor, s.category), file=self.out)
+        print(self.indent(), '<class name="%s" version="%d.%d" category="%s">' %
+              (s.name, s.version.major, s.version.minor, s.category), file=self.out)
 
     def nodeEnd(self, node):
         print(self.indent(), '</class>', file=self.out)
@@ -294,7 +300,7 @@ class Loader(object):
 
         # 3 handler functions
         def start_element(name, attrs):
-            #logger.debug('Start element: name=%s attrs=%s', name, attrs) #FIXME: for 2.4 use CurrentColumnNumber and CurrentLineNumber
+            # logger.debug('Start element: name=%s attrs=%s', name, attrs) #FIXME: for 2.4 use CurrentColumnNumber and CurrentLineNumber
             # if higher level element had error, ignore the corresponding part
             # of the XML tree as we go down
             if self.ignore_count:
@@ -325,7 +331,8 @@ class Loader(object):
                     version = Version(*[int(v) for v in attrs['version'].split('.')])
                     if not cls._schema.version.isCompatible(version):
                         attrs['currversion'] = '%s.%s' % (cls._schema.version.major, cls._schema.version.minor)
-                        self.errors.append(SchemaVersionError('Incompatible schema of %(name)s, repository is %(version)s currently in use is %(currversion)s' % attrs))
+                        self.errors.append(SchemaVersionError(
+                            'Incompatible schema of %(name)s, repository is %(version)s currently in use is %(currversion)s' % attrs))
                         obj = EmptyGangaObject()
                         # ignore all elemenents until the corresponding ending
                         # element (</class>) is reached
@@ -366,7 +373,8 @@ class Loader(object):
                 try:
                     obj.setSchemaAttribute(aname, value)
                 except:
-                    raise GangaException("ERROR in loading XML, failed to set attribute %s for class %s" % (aname, _getName(obj)))
+                    raise GangaException(
+                        "ERROR in loading XML, failed to set attribute %s for class %s" % (aname, _getName(obj)))
                 #logger.info("Setting: %s = %s" % (aname, value))
 
             # when </value> is seen the value_construct buffer (CDATA) should
@@ -391,7 +399,8 @@ class Loader(object):
                     self.stack.append(val)
                     self.value_construct = None
                 except:
-                    raise GangaException("ERROR in loading XML, failed to correctly parse attribute value: \'%s\'" % str(self.value_construct))
+                    raise GangaException(
+                        "ERROR in loading XML, failed to correctly parse attribute value: \'%s\'" % str(self.value_construct))
 
             # when </sequence> is seen we remove last items from stack (as indicated by sequence_start)
             # we make a GangaList from these items and put it on stack
@@ -418,7 +427,8 @@ class Loader(object):
                                 try:
                                     setattr(obj, attr, self._schema.getDefaultValue(attr))
                                 except:
-                                    raise GangaException("ERROR in loading XML, failed to set default attribute %s for class %s" % (attr, _getName(obj)))
+                                    raise GangaException(
+                                        "ERROR in loading XML, failed to set default attribute %s for class %s" % (attr, _getName(obj)))
                 pass
 
         def char_data(data):
@@ -450,4 +460,3 @@ class Loader(object):
             if not hasattr(obj, attr):
                 raise AssertionError("incomplete XML file")
         return obj, self.errors
-

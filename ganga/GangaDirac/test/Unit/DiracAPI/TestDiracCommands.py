@@ -95,7 +95,8 @@ echo '%s' > removeFile.dst
     cred_req = DiracProxy(group='gridpp_user')
     credential_store.create(cred_req)
 
-    final_submit_script = api_script.replace('###EXE_SCRIPT###', exe_path_name).replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name))
+    final_submit_script = api_script.replace('###EXE_SCRIPT###', exe_path_name).replace(
+        '###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name))
     confirm = execute(final_submit_script, cred_req=cred_req, return_raw_dict=True)
     print('Output from submit command', confirm)
     if not isinstance(confirm, dict):
@@ -113,7 +114,7 @@ echo '%s' > removeFile.dst
     end_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=timeout)
     status = execute('status([%s], %s)' % (job_id, repr(statusmapping)), cred_req=cred_req, return_raw_dict=True)
     print('Output from first status command', status)
-    while (status['OK'] and statusmapping[status['Value'][0][1]] not in ['completed', 'failed'] )and datetime.datetime.utcnow() < end_time:
+    while (status['OK'] and statusmapping[status['Value'][0][1]] not in ['completed', 'failed']) and datetime.datetime.utcnow() < end_time:
         time.sleep(5)
         status = execute('status([%s], %s)' % (job_id, repr(statusmapping)), cred_req=cred_req, return_raw_dict=True)
         print("Job status: %s" % status)
@@ -132,8 +133,8 @@ echo '%s' > removeFile.dst
         time.sleep(5)
         output_data_info = execute('getOutputDataInfo("%s")' % job_id, cred_req=cred_req, return_raw_dict=True)
         logger.info("output_data_info:\n%s\n", output_data_info)
-        count+=1
-    
+        count += 1
+
     assert 'OK' in output_data_info, 'getOutputDataInfo Failed!'
     assert output_data_info['OK'], 'getOutputDataInfo Failed!'
 
@@ -204,7 +205,8 @@ class TestDiracCommands(object):
         assert isinstance(confirm['Value'], str), 'normCPUTime ommand not executed successfully'
 
     def test_getStateTime(self, dirac_job):
-        confirm = execute('getStateTime("%s", "completed")' % dirac_job.id, cred_req=dirac_job.cred_req, return_raw_dict=True)
+        confirm = execute('getStateTime("%s", "completed")' % dirac_job.id,
+                          cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'getStateTime command not executed successfully'
         assert isinstance(confirm['Value'], datetime.datetime), 'getStateTime command not executed successfully'
@@ -227,7 +229,8 @@ class TestDiracCommands(object):
         assert confirm['OK'], 'kill command not executed successfully'
 
     def test_status(self, dirac_job):
-        confirm = execute('status([%s], %s)' % (dirac_job.id, repr(statusmapping)), cred_req=dirac_job.cred_req, return_raw_dict=True)
+        confirm = execute('status([%s], %s)' % (dirac_job.id, repr(statusmapping)),
+                          cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'status command not executed successfully'
         assert isinstance(confirm['Value'], list), 'Command not executed successfully'
@@ -238,7 +241,8 @@ class TestDiracCommands(object):
         assert confirm['OK'], 'getFile command not executed successfully'
 
     def test_removeFile(self, dirac_job):
-        confirm = execute('removeFile("%s")' % dirac_job.remove_file_lfn, cred_req=dirac_job.cred_req, return_raw_dict=True)
+        confirm = execute('removeFile("%s")' % dirac_job.remove_file_lfn,
+                          cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'removeFile command not executed successfully'
 
@@ -248,31 +252,37 @@ class TestDiracCommands(object):
         assert confirm['OK'], 'ping command not executed successfully'
 
     def test_getMetadata(self, dirac_job):
-        confirm = execute('getMetadata("%s")' % dirac_job.get_file_lfn, cred_req=dirac_job.cred_req, return_raw_dict=True)
+        confirm = execute('getMetadata("%s")' % dirac_job.get_file_lfn,
+                          cred_req=dirac_job.cred_req, return_raw_dict=True)
         assert confirm['OK'], 'getMetaData command not executed successfully'
 
     def test_getReplicas(self, dirac_job):
-        confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn, cred_req=dirac_job.cred_req, return_raw_dict=True)
+        confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn,
+                          cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'getReplicas command not executed successfully'
 
     def test_getAccessURL(self, dirac_job):
-        confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn, cred_req=dirac_job.cred_req, return_raw_dict=True)
+        confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn,
+                          cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'getReplicas command not executed successfully'
         SE = random.choice(list(confirm['Value']['Successful'][dirac_job.get_file_lfn].keys()))
-        accessResult = execute('getAccessURL("%s", "%s")' % (dirac_job.get_file_lfn, SE), cred_req=dirac_job.cred_req, return_raw_dict = True)
+        accessResult = execute('getAccessURL("%s", "%s")' % (dirac_job.get_file_lfn, SE),
+                               cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(accessResult)
         assert accessResult['OK'], 'getAccessURL command not executed successfully'
 
     def test_replicateFile(self, dirac_job, dirac_sites):
 
         for new_location in dirac_sites:
-            confirm = execute('replicateFile("%s","%s","")' % (dirac_job.get_file_lfn, new_location), cred_req=dirac_job.cred_req, return_raw_dict=True)
+            confirm = execute('replicateFile("%s","%s","")' % (dirac_job.get_file_lfn, new_location),
+                              cred_req=dirac_job.cred_req, return_raw_dict=True)
             logger.info(confirm)
             if not confirm['OK']:
                 continue  # If we couldn't add the file, try the next site
-            confirm = execute('removeReplica("%s","%s")' % (dirac_job.get_file_lfn, new_location), cred_req=dirac_job.cred_req, return_raw_dict=True)
+            confirm = execute('removeReplica("%s","%s")' % (dirac_job.get_file_lfn, new_location),
+                              cred_req=dirac_job.cred_req, return_raw_dict=True)
             logger.info(confirm)
             assert confirm['OK'], 'Command not executed successfully'
             break  # Once we found a working site, stop looking
@@ -280,7 +290,8 @@ class TestDiracCommands(object):
             raise AssertionError('No working site found')
 
     def test_splitInputData(self, dirac_job):
-        confirm = execute('splitInputData("%s","1")' % dirac_job.get_file_lfn, cred_req=dirac_job.cred_req, return_raw_dict=True)
+        confirm = execute('splitInputData("%s","1")' % dirac_job.get_file_lfn,
+                          cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'splitInputData command not executed successfully'
 
@@ -292,7 +303,8 @@ class TestDiracCommands(object):
             temp_file = tmpdir.join('upload_file')
             temp_file.write(uuid.uuid4())
             logger.info('Adding file to %s', location)
-            confirm = execute('uploadFile("%s","%s",["%s"],"")' % (new_lfn, temp_file, location), cred_req=dirac_job.cred_req, return_raw_dict=True)
+            confirm = execute('uploadFile("%s","%s",["%s"],"")' % (
+                new_lfn, temp_file, location), cred_req=dirac_job.cred_req, return_raw_dict=True)
             logger.info(confirm)
             if confirm.get(location, False):
                 continue  # If we couldn't add the file, try the next site
@@ -312,7 +324,8 @@ class TestDiracCommands(object):
             temp_file = tmpdir.join('add_file')
             temp_file.write(uuid.uuid4())
             logger.info('Adding file to %s', location)
-            confirm = execute('addFile("%s","%s","%s","")' % (new_lfn, temp_file, location), cred_req=dirac_job.cred_req, return_raw_dict=True)
+            confirm = execute('addFile("%s","%s","%s","")' % (new_lfn, temp_file, location),
+                              cred_req=dirac_job.cred_req, return_raw_dict=True)
             logger.info(confirm)
             if not confirm['OK']:
                 continue  # If we couldn't add the file, try the next site

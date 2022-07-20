@@ -1,11 +1,12 @@
 import os
-import utils
-import pymongo
 
-from GangaCore.Utility.Config import getConfig
+import pymongo
+import utils
+from GangaCore.Core.GangaRepository.container_controllers import (
+    checkNative, get_database_config)
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Virtualization import checkDocker
-from GangaCore.Core.GangaRepository.container_controllers import get_database_config, checkNative
 
 HOST, PORT = utils.get_host_port()
 
@@ -46,7 +47,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
         """
         Submit the job and check if the `status` has been updated
         """
-        from GangaCore.GPI import jobs, disableMonitoring, enableMonitoring
+        from GangaCore.GPI import disableMonitoring, enableMonitoring, jobs
 
         disableMonitoring()
 
@@ -90,12 +91,10 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
         Assert that the json saved in the database is valid enough to regenerate that job
         """
-        from GangaCore.GPI import jobs, Job
-        from GangaCore.GPIDev.Base.Proxy import stripProxy
-
         from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonRepresentation, object_from_database
-        )
+            JsonRepresentation, object_from_database)
+        from GangaCore.GPI import Job, jobs
+        from GangaCore.GPIDev.Base.Proxy import stripProxy
 
         # job_json = object_from_database(_filter={"name": "modified_name"})
         job_json = self.connection.jobs.find_one(
@@ -116,13 +115,10 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
         Assert that the json saved in the database is valid enough to regenerate that job
         """
-        from GangaCore.GPI import jobs, Job
-        from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
         from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonRepresentation, object_from_database
-        )
-
-        from GangaCore.GPI import jobs
+            JsonRepresentation, object_from_database)
+        from GangaCore.GPI import Job, jobs
+        from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
 
         j = jobs(0)
 

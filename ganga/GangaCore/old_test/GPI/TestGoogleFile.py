@@ -13,21 +13,21 @@ class TestGoogleFile(GangaGPITestCase):
 
     def test__init__(self):
         self.assertEqual(
-            self.gf.namePattern, 'np',  'namePattern not initialised as np')
+            self.gf.namePattern, 'np', 'namePattern not initialised as np')
         self.assertEqual(
-            self.gf.localDir,    '', 'localDir not default initialised as None')
+            self.gf.localDir, '', 'localDir not default initialised as None')
 
         g1 = GoogleFile()
         self.assertEqual(
             g1.namePattern, '', 'namePattern not default initialised as empty')
         self.assertEqual(
-            g1.localDir,    '', 'localDir not default initialised as None')
+            g1.localDir, '', 'localDir not default initialised as None')
 
         g2 = GoogleFile(namePattern='np')
         self.assertEqual(
-            g2.namePattern, 'np',  'namePattern not keyword initialised as np')
+            g2.namePattern, 'np', 'namePattern not keyword initialised as np')
         self.assertEqual(
-            g1.localDir,    '', 'localDir not default initialised as None')
+            g1.localDir, '', 'localDir not default initialised as None')
 
     def test__on_attribute__set__(self):
         g1 = self.gf._on_attribute__set__('', 'dummyAttrib')

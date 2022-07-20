@@ -8,7 +8,6 @@
 """
 
 
-
 # all public GPI names will be exported here
 import GangaCore.GPI
 
@@ -18,9 +17,11 @@ from GangaCore.GPIDev.Base.Proxy import isType, addProxy
 from GangaCore.GPIDev.Base.Objects import GangaObject
 from inspect import isclass
 
+
 def _addToInterface(interface, name, _object):
 
     setattr(interface, name, addProxy(_object))
+
 
 def exportToInterface(myInterface, name, _object, doc_section, docstring=None):
     '''
@@ -38,6 +39,7 @@ def exportToInterface(myInterface, name, _object, doc_section, docstring=None):
     _addToInterface(myInterface, name, _object)
     adddoc(name, getattr(myInterface, name), doc_section, docstring)
 
+
 def exportToGPI(name, _object, doc_section, docstring=None):
     '''
     Make object available publicly as "name" in GangaCore.GPI module. Add automatic documentation to gangadoc system.
@@ -53,6 +55,7 @@ def exportToGPI(name, _object, doc_section, docstring=None):
 
     exportToInterface(GangaCore.GPI, name, _object, doc_section, docstring)
     adddoc(name, getattr(GangaCore.GPI, name), doc_section, docstring)
+
 
 def _importFromGPI(name):
     '''

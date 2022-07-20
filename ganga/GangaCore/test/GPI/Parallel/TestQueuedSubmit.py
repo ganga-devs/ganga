@@ -3,7 +3,6 @@
 import time
 
 import pytest
-
 from GangaCore.testlib.decorators import add_config
 from GangaCore.testlib.monitoring import run_until_completed
 
@@ -23,7 +22,7 @@ class TestQueuedSubmit(object):
         assert num_threads == global_num_threads
 
     def test_b_SetupJobs(self):
-        from GangaCore.GPI import Job, jobs, Executable
+        from GangaCore.GPI import Executable, Job, jobs
 
         for i in range(global_num_jobs):
             print('creating job', end=' ')

@@ -5,7 +5,6 @@
 # different machines)
 
 
-
 import functools
 import threading
 from collections import namedtuple
@@ -45,6 +44,7 @@ except ConfigError as err:
 
 session_lock_refresher = None
 
+
 def setupGlobalLockRef(session_name, sdir, gfn, _on_afs):
     global session_lock_refresher
     if session_lock_refresher is None:
@@ -59,8 +59,10 @@ def setupGlobalLockRef(session_name, sdir, gfn, _on_afs):
         session_lock_refresher.start()
     return session_lock_refresher
 
+
 sessionFiles = []
 sessionFileHandlers = []
+
 
 def registerGlobalSessionFile(thisSessionFile):
     global sessionFiles
@@ -140,20 +142,20 @@ class SessionLockRefresher(GangaThread):
                 self.clearDeadLocks(now)
 
         except Exception as x:
-            logger.warning( "Internal exception in session lock thread: %s %s" % (getName(x), x))
+            logger.warning("Internal exception in session lock thread: %s %s" % (getName(x), x))
 
     def updateNow(self):
         try:
             for index in range(len(self.fns)):
                 now = self.delayedUpdateLocks(index)
         except Exception as x:
-            logger.warning("Internal exception in Updating session lock thread: %s %s" % ( getName(x), x))
+            logger.warning("Internal exception in Updating session lock thread: %s %s" % (getName(x), x))
 
     def delayedUpdateLocks(self, index):
 
         this_index_file = self.fns[index]
         if this_index_file in self.FileCheckTimes:
-            if abs(self.FileCheckTimes[this_index_file]-time.time()) >= 3:
+            if abs(self.FileCheckTimes[this_index_file] - time.time()) >= 3:
                 now = self.updateLocksNow(index)
                 self.FileCheckTimes[this_index_file] = now
         else:
@@ -168,7 +170,7 @@ class SessionLockRefresher(GangaThread):
         try:
             oldnow = os.stat(this_index_file).st_ctime
             os.system('touch "%s"' % this_index_file)
-            now = os.stat(this_index_file).st_ctime # os.stat(self.fn).st_ctime
+            now = os.stat(this_index_file).st_ctime  # os.stat(self.fn).st_ctime
         except OSError as x:
             if x.errno != errno.ENOENT:
                 logger.debug("Session file timestamp could not be updated! Locks could be lost!")
@@ -177,19 +179,21 @@ class SessionLockRefresher(GangaThread):
                         logger.debug("Attempting to lock file again, unknown error:\n'%s'" % x)
                         import time
                         time.sleep(0.5)
-                        failcount=failCount+1
+                        failcount = failCount + 1
                         now = self.updateLocksNow(index, failcount)
                     except Exception as err:
                         now = -999.
-                        logger.debug("Received another type of exception, failing to update lockfile: %s" % this_index_file)
+                        logger.debug("Received another type of exception, failing to update lockfile: %s" %
+                                     this_index_file)
                 else:
                     logger.warning("Failed to update lock file: %s 5 times." % this_index_file)
-                    logger.warning("This could be due to a filesystem problem, or multiple versions of ganga trying to access the same file")
+                    logger.warning(
+                        "This could be due to a filesystem problem, or multiple versions of ganga trying to access the same file")
                     now = -999.
             else:
                 if self.repos[index] is not None:
                     raise RepositoryError(self.repos[index],
-                    "[SessionFileUpdate] Run: Own session file not found! Possibly deleted by another ganga session.\n\
+                                          "[SessionFileUpdate] Run: Own session file not found! Possibly deleted by another ganga session.\n\
                     Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
                     On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" % (this_index_file, x))
                 else:
@@ -204,7 +208,7 @@ class SessionLockRefresher(GangaThread):
             session_files = [f for f in ls_sdir if f.endswith(".session") and f.find(str(os.getpid())) == -1]
             lock_files = [f for f in ls_sdir if f.endswith(".locks") and f.find(str(os.getpid())) == -1]
 
-            ## Loop over locks which aren't belonging to this session!
+            # Loop over locks which aren't belonging to this session!
             for sf in session_files:
                 joined_path = os.path.join(self.sdir, sf)
                 if joined_path in self.fns:
@@ -212,7 +216,8 @@ class SessionLockRefresher(GangaThread):
                 mtm = os.stat(joined_path).st_mtime
                 global session_expiration_timeout
                 if now - mtm > session_expiration_timeout:
-                    logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
+                    logger.warning("Removing session %s because of inactivity (no update since %s seconds)" %
+                                   (sf, now - mtm))
                     os.unlink(joined_path)
                     session_files.remove(sf)
 
@@ -262,6 +267,7 @@ def synchronised(f):
             return f(self, *args, **kwargs)
     return decorated
 
+
 def dry_run_unix_locks(folder):
     """
     This attempts to make a 'sessions/test_lock' file in folder and lock it using unix lock commands
@@ -291,6 +297,7 @@ def dry_run_unix_locks(folder):
                 fcntl.flock(f_lock, fcntl.LOCK_UN)
 
     os.unlink(test_file)
+
 
 def global_disk_lock(f):
     @functools.wraps(f)
@@ -327,7 +334,9 @@ def global_disk_lock(f):
 
     return decorated_global
 
+
 global_disk_lock.global_lock = threading.Lock()
+
 
 class SessionLockManager(object):
 
@@ -460,7 +469,8 @@ class SessionLockManager(object):
                     session_lock_refresher = None
             os.unlink(self.fn)
         except OSError as x:
-            logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, x))
+            logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" %
+                         (self.fn, self.gfn, x))
 
     # Global lock function
     def global_lock_setup(self):
@@ -549,7 +559,8 @@ class SessionLockManager(object):
                     # 00)) # read up to 1 MB (that is more than enough...)
                     return pickle.loads(os.read(fd, 1048576))
                 except Exception as x:
-                    logger.warning("corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)." % (fn, getName(x), x))
+                    logger.warning(
+                        "corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)." % (fn, getName(x), x))
             finally:
                 if fd is not None:
                     if not self.afs:  # additional locking for NFS
@@ -668,7 +679,8 @@ class SessionLockManager(object):
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "OSError on count file '%s' write: %s" % (self.cntfn, x))
             else:
-                raise RepositoryError(self.repo, "Count file '%s' not found! Repository was modified externally!" % (self.cntfn))
+                raise RepositoryError(
+                    self.repo, "Count file '%s' not found! Repository was modified externally!" % (self.cntfn))
         except IOError as x:
             raise RepositoryError(self.repo, "Locking error on count file '%s' write: %s" % (self.cntfn, x))
         finally:
@@ -830,7 +842,8 @@ class SessionLockManager(object):
         Tries to determine the other sessions that are active and returns an informative string for each of them.
         """
         session_lock_refresher.checkAndReap()
-        sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir, s) == self.gfn]
+        sessions = [s for s in os.listdir(self.sdir) if s.endswith(
+            ".session") and not os.path.join(self.sdir, s) == self.gfn]
         return [self.session_to_info(session) for session in sessions]
 
     @synchronised
@@ -842,7 +855,8 @@ class SessionLockManager(object):
         Returns True on success, False on error."""
         failed = False
         #sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir, s) == self.gfn]
-        sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and int(str(s).split('.')[-2]) != int(os.getpid())]
+        sessions = [s for s in os.listdir(self.sdir) if s.endswith(
+            ".session") and int(str(s).split('.')[-2]) != int(os.getpid())]
         metadata_lock_files = [s for s in os.listdir(self.sdir) if s.endswith("metadata.locks")]
         all_lock_files = [s for s in os.listdir(self.sdir) if s.endswith(".locks")]
         lock_files = [s for s in all_lock_files if s not in metadata_lock_files]
@@ -869,5 +883,5 @@ class SessionLockManager(object):
         try:
             return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], ".".join(si[-5:-3]))
         except Exception as err:
-            logger.debug( "Session Info Exception: %s" % err)
+            logger.debug("Session Info Exception: %s" % err)
             return session

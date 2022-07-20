@@ -102,9 +102,9 @@ class Shell(object):
         s = Shell()
         if 'NO_BAR' not in os.environ:
            assert s.env['FOO'] == '$NO_BAR'
-           
+
         will store an env from:
-        
+
         source setup setup_args[0] setup_args[1]
         e.g.
         source . && myCmd.sh someoption
@@ -118,7 +118,7 @@ class Shell(object):
 
         if setup is not None:
             self.env = dict(os.environ)
-            execute('source {0} {1}'.format(setup," ".join(setup_args)), shell=True, env=self.env, update_env=True)
+            execute('source {0} {1}'.format(setup, " ".join(setup_args)), shell=True, env=self.env, update_env=True)
 
         else:
             # bug #44334: Ganga/Utility/Shell.py does not save environ
@@ -160,7 +160,7 @@ class Shell(object):
                 this_cwd = os.path.abspath(tempfile.gettempdir())
             logger.debug("Using CWD: %s" % this_cwd)
 
-            process = subprocess.Popen(command, env=self.env, cwd=this_cwd, stdin = subprocess.DEVNULL)
+            process = subprocess.Popen(command, env=self.env, cwd=this_cwd, stdin=subprocess.DEVNULL)
             pid = process.pid
             while True:
                 wpid, sts = os.waitpid(pid, os.WNOHANG)
@@ -246,7 +246,7 @@ class Shell(object):
         caputured and are passed on the caller.
 
         stderr_capture may specify a name of a file to which stderr is redirected.
-        
+
         Args:
             cmd (str): command to be executed in a shell
             allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
@@ -264,7 +264,7 @@ class Shell(object):
             rc = subprocess.call(['/bin/sh', '-c', cmd], env=self.env)
         except OSError as e:
             logger.warning(
-                    'Problem with shell command: %s, %s', e.errno, e.strerror)
+                'Problem with shell command: %s, %s', e.errno, e.strerror)
             rc = 255
         return rc
 

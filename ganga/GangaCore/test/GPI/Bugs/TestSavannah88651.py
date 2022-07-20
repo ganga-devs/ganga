@@ -9,7 +9,6 @@ class TestSavannah88651(GangaUnitTest):
 
         # Feature request 88651 was to allow the behaviour of copying a prepared job to be configurable.
         # Specifically, the user wanted to be able to control whether the job/application was unprepared upon copying.
-
         # test 1: do not unprepare the job when copying
         a = Job()
         a.prepare()

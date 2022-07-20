@@ -1,7 +1,7 @@
-from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.Core.exceptions import GangaAttributeError
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Proxy import addProxy
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 
 
 class MetadataDict(GangaObject):

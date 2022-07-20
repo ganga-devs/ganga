@@ -2,6 +2,7 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Core.exceptions import IncompleteJobSubmissionError
 import pytest
 
+
 class TestSavannah17080(GangaUnitTest):
     # These tests for failures during submission
 
@@ -11,8 +12,8 @@ class TestSavannah17080(GangaUnitTest):
 
         j = Job()
         j.splitter = TestSplitter()
-        j.splitter.backs = [TestSubmitter(),TestSubmitter(),TestSubmitter()]
-        j.backend= TestSubmitter()
+        j.splitter.backs = [TestSubmitter(), TestSubmitter(), TestSubmitter()]
+        j.backend = TestSubmitter()
         b = j.splitter.backs[1]
         b.fail = 'submit'
         j.parallel_submit = False
@@ -32,8 +33,8 @@ class TestSavannah17080(GangaUnitTest):
 
         j = Job()
         j.splitter = TestSplitter()
-        j.splitter.backs = [TestSubmitter(),TestSubmitter(),TestSubmitter()]
-        j.backend= TestSubmitter()
+        j.splitter.backs = [TestSubmitter(), TestSubmitter(), TestSubmitter()]
+        j.backend = TestSubmitter()
         b = j.splitter.backs[1]
         b.fail = 'submit'
         j.parallel_submit = True
@@ -43,7 +44,7 @@ class TestSavannah17080(GangaUnitTest):
         with pytest.raises(IncompleteJobSubmissionError):
             j.submit(keep_going=True)
 
-        assert j.status =='failed'
+        assert j.status == 'failed'
         assert j.subjobs[0].status in ['submitted', 'running']
 
         assert j.subjobs[1].status == 'new'

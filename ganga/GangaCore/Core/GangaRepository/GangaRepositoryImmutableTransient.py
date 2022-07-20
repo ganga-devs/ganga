@@ -1,13 +1,16 @@
 
-import glob
-import pickle
-import os
-import sys
 import copy
+import glob
+import os
+import pickle
+import sys
+
+from GangaCore.Core.GangaRepository import RepositoryError, allRegistries
 from GangaCore.GPIDev.Persistency import load, stripped_export
-from GangaCore.Core.GangaRepository import allRegistries, RepositoryError
-from .GangaRepository import GangaRepository
 from GangaCore.Utility.logging import getLogger
+
+from .GangaRepository import GangaRepository
+
 logger = getLogger()
 
 

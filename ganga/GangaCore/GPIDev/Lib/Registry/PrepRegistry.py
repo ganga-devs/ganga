@@ -258,7 +258,7 @@ class ShareRef(GangaObject):
 
             if run_unp is not None and unprepare is True:
                 logger.info('Unpreparing %s repository object #%s associated with ShareDir %s' % (
-                    list(item.values())[0],  stripProxy(list(item.keys())[0])._registry_id, sharedir))
+                    list(item.values())[0], stripProxy(list(item.keys())[0])._registry_id, sharedir))
 #                stripProxy(item.keys()[0]).unprepare()
                 run_unp.unprepare()
                 run_unp = None

@@ -50,4 +50,6 @@ class Handler(IRuntimeHandler):
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         return 0
+
+
 allHandlers.add('GListApp', 'TestSubmitter', Handler)

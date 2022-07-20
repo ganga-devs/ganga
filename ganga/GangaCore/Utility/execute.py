@@ -41,8 +41,8 @@ with os.fdopen(###FD_WRITE###,'wb') as envpipe:
     from GangaCore.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
-    script = script.replace('###INDENT###'  , indent      )\
-                   .replace('###FD_READ###' , str(fdread) )\
+    script = script.replace('###INDENT###', indent)\
+                   .replace('###FD_READ###', str(fdread))\
                    .replace('###FD_WRITE###', str(fdwrite))
 
     return script, (fdread, fdwrite)
@@ -82,11 +82,11 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     from GangaCore.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
-    script = script.replace('###INDENT###'     , indent              )\
-                   .replace('###SETUP###'      , python_setup.strip())\
-                   .replace('###COMMAND###'    , command.strip()     )\
-                   .replace('###PKL_FDREAD###' , str(fdread)         )\
-                   .replace('###PKL_FDWRITE###', str(fdwrite)        )
+    script = script.replace('###INDENT###', indent)\
+                   .replace('###SETUP###', python_setup.strip())\
+                   .replace('###COMMAND###', command.strip())\
+                   .replace('###PKL_FDREAD###', str(fdread))\
+                   .replace('###PKL_FDWRITE###', str(fdwrite))
     env_file_pipes = None
     if update_env:
         update_script, env_file_pipes = env_update_script()
@@ -121,7 +121,7 @@ def __timeout_func(process, timed_out):
         process (class): This is a subprocess class which knows of the pid of wrapping thread around the command we want to kill
         timed_out (Event): A threading event to be set when the command has timed out
     """
-        
+
     if process.returncode is None:
         timed_out.set()
         try:
@@ -199,7 +199,8 @@ def execute(command,
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
             command_update, env_file_pipes = env_update_script()
-            command += ''';python -c "import base64;exec(base64.b64decode(%s))"''' % base64.b64encode(command_update.encode("utf-8"))
+            command += ''';python -c "import base64;exec(base64.b64decode(%s))"''' % base64.b64encode(
+                command_update.encode("utf-8"))
 
     # Some minor changes to cleanup the getting of the env
     if env is None:
@@ -301,4 +302,3 @@ def execute(command,
         stdout = stdout_temp
 
     return stdout
-

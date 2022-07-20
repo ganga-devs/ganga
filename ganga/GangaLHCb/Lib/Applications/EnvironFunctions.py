@@ -11,7 +11,7 @@ import GangaCore.Utility.Config
 # Cannot configure LHCb without Gaudi changing underneath
 gaudiConfig = GangaCore.Utility.Config.getConfig('GAUDI')
 
-#---------------------------------------
+# ---------------------------------------
 
 
 def available_versions(self, appname):
@@ -111,7 +111,7 @@ else
 fi
 gaudirun.py %s
 exit $?
-""" % ( DaVinci_version, scriptName)
+""" % (DaVinci_version, scriptName)
 
     script_file_name = tempfile.mktemp('.sh')
     try:
@@ -195,4 +195,3 @@ def _getshell_SP(self):
     self.env = copy.deepcopy(self.shell.env)
 
     return self.shell.env
-

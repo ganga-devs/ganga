@@ -36,6 +36,7 @@ from GangaCore.Utility.Config.Config import ConfigError
 # test configuration properties
 config = getConfig('GPIComponentFilters')
 
+
 def void_filter(val, item):
     return None
 
@@ -72,7 +73,8 @@ class _ComponentFilterManager(object):
                     'FilterManager: Invalid component filter %s.' % _filter)
 
         if filtername in self._dict[category]:
-            raise ValueError('FilterManager: %s component filter already exists for %s category ' % (filtername, category))
+            raise ValueError('FilterManager: %s component filter already exists for %s category ' %
+                             (filtername, category))
 
         if category not in config.options:
             config.addOption(category, "", "")

@@ -40,6 +40,7 @@ def test_execute_cwd():
     # Test changing dir
     assert execute('import os\noutput(os.getcwd())', cwd='/', shell=False).strip() == '/'
 
+
 """
 def test_execute_env():
     ''' This tests that the scripts can update an env based upon input and handle an appropriate python_setup sent in execute args '''
@@ -67,6 +68,7 @@ def test_execute_env():
     assert 'NEWTEST' in env
 """
 
+
 def test_execute_output():
     ''' This tests the abilty to send complex objects back through the output stream to Ganga '''
 
@@ -74,4 +76,3 @@ def test_execute_output():
     d = execute('import datetime\noutput(datetime.datetime(2013,12,12))', shell=False)
     assert hasattr(d, 'month')
     assert d.month == 12
-

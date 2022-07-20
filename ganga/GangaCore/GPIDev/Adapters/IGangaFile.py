@@ -68,9 +68,9 @@ class IGangaFile(GangaObject):
                 self.localDir = to_location
             return returnable
         else:
-            logger.debug("File: %s already exists, not performing copy" % (os.path.join(to_location, self.namePattern), ))
+            logger.debug("File: %s already exists, not performing copy" %
+                         (os.path.join(to_location, self.namePattern), ))
             return True
-
 
     def getSubFiles(self, process_wildcards=False):
         """
@@ -114,13 +114,13 @@ class IGangaFile(GangaObject):
         if not isinstance(targetPath, str) and targetPath:
             raise GangaFileError("Cannot perform a copyTo with no given targetPath!")
         if regex.search(self.namePattern) is None\
-            and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
+                and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
 
             if not os.path.isfile(os.path.join(targetPath, self.namePattern)):
                 shutil.copy(os.path.join(self.localDir, self.namePattern), os.path.join(targetPath, self.namePattern))
             else:
                 logger.debug("Already found file: %s" % os.path.join(targetPath, self.namePattern))
-                
+
             return True
 
         # Again, cannot perform a remote glob here so have to ignore wildcards
@@ -175,7 +175,8 @@ class IGangaFile(GangaObject):
         mystderr = ''
 
         try:
-            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
             (mystdout, mystderr) = child.communicate()
             exitcode = child.returncode
         finally:
@@ -252,7 +253,7 @@ class IGangaFile(GangaObject):
 
         if self._getParent() is not None:
             jobfqid = self.getJobObject().fqid
-                                
+
             jobid = jobfqid
             subjobid = ''
 
@@ -261,8 +262,8 @@ class IGangaFile(GangaObject):
             if len(split) > 1:
                 jobid = split[0]
                 subjobid = split[1]
-          
-            outputStr = outputStr.replace('{jid}', jobid)                                                                    
+
+            outputStr = outputStr.replace('{jid}', jobid)
             outputStr = outputStr.replace('{sjid}', subjobid)
 
         if fileName:
@@ -271,4 +272,3 @@ class IGangaFile(GangaObject):
             outputStr = outputStr.replace('{fname}', os.path.basename(self.namePattern))
 
         return outputStr
-

@@ -1,6 +1,7 @@
 import re
+
 from GangaCore.GPIDev.Base import GangaObject
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.Config import getConfig
 
 

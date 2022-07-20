@@ -3,37 +3,29 @@ Same as Database but uses Central Database:
 TODO:
 - Save each job with owners information
 """
-import os
 import copy
-import json
-import time
 import errno
-import docker
-import pymongo
-import GangaCore.Utility.logging
+import json
+import os
+import time
 
+import docker
+import GangaCore.Utility.logging
+import pymongo
 from GangaCore import GANGA_SWAN_INTEGRATION
+from GangaCore.Core.GangaRepository import (GangaRepository,
+                                            InaccessibleObjectError,
+                                            RepositoryError)
+from GangaCore.Core.GangaRepository.DStreamer import (EmptyGangaObject,
+                                                      index_from_database,
+                                                      index_to_database,
+                                                      object_from_database,
+                                                      object_to_database)
+from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
 from GangaCore.GPIDev.Base.Objects import Node
+from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Plugin import PluginManagerError
-from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
-from GangaCore.Core.GangaRepository.SubJobJsonList import SubJobJsonList
-
-
-from GangaCore.Core.GangaRepository import (
-    GangaRepository,
-    RepositoryError,
-    InaccessibleObjectError,
-)
-
-from GangaCore.Core.GangaRepository.DStreamer import (
-    EmptyGangaObject,
-    object_to_database,
-    object_from_database,
-    index_to_database,
-    index_from_database,
-)
-
 
 logger = GangaCore.Utility.logging.getLogger()
 

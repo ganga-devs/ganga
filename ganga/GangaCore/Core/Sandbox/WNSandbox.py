@@ -14,6 +14,7 @@ import mimetypes
 import tarfile
 from contextlib import closing
 
+
 def multi_glob(pats, exclude=None):
     """ glob using a list of patterns and removing duplicate files, exclude name in the list for which the callback exclude(name) return true
     example: advanced_glob(['*.jpg','*.gif'],exclude=lambda n:len(n)>20) return a list of all JPG and GIF files which have names shorter then 20 characters
@@ -57,6 +58,7 @@ def recursive_copy(src, dest):
             if not os.path.isdir(destdir):
                 os.makedirs(destdir)
             shutil.copy(src, destdir)
+
 
 def getPackedInputSandbox(tarpath, dest_dir='.'):
     """Get all sandbox_files from tarball and write them to the workdir.
@@ -117,4 +119,3 @@ def createPackedOutputSandbox(output_patterns, _filter, dest_dir):
             tf.dereference = True
             for f in outputlist:
                 tf.add(f)
-

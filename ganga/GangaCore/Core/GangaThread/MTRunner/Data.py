@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-from queue import Queue
 import threading
+from queue import Queue
 
 
 class DuplicateDataItemError(Exception):

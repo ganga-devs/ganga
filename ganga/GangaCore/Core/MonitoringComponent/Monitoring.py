@@ -1,5 +1,6 @@
 # Setup logging ---------------
 from GangaCore.Utility.logging import getLogger
+
 log = getLogger()
 
 

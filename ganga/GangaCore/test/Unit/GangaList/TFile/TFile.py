@@ -41,7 +41,7 @@ class TFile(GangaObject):
         self_comb = self.name + self.subdir
         other_comb = other.name + other.subdir
         return self_comb >= other_comb
-        
+
     def __lt__(self, other):
         self_comb = self.name + self.subdir
         other_comb = other.name + other.subdir

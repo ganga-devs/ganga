@@ -8,6 +8,7 @@ def f(name=''):
         l.warning(name + str(i))
         time.sleep(1)
 
+
 f('Main:')
 
 from GangaCore.Core.GangaThread import GangaThread
@@ -17,6 +18,7 @@ class MyThread(GangaThread):
 
     def run(self):
         f('GangaThread:')
+
 
 t = MyThread('GangaThread')
 t.start()

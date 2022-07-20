@@ -29,7 +29,8 @@ def __set_submit_option__():
     if config['Config']:
         submit_option += ' --config %s' % config['Config']
     elif config['GLITE_ALLOWED_WMS_LIST']:
-        wms_conf_path = os.path.join(os.environ['GLITE_WMS_LOCATION'], 'etc', config['VirtualOrganisation'], 'glite_wmsui.conf')
+        wms_conf_path = os.path.join(os.environ['GLITE_WMS_LOCATION'], 'etc',
+                                     config['VirtualOrganisation'], 'glite_wmsui.conf')
         temp_wms_conf = tempfile.NamedTemporaryFile(suffix='.conf', delete=False)
 
         with open(wms_conf_path, "r") as this_file:
@@ -1063,11 +1064,11 @@ def arc_get_output(jid, directory, cred_req):
     tmpdir = tempfile.gettempdir()
     jobhash = jid.split('/')[-1]
 
-    copy_cmd =  'arcget -j %s %s -D %s' % (config["ArcJobListFile"],  jid, tmpdir)
+    copy_cmd = 'arcget -j %s %s -D %s' % (config["ArcJobListFile"], jid, tmpdir)
     rc, output, m = getShell(cred_req).cmd1(copy_cmd,
                                             allowed_exit=[0, 255],
                                             timeout=config['SubmissionTimeout'])
-    #By now the job's output should be in the temp directory
+    # By now the job's output should be in the temp directory
     if rc:
         logger.error(
             "Problem downloading output for job '%s'" % jid)
@@ -1081,6 +1082,7 @@ def arc_get_output(jid, directory, cred_req):
     shutil.rmtree(files_location)
 
     return True
+
 
 def arc_purge_multiple(jobids, cred_req):
     """ARC CE job purging"""

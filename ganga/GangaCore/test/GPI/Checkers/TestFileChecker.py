@@ -7,7 +7,7 @@ from GangaCore.testlib.monitoring import run_until_completed
 class TestFileChecker(GangaUnitTest):
     def setUp(self):
         super(TestFileChecker, self).setUp()
-        from GangaCore.GPI import Job, FileChecker, Executable, Local
+        from GangaCore.GPI import Executable, FileChecker, Job, Local
 
         self.c = FileChecker()
         self.jobslice = []
@@ -24,7 +24,8 @@ class TestFileChecker(GangaUnitTest):
             self.assertEqual(j.status, 'completed')
 
     def checkFail(self, message):
-        from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
+        from GangaCore.GPIDev.Adapters.IPostProcessor import \
+            PostProcessException
         try:
             self.c.check(self.jobslice[0])
         except PostProcessException:

@@ -1,6 +1,6 @@
 import os
 import unittest
-from unittest.mock import patch, ANY
+from unittest.mock import ANY, patch
 
 from ganga.GangaCore.testlib.GangaUnitTest import GangaUnitTest
 

@@ -24,6 +24,7 @@ from GangaCore.Utility.files import expandfilename
 
 logger = getLogger()
 
+
 class Executable(IPrepareApp):
 
     """
@@ -99,7 +100,8 @@ class Executable(IPrepareApp):
         """
 
         if (self.is_prepared is not None) and not force:
-            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+            raise ApplicationPrepareError(
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
 
         # lets use the same criteria as the configure() method for checking file existence & sanity
         # this will bail us out of prepare if there's somthing odd with the job config - like the executable
@@ -178,7 +180,8 @@ class Executable(IPrepareApp):
                     if not x.exists():
                         raise ApplicationConfigurationError('%s: file not found' % x.name)
                 except AttributeError as err:
-                    raise ApplicationConfigurationError('%s (%s): unsupported type, must be a string or File' % (str(x), str(type(x))))
+                    raise ApplicationConfigurationError(
+                        '%s (%s): unsupported type, must be a string or File' % (str(x), str(type(x))))
 
         validate_argument(self.exe, exe=1)
 
@@ -186,6 +189,7 @@ class Executable(IPrepareApp):
             validate_argument(a)
 
         return (None, None)
+
 
 # disable type checking for 'exe' property (a workaround to assign File() objects)
 # FIXME: a cleaner solution, which is integrated with type information in
@@ -221,15 +225,18 @@ class RTHandler(IRuntimeHandler):
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
-            shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+            shared_path = os.path.join(expandfilename(getConfig('Configuration')[
+                                       'gangadir']), 'shared', getConfig('Configuration')['user'])
             if isinstance(app.exe, str):
                 prepared_exe = app.exe
             elif isinstance(app.exe, File):
-                logger.info("Submitting a prepared application; taking any input files from %s" % (app.is_prepared.name))
+                logger.info("Submitting a prepared application; taking any input files from %s" %
+                            (app.is_prepared.name))
                 prepared_exe = File(os.path.join(
                     os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
 
-        c = StandardJobConfig(prepared_exe, stripProxy(app).getJobObject().inputsandbox, convertIntToStringArgs(app.args), stripProxy(app).getJobObject().outputsandbox, app.env)
+        c = StandardJobConfig(prepared_exe, stripProxy(app).getJobObject().inputsandbox,
+                              convertIntToStringArgs(app.args), stripProxy(app).getJobObject().outputsandbox, app.env)
         return c
 
 
@@ -271,6 +278,8 @@ class gLiteRTHandler(IRuntimeHandler):
                     shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
 
         return gLiteJobConfig(prepared_exe, app._getParent().inputsandbox, convertIntToStringArgs(app.args), app._getParent().outputsandbox, app.env)
+
+
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('Executable', 'LSF', RTHandler)
@@ -288,6 +297,7 @@ allHandlers.add('Executable', 'Remote', LCGRTHandler)
 allHandlers.add('Executable', 'CREAM', LCGRTHandler)
 allHandlers.add('Executable', 'ARC', LCGRTHandler)
 allHandlers.add('Executable', 'Slurm', RTHandler)
+
 
 def randomString():
     """Simple method to generate a random string"""
@@ -311,5 +321,3 @@ def randomString():
 
     # seed is set to clock during import
     return ''.join([str(a) for a in sample])
-
-

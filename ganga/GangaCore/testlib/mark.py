@@ -7,7 +7,8 @@ from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
 from GangaCore.Core.exceptions import CredentialsError
 from GangaCore.Utility.Config import getConfig
 
-external = pytest.mark.externals    
+external = pytest.mark.externals
+
 
 class skipif_config(object):
     """
@@ -45,6 +46,7 @@ class skipif_config(object):
 
         return function
 
+
 class requires_cred(object):
     """
     Class used to skip a test is a required credential is not available
@@ -77,4 +79,3 @@ class requires_cred(object):
                 return pytest.mark.skip(self.reason)(function)
         finally:
             clear_config()
-

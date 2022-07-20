@@ -10,7 +10,7 @@ class TestSavannah9779(GangaUnitTest):
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def test_a_CreateJob(self):
-        from GangaCore.GPI import jobs, Job, Executable, Local
+        from GangaCore.GPI import Executable, Job, Local, jobs
 
         jobs.remove()
         j = Job()
@@ -18,7 +18,7 @@ class TestSavannah9779(GangaUnitTest):
         j.backend = Local()
 
     def test_b_ModifyJob(self):
-        from GangaCore.GPI import jobs, Batch
+        from GangaCore.GPI import Batch, jobs
 
         j = jobs(0)
         j.backend = Batch()
@@ -32,7 +32,7 @@ class TestSavannah9779(GangaUnitTest):
         self.check_job(j)
 
     def check_job(self, j):
-        from GangaCore.GPI import Executable, Batch
+        from GangaCore.GPI import Batch, Executable
 
         assert isinstance(j.application, Executable)
         assert j.application.exe == 'myexecutable'

@@ -2,8 +2,8 @@ import time
 
 import Ganga
 from GangaCore.GPI import *
-
 from GangaCore.Utility.logging import getLogger
+
 logger = getLogger(modulename=True)
 
 s = GangaCore.Utility.Shell.Shell()

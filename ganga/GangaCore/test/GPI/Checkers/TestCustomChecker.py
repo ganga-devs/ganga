@@ -10,7 +10,7 @@ class TestCustomChecker(GangaUnitTest):
 
     def setUp(self):
         super(TestCustomChecker, self).setUp()
-        from GangaCore.GPI import Job, CustomChecker
+        from GangaCore.GPI import CustomChecker, Job
         from GangaTest.Framework.utils import sleep_until_completed
         self.c = CustomChecker()
         self.j = None
@@ -41,7 +41,8 @@ def check(j):
             module_fail.write('will not run')
 
     def checkFail(self, message):
-        from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
+        from GangaCore.GPIDev.Adapters.IPostProcessor import \
+            PostProcessException
         try:
             self.c.check(self.j)
         except PostProcessException:

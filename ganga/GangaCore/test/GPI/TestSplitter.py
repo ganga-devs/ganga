@@ -19,9 +19,8 @@ def test_subjob_app_config_fail(gpi):
     j.application = gpi.TestApplication()
     j.splitter = gpi.GenericSplitter()
     j.splitter.attribute = 'application.fail'
-    j.splitter.values = ['','config','']
+    j.splitter.values = ['', 'config', '']
 
     assert_cannot_submit(j)
 
-    assert(len(j.subjobs)==0)
-    
+    assert(len(j.subjobs) == 0)

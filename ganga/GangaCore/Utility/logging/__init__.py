@@ -137,19 +137,20 @@ class ColourFormatter(logging.Formatter, object):
         else:
             self.markup = ColourText.NoMarkup()
 
+
 class SafeRotatingFileHandler(logging.handlers.RotatingFileHandler):
     """
     Derives from the RotatingFileHandler but ensures that if access to file is lost, it will just silently
     continue.
     """
-    
+
     def __init__(self, *args, **kwargs):
         logging.handlers.RotatingFileHandler.__init__(self, *args, **kwargs)
 
     def handleError(self, record):
         private_logger.error('Error writing to the log file.')
 
-            
+
 def _set_formatter(handler, this_format=None):
     """ Set the formatter for this handler. 1 formatter per handler.
     Precdence in deciding which format to use
@@ -241,7 +242,8 @@ def post_config_handler(opt, value):
             _format = _formats[value]
         else:
             if private_logger is not None:
-                private_logger.error('illegal name of format string (%s), possible values: %s' % (str(value), list(_formats.keys())))
+                private_logger.error('illegal name of format string (%s), possible values: %s' %
+                                     (str(value), list(_formats.keys())))
             return
 
     if opt == '_colour':
@@ -287,7 +289,6 @@ def _guess_module_logger_name(modulename, frame=None):
         print('using frame from the caller')
 
     global lookup_frame_names
-
 
     this__file__ = None
     if '__file__' in frame.f_globals:
@@ -357,6 +358,7 @@ def _guess_module_logger_name(modulename, frame=None):
     # return custom module name
     return return_name
 
+
 _MemHandler = logging.handlers.MemoryHandler
 
 
@@ -392,7 +394,7 @@ class FlushedMemoryHandler(_MemHandler):
         if record.levelno > logging.WARNING:
             return True
         return (threading.currentThread().getName() == "MainThread") or \
-                _MemHandler.shouldFlush(self, record)
+            _MemHandler.shouldFlush(self, record)
 
 
 def enableCaching(custom_logger=None, custom_formatter=None):
@@ -519,6 +521,7 @@ def bootstrap(internal=False, handler=None):
             A filter which only allow messages which are WARNING or lower to be logged
             """
             __slots__ = list()
+
             def filter(self, record):
                 return record.levelno <= 30
 
@@ -565,7 +568,7 @@ def force_global_level(level):
         global _global_level
         _global_level = level
 
-    ## May wish to do this for more levels in teh future
+    # May wish to do this for more levels in teh future
     if level in ['DEBUG']:
         global default_formatter
         default_formatter = "DEBUG"

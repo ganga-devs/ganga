@@ -104,7 +104,7 @@ class ConfigError(GangaException):
     """ ConfigError indicates that an option does not exist or it cannot be set.
     """
 
-    __slots__=('what',)
+    __slots__ = ('what',)
 
     def __init__(self, what=''):
         super(ConfigError, self).__init__()
@@ -116,6 +116,7 @@ class ConfigError(GangaException):
 # WARNING: avoid importing logging at the module level in this file
 # for example, do not do here: from GangaCore.Utility.logging import logger
 # use getLogger() function defined below:
+
 
 _logger = None
 
@@ -154,6 +155,7 @@ allConfigs = {}
 unknownConfigFileValues = defaultdict(dict)
 unknownGangarcFileValues = defaultdict(dict)
 unknownUserConfigValues = defaultdict(dict)
+
 
 def getConfig(name):
     """
@@ -196,6 +198,7 @@ def makeConfig(name, docstring, **kwds):
     c._config_made = True
     return c
 
+
 def makeConfigForTest(name, docstring, **kwds):
     """
     Copy of makeConfig(), but without the bootstrap restrictions as Config Sections created for the Tests
@@ -229,7 +232,8 @@ class ConfigOption(object):
     The configuration option may also define the session_value and default_value. The value property gives the effective value.
     """
 
-    __slots__ = ('name', 'hidden', 'cfile', 'examples', 'filter', 'typelist', 'hasModified', 'default_value', 'docstring', 'type', 'user_value', 'session_value', 'gangarc_value')
+    __slots__ = ('name', 'hidden', 'cfile', 'examples', 'filter', 'typelist', 'hasModified',
+                 'default_value', 'docstring', 'type', 'user_value', 'session_value', 'gangarc_value')
 
     def __init__(self, name):
         self.name = name
@@ -347,7 +351,7 @@ class ConfigOption(object):
                 values = []
 
                 for n in ['user', 'gangarc', 'session', 'default']:
-                    str_val = n+'_value'
+                    str_val = n + '_value'
                     if hasattr(self, str_val):
                         values.append(getattr(self, str_val))
 
@@ -356,7 +360,7 @@ class ConfigOption(object):
                     return returnable
             else:
                 for n in ['user', 'gangarc', 'session', 'default']:
-                    str_val = n+'_value'
+                    str_val = n + '_value'
                     if hasattr(self, str_val):
                         return getattr(self, str_val)
 
@@ -439,6 +443,7 @@ class ConfigOption(object):
 
         setattr(self, x_name, new_value)
 
+
 # indicate if the GPI proxies for the configuration have been created
 _after_bootstrap = False
 
@@ -471,7 +476,8 @@ class PackageConfig(object):
 
     """
 
-    __slots__ = ('name', 'options', 'docstring', 'hidden', 'cfile', '_user_handlers', '_session_handlers', 'is_open', '_config_made', 'hasModified', '__dict__')
+    __slots__ = ('name', 'options', 'docstring', 'hidden', 'cfile', '_user_handlers',
+                 '_session_handlers', 'is_open', '_config_made', 'hasModified', '__dict__')
 
     def __init__(self, name, docstring, **meta):
         """ Arguments:
@@ -564,7 +570,7 @@ class PackageConfig(object):
         if option.name in conf_value:
             user_value = conf_value[option.name]
             try:
-                option.setUserValue(user_value) 
+                option.setUserValue(user_value)
                 del conf_value[option.name]
             except Exception as err:
                 msg = "Error Setting User Value: %s" % err
@@ -582,13 +588,12 @@ class PackageConfig(object):
         if option.name in conf_value:
             gangarc_value = conf_value[option.name]
             try:
-                option.setGangarcValue(gangarc_value) 
+                option.setGangarcValue(gangarc_value)
                 del conf_value[option.name]
             except Exception as err:
                 msg = "Error Setting Gangarc Value: %s" % err
                 if locals().get('logger') is not None:
                     locals().get('logger').debug("dbg: %s" % msg)
-
 
     def setSessionValue(self, name, value):
         """  Add or  override options  as a  part of  second  phase of
@@ -735,9 +740,9 @@ class PackageConfig(object):
            config.attachUserHandler(None,post) attaches only the post handler. """
 
         if pre is None:
-            pre = lambda opt, val: val
+            def pre(opt, val): return val
         if post is None:
-            post = lambda opt, val: None
+            def post(opt, val): return None
 
         self._user_handlers.append((pre, post))
 
@@ -746,21 +751,20 @@ class PackageConfig(object):
         # FIXME: this will NOT always work and should be redesigned, see
         # ConfigOption.filter
         if pre is None:
-            pre = lambda opt, val: val
+            def pre(opt, val): return val
         if post is None:
-            post = lambda opt, val: None
+            def post(opt, val): return None
 
         self._session_handlers.append((pre, post))
-
 
     def attachGangarcHandler(self, pre, post):
         """See attachUserHandler(). """
         # FIXME: this will NOT always work and should be redesigned, see
         # ConfigOption.filter
         if pre is None:
-            pre = lambda opt, val: val
+            def pre(opt, val): return val
         if post is None:
-            post = lambda opt, val: None
+            def post(opt, val): return None
 
         self._gangarc_handlers.append((pre, post))
 
@@ -768,6 +772,7 @@ class PackageConfig(object):
         for o in self.options.keys():
             if not self.options[o].check_defined():
                 del self.options[o]
+
 
 try:
     import configparser
@@ -924,7 +929,8 @@ def read_ini_files(filenames, system_vars):
                         logger.debug(str(envvarclean) + ' is set as ' + envval + ' in the shell environment')
                         value = value.replace(envvar, envval)
                     else:
-                        logger.debug('The configuration file ' + f + ' references an unset environment variable: ' + str(envvarclean))
+                        logger.debug('The configuration file ' + f +
+                                     ' references an unset environment variable: ' + str(envvarclean))
 
                 # FIXME: strip trailing whitespaces -- SHOULD BE DONE BEFORE IF
                 # AT ALL?
@@ -963,6 +969,7 @@ def setUserValue(config_name, option_name, value):
     # put value in the buffer, it will be removed from the buffer when option
     # is added
     unknownUserConfigValues[config_name][option_name] = value
+
 
 def setUserValueForTest(config_name, option_name, value):
     """
@@ -1012,6 +1019,7 @@ def setSessionValue(config_name, option_name, value):
     # is added
     unknownConfigFileValues[config_name][option_name] = value
 
+
 def setGangarcValue(config_name, option_name, value):
     """
     Sets the gangarc value for the given config and option.
@@ -1033,6 +1041,7 @@ def setGangarcValue(config_name, option_name, value):
     # is added
     unknownGangarcFileValues[config_name][option_name] = value
 
+
 def setSessionValuesFromFiles(filenames, system_vars):
     """ Sets session values for all options in all configuration units
     defined in the sequence of config files.  Initialize config parser
@@ -1049,7 +1058,7 @@ def setSessionValuesFromFiles(filenames, system_vars):
             gangarcFile.append(filename)
             filenames.remove(filename)
 
-    #First take the gangarc values
+    # First take the gangarc values
     grcCfg = read_ini_files(gangarcFile, system_vars)
 
     for name in grcCfg.sections():
@@ -1067,8 +1076,7 @@ def setSessionValuesFromFiles(filenames, system_vars):
                 v = grcCfg.get(name, o, raw=True)
             setGangarcValue(name, o, v)
 
-
-    #Now the others
+    # Now the others
 
     cfg = read_ini_files(filenames, system_vars)
 
@@ -1108,7 +1116,8 @@ def load_user_config(filename, system_vars):
 
         for o in new_cfg.options(name):
             if o not in current_cfg_section.options:
-                logger.warning("Option '[%s] %s' defined in '%s' is not valid and will be removed" % (name, o, filename))
+                logger.warning("Option '[%s] %s' defined in '%s' is not valid and will be removed" %
+                               (name, o, filename))
                 continue
             try:
                 v = new_cfg.get(name, o)

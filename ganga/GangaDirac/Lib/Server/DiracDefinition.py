@@ -6,12 +6,13 @@ import datetime
 import glob
 import pickle
 from functools import wraps
-## NB parseCommandLine first then import Dirac!!
+# NB parseCommandLine first then import Dirac!!
 from DIRAC.Core.Base.Script import parseCommandLine
 parseCommandLine()
 from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 dirac = Dirac()
+
 
 def diracCommand(f):
     '''
@@ -50,4 +51,3 @@ def diracCommand(f):
         output(output_dict)
 
     return diracWrapper
-

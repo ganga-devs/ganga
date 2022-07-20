@@ -24,6 +24,7 @@ import copy
 
 logger = getLogger()
 
+
 class GaudiExecMerger(IMerger):
 
     """Merger class for GaudiExec jobs
@@ -154,7 +155,8 @@ class GaudiExecMerger(IMerger):
 
                 if not len(glob.glob(os.path.join(j.outputdir, f))):
                     if ignorefailed:
-                        logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.', f, j.fqid)
+                        logger.warning(
+                            'The file pattern %s in Job %s was not found. The file will be ignored.', f, j.fqid)
                         continue
                     else:
                         raise PostProcessException('The file pattern %s in Job %s was not found and so the merge can not continue. '
@@ -214,17 +216,16 @@ class GaudiExecMerger(IMerger):
 
         return self.success
 
-
     def mergefiles(self, masterjob, file_list, output_file):
 
-        #First grab the job object etc.
+        # First grab the job object etc.
         j = masterjob
         sharedir = j.application.is_prepared.path()
         tmp_dir = tempfile.gettempdir()
-        #Extract the run script
+        # Extract the run script
         tar = tarfile.open(os.path.join(sharedir, "cmake-input-sandbox.tgz"), "r:gz")
         tar.extractall(tmp_dir)
-        #Run the hadd command from the application environment.
+        # Run the hadd command from the application environment.
         merge_cmd = os.path.join(tmp_dir, 'run')
         default_arguments = '-f'
         merge_cmd += ' hadd '
@@ -243,17 +244,16 @@ class GaudiExecMerger(IMerger):
         rc, out = subprocess.getstatusoutput(merge_cmd)
 
         try:
-            #Clean up - first make a list of everything in the tarfile
+            # Clean up - first make a list of everything in the tarfile
             tarlist = tar.getnames()
-            #Pop the run script and find the common prefix of the application folder
+            # Pop the run script and find the common prefix of the application folder
             tarlist.pop(tarlist.index('run'))
             folderToRemove = os.path.commonprefix(tarlist)
-            #Now remove the files
+            # Now remove the files
             os.remove(os.path.join(tmp_dir, 'run'))
             shutil.rmtree(os.path.join(tmp_dir, folderToRemove))
         except OSError:
             logger.error('Failed to remove temporary files from merging at %s' % tmp_dir)
-
 
         log_file = '%s.hadd_output' % output_file
         with open(log_file, 'w') as log:

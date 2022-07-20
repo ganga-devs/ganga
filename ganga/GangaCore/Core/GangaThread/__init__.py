@@ -1,3 +1,3 @@
 
-from .GangaThreadPool import GangaThreadPool
 from .GangaThread import GangaThread
+from .GangaThreadPool import GangaThreadPool

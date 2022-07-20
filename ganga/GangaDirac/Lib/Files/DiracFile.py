@@ -78,7 +78,7 @@ class DiracFile(IGangaFile):
 
     4)
         To remove an existing file already in Dirac storage
-        
+
         df = DiracFile('LFN:/some/lfn/path')
         df.remove()
 
@@ -103,11 +103,11 @@ class DiracFile(IGangaFile):
         j.outputfiles=[DiracFile('myData.ext', remoteDir='myProject/job{jid}_sj{sjid}')]
          =>
            /lhcb/user/<u>/<user>/myProject/job1_sj2/2017_01/123456/123456789/myData.ext
-        
+
         j.outputfiles=[DiracFile('myData.ext', remoteDir='myProject')]
          =>
            /lhcb/user/<u>/<user>/myProject/2017_01/123456/123456789/myData.ext
-        
+
 
         Alternatively you may change in your .gangarc:
         [DIRAC]
@@ -148,7 +148,7 @@ class DiracFile(IGangaFile):
                                      'defaultSE': SimpleItem(defvalue='', copyable=1, doc="defaultSE where the file is to be accessed from or uploaded to"),
                                      'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
                                      'credential_requirements': ComponentItem('CredentialRequirement', defvalue='DiracProxy'),
-    })
+                                     })
 
     _env = None
 
@@ -236,15 +236,13 @@ class DiracFile(IGangaFile):
 
         return size
 
-
-
     def _setLFNnamePattern(self, lfn="", namePattern=""):
 
         if hasattr(self, 'defaultSE') and self.defaultSE != "":
-            ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
+            # TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
             # Check for /lhcb/some/path or /gridpp/some/path
             if namePattern.split(os.pathsep)[0] == self.defaultSE \
-                or (len(namePattern) > 3 and namePattern[0:4].upper() == "LFN:"\
+                or (len(namePattern) > 3 and namePattern[0:4].upper() == "LFN:"
                     or len(namePattern.split(os.pathsep)) > 1 and namePattern.split(os.pathsep)[1] == self.defaultSE):
                 # Check for LFN:/gridpp/some/path or others...
                 lfn = namePattern
@@ -296,7 +294,7 @@ class DiracFile(IGangaFile):
 
         return "DiracFile(namePattern='%s', lfn='%s', localDir='%s')" % (self.namePattern, self.lfn, self.localDir)
 
-    def getSubFiles(self, process_wildcards = False):
+    def getSubFiles(self, process_wildcards=False):
         """
         Returns the subfiles for this instance
         """
@@ -377,14 +375,15 @@ class DiracFile(IGangaFile):
         try:
             postprocesslocations = open(postprocessLocationsPath, 'r')
             self.subfiles = []
-            ## NB remember only do this once at it leaves the 'cursor' at the end of the file - rcurrie
+            # NB remember only do this once at it leaves the 'cursor' at the end of the file - rcurrie
             all_lines = postprocesslocations.readlines()
             logger.debug("lines:\n%s" % all_lines)
             for line in all_lines:
                 logger.debug("This line: %s" % line)
                 if line.startswith('DiracFile'):
                     if self.dirac_line_processor(line, self, os.path.dirname(postprocessLocationsPath)) and regex.search(self.namePattern) is None:
-                        logger.error("Error processing line:\n%s\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern)))
+                        logger.error("Error processing line:\n%s\nAND: namePattern: %s is NOT matched" %
+                                     (str(line), str(self.namePattern)))
                     else:
                         logger.debug("Parsed the Line")
                 else:
@@ -436,7 +435,7 @@ class DiracFile(IGangaFile):
         except GangaDiracError as err:
             raise err
 
-        return True 
+        return True
 
     @require_credential
     def getMetadata(self):
@@ -456,7 +455,7 @@ class DiracFile(IGangaFile):
 
         ret = execute('getMetadata("%s")' % self.lfn, cred_req=self.credential_requirements)
 
-        if self.guid != ret.get('Successful',{}).get(self.lfn,{}).get('GUID',False):
+        if self.guid != ret.get('Successful', {}).get(self.lfn, {}).get('GUID', False):
             self.guid = ret['Successful'][self.lfn]['GUID']
 
         reps = self.getReplicas()
@@ -528,7 +527,8 @@ class DiracFile(IGangaFile):
             if (self._storedReplicas == {} and len(self.subfiles) == 0) or forceRefresh:
 
                 try:
-                    self._storedReplicas = execute('getReplicas("%s")' % self.lfn, cred_req=self.credential_requirements)
+                    self._storedReplicas = execute('getReplicas("%s")' %
+                                                   self.lfn, cred_req=self.credential_requirements)
                 except GangaDiracError as err:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
                     self._storedReplicas = {}
@@ -623,7 +623,8 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
-        stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location), cred_req=self.credential_requirements)
+        stdout = execute('getFile("%s", destDir="%s")' %
+                         (self.lfn, to_location), cred_req=self.credential_requirements)
 
         if self.namePattern == "":
             name = os.path.basename(self.lfn)
@@ -650,14 +651,16 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE), cred_req=self.credential_requirements)
+        stdout = execute('replicateFile("%s", "%s", "%s")' %
+                         (self.lfn, destSE, sourceSE), cred_req=self.credential_requirements)
 
         if destSE not in self.locations:
             self.locations.append(destSE)
 
     def processWildcardMatches(self):
         if regex.search(self.namePattern) is not None:
-            raise GangaFileError("No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
+            raise GangaFileError(
+                "No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
 
     @require_credential
     def put(self, lfn='', force=False, uploadSE="", replicate=False):
@@ -682,7 +685,8 @@ class DiracFile(IGangaFile):
         """
 
         if self.lfn != "" and force == False and lfn == '':
-            logger.warning("Warning you're about to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (self.namePattern, self.lfn))
+            logger.warning("Warning you're about to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (
+                self.namePattern, self.lfn))
 
         if (lfn != '' and self.lfn != '') and force == False:
             logger.warning("Warning you're attempting to put this DiracFile: %s" % self.namePattern)
@@ -690,7 +694,8 @@ class DiracFile(IGangaFile):
             logger.warning("Will continue and attempt to upload to: %s" % lfn)
 
         if lfn and os.path.basename(lfn) != self.namePattern:
-            logger.warning("Changing namePattern from: '%s' to '%s' during put operation" % (self.namePattern, os.path.basename(lfn)))
+            logger.warning("Changing namePattern from: '%s' to '%s' during put operation" %
+                           (self.namePattern, os.path.basename(lfn)))
 
         if lfn:
             self.lfn = lfn
@@ -748,7 +753,8 @@ class DiracFile(IGangaFile):
                     if not storage_elements:
                         raise GangaFileError("No SE allowed for Write")
                 else:
-                    raise GangaFileError("Can't upload a file without a valid defaultSE or storageSE, please provide one")
+                    raise GangaFileError(
+                        "Can't upload a file without a valid defaultSE or storageSE, please provide one")
         elif isinstance(uploadSE, list):
             storage_elements = uploadSE
         else:
@@ -771,7 +777,7 @@ class DiracFile(IGangaFile):
                     if not os.path.exists(name):
                         raise GangaFileError('File "%s" must exist!' % name)
 
-            if lfn=='':
+            if lfn == '':
                 lfn = os.path.join(lfn_base, os.path.basename(this_file))
             if len(os.path.basename(lfn)) > 99:
                 logger.warning('Filename is longer than 99 characters. This may cause problems with Dirac storage.')
@@ -783,9 +789,11 @@ class DiracFile(IGangaFile):
             stderr = ''
             stdout = ''
             logger.info('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
-            logger.debug('execute: uploadFile("%s", "%s", %s)' % (lfn, os.path.join(sourceDir, name), str([storage_elements[0]])))
+            logger.debug('execute: uploadFile("%s", "%s", %s)' %
+                         (lfn, os.path.join(sourceDir, name), str([storage_elements[0]])))
             try:
-                stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, os.path.join(sourceDir, name), str([storage_elements[0]])), cred_req=self.credential_requirements)
+                stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, os.path.join(sourceDir, name),
+                                 str([storage_elements[0]])), cred_req=self.credential_requirements)
             except GangaDiracError as err:
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), err))
                 failureReason = "Error in uploading file '%s' : '%s'" % (os.path.basename(name), err)
@@ -848,7 +856,8 @@ class DiracFile(IGangaFile):
 
     def getWNScriptDownloadCommand(self, indent):
 
-        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'downloadScript.py.template')
+        script_location = os.path.join(os.path.dirname(os.path.abspath(
+            inspect.getfile(inspect.currentframe()))), 'downloadScript.py.template')
 
         download_script = FileUtils.loadScript(script_location, '')
 
@@ -858,11 +867,11 @@ import subprocess
 dirac_env=###DIRAC_ENV###
 subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=True, env=dirac_env, stdin=subprocess.PIPE).communicate(download_script)
 """
-        script = '\n'.join([ str(indent+str(line)) for line in script.split('\n')])
+        script = '\n'.join([str(indent + str(line)) for line in script.split('\n')])
 
-        replace_dict = {'###DOWNLOAD_SCRIPT###' : download_script,
-                        '###DIRAC_ENV###' : self._getDiracEnvStr(),
-                        '###LFN###' : self.lfn}
+        replace_dict = {'###DOWNLOAD_SCRIPT###': download_script,
+                        '###DIRAC_ENV###': self._getDiracEnvStr(),
+                        '###LFN###': self.lfn}
 
         for k, v in replace_dict.items():
             script = script.replace(str(k), str(v))
@@ -874,15 +883,15 @@ subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=Tru
         return diracEnv
 
     def _WN_wildcard_script(self, namePattern, lfnBase, compressed):
-        wildcard_str =  """
+        wildcard_str = """
 for f in glob.glob('###NAME_PATTERN###'):
     processes.append(uploadFile(os.path.basename(f), '###LFN_BASE###', ###COMPRESSED###, '###NAME_PATTERN###'))
 """
         wildcard_str = FileUtils.indentScript(wildcard_str, '###INDENT###')
 
-        replace_dict = { '###NAME_PATTERN###' : namePattern,
-                         '###LFN_BASE###' : lfnBase,
-                         '###COMPRESSED###' : compressed }
+        replace_dict = {'###NAME_PATTERN###': namePattern,
+                        '###LFN_BASE###': lfnBase,
+                        '###COMPRESSED###': compressed}
 
         for k, v in replace_dict.items():
             wildcard_str = wildcard_str.replace(str(k), str(v))
@@ -895,11 +904,11 @@ for f in glob.glob('###NAME_PATTERN###'):
         """
 
         script_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-        script_location = os.path.join( script_path, 'uploadScript.py.template')
+        script_location = os.path.join(script_path, 'uploadScript.py.template')
 
         upload_script = FileUtils.loadScript(script_location, '')
 
-        WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py.template' )
+        WNscript_location = os.path.join(script_path, 'WNInjectTemplate.py.template')
         script = FileUtils.loadScript(WNscript_location, '')
 
         if not self.remoteDir:
@@ -914,16 +923,16 @@ for f in glob.glob('###NAME_PATTERN###'):
         else:
             lfn_base = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), self.remoteDir)
 
-
         for this_file in outputFiles:
             isCompressed = this_file.namePattern in patternsToZip
 
             if not regex.search(this_file.namePattern) is None:
                 script += self._WN_wildcard_script(this_file.namePattern, lfn_base, str(isCompressed))
             else:
-                script += '###INDENT###print("Uploading: %s as: %s")\n' % (this_file.namePattern, str(os.path.join(lfn_base, this_file.namePattern)))
-                script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(isCompressed))
-
+                script += '###INDENT###print("Uploading: %s as: %s")\n' % (this_file.namePattern,
+                                                                           str(os.path.join(lfn_base, this_file.namePattern)))
+                script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (
+                    this_file.namePattern, lfn_base, str(isCompressed))
 
         if stripProxy(self)._parent is not None and stripProxy(self).getJobObject() and getName(stripProxy(self).getJobObject().backend) != 'Dirac':
             script_env = self._getDiracEnvStr()
@@ -932,11 +941,11 @@ for f in glob.glob('###NAME_PATTERN###'):
 
         script = '\n'.join([str('###INDENT###' + str(line)) for line in script.split('\n')])
 
-        replace_dict = {'###UPLOAD_SCRIPT###' : upload_script,
-                        '###STORAGE_ELEMENTS###' : str(configDirac['allDiracSE']),
-                        '###INDENT###' : indent,
-                        '###LOCATIONSFILE###' : postProcessLocationsFP,
-                        '###DIRAC_ENV###' : script_env}
+        replace_dict = {'###UPLOAD_SCRIPT###': upload_script,
+                        '###STORAGE_ELEMENTS###': str(configDirac['allDiracSE']),
+                        '###INDENT###': indent,
+                        '###LOCATIONSFILE###': postProcessLocationsFP,
+                        '###DIRAC_ENV###': script_env}
 
         for k, v in replace_dict.items():
             script = script.replace(str(k), str(v))
@@ -971,9 +980,9 @@ for f in glob.glob('###NAME_PATTERN###'):
         user = DiracProxyInfo(credential_requirements).username
         return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], user[0], user)
 
+
 # add DiracFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate DiracFile() objects via config file)
 GangaCore.Utility.Config.config_scope['DiracFile'] = DiracFile
 
 exportToGPI('GangaDirac', GangaList, 'Classes')
-

@@ -11,16 +11,15 @@
 # Date:   January 2007
 import re
 
+import GangaCore.Utility.logging
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Proxy import getName
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-
-from GangaCore.Utility.logging import getLogger
+from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 from GangaCore.Lib.LCG.Utility import get_uuid
+from GangaCore.Utility.ColourText import (ANSIMarkup, Effects, Foreground,
+                                          NoMarkup)
+from GangaCore.Utility.logging import getLogger
 
-from GangaCore.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Effects
-
-import GangaCore.Utility.logging
 logger = GangaCore.Utility.logging.getLogger()
 
 

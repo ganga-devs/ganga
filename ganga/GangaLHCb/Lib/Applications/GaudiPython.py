@@ -125,9 +125,11 @@ class GaudiPython(GaudiBase):
         super(GaudiPython, self).prepare(force)
         self._check_inputs()
 
-        share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'], self.is_prepared.name)
+        share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig(
+            'Configuration')['user'], self.is_prepared.name)
 
-        fillPackedSandbox(self.script, os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name))
+        fillPackedSandbox(self.script, os.path.join(share_dir, 'inputsandbox',
+                          '_input_sandbox_%s.tar' % self.is_prepared.name))
         gzipFile(os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name),
                  os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name), True)
         # add the newly created shared directory into the metadata system if
@@ -178,6 +180,7 @@ class GaudiPython(GaudiBase):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 # Associate the correct run-time handlers to GaudiPython for various backends.
+
 
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler

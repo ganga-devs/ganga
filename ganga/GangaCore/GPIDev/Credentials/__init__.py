@@ -43,5 +43,3 @@ def require_credential(method):
 
         return method(self, *args, **kwargs)
     return cred_wrapped_method
-
-

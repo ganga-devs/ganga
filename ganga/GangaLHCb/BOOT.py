@@ -35,6 +35,7 @@ def browseBK(gui=True):
     bkk = Bookkeeping()
     return addProxy(bkk.browse(gui))
 
+
 exportToGPI('browseBK', browseBK, 'Functions')
 
 
@@ -91,6 +92,7 @@ def fixBKQueryInBox(newCategory='query'):
     logger.info(
         "PLEASE NOW QUIT THIS GANGA SESSION AND RESTART TO SEE EFFECTS.")
 
+
 exportToGPI('fixBKQueryInBox', fixBKQueryInBox, 'Functions')
 
 
@@ -108,5 +110,6 @@ def restoreOLDBox():
     logger.info("box repository converted!\n")
     logger.info(
         "PLEASE NOW QUIT THIS GANGA SESSION AND RESTART TO SEE EFFECTS.")
+
 
 exportToGPI('restoreOLDBox', restoreOLDBox, 'Functions')

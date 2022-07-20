@@ -35,6 +35,7 @@ logger = getLogger()
 
 _pseudo_session_id = str(uuid.uuid4())
 
+
 def genDataFiles(job):
     """
     Generating a data.py file which contains the data we want gaudirun to use
@@ -58,7 +59,8 @@ def genDataFiles(job):
 
         inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file, data_str))
     else:
-        inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file, '#dummy_data_file\n'+LHCbDataset().optionsString()))
+        inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file,
+                            '#dummy_data_file\n' + LHCbDataset().optionsString()))
 
     return inputsandbox
 
@@ -70,11 +72,13 @@ def getAutoDBTags(job):
         if app in job.application.directory:
             prefix = app
     inputsandbox = []
-    ddb, conddb = execute('getDBtagsFromLFN("{0}")'.format(job.inputdata[0].lfn)) # take the tags only from the first file
-    tagOpts = 'from Configurables import ' + prefix +'\n' 
+    ddb, conddb = execute('getDBtagsFromLFN("{0}")'.format(
+        job.inputdata[0].lfn))  # take the tags only from the first file
+    tagOpts = 'from Configurables import ' + prefix + '\n'
     tagOpts += prefix + '().DDDBtag = ' + "'" + ddb + "'\n"
     tagOpts += prefix + '().CondDBtag = ' + "'" + conddb + "'"
     return tagOpts
+
 
 def generateWrapperScript(app):
     """
@@ -93,7 +97,7 @@ def getScriptName(app):
         app (Job): This is the app object which contains everything useful for generating the code
     """
     job = app.getJobObject()
-    return "_".join((getName(app), getConfig('Configuration')['user'], 'Job', job.getFQID('.'), _pseudo_session_id, 'script'))+'.py'
+    return "_".join((getName(app), getConfig('Configuration')['user'], 'Job', job.getFQID('.'), _pseudo_session_id, 'script')) + '.py'
 
 
 def generateWNScript(commandline, app):
@@ -107,7 +111,7 @@ def generateWNScript(commandline, app):
     exe_script_name = getScriptName(app)
 
     return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
-                                                                      OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
+                                                                      OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, '    ')),
                       subdir='jobScript', executable=True)
 
 
@@ -130,12 +134,14 @@ def collectPreparedFiles(app):
     for file_ in app.getJobObject().inputfiles:
         if isinstance(file_, LocalFile):
             if file_.namePattern == 'data.py':
-                raise ApplicationConfigurationError("You should not name any inputfiles 'data.py' to avoid conflict with the generated inputdata. Please rename the file and submit again.")
+                raise ApplicationConfigurationError(
+                    "You should not name any inputfiles 'data.py' to avoid conflict with the generated inputdata. Please rename the file and submit again.")
             shutil.copy(os.path.join(file_.localDir, os.path.basename(file_.namePattern)), shared_dir)
             input_files.append(os.path.join(shared_dir, file_.namePattern))
         elif isinstance(file_, str):
             if 'data.py' in file_:
-                raise ApplicationConfigurationError("You should not name any inputfiles 'data.py' to avoid conflict with the generated inputdata. Please rename the file and submit again.")
+                raise ApplicationConfigurationError(
+                    "You should not name any inputfiles 'data.py' to avoid conflict with the generated inputdata. Please rename the file and submit again.")
             new_file = LocalFile(file_)
             shutil.copy(os.path.join(new_file.localDir, os.path.basename(new_file.namePattern)), shared_dir)
             input_files.append(os.path.join(shared_dir, new_file.namePattern))
@@ -167,7 +173,7 @@ def prepareCommand(app):
 
     sourceEnv = app.getWNEnvScript(True)
 
-    #Get the options for the run script
+    # Get the options for the run script
     run_args = ''
     for _arg in app.run_args:
         run_args += ' %s ' % _arg
@@ -177,9 +183,10 @@ def prepareCommand(app):
     if not app.useGaudiRun:
         full_cmd = sourceEnv + run_cmd + 'python %s' % app.getWrapperScriptName()
     else:
-        #If the job does not have inputdata don't include the data.py file in the run command. For Gauss jobs.
+        # If the job does not have inputdata don't include the data.py file in the run command. For Gauss jobs.
         if app.getJobObject().inputdata:
-            full_cmd = sourceEnv + run_cmd + "gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
+            full_cmd = sourceEnv + run_cmd + \
+                "gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
         else:
             full_cmd = sourceEnv + run_cmd + "gaudirun.py %s " % (' '.join(opts_names))
         if app.extraOpts:
@@ -222,7 +229,8 @@ class GaudiExecRTHandler(IRuntimeHandler):
 
         if app.getMetadata:
             logger.info("Adding options to make the summary.xml")
-            inputsandbox.append(FileBuffer('summary.py', "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"))
+            inputsandbox.append(FileBuffer(
+                'summary.py', "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"))
 
         if app.autoDBtags:
             logger.info("Adding options for auto DB tags")
@@ -264,7 +272,7 @@ class GaudiExecRTHandler(IRuntimeHandler):
 
         # It's this authors opinion that the script should be in the PATH on the WN
         # As it stands policy is that is isn't so we have to call it in a relative way, hence "./"
-        c = StandardJobConfig('./'+os.path.join(scriptToRun.subdir, scriptToRun.name), input_sand, [], output_sand)
+        c = StandardJobConfig('./' + os.path.join(scriptToRun.subdir, scriptToRun.name), input_sand, [], output_sand)
         return c
 
 
@@ -297,7 +305,7 @@ def generateDiracInput(app):
         master_no = job.id
         prep_file = '%s_%s.tgz' % (master_no, _pseudo_session_id)
         tmp_dir = tempfile.gettempdir()
-        compressed_file = os.path.join(tmp_dir, 'diracInputFiles_'+os.path.basename(prep_file))
+        compressed_file = os.path.join(tmp_dir, 'diracInputFiles_' + os.path.basename(prep_file))
 
         if not job.master:
             rjobs = job.subjobs
@@ -313,7 +321,8 @@ def generateDiracInput(app):
     new_df = uploadLocalFile(job, os.path.basename(compressed_file), tmp_dir)
 
     app.uploadedInput = new_df
-    app.is_prepared.addAssociatedFile(DiracFile(lfn = new_df.lfn))
+    app.is_prepared.addAssociatedFile(DiracFile(lfn=new_df.lfn))
+
 
 def generateJobScripts(app, appendJobScripts):
     """
@@ -345,7 +354,8 @@ def generateJobScripts(app, appendJobScripts):
     master_job = job.master or job
 
     # Now lets get the name of this tar file
-    scriptArchive = os.path.join(master_job.application.jobScriptArchive.localDir, master_job.application.jobScriptArchive.namePattern)
+    scriptArchive = os.path.join(master_job.application.jobScriptArchive.localDir,
+                                 master_job.application.jobScriptArchive.namePattern)
 
     if appendJobScripts:
         # Now lets add the Job scripts to this archive and potentially the extra options to generate the summary.xml
@@ -355,13 +365,13 @@ def generateJobScripts(app, appendJobScripts):
                 summaryPath = os.path.join(job.getInputWorkspace().getPath(), 'summary.py')
                 summaryFile = FileBuffer(summaryPath, summaryScript)
                 summaryFile.create()
-                tar_file.add(summaryPath, arcname = 'summary.py')
+                tar_file.add(summaryPath, arcname='summary.py')
             if app.autoDBtags:
                 dbScript = getAutoDBTags(job)
                 dbPath = os.path.join(job.getInputWorkspace().getPath(), 'dbTags.py')
                 dbFile = FileBuffer(dbPath, dbScript)
                 dbFile.create()
-                tar_file.add(dbPath, arcname = 'dbTags.py')
+                tar_file.add(dbPath, arcname='dbTags.py')
             for this_job in rjobs:
                 this_app = this_job.application
                 wnScript = generateWNScript(prepareCommand(this_app), this_app)
@@ -370,8 +380,9 @@ def generateJobScripts(app, appendJobScripts):
                 tar_file.add(this_script, arcname=os.path.join(wnScript.subdir, wnScript.name))
                 os.unlink(this_script)
 
-    gzipFile(scriptArchive, scriptArchive+'.gz', True)
+    gzipFile(scriptArchive, scriptArchive + '.gz', True)
     app.jobScriptArchive.namePattern = app.jobScriptArchive.namePattern + '.gz'
+
 
 def generateDiracScripts(app):
     """
@@ -389,6 +400,7 @@ def generateDiracScripts(app):
 
     app.is_prepared.addAssociatedFile(DiracFile(lfn=new_df.lfn))
 
+
 def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
     Upload a locally available file to the grid as a DiracFile.
@@ -403,26 +415,26 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
 
     new_df = DiracFile(namePattern, localDir=localDir)
-    new_df.credential_requirements=job.backend.credential_requirements
+    new_df.credential_requirements = job.backend.credential_requirements
     trySEs = getConfig('DIRAC')['allDiracSE']
     random.shuffle(trySEs)
     new_lfn = os.path.join(getInputFileDir(job), namePattern)
     returnable = None
     for SE in trySEs:
-        #Check that the SE is writable
+        # Check that the SE is writable
         if execute('checkSEStatus("%s", "%s")' % (SE, 'Write')):
             try:
                 returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
-                #We have to check the failureReason as DiracFile put doesn't necessarily raise an exception on failure
-                if not returnable.failureReason=='':
+                # We have to check the failureReason as DiracFile put doesn't necessarily raise an exception on failure
+                if not returnable.failureReason == '':
                     logger.warning("Upload of input file as LFN %s to SE %s failed, trying another SE" % (new_lfn, SE))
-                    #Clear the failure reason and continue
+                    # Clear the failure reason and continue
                     new_df.failureReason = ''
                     continue
                 else:
                     break
             except GangaDiracError as err:
-                logger.warning("Upload of input file as LFN %s to SE %s failed, trying another SE" % (new_lfn, SE)) 
+                logger.warning("Upload of input file as LFN %s to SE %s failed, trying another SE" % (new_lfn, SE))
     if not returnable:
         raise GangaException("Failed to upload input file to any SE")
     if should_del:
@@ -439,7 +451,7 @@ def replicateJobFile(fileToReplicate):
     if not isinstance(fileToReplicate, DiracFile):
         raise GangaDiracError("Can only request replicas of DiracFiles. %s is not a DiracFile" % fileToReplicate)
 
-    if len(fileToReplicate.locations)==0:
+    if len(fileToReplicate.locations) == 0:
         fileToReplicate.getReplicas()
 
     trySEs = [SE for SE in getConfig('DIRAC')['allDiracSE'] if SE not in fileToReplicate.locations]
@@ -455,6 +467,7 @@ def replicateJobFile(fileToReplicate):
                 logger.warning("Failed to replicate %s to %s. Trying another SE." % (fileToReplicate.lfn, SE))
     if not success:
         raise GangaException("Failed to replicate %s to any SE" % fileToReplicate.lfn)
+
 
 def getInputFileDir(job):
     """
@@ -486,12 +499,12 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
 
-        #First check the remote options or inputfiles exist
+        # First check the remote options or inputfiles exist
         j = app.getJobObject()
         for file_ in j.inputfiles:
             if isinstance(file_, DiracFile):
                 if not file_.getReplicas():
-                        raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % file_.lfn)
+                    raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % file_.lfn)
 
         all_opts_files = app.getOptsFiles(True)
         for opts_file in all_opts_files:
@@ -502,7 +515,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
                     else:
                         raise GangaFileError("DiracFile options file with LFN %s has no replicas" % opts_file.lfn)
                 except GangaFileError as err:
-                    raise  err
+                    raise err
 
         if app.autoDBtags and not app.getJobObject().inputdata[0].lfn.startswith('/lhcb/MC/'):
             logger.warning("This doesn't look like MC! Not automatically adding db tags.")
@@ -528,14 +541,14 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             try:
                 assert isinstance(app.uploadedInput, DiracFile)
             except AssertionError:
-                raise ApplicationPrepareError("Failed to upload needed file, aborting submit. Tried to upload to: %s\nIf your Ganga installation is not at CERN your username may be trying to create a non-existent LFN. Try setting the 'DIRAC' configuration 'DiracLFNBase' to your grid user path.\n" % DiracFile.diracLFNBase(cred_req))
-        
+                raise ApplicationPrepareError(
+                    "Failed to upload needed file, aborting submit. Tried to upload to: %s\nIf your Ganga installation is not at CERN your username may be trying to create a non-existent LFN. Try setting the 'DIRAC' configuration 'DiracLFNBase' to your grid user path.\n" % DiracFile.diracLFNBase(cred_req))
+
         rep_data = app.uploadedInput.getReplicas()
         try:
             assert rep_data != {}
         except AssertionError:
             raise ApplicationPrepareError("Failed to find a replica of uploaded file, aborting submit")
-
 
         if isinstance(app.jobScriptArchive, (DiracFile, LocalFile)):
             app.jobScriptArchive = None
@@ -552,8 +565,8 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         except AssertionError:
             raise ApplicationPrepareError("Failed to find a replica, aborting submit")
 
-        #Check if the uploaded input already has replicas in case this is a copy of a job.
-        if len(app.uploadedInput.locations)==0:
+        # Check if the uploaded input already has replicas in case this is a copy of a job.
+        if len(app.uploadedInput.locations) == 0:
             app.uploadedInput.getReplicas()
         if len(app.uploadedInput.locations) >= 2:
             logger.debug("Uploaded input archive already at two locations, not replicating again")
@@ -564,7 +577,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         replicateJobFile(app.jobScriptArchive)
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
-
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         """
@@ -580,7 +592,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         # NB this needs to be removed safely
         # Get the inputdata and input/output sandbox in a sorted way
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
-        input_data,   parametricinput_data = dirac_inputdata(app)
+        input_data, parametricinput_data = dirac_inputdata(app)
 
         # We know we don't need this one
         inputsandbox = []
@@ -592,17 +604,18 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         for opts_file in all_opts_files:
             if isinstance(opts_file, DiracFile):
-                inputsandbox += ['LFN:'+opts_file.lfn]
+                inputsandbox += ['LFN:' + opts_file.lfn]
         # Sort out inputfiles we support
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
-                inputsandbox += ['LFN:'+file_.lfn]
+                inputsandbox += ['LFN:' + file_.lfn]
             elif isinstance(file_, LocalFile):
                 if job.master is not None and file_ not in job.master.inputfiles:
                     shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())
                     inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
             else:
-                logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
+                logger.error(
+                    "Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
                 raise ApplicationConfigurationError("Unsupported filetype: %s with DIRAC backend" % getName(file_))
 
         master_job = job.master or job
@@ -616,13 +629,13 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         logger.debug("Replica info: %s" % rep_data)
 
-        inputsandbox += ['LFN:'+app.uploadedInput.lfn]
-        inputsandbox += ['LFN:'+app.jobScriptArchive.lfn]
+        inputsandbox += ['LFN:' + app.uploadedInput.lfn]
+        inputsandbox += ['LFN:' + app.jobScriptArchive.lfn]
 
-        #Now add in the missing DiracFiles from the master job
+        # Now add in the missing DiracFiles from the master job
         for file_ in master_job.inputfiles:
-            if isinstance(file_, DiracFile) and 'LFN:'+file_.lfn not in inputsandbox:
-                inputsandbox += ['LFN:'+file_.lfn]
+            if isinstance(file_, DiracFile) and 'LFN:' + file_.lfn not in inputsandbox:
+                inputsandbox += ['LFN:' + file_.lfn]
 
         logger.debug("Input Sand: %s" % inputsandbox)
 
@@ -636,10 +649,11 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         # This code deals with the outputfiles as outputsandbox and outputdata for us
         lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 
-        #If we are doing virtualisation with a CVMFS location, check it is available
+        # If we are doing virtualisation with a CVMFS location, check it is available
         if job.virtualization and isinstance(job.virtualization.image, str):
             if 'cvmfs' == job.virtualization.image.split('/')[1]:
-                tag_location = '/'+job.virtualization.image.split('/')[1]+'/'+job.virtualization.image.split('/')[2]+'/'
+                tag_location = '/' + \
+                    job.virtualization.image.split('/')[1] + '/' + job.virtualization.image.split('/')[2] + '/'
                 if 'Tag' in job.backend.settings:
                     job.backend.settings['Tag'].append(tag_location)
                 else:
@@ -785,6 +799,6 @@ if __name__ == '__main__':
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('GaudiExec', 'Dirac', GaudiExecDiracRTHandler)
-

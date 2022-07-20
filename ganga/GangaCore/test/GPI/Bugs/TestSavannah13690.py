@@ -1,15 +1,16 @@
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TestSavannah13690(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts=[('PollThread', 'base_poll_rate', 1)]
+        extra_opts = [('PollThread', 'base_poll_rate', 1)]
         super(TestSavannah13690, self).setUp(extra_opts=extra_opts)
 
     def test_SubmitAndRemoval(self):
         from GangaCore.GPI import Job, TestSubmitter
-        
+
         j = Job()
         j.backend = TestSubmitter(time=1, update_delay=5)
         j.submit()
@@ -22,4 +23,3 @@ class TestSavannah13690(GangaUnitTest):
 
         for j in all:
             j.remove()
-

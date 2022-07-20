@@ -44,20 +44,20 @@ class ExeDiracRTHandler(IRuntimeHandler):
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
-        input_data,   parametricinput_data = dirac_inputdata(app)
+        input_data, parametricinput_data = dirac_inputdata(app)
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job = stripProxy(app).getJobObject()
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
-        #Grab the platform if the app has that attribute
+        # Grab the platform if the app has that attribute
         platform = 'ANY'
         if hasattr(app, 'platform'):
             platform = app.platform
 
-        #We have to specify a platform for the WN
+        # We have to specify a platform for the WN
         if platform == 'ANY':
-            platform = configLHCb['defaultPlatform'] 
+            platform = configLHCb['defaultPlatform']
             logger.warning('No application platform specified. Using default platform %s' % platform)
 
         commandline = []
@@ -66,9 +66,9 @@ class ExeDiracRTHandler(IRuntimeHandler):
             #logger.info("app: %s" % str(app.exe.name))
             #fileName = os.path.join(get_share_path(app), os.path.basename(app.exe.name))
             #logger.info("EXE: %s" % str(fileName))
-            #inputsandbox.append(File(name=fileName))
+            # inputsandbox.append(File(name=fileName))
             inputsandbox.append(app.exe)
-            commandline[0]=os.path.join('.', os.path.basename(app.exe.name))
+            commandline[0] = os.path.join('.', os.path.basename(app.exe.name))
         commandline.extend([str(arg) for arg in app.args])
         logger.debug('Command line: %s: ', commandline)
 
@@ -83,14 +83,14 @@ class ExeDiracRTHandler(IRuntimeHandler):
         if virtualization:
             contents = virtualization.modify_script(exe_script_template(), sandbox=True)
 
-            virtualizationutils = File(inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR )
+            virtualizationutils = File(inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR)
             inputsandbox.append(virtualizationutils)
 
         contents = script_generator(contents,
                                     COMMAND=repr(commandline),
                                     PYTHONDIR=repr(PYTHON_DIR),
                                     OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, ''))
-            
+
         inputsandbox.append(FileBuffer(name=exe_script_name, contents=contents, executable=True))
 
         logger.debug("Script is: %s" % str(contents))
@@ -107,10 +107,11 @@ class ExeDiracRTHandler(IRuntimeHandler):
                 if not this_file.getReplicas():
                     raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % this_file.lfn)
 
-        #If we are doing virtualisation with a CVMFS location, check it is available
+        # If we are doing virtualisation with a CVMFS location, check it is available
         if job.virtualization and isinstance(job.virtualization.image, str):
             if 'cvmfs' == job.virtualization.image.split('/')[1]:
-                tag_location = '/'+job.virtualization.image.split('/')[1]+'/'+job.virtualization.image.split('/')[2]+'/'
+                tag_location = '/' + \
+                    job.virtualization.image.split('/')[1] + '/' + job.virtualization.image.split('/')[2] + '/'
                 if 'Tag' in job.backend.settings:
                     job.backend.settings['Tag'].append(tag_location)
                 else:
@@ -221,6 +222,7 @@ sys.exit(rc)
     return script_template
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
 
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Executable', 'Dirac', ExeDiracRTHandler)

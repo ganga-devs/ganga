@@ -22,6 +22,7 @@ from GangaCore.GPIDev.Base.Proxy import getName
 
 logger = getLogger()
 
+
 class Notebook(IPrepareApp):
 
     """Notebook application -- execute Jupyter notebooks.
@@ -50,7 +51,7 @@ class Notebook(IPrepareApp):
         'timeout': SimpleItem(preparable=1, defvalue=None, typelist=[None, int], doc="Timeout in seconds for executing a notebook. If None, the default value will be taken."),
         'kernel': SimpleItem(preparable=1, defvalue='python2', doc="The kernel to use for the notebook execution. Depending on configuration, python3, Root and R might be available."),
         'regexp': SimpleItem(preparable=1, defvalue=[r'.+\.ipynb$'], typelist=["str"], sequence=1, strict_sequence=0, doc="Regular expression for the inputfiles to match for executing."),
-       'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes')
     })
     _category = 'applications'
@@ -67,7 +68,7 @@ class Notebook(IPrepareApp):
         """Provide name of template file with absolute path"""
         dir = path.dirname(path.abspath(inspect.getfile(inspect.currentframe())))
         return path.join(dir, 'wrapperNotebookTemplate.py.template')
-                                                   
+
     def wrapper(self, regexp, version, timeout, kernel):
         """Write a wrapper Python script that executes the notebooks"""
         wrapperscript = FileUtils.loadScript(self.templatelocation(), '')
@@ -83,7 +84,7 @@ class Notebook(IPrepareApp):
         runScript = FileBuffer(scriptName, wrapperscript, executable=1)
 
         return runScript
-    
+
     def unprepare(self, force=False):
         """
         Revert a Notebook application back to its unprepared state.
@@ -101,19 +102,20 @@ class Notebook(IPrepareApp):
         """
         if force:
             self.unprepare()
-    
+
         if (self.is_prepared is not None):
-            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+            raise ApplicationPrepareError(
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
 
         logger.info('Preparing %s application.' % getName(self))
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
-    
+
         # Prevent orphaned shared directories
         try:
             self.checkPreparedHasParent(self)
 
-            script = self.wrapper(self.regexp,self.version, self.timeout, self.kernel)
+            script = self.wrapper(self.regexp, self.version, self.timeout, self.kernel)
             logger.debug("Creating: %s" % path.join(self.getSharedPath(), script.name))
             script.create(path.join(self.getSharedPath(), script.name))
 

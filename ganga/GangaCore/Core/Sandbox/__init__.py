@@ -1,3 +1,5 @@
 
-from .Sandbox import SandboxError, createPackedInputSandbox, createInputSandbox, getPackedOutputSandbox
-from .WNSandbox import getPackedInputSandbox, createOutputSandbox, createPackedOutputSandbox, OUTPUT_TARBALL_NAME, PYTHON_DIR
+from .Sandbox import (SandboxError, createInputSandbox,
+                      createPackedInputSandbox, getPackedOutputSandbox)
+from .WNSandbox import (OUTPUT_TARBALL_NAME, PYTHON_DIR, createOutputSandbox,
+                        createPackedOutputSandbox, getPackedInputSandbox)

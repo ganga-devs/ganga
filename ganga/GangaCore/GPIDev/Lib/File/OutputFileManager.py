@@ -12,6 +12,7 @@ from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
+
 def outputFilePostProcessingOnWN(job, outputFileClassName):
     """
     Checks if the output files of a given job(we are interested in the backend) 
@@ -51,6 +52,7 @@ def outputFilePostProcessingTestForWhen(job, outputFileClassName, when):
 
     return False
 
+
 def getOutputSandboxPatterns(job):
     """
     Intended for grid backends where we have to set the outputsandbox patterns for the output file types that have to be processed on the client
@@ -74,6 +76,7 @@ def getOutputSandboxPatterns(job):
 
     return outputPatterns
 
+
 def getInputFilesPatterns(job):
     """
     we have to set the inputsandbox patterns for the input files that will be copied from the client, also write the commands for downloading input files from the WN
@@ -89,9 +92,9 @@ def getInputFilesPatterns(job):
 
     if job.virtualization and isinstance(job.virtualization.image, IGangaFile):
         inputfiles_list.append(job.virtualization.image)
-        
+
     tmpDir = tempfile.mkdtemp() if inputfiles_list else None
-        
+
     for inputFile in inputfiles_list:
 
         inputFileClassName = getName(inputFile)
@@ -248,7 +251,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
 
     if job.virtualization and isinstance(job.virtualization.image, IGangaFile):
         inputfiles_list.append(job.virtualization.image)
-            
+
     for inputFile in inputfiles_list:
 
         inputfileClassName = getName(inputFile)
@@ -311,13 +314,15 @@ postprocesslocations = open(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFI
     insertScript = shortScript
 
     insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
-    insertScript = insertScript.replace('###POSTPROCESSLOCATIONSFILENAME###', getConfig('Output')['PostProcessLocationsFileName'])
+    insertScript = insertScript.replace('###POSTPROCESSLOCATIONSFILENAME###',
+                                        getConfig('Output')['PostProcessLocationsFileName'])
 
     for outputFileName in outputFilesProcessedOnWN.keys():
 
         if len(outputFilesProcessedOnWN[outputFileName]) > 0:
 
-            insertScript += outputFilesProcessedOnWN[outputFileName][0].getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
+            insertScript += outputFilesProcessedOnWN[outputFileName][0].getWNInjectedScript(
+                outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
 
     insertScript += """\n
 ###INDENT###postprocesslocations.close()
@@ -325,6 +330,7 @@ postprocesslocations = open(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFI
     insertScript = insertScript.replace('###INDENT###', indent)
 
     return insertScript
+
 
 import re
 
@@ -369,4 +375,3 @@ def getWNCodeForInputdataListCreation(job, indent):
         insertScript = insertScript.replace('###FILELIST###', "[]")
 
     return insertScript
-

@@ -1,6 +1,7 @@
 import os
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest, start_ganga, stop_ganga
 
+
 class TestRunfile(GangaUnitTest):
     def test(self):
         from GangaCore.Runtime.GPIFunctions import runfile

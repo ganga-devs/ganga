@@ -30,6 +30,7 @@ def backend_handlers():
                 }
     return backends
 
+
 def available_apps():
     global available_lhcb_apps
     if available_lhcb_apps is None:
@@ -100,7 +101,7 @@ def lumi(xmlsummary):
     #  print(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[0],'+/-',xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[2])
 
     lumiDict = dict(list(zip(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].attrib('format'),
-                        xmlsummary.counter_dict()['lumiCounters'][
+                             xmlsummary.counter_dict()['lumiCounters'][
         'IntegrateBeamCrossing/Luminosity'].value()
     ))
     )
@@ -166,4 +167,3 @@ def activeSummaryItems():
                    'xmlskippedfiles': xmlskippedfiles
                    }
     return activeItems
-

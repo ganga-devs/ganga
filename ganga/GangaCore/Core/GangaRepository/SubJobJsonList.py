@@ -22,6 +22,8 @@ from GangaCore.Core.GangaRepository.DStreamer import (
 logger = getLogger()
 
 # FIXME There has to be a better way of doing this?
+
+
 class SJXLIterator(object):
     """Class for iterating over SJXMLList, potentially very unstable, dangerous and only supports looping forwards ever"""
 
@@ -178,7 +180,6 @@ class SubJobJsonList(GangaObject):
             if this_cache:
                 from GangaCore.GPIDev.Base.Proxy import getName
 
-
                 obj = self.__getitem__(sj_id)
                 this_cache["classname"] = getName(obj)
                 this_cache["category"] = obj._category
@@ -215,7 +216,6 @@ class SubJobJsonList(GangaObject):
 
         #         safe_save(subjob_data, subjob_obj, to_file)
 
-
     def __iter__(self):
         """Return iterator for this class"""
         return SJXLIterator(self)
@@ -228,7 +228,7 @@ class SubJobJsonList(GangaObject):
         if len(self._stored_len) == 2:
             # last_time = self._stored_len[0]
             # if this_time == last_time:
-                return self._stored_len[1]
+            return self._stored_len[1]
 
         subjob_count = SubJobJsonList.countSubJobDirs(
             master_id=self.parent_id,

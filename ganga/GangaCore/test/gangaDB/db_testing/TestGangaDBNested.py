@@ -1,11 +1,10 @@
 import os
-import utils
+
 import pymongo
-
-from GangaCore.Utility.Config import getConfig
+import utils
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Virtualization import checkDocker
-
 
 HOST, PORT = utils.get_host_port()
 
@@ -26,10 +25,9 @@ class TestGangaDBNested(GangaUnitTest):
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
-        from GangaCore.Utility.Config import getConfig
         # self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
-
-        from GangaCore.GPI import Job, jobs, ArgSplitter
+        from GangaCore.GPI import ArgSplitter, Job, jobs
+        from GangaCore.Utility.Config import getConfig
         j = Job()
         assert len(jobs) == 1
 
@@ -57,13 +55,13 @@ class TestGangaDBNested(GangaUnitTest):
 
     def test_c_JobLoaded(self):
         """ Third do something to trigger a loading of a Job and then test if it's loaded"""
-        from GangaCore.GPI import jobs, ArgSplitter
+        from GangaCore.GPI import ArgSplitter, jobs
 
         assert len(jobs) == 1
 
         j = jobs(0)
 
-        from GangaCore.GPIDev.Base.Proxy import stripProxy, addProxy
+        from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
         raw_j = stripProxy(j)
 
         # ANY COMMAND TO LOAD A JOB CAN BE USED HERE
@@ -79,12 +77,10 @@ class TestGangaDBNested(GangaUnitTest):
 
     def test_d_testJSONContent(self):
         # Check content of JSON is as expected
-        from GangaCore.GPI import jobs, Job
-        from GangaCore.GPIDev.Base.Proxy import stripProxy
-
         from GangaCore.Core.GangaRepository.DStreamer import (
-            JsonRepresentation, object_from_database
-        )
+            JsonRepresentation, object_from_database)
+        from GangaCore.GPI import Job, jobs
+        from GangaCore.GPIDev.Base.Proxy import stripProxy
 
         # job_json = object_from_database(_filter={"name": "modified_name"})
         job_json = self.connection.jobs.find_one(filter={"id": 0})

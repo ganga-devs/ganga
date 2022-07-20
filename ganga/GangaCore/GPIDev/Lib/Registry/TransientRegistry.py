@@ -123,4 +123,3 @@ class TransientRegistrySliceProxy(RegistrySliceProxy):
         Get an item by positional index. Examples:
         """
         return _wrap(stripProxy(self).__getitem__(x))
-

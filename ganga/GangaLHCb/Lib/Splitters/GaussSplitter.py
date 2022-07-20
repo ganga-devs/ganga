@@ -11,6 +11,7 @@ from GangaLHCb.Lib.Applications.GaudiExec import GaudiExec
 
 logger = getLogger()
 
+
 class GaussSplitter(ISplitter):
 
     """Create a set of Gauss jobs based on the total number of jobs and the
@@ -49,7 +50,8 @@ class GaussSplitter(ISplitter):
 
         from GangaLHCb.Lib.Applications import Gauss
         if not isinstance(job.application, (Gauss, GaudiExec)):
-            logger.warning("This application is of type: '%s', be careful how you use it with the GaussSplitter!" % type(job.application))
+            logger.warning(
+                "This application is of type: '%s', be careful how you use it with the GaussSplitter!" % type(job.application))
 
         subjobs = []
 
@@ -67,7 +69,7 @@ class GaussSplitter(ISplitter):
 
                 if os.path.exists(share_path):
                     f = open(share_path, 'r+b')
-                    #FIXME should this have been an addition?
+                    # FIXME should this have been an addition?
                     inputdata = pickle.load(f)
                     f.close()
 
@@ -96,5 +98,3 @@ class GaussSplitter(ISplitter):
             subjobs.append(j)
 
         return subjobs
-
-

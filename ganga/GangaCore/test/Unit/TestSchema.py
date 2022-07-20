@@ -3,10 +3,12 @@ import unittest
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
 from GangaCore.Core.exceptions import GangaAttributeError
 
+
 class TestVersion(unittest.TestCase):
     """
     Make sure that the version checks are working
     """
+
     def test_equal(self):
         v1 = Version(1, 0)
         v2 = Version(1, 0)
@@ -43,7 +45,7 @@ class TestSchema(unittest.TestCase):
         """
 
         self.assertEqual(self.s.allItems(), list(self.dd.items()))
-        self.assertEqual(sorted(self.s.componentItems()+self.s.simpleItems()), sorted(self.dd.items()))
+        self.assertEqual(sorted(self.s.componentItems() + self.s.simpleItems()), sorted(self.dd.items()))
 
     def test_get_non_existant(self):
         """
@@ -81,4 +83,3 @@ class TestSchema(unittest.TestCase):
         self.assertFalse(self.s['plain_copyable']['copyable'])
         self.assertFalse(self.s['id']['copyable'])
         self.assertTrue(self.s['application']['copyable'])
-

@@ -78,8 +78,10 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
             from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
             fileTransform = allComponentFilters['gangafiles']
-            job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)])
-            job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)])
+            job.non_copyable_outputfiles.extend(
+                [fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)])
+            job.non_copyable_outputfiles.extend(
+                [fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)])
 
             outputsandbox.extend([f.namePattern for f in job.non_copyable_outputfiles])
 
@@ -127,7 +129,7 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
                                   PLATFORM=job.application.platform,
                                   CMDLINE=cmd,
                                   XMLSUMMARYPARSING=getXMLSummaryScript())  # ,
-                                  # OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
+        # OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
 
         logger.debug("Returning StandardJobConfig")
 

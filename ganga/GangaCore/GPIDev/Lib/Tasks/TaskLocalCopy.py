@@ -1,8 +1,9 @@
 
-from GangaCore.GPIDev.Lib.Dataset import Dataset
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
-import re
 import os
+import re
+
+from GangaCore.GPIDev.Lib.Dataset import Dataset
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 
 
 class TaskLocalCopy(Dataset):

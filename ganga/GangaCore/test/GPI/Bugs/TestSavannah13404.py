@@ -1,8 +1,8 @@
 
 
-from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-
 import os
+
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestSavannah13404(GangaUnitTest):

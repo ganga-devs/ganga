@@ -98,8 +98,10 @@ class TestSmartMerger(GangaUnitTest):
 
         for j in self.jobslice:
             output = os.path.join(j.outputdir, 'out.txt')
-            assert file_contains(output, 'Output from job %d.' % j.id), 'File must contain the output of each individual job'
+            assert file_contains(output, 'Output from job %d.' %
+                                 j.id), 'File must contain the output of each individual job'
 
         for j in self.jobslice:
             output = os.path.join(j.outputdir, 'out2.txt')
-            assert file_contains(output, 'Output from job %d.' % (j.id * 10)), 'File must contain the output of each individual job'
+            assert file_contains(output, 'Output from job %d.' % (j.id * 10)
+                                 ), 'File must contain the output of each individual job'

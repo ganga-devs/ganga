@@ -55,11 +55,11 @@ class Docker(IVirtualization):
 
         if sandbox:
             extra = extra + 'virtualization_udockerlocation = ' + repr(getcwd())
-            extra = extra + 'runenv[\'UDOCKER_DIR\']=' + repr(path.join(getcwd(),'.udocker'))
+            extra = extra + 'runenv[\'UDOCKER_DIR\']=' + repr(path.join(getcwd(), '.udocker'))
         else:
             extra = extra + 'virtualization_udockerlocation = ' + \
-            repr(getConfig('Configuration')['UDockerlocation'])  + '\n'
-        
+                repr(getConfig('Configuration')['UDockerlocation']) + '\n'
+
         extra = extra + """
 
 from Virtualization import checkDocker, checkUDocker, checkSingularity, installUdocker
@@ -102,5 +102,5 @@ else:
     execmd = [binary, '--quiet', 'run', '--rm', '--volume', workdir+":"+"/work_dir"] + options + [virtualization_image] + execmd
 
 """
-        script = script.replace('###VIRTUALIZATION###',extra)
+        script = script.replace('###VIRTUALIZATION###', extra)
         return script

@@ -3,6 +3,6 @@ def requiresAfsToken():
 
 
 def getLocalRoot():
-    from GangaCore.Utility.files import fullpath
     import GangaCore.Core.FileWorkspace
+    from GangaCore.Utility.files import fullpath
     return fullpath(GangaCore.Core.FileWorkspace.gettop())

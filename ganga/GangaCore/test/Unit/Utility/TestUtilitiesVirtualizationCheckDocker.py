@@ -5,6 +5,7 @@ except ImportError:
 import unittest
 from GangaCore.Utility.Virtualization import checkDocker
 
+
 class TestCheckDocker(unittest.TestCase):
     @patch('subprocess.call')
     def test_checkDocker_success(self, mock_subprocess_call):
@@ -12,11 +13,8 @@ class TestCheckDocker(unittest.TestCase):
         assert(checkDocker() == True)
         mock_subprocess_call.assert_called_once()
 
-
     @patch('subprocess.call')
-    def test_checkDocker_fail(self,mock_subprcess_call):
+    def test_checkDocker_fail(self, mock_subprcess_call):
         mock_subprcess_call.side_effect = [1]
         assert(checkDocker() == False)
         mock_subprcess_call.assert_called_once()
-    
- 

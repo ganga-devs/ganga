@@ -61,7 +61,7 @@ class ItemizedTextParagraph(object):
             if len(it) > maxitem:
                 maxitem = len(it)
 
-        indent = ' ' * int(self.head_size*0.5)
+        indent = ' ' * int(self.head_size * 0.5)
 
         buf = self.head + '\n'
 
@@ -95,4 +95,3 @@ if __name__ == "__main__":
     print(it.getString())
 
     print('strings: Test Passed OK')
-

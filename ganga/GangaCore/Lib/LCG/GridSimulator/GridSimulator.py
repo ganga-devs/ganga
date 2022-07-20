@@ -13,6 +13,7 @@ logger.critical('LCG Grid Simulator ENABLED')
 
 config = getConfig("GridSimulator")
 
+
 def sleep(val):
     import time
     time.sleep(get_number(val))
@@ -37,6 +38,7 @@ def get_number(val):
         return 0
     # print t
     return t
+
 
 import os
 import time

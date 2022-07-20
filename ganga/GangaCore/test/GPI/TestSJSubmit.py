@@ -1,13 +1,15 @@
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TestSJSubmit(GangaUnitTest):
 
     n_subjobs = 10
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts = [('Output', 'FailJobIfNoOutputMatched', 'True'), ('TestingFramework', 'AutoCleanup', 'False'), ('Configuration', 'resubmitOnlyFailedSubjobs', 'True')]
+        extra_opts = [('Output', 'FailJobIfNoOutputMatched', 'True'), ('TestingFramework',
+                                                                       'AutoCleanup', 'False'), ('Configuration', 'resubmitOnlyFailedSubjobs', 'True')]
         super(TestSJSubmit, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
@@ -140,7 +142,7 @@ class TestSJSubmit(GangaUnitTest):
         """
         from GangaCore.GPI import Job, Local
 
-        j=Job()
+        j = Job()
         j.splitter = self._getSplitter()
         j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
@@ -195,7 +197,6 @@ class TestSJSubmit(GangaUnitTest):
 
         # Test that this works when resubmitOnlyFailedSubjobs = False
 
-
     def test_f_testResplit(self):
         from GangaCore.GPI import Job, Local
         from GangaTest.Framework.utils import (sleep_until_completed,
@@ -203,8 +204,8 @@ class TestSJSubmit(GangaUnitTest):
         from GangaCore.GPIDev.Lib.Job.Job import JobError
 
         import time
-        
-        j=Job()
+
+        j = Job()
         j.splitter = self._getSplitter()
         j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
@@ -218,7 +219,7 @@ class TestSJSubmit(GangaUnitTest):
         sleep_until_completed(j, timeout=20, verbose=True)
         print('D', time.time())
         assert j.subjobs(0).status == 'completed_frozen'
-        assert len(j.subjobs) == 2*TestSJSubmit.n_subjobs
+        assert len(j.subjobs) == 2 * TestSJSubmit.n_subjobs
         assert 'has been resplit' in j.subjobs(0).comment
 
         # Resplit of failed subjob
@@ -228,16 +229,15 @@ class TestSJSubmit(GangaUnitTest):
         print('F', time.time())
         sleep_until_completed(j, timeout=20, verbose=True)
         print('G', time.time())
-        
+
         assert j.subjobs(1).status == 'failed_frozen'
-        assert len(j.subjobs) == 3*TestSJSubmit.n_subjobs
+        assert len(j.subjobs) == 3 * TestSJSubmit.n_subjobs
 
         # Failure to resplit subjob in status new
         print('H', time.time())
-        j.subjobs(2)._impl.status='new'
+        j.subjobs(2)._impl.status = 'new'
         print('I', time.time())
         self.assertRaises(JobError, j.subjobs(2).resplit, self._getSplitter())
         print('J', time.time())
-        assert len(j.subjobs) == 3*TestSJSubmit.n_subjobs
+        assert len(j.subjobs) == 3 * TestSJSubmit.n_subjobs
         print('K', time.time())
-        

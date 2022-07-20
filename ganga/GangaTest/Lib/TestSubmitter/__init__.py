@@ -1,1 +1,4 @@
-import GangaTest.Lib.TestSubmitter, GangaTest.Lib.TestSubmitter.TestSplitter, GangaTest.Lib.TestSubmitter.TestConfig, GangaTest.Lib.TestSubmitter.TestConfig2
+import GangaTest.Lib.TestSubmitter
+import GangaTest.Lib.TestSubmitter.TestSplitter
+import GangaTest.Lib.TestSubmitter.TestConfig
+import GangaTest.Lib.TestSubmitter.TestConfig2

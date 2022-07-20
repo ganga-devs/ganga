@@ -119,6 +119,7 @@ LHCbApp().EvtMax = -1
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+
 # Add it to the list of plug-ins
 allPlugins.add(LHCbFileMerger, 'postprocessor', 'LHCbFileMerger')
 

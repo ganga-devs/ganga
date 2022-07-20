@@ -1,12 +1,13 @@
 #!/usr/bin/env python
-import re
-import time
-import random
 import gzip
-from GangaCore.Utility.logging import getLogger
-from GangaCore.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 import hashlib
+import random
+import re
 import socket
+import time
+
+from GangaCore.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
+from GangaCore.Utility.logging import getLogger
 
 
 def get_uuid(*args):

@@ -70,4 +70,3 @@ def test_eq():
     assert a1 == a2
 
     assert v1 != a1
-

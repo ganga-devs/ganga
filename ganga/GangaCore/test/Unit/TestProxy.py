@@ -2,7 +2,8 @@ import unittest
 
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Lib.File import LocalFile
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
+from GangaCore.GPIDev.Schema import (ComponentItem, FileItem, Schema,
+                                     SimpleItem, Version)
 
 
 class SampleGangaObject(GangaObject):
@@ -38,8 +39,8 @@ class NonProxiedGangaObject(GangaObject):
     _name = 'TestGangaObject'
 
 
-import GangaCore.GPIDev.Base.Proxy
 import GangaCore.Core.exceptions
+import GangaCore.GPIDev.Base.Proxy
 
 
 class TestProxy(unittest.TestCase):

@@ -25,7 +25,7 @@ class GangaThreadPool(object):
     getInstance = SingletonHelper()
     shutdown_policy = 'interactive'
 
-    __slots__ = ('__threads', 'SHUTDOWN_TIMEOUT')#, '_instance')
+    __slots__ = ('__threads', 'SHUTDOWN_TIMEOUT')  # , '_instance')
 
     def __init__(self):
 
@@ -39,7 +39,7 @@ class GangaThreadPool(object):
 
     def addServiceThread(self, t):
         #logger.debug('service thread "%s" added to the GangaThreadPool', t.getName())
-        ##   HERE TO AVOID AN IMPORT ERROR!
+        # HERE TO AVOID AN IMPORT ERROR!
         from GangaCore.Core.GangaThread.MTRunner import DuplicateDataItemError
         try:
             self.__threads.append(t)
@@ -91,7 +91,8 @@ class GangaThreadPool(object):
 
         # run shutdown thread in background
         import threading
-        shutdown_thread = threading.Thread(target=self.__do_shutdown__, args=(self.__threads,), name='GANGA_Update_Thread_shutdown')
+        shutdown_thread = threading.Thread(target=self.__do_shutdown__, args=(
+            self.__threads,), name='GANGA_Update_Thread_shutdown')
         shutdown_thread.setDaemon(True)
         shutdown_thread.start()
 
@@ -166,13 +167,15 @@ class GangaThreadPool(object):
         critical_thread_ids = self.__alive_critical_thread_ids()
         if critical_thread_ids:
             logger.debug('GangaThreadPool shutdown anyway after %d sec.' % (time.time() - t_start))
-            logger.warning('Shutdown forced. %d background thread(s) still running: %s', len(critical_thread_ids), critical_thread_ids)
+            logger.warning('Shutdown forced. %d background thread(s) still running: %s',
+                           len(critical_thread_ids), critical_thread_ids)
 
         # log debug message if critical thread still alive
         non_critical_thread_ids = self.__alive_non_critical_thread_ids()
         if non_critical_thread_ids:
             logger.debug('GangaThreadPool shutdown anyway after %d sec.' % (time.time() - t_start))
-            logger.debug('Shutdown forced. %d non-critical background thread(s) still running: %s', len(non_critical_thread_ids), non_critical_thread_ids)
+            logger.debug('Shutdown forced. %d non-critical background thread(s) still running: %s',
+                         len(non_critical_thread_ids), non_critical_thread_ids)
 
         # set singleton instance to None
         GangaThreadPool._instance = None
@@ -261,4 +264,3 @@ class GangaThreadPool(object):
             logger.debug('number of alive threads: %d' % num_alive_threads)
             time.sleep(0.3)
             num_alive_threads = __cnt_alive_threads__(_all_threads)
-

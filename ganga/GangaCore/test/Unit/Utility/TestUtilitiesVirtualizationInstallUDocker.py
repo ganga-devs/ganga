@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock, mock_open
 from GangaCore.Utility.Virtualization import installUdocker
 from urllib.error import URLError
 
+
 class TestInstallUDocker(unittest.TestCase):
 
     @patch('subprocess.call')
@@ -20,7 +21,7 @@ class TestInstallUDocker(unittest.TestCase):
     @patch('GangaCore.Utility.Virtualization.urlopen')
     def test_installUDocker_download_fail(self,
                                           mock_urlopen, mock_check_call, mock_subprocess_call, mock_main_open):
-        mock_main_open=mock_open()
+        mock_main_open = mock_open()
         mock_check_call.side_effect = [1]
         cm = MagicMock()
         cm.getcode.return_value = 404

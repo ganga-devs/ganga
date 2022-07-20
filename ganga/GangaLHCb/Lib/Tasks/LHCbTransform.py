@@ -18,6 +18,7 @@ from GangaCore.GPIDev.Base.Proxy import stripProxy
 
 logger = getLogger()
 
+
 class LHCbTransform(ITransform):
     _schema = Schema(Version(1, 0), dict(list(ITransform._schema.datadict.items()) + list({
         'files_per_unit': SimpleItem(defvalue=-1, doc='Maximum number of files to assign to each unit from a given input dataset. If < 1, use all files.', typelist=["int"]),
@@ -137,7 +138,7 @@ class LHCbTransform(ITransform):
                     self.addUnitToTRF(unit)
                     unit.inputdata = copy.deepcopy(self.inputdata[id])
                     unit.inputdata.files = []
-                    unit.inputdata.files += new_data.files[num:num+step]
+                    unit.inputdata.files += new_data.files[num:num + step]
 
         elif self.mc_num_units > 0:
             if len(self.units) == 0:
@@ -213,17 +214,16 @@ class LHCbTransform(ITransform):
                                 if re.search(pat, f.namePattern) and f.location[0] in flist_local:
                                     flist_local.remove(f.location[0])
 
-
         # just do one unit that uses all data
         unit = LHCbUnit()
         unit.name = "Unit %d" % len(self.units)
-        if len(flist_local)==0:
+        if len(flist_local) == 0:
             unit.inputdata = LHCbDataset(files=[DiracFile(lfn=f) for f in flist])
-        elif len(flist_local)!=0 and len(flist)!=0:
+        elif len(flist_local) != 0 and len(flist) != 0:
             logger.warning("Found both DiracFile and LocalFile to copy job input. Only taking DiracFile")
             unit.inputdata = LHCbDataset(files=[DiracFile(lfn=f) for f in flist])
         else:
-            unit.inputdata = LHCbDataset(files = [f for f in flist_local])
+            unit.inputdata = LHCbDataset(files=[f for f in flist_local])
 
         return unit
 

@@ -21,6 +21,7 @@ def jobid_as_string(job):
         jstr = str(job.id)
     return jstr
 
+
 def lhcbdirac_outputfile_jdl(output_files):
     """ Construct the setOutputFile section of the JDL for this job
     Args:
@@ -35,6 +36,7 @@ def lhcbdirac_outputfile_jdl(output_files):
 
     return DiracScript
 
+
 def lhcbdiracAPI_script_template():
     """ Create a template LHCbDirac LHCbJob by taking the Dirac Job and making some modifications to teh template"""
 
@@ -45,8 +47,8 @@ j.setApplicationScript('###APP_NAME###', '###APP_VERSION###', '###APP_SCRIPT###'
 j.setAncestorDepth(###ANCESTOR_DEPTH###)
 """
 
-
-    DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'', '\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
+    DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'',
+                                      '\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
     DiracScript = DiracScript.replace('j.setPlatform( \'###PLATFORM###\' )', 'j.setDIRACPlatform()')
 
     setName_str = 'j.setName(\'###NAME###\')'
@@ -64,6 +66,7 @@ def is_gaudi_child(app):
 
 class filenameFilter:
     """ class for returning a given filename as a filter"""
+
     def __init__(self, filename):
         self.filename = filename
 
@@ -100,7 +103,7 @@ def create_runscript(useCmake=False):
 
     import inspect
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                   'WorkerScript.py.template')
+                                   'WorkerScript.py.template')
 
     from GangaCore.GPIDev.Lib.File import FileUtils
     worker_script = FileUtils.loadScript(script_location, '')

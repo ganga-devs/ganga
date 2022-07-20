@@ -5,8 +5,7 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 class TestSavannah14799(GangaUnitTest):
     def test_Savannah14799(self):
-        from GangaCore.GPI import Job, jobtree, jobs
-
+        from GangaCore.GPI import Job, jobs, jobtree
         from GangaCore.GPIDev.Base.Proxy import stripProxy
         j = Job()
         jobtree.add(j)

@@ -5,7 +5,7 @@ from GangaCore.testlib.decorators import add_config
 
 @add_config([('Preparable', 'unprepare_on_copy', 'True')])
 def test_unprepareTrue(gpi):
-    from GangaCore.GPI import Job, Executable
+    from GangaCore.GPI import Executable, Job
     j = Job(application=Executable(exe='/bin/echo', args=['hello']))
     j.submit()
 
@@ -23,7 +23,7 @@ def test_unprepareTrue(gpi):
 @add_config([('Preparable', 'unprepare_on_copy', 'False')])
 def test_unprepareFalse(gpi):
 
-    from GangaCore.GPI import Job, Executable
+    from GangaCore.GPI import Executable, Job
     k = Job(application=Executable(exe='/bin/echo', args=['hello']))
     k.submit()
 

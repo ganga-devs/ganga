@@ -5,6 +5,7 @@
 ##########################################################################
 
 import GangaCore.Utility.logging
+
 logger = GangaCore.Utility.logging.getLogger()
 
 import os

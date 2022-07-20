@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 
-import sys
 import signal
+import sys
 import time
 
 duration = int(sys.argv[1])
