@@ -70,6 +70,10 @@ class AsyncMonitoringService(GangaThread):
             stripProxy(backend_obj).master_updateMonitoringInformation(these_jobs)
         self.loop.call_later(POLL_RATE, self._check_active_backends)
 
+    def run_monitoring_task(self, coro, executor=None):
+        if not executor:
+            self.loop.create_task(coro)
+
     def _cleanup_scheduled_tasks(self):
         scheduled_tasks = [task for task in asyncio.all_tasks(self.loop) if task is not asyncio.current_task(self.loop)]
         for task in scheduled_tasks:
