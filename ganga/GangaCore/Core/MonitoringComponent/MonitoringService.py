@@ -75,6 +75,22 @@ class AsyncMonitoringService(GangaThread):
         for task in scheduled_tasks:
             task.cancel()
 
+    def disable(self):
+        if not self.alive:
+            log.error("Cannot disable monitoring loop. It has already been stopped")
+            return False
+        self._cleanup_scheduled_tasks()
+        self.enabled = False
+        return True
+
+    def enable(self):
+        if not self.alive:
+            log.error("Cannot start monitoring loop. It has already been stopped")
+            return False
+        self.enabled = True
+        self.loop.call_soon_threadsafe(self._check_active_backends)
+        return True
+
     def stop(self):
         self.alive = False
         self.enabled = False
