@@ -36,8 +36,6 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     from GangaCore.Utility.logging import getLogger
     global monitoring_component
 
-    # The asyncio monitoring loop implementation to use
-    aioloop = asyncio.new_event_loop()
     # start the monitoring loop
     monitoring_component = AsyncMonitoringService(registry_slice=reg_slice)
     # monitoring_component = JobRegistry_Monitor(registry_slice=reg_slice)
