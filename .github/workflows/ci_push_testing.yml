@@ -35,7 +35,7 @@ jobs:
     - name: Set up Python 3
       run: | 
         yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python
+        yum install -y rh-python38-python rh-python38-python-pip
     - name: Install dependencies
       run: |
         /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
@@ -60,7 +60,7 @@ jobs:
     - name: Set up Python 3
       run: | 
         yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python
+        yum install -y rh-python38-python rh-python38-python-pip
     - name: Install dependencies
       run: |
         /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
@@ -82,7 +82,7 @@ jobs:
     - name: Set up Python 3
       run: | 
         yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python
+        yum install -y rh-python38-python rh-python38-python-pip
     - name: Install dependencies
       run: |
         /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
@@ -100,7 +100,7 @@ jobs:
     - name: Set up Python 3
       run: | 
         yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python
+        yum install -y rh-python38-python rh-python38-python-pip
     - name: Install dependencies
       run: |
         /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
@@ -128,7 +128,7 @@ jobs:
     - name: Set up Python 3
       run: | 
         yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python
+        yum install -y rh-python38-python rh-python38-python-pip
     - name: Install dependencies
       run: |
         /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
@@ -170,7 +170,7 @@ jobs:
     - name: Set up Python 3
       run: | 
         yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python
+        yum install -y rh-python38-python rh-python38-python-pip
     - name: Install dependencies
       run: |
         /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
