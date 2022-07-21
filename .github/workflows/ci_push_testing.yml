@@ -114,7 +114,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Install git
-      run: yum install -y git
+      run: sudo yum install -y git
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
@@ -131,7 +131,7 @@ jobs:
         chmod 400 ~/.globus/userkey.pem
     - name: Install DIRAC UI
       run: |
-        yum install -y wget
+        sudo yum install -y wget
         mkdir ~/dirac_ui
         cd ~/dirac_ui
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
@@ -154,7 +154,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Install git
-      run: yum install -y git
+      run: sudo yum install -y git
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip setuptools wheel
@@ -171,7 +171,7 @@ jobs:
         chmod 400 ~/.globus/userkey.pem
     - name: Install DIRAC UI
       run: |
-        yum install -y wget
+        sudo yum install -y wget
         mkdir ~/dirac_ui
         cd ~/dirac_ui
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
