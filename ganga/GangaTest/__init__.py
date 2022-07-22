@@ -12,4 +12,5 @@ def loadPlugins(config=None):
     import GangaTest.Lib.TestSubmitter  # TestSubmitter, TestSplitter here
     import GangaTest.Lib.TestRobot
     import GangaTest.Lib.TestObjects
+    import GangaTest.Lib.TestRemoteBackend
     import GangaTest.Framework.runner

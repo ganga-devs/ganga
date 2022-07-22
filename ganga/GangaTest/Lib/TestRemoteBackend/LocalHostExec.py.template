@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+import glob
+import mimetypes
+import os
+import os.path
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+import time
+
+###########################################################################################
+
+###INLINEMODULES###
+
+############################################################################################
+def failurereport(filehandle, message):
+    errfile = open('stderr', 'w' )
+    errfile.close()
+    print('EXITCODE: %d' % -9999, file=filehandle)
+    print('FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y'), file=filehandle)
+    print('PROBLEM STARTING THE APPLICATION SCRIPT: \'%s\' \'%s\''%(execmd,str(x)), file=filehandle)
+    print('FILES FOUND ARE: %s' % os.listdir('.'), file=filehandle)
+    filehandle.close()
+    sys.exit()
+
+input_sandbox = ###INPUT_SANDBOX###
+sharedoutputpath= ###SHAREDOUTPUTPATH###
+outputpatterns = ###OUTPUTPATTERNS###
+execmd = ###APPSCRIPTPATH###
+environment = ###ENVIRONMENT###
+workdir = ###WORKDIR###
+
+statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
+
+try:
+    statusfile=open(statusfilename,'w')
+except IOError as x:
+    print('ERROR: not able to write a status file: ', statusfilename)
+    print('ERROR: ',x)
+    raise
+
+line='START: '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
+statusfile.writelines(line)
+statusfile.flush()
+
+if not os.path.exists(workdir):
+    os.makedirs(workdir)
+os.chdir(workdir)
+
+##-- WARNING: get the input files including the python modules BEFORE sys.path.insert()
+
+for f in input_sandbox:
+    if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+        getPackedInputSandbox(f)
+    else:
+        shutil.copy(f, os.path.join(os.getcwd(), os.path.basename(f)))
+
+# -- END OF MOVED CODE BLOCK
+
+#get input files
+###DOWNLOADINPUTFILES###
+
+# create inputdata list
+###CREATEINPUTDATALIST###
+gangadir = ###GANGADIR###
+
+sys.path.insert(0, gangadir)
+sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
+
+runenv = os.environ.copy()
+for key,value in environment.items():
+    runenv[key] = value
+
+outfile=open('stdout','w')
+errorfile=open('stderr','w')
+
+sys.stdout=open('./__syslog__','w')
+sys.stderr=sys.stdout
+
+###VIRTUALIZATION###
+
+try:
+    child = subprocess.Popen(execmd, shell=False, stdout=outfile, stderr=errorfile, env=runenv)
+except OSError as x:
+    failurereport(statusfile, 'PROBLEM STARTING THE APPLICATION SCRIPT: \'%s\' \'%s\''%(execmd,str(x)))
+                
+print('WRAPPER: %d'% os.getpid(), file=statusfile)
+print('PID: %d'%child.pid, file=statusfile)
+statusfile.flush()
+
+result = -1
+
+try:
+    while 1:
+        result = child.poll()
+        if result is not None:
+            break
+        outfile.flush()
+        errorfile.flush()
+        time.sleep(0.3)
+finally:
+    pass
+
+    sys.stdout=sys.__stdout__
+    sys.stderr=sys.__stderr__
+
+
+outfile.flush()
+errorfile.flush()
+
+createOutputSandbox(outputpatterns,None,sharedoutputpath)
+
+def printError(message):
+    errorfile.write(message + os.linesep)
+    errorfile.flush()
+
+def printInfo(message):
+    outfile.write(message + os.linesep)
+    outfile.flush()
+
+
+###OUTPUTUPLOADSPOSTPROCESSING###
+
+outfile.close()
+errorfile.close()
+
+###OUTPUTSANDBOXPOSTPROCESSING###
+
+line="EXITCODE: " + repr(result) + os.linesep
+line+='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
+statusfile.writelines(line)
+statusfile.close()
+sys.exit()
+

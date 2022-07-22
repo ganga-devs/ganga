@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+import multiprocessing
+import os
+import subprocess
+import sys
+import time
+from os.path import dirname, isdir, join
+from pathlib import Path
+
+
+def mp_worker(name):
+    print(f'START: {name} '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())))
+    subprocess.run([sys.executable, name], start_new_session=True)
+
+
+def runwrapper():
+    workdir = ###WORKDIR###
+    batch_size = ###BATCHSIZE###
+    subjoblist = ###SUBJOBLIST###
+
+    scriptnames_g = [join(workdir,sj,'input','__jobscript__') for sj in subjoblist]
+
+    outdir = join(workdir,'output')
+    if not isdir(outdir):
+        os.mkdir(outdir)
+    statusfilename = join(outdir,'__jobstatus__')
+
+    try:
+        statusfile=open(statusfilename,'w')
+    except IOError as x:
+        print('ERROR: not able to write a status file: ', statusfilename)
+        print('ERROR: ',x)
+        raise
+
+    line='START: '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
+    statusfile.writelines(line)
+    statusfile.flush()
+
+    sys.stdout=open(join(outdir,'__syslog__'),'w')
+    sys.stderr=sys.stdout
+
+    print(f'Running with a batch size of {batch_size}')
+    try:
+        pool = multiprocessing.Pool(batch_size)
+        pool.map(mp_worker, scriptnames_g)
+    finally:
+        pool.close()
+        pool.join()
+
+    sys.stdout=sys.__stdout__
+    sys.stderr=sys.__stderr__
+
+    line='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
+    statusfile.writelines(line)
+    statusfile.close()
+
+if __name__ == '__main__':
+    runwrapper()
+    
