@@ -145,7 +145,7 @@ jobs:
         chmod 400 ~/.globus/userkey.pem
     - name: Install DIRAC UI
       run: |
-        sudo yum install -y git wget
+        yum install -y git wget
         mkdir ~/dirac_ui
         cd ~/dirac_ui
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
@@ -187,7 +187,7 @@ jobs:
         chmod 400 ~/.globus/userkey.pem
     - name: Install DIRAC UI
       run: |
-        sudo yum install -y git wget
+        yum install -y git wget
         mkdir ~/dirac_ui
         cd ~/dirac_ui
         wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
