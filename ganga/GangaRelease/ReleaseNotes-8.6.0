@@ -1,0 +1,12 @@
+**************************************************************************************************************
+8.6.0 (2022/07/25)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaCore
+--------------------------------------------------------------------------------------------------------------
+* Minimal python version increased to 3.8 #2041 
+* Add missing rm command to MassStorage config #2031 
+* Added unit test for GangaFile subclasses #2033 
+* Add __class_getitem to GangaList for python 3.9 #2038 
+* Code autoformatted for PEP8 #2039
