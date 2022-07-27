@@ -1,12 +1,16 @@
 import asyncio
-from threading import get_ident
+from concurrent.futures import ThreadPoolExecutor
+import functools
 
 from GangaCore.Core.GangaRepository.Registry import RegistryKeyError, RegistryLockError
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
 from GangaCore.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus
+from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 
+config = getConfig("PollThread")
+THREAD_POOL_SIZE = config['update_thread_pool_size']
 POLL_RATE = 1  # in seconds
 log = getLogger()
 
@@ -20,10 +24,12 @@ class AsyncMonitoringService(GangaThread):
         self.alive = True
         self.registry_slice = registry_slice
         self.active_backends = {}
+        self.thread_executor = None
 
     def run(self):
         asyncio.set_event_loop(self.loop)
         self.enabled = True
+        self.thread_executor = ThreadPoolExecutor(max_workers=THREAD_POOL_SIZE)
         self.loop.call_later(POLL_RATE, self._check_active_backends)
         self.loop.run_forever()
 
@@ -70,9 +76,15 @@ class AsyncMonitoringService(GangaThread):
             stripProxy(backend_obj).master_updateMonitoringInformation(these_jobs)
         self.loop.call_later(POLL_RATE, self._check_active_backends)
 
-    def run_monitoring_task(self, coro, executor=None):
-        if not executor:
-            self.loop.create_task(coro)
+    def run_monitoring_task(self, monitoring_task, jobs):
+        if asyncio.iscoroutinefunction(monitoring_task):
+            self.loop.create_task(monitoring_task(jobs))
+        else:
+            self.loop.create_task(self._run_in_threadpool(monitoring_task, jobs))
+
+    async def _run_in_threadpool(self, task, jobs):
+        await self.loop.run_in_executor(
+            self.thread_executor, functools.partial(task, jobs=jobs))
 
     def _cleanup_scheduled_tasks(self):
         scheduled_tasks = [task for task in asyncio.all_tasks(self.loop) if task is not asyncio.current_task(self.loop)]
@@ -83,6 +95,7 @@ class AsyncMonitoringService(GangaThread):
         if not self.alive:
             log.error("Cannot disable monitoring loop. It has already been stopped")
             return False
+        self.thread_executor.shutdown()
         self._cleanup_scheduled_tasks()
         self.enabled = False
         return True
@@ -92,11 +105,13 @@ class AsyncMonitoringService(GangaThread):
             log.error("Cannot start monitoring loop. It has already been stopped")
             return False
         self.enabled = True
+        self.thread_executor = ThreadPoolExecutor(max_workers=THREAD_POOL_SIZE)
         self.loop.call_soon_threadsafe(self._check_active_backends)
         return True
 
     def stop(self):
         self.alive = False
         self.enabled = False
+        self.thread_executor.shutdown()
         self._cleanup_scheduled_tasks()
         self.loop.stop()

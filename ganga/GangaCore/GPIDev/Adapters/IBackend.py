@@ -485,8 +485,8 @@ class IBackend(GangaObject):
                         for sj_id in this_block:
                             subjobs_to_monitor.append(j.subjobs[sj_id])
 
-                        monitoring_component.run_monitoring_task(
-                            j.backend.updateMonitoringInformation(subjobs_to_monitor))
+                        task = j.backend.updateMonitoringInformation
+                        monitoring_component.run_monitoring_task(task, subjobs_to_monitor)
                     except Exception as err:
                         logger.error("Monitoring Error: %s" % err)
 
@@ -500,9 +500,10 @@ class IBackend(GangaObject):
 
         if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
-                logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
-                monitoring_component.run_monitoring_task(stripProxy(
-                    simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend]))
+                jobs = simple_jobs[this_backend]
+                logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in jobs]))
+                task = stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation
+                monitoring_component.run_monitoring_task(task, jobs)
 
         logger.debug("Finished Monitoring request")
 
