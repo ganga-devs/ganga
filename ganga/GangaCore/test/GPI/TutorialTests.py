@@ -80,9 +80,7 @@ j.submit()
 
     def test_c_JobManipulation(self):
 
-        from GangaCore.GPI import runMonitoring, Job, jobs, export, load
-
-        runMonitoring()
+        from GangaCore.GPI import Job, jobs, export, load
 
         # -- JOBMANIPULATION JOBCOPY START
         j = Job(name='original')
