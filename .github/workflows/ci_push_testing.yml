@@ -3,27 +3,23 @@ name: CI Push Testing
 on: [pull_request]
 
 jobs:
-
   lint:
     name: Linting
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - name: Install dependencies
-      run: |
-        python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install flake8
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        # disable for now
-        flake8 --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics ganga
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics ganga
+      - uses: actions/checkout@v1
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install flake8
+      - name: Lint with flake8
+        run: |
+          flake8 ganga
+        continue-on-error: true
 
   core-unit:
     name: GangaCore Unit
@@ -31,17 +27,17 @@ jobs:
     runs-on: ubuntu-latest
     container: centos:7
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3
-      run: | 
-        yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python rh-python38-python-pip
-    - name: Install dependencies
-      run: |
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
-    - name: Test with pytest
-      run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/Unit
+      - uses: actions/checkout@v1
+      - name: Set up Python 3
+        run: |
+          yum install -y centos-release-scl-rh
+          yum install -y rh-python38-python rh-python38-python-pip
+      - name: Install dependencies
+        run: |
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+      - name: Test with pytest
+        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/Unit
 
   core-integration:
     name: GangaCore Integration
@@ -53,24 +49,24 @@ jobs:
       mongodb:
         image: mongo
         ports:
-        - 27017:27017
+          - 27017:27017
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3
-      run: | 
-        yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python rh-python38-python-pip
-    - name: Install dependencies
-      run: |
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
-    - name: Test with pytest
-      run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/GPI
-      env:
-        GANGA_GITHUB_HOST: True
-        MONGODB_HOST: mongodb
-        MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+      - uses: actions/checkout@v1
+      - name: Set up Python 3
+        run: |
+          yum install -y centos-release-scl-rh
+          yum install -y rh-python38-python rh-python38-python-pip
+      - name: Install dependencies
+        run: |
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+      - name: Test with pytest
+        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/GPI
+        env:
+          GANGA_GITHUB_HOST: True
+          MONGODB_HOST: mongodb
+          MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
   gui:
     name: GangaGUI tests
@@ -78,17 +74,17 @@ jobs:
     runs-on: ubuntu-latest
     container: centos:7
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3
-      run: | 
-        yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python rh-python38-python-pip
-    - name: Install dependencies
-      run: |
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
-    - name: Test with pytest
-      run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaGUI ganga/GangaGUI/test
+      - uses: actions/checkout@v1
+      - name: Set up Python 3
+        run: |
+          yum install -y centos-release-scl-rh
+          yum install -y rh-python38-python rh-python38-python-pip
+      - name: Install dependencies
+        run: |
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+      - name: Test with pytest
+        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaGUI ganga/GangaGUI/test
 
   condor:
     name: Condor
@@ -96,69 +92,69 @@ jobs:
     runs-on: ubuntu-latest
     container: htcondor/mini:el7
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3
-      run: | 
-        yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python rh-python38-python-pip
-    - name: Install dependencies
-      run: |
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
-    - name: Start Condor
-      run: |
-        /start.sh > start.stdout &
-        sleep 30
-        condor_status
-    - name: Test with pytest
-      run: |
-        pwd
-        find . -exec chown submituser:submituser {} \;
-        su submituser -s /opt/rh/rh-python38/root/usr/bin/python -- -m pytest --cov-report term-missing --cov ganga/GangaCore/Lib/Condor ganga/GangaCore/test/Condor
-        condor_status
-        condor_q
-      
+      - uses: actions/checkout@v1
+      - name: Set up Python 3
+        run: |
+          yum install -y centos-release-scl-rh
+          yum install -y rh-python38-python rh-python38-python-pip
+      - name: Install dependencies
+        run: |
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+      - name: Start Condor
+        run: |
+          /start.sh > start.stdout &
+          sleep 30
+          condor_status
+      - name: Test with pytest
+        run: |
+          pwd
+          find . -exec chown submituser:submituser {} \;
+          su submituser -s /opt/rh/rh-python38/root/usr/bin/python -- -m pytest --cov-report term-missing --cov ganga/GangaCore/Lib/Condor ganga/GangaCore/test/Condor
+          condor_status
+          condor_q
+
   dirac-unit:
     name: GangaDirac Unit
     needs: lint
     runs-on: ubuntu-latest
     container: centos:7
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3
-      run: | 
-        yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python rh-python38-python-pip
-    - name: Install dependencies
-      run: |
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
-    - name: Install Robot certificate
-      env: # Or as an environment variable
-        ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
-        ROBOT_KEY: ${{ secrets.GangaRobot_UserKey }}
-      run: |
-        mkdir ~/.globus
-        echo "$ROBOT_CERT" > ~/.globus/usercert.pem
-        echo "$ROBOT_KEY" > ~/.globus/userkey.pem
-        chmod 644 ~/.globus/usercert.pem
-        chmod 400 ~/.globus/userkey.pem
-    - name: Install DIRAC UI
-      run: |
-        yum install -y git wget
-        mkdir ~/dirac_ui
-        cd ~/dirac_ui
-        wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
-        chmod u+x dirac-install
-        DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
-        DIRAC_VERSION=v7r2p10
-        ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
-        source ~/dirac_ui/bashrc
-        dirac-proxy-init -x
-        dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
-        dirac-proxy-init -g gridpp_user -M
-    - name: Test with pytest
-      run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
+      - uses: actions/checkout@v1
+      - name: Set up Python 3
+        run: |
+          yum install -y centos-release-scl-rh
+          yum install -y rh-python38-python rh-python38-python-pip
+      - name: Install dependencies
+        run: |
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+      - name: Install Robot certificate
+        env: # Or as an environment variable
+          ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
+          ROBOT_KEY: ${{ secrets.GangaRobot_UserKey }}
+        run: |
+          mkdir ~/.globus
+          echo "$ROBOT_CERT" > ~/.globus/usercert.pem
+          echo "$ROBOT_KEY" > ~/.globus/userkey.pem
+          chmod 644 ~/.globus/usercert.pem
+          chmod 400 ~/.globus/userkey.pem
+      - name: Install DIRAC UI
+        run: |
+          yum install -y git wget
+          mkdir ~/dirac_ui
+          cd ~/dirac_ui
+          wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
+          chmod u+x dirac-install
+          DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
+          DIRAC_VERSION=v7r2p10
+          ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
+          source ~/dirac_ui/bashrc
+          dirac-proxy-init -x
+          dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
+          dirac-proxy-init -g gridpp_user -M
+      - name: Test with pytest
+        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
 
   dirac-integration:
     name: GangaDirac Integration
@@ -166,50 +162,50 @@ jobs:
     runs-on: ubuntu-latest
     container: centos:7
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3
-      run: | 
-        yum install -y centos-release-scl-rh
-        yum install -y rh-python38-python rh-python38-python-pip
-    - name: Install dependencies
-      run: |
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-        /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
-    - name: Install Robot certificate
-      env: # Or as an environment variable
-        ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
-        ROBOT_KEY: ${{ secrets.GangaRobot_UserKey }}
-      run: |
-        mkdir ~/.globus
-        echo "$ROBOT_CERT" > ~/.globus/usercert.pem
-        echo "$ROBOT_KEY" > ~/.globus/userkey.pem
-        chmod 644 ~/.globus/usercert.pem
-        chmod 400 ~/.globus/userkey.pem
-    - name: Install DIRAC UI
-      run: |
-        yum install -y git wget
-        mkdir ~/dirac_ui
-        cd ~/dirac_ui
-        wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
-        chmod u+x dirac-install
-        DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
-        DIRAC_VERSION=v7r2p10
-        ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
-        source ~/dirac_ui/bashrc
-        dirac-proxy-init -x
-        dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
-        dirac-proxy-init -g gridpp_user -M
-    - name: Install gangarc file
-      run: |
-        echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc
-        echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ~/.gangarc
-        echo -e "[defaults_DiracProxy]\ngroup=gridpp_user" >> ~/.gangarc
-    - name: Test with pytest
-      env:
-        GANGA_CONFIG_FILE: ~/.gangarc
-        GANGA_CONFIG_PATH: GangaDirac/Dirac.ini
-        DIRAC_DEPRECATED_FAIL: True
-      run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/GPI
+      - uses: actions/checkout@v1
+      - name: Set up Python 3
+        run: |
+          yum install -y centos-release-scl-rh
+          yum install -y rh-python38-python rh-python38-python-pip
+      - name: Install dependencies
+        run: |
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+      - name: Install Robot certificate
+        env: # Or as an environment variable
+          ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
+          ROBOT_KEY: ${{ secrets.GangaRobot_UserKey }}
+        run: |
+          mkdir ~/.globus
+          echo "$ROBOT_CERT" > ~/.globus/usercert.pem
+          echo "$ROBOT_KEY" > ~/.globus/userkey.pem
+          chmod 644 ~/.globus/usercert.pem
+          chmod 400 ~/.globus/userkey.pem
+      - name: Install DIRAC UI
+        run: |
+          yum install -y git wget
+          mkdir ~/dirac_ui
+          cd ~/dirac_ui
+          wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
+          chmod u+x dirac-install
+          DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
+          DIRAC_VERSION=v7r2p10
+          ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
+          source ~/dirac_ui/bashrc
+          dirac-proxy-init -x
+          dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
+          dirac-proxy-init -g gridpp_user -M
+      - name: Install gangarc file
+        run: |
+          echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc
+          echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ~/.gangarc
+          echo -e "[defaults_DiracProxy]\ngroup=gridpp_user" >> ~/.gangarc
+      - name: Test with pytest
+        env:
+          GANGA_CONFIG_FILE: ~/.gangarc
+          GANGA_CONFIG_PATH: GangaDirac/Dirac.ini
+          DIRAC_DEPRECATED_FAIL: True
+        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/GPI
 
   lhcb-unit:
     name: GangaLHCb Unit
@@ -219,28 +215,28 @@ jobs:
       image: centos:7
       options: --privileged
     steps:
-    - name: Install CVM-FS
-      run: |
-        yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
-        yum install -y cvmfs cvmfs-config-default
-        cvmfs_config setup
-        echo "CVMFS_REPOSITORIES=lhcb.cern.ch,sft.cern.ch" > /etc/cvmfs/default.local
-        echo "CVMFS_HTTP_PROXY=DIRECT" >> /etc/cvmfs/default.local
-        mkdir -p /cvmfs/lhcb.cern.ch
-        mkdir -p /cvmfs/sft.cern.ch
-        mount -t cvmfs lhcb.cern.ch /cvmfs/lhcb.cern.ch
-        mount -t cvmfs sft.cern.ch /cvmfs/sft.cern.ch
-    - uses: actions/checkout@v1
-    - name: Install virtualenv and dependencies
-      run: |
-        /cvmfs/sft.cern.ch/lcg/releases/LCG_100/Python/3.8.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
-        . ~/venv/bin/activate
-        python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install -e .[dev,LHCb]
-    - name: Test with pytest
-      run: |
-        . ~/venv/bin/activate
-        python3 -m pytest --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/Unit
+      - name: Install CVM-FS
+        run: |
+          yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
+          yum install -y cvmfs cvmfs-config-default
+          cvmfs_config setup
+          echo "CVMFS_REPOSITORIES=lhcb.cern.ch,sft.cern.ch" > /etc/cvmfs/default.local
+          echo "CVMFS_HTTP_PROXY=DIRECT" >> /etc/cvmfs/default.local
+          mkdir -p /cvmfs/lhcb.cern.ch
+          mkdir -p /cvmfs/sft.cern.ch
+          mount -t cvmfs lhcb.cern.ch /cvmfs/lhcb.cern.ch
+          mount -t cvmfs sft.cern.ch /cvmfs/sft.cern.ch
+      - uses: actions/checkout@v1
+      - name: Install virtualenv and dependencies
+        run: |
+          /cvmfs/sft.cern.ch/lcg/releases/LCG_100/Python/3.8.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
+          . ~/venv/bin/activate
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install -e .[dev,LHCb]
+      - name: Test with pytest
+        run: |
+          . ~/venv/bin/activate
+          python3 -m pytest --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/Unit
 
   lhcb-integration:
     name: GangaLHCb Integration
@@ -250,142 +246,141 @@ jobs:
       image: centos:7
       options: --privileged
     steps:
-    - name: Install git
-      run: yum install -y git
-    - name: Install CVM-FS
-      run: |
-        yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
-        yum install -y cvmfs cvmfs-config-default
-        cvmfs_config setup
-        echo "CVMFS_REPOSITORIES=lhcb.cern.ch,sft.cern.ch" > /etc/cvmfs/default.local
-        echo "CVMFS_HTTP_PROXY=DIRECT" >> /etc/cvmfs/default.local
-        mkdir -p /cvmfs/lhcb.cern.ch
-        mkdir -p /cvmfs/sft.cern.ch
-        mount -t cvmfs lhcb.cern.ch /cvmfs/lhcb.cern.ch
-        mount -t cvmfs sft.cern.ch /cvmfs/sft.cern.ch
-    - name: Install Robot certificate
-      env: # Or as an environment variable
-        ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
-        ROBOT_KEY: ${{ secrets.GangaRobot_UserKey }}
-      run: |
-        mkdir ~/.globus
-        echo "$ROBOT_CERT" > ~/.globus/usercert.pem
-        echo "$ROBOT_KEY" > ~/.globus/userkey.pem
-        chmod 644 ~/.globus/usercert.pem
-        chmod 400 ~/.globus/userkey.pem
-    - name: Install DIRAC UI
-      run: |
-        yum install -y wget
-        mkdir ~/dirac_ui
-        cd ~/dirac_ui
-        wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
-        chmod u+x dirac-install
-        DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
-        DIRAC_VERSION=v7r1p19
-        ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
-        source ~/dirac_ui/bashrc
-        dirac-proxy-init -x
-        dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
-        dirac-proxy-init -g gridpp_user -M
-    - name: Install gangarc file
-      run: |
-        echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc
-        echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac:GangaGaudi:GangaLHCb" >> ~/.gangarc
-        echo -e "[defaults_DiracProxy]\ngroup=lhcb_user" >> ~/.gangarc
-    - uses: actions/checkout@v1
-    - name: Install virtualenv and dependencies
-      run: |
-        /cvmfs/sft.cern.ch/lcg/releases/LCG_100/Python/3.8.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
-        . ~/venv/bin/activate
-        python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install -e .[dev,LHCb]
-    - name: Test with pytest
-      env:
-        GANGA_CONFIG_FILE: ~/.gangarc
-        GANGA_CONFIG_PATH: GangaLHCb/LHCb.ini
-      run: |
-        source /cvmfs/lhcb.cern.ch/lib/LbEnv 2>&1
-        lhcb-proxy-init
-        . ~/venv/bin/activate
-        python3 -m pytest --testLHCb --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/GPI
+      - name: Install git
+        run: yum install -y git
+      - name: Install CVM-FS
+        run: |
+          yum install -y https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
+          yum install -y cvmfs cvmfs-config-default
+          cvmfs_config setup
+          echo "CVMFS_REPOSITORIES=lhcb.cern.ch,sft.cern.ch" > /etc/cvmfs/default.local
+          echo "CVMFS_HTTP_PROXY=DIRECT" >> /etc/cvmfs/default.local
+          mkdir -p /cvmfs/lhcb.cern.ch
+          mkdir -p /cvmfs/sft.cern.ch
+          mount -t cvmfs lhcb.cern.ch /cvmfs/lhcb.cern.ch
+          mount -t cvmfs sft.cern.ch /cvmfs/sft.cern.ch
+      - name: Install Robot certificate
+        env: # Or as an environment variable
+          ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
+          ROBOT_KEY: ${{ secrets.GangaRobot_UserKey }}
+        run: |
+          mkdir ~/.globus
+          echo "$ROBOT_CERT" > ~/.globus/usercert.pem
+          echo "$ROBOT_KEY" > ~/.globus/userkey.pem
+          chmod 644 ~/.globus/usercert.pem
+          chmod 400 ~/.globus/userkey.pem
+      - name: Install DIRAC UI
+        run: |
+          yum install -y wget
+          mkdir ~/dirac_ui
+          cd ~/dirac_ui
+          wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/Core/scripts/dirac-install.py
+          chmod u+x dirac-install
+          DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
+          DIRAC_VERSION=v7r1p19
+          ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
+          source ~/dirac_ui/bashrc
+          dirac-proxy-init -x
+          dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
+          dirac-proxy-init -g gridpp_user -M
+      - name: Install gangarc file
+        run: |
+          echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc
+          echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac:GangaGaudi:GangaLHCb" >> ~/.gangarc
+          echo -e "[defaults_DiracProxy]\ngroup=lhcb_user" >> ~/.gangarc
+      - uses: actions/checkout@v1
+      - name: Install virtualenv and dependencies
+        run: |
+          /cvmfs/sft.cern.ch/lcg/releases/LCG_100/Python/3.8.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
+          . ~/venv/bin/activate
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install -e .[dev,LHCb]
+      - name: Test with pytest
+        env:
+          GANGA_CONFIG_FILE: ~/.gangarc
+          GANGA_CONFIG_PATH: GangaLHCb/LHCb.ini
+        run: |
+          source /cvmfs/lhcb.cern.ch/lib/LbEnv 2>&1
+          lhcb-proxy-init
+          . ~/venv/bin/activate
+          python3 -m pytest --testLHCb --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/GPI
 
   controller-tests:
     name: Database Controller Tests
     needs: lint
     runs-on: ubuntu-18.04
     steps:
+      - name: Set up Go 1.16.4
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16.4
+        id: go
 
-    - name: Set up Go 1.16.4
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.16.4
-      id: go
+      - name: Check out code for the container build
+        uses: actions/checkout@v1
 
-    - name: Check out code for the container build
-      uses: actions/checkout@v1
+      - name: Singularity Install Dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            build-essential \
+            libssl-dev \
+            uuid-dev \
+            libgpgme11-dev \
+            squashfs-tools \
+            libseccomp-dev \
+            pkg-config
+      - name: Singularity Install
+        env:
+          SINGULARITY_VERSION: 3.7.3
+        run: |
+          export GOPATH=/tmp/go
+          mkdir -p $GOPATH
+          sudo mkdir -p /usr/local/var/singularity/mnt && \
+          mkdir -p $GOPATH/src/github.com/sylabs && \
+          cd $GOPATH/src/github.com/sylabs && \
+          wget -qO- https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz | \
+          tar xzv && \
+          cd singularity && \
+          ./mconfig -p /usr/local && \
+          make -C builddir && \
+          sudo make -C builddir install
+      - name: Singularity Download MongoDB
+        run: singularity pull docker://mongo:latest
 
-    - name: Singularity Install Dependencies
-      run: |
-        sudo apt-get update && sudo apt-get install -y \
-          build-essential \
-          libssl-dev \
-          uuid-dev \
-          libgpgme11-dev \
-          squashfs-tools \
-          libseccomp-dev \
-          pkg-config
-    - name: Singularity Install
-      env:
-        SINGULARITY_VERSION: 3.7.3
-      run: |
-        export GOPATH=/tmp/go
-        mkdir -p $GOPATH
-        sudo mkdir -p /usr/local/var/singularity/mnt && \
-        mkdir -p $GOPATH/src/github.com/sylabs && \
-        cd $GOPATH/src/github.com/sylabs && \
-        wget -qO- https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz | \
-        tar xzv && \
-        cd singularity && \
-        ./mconfig -p /usr/local && \
-        make -C builddir && \
-        sudo make -C builddir install
-    - name: Singularity Download MongoDB
-      run: singularity pull docker://mongo:latest
+      - name: uDocker Installation
+        env:
+          UDOCKER_VERSION: 1.3.0
+        run: |
+          curl -L https://github.com/indigo-dc/udocker/releases/download/v1.3.0/udocker-${UDOCKER_VERSION}.tar.gz > udocker-${UDOCKER_VERSION}.tar.gz
+          tar xzf ./udocker-${UDOCKER_VERSION}.tar.gz
+          ./udocker/udocker install
 
-    - name: uDocker Installation
-      env:
-        UDOCKER_VERSION: 1.3.0
-      run: |
-        curl -L https://github.com/indigo-dc/udocker/releases/download/v1.3.0/udocker-${UDOCKER_VERSION}.tar.gz > udocker-${UDOCKER_VERSION}.tar.gz
-        tar xzf ./udocker-${UDOCKER_VERSION}.tar.gz
-        ./udocker/udocker install
+      - name: uDocker Download MongoDB
+        run: |
+          export PATH=$PATH:$PWD/udocker
+          udocker pull mongo:latest
 
-    - name: uDocker Download MongoDB
-      run: |
-        export PATH=$PATH:$PWD/udocker
-        udocker pull mongo:latest
+      - name: Docker Download MongoDB
+        run: docker pull mongo:latest
 
-    - name: Docker Download MongoDB
-      run: docker pull mongo:latest
-
-    - name: Set up Python 3
-      run: |
-        sudo apt-get install -y python3
-        sudo apt-get install -y python3-pip
-    - name: Python3 Install dependencies
-      run: |
-        pip3 install --upgrade pip setuptools wheel
-        pip3 install -e .[dev]
-        pip3 install pymongo pytest gdown
-    - name: Test Container Controllers
-      run: |
-        export PATH=$PATH:$PWD/udocker
-        python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core ganga/GangaCore/test/gangaDB/db_controllers/TestContainerHandler.py
-      env:
-        # To force usage of docker controller
-        GANGA_GITHUB_HOST: False
-        MONGODB_HOST: mongodb
-        MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+      - name: Set up Python 3
+        run: |
+          sudo apt-get install -y python3
+          sudo apt-get install -y python3-pip
+      - name: Python3 Install dependencies
+        run: |
+          pip3 install --upgrade pip setuptools wheel
+          pip3 install -e .[dev]
+          pip3 install pymongo pytest gdown
+      - name: Test Container Controllers
+        run: |
+          export PATH=$PATH:$PWD/udocker
+          python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core ganga/GangaCore/test/gangaDB/db_controllers/TestContainerHandler.py
+        env:
+          # To force usage of docker controller
+          GANGA_GITHUB_HOST: False
+          MONGODB_HOST: mongodb
+          MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
 
   db-unit:
     name: Database Testing
@@ -396,29 +391,28 @@ jobs:
       mongodb:
         image: mongo
         ports:
-        - 27017:27017
+          - 27017:27017
 
     steps:
-    - name: Check out code for the container build
-      uses: actions/checkout@v1
+      - name: Check out code for the container build
+        uses: actions/checkout@v1
 
-    - name: Update packages
-      run: apt update -y
+      - name: Update packages
+        run: apt update -y
 
-    - name: Set up Python 3
-      run: |
-        apt install -y python3
-        apt install -y python3-pip
+      - name: Set up Python 3
+        run: |
+          apt install -y python3
+          apt install -y python3-pip
 
-    - name: Install dependencies
-      run: |
-        pip3 install --upgrade pip setuptools wheel
-        pip3 install -e .[dev]
-    - name: Testing GangaDB
-      run: |
-        python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core ganga/GangaCore/test/gangaDB/db_testing
-      env:
-        GANGA_GITHUB_HOST: True
-        MONGODB_HOST: mongodb
-        MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
-
+      - name: Install dependencies
+        run: |
+          pip3 install --upgrade pip setuptools wheel
+          pip3 install -e .[dev]
+      - name: Testing GangaDB
+        run: |
+          python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core ganga/GangaCore/test/gangaDB/db_testing
+        env:
+          GANGA_GITHUB_HOST: True
+          MONGODB_HOST: mongodb
+          MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
