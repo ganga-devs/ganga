@@ -7,23 +7,33 @@ jobs:
   lint:
     name: Linting
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.8
-    - name: Install dependencies
-      run: |
-        python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install flake8
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        # disable for now
-        flake8 --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics ganga
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics ganga
+      - uses: actions/checkout@v1
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v24
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install flake8
+
+      - name: Setup flake8 annotations
+        uses: rbialon/flake8-annotations@v1
+
+      - name: Lint with flake8
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            if [[ $file == *.py ]]; then
+              flake8 $file
+            fi
+          done
 
   core-unit:
     name: GangaCore Unit
