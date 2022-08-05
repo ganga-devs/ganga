@@ -379,13 +379,13 @@ class DummyRemote(IBackend):
 
         async def simulate_fetch_output_files():
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"{BASE_URL}/outputfile") as resp:
+                async with session.get(f"{BASE_URL}/outputfile", params={"jid": j.id}) as resp:
                     if resp:
                         return True
 
         async def fetch_status_file(path, job):
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"{BASE_URL}/statusfile", params={"path": path, "id": j.id}) as resp:
+                async with session.get(f"{BASE_URL}/statusfile", params={"path": path, "jid": j.id}) as resp:
                     if resp.status == 404:
                         raise IOError
                     data = await resp.json()
