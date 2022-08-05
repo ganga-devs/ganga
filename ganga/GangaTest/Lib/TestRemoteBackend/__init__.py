@@ -1,5 +1,8 @@
+
 import GangaCore.Utility.Config
-from .TestRemoteBackend import *
+from .TestRemoteBackend import DummyRemote
+
+__all__ = ['DummyRemote']
 
 config = GangaCore.Utility.Config.makeConfig(
     'TestDummyRemote', 'A dummy remote backend to emulate non local endpoints such as DIRAC')
