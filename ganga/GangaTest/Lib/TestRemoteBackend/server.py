@@ -11,21 +11,29 @@ app = Flask(__name__)
 app.config['ENV'] = 'development'
 test_config = getConfig('TestDummyRemote')
 port = test_config['SERVER_PORT']
-delay_amount = test_config['SERVER_DEFAULT_DELAY']
 
 
 @app.route("/statusfile", methods=["GET"])
 def retrieve_statusfile():
     file_path = request.args.get("path")
-    print(f'DummyRemote: Received request for statusfile at {file_path}')
-    time.sleep(delay_amount)
+    job_id = request.args.get("jid")
+    print(f'DummyRemote: Received request from job {job_id} for statusfile at {file_path}')
+    time.sleep(getConfig('TestDummyRemote')['SERVER_DEFAULT_DELAY'])
     if not os.path.exists(file_path):
-        print(f'DummyRemote: Requested statusfile at {file_path} was not found.')
+        print(f'DummyRemote: Requested statusfile at {file_path} was not found')
         abort(404)
     with open(file_path, "r") as statusfile:
         stat = statusfile.read()
 
     return {"stat": stat}
+
+
+@app.route("/outputfile", methods=["GET"])
+def retrieve_outputfile():
+    job_id = request.args.get("jid")
+    print(f'DummyRemote: Received request from job {job_id} for dummy outpufile')
+    time.sleep(getConfig('TestDummyRemote')['FINALISATION_DELAY'])
+    return "OK"
 
 
 class DummyServer(GangaThread):

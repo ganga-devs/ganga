@@ -27,7 +27,7 @@ from GangaCore.GPIDev.Lib.File import FileBuffer
 from GangaCore.GPIDev.Lib.File import FileUtils
 
 logger = GangaCore.Utility.logging.getLogger()
-config = GangaCore.Utility.Config.getConfig('Local')
+local_config = GangaCore.Utility.Config.getConfig('Local')
 
 
 class DummyRemote(IBackend):
@@ -93,7 +93,7 @@ class DummyRemote(IBackend):
     def cleanworkdir(self):
         if self.workdir == '':
             import tempfile
-            self.workdir = tempfile.mkdtemp(dir=config['location'])
+            self.workdir = tempfile.mkdtemp(dir=local_config['location'])
 
         try:
             shutil.rmtree(self.workdir)
@@ -262,7 +262,7 @@ class DummyRemote(IBackend):
         environment = dict() if jobconfig.env is None else jobconfig.env
 
         import tempfile
-        workdir = tempfile.mkdtemp(dir=config['location'])
+        workdir = tempfile.mkdtemp(dir=local_config['location'])
 
         script_location = join(dirname(abspath(inspect.getfile(inspect.currentframe()))),
                                'LocalHostExec.py.template')
@@ -355,7 +355,7 @@ class DummyRemote(IBackend):
         return 1
 
     def remove_workdir(self):
-        if config['remove_workdir'] and self.workdir:
+        if local_config['remove_workdir'] and self.workdir:
             import shutil
             try:
                 logger.debug("removing: %s" % self.workdir)
@@ -366,11 +366,26 @@ class DummyRemote(IBackend):
 
     @staticmethod
     async def updateMonitoringInformation(jobs):
-        BASE_URL = "http://localhost:5100/statusfile"
+        test_config = GangaCore.Utility.Config.getConfig('TestDummyRemote')
+        BASE_URL = "http://localhost:5100"
 
-        async def fetch_status_file(path):
+        def finalise_job(job):
+            from GangaCore.Core import monitoring_component
+            monitoring_component.loop.create_task(job_finalisation(job))
+
+        async def job_finalisation(j):
+            await simulate_fetch_output_files()
+            j.updateStatus('completed')
+
+        async def simulate_fetch_output_files():
             async with aiohttp.ClientSession() as session:
-                async with session.get(BASE_URL, params={"path": path}) as resp:
+                async with session.get(f"{BASE_URL}/outputfile") as resp:
+                    if resp:
+                        return True
+
+        async def fetch_status_file(path, job):
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{BASE_URL}/statusfile", params={"path": path, "id": j.id}) as resp:
                     if resp.status == 404:
                         raise IOError
                     data = await resp.json()
@@ -407,7 +422,7 @@ class DummyRemote(IBackend):
             # try to get the application exit code from the status file
             try:
                 statusfile_path = join(outw.getPath(), '__jobstatus__')
-                statusfile = await fetch_status_file(statusfile_path)
+                statusfile = await fetch_status_file(statusfile_path, j)
 
                 if j.status == 'submitted':
                     pid, wrapper_pid = get_pids(statusfile)
@@ -431,7 +446,11 @@ class DummyRemote(IBackend):
                 j.backend.exitcode = exitcode
 
                 if exitcode == 0:
-                    j.updateStatus('completed')
+                    if test_config['ENABLE_FINALISATION']:
+                        j.updateStatus('completing')
+                        finalise_job(j)
+                    else:
+                        j.updateStatus('completed')
                 else:
                     j.updateStatus('failed')
 
