@@ -36,13 +36,25 @@ def retrieve_outputfile():
     return "OK"
 
 
-class DummyServer(GangaThread):
+class Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class DummyServer(GangaThread, metaclass=Singleton):
     def __init__(self):
         GangaThread.__init__(self, name="DummyServer")
         self.daemon = True
+        self.running = False
 
     def run(self):
+        if self.running:
+            return
         app.run(port=port, debug=True, use_reloader=False)
+        self.running = True
 
     def stop(self):
         exit(0)

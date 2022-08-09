@@ -50,7 +50,11 @@ class DummyRemote(IBackend):
     _name = 'DummyRemote'
 
     def __init__(self):
+        from .server import DummyServer
+
         super(DummyRemote, self).__init__()
+        server = DummyServer()
+        server.start()
 
     def prepare_master_script(self, rjobs):
         job = self.getJobObject()
