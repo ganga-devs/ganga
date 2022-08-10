@@ -19,6 +19,7 @@ import GangaCore.Utility.util
 import GangaCore.Utility.logging
 import GangaCore.Utility.Config
 import GangaCore.Utility.Virtualization
+import GangaCore.Lib.Localhost as Localhost
 
 from GangaCore.GPIDev.Adapters.IBackend import IBackend
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
@@ -65,8 +66,7 @@ class DummyRemote(IBackend):
                 bs = multiprocessing.cpu_count()
                 logger.info(f'Will run up to {bs} subjobs in parallel')
 
-            script_location = join(dirname(abspath(inspect.getfile(inspect.currentframe()))),
-                                   'LocalHostExec_batch.py.template')
+            script_location = join(dirname(inspect.getfile(Localhost)), 'LocalHostExec_batch.py.template')
             script = FileUtils.loadScript(script_location, '')
             script = script.replace('###BATCHSIZE###', str(bs))
             script = script.replace('###SUBJOBLIST###', str([str(sj.id) for sj in rjobs]))
@@ -268,9 +268,7 @@ class DummyRemote(IBackend):
         import tempfile
         workdir = tempfile.mkdtemp(dir=local_config['location'])
 
-        script_location = join(dirname(abspath(inspect.getfile(inspect.currentframe()))),
-                               'LocalHostExec.py.template')
-
+        script_location = join(dirname(inspect.getfile(Localhost)), 'LocalHostExec.py.template')
         from GangaCore.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '')
 
