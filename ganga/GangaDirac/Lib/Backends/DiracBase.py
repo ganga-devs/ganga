@@ -1,7 +1,7 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """The Ganga backendhandler for the Dirac system."""
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import re
 import fnmatch
@@ -10,21 +10,20 @@ import datetime
 import shutil
 import tempfile
 import math
-from functools import wraps
-from collections import defaultdict
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaCore.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
 from GangaCore.GPIDev.Lib.Job.Job import Job
-from GangaCore.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError, GangaDiskSpaceError
-from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs, getReplicas
+from GangaCore.Core.exceptions import (GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError,
+        GangaDiskSpaceError)
+from GangaDirac.Lib.Backends.DiracUtils import (result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator,
+        outputfiles_foreach, getAccessURLs, getReplicas)
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaCore.Utility.util import require_disk_space
-from GangaCore.Utility.ColourText import getColour
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger, log_user_exception
-from GangaCore.GPIDev.Credentials import require_credential, credential_store, needed_credentials
+from GangaCore.GPIDev.Credentials import require_credential, credential_store
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.Core import monitoring_component
@@ -297,9 +296,6 @@ class DiracBase(IBackend):
 
         if rjobs and len(subjobconfigs) != len(rjobs):
             raise BackendError("The number of subjob configurations does not match the number of subjobs!")
-
-        incomplete = 0
-        incomplete_subjobs = []
 
         master_input_sandbox = self.master_prepare(masterjobconfig)
 
@@ -585,7 +581,6 @@ class DiracBase(IBackend):
     def _blockResubmit(self):
         """Resubmit a DIRAC job that was submitted with bulk submission. This requires writing a new dirac-script for the individual job."""
         j = self.getJobObject()
-        parametric = False
 
         if j.master is None:
             scriptDir = j.getInputWorkspace().getPath()
@@ -1215,7 +1210,7 @@ class DiracBase(IBackend):
             try:
                 count += 1
                 # Check status is sane before we start
-                if job.status != "running" and (not job.status in ['completed', 'killed', 'removed']):
+                if job.status != "running" and (job.status not in ['completed', 'killed', 'removed']):
                     job.updateStatus('submitted')
                     job.updateStatus('running')
                 if job.status in ['completed', 'killed', 'removed']:
@@ -1262,8 +1257,6 @@ class DiracBase(IBackend):
             logger.warning("No jobs from the list are ready to be finalised yet. Be more patient.")
             return
 
-        # First grab all the info from Dirac
-        inputDict = {}
         # I have to reduce the no. of subjobs per process to prevent DIRAC timeouts
         nPerProcess = int(math.floor(configDirac['maxSubjobsFinalisationPerProcess']))
         nProcessToUse = math.ceil((len(theseJobs) * 1.0) / nPerProcess)
