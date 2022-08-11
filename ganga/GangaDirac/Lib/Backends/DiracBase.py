@@ -366,7 +366,7 @@ class DiracBase(IBackend):
                 # Either do the submission in parallel with threads or sequentially
                 if parallel_submit:
                     getQueues()._monitoring_threadpool.add_function(self._block_submit,
-                                (dirac_script_filename, nSubjobs, keep_going))
+                                                                    (dirac_script_filename, nSubjobs, keep_going))
                 else:
                     self._block_submit(dirac_script_filename, nSubjobs, keep_going)
 
@@ -1083,10 +1083,11 @@ class DiracBase(IBackend):
 
             logger.debug('Contacting DIRAC for job: %s' % job.fqid)
             # Contact dirac which knows about the job
-            job.backend.normCPUTime, getSandboxResult, file_info_dict,completeTimeResult = execute(
-                "finished_job(%d, '%s', %s, downloadSandbox=%s)" % (
-                job.backend.id, output_path, job.backend.unpackOutputSandbox, job.backend.downloadSandbox),
-                cred_req = job.backend.credential_requirements)
+            job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult=execute(
+                "finished_job(%d, '%s', %s, downloadSandbox=%s)" % ( job.backend.id, output_path,
+                                                                     job.backend.unpackOutputSandbox,
+                                                                     job.backend.downloadSandbox),
+                                                                     cred_req = job.backend.credential_requirements)
 
             now = time.time()
             logger.debug('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
@@ -1168,7 +1169,7 @@ class DiracBase(IBackend):
                 raise BackendError('Dirac', 'Problem retrieving outputsandbox: %s' % str(getSandboxResult))
             # If the sandbox dict includes a Succesful key then the sandbox has been download from grid storage,
             # likely due to being oversized. Untar it and issue a warning.
-            elif(job.backend.downloadSandbox and isinstance(getSandboxResult['Value'], dict) and
+            elif (job.backend.downloadSandbox and isinstance(getSandboxResult['Value'], dict) and
                  getSandboxResult['Value'].get('Successful', False)):
                 try:
                     sandbox_name = list(getSandboxResult['Value']['Successful'].values())[0]
