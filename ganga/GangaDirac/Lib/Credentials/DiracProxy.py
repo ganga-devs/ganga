@@ -175,6 +175,18 @@ class DiracProxyInfo(VomsProxyInfo):
         """
         return self.default_location()
 
+    def uploadedExpiryDate(self):
+        """
+        Returns the expiry date of the proxy uploaded to Dirac
+        """
+        self.shell.env['X509_USER_PROXY'] = self.location
+        info_cmd = getConfig('DIRAC')['proxyInfoCmd'] + ' -m --file "%s"' % self.location
+        logger.debug(info_cmd)
+        status, output, message = self.shell.cmd1(info_cmd)
+        idx = output.splitlines().index('== Proxies uploaded ==')
+        string_date = output.splitlines()[idx+2:][0].split('|')[-1].strip()
+        return string_date 
+
 
 class DiracProxy(ICredentialRequirement):
     """

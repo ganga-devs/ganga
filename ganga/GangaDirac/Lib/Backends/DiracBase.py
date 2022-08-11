@@ -308,10 +308,18 @@ class DiracBase(IBackend):
 
         from GangaCore.Core.GangaThread.WorkerThreads import getQueues
         # Must check for credentials here as we cannot handle missing credentials on Queues by design!
+        cred = None
         try:
             cred = credential_store[self.credential_requirements]
         except GangaKeyError:
             credential_store.create(self.credential_requirements)
+            cred = credential_store[self.credential_requirements]
+
+        # Check the uploaded proxy has plenty of time left
+        uploaded_expiry = datetime.datetime.strptime(cred.uploadedExpiryDate(), '%Y/%m/%d %H:%M')
+        remaining  = (uploaded_expiry - datetime.datetime.now()).days
+        if remaining < 21:
+            raise BackendError('Dirac', 'Uploaded Dirac credential has only %s days remaining (expires on %s). To submit jobs you need a credential with at least 3 weeks of validity. To resolve this get a new grid certificate.' % (remaining, uploaded_expiry.strftime('%d/%m/%Y')))
 
         tmp_dir = tempfile.mkdtemp()
         # Loop over the processes and create the master script for each one.
