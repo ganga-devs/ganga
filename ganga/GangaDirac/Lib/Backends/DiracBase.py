@@ -335,8 +335,8 @@ class DiracBase(IBackend):
                 # This is a bit of a hack but it saves having to rewrite every RTHandler
                 sjScript = sj.backend._job_script(sc, master_input_sandbox, tmp_dir)
                 sjScript = sjScript.replace(
-                    "output(result)", "if isinstance(result, dict) and 'Value' in result:\n'
-                    '\tresultdict.update({sjNo : result['Value']})\nelse:\n\tresultdict.update({sjNo : result['Message']})")
+                    "output(result)", "if isinstance(result, dict) and 'Value' in result:\n"
+                    "\tresultdict.update({sjNo : result['Value']})\nelse:\n\tresultdict.update({sjNo : result['Message']})")
                 if nSubjobs == 0:
                     sjScript = re.sub(r"(dirac = Dirac.*\(\))", r"\1\nsjNo='%s'\n" % fqid, sjScript)
                 if nSubjobs != 0:
