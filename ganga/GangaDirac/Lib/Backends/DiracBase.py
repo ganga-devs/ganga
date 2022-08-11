@@ -313,11 +313,11 @@ class DiracBase(IBackend):
 
         # Check the uploaded proxy has plenty of time left
         uploaded_expiry = datetime.datetime.strptime(cred.uploadedExpiryDate(), '%Y/%m/%d %H:%M')
-        remaining  = (uploaded_expiry - datetime.datetime.now()).days
+        remaining = (uploaded_expiry - datetime.datetime.now()).days
         if remaining < 21:
-            raise BackendError('Dirac', 'Uploaded Dirac credential has only %s days remaining (expires on %s).'\
-                                        'To submit jobs you need a credential with at least 3 weeks of validity.'\
-                                        'To resolve this get a new grid certificate.' 
+            raise BackendError('Dirac', 'Uploaded Dirac credential has only %s days remaining (expires on %s).'
+                                        'To submit jobs you need a credential with at least 3 weeks of validity.'
+                                        'To resolve this get a new grid certificate.'
                                         % (remaining, uploaded_expiry.strftime('%d/%m/%Y')))
 
         tmp_dir = tempfile.mkdtemp()
@@ -326,14 +326,17 @@ class DiracBase(IBackend):
             nSubjobs = 0
             # The Dirac IDs are stored in a dict so create it at the start of the script
             masterScript = 'resultdict = {}\n'
-            for sc, sj in zip(subjobconfigs[i * nPerProcess:(i + 1) * nPerProcess], rjobs[i * nPerProcess:(i + 1) * nPerProcess]):
+            for sc, sj in zip(subjobconfigs[i * nPerProcess:(i + 1) * nPerProcess],
+                              rjobs[i * nPerProcess:(i + 1) * nPerProcess]):
                 # Add in the script for each subjob
                 sj.updateStatus('submitting')
                 fqid = sj.getFQID('.')
-                # Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
+                # Change the output of the job script for our own ends.
+                # This is a bit of a hack but it saves having to rewrite every RTHandler
                 sjScript = sj.backend._job_script(sc, master_input_sandbox, tmp_dir)
                 sjScript = sjScript.replace(
-                    "output(result)", "if isinstance(result, dict) and 'Value' in result:\n\tresultdict.update({sjNo : result['Value']})\nelse:\n\tresultdict.update({sjNo : result['Message']})")
+                    "output(result)", "if isinstance(result, dict) and 'Value' in result:\n'
+                    '\tresultdict.update({sjNo : result['Value']})\nelse:\n\tresultdict.update({sjNo : result['Message']})")
                 if nSubjobs == 0:
                     sjScript = re.sub(r"(dirac = Dirac.*\(\))", r"\1\nsjNo='%s'\n" % fqid, sjScript)
                 if nSubjobs != 0:
@@ -857,7 +860,7 @@ class DiracBase(IBackend):
                     "Not all LFNs in the outputdata have available replicas. ignoreMissing=True so proceeding anyway!")
             else:
                 raise GangaDiracError(
-                    "Not all LFNs in the outputdata have available replicas and ignoreMissing=False!"\
+                    "Not all LFNs in the outputdata have available replicas and ignoreMissing=False!"
                     "lns: %s, reps: %s" % (lfns, reps))
 
         suceeded = []
@@ -876,7 +879,7 @@ class DiracBase(IBackend):
                 logger.warning("Not all files downloaded successfully! ignoreMissing=True")
             else:
                 raise GangaDiracError(
-                    "Not all files downloaded successfully and ignoreMissing=False! Check your gangadir for missing files!"\
+                    "Not all files downloaded successfully and ignoreMissing=False! Check your gangadir for missing files!"
                     "len lfns: %s, len success: %s" % (lfns, successes))
 
         return successes
@@ -1083,7 +1086,7 @@ class DiracBase(IBackend):
             job.backend.normCPUTime, getSandboxResult, file_info_dict,completeTimeResult = execute(
                 "finished_job(%d, '%s', %s, downloadSandbox=%s)" % (
                 job.backend.id, output_path, job.backend.unpackOutputSandbox, job.backend.downloadSandbox),
-                cred_req=job.backend.credential_requirements)
+                cred_req = job.backend.credential_requirements)
 
             now = time.time()
             logger.debug('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
@@ -1165,8 +1168,8 @@ class DiracBase(IBackend):
                 raise BackendError('Dirac', 'Problem retrieving outputsandbox: %s' % str(getSandboxResult))
             # If the sandbox dict includes a Succesful key then the sandbox has been download from grid storage,
             # likely due to being oversized. Untar it and issue a warning.
-            elif( job.backend.downloadSandbox and isinstance(getSandboxResult['Value'], dict)
-                  and getSandboxResult['Value'].get('Successful', False) ):
+            elif(job.backend.downloadSandbox and isinstance(getSandboxResult['Value'], dict) and
+                 getSandboxResult['Value'].get('Successful', False)):
                 try:
                     sandbox_name = list(getSandboxResult['Value']['Successful'].values())[0]
                     check_output(['tar', '-xvf', sandbox_name, '-C', output_path])
@@ -1235,7 +1238,7 @@ class DiracBase(IBackend):
                 # Print a helpful message.
                 job.force_status('failed')
                 raise GangaDiskSpaceError(
-                    "Cannot finalise job %s. No disk space available!"\
+                    "Cannot finalise job %s. No disk space available!"
                     "Clear some space and the do j.backend.reset() to try again." % job.getFQID('.'))
 
             except Exception as err:
