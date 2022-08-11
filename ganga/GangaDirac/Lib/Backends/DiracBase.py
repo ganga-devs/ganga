@@ -1084,9 +1084,9 @@ class DiracBase(IBackend):
             logger.debug('Contacting DIRAC for job: %s' % job.fqid)
             # Contact dirac which knows about the job
             job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = execute(
-                "finished_job(%d, '%s', %s, downloadSandbox=%s)" % ( job.backend.id, output_path,
-                                                                     job.backend.unpackOutputSandbox,
-                                                                     job.backend.downloadSandbox),
+                "finished_job(%d, '%s', %s, downloadSandbox=%s)" % (job.backend.id, output_path,
+                                                                    job.backend.unpackOutputSandbox,
+                                                                    job.backend.downloadSandbox),
                 cred_req=job.backend.credential_requirements)
 
             now = time.time()
