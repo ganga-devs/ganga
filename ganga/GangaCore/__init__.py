@@ -120,29 +120,29 @@ conf_config.addOption('ReleaseNotes', True,
 conf_config.addOption('used_versions_path', '~/.cache/Ganga/',
                       'Path to the directory to store the file listing the used ganga versions')
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
-                      'Location of local job repositories and workspaces. \
-                       Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point \
-                       to the shared file system directory.', filter=GangaCore.Utility.Config.expandvars)
+                      ('Location of local job repositories and workspaces. '
+                      'Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point '
+                      'to the shared file system directory.'), filter=GangaCore.Utility.Config.expandvars)
 conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML, Database')
 conf_config.addOption('lockingStrategy', 'UNIX',
                       'Type of locking strategy which can be used. UNIX or FIXED . default = UNIX')
 conf_config.addOption('workspacetype', 'LocalFilesystem',
-                      'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. \
-                       Currently the only supported type is LocalFilesystem.')
+                      ('Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. '
+                       'Currently the only supported type is LocalFilesystem.'))
 conf_config.addOption('user', getpass.getuser(),
-                      'User name. The same person may have different roles (user names) and still use the same gangadir. \
-                       Unless explicitly set this option defaults to the real user name.')
+                      ('User name. The same person may have different roles (user names) and still use the same gangadir. '
+                       'Unless explicitly set this option defaults to the real user name.'))
 conf_config.addOption('resubmitOnlyFailedSubjobs', True,
-                      'If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs. \
-                       Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.')
+                      ('If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs. '
+                       'Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.'))
 conf_config.addOption('SMTPHost', 'localhost',
                       'The SMTP server for notification emails to be sent, default is localhost')
 conf_config.addOption('deleteUnusedShareDir', 'always',
-                      'If set to ask the user is presented with a prompt asking whether Shared directories not \
-                       associated with a persisted Ganga object should be deleted upon Ganga exit. \
-                       If set to never, shared directories will not be deleted upon exit, even if they are not \
-                       associated with a persisted Ganga object. If set to always (the default), \
-                       then shared directories will always be deleted if not associated with a persisted Ganga object.')
+                      ('If set to ask the user is presented with a prompt asking whether Shared directories not '
+                       'associated with a persisted Ganga object should be deleted upon Ganga exit. '
+                       'If set to never, shared directories will not be deleted upon exit, even if they are not '
+                       'associated with a persisted Ganga object. If set to always (the default), '
+                       'then shared directories will always be deleted if not associated with a persisted Ganga object.'))
 
 conf_config.addOption('autoGenerateJobWorkspace', False, 'Autogenerate workspace dirs for new jobs')
 
@@ -157,24 +157,24 @@ conf_config.addOption('UDockerlocation', '~',
 
 # add named template options
 conf_config.addOption('namedTemplates_ext', 'tpl',
-                      'The default file extension for the named template system. \
-                       If a package sets up their own by calling "establishNamedTemplates" from \
-                       python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override \
-                       this without needing the config option')
+                      ('The default file extension for the named template system. '
+                       'If a package sets up their own by calling "establishNamedTemplates" from '
+                       'python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override '
+                       'this without needing the config option'))
 conf_config.addOption('namedTemplates_pickle', False,
-                      'Determines if named template system stores templates in pickle file format (True) \
-                       or in the Ganga streamed object format (False). \
-                       By default streamed object format which is human readable is used. \
-                       If a package sets up their own by calling "establishNamedTemplates" \
-                       from python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override \
-                       this without needing the config option')
+                      ('Determines if named template system stores templates in pickle file format (True) '
+                       'or in the Ganga streamed object format (False). '
+                       'By default streamed object format which is human readable is used. '
+                       'If a package sets up their own by calling "establishNamedTemplates" '
+                       'from python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override '
+                       'this without needing the config option'))
 
 # add server options
 conf_config.addOption('ServerPort', 434343, 'Port for the Ganga server to listen on')
 conf_config.addOption('ServerTimeout', 60, 'Timeout in minutes for auto-server shutdown')
 conf_config.addOption('ServerUserScript', "",
-                      "Full path to user script to call periodically. \
-                       The script will be executed as if called within Ganga by 'execfile'.")
+                      ("Full path to user script to call periodically. "
+                       "The script will be executed as if called within Ganga by 'execfile'."))
 conf_config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between executions of the user script")
 
 conf_config.addOption('confirm_exit', True,
@@ -190,8 +190,8 @@ conf_config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued b
 conf_config.addOption('Batch', 'LSF', 'default batch system')
 
 conf_config.addOption('AutoStartReg', True,
-                      'AutoStart the registries, \
-                       needed to access any jobs in registry therefore needs to be True for 99.999% of use cases')
+                      ('AutoStart the registries, '
+                       'needed to access any jobs in registry therefore needs to be True for 99.999% of use cases'))
 # ------------------------------------------------
 # IPython
 ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration''')
@@ -221,21 +221,21 @@ default_backends = LCG
 # ------------------------------------------------
 # GPI Semantics
 gpi_config = makeConfig('GPI_Semantics',
-                        'Customization of GPI behaviour. These options may affect the semantics of the Ganga GPI interface \
-                         (what may result in a different behaviour of scripts and commands).')
+                        ('Customization of GPI behaviour. These options may affect the semantics of the Ganga GPI interface '
+                         '(what may result in a different behaviour of scripts and commands).'))
 gpi_config.addOption('job_submit_keep_going', False,
                      'Keep on submitting as many subjobs as possible. Option to j.submit(), see Job class for details')
 gpi_config.addOption('job_submit_keep_on_fail', False,
-                     'Do not revert job to new status even if submission failed. Option to j.submit(), \
-                      see Job class for details')
+                     ('Do not revert job to new status even if submission failed. Option to j.submit(), '
+                      'see Job class for details'))
 
 # ------------------------------------------------
 # PollThread
 poll_config = makeConfig('PollThread', 'background job status monitoring and output retrieval')
 poll_config.addOption('repeat_messages', False,
                       'if 0 then log only once the errors for a given backend and do not repeat them anymore')
-poll_config.addOption('autostart', True, 'enable monitoring automatically at startup, \
-                                          in script mode monitoring disabled by default, in interactive mode it is enabled',
+poll_config.addOption('autostart', True, ('enable monitoring automatically at startup, '
+                                          'in script mode monitoring disabled by default, in interactive mode it is enabled'),
                        type=type(True))  # enable monitoring on startup
 poll_config.addOption('autostart_monThreads', True, 'enable populating of the monitoring worker threads')
 poll_config.addOption('enable_multiThreadMon', True, 'enable multiple threads to be used for running monitoring tasks')
@@ -246,8 +246,8 @@ poll_config.addOption('MaxFracForResubmit', 0.25,
 poll_config.addOption('autoKillThreshold', 20,
                       'Maximum number of failed subjobs before a job is automatically killed by the monitoring.')
 poll_config.addOption('update_thread_pool_size', 5,
-                      'Size of the thread pool. Each threads monitors a specific backaend at a given time. \
-                       Minimum value is one, preferably set to the number_of_backends + 1')
+                      ('Size of the thread pool. Each threads monitors a specific backaend at a given time. '
+                       'Minimum value is one, preferably set to the number_of_backends + 1'))
 poll_config.addOption('default_backend_poll_rate', 30,
                       'Default rate for polling job status in the thread pool. This is the default value for all backends.')
 poll_config.addOption('Local', 10, 'Poll rate for Local backend.')
@@ -264,30 +264,30 @@ poll_config.addOption('Panda', 50, 'Poll rate for Panda backend.')
 poll_config.addOption('creds_poll_rate', 30, "The frequency in seconds for credentials checker")
 poll_config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
 poll_config.addOption('DiskSpaceChecker', "",
-                      "disk space checking callback. This function should return False when no disk space is available, \
-                       True otherwise")
+                      ("disk space checking callback. This function should return False when no disk space is available, "
+                       "True otherwise"))
 poll_config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
 poll_config.addOption('numParallelJobs', 25, 'Number of Jobs to update the status for in parallel')
 
 poll_config.addOption('forced_shutdown_policy', 'session_type',
-                      'If there are remaining background activities at exit such as monitoring, \
-                       output download Ganga will attempt to wait for the activities to complete. \
-                       You may select if a user is prompted to answer if he wants to force shutdown ("interactive") \
-                       or if the system waits on a timeout without questions ("timeout"). \
-                       The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')
+                      ('If there are remaining background activities at exit such as monitoring, '
+                       'output download Ganga will attempt to wait for the activities to complete. '
+                       'You may select if a user is prompted to answer if he wants to force shutdown ("interactive") '
+                       'or if the system waits on a timeout without questions ("timeout"). '
+                       'The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.'))
 poll_config.addOption('forced_shutdown_timeout', 60,
                       "Timeout in seconds for forced Ganga shutdown in batch mode.")
 poll_config.addOption('forced_shutdown_prompt_time', 10,
                       "User will get the prompt every N seconds, as specified by this parameter.")
 poll_config.addOption('forced_shutdown_first_prompt_time', 5,
-                      "User will get the FIRST prompt after N seconds, as specified by this parameter.\
-                      This parameter also defines the time that Ganga will wait before shutting down, \
-                      if there are only non-critical threads alive, in both interactive and batch mode.")
+                      ("User will get the FIRST prompt after N seconds, as specified by this parameter. "
+                       "This parameter also defines the time that Ganga will wait before shutting down, "
+                       "if there are only non-critical threads alive, in both interactive and batch mode."))
 
 import sys
 poll_config.addOption('HeartBeatTimeOut', sys.maxsize,
-                      'Time before the user gets the warning that a thread has locked up due to failing \
-                       to update the heartbeat attribute')
+                      ('Time before the user gets the warning that a thread has locked up due to failing '
+                       'to update the heartbeat attribute'))
 
 poll_config.addOption('autoCheckCredentials', True, 'Check credentials using the monitoring loop')
 
@@ -302,11 +302,11 @@ feedback_config.addOption('uploadServer', 'http://gangamon.cern.ch/django/errorr
 # ------------------------------------------------
 # Associations
 assoc_config = makeConfig(
-    "File_Associations", 'Default associations between file types and file-viewing commands.\
-                          The name identifies the extension and the value the commands. New extensions can be added.\
-                          A single & after the command indicates that the process will be started in the background.\
-                          A && after the command indicates that a new terminal will be opened and the\
-                          command executed in that terminal.', is_open=True)
+    "File_Associations", ('Default associations between file types and file-viewing commands. '
+                          'The name identifies the extension and the value the commands. New extensions can be added. '
+                          'A single & after the command indicates that the process will be started in the background. '
+                          'A && after the command indicates that a new terminal will be opened and the '
+                          'command executed in that terminal.'), is_open=True)
 
 assoc_config.addOption("newterm_command", "xterm",
                        'Command for opening a new terminal (xterm, gnome-terminal, ...')
@@ -390,8 +390,8 @@ lcg_config.addOption('DefaultSRMToken', '',
 lcg_config.addOption(
     'DefaultLFC', 'prod-lfc-shared-central.cern.ch', 'sets the file catalogue server')
 lcg_config.addOption('BoundSandboxLimit', 10 * 1024 * 1024,
-                     'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded\
-                      to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\'')
+                     ('sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded '
+                      'to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\''))
 
 lcg_config.addOption('Requirements', 'GangaCore.Lib.LCG.LCGRequirements',
                      'sets the full qualified class name for other specific LCG job requirements')
@@ -421,12 +421,12 @@ lcg_config.addOption(
     'JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
 
 lcg_config.addOption('MatchBeforeSubmit', False,
-                     'sets to True will do resource matching before submitting jobs,\
-                      jobs without any matched resources will fail the submission')
+                     ('sets to True will do resource matching before submitting jobs, '
+                      'jobs without any matched resources will fail the submission'))
 
 lcg_config.addOption('IgnoreGliteScriptHeader', False,
-                     'sets to True will load script-based glite-wms-* commands forcely with current python,\
-                      a trick for 32/64 bit compatibility issues.')
+                     ('sets to True will load script-based glite-wms-* commands forcely with current python, '
+                      'a trick for 32/64 bit compatibility issues.'))
 
 # add ARC specific configuration options
 # lcg_config.addOption('ArcInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
@@ -434,11 +434,11 @@ lcg_config.addOption('IgnoreGliteScriptHeader', False,
 lcg_config.addOption('ArcWaitTimeBeforeStartingMonitoring', 240,
                      'Time (s) to wait after submission before starting to monitor ARC jobs to ensure they are in the system')
 lcg_config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml",
-                     'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub.\
-                      Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
+                     ('File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. '
+                      'Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.'))
 lcg_config.addOption('ArcConfigFile', "",
-                     'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config\
-                      file is specified and the default (~/arc/client.conf) is used')
+                     ('Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config '
+                      'file is specified and the default (~/arc/client.conf) is used'))
 lcg_config.addOption('ArcCopyCommand', 'arcget',
                      'sets the copy command for ARC when dealing with sandboxes')
 # lcg_config.addOption('ArcPrologue','','sets the prologue script')
@@ -459,42 +459,42 @@ lcg_config.addOption('CreamCopyCommand', 'gfal-copy-url',
 gridsim_config = makeConfig('GridSimulator', 'Grid Simulator configuration parameters')
 
 gridsim_config.addOption('submit_time', 'random.uniform(1,10)',
-                         'python expression which returns the time it takes (in seconds) to complete the Grid.submit()\
-                          command (also for subjob in bulk emulation)')
+                         ('python expression which returns the time it takes (in seconds) to complete the Grid.submit() '
+                          'command (also for subjob in bulk emulation)'))
 gridsim_config.addOption(
     'submit_failure_rate', 0.0, 'probability that the Grid.submit() method fails')
 
 gridsim_config.addOption('cancel_time', 'random.uniform(1,5)',
-                         'python expression which returns the time it takes (in seconds) to complete the Grid.cancel()\
-                          command (also for subjob in bulk emulation)')
+                         ('python expression which returns the time it takes (in seconds) to complete the Grid.cancel() '
+                          'command (also for subjob in bulk emulation)'))
 gridsim_config.addOption(
     'cancel_failure_rate', 0.0, 'probability that the Grid.cancel() method fails')
 
 gridsim_config.addOption('status_time', 'random.uniform(1,5)',
-                         'python expression which returns the time it takes (in seconds) to complete the status command\
-                          (also for subjob in bulk emulation)')
+                         ('python expression which returns the time it takes (in seconds) to complete the status command '
+                          '(also for subjob in bulk emulation)'))
 
 gridsim_config.addOption('get_output_time', 'random.uniform(1,5)',
-                         'python expression which returns the time it takes (in seconds) to complete the get_output command\
-                          (also for subjob in bulk emulation)')
+                         ('python expression which returns the time it takes (in seconds) to complete the get_output command '
+                          '(also for subjob in bulk emulation)'))
 
-# config.addOption('bulk_submit_time','random.uniform(1,2)','python expression which returns the time it takes (in seconds)\
-#        to complete the submission of a single job within the Grid.native_master_submit() command')
+# config.addOption('bulk_submit_time','random.uniform(1,2)',('python expression which returns the time it takes (in seconds) '
+#        'to complete the submission of a single job within the Grid.native_master_submit() command'))
 # config.addOption('bulk_submit_failure_rate',0.0,'probabilty that the Grid.native_master_submit() fails')
 
-# config.addOption('bulk_cancel_time','random.uniform(1,2)','python expression which returns the time it takes (in seconds)\
-#        to complete the cancellation of a single job within the Grid.native_master_cancel() command')
+# config.addOption('bulk_cancel_time','random.uniform(1,2)',('python expression which returns the time it takes (in seconds) '
+#        'to complete the cancellation of a single job within the Grid.native_master_cancel() command'))
 # config.addOption('bulk_cancel_failure_rate',0.0,'probabilty that the Grid.native_master_cancel() fails')
 
 gridsim_config.addOption('job_id_resolved_time', 'random.uniform(1,2)',
-                         'python expression which returns the time it takes (in seconds) to complete the resolution\
-                          of all the id of a subjob (when submitted in bulk) this is the time the NODE_ID becomes\
-                          available from the monitoring)')
+                         ('python expression which returns the time it takes (in seconds) to complete the resolution '
+                          'of all the id of a subjob (when submitted in bulk) this is the time the NODE_ID becomes '
+                          'available from the monitoring)'))
 
-# config.addOption('job_scheduled_time','random.uniform(10,20)', 'python expression which returns the time the job\
-#                                                                 stays in the scheduled state')
-# config.addOption('job_running_time','random.uniform(10,20)', 'python expression which returns the time the job\
-#                                                               stays in the running state')
+# config.addOption('job_scheduled_time','random.uniform(10,20)', ('python expression which returns the time the job '
+#                                                                 'stays in the scheduled state')
+# config.addOption('job_running_time','random.uniform(10,20)', ('python expression which returns the time the job '
+#                                                               'stays in the running state')
 gridsim_config.addOption('job_finish_time', 'random.uniform(10,20)',
                          'python expression which returns the time when the job enters the Done success or Failed state')
 gridsim_config.addOption(
@@ -528,8 +528,8 @@ lsf_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for definin
 
 lsf_config.addOption('kill_str', 'bkill %s', "String used to kill job")
 lsf_config.addOption('kill_res_pattern',
-                     '(^Job <\\d+> is being terminated)|(Job <\\d+>: Job has already finished)|\
-                      (Job <\\d+>: No matching job found)',
+                     ('(^Job <\\d+> is being terminated)|(Job <\\d+>: Job has already finished)|'
+                      '(Job <\\d+>: No matching job found)'),
                      "String pattern for replay from the kill command")
 
 tempstr = '''
@@ -548,13 +548,13 @@ def filefilter(fn):
 lsf_config.addOption('postexecute', tempstr, "String contains commands executing before submiting job to queue")
 lsf_config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
 lsf_config.addOption(
-    'timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file.\
-                     Heartbeat is touched every 30s so do not set this below 120 or so.')
+    'timeout', 600, ('Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. '
+                     'Heartbeat is touched every 30s so do not set this below 120 or so.'))
 
 # illegal substring substition in job names
 lsf_config.addOption('jobnamesubstitution', [
-], "A list containing (1) a regular expression used to substitute illegal substrings in a job name,\
-    and (2) the substring to replace such occurences with.")
+], ("A list containing (1) a regular expression used to substitute illegal substrings in a job name, "
+    "and (2) the substring to replace such occurences with."))
 
 
 # ------------------------------------------------
@@ -598,13 +598,13 @@ pbs_config.addOption('postexecute', tempstr,
                      "String contains commands executing before submiting job to queue")
 pbs_config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
 pbs_config.addOption('timeout', 600,
-                     'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file.\
-                      Heartbeat is touched every 30s so do not set this below 120 or so.')
+                     ('Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. '
+                      'Heartbeat is touched every 30s so do not set this below 120 or so.'))
 
 # illegal substring substition in job names
 pbs_config.addOption('jobnamesubstitution', [
-                     '[\\s]', '_'], "A list containing (1) a regular expression used to substitute illegal substrings in a\
-                                     job name, and (2) the substring to replace such occurences with.")
+                     '[\\s]', '_'], ("A list containing (1) a regular expression used to substitute illegal substrings in a "
+                                     "job name, and (2) the substring to replace such occurences with."))
 
 
 # ------------------------------------------------
@@ -648,13 +648,13 @@ sge_config.addOption('preexecute', 'os.chdir(os.environ["TMPDIR"])\nos.environ["
 sge_config.addOption('postexecute', '', "String contains commands executing before submiting job to queue")
 sge_config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
 sge_config.addOption(
-    'timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file.\
-                     Heartbeat is touched every 30s so do not set this below 120 or so.')
+    'timeout', 600, ('Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. '
+                     'Heartbeat is touched every 30s so do not set this below 120 or so.'))
 
 # illegal substring substition in job names
 sge_config.addOption('jobnamesubstitution', [
-                     '[\\s:]', '_'], "A list containing (1) a regular expression used to substitute illegal substrings in\
-                                      a job name, and (2) the substring to replace such occurences with.")
+                     '[\\s:]', '_'], ("A list containing (1) a regular expression used to substitute illegal substrings in "
+                                      "a job name, and (2) the substring to replace such occurences with."))
 
 # ------------------------------------------------
 # Slurm
@@ -726,13 +726,13 @@ slurm_config.addOption('postexecute', tempstr,
                        "String contains the last commands executing right before the job ends")
 slurm_config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
 slurm_config.addOption('timeout', 600,
-                       'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file.\
-                        Heartbeat is touched every 30s so do not set this below 120 or so.')
+                       ('Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. '
+                        'Heartbeat is touched every 30s so do not set this below 120 or so.'))
 
 # illegal substring substition in job names
 slurm_config.addOption('jobnamesubstitution', [
-], "A list containing (1) a regular expression used to substitute illegal substrings in a job name,\
-and (2) the substring to replace such occurences with.")
+], ("A list containing (1) a regular expression used to substitute illegal substrings in a job name, "
+"and (2) the substring to replace such occurences with."))
 
 
 # ------------------------------------------------
@@ -777,9 +777,9 @@ output_config.addOption('ForbidLegacyOutput', True,
 
 output_config.addOption('ForbidLegacyInput', True, 'if True, writing to the job inputsandbox field will be forbidden')
 
-docstr_Ext = 'fileExtensions:list of output files that will be written to %s,\
-backendPostprocess:defines where postprocessing should be done (WN/client) on different backends,\
-uploadOptions:config values needed for the actual %s upload'
+docstr_Ext = ('fileExtensions:list of output files that will be written to %s, '
+              'backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, '
+              'uploadOptions:config values needed for the actual %s upload')
 
 # LocalFile
 LocalPost = {'Local': 'client',
