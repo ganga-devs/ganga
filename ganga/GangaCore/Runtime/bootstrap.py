@@ -510,7 +510,7 @@ under certain conditions; type license() for details.
         from GangaCore.Utility.logging import getLogger
         from GangaCore.Utility.Config.Config import getConfig
         logger = getLogger('ReleaseNotes')
-        if getConfig('Configuration')['ReleaseNotes']:
+        if getConfig('Configuration')['ReleaseNotes'] is True:
             packages = map(lambda x: 'ganga/ganga/' + x, filter(lambda x: x != '',
                            ['GangaCore'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
             pathname = os.path.join(os.path.dirname(__file__), '..', '..',
@@ -1030,7 +1030,7 @@ under certain conditions; type license() for details.
 
         sys.path.insert(0, '')
 
-        if self.options.webgui:
+        if self.options.webgui is True:
             from GangaGUI.start import start_gui
             start_gui()
 
