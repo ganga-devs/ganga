@@ -520,8 +520,10 @@ under certain conditions; type license() for details.
                 logger.warning("couldn't find release notes for version %s" % _gangaVersion)
                 return
 
-            bounding_line = '**************************************************************************************************************\n'
-            dividing_line = '--------------------------------------------------------------------------------------------------------------\n'
+            bounding_line = '******************************************************************************************\
+                             ********************\n'
+            dividing_line = '------------------------------------------------------------------------------------------\
+                             --------------------\n'
             with open(pathname, 'r') as f:
                 try:
                     notes = [_l.strip() for _l in f.read().replace(bounding_line, '').split(dividing_line)]
@@ -549,8 +551,8 @@ under certain conditions; type license() for details.
                     logger.info(log_divider)
                     # logger.info('*'*len(p))
                     logger.info('')
-                    for l in n:
-                        logger.info(l.strip())
+                    for _l in n:
+                        logger.info(_l.strip())
                     logger.info('')
                     logger.info(log_divider)
                 logger.info(log_divider)
@@ -571,7 +573,9 @@ under certain conditions; type license() for details.
                 and not os.path.exists(specified_config):
             logger.info('It seems that you run Ganga for the first time')
             logger.info(
-                'Ganga will send a udp packet each time you start it in order to help the development team understand how ganga is used. You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
+                'Ganga will send a udp packet each time you start it in order to help the development team \
+                 understand how ganga is used. \
+                 You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
 
         if not os.path.exists(specified_gangadir) \
                 and not os.path.exists(default_gangadir):
