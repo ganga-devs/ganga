@@ -25,6 +25,7 @@ import os.path
 import sys
 import time
 import re
+import importlib
 
 from GangaCore import _gangaVersion, _gangaPythonPath, _development
 from GangaCore.Utility.Config.Config import getConfig
@@ -392,7 +393,6 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def rollHistoryForward():
-        from GangaCore.Utility.Config.Config import getConfig
 
         old_dir = os.path.expanduser('~/.ipython-ganga')
         if 'IPYTHONDIR' in os.environ:
@@ -408,14 +408,16 @@ under certain conditions; type license() for details.
             logger.info("This is your first time running Ganga >=6.1.14")
             logger.info("Now attempting to migrate your IPython history file")
 
-            try:
-                from IPython.core.interactiveshell import InteractiveShell
-                from IPython.core.history import HistoryManager
-                from IPython.utils.path import locate_profile, get_ipython_dir
-            except ImportError:
+            ishell = importlib.util.find_spec("IPython.core.interactiveshell", "InteractiveShell")
+            ihist = importlib.util.find_spec("IPython.core.history", "HistoryManager")
+            ipath = importlib.util.find_spec("IPython.utils.path", ["locate_profile", "get_ipython_dir"])
+
+            if not (ishell and ihist and ipath):
                 logger.error("Unable to import required IPython files, can't roll forward history")
                 logger.error("If you want to roll forward your old history files you'll need to do this by hand")
                 logger.error("Please try running: https://gist.github.com/minrk/6003365")
+            else:
+                from IPython.core.history import HistoryManager
 
             old_text_history = os.path.join(old_dir, 'history')
             new_sqlite_history = os.path.join(old_dir, "profile_default/history.sqlite")
@@ -1120,9 +1122,7 @@ under certain conditions; type license() for details.
 
         if shell == 'IPython':
 
-            try:
-                import IPython
-            except ImportError:
+            if not importlib.util.find_spec("IPython"):
                 logger.error("Cannot load IPython class!!!")
                 logger.error("Please check your environment and re-load Ganga from a working shell!")
                 logger.error("Exiting Ganga now, goodbye!")
