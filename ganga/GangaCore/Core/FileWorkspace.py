@@ -89,7 +89,7 @@ class FileWorkspace(object):
     # write a file (represent as file object) to the workspace
     # file object may be:
     #  - a File instance - referes to an existing file which will be copied to workspace directory
-    #  - a FileBuffer instance - refers to a file which is does not yet exist but which contents is available in a memory buffer
+    #  - a FileBuffer instance - refers to a file which does not yet exist but which contents is available in a memory buffer
     #      this is a handy way of creating wrapper scripts etc.
     #  - a tuple (name,contents) - deprecated - equivalent to FileBuffer
     #
