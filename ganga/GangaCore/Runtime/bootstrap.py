@@ -54,8 +54,7 @@ class GangaPrompt(Prompts):
 
     def in_prompt_tokens(self, cli=None):
         from datetime import datetime
-        return [(Token.Prompt, '[' + str(datetime.now().strftime("%H:%M:%S"))
-                                + ']\nGanga In ['.format(GangaPrompt.environment)),
+        return [(Token.Prompt, '[' + str(datetime.now().strftime("%H:%M:%S")) + ']\nGanga In ['),
                 (Token.PromptNum, str(self.shell.execution_count)),
                 (Token.Prompt, ']: ')]
 
@@ -341,7 +340,7 @@ under certain conditions; type license() for details.
 
         if self.options.config_file == '':
             self.options.config_file = None
-        self.options.config_file_set_explicitly = not self.options.config_file is None
+        self.options.config_file_set_explicitly = self.options.config_file is not None
 
         # use GANGA_CONFIG_FILE env var if it's set
         if self.options.config_file is None:
@@ -394,22 +393,6 @@ under certain conditions; type license() for details.
     @staticmethod
     def rollHistoryForward():
         from GangaCore.Utility.Config.Config import getConfig
-        versions_filename = os.path.join(os.path.expanduser(os.path.expandvars(
-            getConfig('Configuration')['used_versions_path'])), '.used_versions')
-        hasLoaded_newer = False
-        with open(versions_filename, 'r') as versions_file:
-            this_version = versions_file.read()
-            split_version_info = this_version.split('.')
-            if len(split_version_info) == 3:
-                major = int(split_version_info[0])
-                minor = int(split_version_info[1])
-                debug = int(split_version_info[2])
-                if major > 6:
-                    hasLoaded_newer = True
-                if major == 6 and minor > 1:
-                    hasLoaded_newer = True
-                if major == 6 and minor == 1 and debug > 13:
-                    hasLoaded_newer = True
 
         old_dir = os.path.expanduser('~/.ipython-ganga')
         if 'IPYTHONDIR' in os.environ:
@@ -429,7 +412,7 @@ under certain conditions; type license() for details.
                 from IPython.core.interactiveshell import InteractiveShell
                 from IPython.core.history import HistoryManager
                 from IPython.utils.path import locate_profile, get_ipython_dir
-            except ImportError as err:
+            except ImportError:
                 logger.error("Unable to import required IPython files, can't roll forward history")
                 logger.error("If you want to roll forward your old history files you'll need to do this by hand")
                 logger.error("Please try running: https://gist.github.com/minrk/6003365")
@@ -579,11 +562,11 @@ under certain conditions; type license() for details.
 
         if not os.path.exists(specified_gangadir) \
                 and not os.path.exists(default_gangadir):
-            logger.info('Making default gangadir: %s' % gangadir)
+            logger.info('Making default gangadir: %s' % default_gangadir)
             try:
-                os.makedirs(gangadir)
+                os.makedirs(default_gangadir)
             except OSError as err:
-                logger.error("Failed to create default gangadir '%s': %s" % (gangadir, err.message))
+                logger.error("Failed to create default gangadir '%s': %s" % (default_gangadir, err.message))
                 raise
         if self.options.generate_config:
             logger = getLogger('ConfigUpdater')
@@ -629,7 +612,7 @@ under certain conditions; type license() for details.
                 try:
                     opts = self.parse_cmdline_config_options(self.options.cmdline_options)
                     for section, option, val in opts:
-                        config = getConfig(section).setUserValue(option, val)
+                        getConfig(section).setUserValue(option, val)
                 except ConfigError as x:
                     self.exit('command line option error when resetting after config generation: %s' % x)
 
@@ -659,7 +642,6 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def get_config_files(config_file, config_path=None):
-        # type: (str, str) -> List[str]
         """
         Get the list of the config files to read. They are in order
         of increasing precedence so those later in the list have a
@@ -775,10 +757,10 @@ under certain conditions; type license() for details.
                 opts = self.parse_cmdline_config_options(self.options.cmdline_options)
                 for section, option, val in opts:
                     should_set = True
-                    if not sects is None and not section in sects:
+                    if sects is not None and section not in sects:
                         should_set = False
                     if should_set:
-                        config = GangaCore.Utility.Config.setUserValue(section, option, val)
+                        GangaCore.Utility.Config.setUserValue(section, option, val)
             except ConfigError as x:
                 self.exit('command line option error: %s' % x)
 
@@ -1155,9 +1137,7 @@ under certain conditions; type license() for details.
             self.check_IPythonDir()
             self.launch_IPython(local_ns)
         else:
-            override_credits()
             import code
-            sys.displayhook = _display
             c = code.InteractiveConsole(locals=local_ns)
             c.interact()
 
