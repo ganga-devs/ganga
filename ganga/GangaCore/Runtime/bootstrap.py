@@ -277,22 +277,22 @@ under certain conditions; type license() for details.
                           help='starts web GUI monitoring server')
 
         parser.add_option("--config", dest="config_file", action="store", metavar="FILE", default=None,
-                          help='read user configuration from FILE, overrides the GANGA_CONFIG_FILE environment variable.\
-                                Default: ~/.gangarc')
+                          help=('read user configuration from FILE, overrides the GANGA_CONFIG_FILE environment variable. '
+                                'Default: ~/.gangarc'))
 
         parser.add_option("--config-path", dest='config_path', action="store", default=None,
-                          help='site/experiment config customization path, overrides GANGA_CONFIG_PATH environment variable.\
-                                The relative paths are resolved wrt to the release directory.\
-                                To use a specific file you should specify the absolute path. Default: None')
+                          help=('site/experiment config customization path, overrides GANGA_CONFIG_PATH environment variable. '
+                                'The relative paths are resolved wrt to the release directory. '
+                                'To use a specific file you should specify the absolute path. Default: None'))
 
         parser.add_option("-g", "--generate-config", dest='generate_config', action="store_const", const=1,
                           help='generate a default config file, backup the existing one')
 
         parser.add_option("-o", "--option", dest='cmdline_options', action="append", default=[], metavar='EXPR',
-                          help='set configuration options, may be repeated mutiple times,'
-                               'for example: -o[Logging]GangaCore.Lib=DEBUG -oGangaLHCb=INFO\
-                                -o[Configuration]TextShell = IPython '
-                               'The VALUE of *_PATH option is prepended. To reset it use :::VALUE')
+                          help=('set configuration options, may be repeated mutiple times, '
+                                'for example: -o[Logging]GangaCore.Lib=DEBUG -oGangaLHCb=INFO '
+                                '-o[Configuration]TextShell = IPython '
+                                'The VALUE of *_PATH option is prepended. To reset it use :::VALUE'))
 
         parser.add_option("--quiet", dest="force_loglevel", action="store_const", const='ERROR',
                           help='only ERROR messages are printed')
@@ -314,10 +314,10 @@ under certain conditions; type license() for details.
                                'to setup runtime plugin modules (affects LD_LIBRARY_PATH)')
 
         parser.add_option("--test", dest='TEST', action="store_true", default=False,
-                          help='run Ganga test(s) using internal test-runner. It requires GangaTest package to be installed.'
-                               'Usage example: *ganga --test Ganga/old_test/MyTestcase* .'
-                               'Refer to [TestingFramework] section in Ganga config for more\
-                                information on how to configure the test runner.')
+                          help=('run Ganga test(s) using internal test-runner. It requires GangaTest package to be installed. '
+                                'Usage example: *ganga --test Ganga/old_test/MyTestcase* . '
+                                'Refer to [TestingFramework] section in Ganga config for more '
+                                'information on how to configure the test runner.'))
 
         parser.add_option("--daemon", dest='daemon', action="store_true", default=False,
                           help='run Ganga as service.')
@@ -520,10 +520,10 @@ under certain conditions; type license() for details.
                 logger.warning("couldn't find release notes for version %s" % _gangaVersion)
                 return
 
-            bounding_line = '******************************************************************************************\
-                             ********************\n'
-            dividing_line = '------------------------------------------------------------------------------------------\
-                             --------------------\n'
+            bounding_line = ('******************************************************************************************'
+                             '********************\n')
+            dividing_line = ('------------------------------------------------------------------------------------------'
+                             '--------------------\n')
             with open(pathname, 'r') as f:
                 try:
                     notes = [_l.strip() for _l in f.read().replace(bounding_line, '').split(dividing_line)]
@@ -573,9 +573,9 @@ under certain conditions; type license() for details.
                 and not os.path.exists(specified_config):
             logger.info('It seems that you run Ganga for the first time')
             logger.info(
-                'Ganga will send a udp packet each time you start it in order to help the development team \
-                 understand how ganga is used. \
-                 You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
+                'Ganga will send a udp packet each time you start it in order to help the development team '
+                'understand how ganga is used. '
+                'You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
 
         if not os.path.exists(specified_gangadir) \
                 and not os.path.exists(default_gangadir):
@@ -1191,9 +1191,9 @@ under certain conditions; type license() for details.
             if not os.path.exists(newpath):
                 if os.path.exists(oldpath):
                     logger.warning('Default location of IPython history files has changed.')
-                    logger.warning('Ganga will now try to copy your old settings from %s to the new path %s.\
-                                    If you do not want that, quit Ganga and wipe off the content of new path:\
-                                    rm -rf %s/*', oldpath, newpath, newpath)
+                    logger.warning('Ganga will now try to copy your old settings from %s to the new path %s. '
+                                   'If you do not want that, quit Ganga and wipe off the content of new path: '
+                                   'rm -rf %s/*' % (oldpath, newpath, newpath))
                     import shutil
                     shutil.copytree(oldpath, newpath)
                 else:
