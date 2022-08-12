@@ -704,7 +704,7 @@ class DiracBase(IBackend):
             return None
         dirac_cmd = 'kill(%d)' % self.id
         try:
-            result = execute(dirac_cmd, cred_req=self.credential_requirements)
+            execute(dirac_cmd, cred_req=self.credential_requirements)
         except GangaDiracError as err:
             raise BackendError('Dirac', 'Could not kill job: %s' % err)
         return True
@@ -760,7 +760,7 @@ class DiracBase(IBackend):
             outputDir = j.getOutputWorkspace().getPath()
         dirac_cmd = "getOutputSandbox(%d,'%s', %s)" % (self.id, outputDir, unpack)
         try:
-            result = execute(dirac_cmd, cred_req=self.credential_requirements)
+            execute(dirac_cmd, cred_req=self.credential_requirements)
         except GangaDiracError as err:
             msg = 'Problem retrieving output: %s' % str(err)
             logger.warning(msg)
@@ -787,7 +787,7 @@ class DiracBase(IBackend):
             outputfiles_foreach(j, DiracFile, lambda x: lfnsToRemove.append(x.lfn))
         dirac_cmd = "removeFile(%s)" % lfnsToRemove
         try:
-            result = execute(dirac_cmd, cred_req=self.credential_requirements)
+            execute(dirac_cmd, cred_req=self.credential_requirements)
         except GangaDiracError as err:
             msg = 'Problem removing files: %s' % str(err)
             logger.warning(msg)
@@ -1169,8 +1169,9 @@ class DiracBase(IBackend):
                 raise BackendError('Dirac', 'Problem retrieving outputsandbox: %s' % str(getSandboxResult))
             # If the sandbox dict includes a Succesful key then the sandbox has been download from grid storage,
             # likely due to being oversized. Untar it and issue a warning.
-            elif (job.backend.downloadSandbox and isinstance(getSandboxResult['Value'], dict) and
-                  getSandboxResult['Value'].get('Successful', False)):
+            elif (job.backend.downloadSandbox
+                  and isinstance(getSandboxResult['Value'], dict)
+                  and getSandboxResult['Value'].get('Successful', False)):
                 try:
                     sandbox_name = list(getSandboxResult['Value']['Successful'].values())[0]
                     check_output(['tar', '-xvf', sandbox_name, '-C', output_path])
