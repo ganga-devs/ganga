@@ -8,7 +8,6 @@ from GangaCore.Utility.Config import getConfig, ConfigError
 from subprocess import getstatusoutput
 import GangaCore.Utility.logging
 import os
-from GangaCore.Utility.logging import getLogger
 logger = GangaCore.Utility.logging.getLogger()
 
 
