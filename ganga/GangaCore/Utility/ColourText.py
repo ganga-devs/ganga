@@ -1,5 +1,5 @@
 ##########################################################################
-# Ganga Project. http://cern.ch/ganga
+# Ganga Project. https://github.com/ganga-devs/ganga
 #
 # $Id: ColourText.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
 ##########################################################################

@@ -1,6 +1,6 @@
 ##########################################################################
 # Ganga - a computational task management tool for easy access to Grid resources
-# http://cern.ch/ganga
+# https://github.com/ganga-devs/ganga
 #
 # Copyright (C) 2003 The Ganga Project
 #
@@ -226,7 +226,8 @@ class GangaProgram(object):
             self.hello_string = """
 *** Welcome to Ganga ***
 Version: %s
-Documentation and support: http://cern.ch/ganga
+Documentation: https://ganga.readthedocs.io/en/latest/
+Report issues: https://github.com/ganga-devs/ganga
 Type help() or help('index') for online help.
 
 This is free software (GPL), and you are welcome to redistribute it

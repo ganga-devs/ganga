@@ -1,5 +1,5 @@
 ##########################################################################
-# Ganga Project. http://cern.ch/ganga
+# Ganga Project. https://github.com/ganga-devs/ganga
 #
 # $Id: FileWorkspace.py,v 1.2 2009-05-20 09:23:46 moscicki Exp $
 ##########################################################################

@@ -1,6 +1,6 @@
 ##########################################################################
 # Ganga - a computational task management tool for easy access to Grid resources
-# http://cern.ch/ganga
+# https://github.com/ganga-devs/ganga
 #
 # $Id: GridShell.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
 #
