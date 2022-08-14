@@ -32,7 +32,7 @@ jobs:
         run: |
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             if [[ $file == *.py ]]; then
-              flake8 --ignore=W503 $file
+              flake8 $file
             fi
           done
 
