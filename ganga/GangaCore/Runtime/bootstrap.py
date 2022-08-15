@@ -1,6 +1,6 @@
 ##########################################################################
 # Ganga - a computational task management tool for easy access to Grid resources
-# http://cern.ch/ganga
+# https://github.com/ganga-devs/ganga
 #
 # Copyright (C) 2003 The Ganga Project
 #
@@ -22,10 +22,10 @@
 
 import os
 import os.path
-import string
 import sys
 import time
 import re
+import importlib
 
 from GangaCore import _gangaVersion, _gangaPythonPath, _development
 from GangaCore.Utility.Config.Config import getConfig
@@ -55,7 +55,7 @@ class GangaPrompt(Prompts):
 
     def in_prompt_tokens(self, cli=None):
         from datetime import datetime
-        return [(Token.Prompt, '[' + str(datetime.now().strftime("%H:%M:%S")) + ']\nGanga In ['.format(GangaPrompt.environment)),
+        return [(Token.Prompt, '[' + str(datetime.now().strftime("%H:%M:%S")) + ']\nGanga In ['),
                 (Token.PromptNum, str(self.shell.execution_count)),
                 (Token.Prompt, ']: ')]
 
@@ -108,7 +108,7 @@ if DEBUGFILES or MONITOR_FILES:
                 logger = getLogger(modulename=True)
                 logger.debug("### CLOSING %s ###" % self.x)
             oldfile.close(self)
-            #openfiles[ self.x ] = None
+            # openfiles[ self.x ] = None
             del openfiles[self.x]
 
     oldopen = builtins.open
@@ -156,15 +156,16 @@ def manualExportToGPI(my_interface=None):
     exportToInterface(my_interface, 'ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
     exportToInterface(my_interface, 'JobError', JobError, 'Exceptions')
 
-    from GangaCore.Runtime.GPIFunctions import license, typename, categoryname, plugins, convert_merger_to_postprocessor, runfile
+    from GangaCore.Runtime.GPIFunctions import (license, typename, categoryname, plugins, convert_merger_to_postprocessor,
+                                                runfile)
 
     exportToInterface(my_interface, 'license', license, 'Functions')
     exportToInterface(my_interface, 'runfile', runfile, 'Functions')
     # FIXME:
-    #from GangaCore.Runtime.GPIFunctions import applications, backends, list_plugins
+    # from GangaCore.Runtime.GPIFunctions import applications, backends, list_plugins
     # exportToInterface(my_interface, 'applications', applications, 'Functions)
-    #exportToInterface(my_interface, 'backends', backends, 'Functions')
-    #exportToInterface(my_interface, 'list_plugins', list_plugins, 'Functions')
+    # exportToInterface(my_interface, 'backends', backends, 'Functions')
+    # exportToInterface(my_interface, 'list_plugins', list_plugins, 'Functions')
     # FIXME: END DEPRECATED
 
     from GangaCore.GPIDev.Credentials import credential_store
@@ -191,7 +192,8 @@ def manualExportToGPI(my_interface=None):
     from GangaCore.Utility.feedback_report import report
     exportToInterface(my_interface, 'report', report, 'Functions')
 
-    from GangaCore.Core.InternalServices.Coordinator import enableInternalServices, disableMonitoringService, enableMonitoringService, disableInternalServices
+    from GangaCore.Core.InternalServices.Coordinator import (enableInternalServices, disableMonitoringService,
+                                                             enableMonitoringService, disableInternalServices)
     exportToInterface(my_interface, 'reactivate', enableInternalServices, 'Functions')
     exportToInterface(my_interface, 'disableMonitoring', disableMonitoringService, 'Functions')
     exportToInterface(my_interface, 'enableMonitoring', enableMonitoringService, 'Functions')
@@ -226,7 +228,8 @@ class GangaProgram(object):
             self.hello_string = """
 *** Welcome to Ganga ***
 Version: %s
-Documentation and support: http://cern.ch/ganga
+Documentation: https://ganga.readthedocs.io/en/latest/
+Report issues: https://github.com/ganga-devs/ganga
 Type help() or help('index') for online help.
 
 This is free software (GPL), and you are welcome to redistribute it
@@ -274,18 +277,22 @@ under certain conditions; type license() for details.
                           help='starts web GUI monitoring server')
 
         parser.add_option("--config", dest="config_file", action="store", metavar="FILE", default=None,
-                          help='read user configuration from FILE, overrides the GANGA_CONFIG_FILE environment variable. Default: ~/.gangarc')
+                          help=('read user configuration from FILE, overrides the GANGA_CONFIG_FILE environment variable. '
+                                'Default: ~/.gangarc'))
 
         parser.add_option("--config-path", dest='config_path', action="store", default=None,
-                          help='site/experiment config customization path, overrides the GANGA_CONFIG_PATH environment variable. The relative paths are resolved wrt to the release directory. To use a specific file you should specify the absolute path. Default: None')
+                          help=('site/experiment config customization path, overrides GANGA_CONFIG_PATH environment variable. '
+                                'The relative paths are resolved wrt to the release directory. '
+                                'To use a specific file you should specify the absolute path. Default: None'))
 
         parser.add_option("-g", "--generate-config", dest='generate_config', action="store_const", const=1,
                           help='generate a default config file, backup the existing one')
 
         parser.add_option("-o", "--option", dest='cmdline_options', action="append", default=[], metavar='EXPR',
-                          help='set configuration options, may be repeated mutiple times,'
-                               'for example: -o[Logging]GangaCore.Lib=DEBUG -oGangaLHCb=INFO -o[Configuration]TextShell = IPython '
-                               'The VALUE of *_PATH option is prepended. To reset it use :::VALUE')
+                          help=('set configuration options, may be repeated mutiple times, '
+                                'for example: -o[Logging]GangaCore.Lib=DEBUG -oGangaLHCb=INFO '
+                                '-o[Configuration]TextShell = IPython '
+                                'The VALUE of *_PATH option is prepended. To reset it use :::VALUE'))
 
         parser.add_option("--quiet", dest="force_loglevel", action="store_const", const='ERROR',
                           help='only ERROR messages are printed')
@@ -300,16 +307,17 @@ under certain conditions; type license() for details.
                           help='disable the monitoring loop (useful if you run multiple Ganga sessions)')
 
         parser.add_option("--no-prompt", dest='prompt', action="store_const", const=0,
-                          help='never prompt interactively for anything except IPython (FIXME: this is not fully implemented)')
+                          help='never prompt interactively for anything except IPython (FIXME: is not fully implemented)')
 
         parser.add_option("--no-rexec", dest="rexec", action="store_const", const=0,
                           help='[DEPRECATED] rely on existing environment and do not re-exec ganga process'
                                'to setup runtime plugin modules (affects LD_LIBRARY_PATH)')
 
         parser.add_option("--test", dest='TEST', action="store_true", default=False,
-                          help='run Ganga test(s) using internal test-runner. It requires GangaTest package to be installed.'
-                               'Usage example: *ganga --test Ganga/old_test/MyTestcase* .'
-                               'Refer to [TestingFramework] section in Ganga config for more information on how to configure the test runner.')
+                          help=('run Ganga test(s) using internal test-runner. It requires GangaTest package to be installed. '
+                                'Usage example: *ganga --test Ganga/old_test/MyTestcase* . '
+                                'Refer to [TestingFramework] section in Ganga config for more '
+                                'information on how to configure the test runner.'))
 
         parser.add_option("--daemon", dest='daemon', action="store_true", default=False,
                           help='run Ganga as service.')
@@ -333,7 +341,7 @@ under certain conditions; type license() for details.
 
         if self.options.config_file == '':
             self.options.config_file = None
-        self.options.config_file_set_explicitly = not self.options.config_file is None
+        self.options.config_file_set_explicitly = self.options.config_file is not None
 
         # use GANGA_CONFIG_FILE env var if it's set
         if self.options.config_file is None:
@@ -385,23 +393,6 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def rollHistoryForward():
-        from GangaCore.Utility.Config.Config import getConfig
-        versions_filename = os.path.join(os.path.expanduser(os.path.expandvars(
-            getConfig('Configuration')['used_versions_path'])), '.used_versions')
-        hasLoaded_newer = False
-        with open(versions_filename, 'r') as versions_file:
-            this_version = versions_file.read()
-            split_version_info = this_version.split('.')
-            if len(split_version_info) == 3:
-                major = int(split_version_info[0])
-                minor = int(split_version_info[1])
-                debug = int(split_version_info[2])
-                if major > 6:
-                    hasLoaded_newer = True
-                if major == 6 and minor > 1:
-                    hasLoaded_newer = True
-                if major == 6 and minor == 1 and debug > 13:
-                    hasLoaded_newer = True
 
         old_dir = os.path.expanduser('~/.ipython-ganga')
         if 'IPYTHONDIR' in os.environ:
@@ -417,14 +408,16 @@ under certain conditions; type license() for details.
             logger.info("This is your first time running Ganga >=6.1.14")
             logger.info("Now attempting to migrate your IPython history file")
 
-            try:
-                from IPython.core.interactiveshell import InteractiveShell
-                from IPython.core.history import HistoryManager
-                from IPython.utils.path import locate_profile, get_ipython_dir
-            except ImportError as err:
+            ishell = importlib.util.find_spec("IPython.core.interactiveshell", "InteractiveShell")
+            ihist = importlib.util.find_spec("IPython.core.history", "HistoryManager")
+            ipath = importlib.util.find_spec("IPython.utils.path", ["locate_profile", "get_ipython_dir"])
+
+            if not (ishell and ihist and ipath):
                 logger.error("Unable to import required IPython files, can't roll forward history")
                 logger.error("If you want to roll forward your old history files you'll need to do this by hand")
                 logger.error("Please try running: https://gist.github.com/minrk/6003365")
+            else:
+                from IPython.core.history import HistoryManager
 
             old_text_history = os.path.join(old_dir, 'history')
             new_sqlite_history = os.path.join(old_dir, "profile_default/history.sqlite")
@@ -460,7 +453,8 @@ under certain conditions; type license() for details.
                     except Exception as err:
                         logger.error('Failed to create config backup file %s' % bn)
                         logger.error(
-                            'Old file will not be overwritten, please manually remove it and start ganga with the -g option to re-generate it')
+                            'Old file will not be overwritten,\
+                             please manually remove it and start ganga with the -g option to re-generate it')
                         logger.error('Reason: %s' % err)
                         return
                     logger.info('Copied current config file to %s' % bn)
@@ -483,7 +477,7 @@ under certain conditions; type license() for details.
                 bn = "%s.%.2d" % (config_file, 0)
                 os.rename(config_file, bn)
                 logger.info('Copied current config file to %s' % bn)
-                #raise ValueError('too many bckup files')
+                # raise ValueError('too many bckup files')
 
         logger.info('Creating ganga config file %s' % config_file)
         new_config = ''
@@ -500,9 +494,8 @@ under certain conditions; type license() for details.
     def print_release_notes():
         from GangaCore.Utility.logging import getLogger
         from GangaCore.Utility.Config.Config import getConfig
-        import itertools
         logger = getLogger('ReleaseNotes')
-        if getConfig('Configuration')['ReleaseNotes'] == True:
+        if getConfig('Configuration')['ReleaseNotes'] is True:
             packages = map(lambda x: 'ganga/ganga/' + x, filter(lambda x: x != '',
                            ['GangaCore'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
             pathname = os.path.join(os.path.dirname(__file__), '..', '..',
@@ -512,11 +505,13 @@ under certain conditions; type license() for details.
                 logger.warning("couldn't find release notes for version %s" % _gangaVersion)
                 return
 
-            bounding_line = '**************************************************************************************************************\n'
-            dividing_line = '--------------------------------------------------------------------------------------------------------------\n'
+            bounding_line = ('******************************************************************************************'
+                             '********************\n')
+            dividing_line = ('------------------------------------------------------------------------------------------'
+                             '--------------------\n')
             with open(pathname, 'r') as f:
                 try:
-                    notes = [l.strip() for l in f.read().replace(bounding_line, '').split(dividing_line)]
+                    notes = [_l.strip() for _l in f.read().replace(bounding_line, '').split(dividing_line)]
                 except Exception as err:
                     logger.error('Error while attempting to read release notes')
                     logger.debug('Reason: %s' % err)
@@ -541,8 +536,8 @@ under certain conditions; type license() for details.
                     logger.info(log_divider)
                     # logger.info('*'*len(p))
                     logger.info('')
-                    for l in n:
-                        logger.info(l.strip())
+                    for _l in n:
+                        logger.info(_l.strip())
                     logger.info('')
                     logger.info(log_divider)
                 logger.info(log_divider)
@@ -563,15 +558,17 @@ under certain conditions; type license() for details.
                 and not os.path.exists(specified_config):
             logger.info('It seems that you run Ganga for the first time')
             logger.info(
-                'Ganga will send a udp packet each time you start it in order to help the development team understand how ganga is used. You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
+                'Ganga will send a udp packet each time you start it in order to help the development team '
+                'understand how ganga is used. '
+                'You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
 
         if not os.path.exists(specified_gangadir) \
                 and not os.path.exists(default_gangadir):
-            logger.info('Making default gangadir: %s' % gangadir)
+            logger.info('Making default gangadir: %s' % default_gangadir)
             try:
-                os.makedirs(gangadir)
+                os.makedirs(default_gangadir)
             except OSError as err:
-                logger.error("Failed to create default gangadir '%s': %s" % (gangadir, err.message))
+                logger.error("Failed to create default gangadir '%s': %s" % (default_gangadir, err.message))
                 raise
         if self.options.generate_config:
             logger = getLogger('ConfigUpdater')
@@ -611,13 +608,13 @@ under certain conditions; type license() for details.
                     load_user_config(specified_config, {})
                     self.generate_config_file(specified_config, interactive)
 
-                # config file generation overwrites user values so we need to reapply the cmd line options to these user settings
+                # config file generation overwrites user values so we need to reapply cmd line options to these user settings
                 # e.g. set -o[Configuration]gangadir=/home/mws/mygangadir and the user value gets reset to the .gangarc value
                 # (not the session value but the user value has precedence)
                 try:
                     opts = self.parse_cmdline_config_options(self.options.cmdline_options)
                     for section, option, val in opts:
-                        config = getConfig(section).setUserValue(option, val)
+                        getConfig(section).setUserValue(option, val)
                 except ConfigError as x:
                     self.exit('command line option error when resetting after config generation: %s' % x)
 
@@ -647,7 +644,6 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def get_config_files(config_file, config_path=None):
-        # type: (str, str) -> List[str]
         """
         Get the list of the config files to read. They are in order
         of increasing precedence so those later in the list have a
@@ -763,10 +759,10 @@ under certain conditions; type license() for details.
                 opts = self.parse_cmdline_config_options(self.options.cmdline_options)
                 for section, option, val in opts:
                     should_set = True
-                    if not sects is None and not section in sects:
+                    if sects is not None and section not in sects:
                         should_set = False
                     if should_set:
-                        config = GangaCore.Utility.Config.setUserValue(section, option, val)
+                        GangaCore.Utility.Config.setUserValue(section, option, val)
             except ConfigError as x:
                 self.exit('command line option error: %s' % x)
 
@@ -893,7 +889,6 @@ under certain conditions; type license() for details.
         from GangaCore.Core.InternalServices.ShutdownManager import register_exitfunc
         register_exitfunc()
 
-        import GangaCore.Utility.Config
         from GangaCore.Utility.Runtime import initSetupRuntimePackages
         from GangaCore.Core.exceptions import GangaException
 
@@ -1023,7 +1018,7 @@ under certain conditions; type license() for details.
 
         sys.path.insert(0, '')
 
-        if self.options.webgui == True:
+        if self.options.webgui is True:
             from GangaGUI.start import start_gui
             start_gui()
 
@@ -1127,9 +1122,7 @@ under certain conditions; type license() for details.
 
         if shell == 'IPython':
 
-            try:
-                import IPython
-            except ImportError as err:
+            if not importlib.util.find_spec("IPython"):
                 logger.error("Cannot load IPython class!!!")
                 logger.error("Please check your environment and re-load Ganga from a working shell!")
                 logger.error("Exiting Ganga now, goodbye!")
@@ -1144,9 +1137,7 @@ under certain conditions; type license() for details.
             self.check_IPythonDir()
             self.launch_IPython(local_ns)
         else:
-            override_credits()
             import code
-            sys.displayhook = _display
             c = code.InteractiveConsole(locals=local_ns)
             c.interact()
 
@@ -1166,7 +1157,6 @@ under certain conditions; type license() for details.
         if 'IPYTHONDIR' in os.environ:
             ipyth_dir = os.environ['IPYTHONDIR']
             os.environ['IPYTHONDIR'] = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
-            #logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', ipyth_dir)
             if not os.path.isdir(ipyth_dir):
                 if os.path.exists(ipyth_dir):
                     ipyth_dir_bak = str(ipyth_dir).append('_bak')
@@ -1181,8 +1171,9 @@ under certain conditions; type license() for details.
             if not os.path.exists(newpath):
                 if os.path.exists(oldpath):
                     logger.warning('Default location of IPython history files has changed.')
-                    logger.warning('Ganga will now try to copy your old settings from %s to the new path %s.\
-                            If you do not want that, quit Ganga and wipe off the content of new path: rm -rf %s/*', oldpath, newpath, newpath)
+                    logger.warning('Ganga will now try to copy your old settings from %s to the new path %s. '
+                                   'If you do not want that, quit Ganga and wipe off the content of new path: '
+                                   'rm -rf %s/*' % (oldpath, newpath, newpath))
                     import shutil
                     shutil.copytree(oldpath, newpath)
                 else:
@@ -1218,7 +1209,7 @@ under certain conditions; type license() for details.
         cfg.TerminalInteractiveShell.colors = gangaconfig['colourscheme']
         cfg.TerminalInteractiveShell.autocall = 0
         cfg.PlainTextFormatter.pprint = True
-        banner = exit_msg = ''
+        banner = ''
         cfg.TerminalInteractiveShell.prompts_class = GangaPrompt
         cfg.TerminalInteractiveShell.banner1 = banner
 
@@ -1229,7 +1220,6 @@ under certain conditions; type license() for details.
         # The customisation of the interactive shell is done in this extension
         cfg.InteractiveShellApp.extensions = ['GangaCore.Runtime.ganga_extension']
 
-        import IPython
         IPython.start_ipython(argv=[], user_ns=local_ns, local_ns=local_ns, module=GangaCore.GPI, config=cfg)
 
 
@@ -1267,7 +1257,8 @@ under certain conditions; type license() for details.
 # bug #43917: Implement Batch backend as alias to default backend at a given site
 #
 # Revision 1.7  2008/10/23 15:24:04  moscicki
-# install the shutdown manager for atexit handlers before loading system plugins (e.g. LCG download thread registers the atexit handler using a tuple (priority,handler))
+# install the shutdown manager for atexit handlers before loading system plugins
+# (e.g. LCG download thread registers the atexit handler using a tuple (priority,handler))
 #
 # Revision 1.6  2008/09/05 15:55:51  moscicki
 # XML differenciater added (from Ulrik)
@@ -1378,7 +1369,8 @@ under certain conditions; type license() for details.
 # merged from old config branch
 #
 # Revision 1.71.8.1  2007/10/30 12:12:08  wreece
-# First version of the new print_summary functionality. Lots of changes, but some known limitations. Will address in next version.
+# First version of the new print_summary functionality. Lots of changes, but some known limitations.
+# Will address in next version.
 #
 # Revision 1.76  2007/11/26 12:13:27  amuraru
 # decode tab and newline characters in StartupGPI option
@@ -1443,7 +1435,8 @@ under certain conditions; type license() for details.
 # Disable the autocompletion of private attributes and methods starting with _ or __
 #
 # Revision 1.57  2007/05/21 16:07:57  amuraru
-# integrated TestingFramework into ganga itsefl (ganga --test). [TestingFramework] section in Ganga config is used to control it.
+# integrated TestingFramework into ganga itsefl (ganga --test).
+# [TestingFramework] section in Ganga config is used to control it.
 # changed GangaCore.Runtime.bootstrap default log level to INFO
 #
 # Revision 1.56  2007/05/11 13:21:24  moscicki
@@ -1479,7 +1472,9 @@ under certain conditions; type license() for details.
 # initialize [Configuration]LOAD_PATH
 #
 # Revision 1.50  2006/10/16 12:53:13  moscicki
-# fix the SCRIPTS_PATH mechanism: the . is always in the path and the session level updates are prepending to the default value... fix for bug #20332 overview: Ganga/scripts not included in SCRIPTS_PATH in Atlas.ini
+# fix the SCRIPTS_PATH mechanism:
+# the . is always in the path and the session level updates are prepending to the default value...
+# fix for bug #20332 overview: Ganga/scripts not included in SCRIPTS_PATH in Atlas.ini
 #
 # Revision 1.49  2006/10/04 18:16:48  moscicki
 # fixed bug #20333 overview: hostname function of Ganga/Utility/util.py sometimes fails
@@ -1519,7 +1514,8 @@ under certain conditions; type license() for details.
 # --gui option and GUI integration
 #
 # Revision 1.37  2006/02/13 15:21:25  moscicki
-# support for cached logging messages at interactive prompt (messages from monitoring thread are cached in IPython environment and printed at the next prompt)
+# support for cached logging messages at interactive prompt
+# (messages from monitoring thread are cached in IPython environment and printed at the next prompt)
 #
 # Revision 1.36  2006/02/10 14:16:00  moscicki
 # fixed bugs:

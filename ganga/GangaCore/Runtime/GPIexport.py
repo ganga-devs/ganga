@@ -1,5 +1,5 @@
 ##########################################################################
-# Ganga Project. http://cern.ch/ganga
+# Ganga Project. https://github.com/ganga-devs/ganga
 #
 # $Id: GPIexport.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
 ##########################################################################
@@ -7,15 +7,12 @@
 """ Utility for exporting symbols to GPI.
 """
 
-
 # all public GPI names will be exported here
 import GangaCore.GPI
 
 from .gangadoc import adddoc
 
-from GangaCore.GPIDev.Base.Proxy import isType, addProxy
-from GangaCore.GPIDev.Base.Objects import GangaObject
-from inspect import isclass
+from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 
 
 def _addToInterface(interface, name, _object):
@@ -27,7 +24,8 @@ def exportToInterface(myInterface, name, _object, doc_section, docstring=None):
     '''
     Make object available publicly as "name" in the interface module. Add automatic documentation to gangadoc system.
     "doc_section" specifies how the object should be documented.
-    If docstring is specified then use it to document the object (only use for "Objects" section). Otherwise use __doc__ (via pydoc utilities).
+    If docstring is specified then use it to document the object (only use for "Objects" section).
+    Otherwise use __doc__ (via pydoc utilities).
     FIXME: if you try to export the object instance, you should import it with fully qualified path, e.g.
     import X.Y.Z
     X.Y.Z.object = object
@@ -44,7 +42,8 @@ def exportToGPI(name, _object, doc_section, docstring=None):
     '''
     Make object available publicly as "name" in GangaCore.GPI module. Add automatic documentation to gangadoc system.
     "doc_section" specifies how the object should be documented.
-    If docstring is specified then use it to document the object (only use for "Objects" section). Otherwise use __doc__ (via pydoc utilities).
+    If docstring is specified then use it to document the object (only use for "Objects" section).
+    Otherwise use __doc__ (via pydoc utilities).
     FIXME: if you try to export the object instance, you should import it with fully qualified path, e.g.
      import X.Y.Z
      X.Y.Z.object = object

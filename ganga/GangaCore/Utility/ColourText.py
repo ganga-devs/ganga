@@ -1,5 +1,5 @@
 ##########################################################################
-# Ganga Project. http://cern.ch/ganga
+# Ganga Project. https://github.com/ganga-devs/ganga
 #
 # $Id: ColourText.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
 ##########################################################################
@@ -209,8 +209,9 @@ def getColour(name):
     return getattr(colour_objects[x], y)
 
 
-cols = {"black": (0, 0), "red": (0, 1), "green": (0, 2), "orange": (0, 3), "blue": (0, 4), "magenta": (0, 5), "cyan": (0, 6), "lgray": (0, 7),
-        "dgray": (6, 0), "lred": (6, 1), "lgreen": (6, 2), "yellow": (6, 3), "lblue": (6, 4), "pink": (6, 5), "lcyan": (6, 6), "white": (6, 7)}
+cols = {"black": (0, 0), "red": (0, 1), "green": (0, 2), "orange": (0, 3), "blue": (0, 4), "magenta": (0, 5), "cyan": (0, 6),
+        "lgray": (0, 7), "dgray": (6, 0), "lred": (6, 1), "lgreen": (6, 2), "yellow": (6, 3), "lblue": (6, 4), "pink": (6, 5),
+        "lcyan": (6, 6), "white": (6, 7)}
 
 
 def col(f, b):
