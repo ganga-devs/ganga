@@ -9,6 +9,7 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 
 _gangaVersion = '8.4.2'
 
+
 def version():
     return _gangaVersion
 
@@ -75,11 +76,12 @@ pythonPackages.append('ganga/GangaRelease')
 pythonPackages.append('ganga/GangaGUI')
 
 
-install_requires=[
+install_requires = [
     'ipython>=5.0.0',
     'jedi==0.17.2',
     'httplib2>=0.8',
     'aiofile==3.7.4',
+    'aiohttp==3.8.1',
     'absl-py>=0.1.2',
     'google-api-python-client',
     'google-auth-httplib2',
@@ -98,7 +100,7 @@ install_requires=[
     "gdown",
 ]
 if sys.platform != 'darwin':
-      install_requires.append("htcondor")
+    install_requires.append("htcondor")
 
 
 setup(name='ganga',
@@ -110,13 +112,13 @@ setup(name='ganga',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',
       scripts=['bin/ganga', 'bin/ganga-gui'],
-      package_dir={'ganga':'ganga', 'GangaRelease':'ganga/GangaRelease', 'GangaGUI':'ganga/GangaGUI'},
+      package_dir={'ganga': 'ganga', 'GangaRelease': 'ganga/GangaRelease', 'GangaGUI': 'ganga/GangaGUI'},
       packages=pythonPackages,
       install_requires=install_requires,
       extras_require={
           'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],
-          'profiler' : ['memory_profiler'],
-          'LHCb' : ['LbDevTools']},
+          'profiler': ['memory_profiler'],
+          'LHCb': ['LbDevTools']},
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
           'Programming Language :: Python :: 3.8',
@@ -124,7 +126,8 @@ setup(name='ganga',
           'Programming Language :: Python :: 3.10',
       ],
       include_package_data=True,
-      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh', 'tools/ganga-cvmfs-install-dev.sh'], 'GangaGUI':['gui/templates/*.html', 'gui/static/css/main.css', 'gui/static/js/*.js']},
+      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease': ['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh',
+                                                                               'tools/ganga-cvmfs-install-dev.sh'], 'GangaGUI': ['gui/templates/*.html', 'gui/static/css/main.css', 'gui/static/js/*.js']},
       cmdclass={
           'tests': RunTestsCommand,
       },
