@@ -1,5 +1,5 @@
 ##########################################################################
-# Ganga Project. http://cern.ch/ganga
+# Ganga Project. https://github.com/ganga-devs/ganga
 #
 # $Id: Shell.py,v 1.7 2009-06-26 11:35:09 moscicki Exp $
 ##########################################################################
@@ -133,10 +133,10 @@ class Shell(object):
         Args:
             cmd (str): command to be executed in a shell
             soutfile (str): filename of file to store the output in (optional)
-            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            allowed_exit (list): list of numerical rc which are deemed successful when checking the function output. Def [0]
             capture_stderr (None): unused, kept for API compatability?
             timeout (int): length of time (sec) that a command is expected to have finished by
-            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something when something goes wrong
+            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something goes wrong
         """
 
         if allowed_exit is None:
@@ -218,10 +218,10 @@ class Shell(object):
         Args:
             cmd (str): command to be executed in a shell
             soutfile (str): filename of file to store the output in (optional)
-            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            allowed_exit (list): list of numerical rc which are deemed successful when checking the function output. Def [0]
             capture_stderr (None): unused, kept for API compatability?
             timeout (int): length of time (sec) that a command is expected to have finished by
-            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something when something goes wrong
+            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something goes wrong
         """
 
         if allowed_exit is None:
@@ -249,7 +249,7 @@ class Shell(object):
 
         Args:
             cmd (str): command to be executed in a shell
-            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            allowed_exit (list): list of numerical rc which are deemed successful when checking the function output. Def [0]
             capture_stderr (None): unused, kept for API compatability?
         """
         if allowed_exit is None:

@@ -1,5 +1,5 @@
 ##########################################################################
-# Ganga Project. http://cern.ch/ganga
+# Ganga Project. https://github.com/ganga-devs/ganga
 #
 # $Id: util.py,v 1.1 2008-07-17 16:41:01 moscicki Exp $
 ##########################################################################
@@ -14,7 +14,9 @@ from functools import wraps
 def empty_obj(klass):
     class Empty(klass):
         __slots__ = ('__class__',)
-        def __init__(self): pass
+
+        def __init__(self):
+            pass
     newcopy = Empty()
     newcopy.__class__ = klass
     return newcopy
@@ -26,7 +28,9 @@ def empty_obj(klass):
 def empty_class(klass):
     class _Empty(klass):
         __slots__ = list()
-        def __init__(self): pass
+
+        def __init__(self):
+            pass
     return _Empty
 
 # remove the duplicates from a list. From the Python cook book recipe 17.3
@@ -82,7 +86,7 @@ def unique(s):
 def canLoopOver(maybeIterable):
     try:
         iter(maybeIterable)
-    except:
+    except Exception:
         return 0
     else:
         return 1
@@ -170,7 +174,7 @@ def hostname():
 def setAttributesFromDict(d, prefix=None):
     """
     *Python Cookbook recipe 6.18*
-    Helper function to automatically initialises instance variables 
+    Helper function to automatically initialises instance variables
     from __init_ arguments.
     """
     if prefix is None:
@@ -239,7 +243,8 @@ class Proxy(object):
 
 
 def make_binder(unbounded_method):
-    def f(self, *a, **k): return unbounded_method(self._obj, *a, **k)
+    def f(self, *a, **k):
+        return unbounded_method(self._obj, *a, **k)
     return f
 
 
@@ -275,7 +280,7 @@ def require_disk_space(method):
     def ds_wrapped_method(self, *args, **kwargs):
         try:
             checkDiskQuota()
-        except GangaDiskSpaceError as disk_err:
+        except GangaDiskSpaceError:
             raise GangaDiskSpaceError("Function cannot be run - no Disk space available!")
 
         return method(self, *args, **kwargs)
@@ -309,14 +314,14 @@ def importName(modulename, name):
 if __name__ == "__main__":
     import GangaCore.Utility.logic as logic
 
-    assert(execute_once())
-    assert(execute_once())
+    assert (execute_once())
+    assert (execute_once())
 
     if execute_once() and execute_once():
-        assert(0)
+        assert (0)
 
     for i in range(5):
-        assert(logic.equivalent(execute_once(), i == 0))
+        assert (logic.equivalent(execute_once(), i == 0))
 
 #
 #

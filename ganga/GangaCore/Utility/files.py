@@ -1,5 +1,5 @@
 ##########################################################################
-# Ganga Project. http://cern.ch/ganga
+# Ganga Project. https://github.com/ganga-devs/ganga
 #
 # $Id: files.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
 ##########################################################################
@@ -67,13 +67,16 @@ def real_basename(x):
 
 
 def multi_glob(pats, exclude=None):
-    """ glob using a list of patterns and removing duplicate files, exclude name in the list for which the callback exclude(name) return true
-    example: advanced_glob(['*.jpg','*.gif'],exclude=lambda n:len(n)>20) return a list of all JPG and GIF files which have names shorter then 20 characters
+    """ glob using a list of patterns and removing duplicate files,
+        exclude name in the list for which the callback exclude(name) return true
+        example: advanced_glob(['*.jpg','*.gif'],exclude=lambda n:len(n)>20) return a list of all JPG and GIF files
+                 which have names shorter then 20 characters
     """
 
     unique = {}
     if exclude is None:
-        def exclude(n): return 0
+        def exclude(n):
+            return 0
 
     for p in pats:
         for f in glob.glob(p):
@@ -83,8 +86,9 @@ def multi_glob(pats, exclude=None):
 
 
 def recursive_copy(src, dest):
-    """ copy src file (or a directory tree if src specifies a directory) to dest directory. dest must be a directory and must exist.
-    if src is a relative path, then the src directory structure is preserved in dest.
+    """ copy src file (or a directory tree if src specifies a directory) to dest directory.
+        dest must be a directory and must exist.
+        if src is a relative path, then the src directory structure is preserved in dest.
     """
 
     if not os.path.isdir(dest):

@@ -1,5 +1,5 @@
 ##########################################################################
-# Ganga Project. http://cern.ch/ganga
+# Ganga Project. https://github.com/ganga-devs/ganga
 #
 # $Id: FileWorkspace.py,v 1.2 2009-05-20 09:23:46 moscicki Exp $
 ##########################################################################
@@ -89,7 +89,7 @@ class FileWorkspace(object):
     # write a file (represent as file object) to the workspace
     # file object may be:
     #  - a File instance - referes to an existing file which will be copied to workspace directory
-    #  - a FileBuffer instance - refers to a file which is does not yet exist but which contents is available in a memory buffer
+    #  - a FileBuffer instance - refers to a file which does not yet exist but which contents is available in a memory buffer
     #      this is a handy way of creating wrapper scripts etc.
     #  - a tuple (name,contents) - deprecated - equivalent to FileBuffer
     #
@@ -134,7 +134,6 @@ class FileWorkspace(object):
             if os.path.exists(self.getPath()):
 
                 try:
-                    import time
                     remove_path = os.path.dirname(self.getPath()) + "_" + str(time.time()) + '__to_be_deleted_'
                     logger.debug("Moving Path: %s to: %s ahead of delete operation" % (self.getPath(), remove_path))
                     os.rename(self.getPath(), remove_path)
@@ -149,7 +148,7 @@ class FileWorkspace(object):
 
                 def retryRemove(function, path, excinfo):
                     """ Address AFS/NSF problems with left-over lock files which prevents
-                    the 'shutil.rmtree' to delete the directory (the idea is to wait a bit 
+                    the 'shutil.rmtree' to delete the directory (the idea is to wait a bit
                     for the fs to automatically remove these lock files and try again)
                     """
                     self.__removeTrials += 1
@@ -160,7 +159,8 @@ class FileWorkspace(object):
                         shutil.rmtree(remove_path, ignore_errors=False, onerror=retryRemove)
                     else:
                         exctype, value = excinfo[:2]
-                        logger.warning('Cannot delete %s after %s retries due to:  %s:%s (there might some AFS/NSF lock files left over)' %
+                        logger.warning('Cannot delete %s after %s retries due to:  %s:%s'
+                                       ' (there might some AFS/NSF lock files left over)' %
                                        (self.getPath(), self.__removeTrials, exctype, value))
 
                 shutil.rmtree(remove_path, ignore_errors=False, onerror=retryRemove)

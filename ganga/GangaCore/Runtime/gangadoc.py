@@ -1,5 +1,5 @@
 ##########################################################################
-# Ganga Project. http://cern.ch/ganga
+# Ganga Project. https://github.com/ganga-devs/ganga
 #
 # $Id: gangadoc.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
 ##########################################################################
@@ -38,8 +38,8 @@ def adddoc(name, object, doc_section, docstring):
     If docstring is specified then use it to document the object. Otherwise use __doc__ (via pydoc utilities).
     '''
     from GangaCore.Utility.logic import implies
-    assert(implies(docstring, doc_section == "Objects"))
-    #assert(not docstring and not object.__doc__)
+    assert (implies(docstring, doc_section == "Objects"))
+    # assert(not docstring and not object.__doc__)
 
     _GPIhelp_sections[doc_section] += [(name, object, docstring)]
 
@@ -197,10 +197,10 @@ def doc2(thing, title='Python Library Documentation: %s', forceload=0, output=No
         elif module and module is not object:
             desc += ' in module ' + module.__name__
 
-        if not (inspect.ismodule(object) or
-                inspect.isclass(object) or
-                inspect.isroutine(object) or
-                isinstance(object, property)):
+        if not (inspect.ismodule(object)
+                or inspect.isclass(object)
+                or inspect.isroutine(object)
+                or isinstance(object, property)):
             # If the passed object is a piece of data or an instance,
             # document its available methods instead of its value.
 

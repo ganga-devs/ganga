@@ -51,7 +51,7 @@ class DiracProxyInfo(VomsProxyInfo):
             group_command = '--group %s --VOMS' % self.initial_requirements.group
         validTime_command = ''
         if self.initial_requirements.validTime:
-            r = re.compile('\d{2}:\d{2}$')
+            r = re.compile(r'\d{2}:\d{2}$')
             if r.match(self.initial_requirements.validTime):
                 validTime_command = '--valid %s' % self.initial_requirements.validTime
             else:
@@ -175,6 +175,18 @@ class DiracProxyInfo(VomsProxyInfo):
         """
         return self.default_location()
 
+    def uploadedExpiryDate(self):
+        """
+        Returns the expiry date of the proxy uploaded to Dirac
+        """
+        self.shell.env['X509_USER_PROXY'] = self.location
+        info_cmd = getConfig('DIRAC')['proxyInfoCmd'] + ' -m --file "%s"' % self.location
+        logger.debug(info_cmd)
+        status, output, message = self.shell.cmd1(info_cmd)
+        idx = output.splitlines().index('== Proxies uploaded ==')
+        string_date = output.splitlines()[idx + 2:][0].split('|')[-1].strip()
+        return string_date
+
 
 class DiracProxy(ICredentialRequirement):
     """
@@ -183,11 +195,13 @@ class DiracProxy(ICredentialRequirement):
     _schema = ICredentialRequirement._schema.inherit_copy()
     _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy')
     _schema.datadict['encodeDefaultProxyFileName'] = \
-        SimpleItem(defvalue=True, doc='Should the proxy be generated with the group encoded onto the end of the proxy filename')
+        SimpleItem(defvalue=True,
+                   doc='Should the proxy be generated with the group encoded onto the end of the proxy filename')
     _schema.datadict['dirac_env'] = SimpleItem(
         defvalue=None, typelist=[str, None], doc='File which can be used to access a different DIRAC backend')
-    _schema.datadict['validTime'] = SimpleItem(defvalue=None, typelist=[
-                                               str, None], doc='Time for which proxy will be valid. Default if None is 24 hours. Must be of form "HH:MM"')
+    _schema.datadict['validTime'] = SimpleItem(defvalue=None, typelist=[str, None],
+                                               doc='Time for which proxy will be valid. Default if None is 24 hours. '
+                                               'Must be of form "HH:MM"')
     _category = 'CredentialRequirement'
 
     info_class = DiracProxyInfo

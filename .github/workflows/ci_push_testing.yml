@@ -3,13 +3,16 @@ name: CI Push Testing
 on: [pull_request]
 
 jobs:
-
   lint:
     name: Linting
     runs-on: ubuntu-latest
     continue-on-error: true
+    outputs:
+      files_to_lint: ${{ steps.flake8.outputs.files_to_lint }}
     steps:
       - uses: actions/checkout@v1
+        with:
+          fetch-depth: 0
       - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
@@ -24,16 +27,54 @@ jobs:
           python3 -m pip install --upgrade pip setuptools wheel
           python3 -m pip install flake8
 
-      - name: Setup flake8 annotations
-        uses: rbialon/flake8-annotations@v1
-
       - name: Lint with flake8
+        id: flake8
         run: |
+          files_to_lint=""
+          count=0
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             if [[ $file == *.py ]]; then
-              flake8 $file
+              count=`flake8 --count --exit-zero $file | tail -1`
+              if [[ $count > 0 ]]; then
+                files_to_lint="$files_to_lint $file"
+              fi
             fi
           done
+          echo "::set-output name=files_to_lint::$files_to_lint";
+
+      - name: Fail on linting violations
+        if: steps.flake8.outputs.files_to_lint != ''
+        run: exit 1
+
+  autofix_pr:
+    name: Create autopep8 PR
+    if: startsWith(github.head_ref, 'autopep8-patches') == false && needs.lint.outputs.files_to_lint != ''
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Run autopep8
+        id: autopep8
+        uses: peter-evans/autopep8@v1
+        with:
+          args: --exit-code --recursive --in-place --aggressive --aggressive ${{ needs.lint.outputs.files_to_lint }}
+
+      - name: Set autopep8 branch name
+        id: vars
+        run: echo ::set-output name=branch-name::"autopep8-patches/${{ github.head_ref }}"
+
+      - name: Create Pull Request
+        if: steps.autopep8.outputs.exit-code == 2
+        uses: peter-evans/create-pull-request@v4
+        with:
+          commit-message: autopep8 action fixes
+          title: PEP8 fixes by autopep8
+          body: This is an auto-generated PR with fixes by autopep8 for the ${{ steps.vars.outputs.branch-name }} branch.
+          labels: autopep8, automated pr
+          branch: ${{ steps.vars.outputs.branch-name }}
 
   core-unit:
     name: GangaCore Unit

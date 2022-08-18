@@ -1,6 +1,6 @@
 ##########################################################################
 # Ganga - a computational task management tool for easy access to Grid resources
-# http://cern.ch/ganga
+# https://github.com/ganga-devs/ganga
 #
 # $Id: GridShell.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
 #
@@ -96,9 +96,11 @@ def getShell(cred_req=None):
     Utility function for getting Grid Shell.
 
     If a cred_req is given then the grid shell which has been cached for this credential requirement is returned.
-    If a cred_req is given an the credential doesn't exist in the credential_store then an InvalidCredentialError exception is raised
+    If a cred_req is given and the credential does not exist in the credential_store then an InvalidCredentialError
+    exception is raised
 
-    If no cred_req is given then a grid shell is contructed based upon either the GLITE_SETUP or GLITE_LOCATION as possibly defined by the user
+    If no cred_req is given then a grid shell is contructed based upon either the GLITE_SETUP or GLITE_LOCATION
+    as possibly defined by the user
         THERE IS NO CACHING MADE HERE IN THIS CASE!!!
 
     Arguments:
