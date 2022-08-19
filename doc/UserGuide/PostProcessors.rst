@@ -93,8 +93,6 @@ In ``mymerger.py`` you must define a function called mergefiles(file_list,output
     :end-before: # -- POSTPROCESSORS MYMERGER STOP
     :dedent: 8
 
-.. code-block:: python
-
 
 This function would mimic the TextMerger, but with more control to the user. Note that the ``overwrite`` and
 ``ignorefailed`` flags will still work here as a normal merger object.
