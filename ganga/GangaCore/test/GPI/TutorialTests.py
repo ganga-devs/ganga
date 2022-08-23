@@ -13,7 +13,7 @@ conf = getConfig('Configuration')
 conf.setSessionValue('gangadir', expandvars(None, '~/gangadir_testing/TutorialTests'))
 
 # Now we can start ganga properly
-#from ganga import *
+# from ganga import *
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 
