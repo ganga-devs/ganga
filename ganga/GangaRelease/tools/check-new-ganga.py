@@ -6,6 +6,7 @@ import shutil
 import glob
 msg = ""
 
+# noop
 # put in a massive try..except block so I can get some feedback
 try:
     # Request the list of releases
