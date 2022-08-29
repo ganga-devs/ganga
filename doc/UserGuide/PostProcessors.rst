@@ -88,17 +88,10 @@ python module which carries out the merge with
 
 In ``mymerger.py`` you must define a function called mergefiles(file_list,output_file), e.g:
 
-.. code-block:: python
-
-    import os
-    def mergefiles(file_list,output_file):
-          f_out = file(output_file,'w')
-          for f in file_list:
-                f_in = file(f)
-                f_out.write(f_in.read())
-                f_in.close()
-          f_out.flush()
-          f_out.close()
+.. literalinclude:: ../../ganga/GangaCore/test/GPI/TutorialTests.py
+    :start-after: # -- POSTPROCESSORS MYMERGER START
+    :end-before: # -- POSTPROCESSORS MYMERGER STOP
+    :dedent: 8
 
 
 This function would mimic the TextMerger, but with more control to the user. Note that the ``overwrite`` and
