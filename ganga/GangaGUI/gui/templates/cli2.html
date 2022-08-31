@@ -50,11 +50,13 @@
       });
       const socket = io.connect("/pty");
       const status = document.getElementById("status");
-      socket.emit("pty-input", { input: "ganga --webgui\r" });
+      term.write("Welcome to Ganga")
+      socket.emit("\r")
       socket.on("pty-output", function (data) {
         console.log("new output received from server:", data.output);
         term.write(data.output);
       });
+
 
       socket.on("connect", () => {
         fitToscreen();
