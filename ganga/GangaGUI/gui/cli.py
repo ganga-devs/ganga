@@ -45,7 +45,7 @@ def read_and_forward_pty_output():
 
 @app.route("/")
 def index():
-    return render_template("templates/cli.html")
+    return render_template("templates/cli1.html")
 
 @app.route("/term")
 def gangaterminal():
