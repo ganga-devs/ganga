@@ -189,6 +189,14 @@ RecoToDST-07/90000000/DST" ,
 
         logger.debug("Creating dataset")
 
+        if len(files)==0:
+                logger.warning("No files found for BKQuery %s, returning an empty data set" % self.path)
+                if compressed:
+                        return LHCbCompressedDataset()
+                else:
+                        return LHCbDataset()
+
+
         # If we think this is an MC request check to see if the data set has been archived.
         isMC = False
         if 'MC' == self.path.split('/')[1]:
