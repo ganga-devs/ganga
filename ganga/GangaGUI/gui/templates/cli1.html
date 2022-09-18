@@ -13,13 +13,16 @@
     />
   </head>
   <body>
-    <span style="font-size: 1.4em">pyxterm.js</span>&nbsp;&nbsp;&nbsp;
-    <span style="font-size: small"
-      >status:
-      <span style="font-size: small" id="status">connecting...</span></span
-    >
-
-    <div style="width: 100%; height: calc(100% - 50px)" id="terminal"></div>
+    <iframe id="url" src="" title="terminal" width="100%" height="95%"></iframe>
+    <button type="button" class="collapsible" onclick="myFunction()">CLI</button>
+    <div class="content">
+    <span style="font-size: small">status:
+      <span style="font-size: small" id="status">connecting...</span></span>
+      <div style="
+        height: 50%;
+        overflow: scroll;">
+    <div style="width: 100%; height: 1000%" id="terminal" ></div></div>
+    </div>
     <!-- xterm -->
     <script src="https://unpkg.com/xterm@4.11.0/lib/xterm.js"></script>
     <script src="https://unpkg.com/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.js"></script>
@@ -48,10 +51,27 @@
         console.log("key pressed in browser:", data);
         socket.emit("pty-input", { input: data });
       });
+      output=getCookie("URL")
+      document.getElementById("url").src = output;
       const socket = io.connect("/pty");
       const status = document.getElementById("status");
       socket.emit("pty-input", { input: "ganga --webgui\r" });
+      var flag=0;
       socket.on("pty-output", function (data) {
+        if (flag==0){
+          const urlRegex = /http:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g;
+          let result=data.output.match(urlRegex);
+          if(result!==null){
+            if(result.length>1){
+              url=result[0]
+              setTimeout(function() {
+                document.getElementById("url").src = url;
+                flag=1
+                setCookie("URL",url,7)
+              }, 500);
+            }
+          }
+        }
         console.log("new output received from server:", data.output);
         term.write(data.output);
       });
@@ -85,6 +105,48 @@
 
       const wait_ms = 50;
       window.onresize = debounce(fitToscreen, wait_ms);
+
+
+      function setCookie(name,value,days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days*24*60*60*1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+      }
+      function getCookie(name) {
+          var nameEQ = name + "=";
+          var ca = document.cookie.split(';');
+          for(var i=0;i < ca.length;i++) {
+              var c = ca[i];
+              while (c.charAt(0)==' ') c = c.substring(1,c.length);
+              if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+          }
+          return null;
+      }
+      let j=0;
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+        for (i = 0; i < coll.length; i++) {
+          coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.display === "block") {
+              content.style.display = "none";
+            } else {
+              content.style.display = "block";
+            }
+            if (j%2==0){
+              document.getElementById("url").style.height = "50%";
+              j=j+1
+            }else{
+              document.getElementById("url").style.height = "90%";
+              j=j+1
+            }
+          });
+        }
     </script>
   </body>
 </html>
