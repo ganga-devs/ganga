@@ -109,7 +109,7 @@ def main():
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("-p", "--port", default=5000, help="port to run server on")
+    parser.add_argument("-p", "--port", default=11000, help="port to run server on")
     parser.add_argument(
         "--host",
         default="127.0.0.1",
