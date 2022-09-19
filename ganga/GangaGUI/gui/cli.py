@@ -47,9 +47,11 @@ def read_and_forward_pty_output():
 def index():
     return render_template("templates/cli1.html")
 
+
 @app.route("/term")
 def gangaterminal():
     return render_template("templates/cli2.html")
+
 
 @socketio.on("pty-input", namespace="/pty")
 def pty_input(data):
