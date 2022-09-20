@@ -82,6 +82,7 @@ install_requires = [
     'httplib2>=0.8',
     'aiofile==3.7.4',
     'aiohttp==3.8.1',
+    'aioprocessing>=2.0.1',
     'absl-py>=0.1.2',
     'google-api-python-client',
     'google-auth-httplib2',
