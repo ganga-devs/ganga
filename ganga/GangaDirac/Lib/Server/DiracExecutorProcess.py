@@ -1,4 +1,3 @@
-# flake8: noqa
 import functools
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Lock, Process
