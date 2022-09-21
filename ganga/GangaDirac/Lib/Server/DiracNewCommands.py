@@ -19,11 +19,6 @@ def diracCommand(f):
     def diracWrapper(*args, **kwargs):
         ''' This method does the parsing of the wrapped function and it's output '''
         # When pipe_out == False this function is being called internally and shouldn't pipe the output to the streams
-        if "normCPUTime" in str(f):
-            with open("cpuargs.txt", "a") as file:
-                file.write(f"Args: {str(args)}")
-                file.write(f"Kwargs: {str(kwargs)}")
-
         if kwargs.get('pipe_out', True) is False:
             return f(*args, **kwargs)
 
