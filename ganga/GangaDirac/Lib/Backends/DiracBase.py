@@ -1472,7 +1472,7 @@ class DiracBase(IBackend):
         statusmapping = configDirac['statusmapping']
 
         manager = AsyncDiracManager()
-        result = await manager.execute(dirac_status, job_ids=str(dirac_job_ids), statusmapping=str(statusmapping))
+        result = await manager.execute(dirac_status, job_ids=dirac_job_ids, statusmapping=statusmapping)
 
         # result, bulk_state_result = execute('monitorJobs(%s, %s)' % (repr(dirac_job_ids), repr(
         #     statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements, new_subprocess=True)

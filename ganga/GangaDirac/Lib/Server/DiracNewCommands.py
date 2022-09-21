@@ -332,9 +332,6 @@ def status(dirac, job_ids, statusmapping, pipe_out=True):
     # Translate between the many statuses in DIRAC and the few in Ganga
 
     # return {'OK':True, 'Value':[['WIP', 'WIP', 'WIP', 'WIP', 'WIP']]}
-    import ast
-    job_ids = ast.literal_eval(job_ids)
-    statusmapping = ast.literal_eval(statusmapping)
     result = dirac.getJobStatus(job_ids)
     # result = ast.literal_eval(result)
     if not result['OK']:
