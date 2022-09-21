@@ -1,8 +1,11 @@
+import os
 import time
 import uuid
+import psutil
 
 from aioprocessing import AioManager, AioQueue
-from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, getDiracEnv
+from GangaCore.GPIDev.Credentials import credential_store
 
 from .DiracExecutorProcess import DiracProcess
 
@@ -17,22 +20,46 @@ class Singleton(type):
 
 
 class AsyncDiracManager(metaclass=Singleton):
-    def __init__(self, env=None):
+    def __init__(self):
         self.dirac_process = None
         self.manager = None
+        self.task_queues = {}
+        self.task_result_dicts = {}
+        self.active_processes = {}
         self.task_queue = AioQueue()
-        self.task_result_dict = {}
-        self.initialized = False
-        self.env = env
 
-    def start_dirac_process(self):
+    def prepare_process_env(self, env=None, cred_req=None):
+        if env is None:
+            if cred_req is None:
+                env = getDiracEnv()
+            else:
+                env = getDiracEnv(cred_req.dirac_env)
+        if cred_req is not None:
+            env['X509_USER_PROXY'] = credential_store[cred_req].location
+            if os.getenv('KRB5CCNAME'):
+                env['KRB5CCNAME'] = os.getenv('KRB5CCNAME')
+
+        return env
+
+    def hash_dirac_env(self, dirac_env):
+        # This function hashes an env dict to be used as a dictionary key for our active processes
+        return hash(frozenset(dirac_env.items()))
+
+    def start_dirac_process(self, dirac_env=None):
         self.manager = AioManager()
         self.task_result_dict = self.manager.dict()
-        self.dirac_process = DiracProcess(task_queue=self.task_queue, task_result_dict=self.task_result_dict)
-        self.dirac_process.start()
-        self.initialized = True
+        env_hash = self.hash_dirac_env(dirac_env)
+        self.task_queues[env_hash] = AioQueue()
+        self.task_result_dicts[env_hash] = self.manager.dict()
+        dirac_process = DiracProcess(
+            task_queue=self.task_queues[env_hash],
+            task_result_dict=self.task_result_dicts[env_hash],
+            env=dirac_env)
+        dirac_process.start()
+        self.active_processes[env_hash] = dirac_process.pid
 
-    def parse_command_result(self, result, return_raw_dict=False):
+    def parse_command_result(self, result, cmd, return_raw_dict=False):
+        print(f"Executed {cmd} with result:{result}")
         if isinstance(result, dict):
             if return_raw_dict:
                 # If the output is a dictionary return and it has been requested, then return it
@@ -46,13 +73,24 @@ class AsyncDiracManager(metaclass=Singleton):
             # Else raise an exception as it should be a dictionary
             raise GangaDiracError(result)
 
-    async def execute(self, cmd, return_raw_dict=False, *args, **kwargs):
-        if not self.initialized:
-            self.start_dirac_process()
+    def is_dirac_process_active(self, env_hash):
+        if env_hash not in self.active_processes:
+            return False
+        pid = self.active_processes[env_hash]
+        if not psutil.pid_exists(pid):
+            return False
+        return True
+
+    async def execute(self, cmd, return_raw_dict=False, env=None, cred_req=None, *args, **kwargs):
+        dirac_env = self.prepare_process_env(env, cred_req)
+        env_hash = self.hash_dirac_env(dirac_env)
+
+        if not self.is_dirac_process_active(env_hash):
+            self.start_dirac_process(dirac_env)
 
         task_id = uuid.uuid4()
         task_done = self.manager.AioEvent()
-        await self.task_queue.coro_put((task_done, task_id, cmd, (args, kwargs)))
+        await self.task_queues[env_hash].coro_put((task_done, task_id, cmd, (args, kwargs)))
 
         t1 = time.perf_counter()
         await task_done.coro_wait()
@@ -60,8 +98,8 @@ class AsyncDiracManager(metaclass=Singleton):
         t2 = time.perf_counter()
         print(f'{task_id}: Executed task in {t2-t1:.4f} seconds. Task queue: {self.task_queue.qsize()}')
 
-        dirac_result = self.task_result_dict.get(task_id)
-        del self.task_result_dict[task_id]
+        dirac_result = self.task_result_dicts[env_hash].get(task_id)
+        del self.task_result_dicts[env_hash][task_id]
 
-        returnable = self.parse_command_result(dirac_result, return_raw_dict)
+        returnable = self.parse_command_result(dirac_result, str(cmd), return_raw_dict)
         return returnable

@@ -1,4 +1,5 @@
 import functools
+import os
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Lock, Process
 
@@ -9,6 +10,7 @@ class DiracProcess(Process):
         self.daemon = True
         self.task_queue = task_queue
         self.task_result_dict = task_result_dict
+        self.env = env
 
     def initialize_dirac_api(self):
         from DIRAC.Core.Utilities.DIRACScript import DIRACScript as Script  # type: ignore
@@ -19,6 +21,9 @@ class DiracProcess(Process):
             with lock:
                 self.task_result_dict[id] = future.result()
                 event.set()
+
+        if self.env:
+            os.environ = self.env
 
         self.initialize_dirac_api()
         executor = ThreadPoolExecutor()
