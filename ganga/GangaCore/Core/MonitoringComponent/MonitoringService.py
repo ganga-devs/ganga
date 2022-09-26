@@ -12,7 +12,7 @@ from GangaCore.Utility.logging import getLogger
 
 config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
-POLL_RATE = 2  # in seconds
+POLL_RATE = config['base_poll_rate']  # in seconds
 log = getLogger()
 
 
@@ -70,11 +70,12 @@ class AsyncMonitoringService(GangaThread):
                 log.debug("RegistryLockError: The job was most likely removed")
                 log.debug("Reg LockError%s" % str(err))
 
+        # If a backend is newly found as active, trigger its monitoring
         previously_active_backends = self.active_backends
         self.active_backends = found_active_backends
-        print(self.active_backends)
         for backend_name in self.active_backends:
             if backend_name not in previously_active_backends:
+                log.debug(f'Adding {backend_name} to list of backends to monitor.')
                 self._check_backend(backend_obj)
 
         self._log_backend_summary(found_active_backends)
@@ -89,7 +90,7 @@ class AsyncMonitoringService(GangaThread):
                 summary += str(stripProxy(this_job).id) + ', '  # getFQID('.')) + ', '
             summary += '], '
         summary += '}'
-        log.debug(f"Active backends updated: {summary}")
+        log.debug(f"Active backends: {summary}")
 
     def run_monitoring_task(self, monitoring_task, jobs):
         if not self.enabled:
@@ -105,15 +106,17 @@ class AsyncMonitoringService(GangaThread):
         backend_name = getName(backend)
         if backend_name not in self.active_backends:
             return
+
         job_slice = self.active_backends[backend_name]
-        print(f'checking backend {backend_name}')
+        log.debug(f'Checking backend {backend_name}')
         backend.master_updateMonitoringInformation(job_slice)
+
         if backend_name in config:
             pRate = config[backend_name]
         else:
             pRate = POLL_RATE
-        print(f"Poll rate for {backend_name} is {pRate}")
         timer_handle = self.loop.call_later(pRate, self._check_backend, backend)
+
         self.scheduled_backend_checks.setdefault(backend_name, [])
         self.scheduled_backend_checks[backend_name].append(timer_handle)
 
@@ -122,7 +125,7 @@ class AsyncMonitoringService(GangaThread):
         if backend in config:
             pRate = config[backend_name]
         else:
-            pRate = POLL_RATE
+            pRate = config['default_backend_poll_rate']
         timer_handle = self.loop.call_later(pRate, self._check_backend(backend))
         self.scheduled_backend_checks[backend_name] = timer_handle
         self.scheduled_backend_checks[backend_name].append(timer_handle)
@@ -132,8 +135,10 @@ class AsyncMonitoringService(GangaThread):
             self.thread_executor, functools.partial(task, jobs=jobs))
 
     def _cleanup_finished_backends(self, previously_active_backends, found_active_backends):
+        # Check for backends which have no more jobs to monitor and trigger their cleanup.
         for backend, jobs in previously_active_backends.items():
             if backend not in found_active_backends:
+                log.debug(f'Removing {getName(backend)} from active backends')
                 backend_obj = lazyLoadJobBackend(jobs[0])
                 self._cleanup_backend(backend_obj)
 
