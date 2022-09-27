@@ -114,7 +114,10 @@ class AsyncMonitoringService(GangaThread):
 
     def _schedule_next_backend_check(self, backend):
         backend_name = getName(backend)
-        pRate = config.get(backend_name, config['default_backend_poll_rate'])
+        if backend in config:
+            pRate = config[backend_name]
+        else:
+            pRate = config['default_backend_poll_rate']
         timer_handle = self.loop.call_later(pRate, self._check_backend, backend)
         self.scheduled_backend_checks.setdefault(backend_name, [])
         self.scheduled_backend_checks[backend_name].append(timer_handle)
