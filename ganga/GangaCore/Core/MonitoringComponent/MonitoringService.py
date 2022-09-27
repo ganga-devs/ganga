@@ -110,15 +110,7 @@ class AsyncMonitoringService(GangaThread):
         job_slice = self.active_backends[backend_name]
         log.debug(f'Checking backend {backend_name}')
         backend.master_updateMonitoringInformation(job_slice)
-
-        if backend_name in config:
-            pRate = config[backend_name]
-        else:
-            pRate = POLL_RATE
-        timer_handle = self.loop.call_later(pRate, self._check_backend, backend)
-
-        self.scheduled_backend_checks.setdefault(backend_name, [])
-        self.scheduled_backend_checks[backend_name].append(timer_handle)
+        self._schedule_next_backend_check(backend)
 
     def _schedule_next_backend_check(self, backend):
         backend_name = getName(backend)
@@ -126,8 +118,8 @@ class AsyncMonitoringService(GangaThread):
             pRate = config[backend_name]
         else:
             pRate = config['default_backend_poll_rate']
-        timer_handle = self.loop.call_later(pRate, self._check_backend(backend))
-        self.scheduled_backend_checks[backend_name] = timer_handle
+        timer_handle = self.loop.call_later(pRate, self._check_backend, backend)
+        self.scheduled_backend_checks.setdefault(backend_name, [])
         self.scheduled_backend_checks[backend_name].append(timer_handle)
 
     async def _run_in_threadpool(self, task, jobs):
