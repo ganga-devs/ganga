@@ -1,5 +1,4 @@
 import os
-import time
 import uuid
 import psutil
 
@@ -59,7 +58,6 @@ class AsyncDiracManager(metaclass=Singleton):
         self.active_processes[env_hash] = dirac_process.pid
 
     def parse_command_result(self, result, cmd, return_raw_dict=False):
-        print(f"Executed {cmd} with result:{result}")
         if isinstance(result, dict):
             if return_raw_dict:
                 # If the output is a dictionary return and it has been requested, then return it
@@ -92,12 +90,7 @@ class AsyncDiracManager(metaclass=Singleton):
         task_done = self.manager.AioEvent()
         await self.task_queues[env_hash].coro_put((task_done, task_id, cmd, args_dict))
 
-        t1 = time.perf_counter()
         await task_done.coro_wait()
-
-        t2 = time.perf_counter()
-        print(f'{task_id}: Executed task in {t2-t1:.4f} seconds. Task queue: {self.task_queue.qsize()}')
-
         dirac_result = self.task_result_dicts[env_hash].get(task_id)
         del self.task_result_dicts[env_hash][task_id]
 
