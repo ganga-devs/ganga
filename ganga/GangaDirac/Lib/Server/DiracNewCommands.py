@@ -303,9 +303,16 @@ def finished_job(dirac, id, outputDir=os.getcwd(), unpack=True, oversized=True, 
         out_sandbox = getOutputSandbox(dirac, id, outputDir, unpack, oversized, noJobDir, pipe_out=False)
     else:
         out_sandbox = None
+    try:
+        from DIRAC.Core.DISET.RPCClient import RPCClient
+        monitoring = RPCClient('WorkloadManagement/JobMonitoring')
+        app_status = monitoring.getJobAttributes(id)['Value']['ApplicationStatus']
+    except Exception:
+        app_status = "unknown ApplicationStatus"
+
     out_dataInfo = getOutputDataInfo(dirac, id, pipe_out=False)
     outStateTime = {'completed': getStateTime(dirac, id, 'completed', pipe_out=False)}
-    return (out_cpuTime, out_sandbox, out_dataInfo, outStateTime)
+    return (out_cpuTime, out_sandbox, out_dataInfo, outStateTime, app_status)
 
 
 @diracCommand
@@ -345,6 +352,7 @@ def status(dirac, job_ids, statusmapping, pipe_out=True):
         dirac_status = job_status.get('Status', None)
         dirac_site = job_status.get('Site', None)
         ganga_status = statusmapping.get(dirac_status, None)
+        app_status = 'In progress'
         if ganga_status is None:
             ganga_status = 'failed'
             dirac_status = 'Unknown: No status for Job'
@@ -352,14 +360,6 @@ def status(dirac, job_ids, statusmapping, pipe_out=True):
         #    ganga_status = 'running'
         if minor_status in ['Uploading Output Data']:
             ganga_status = 'running'
-
-        try:
-            from DIRAC.Core.DISET.RPCClient import RPCClient
-            monitoring = RPCClient('WorkloadManagement/JobMonitoring')
-            app_status = monitoring.getJobAttributes(_id)['Value']['ApplicationStatus']
-        except Exception:
-            app_status = "unknown ApplicationStatus"
-
         status_list.append([minor_status, dirac_status, dirac_site, ganga_status, app_status])
 
     return status_list
@@ -415,8 +415,6 @@ def monitorJobs(dirac, job_ids, status_mapping, pipe_out=True):
     state_job_status = {}
     for job_id, this_stat_info in zip(job_ids, status_info):
         if this_stat_info:
-            # with open('what.txt', 'w') as f:
-            #     f.write(this_stat_info['Value'])
             try:
                 update_status = this_stat_info[3]
             except Exception as err:

@@ -1109,18 +1109,27 @@ class DiracBase(IBackend):
 
             # Contact dirac which knows about the job
             dm = AsyncDiracManager()
-            job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = await dm.execute(
-                finished_job,
-                args_dict={
-                    'id': job.backend.id,
-                    'outputDir': output_path,
-                    'unpack': job.backend.unpackOutputSandbox,
-                    'downloadSandbox': job.backend.downloadSandbox
-                })
+            job.backend.normCPUTime, \
+                getSandboxResult, \
+                file_info_dict, \
+                completeTimeResult, \
+                app_status = await dm.execute(
+                    finished_job,
+                    args_dict={
+                        'id': job.backend.id,
+                        'outputDir': output_path,
+                        'unpack': job.backend.unpackOutputSandbox,
+                        'downloadSandbox': job.backend.downloadSandbox
+                    })
 
             now = time.time()
-            print('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
+            logger.debug('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
 
+            try:
+                job.backend.extraInfo = app_status
+            except Exception as err:
+                logger.debug("gexception: %s" % str(err))
+                pass
             # logger.info('Job ' + job.fqid + ' OutputDataInfo: ' + str(file_info_dict))
             # logger.info('Job ' + job.fqid + ' OutputSandbox: ' + str(getSandboxResult))
             # logger.info('Job ' + job.fqid + ' normCPUTime: ' + str(job.backend.normCPUTime))
@@ -1565,7 +1574,6 @@ class DiracBase(IBackend):
         for j in master_jobs_to_update:
             j.updateMasterJobStatus()
 
-        print(requeue_job_list)
         DiracBase.requeue_dirac_finished_jobs(requeue_job_list, finalised_statuses)
 
     @staticmethod
