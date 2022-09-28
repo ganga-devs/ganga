@@ -29,14 +29,13 @@ class DiracProcess(Process):
         executor = ThreadPoolExecutor()
         lock = Lock()
         while True:
-            is_done, task_id, cmd, arg_tuple = self.task_queue.get()
-            args, kwargs = arg_tuple
-            future = executor.submit(self.run_dirac_command, cmd, *args, **kwargs)
+            is_done, task_id, cmd, args_dict = self.task_queue.get()
+            future = executor.submit(self.run_dirac_command, cmd, args_dict)
             future.add_done_callback(functools.partial(send_result, is_done, task_id, lock))
 
-    def run_dirac_command(self, cmd, *args, **kwargs):
+    def run_dirac_command(self, cmd, args_dict):
         from DIRAC.Interfaces.API.Dirac import Dirac  # type: ignore
         dirac = Dirac()
-        kwargs['dirac'] = dirac
-        return_value = cmd(*args, **kwargs)
+        args_dict['dirac'] = dirac
+        return_value = cmd(**args_dict)
         return return_value

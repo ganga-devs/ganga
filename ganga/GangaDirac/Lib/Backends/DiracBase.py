@@ -1110,7 +1110,13 @@ class DiracBase(IBackend):
             # Contact dirac which knows about the job
             dm = AsyncDiracManager()
             job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = await dm.execute(
-                finished_job, id=job.backend.id, outputDir=output_path, unpack=job.backend.unpackOutputSandbox, downloadSandbox=job.backend.downloadSandbox)
+                finished_job,
+                args_dict={
+                    'id': job.backend.id,
+                    'outputDir': output_path,
+                    'unpack': job.backend.unpackOutputSandbox,
+                    'downloadSandbox': job.backend.downloadSandbox
+                })
 
             now = time.time()
             print('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
@@ -1310,7 +1316,13 @@ class DiracBase(IBackend):
         manager = AsyncDiracManager()
         for job in jobs:
             monitoring_component.loop.create_task(manager.execute(
-                finished_job, id=job.backend.id, outputDir=job.getOutputWorkspace().getPath(), unpack=job.backend.unpackOutputSandbox, downloadSandbox=downloadSandbox))
+                finished_job,
+                args_dict={
+                    'id': job.backend.id,
+                    'outputDir': job.getOutputWorkspace().getPath(),
+                    'unpack': job.backend.unpackOutputSandbox,
+                    'downloadSandbox': downloadSandbox
+                }))
 
     @staticmethod
     @require_disk_space
@@ -1471,8 +1483,8 @@ class DiracBase(IBackend):
 
         statusmapping = configDirac['statusmapping']
 
-        manager = AsyncDiracManager()
-        result = await manager.execute(dirac_status, job_ids=dirac_job_ids, statusmapping=statusmapping)
+        dm = AsyncDiracManager()
+        result = await dm.execute(dirac_status, args_dict={'job_ids': dirac_job_ids, 'statusmapping': statusmapping})
 
         # result, bulk_state_result = execute('monitorJobs(%s, %s)' % (repr(dirac_job_ids), repr(
         #     statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements, new_subprocess=True)

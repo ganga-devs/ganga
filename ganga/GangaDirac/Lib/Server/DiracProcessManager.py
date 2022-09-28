@@ -81,7 +81,7 @@ class AsyncDiracManager(metaclass=Singleton):
             return False
         return True
 
-    async def execute(self, cmd, return_raw_dict=False, env=None, cred_req=None, *args, **kwargs):
+    async def execute(self, cmd, args_dict=None, return_raw_dict=False, env=None, cred_req=None):
         dirac_env = self.prepare_process_env(env, cred_req)
         env_hash = self.hash_dirac_env(dirac_env)
 
@@ -90,7 +90,7 @@ class AsyncDiracManager(metaclass=Singleton):
 
         task_id = uuid.uuid4()
         task_done = self.manager.AioEvent()
-        await self.task_queues[env_hash].coro_put((task_done, task_id, cmd, (args, kwargs)))
+        await self.task_queues[env_hash].coro_put((task_done, task_id, cmd, args_dict))
 
         t1 = time.perf_counter()
         await task_done.coro_wait()
