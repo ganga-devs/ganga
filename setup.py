@@ -89,6 +89,7 @@ install_requires = [
     'google-auth-oauthlib',
     'requests>=2.23.0',
     'Flask>=1.1.2',
+    'psutil==5.9.2',
     'PyJWT~=2.4.0',
     'Flask-SQLAlchemy>=2.4.3',
     'gunicorn>=20.0.4',
