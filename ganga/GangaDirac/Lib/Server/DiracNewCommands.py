@@ -94,7 +94,7 @@ def ping(dirac, system, service):
 def removeFile(dirac, lfn):
     ''' Remove a given LFN from the DFC'''
     ret = {}
-    if type(lfn) is list:
+    if isinstance(lfn, list):
         for l in lfn:
             ret.update(dirac.removeFile(l))
     else:
@@ -209,7 +209,8 @@ def getOutputSandbox(dirac, id, outputDir=os.getcwd(), unpack=True, oversized=Tr
 
         os.system(
             'for file in $(ls %s/*Ganga_*.log); do ln -s ${file} %s/stdout; break; done' % (outputDir, outputDir))
-    # So the download failed. Maybe the sandbox was oversized and stored on the grid. Check in the job parameters and download it
+    # So the download failed. Maybe the sandbox was oversized and stored on
+    # the grid. Check in the job parameters and download it
     else:
         parameters = dirac.getJobParameters(id)
         if parameters is not None and parameters.get('OK', False):
@@ -266,7 +267,7 @@ def getOutputDataLFNs(dirac, id, pipe_out=True):
         if 'UploadedOutputData' in parameters:
             lfn_list = parameters['UploadedOutputData']
             import re
-            lfns = re.split(',\s*', lfn_list)
+            lfns = re.split(r',\s*', lfn_list)
             if sandbox is not None and sandbox in lfns:
                 lfns.remove(sandbox)
             ok = True
@@ -521,7 +522,7 @@ def listFiles(baseDir, minAge=None):
     withMetaData = False
     cutoffTime = datetime.utcnow()
     import re
-    r = re.compile('\d:\d:\d')
+    r = re.compile(r'\d:\d:\d')
     if r.match(minAge):
         withMetaData = True
         timeList = minAge.split(':')
