@@ -23,7 +23,8 @@ class DiracProcess(Process):
                 event.set()
 
         if self.env:
-            os.environ = self.env
+            for var_name, value in self.env.items():
+                os.environ[var_name] = value
 
         self.initialize_dirac_api()
         executor = ThreadPoolExecutor()
