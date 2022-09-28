@@ -122,7 +122,7 @@ conf_config.addOption('used_versions_path', '~/.cache/Ganga/',
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
                       ('Location of local job repositories and workspaces. '
                       'Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point '
-                      'to the shared file system directory.'), filter=GangaCore.Utility.Config.expandvars)
+                       'to the shared file system directory.'), filter=GangaCore.Utility.Config.expandvars)
 conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML, Database')
 conf_config.addOption('lockingStrategy', 'UNIX',
                       'Type of locking strategy which can be used. UNIX or FIXED . default = UNIX')
@@ -236,7 +236,7 @@ poll_config.addOption('repeat_messages', False,
                       'if 0 then log only once the errors for a given backend and do not repeat them anymore')
 poll_config.addOption('autostart', True, ('enable monitoring automatically at startup, '
                                           'in script mode monitoring disabled by default, in interactive mode it is enabled'),
-                       type=type(True))  # enable monitoring on startup
+                      type=type(True))  # enable monitoring on startup
 poll_config.addOption('autostart_monThreads', True, 'enable populating of the monitoring worker threads')
 poll_config.addOption('enable_multiThreadMon', True, 'enable multiple threads to be used for running monitoring tasks')
 poll_config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
@@ -248,7 +248,7 @@ poll_config.addOption('autoKillThreshold', 20,
 poll_config.addOption('update_thread_pool_size', 5,
                       ('Size of the thread pool. Each threads monitors a specific backaend at a given time. '
                        'Minimum value is one, preferably set to the number_of_backends + 1'))
-poll_config.addOption('default_backend_poll_rate', 30,
+poll_config.addOption('default_backend_poll_rate', 15,
                       'Default rate for polling job status in the thread pool. This is the default value for all backends.')
 poll_config.addOption('Local', 10, 'Poll rate for Local backend.')
 poll_config.addOption('LCG', 30, 'Poll rate for LCG backend.')
@@ -732,7 +732,7 @@ slurm_config.addOption('timeout', 600,
 # illegal substring substition in job names
 slurm_config.addOption('jobnamesubstitution', [
 ], ("A list containing (1) a regular expression used to substitute illegal substrings in a job name, "
-"and (2) the substring to replace such occurences with."))
+    "and (2) the substring to replace such occurences with."))
 
 
 # ------------------------------------------------

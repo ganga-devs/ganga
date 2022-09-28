@@ -117,7 +117,7 @@ class AsyncMonitoringService(GangaThread):
         if backend in config:
             pRate = config[backend_name]
         else:
-            pRate = POLL_RATE
+            pRate = config['default_backend_poll_rate']
         timer_handle = self.loop.call_later(pRate, self._check_backend, backend)
         self.scheduled_backend_checks.setdefault(backend_name, [])
         self.scheduled_backend_checks[backend_name].append(timer_handle)
