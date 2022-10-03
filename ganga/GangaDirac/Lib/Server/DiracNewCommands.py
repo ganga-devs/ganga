@@ -299,7 +299,7 @@ def normCPUTime(dirac, id, pipe_out=True):
 def finished_job(dirac, id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDir=True, downloadSandbox=True):
     ''' Nesting function to reduce number of calls made against DIRAC when finalising a job,
     takes arguments such as getOutputSandbox.__annotations__
-    
+
     Returns the CPU time of the job as a dict, the output sandbox information in another dict
     and a dict of the LFN of any uploaded data'''
     out_cpuTime = normCPUTime(dirac, id, pipe_out=False)
