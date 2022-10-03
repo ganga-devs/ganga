@@ -85,7 +85,6 @@ def startDiracProcess():
     dirac_process.stdin.write(str(rand_hash).encode("utf-8"))
     dirac_process.stdin.close()
 
-    data = ''
     # We have to wait a little bit for the subprocess to start the server so
     # we try until the connection stops being refused. Set a limit of one
     # minute.
