@@ -297,7 +297,7 @@ def normCPUTime(dirac, id, pipe_out=True):
 
 @diracCommand
 def finished_job(dirac, id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDir=True, downloadSandbox=True):
-    ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, 
+    ''' Nesting function to reduce number of calls made against DIRAC when finalising a job,
     takes arguments such as getOutputSandbox.__annotations__
     
     Returns the CPU time of the job as a dict, the output sandbox information in another dict
@@ -340,7 +340,7 @@ def finaliseJobs(dirac, inputDict, downloadSandbox=True, oversized=True, noJobDi
 
 @diracCommand
 def status(dirac, job_ids, statusmapping, pipe_out=True):
-    '''Function to check the statuses and return the Ganga status of a job after 
+    '''Function to check the statuses and return the Ganga status of a job after
     looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
 
@@ -396,7 +396,7 @@ def getStateTime(dirac, id, status, pipe_out=True):
         return
 
     for line in L:
-        if checkstr in l[0]:
+        if checkstr in line[0]:
             T = datetime.datetime(*(time.strptime(line[3], "%Y-%m-%d %H:%M:%S")[0:6]))
             return T
 
