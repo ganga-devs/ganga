@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 import sys
-import os
-import errno
 import socket
 import traceback
 import six
 HOST = 'localhost'  # Standard loopback interface address (localhost)
 PORT = int(sys.argv[1])        # Port to listen on
 rand_hash = six.moves.input()
-import time
 # We have to define an output function as a placeholder here.
 
 
