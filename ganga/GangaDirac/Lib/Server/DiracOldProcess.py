@@ -6,11 +6,6 @@ import six
 HOST = 'localhost'  # Standard loopback interface address (localhost)
 PORT = int(sys.argv[1])        # Port to listen on
 rand_hash = six.moves.input()
-# We have to define an output function as a placeholder here.
-
-
-def output(data):
-    pass
 
 # A function to shutdown an existing processes
 
