@@ -127,7 +127,7 @@ class IBackend(GangaObject):
 
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
-        assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
+        assert implies(rjobs, len(subjobconfigs) == len(rjobs))
 
         incomplete = 0
         incomplete_subjobs = []
