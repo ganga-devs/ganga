@@ -453,7 +453,7 @@ def getJobPilotOutput(dirac, id, dir):
     try:
         os.chdir(dir)
         os.system('rm -f pilot_%d/std.out && rmdir pilot_%d ' % (id, id))
-        result = DiracAdmin().getJobPilotOutput(id)
+        result = DiracAdmin().getJobPilotOutput(id)  # noqa
     finally:
         os.chdir(pwd)
     return result
@@ -462,7 +462,7 @@ def getJobPilotOutput(dirac, id, dir):
 @diracCommand
 def getServicePorts():
     ''' Get the service ports from the DiracAdmin based upon the Dirac config'''
-    return DiracAdmin().getServicePorts()
+    return DiracAdmin().getServicePorts()  # noqa
 
 
 @diracCommand
