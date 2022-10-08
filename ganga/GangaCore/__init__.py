@@ -121,7 +121,7 @@ conf_config.addOption('used_versions_path', '~/.cache/Ganga/',
                       'Path to the directory to store the file listing the used ganga versions')
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
                       ('Location of local job repositories and workspaces. '
-                      'Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point '
+                       'Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point '
                        'to the shared file system directory.'), filter=GangaCore.Utility.Config.expandvars)
 conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML, Database')
 conf_config.addOption('lockingStrategy', 'UNIX',

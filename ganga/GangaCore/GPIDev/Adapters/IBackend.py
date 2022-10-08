@@ -175,7 +175,8 @@ class IBackend(GangaObject):
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs:
-                    if sj.status not in ["submitted", "failed", "completed", "running", "completing"] and sj.getFQID('.') not in incomplete_subjobs:
+                    if sj.status not in ["submitted", "failed", "completed", "running",
+                                         "completing"] and sj.getFQID('.') not in incomplete_subjobs:
                         has_submitted = False
                         break
                 return has_submitted
@@ -554,4 +555,3 @@ def group_jobs_by_backend_credential(jobs):
             logger.debug('Required credential %s is missing', cred_req)
             needed_credentials.add(cred_req)
     return list(jobs_by_credential.values())
-
