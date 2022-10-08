@@ -518,6 +518,14 @@ class IBackend(GangaObject):
 
         raise NotImplementedError
 
+    @staticmethod
+    def tear_down_monitoring():
+        """ This method may be called by the monitoring service when
+        a backend no longer requires monitoring so that any resources
+        used can be freed.
+        """
+        raise NotImplementedError
+
 
 def group_jobs_by_backend_credential(jobs):
     # type: (List[Job]) -> List[List[Job]]
@@ -546,3 +554,4 @@ def group_jobs_by_backend_credential(jobs):
             logger.debug('Required credential %s is missing', cred_req)
             needed_credentials.add(cred_req)
     return list(jobs_by_credential.values())
+

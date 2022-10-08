@@ -139,10 +139,10 @@ class AsyncMonitoringService(GangaThread):
         for timer_handle in self.scheduled_backend_checks[backend_name]:
             timer_handle.cancel()
         del self.scheduled_backend_checks[backend_name]
-        # try:
-        #     backend.tear_down_monitoring()
-        # except NotImplementedError:
-        #     pass
+        try:
+            backend.tear_down_monitoring()
+        except NotImplementedError:
+            pass
 
     def _cleanup_scheduled_tasks(self):
         scheduled_tasks = [task for task in asyncio.all_tasks(self.loop) if task is not asyncio.current_task(self.loop)]
