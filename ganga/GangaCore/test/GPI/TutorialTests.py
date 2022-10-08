@@ -13,7 +13,7 @@ conf = getConfig('Configuration')
 conf.setSessionValue('gangadir', expandvars(None, '~/gangadir_testing/TutorialTests'))
 
 # Now we can start ganga properly
-#from ganga import *
+# from ganga import *
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 
@@ -304,6 +304,16 @@ j.submit()
         # -- POSTPROCESSORS ROOTMERGER START
         RootMerger(args='-T')
         # -- POSTPROCESSORS ROOTMERGER STOP
+
+        # --POSTPROCESSORS MYMERGER START
+        def mergefiles(file_list, output_file):
+            with open(output_file, 'w') as out:
+                for _f in file_list:
+                    print(_f, file=out)
+
+            return True
+        # --POSTPROCESSORS MYMERGER STOP
+        mergefiles(['my_input.txt', 'my_output.txt'], 'merged_file.txt')
 
         # -- POSTPROCESSORS CUSTOMMERGER START
         CustomMerger().module = '~/mymerger.py'

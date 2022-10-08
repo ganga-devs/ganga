@@ -23,7 +23,7 @@ class BKQuery(GangaObject):
 
     Currently 4 types of queries are supported: Path, RunsByDate, Run and
     Production.  These correspond to the Dirac API methods
-    DiracLHCb.bkQuery<type> (see Dirac docs for details).  
+    DiracLHCb.bkQuery<type> (see Dirac docs for details).
 
 
     Path formats are as follows:
@@ -34,7 +34,7 @@ class BKQuery(GangaObject):
 
     type = "RunsByDate":
      /<ConfigurationName>/<Configuration Version>/<Processing Pass>/\
-<Event Type>/<File Type> 
+<Event Type>/<File Type>
 
     type = "Run":
     /<Run Number>/<Processing Pass>/<Event Type>/<File Type>
@@ -50,8 +50,8 @@ class BKQuery(GangaObject):
     dqflag = "All" ,
     path = "/LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data/\
 RecoToDST-07/90000000/DST" ,
-    type = "Path" 
-    ) 
+    type = "Path"
+    )
 
     bkq = BKQuery (
     startDate = "2010-05-18" ,
@@ -59,20 +59,20 @@ RecoToDST-07/90000000/DST" ,
     endDate = "2010-05-20" ,
     dqflag = "All" ,
     path = "/LHCb/Collision10/Real Data/90000000/RAW" ,
-    type = "RunsByDate" 
-    ) 
+    type = "RunsByDate"
+    )
 
     bkq = BKQuery (
     dqflag = "All" ,
     path = "111183-126823/Real Data/Reco14/Stripping20/90000000/DIMUON.DST" ,
-    type = "Run" 
-    ) 
+    type = "Run"
+    )
 
     bkq = BKQuery (
     dqflag = "All" ,
     path = "/5842/Real Data/RecoToDST-07/90000000/DST" ,
-    type = "Production" 
-    ) 
+    type = "Production"
+    )
 
     then (for any type) one can get the data set by doing the following:
     data = bkq.getDataset()
@@ -112,7 +112,7 @@ RecoToDST-07/90000000/DST" ,
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
             return None
-        if not self.type in ['Path', 'RunsByDate', 'Run', 'Production']:
+        if self.type not in ['Path', 'RunsByDate', 'Run', 'Production']:
             raise GangaException('Type="%s" is not valid.' % self.type)
         if not self.type == 'RunsByDate':
             if self.startDate:
@@ -141,7 +141,7 @@ RecoToDST-07/90000000/DST" ,
         metadata = {}
         if 'LFNs' in value:
             files = value['LFNs']
-        if not type(files) is list:  # i.e. a dict of LFN:Metadata
+        if not isinstance(files, list):  # i.e. a dict of LFN:Metadata
             # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
             metadata = files.copy()
 
@@ -155,7 +155,7 @@ RecoToDST-07/90000000/DST" ,
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
             return None
-        if not self.type in ['Path', 'RunsByDate', 'Run', 'Production']:
+        if self.type not in ['Path', 'RunsByDate', 'Run', 'Production']:
             raise GangaException('Type="%s" is not valid.' % self.type)
         if not self.type == 'RunsByDate':
             if self.startDate:
@@ -180,7 +180,7 @@ RecoToDST-07/90000000/DST" ,
         value = result
         if 'LFNs' in value:
             files = value['LFNs']
-        if not type(files) is list:
+        if not isinstance(files, list):
             files = list(files.keys())
 
         if SE:
@@ -188,6 +188,13 @@ RecoToDST-07/90000000/DST" ,
             files = tempFiles
 
         logger.debug("Creating dataset")
+
+        if len(files) == 0:
+            logger.warning("No files found for BKQuery %s, returning an empty data set" % self.path)
+            if compressed:
+                return LHCbCompressedDataset()
+            else:
+                return LHCbDataset()
 
         # If we think this is an MC request check to see if the data set has been archived.
         isMC = False
@@ -293,7 +300,7 @@ class BKQueryDict(GangaObject):
         if 'LFNs' in value:
             files = value['LFNs']
         metadata = {}
-        if not type(files) is list:
+        if not isinstance(files, list):
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
                 metadata = files['LFNs'].copy()
 
@@ -312,7 +319,7 @@ class BKQueryDict(GangaObject):
         files = []
         if 'LFNs' in value:
             files = value['LFNs']
-        if not type(files) is list:
+        if not isinstance(files, list):
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
                 files = list(files['LFNs'].keys())
 
