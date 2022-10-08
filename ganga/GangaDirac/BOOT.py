@@ -9,12 +9,8 @@ import uuid
 from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaCore.Utility.logging import getLogger
-# from GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
-# from GangaCore.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 logger = getLogger()
-# user_threadpool       = WorkerThreadPool()
-# monitoring_threadpool = WorkerThreadPool()
 # \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ #
 
 
