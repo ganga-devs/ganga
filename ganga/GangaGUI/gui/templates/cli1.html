@@ -21,7 +21,7 @@
       <div style="
         height: 50%;
         overflow: scroll;">
-    <div style="width: 100%; height: 1000%" id="terminal" ></div></div>
+    <div style="width: 100%; height: 5000%" id="terminal" ></div></div>
     </div>
     <!-- xterm -->
     <script src="https://unpkg.com/xterm@4.11.0/lib/xterm.js"></script>
@@ -55,7 +55,8 @@
       document.getElementById("url").src = output;
       const socket = io.connect("/pty");
       const status = document.getElementById("status");
-      socket.emit("pty-input", { input: "ganga --webgui\r" });
+      const data=({{ data | tojson }})
+      socket.emit("pty-input", { input: "ganga-gui --port={{data.port}}\r" });
       var flag=0;
       socket.on("pty-output", function (data) {
         if (flag==0){

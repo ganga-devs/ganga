@@ -42,16 +42,14 @@ def read_and_forward_pty_output():
                 output = os.read(app.config["fd"], max_read_bytes).decode()
                 socketio.emit("pty-output", {"output": output}, namespace="/pty")
 
-
 @app.route("/")
 def index():
-    return render_template("templates/cli1.html")
-
+    data={'port':flask}
+    return render_template("templates/cli1.html",data=data)
 
 @app.route("/term")
 def gangaterminal():
     return render_template("templates/cli2.html")
-
 
 @socketio.on("pty-input", namespace="/pty")
 def pty_input(data):
@@ -104,14 +102,14 @@ def connect():
         logging.info("task started")
 
 
-def main():
+def main(host,port):
     parser = argparse.ArgumentParser(
         description=(
             "Ganga CLI"
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("-p", "--port", default=11000, help="port to run server on")
+    parser.add_argument("-p", "--port", default=port, help="port to run server on")
     parser.add_argument(
         "--host",
         default="127.0.0.1",
@@ -146,3 +144,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def cli(host: str, port: int, internal_port: int, log_output=True, ganga_args: str = ""):
+    global flask
+    flask=internal_port
+    main(host,port)
