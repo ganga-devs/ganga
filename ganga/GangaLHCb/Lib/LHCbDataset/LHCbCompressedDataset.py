@@ -180,8 +180,9 @@ class LHCbCompressedDataset(GangaDataset):
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
-        if type(i) == type(slice(0)):
-            # We construct a list of all LFNs first. Not the most efficient but it allows us to use the standard slice machinery
+        if isinstance(i, type(slice(0))):
+            # We construct a list of all LFNs first. Not the most efficient but it
+            # allows us to use the standard slice machinery
             newLFNs = self.getLFNs()[i]
             # We define these here for future speed
             indexLen = len(newLFNs)
