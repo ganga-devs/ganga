@@ -13,8 +13,7 @@ import GangaLHCb.Lib.LHCbDataset
 from GangaCore.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaCore.GPIDev.Credentials import require_credential
-from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
-from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 logger = GangaCore.Utility.logging.getLogger()
 
 # \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -181,8 +180,6 @@ class LHCbCompressedDataset(GangaDataset):
             # We construct a list of all LFNs first. Not the most efficient but it
             # allows us to use the standard slice machinery
             newLFNs = self.getLFNs()[i]
-            # We define these here for future speed
-            indexLen = len(newLFNs)
             # Now pull out the prefixes/suffixes
             setNo = 0
             step = 1
@@ -190,7 +187,6 @@ class LHCbCompressedDataset(GangaDataset):
             if i.step and i.step < 0:
                 step = -1
                 setNo = len(self.files) - 1
-            currentPrefix = None
             # Iterate over the LFNs and find out where it came from
             ds = LHCbCompressedDataset()
             tempList = []
@@ -370,7 +366,7 @@ class LHCbCompressedDataset(GangaDataset):
             snew = '\n#new method\nfrom GaudiConf import IOExtension\nIOExtension(\"%s\").inputFiles([' % self.persistency
         elif self.persistency == 'POOL':
             snew = ('\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    '
-                   'IOExtension(\"%s\").inputFiles([' % self.persistency)
+                    'IOExtension(\"%s\").inputFiles([' % self.persistency)
         elif self.persistency is None:
             snew = '\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    IOExtension().inputFiles(['
         else:
