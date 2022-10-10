@@ -1,26 +1,23 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
-from copy import deepcopy
 import tempfile
 import fnmatch
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Lib.Dataset import GangaDataset
 from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version, ComponentItem
 from GangaCore.GPIDev.Base import GangaObject
-from GangaCore.Utility.Config import getConfig, ConfigError
+from GangaCore.Utility.Config import getConfig
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 import GangaCore.Utility.logging
 import GangaLHCb.Lib.LHCbDataset
-from .LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
-from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
-from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
+from GangaCore.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaCore.GPIDev.Credentials import require_credential
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
 logger = GangaCore.Utility.logging.getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 class LHCbCompressedFileSet(GangaObject):
@@ -372,7 +369,8 @@ class LHCbCompressedDataset(GangaDataset):
         if self.persistency == 'ROOT':
             snew = '\n#new method\nfrom GaudiConf import IOExtension\nIOExtension(\"%s\").inputFiles([' % self.persistency
         elif self.persistency == 'POOL':
-            snew = '\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    IOExtension(\"%s\").inputFiles([' % self.persistency
+            snew = ('\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    '
+                   'IOExtension(\"%s\").inputFiles([' % self.persistency)
         elif self.persistency is None:
             snew = '\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    IOExtension().inputFiles(['
         else:
@@ -380,7 +378,8 @@ class LHCbCompressedDataset(GangaDataset):
                 "Unknown LHCbCompressedDataset persistency technology... reverting to None")
             snew = '\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    IOExtension().inputFiles(['
 
-        sold = '\nexcept ImportError:\n    #Use previous method\n    from Gaudi.Configuration import EventSelector\n    EventSelector().Input=['
+        sold = ('\nexcept ImportError:\n    #Use previous method\n    from Gaudi.Configuration import EventSelector\n    '
+                'EventSelector().Input=[')
         sdatasetsnew = ''
         sdatasetsold = ''
 
@@ -410,7 +409,7 @@ class LHCbCompressedDataset(GangaDataset):
                 sdatasetsnew = sdatasetsnew[:-1] + """\n    ], clear=True)"""
             sdatasetsold = sdatasetsold[:-1]
             sdatasetsold += """\n    ]"""
-        if(file):
+        if (file):
             f = open(file, 'w')
             if self.persistency == 'ROOT':
                 f.write(snew)
@@ -480,7 +479,8 @@ class LHCbCompressedDataset(GangaDataset):
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '
         logger.info(
-            "Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
+            "Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path,"
+            " will yield more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
         b = get_result(cmd, 'Error removing getting metadata.')
         return b
