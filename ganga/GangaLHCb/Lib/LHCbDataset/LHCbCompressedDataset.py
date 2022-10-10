@@ -15,6 +15,7 @@ from .LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataF
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
 from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
+from GangaCore.GPIDev.Credentials import require_credential
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
 logger = GangaCore.Utility.logging.getLogger()
@@ -281,6 +282,7 @@ class LHCbCompressedDataset(GangaDataset):
         logger.debug("Returning #%s LFNS" % str(len(lfns)))
         return lfns
 
+    @require_credential
     def getMetadata(self):
         '''Returns a list of all the metadata'''
         from GangaLHCb.Lib.Backends.Dirac import getLFNMetadata
