@@ -351,7 +351,7 @@ class LHCbCompressedDataset(GangaDataset):
         tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
         cmd = 'getLHCbInputDataCatalog(%s,%d,"%s","%s")' \
               % (str(lfns), depth, site, tmp_xml.name)
-        result = get_result(cmd, 'LFN->PFN error. XML catalog error.')
+        get_result(cmd, 'LFN->PFN error. XML catalog error.')
         xml_catalog = tmp_xml.read()
         tmp_xml.close()
         return xml_catalog
