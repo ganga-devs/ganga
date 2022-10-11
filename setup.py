@@ -104,7 +104,6 @@ install_requires = [
 if sys.platform != 'darwin':
     install_requires.append("htcondor")
 
-
 setup(name='ganga',
       description='Job management tool',
       long_description=readme(),
@@ -128,8 +127,14 @@ setup(name='ganga',
           'Programming Language :: Python :: 3.10',
       ],
       include_package_data=True,
-      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease': ['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh',
-                                                                               'tools/ganga-cvmfs-install-dev.sh'], 'GangaGUI': ['gui/templates/*.html', 'gui/static/css/main.css', 'gui/static/js/*.js']},
+      package_data={
+          'GangaCore': ['Runtime/HEAD_CONFIG.INI'],
+          'GangaRelease': [
+              'ReleaseNotes-*',
+              'tools/check-new-ganga.py',
+              'tools/ganga-cvmfs-install.sh',
+              'tools/ganga-cvmfs-install-dev.sh'],
+          'GangaGUI': ['gui/templates/*.html', 'gui/static/css/main.css', 'gui/static/js/*.js']},
       cmdclass={
           'tests': RunTestsCommand,
       },

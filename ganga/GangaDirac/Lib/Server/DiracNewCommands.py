@@ -94,9 +94,9 @@ def ping(dirac, system, service):
 def removeFile(dirac, lfn):
     ''' Remove a given LFN from the DFC'''
     ret = {}
-    if type(lfn) is list:
-        for l in lfn:
-            ret.update(dirac.removeFile(l))
+    if isinstance(lfn, list):
+        for lf in lfn:
+            ret.update(dirac.removeFile(lf))
     else:
         ret.update(dirac.removeFile(lfn))
     return ret
@@ -209,7 +209,8 @@ def getOutputSandbox(dirac, id, outputDir=os.getcwd(), unpack=True, oversized=Tr
 
         os.system(
             'for file in $(ls %s/*Ganga_*.log); do ln -s ${file} %s/stdout; break; done' % (outputDir, outputDir))
-    # So the download failed. Maybe the sandbox was oversized and stored on the grid. Check in the job parameters and download it
+    # So the download failed. Maybe the sandbox was oversized and stored on
+    # the grid. Check in the job parameters and download it
     else:
         parameters = dirac.getJobParameters(id)
         if parameters is not None and parameters.get('OK', False):
@@ -266,7 +267,7 @@ def getOutputDataLFNs(dirac, id, pipe_out=True):
         if 'UploadedOutputData' in parameters:
             lfn_list = parameters['UploadedOutputData']
             import re
-            lfns = re.split(',\s*', lfn_list)
+            lfns = re.split(r',\s*', lfn_list)
             if sandbox is not None and sandbox in lfns:
                 lfns.remove(sandbox)
             ok = True
@@ -296,8 +297,11 @@ def normCPUTime(dirac, id, pipe_out=True):
 
 @diracCommand
 def finished_job(dirac, id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDir=True, downloadSandbox=True):
-    ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, takes arguments such as getOutputSandbox
-    Returns the CPU time of the job as a dict, the output sandbox information in another dict and a dict of the LFN of any uploaded data'''
+    ''' Nesting function to reduce number of calls made against DIRAC when finalising a job,
+    takes arguments such as getOutputSandbox.__annotations__
+
+    Returns the CPU time of the job as a dict, the output sandbox information in another dict
+    and a dict of the LFN of any uploaded data'''
     out_cpuTime = normCPUTime(dirac, id, pipe_out=False)
     if downloadSandbox:
         out_sandbox = getOutputSandbox(dirac, id, outputDir, unpack, oversized, noJobDir, pipe_out=False)
@@ -317,7 +321,8 @@ def finished_job(dirac, id, outputDir=os.getcwd(), unpack=True, oversized=True, 
 
 @diracCommand
 def finaliseJobs(dirac, inputDict, downloadSandbox=True, oversized=True, noJobDir=True):
-    ''' A function to get the necessaries to finalise a whole bunch of jobs. Returns a dict of job information and a dict of stati.'''
+    ''' A function to get the necessaries to finalise a whole bunch of jobs.
+    Returns a dict of job information and a dict of stati.'''
     returnDict = {}
     statusList = dirac.getJobStatus(list(inputDict))
     for diracID in inputDict:
@@ -335,7 +340,8 @@ def finaliseJobs(dirac, inputDict, downloadSandbox=True, oversized=True, noJobDi
 
 @diracCommand
 def status(dirac, job_ids, statusmapping, pipe_out=True):
-    '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
+    '''Function to check the statuses and return the Ganga status of a job after
+    looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
 
     # return {'OK':True, 'Value':[['WIP', 'WIP', 'WIP', 'WIP', 'WIP']]}
@@ -389,9 +395,9 @@ def getStateTime(dirac, id, status, pipe_out=True):
         print("%s" % None)
         return
 
-    for l in L:
-        if checkstr in l[0]:
-            T = datetime.datetime(*(time.strptime(l[3], "%Y-%m-%d %H:%M:%S")[0:6]))
+    for line in L:
+        if checkstr in line[0]:
+            T = datetime.datetime(*(time.strptime(line[3], "%Y-%m-%d %H:%M:%S")[0:6]))
             return T
 
     return None
@@ -447,7 +453,7 @@ def getJobPilotOutput(dirac, id, dir):
     try:
         os.chdir(dir)
         os.system('rm -f pilot_%d/std.out && rmdir pilot_%d ' % (id, id))
-        result = DiracAdmin().getJobPilotOutput(id)
+        result = DiracAdmin().getJobPilotOutput(id)  # noqa
     finally:
         os.chdir(pwd)
     return result
@@ -456,7 +462,7 @@ def getJobPilotOutput(dirac, id, dir):
 @diracCommand
 def getServicePorts():
     ''' Get the service ports from the DiracAdmin based upon the Dirac config'''
-    return DiracAdmin().getServicePorts()
+    return DiracAdmin().getServicePorts()  # noqa
 
 
 @diracCommand
@@ -521,7 +527,7 @@ def listFiles(baseDir, minAge=None):
     withMetaData = False
     cutoffTime = datetime.utcnow()
     import re
-    r = re.compile('\d:\d:\d')
+    r = re.compile(r'\d:\d:\d')
     if r.match(minAge):
         withMetaData = True
         timeList = minAge.split(':')
