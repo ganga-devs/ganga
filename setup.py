@@ -82,12 +82,14 @@ install_requires = [
     'httplib2>=0.8',
     'aiofile==3.7.4',
     'aiohttp==3.8.1',
+    'aioprocessing>=2.0.1',
     'absl-py>=0.1.2',
     'google-api-python-client',
     'google-auth-httplib2',
     'google-auth-oauthlib',
     'requests>=2.23.0',
     'Flask>=1.1.2',
+    'psutil==5.9.2',
     'PyJWT~=2.4.0',
     'Flask-SQLAlchemy>=2.4.3',
     'gunicorn>=20.0.4',
@@ -101,7 +103,6 @@ install_requires = [
 ]
 if sys.platform != 'darwin':
     install_requires.append("htcondor")
-
 
 setup(name='ganga',
       description='Job management tool',
@@ -126,8 +127,14 @@ setup(name='ganga',
           'Programming Language :: Python :: 3.10',
       ],
       include_package_data=True,
-      package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease': ['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh',
-                                                                               'tools/ganga-cvmfs-install-dev.sh'], 'GangaGUI': ['gui/templates/*.html', 'gui/static/css/main.css', 'gui/static/js/*.js']},
+      package_data={
+          'GangaCore': ['Runtime/HEAD_CONFIG.INI'],
+          'GangaRelease': [
+              'ReleaseNotes-*',
+              'tools/check-new-ganga.py',
+              'tools/ganga-cvmfs-install.sh',
+              'tools/ganga-cvmfs-install-dev.sh'],
+          'GangaGUI': ['gui/templates/*.html', 'gui/static/css/main.css', 'gui/static/js/*.js']},
       cmdclass={
           'tests': RunTestsCommand,
       },

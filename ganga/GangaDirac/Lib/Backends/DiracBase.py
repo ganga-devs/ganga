@@ -1,34 +1,44 @@
 # \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """The Ganga backendhandler for the Dirac system."""
 
+import datetime
+import fnmatch
+import math
 # \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import re
-import fnmatch
-import time
-import datetime
 import shutil
 import tempfile
-import math
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from GangaCore.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
+import time
+from subprocess import CalledProcessError, check_output
+
+from GangaCore.Core import monitoring_component
+from GangaCore.Core.exceptions import (BackendError, GangaDiskSpaceError,
+                                       GangaFileError, GangaKeyError,
+                                       IncompleteJobSubmissionError)
+from GangaCore.GPIDev.Adapters.IBackend import (
+    IBackend, group_jobs_by_backend_credential)
+from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
+from GangaCore.GPIDev.Credentials import credential_store, require_credential
 from GangaCore.GPIDev.Lib.Job.Job import Job
-from GangaCore.Core.exceptions import (GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError,
-                                       GangaDiskSpaceError)
-from GangaDirac.Lib.Backends.DiracUtils import (result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator,
-                                                outputfiles_foreach, getAccessURLs, getReplicas)
-from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
-from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
-from GangaCore.Utility.util import require_disk_space
+from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger, log_user_exception
-from GangaCore.GPIDev.Credentials import require_credential, credential_store
-from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
-from GangaCore.Core.GangaThread.WorkerThreads import getQueues
-from GangaCore.Core import monitoring_component
-from GangaCore.Runtime.GPIexport import exportToGPI
-from subprocess import check_output, CalledProcessError
+from GangaCore.Utility.util import require_disk_space
+from GangaDirac.Lib.Backends.DiracUtils import (get_job_ident,
+                                                get_parametric_datasets,
+                                                getAccessURLs, getReplicas,
+                                                outputfiles_foreach,
+                                                outputfiles_iterator,
+                                                result_ok)
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaDirac.Lib.Server.DiracNewCommands import finished_job
+from GangaDirac.Lib.Server.DiracNewCommands import status as dirac_status
+from GangaDirac.Lib.Server.DiracProcessManager import AsyncDiracManager
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
+
 configDirac = getConfig('DIRAC')
 default_finaliseOnMaster = configDirac['default_finaliseOnMaster']
 default_downloadOutputSandbox = configDirac['default_downloadOutputSandbox']
@@ -303,6 +313,7 @@ class DiracBase(IBackend):
         nProcessToUse = math.ceil((len(rjobs) * 1.0) / nPerProcess)
 
         from GangaCore.Core.GangaThread.WorkerThreads import getQueues
+
         # Must check for credentials here as we cannot handle missing credentials on Queues by design!
         cred = None
         try:
@@ -1048,7 +1059,7 @@ class DiracBase(IBackend):
 
     @staticmethod
     @require_disk_space
-    def _internal_job_finalisation(job, updated_dirac_status):
+    async def _internal_job_finalisation(job, updated_dirac_status):
         """
         This method performs the main job finalisation
         Args:
@@ -1082,16 +1093,30 @@ class DiracBase(IBackend):
             output_path = job.getOutputWorkspace().getPath()
 
             logger.debug('Contacting DIRAC for job: %s' % job.fqid)
+
             # Contact dirac which knows about the job
-            job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = execute(
-                "finished_job(%d, '%s', %s, downloadSandbox=%s)" % (job.backend.id, output_path,
-                                                                    job.backend.unpackOutputSandbox,
-                                                                    job.backend.downloadSandbox),
-                cred_req=job.backend.credential_requirements)
+            dm = AsyncDiracManager()
+            job.backend.normCPUTime, \
+                getSandboxResult, \
+                file_info_dict, \
+                completeTimeResult, \
+                app_status = await dm.execute(
+                    finished_job,
+                    args_dict={
+                        'id': job.backend.id,
+                        'outputDir': output_path,
+                        'unpack': job.backend.unpackOutputSandbox,
+                        'downloadSandbox': job.backend.downloadSandbox
+                    })
 
             now = time.time()
             logger.debug('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
 
+            try:
+                job.backend.extraInfo = app_status
+            except Exception as err:
+                logger.debug("gexception: %s" % str(err))
+                pass
             # logger.info('Job ' + job.fqid + ' OutputDataInfo: ' + str(file_info_dict))
             # logger.info('Job ' + job.fqid + ' OutputSandbox: ' + str(getSandboxResult))
             # logger.info('Job ' + job.fqid + ' normCPUTime: ' + str(job.backend.normCPUTime))
@@ -1211,7 +1236,8 @@ class DiracBase(IBackend):
             logger.error("Job #%s Unexpected dirac status '%s' encountered" % (job.getFQID('.'), updated_dirac_status))
 
     @staticmethod
-    def job_finalisation(job, updated_dirac_status):
+    # @trace_and_save
+    async def job_finalisation(job, updated_dirac_status):
         """
         Attempt to finalise the job given and auto-retry 5 times on error
         Args:
@@ -1232,7 +1258,7 @@ class DiracBase(IBackend):
                     job.updateStatus('running')
                 if job.status in ['completed', 'killed', 'removed']:
                     break
-                DiracBase._internal_job_finalisation(job, updated_dirac_status)
+                await DiracBase._internal_job_finalisation(job, updated_dirac_status)
                 break
 
             except GangaDiskSpaceError:
@@ -1266,6 +1292,8 @@ class DiracBase(IBackend):
         """
         theseJobs = []
 
+        if not monitoring_component.enabled:
+            return
         for sj in allJobs:
             if stripProxy(sj).status in ['completing', 'failed', 'killed', 'removed']:
                 theseJobs.append(sj)
@@ -1277,14 +1305,20 @@ class DiracBase(IBackend):
             return
 
         # I have to reduce the no. of subjobs per process to prevent DIRAC timeouts
-        nPerProcess = int(math.floor(configDirac['maxSubjobsFinalisationPerProcess']))
-        nProcessToUse = math.ceil((len(theseJobs) * 1.0) / nPerProcess)
+        # nPerProcess = int(math.floor(configDirac['maxSubjobsFinalisationPerProcess']))
+        # nProcessToUse = math.ceil((len(theseJobs) * 1.0) / nPerProcess)
 
         jobs = [stripProxy(j) for j in theseJobs]
-
-        for i in range(0, int(nProcessToUse)):
-            jobSlice = jobs[i * nPerProcess:(i + 1) * nPerProcess]
-            getQueues()._monitoring_threadpool.add_function(DiracBase.finalise_jobs_thread_func, (jobSlice, downloadSandbox))
+        manager = AsyncDiracManager()
+        for job in jobs:
+            monitoring_component.loop.create_task(manager.execute(
+                finished_job,
+                args_dict={
+                    'id': job.backend.id,
+                    'outputDir': job.getOutputWorkspace().getPath(),
+                    'unpack': job.backend.unpackOutputSandbox,
+                    'downloadSandbox': downloadSandbox
+                }))
 
     @staticmethod
     @require_disk_space
@@ -1386,8 +1420,8 @@ class DiracBase(IBackend):
             # Set the status of the subjob
             sj.updateStatus(statusmapping[statusList['Value'][sj.backend.id]['Status']])
 
-    @staticmethod
-    def requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses):
+    # @staticmethod
+    async def requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses):
         """
         Method used to requeue jobs whih are in the finalized state of some form, finished/failed/etc
         Args:
@@ -1406,16 +1440,12 @@ class DiracBase(IBackend):
             if j.backend.status not in finalised_statuses:
                 j.been_queued = False
                 continue
-            if not configDirac['serializeBackend']:
-                getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
-                                                                args=(j, finalised_statuses[j.backend.status]),
-                                                                priority=5, name="Job %s Finalizing" % j.fqid)
-                j.been_queued = True
             else:
-                DiracBase.job_finalisation(j, finalised_statuses[j.backend.status])
+                await DiracBase.job_finalisation(j, finalised_statuses[j.backend.status])
 
+    # @trace_and_save
     @staticmethod
-    def monitor_dirac_running_jobs(monitor_jobs, finalised_statuses):
+    async def monitor_dirac_running_jobs(monitor_jobs, finalised_statuses):
         """
         Method to update the configuration of jobs which are in a submitted/running state in Ganga&Dirac
         Args:
@@ -1449,8 +1479,11 @@ class DiracBase(IBackend):
 
         statusmapping = configDirac['statusmapping']
 
-        result, bulk_state_result = execute('monitorJobs(%s, %s)' % (repr(dirac_job_ids), repr(
-            statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements, new_subprocess=True)
+        dm = AsyncDiracManager()
+        result = await dm.execute(dirac_status, args_dict={'job_ids': dirac_job_ids, 'statusmapping': statusmapping})
+
+        # result, bulk_state_result = execute('monitorJobs(%s, %s)' % (repr(dirac_job_ids), repr(
+        #     statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements, new_subprocess=True)
 
         # result = results[0]
         # bulk_state_result = results[1]
@@ -1521,8 +1554,6 @@ class DiracBase(IBackend):
                         if job.master not in master_jobs_to_update:
                             master_jobs_to_update.append(job.master)
 
-        DiracBase._bulk_updateStateTime(jobStateDict, bulk_state_result)
-
         for status in jobs_to_update:
             for job in jobs_to_update[status]:
                 job.updateStatus(status, update_master=False)
@@ -1533,7 +1564,12 @@ class DiracBase(IBackend):
         DiracBase.requeue_dirac_finished_jobs(requeue_job_list, finalised_statuses)
 
     @staticmethod
-    def updateMonitoringInformation(jobs_):
+    async def updateMonitoringInformation(jobs):
+        """
+        It takes a list of jobs, and checks their status on the DIRAC backend
+
+        :param jobs: A list of jobs to be monitored
+        """
         """Check the status of jobs and retrieve output sandboxesi
         Args:
             jobs_ (list): List of the appropriate jobs to monitored
@@ -1544,7 +1580,7 @@ class DiracBase(IBackend):
         # querying dirac again. Their signature is status = running and job.backend.status
         # already set to Done or Failed etc.
 
-        jobs = [stripProxy(j) for j in jobs_]
+        jobs = [stripProxy(j) for j in jobs]
 
         # remove from consideration any jobs already in the queue. Checking this non persisted attribute
         # is better than querying the queue as cant tell if a job has just been taken off queue and is being processed
@@ -1566,9 +1602,9 @@ class DiracBase(IBackend):
             # Split all the monitorable jobs into groups based on the
             # credential used to communicate with DIRAC
             for requeue_jobs_group in group_jobs_by_backend_credential(requeue_jobs):
-                DiracBase.requeue_dirac_finished_jobs(requeue_jobs_group, finalised_statuses)
+                await DiracBase.requeue_dirac_finished_jobs(requeue_jobs_group, finalised_statuses)
             for monitor_jobs_group in group_jobs_by_backend_credential(monitor_jobs):
-                DiracBase.monitor_dirac_running_jobs(monitor_jobs_group, finalised_statuses)
+                await DiracBase.monitor_dirac_running_jobs(monitor_jobs_group, finalised_statuses)
         except GangaDiracError as err:
             logger.warning("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
             logger.debug(err)
