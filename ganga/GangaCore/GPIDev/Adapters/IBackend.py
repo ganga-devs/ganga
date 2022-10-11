@@ -4,11 +4,8 @@
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ##########################################################################
 
-import asyncio
 import itertools
 import os
-import threading
-import time
 from collections import defaultdict
 
 import GangaCore.Utility.logging
@@ -16,8 +13,6 @@ from GangaCore.Utility.logic import implies
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Schema import Schema, Version
-from GangaCore.GPIDev.Lib.Dataset import GangaDataset
-from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
 from GangaCore.GPIDev.Credentials import credential_store, needed_credentials
 from GangaCore.Core.exceptions import (
@@ -132,7 +127,7 @@ class IBackend(GangaObject):
 
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
-        assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
+        assert implies(rjobs, len(subjobconfigs) == len(rjobs))
 
         incomplete = 0
         incomplete_subjobs = []
@@ -153,8 +148,6 @@ class IBackend(GangaObject):
 
             from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 
-            threads_before = getQueues().totalNumIntThreads()
-
             for sc, sj in zip(subjobconfigs, rjobs):
 
                 b = sj.backend
@@ -163,19 +156,24 @@ class IBackend(GangaObject):
                 if hasattr(b, 'credential_requirements') and b.credential_requirements is not None:
                     from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
                     try:
-                        cred = credential_store[b.credential_requirements]
+                        credential_store[b.credential_requirements]
                     except GangaKeyError:
                         credential_store.create(b.credential_requirements)
 
                 fqid = sj.getFQID('.')
                 # FIXME would be nice to move this to the internal threads not user ones
-                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox,
-                                                                                        fqid, logger), callback_func=self._successfulSubmit, callback_args=(sj, incomplete_subjobs))
+                getQueues()._monitoring_threadpool.add_function(
+                    self._parallel_submit,
+                    (b, sj, sc, master_input_sandbox, fqid, logger),
+                    callback_func=self._successfulSubmit,
+                    callback_args=(sj, incomplete_subjobs)
+                )
 
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs:
-                    if sj.status not in ["submitted", "failed", "completed", "running", "completing"] and sj.getFQID('.') not in incomplete_subjobs:
+                    if sj.status not in ["submitted", "failed", "completed", "running",
+                                         "completing"] and sj.getFQID('.') not in incomplete_subjobs:
                         has_submitted = False
                         break
                 return has_submitted
@@ -249,7 +247,8 @@ class IBackend(GangaObject):
             create_sandbox = job.createPackedInputSandbox
         if masterjobconfig:
             if hasattr(job.application, 'is_prepared') and isType(job.application.is_prepared, ShareDir):
-                def sharedir_pred(f): return f.name.find(job.application.is_prepared.name) > -1
+                def sharedir_pred(f):
+                    return f.name.find(job.application.is_prepared.name) > -1
                 sharedir_files = filter(sharedir_pred, masterjobconfig.getSandboxFiles())
                 nonsharedir_files = itertools.filterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
             # ATLAS use bool to bypass the prepare mechanism and some ATLAS
@@ -294,8 +293,8 @@ class IBackend(GangaObject):
     def master_resubmit(self, rjobs, backend=None):
         """ Resubmit (previously submitted) job. Configuration phase is skipped.
         Default implementation works is an emulated-bulk operation.
-        If you override this method for bulk optimization then make sure that you call updateMasterJobStatus() on the master job,
-        so the master job will be monitored by the monitoring loop.
+        If you override this method for bulk optimization then make sure that you call updateMasterJobStatus() on the
+        master job, so the master job will be monitored by the monitoring loop.
         """
         from GangaCore.Utility.logging import log_user_exception
         incomplete = 0
@@ -477,7 +476,8 @@ class IBackend(GangaObject):
                 for this_block in monitorable_blocks:
 
                     # If the monitoring function was running at the start of the function but has since stopped, break.
-                    if was_monitoring_running and monitoring_component and not monitoring_component.enabled or not monitoring_component:
+                    if (was_monitoring_running and monitoring_component and not monitoring_component.enabled
+                            or not monitoring_component):
                         break
 
                     try:
@@ -518,9 +518,16 @@ class IBackend(GangaObject):
 
         raise NotImplementedError
 
+    @staticmethod
+    def tear_down_monitoring():
+        """ This method may be called by the monitoring service when
+        a backend no longer requires monitoring so that any resources
+        used can be freed.
+        """
+        raise NotImplementedError
+
 
 def group_jobs_by_backend_credential(jobs):
-    # type: (List[Job]) -> List[List[Job]]
     """
     Split a list of jobs based on the credential required by their backends.
 
