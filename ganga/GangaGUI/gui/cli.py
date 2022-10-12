@@ -44,7 +44,7 @@ def read_and_forward_pty_output():
 
 @app.route("/")
 def index():
-    data={'port':flask}
+    data={'port':flask,'internal_port':internal_server}
     return render_template("templates/cli1.html",data=data)
 
 @app.route("/term")
@@ -102,7 +102,7 @@ def connect():
         logging.info("task started")
 
 
-def main(host,port):
+def main(host,port,flask_port,internal_port):
     parser = argparse.ArgumentParser(
         description=(
             "Ganga CLI"
@@ -110,6 +110,8 @@ def main(host,port):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("-p", "--port", default=port, help="port to run server on")
+    parser.add_argument("-f","--flask-port",default=flask_port, help="flask port to run ganga on")
+    parser.add_argument("-i", "--internal-port", default=internal_port, help="flask port to run ganga on")
     parser.add_argument(
         "--host",
         default="127.0.0.1",
@@ -145,7 +147,9 @@ def main(host,port):
 if __name__ == "__main__":
     main()
 
-def cli(host: str, port: int, internal_port: int, log_output=True, ganga_args: str = ""):
+def cli(host: str, port: int, flask_port: int, internal_port: int, log_output=True, ganga_args: str = ""):
     global flask
-    flask=internal_port
-    main(host,port)
+    global internal_server
+    flask=flask_port
+    internal_server=internal_port
+    main(host,port,flask,internal_port)

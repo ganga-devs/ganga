@@ -112,7 +112,8 @@ setup(
     license='GPL v2',
     scripts=[
         'bin/ganga',
-        'bin/ganga-gui'],
+        'bin/ganga-gui',
+        'bin/ganga-gui-terminal'],
     package_dir={
         'ganga': 'ganga',
         'GangaRelease': 'ganga/GangaRelease',

@@ -7,6 +7,8 @@ Starts Ganga GUI with integrated terminal
 import argparse
 import sys
 import os
+import socket
+from contextlib import closing
 
 # Insert the path to Ganga itself - this is required for the installations without pip
 from ganga.GangaGUI.gui.cli import cli
@@ -16,17 +18,22 @@ gangaDir = os.path.join(os.path.dirname(exeDir))
 sys.path.insert(0, gangaDir)
 
 #from ganga.GangaGUI.gui.routes import start_web_cli
+def free_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
 
-# Command line options
+# Command line
 parser = argparse.ArgumentParser(
     description="Start Ganga GUI with integrated Ganga CLI. This will also start a Ganga session with the arguments passed as a string to --ganga-args flag.")
 parser.add_argument('--host', action='store', dest='host', default='127.0.0.1',
                     help='Host to start the server on. Default is 127.0.0.1')
-parser.add_argument('--port', action='store', dest='port', default=5500,
+parser.add_argument('--port', action='store', dest='port', default=free_port(),
                     help='Port to start the web gui server on. Default is 5500.')
-# parser.add_argument('--flask', action='store', dest='flask_port', default=15500,
-#                     help='Port to start the web gui server on. Default is 5500.')
-parser.add_argument('--internal-port', action='store', dest='internal_port', default=15000,
+parser.add_argument('--flask', action='store', dest='flask_port', default=free_port(),
+                  help='Port to start the web gui server on. Default is 5500.')
+parser.add_argument('--internal-port', action='store', dest='internal_port', default=free_port(),
                     help='Port to start internal API server on, which is used by web gui server internally to communicate with Ganga. Default is 5000.')
 parser.add_argument('--quiet', action='store_true', default=False,
                     help='Disables logging of GUI server output to the stdout.')
@@ -38,10 +45,10 @@ args= parser.parse_args()
 # Parse command line arguments
 web_cli_host = args.host
 web_cli_port = int(args.port)
-internal_server_port = int(args.internal_port)
-# flask_port=int(args.flask_port)
+internal_port = int(args.internal_port)
+flask_port=int(args.flask_port)
 ganga_args = args.ganga_args
 log_output = not args.quiet
 
 # Start the web cli - this will also start a Ganga Session
-cli(host=web_cli_host, port=web_cli_port, internal_port=internal_server_port, ganga_args=ganga_args, log_output=log_output)
+cli(host=web_cli_host, port=web_cli_port, flask_port=flask_port, internal_port=internal_port,ganga_args=ganga_args,  log_output=log_output)
