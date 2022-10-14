@@ -7,6 +7,10 @@ from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, getDiracEnv
 from GangaCore.GPIDev.Credentials import credential_store
 
 from .DiracExecutorProcess import DiracProcess
+from GangaCore.Utility.logging import getLogger
+
+
+logger = getLogger()
 
 
 class Singleton(type):
@@ -55,7 +59,7 @@ class AsyncDiracManager(metaclass=Singleton):
             task_result_dict=self.task_result_dicts[env_hash],
             env=dirac_env)
         dirac_process.start()
-        self.active_processes[env_hash] = dirac_process.pid
+        self.active_processes[env_hash] = dirac_process
 
     def parse_command_result(self, result, cmd, return_raw_dict=False):
         if isinstance(result, dict):
@@ -74,8 +78,8 @@ class AsyncDiracManager(metaclass=Singleton):
     def is_dirac_process_active(self, env_hash):
         if env_hash not in self.active_processes:
             return False
-        pid = self.active_processes[env_hash]
-        if not psutil.pid_exists(pid):
+        process = self.active_processes[env_hash]
+        if not psutil.pid_exists(process.pid):
             return False
         return True
 
@@ -96,3 +100,10 @@ class AsyncDiracManager(metaclass=Singleton):
 
         returnable = self.parse_command_result(dirac_result, str(cmd), return_raw_dict)
         return returnable
+
+    def kill_dirac_processes(self):
+        for process in self.active_processes.values():
+            process.terminate()
+            process.join()
+            logger.debug(f"Terminated DIRAC executor process with pid {process.pid}")
+        self.active_processes = None

@@ -201,3 +201,7 @@ class GangaTypeError(GangaException, TypeError):
         super(GangaException, self).__init__(args)
         TypeError.__init__(self, *args)
         self.kwds = kwds
+
+
+class TerminationSignalException(GangaException):
+    pass
