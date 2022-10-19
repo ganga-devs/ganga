@@ -5,8 +5,12 @@ import psutil
 from aioprocessing import AioManager, AioQueue
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, getDiracEnv
 from GangaCore.GPIDev.Credentials import credential_store
+from GangaCore.Utility.logging import getLogger
 
 from .DiracExecutorProcess import DiracProcess
+
+
+logger = getLogger()
 
 
 class Singleton(type):
@@ -55,6 +59,7 @@ class AsyncDiracManager(metaclass=Singleton):
             task_result_dict=self.task_result_dicts[env_hash],
             env=dirac_env)
         dirac_process.start()
+        logger.debug(f"DIRAC process started with PID {dirac_process.pid}")
         self.active_processes[env_hash] = dirac_process.pid
 
     def parse_command_result(self, result, cmd, return_raw_dict=False):
@@ -95,4 +100,5 @@ class AsyncDiracManager(metaclass=Singleton):
         del self.task_result_dicts[env_hash][task_id]
 
         returnable = self.parse_command_result(dirac_result, str(cmd), return_raw_dict)
+        logger.debug(f'Executed DIRAC command {cmd} with result {returnable}')
         return returnable
