@@ -203,5 +203,5 @@ class GangaTypeError(GangaException, TypeError):
         self.kwds = kwds
 
 
-class TerminationSignalException(GangaException):
+class TerminationSignalException(Exception):
     pass
