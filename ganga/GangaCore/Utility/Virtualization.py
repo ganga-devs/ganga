@@ -1,14 +1,12 @@
-try:
-    from urllib.request import urlopen
-except:
-    from urllib2 import urlopen
-
 import subprocess
 import os
 import urllib
 import os
 import tempfile
 
+from urllib.request import urlopen
+
+from GangaCore.Core.exceptions import GangaIOError
 
 def checkSingularity():
     """Check whether Singularity is installed and the current user has right to access
@@ -74,8 +72,8 @@ def installUdocker(location='~'):
 
     location = os.path.expanduser(location)
 
-    tarball = "udocker-1.3.0.tar.gz"
-    url = "https://github.com/indigo-dc/udocker/releases/download/v1.3.0/" + tarball
+    tarball = "udocker-1.3.4.tar.gz"
+    url = "https://github.com/indigo-dc/udocker/releases/download/1.3.4/" + tarball
 
     import ssl
     context = ssl._create_unverified_context()
@@ -89,18 +87,23 @@ def installUdocker(location='~'):
                 data = response.read()
                 out_file.write(data)
         except:
-            returnCode = subprocess.check_call(['curl', '-k', url], stdout=open(fname, 'wb'))
+            returnCode = subprocess.call(['curl', '-k', url], stdout=open(fname, 'wb'))
             if (returnCode != 0):
-                raise OSError('Error downloading uDocker')
+                raise GangaIOError('Error downloading uDocker')
 
-        subprocess.call(["tar", "-C", location, "-xzf", fname])
+        returnCode = subprocess.call(["tar", "-C", location, "-xzf", fname])
+        if (returnCode != 0):
+            raise GangaIOError('Fail to unpack tarball for uDocker installation')
 
         udockerdir = os.path.join(location, '.udocker')
         os.environ['UDOCKER_DIR'] = udockerdir
         os.makedirs(udockerdir, exist_ok=True)
-        returnCode = subprocess.call([os.path.join(location, "udocker", "udocker"), "install"])
-        if (returnCode != 0):
-            raise OSError('Error installing uDocker')
+        try:
+            returnCode = subprocess.call([os.path.join(location, "udocker", "udocker"), "install"])
+            if (returnCode != 0):
+                raise GangaIOError('Error installing uDocker')
+        except FileNotFoundError as e:
+            raise GangaIOError(f'Error installing uDocker: {e}')
 
     os.makedirs(os.path.join(location, 'udocker'), exist_ok=True)
     with open(os.path.join(location, 'udocker', 'udocker.conf'), 'w') as fconfig:
