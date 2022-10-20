@@ -1,18 +1,25 @@
 import unittest
 import tempfile
 import shutil
+import os
 from unittest.mock import patch, MagicMock, mock_open
 from urllib.error import URLError
 
 from GangaCore.Utility.Virtualization import installUdocker
-from GangaCore.Core.exceptions import GangaIOError
+from GangaCore.Core.exceptions import GangaException, GangaIOError
 
 
 class TestInstallUDocker(unittest.TestCase):
 
     def test_installUDocker_success(self):
         with tempfile.TemporaryDirectory() as dir:
-            installUdocker(dir)
+            # Allow for installation itself (but not download) to fail if running test as root.
+            try:
+                installUdocker(dir)
+            except GangaException as e:
+                if os.geteuid():
+                    raise e
+                    pass
 
     @patch('GangaCore.Utility.Virtualization.open')
     @patch('subprocess.call')

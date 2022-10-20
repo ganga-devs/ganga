@@ -6,7 +6,7 @@ import tempfile
 
 from urllib.request import urlopen
 
-from GangaCore.Core.exceptions import GangaIOError
+from GangaCore.Core.exceptions import GangaIOError, GangaException
 
 def checkSingularity():
     """Check whether Singularity is installed and the current user has right to access
@@ -93,7 +93,7 @@ def installUdocker(location='~'):
 
         returnCode = subprocess.call(["tar", "-C", location, "-xzf", fname])
         if (returnCode != 0):
-            raise GangaIOError(f'Fail to unpack tarball for uDocker installation. Maybe {url} not available.')
+            raise ValueError(f'Fail to unpack tarball for uDocker installation. Maybe {url} not available.')
 
         udockerdir = os.path.join(location, '.udocker')
         os.environ['UDOCKER_DIR'] = udockerdir
@@ -101,9 +101,9 @@ def installUdocker(location='~'):
         try:
             returnCode = subprocess.call([os.path.join(location, "udocker", "udocker"), "install"])
             if (returnCode != 0):
-                raise GangaIOError('Error installing uDocker')
+                raise GangaException('Error installing uDocker')
         except FileNotFoundError as e:
-            raise GangaIOError(f'Error installing uDocker: {e}')
+            raise FileNotFoundError(f'udocker not downloaded: {e}')
 
     os.makedirs(os.path.join(location, 'udocker'), exist_ok=True)
     with open(os.path.join(location, 'udocker', 'udocker.conf'), 'w') as fconfig:
