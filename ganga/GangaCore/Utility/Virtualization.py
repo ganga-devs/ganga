@@ -93,7 +93,7 @@ def installUdocker(location='~'):
 
         returnCode = subprocess.call(["tar", "-C", location, "-xzf", fname])
         if (returnCode != 0):
-            raise GangaIOError('Fail to unpack tarball for uDocker installation')
+            raise GangaIOError(f'Fail to unpack tarball for uDocker installation. Maybe {url} not available.')
 
         udockerdir = os.path.join(location, '.udocker')
         os.environ['UDOCKER_DIR'] = udockerdir
