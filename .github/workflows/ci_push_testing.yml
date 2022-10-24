@@ -338,9 +338,13 @@ jobs:
           . ~/venv/bin/activate
           python3 -m pip install --upgrade pip setuptools wheel
           python3 -m pip install -e .[dev,LHCb]
+      - name: Install gangarc file
+        run: |
+          echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac:GangaGaudi:GangaLHCb" > ~/.gangarc
       - name: Test with pytest
         env:
           GANGA_CONFIG_PATH: GangaLHCb/LHCb.ini
+          GANGA_CONFIG_FILE: ~/.gangarc
         run: |
           source /cvmfs/lhcb.cern.ch/lib/LbEnv 2>&1
           lhcb-proxy-init
