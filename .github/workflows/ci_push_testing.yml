@@ -343,6 +343,7 @@ jobs:
           GANGA_CONFIG_FILE: ~/.gangarc
           GANGA_CONFIG_PATH: GangaLHCb/LHCb.ini
         run: |
+          touch ~/.gangarc
           source /cvmfs/lhcb.cern.ch/lib/LbEnv 2>&1
           lhcb-proxy-init
           . ~/venv/bin/activate
