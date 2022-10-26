@@ -62,7 +62,7 @@ class Docker(IVirtualization):
 
         extra = extra + """
 
-from Virtualization import checkDocker, checkUDocker, checkSingularity, installUdocker
+from Virtualization import checkDocker, checkUDocker, checkSingularity, installUDocker
 options = []
                 
 if execmd[0].startswith('./'): 
@@ -80,12 +80,12 @@ if (checkDocker()):
     options = options + virtualization_options
     execmd = ['docker', 'run', '--rm', '-v', workdir+":"+"/work_dir"] + options + [virtualization_image] + execmd        
 else:
-    print("Docker not available or no permission to run docker demon, will attempt UDocker.")
+    print("Docker not available or no permission to run docker deamon, will attempt UDocker.")
     location = os.path.expanduser(virtualization_udockerlocation)
-    binary = os.path.join(location,'udocker')
+    binary = os.path.join(location,'udocker', 'bin', 'udocker')
     if not (checkUDocker(location)):
         try:
-            installUdocker(location)
+            installUDocker(location)
         except OSError as x:
             failurereport(statusfile, 'PROBLEM WITH UDOCKER: %s' % str(x))
     runenv["PROOT_NO_SECCOMP"]="1"
