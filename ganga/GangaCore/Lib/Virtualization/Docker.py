@@ -2,7 +2,7 @@
 # Ganga Project. https://github.com/ganga-devs/ganga
 #
 ##########################################################################
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Schema import SimpleItem
 from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Adapters.IVirtualization import IVirtualization
 
@@ -54,8 +54,8 @@ class Docker(IVirtualization):
         extra = extra + 'virtualization_options = ' + repr(self.options) + '\n'
 
         if sandbox:
-            extra = extra + 'virtualization_udockerlocation = ' + repr(getcwd())
-            extra = extra + 'runenv[\'UDOCKER_DIR\']=' + repr(path.join(getcwd(), '.udocker'))
+            extra = extra + 'virtualization_udockerlocation = repr(getcwd())'
+            extra = extra + 'runenv[\'UDOCKER_DIR\']= repr(path.join(getcwd(), \'.udocker\'))'
         else:
             extra = extra + 'virtualization_udockerlocation = ' + \
                 repr(getConfig('Configuration')['UDockerlocation']) + '\n'
@@ -78,7 +78,8 @@ if (checkDocker()):
         else:
             print('Requested directory %s is not available and no bind will be made to container' % k)
     options = options + virtualization_options
-    execmd = ['docker', 'run', '--rm', '-v', workdir+":"+"/work_dir"] + options + [virtualization_image] + execmd
+    execmd = ['docker', 'run', '--rm', '-v', workdir+":"+"/work_dir"] + 
+             options + [virtualization_image] + execmd
 else:
     print("Docker not available or no permission to run docker deamon, will attempt UDocker.")
     location = os.path.expanduser(virtualization_udockerlocation)
@@ -91,7 +92,8 @@ else:
     runenv["PROOT_NO_SECCOMP"]="1"
     runenv['UDOCKER_DIR']=os.path.join(location,'.udocker')
     if virtualization_user:
-        buildcommand = [binary, 'login', '--username='+virtualization_user, '--password='+virtualization_password]
+        buildcommand = [binary, 'login', '--username='+virtualization_user, 
+                        '--password='+virtualization_password]
         rc = subprocess.call(buildcommand, env=runenv, shell=False)
     for k,v in virtualization_mounts.items():
         if os.path.isdir(k):
@@ -99,7 +101,8 @@ else:
         else:
             print('Requested directory %s is not available and no bind will be made to container' % k)
     options = options + virtualization_options
-    execmd = [binary, '--quiet', 'run', '--rm', '--volume', workdir+":"+"/work_dir"] + options + [virtualization_image] + execmd
+    execmd = [binary, '--quiet', 'run', '--rm', '--volume', workdir+":"+"/work_dir"] + 
+             options + [virtualization_image] + execmd
 
 """
         script = script.replace('###VIRTUALIZATION###', extra)
