@@ -78,7 +78,7 @@ if (checkDocker()):
         else:
             print('Requested directory %s is not available and no bind will be made to container' % k)
     options = options + virtualization_options
-    execmd = ['docker', 'run', '--rm', '-v', workdir+":"+"/work_dir"] + 
+    execmd = ['docker', 'run', '--rm', '-v', workdir+":"+"/work_dir"] +
              options + [virtualization_image] + execmd
 else:
     print("Docker not available or no permission to run docker deamon, will attempt UDocker.")
@@ -92,7 +92,7 @@ else:
     runenv["PROOT_NO_SECCOMP"]="1"
     runenv['UDOCKER_DIR']=os.path.join(location,'.udocker')
     if virtualization_user:
-        buildcommand = [binary, 'login', '--username='+virtualization_user, 
+        buildcommand = [binary, 'login', '--username='+virtualization_user,
                         '--password='+virtualization_password]
         rc = subprocess.call(buildcommand, env=runenv, shell=False)
     for k,v in virtualization_mounts.items():
@@ -101,7 +101,7 @@ else:
         else:
             print('Requested directory %s is not available and no bind will be made to container' % k)
     options = options + virtualization_options
-    execmd = [binary, '--quiet', 'run', '--rm', '--volume', workdir+":"+"/work_dir"] + 
+    execmd = [binary, '--quiet', 'run', '--rm', '--volume', workdir+":"+"/work_dir"] +
              options + [virtualization_image] + execmd
 
 """
