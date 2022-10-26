@@ -14,7 +14,7 @@ class Docker(IVirtualization):
     is tried first and if not installed or permission do not allow it, UDocker is installed and used.
 
     j=Job()
-    j.virtualization = Docker("fedora:latest")   
+    j.virtualization = Docker("fedora:latest")
 
     The mode of the UDocker running can be modified. The P1 mode is working almost everywhere but might
     not give the best performance. See https://github.com/indigo-dc/udocker for more details about
@@ -25,7 +25,7 @@ class Docker(IVirtualization):
     j.virtualization.tokenuser = 'gitlab+deploy-token-123'
     j.virtualization.tokenpassword = 'gftrh84dgel-245^ghHH'
 
-    Note that images stored in a docker repository hosted by Github at present doesn't work with uDocker 
+    Note that images stored in a docker repository hosted by Github at present doesn't work with uDocker
     as uDocker is not updated to the latest version of the API.
 
     Directories can be mounted from the host to the container using key-value pairs to the mounts option.
@@ -64,8 +64,8 @@ class Docker(IVirtualization):
 
 from Virtualization import checkDocker, checkUDocker, checkSingularity, installUDocker
 options = []
-                
-if execmd[0].startswith('./'): 
+
+if execmd[0].startswith('./'):
     execmd[0] = "/work_dir/"+execmd[0]
 if (checkDocker()):
     print("Using Docker")
@@ -78,7 +78,7 @@ if (checkDocker()):
         else:
             print('Requested directory %s is not available and no bind will be made to container' % k)
     options = options + virtualization_options
-    execmd = ['docker', 'run', '--rm', '-v', workdir+":"+"/work_dir"] + options + [virtualization_image] + execmd        
+    execmd = ['docker', 'run', '--rm', '-v', workdir+":"+"/work_dir"] + options + [virtualization_image] + execmd
 else:
     print("Docker not available or no permission to run docker deamon, will attempt UDocker.")
     location = os.path.expanduser(virtualization_udockerlocation)
