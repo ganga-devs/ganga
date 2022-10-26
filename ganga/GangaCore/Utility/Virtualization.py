@@ -3,9 +3,8 @@ import os
 import stat
 import tempfile
 
-from urllib.request import urlopen
+from GangaCore.Core.exceptions import GangaException
 
-from GangaCore.Core.exceptions import GangaIOError, GangaException
 
 def checkSingularity():
     """Check whether Singularity is installed and the current user has right to access
@@ -16,7 +15,7 @@ def checkSingularity():
     returnCode = 1
     try:
         returnCode = subprocess.call(["singularity", "--version"], stdout=nullOutput, stderr=nullOutput)
-    except:
+    except BaseException:
         pass
     if returnCode == 0:
         return True
@@ -32,7 +31,7 @@ def checkDocker():
     returnCode = 1
     try:
         returnCode = subprocess.call(["docker", "ps"], stdout=nullOutput, stderr=nullOutput)
-    except:
+    except BaseException:
         pass
     if returnCode == 0:
         return True
@@ -80,7 +79,7 @@ def installUDocker(location='~'):
     python -m pip install udocker
     """
     with tempfile.TemporaryDirectory() as tmpdirname:
-        fname = os.path.join(tmpdirname,'installer')
+        fname = os.path.join(tmpdirname, 'installer')
         with open(fname, 'w') as f:
             f.write(installscript)
         os.chmod(fname, stat.S_IRWXU)
