@@ -96,10 +96,14 @@ jobs:
           yum install -y rh-python38-python rh-python38-python-pip
       - name: Install dependencies
         run: |
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+          /opt/rh/rh-python38/root/usr/bin/python -m venv ~/venv
+          . ~/venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e .[dev]
       - name: Test with pytest
-        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/Unit
+        run: |
+          . ~/venv/bin/activate
+          python -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/Unit
 
   core-integration:
     name: GangaCore Integration
