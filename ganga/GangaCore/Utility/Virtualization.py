@@ -3,9 +3,7 @@ import os
 import stat
 import tempfile
 
-from urllib.request import urlopen
-
-from GangaCore.Core.exceptions import GangaIOError, GangaException
+from GangaCore.Core.exceptions import GangaException
 
 
 def checkSingularity():
