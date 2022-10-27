@@ -4,9 +4,7 @@ import os
 import time
 import sys
 import docker
-import shutil
 import subprocess
-import shutil
 import gdown
 
 from GangaCore.Utility import logging
@@ -355,6 +353,8 @@ def udocker_handler(database_config, action, gangadir):
     action: The action to be performed using the handler
     """
 
+    import shutil
+    
     fname = shutil.which('udocker') or os.path.join(os.path.expanduser("~"), "udocker", "bin", "udocker")
     bind_loc = create_mongodir(gangadir=gangadir)
     container_loc = os.path.join(
