@@ -6,6 +6,7 @@ import sys
 import docker
 import shutil
 import subprocess
+import shutil
 import gdown
 
 from GangaCore.Utility import logging
