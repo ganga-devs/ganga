@@ -284,8 +284,8 @@ def singularity_handler(database_config, action, gangadir):
     if not has_correct_hash:
         import sys
         logger.fatal((
-            f"sif_file at {sif_file} does not match the expected hash." +
-            " Delete it to automatically download the correct file."
+            f"sif_file at {sif_file} does not match the expected hash."
+            + " Delete it to automatically download the correct file."
         ))
         sys.exit(1)
 
@@ -317,7 +317,7 @@ def singularity_handler(database_config, action, gangadir):
                             if log['s'] == "E":
                                 logger.error(
                                     f"Singularity container could not start because of: {log['attr']['error']}")
-                except:
+                except BaseException:
                     pass
                 import sys
                 sys.exit(1)
@@ -354,7 +354,7 @@ def udocker_handler(database_config, action, gangadir):
     """
 
     import shutil
-    
+
     fname = shutil.which('udocker') or os.path.join(os.path.expanduser("~"), "udocker", "bin", "udocker")
     bind_loc = create_mongodir(gangadir=gangadir)
     container_loc = os.path.join(
@@ -395,7 +395,7 @@ def udocker_handler(database_config, action, gangadir):
 
     if action == "start":
         proc_status = mongod_exists(
-            controller = "udocker", cname=database_config["containerName"]
+            controller="udocker", cname=database_config["containerName"]
         )
         if proc_status is None:
             proc = subprocess.Popen(
@@ -406,7 +406,7 @@ def udocker_handler(database_config, action, gangadir):
                 stderr=subprocess.DEVNULL,
             )
             proc_status = mongod_exists_wait(
-                controller = "udocker", cname=database_config["containerName"]
+                controller="udocker", cname=database_config["containerName"]
             )
             if proc_status is None:
                 logger.debug(f"start_container commands: {start_container}")
