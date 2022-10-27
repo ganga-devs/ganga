@@ -4,6 +4,7 @@ import os
 import time
 import sys
 import docker
+import shutil
 import subprocess
 import gdown
 
@@ -353,7 +354,7 @@ def udocker_handler(database_config, action, gangadir):
     action: The action to be performed using the handler
     """
 
-    fname = os.path.join(os.path.expanduser("~"), "udocker", "bin", "udocker")
+    fname = shutil.which('udocker') or os.path.join(os.path.expanduser("~"), "udocker", "bin", "udocker")
     bind_loc = create_mongodir(gangadir=gangadir)
     container_loc = os.path.join(
         UDOCKER_LOC, ".udocker", "containers", database_config["containerName"]
