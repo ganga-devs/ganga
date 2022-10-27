@@ -1,8 +1,6 @@
 # TODO: Add progress bars, when pulling docker containers (stream logs to show progress?)
 
 import os
-import time
-import sys
 import docker
 import subprocess
 import gdown
@@ -14,7 +12,6 @@ from GangaCore.Utility.Config.Config import ConfigError
 from GangaCore.Utility.Virtualization import (
     checkDocker, checkUDocker,
     checkSingularity)
-from GangaCore.Utility.Config import get_unique_name, get_unique_port
 from GangaCore.Utility.Decorators import repeat_while_none
 
 logger = logging.getLogger()
@@ -42,7 +39,6 @@ def mongo_processes():
     """
     Lists all the running processes on the system
     """
-    status_command = "ps -aux | grep mongod"
     output = subprocess.Popen(
         ['ps', 'aux'],
         stdout=subprocess.PIPE
@@ -237,7 +233,7 @@ def native_handler(database_config, action, gangadir):
     2. Database cannot be shut by ganga, citing the same reasons as above.
     """
     if action not in ["start", "quit"]:
-        raise NotImplementedError(f"Illegal Opertion on container")
+        raise NotImplementedError("Illegal Opertion on container")
     if action == "start":
         logger.info("Native Database detection, skipping startup")
     else:
@@ -278,7 +274,7 @@ def singularity_handler(database_config, action, gangadir):
     if not checkSingularity():
         raise Exception("Singularity seems to not be installed on the system.")
     if action not in ["start", "quit"]:
-        raise NotImplementedError(f"Illegal Opertion on container")
+        raise NotImplementedError("Illegal Opertion on container")
 
     has_correct_hash = check_sif_file_hash(sif_file)
     if not has_correct_hash:
