@@ -13,8 +13,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.Config.Config import ConfigError
 from GangaCore.Utility.Virtualization import (
     checkDocker, checkUDocker,
-    checkSingularity, installUdocker
-)
+    checkSingularity)
 from GangaCore.Utility.Config import get_unique_name, get_unique_port
 from GangaCore.Utility.Decorators import repeat_while_none
 
@@ -354,17 +353,18 @@ def udocker_handler(database_config, action, gangadir):
     action: The action to be performed using the handler
     """
 
+    fname = os.path.join(os.path.expanduser("~"), "udocker", "bin", "udocker")
     bind_loc = create_mongodir(gangadir=gangadir)
     container_loc = os.path.join(
         UDOCKER_LOC, ".udocker", "containers", database_config["containerName"]
     )
-    stop_container = f"udocker rm {database_config['containerName']}"
+    stop_container = f"{fname} rm {database_config['containerName']}"
 
-    create_container = f"""udocker create \
+    create_container = f"""{fname} create \
     --name={database_config['containerName']} \
     {database_config['baseImage']}"""
 
-    start_container = f"""udocker run \
+    start_container = f"""{fname} run \
     --volume={bind_loc}/db:/data/db \
     --publish={database_config['port']}:27017 \
     {database_config['containerName']} --logpath mongod-ganga.log
@@ -393,7 +393,7 @@ def udocker_handler(database_config, action, gangadir):
 
     if action == "start":
         proc_status = mongod_exists(
-            controller="udocker", cname=database_config["containerName"]
+            controller = "udocker", cname=database_config["containerName"]
         )
         if proc_status is None:
             proc = subprocess.Popen(
@@ -404,7 +404,7 @@ def udocker_handler(database_config, action, gangadir):
                 stderr=subprocess.DEVNULL,
             )
             proc_status = mongod_exists_wait(
-                controller="udocker", cname=database_config["containerName"]
+                controller = "udocker", cname=database_config["containerName"]
             )
             if proc_status is None:
                 logger.debug(f"start_container commands: {start_container}")
