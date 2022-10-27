@@ -372,7 +372,7 @@ def udocker_handler(database_config, action, gangadir):
         # if checkUDocker():
         raise Exception("Udocker seems to not be installed on the system.")
     if action not in ["start", "quit"]:
-        raise NotImplementedError(f"Illegal Opertion on container")
+        raise NotImplementedError("Illegal Opertion on container")
 
     if not os.path.exists(container_loc):
         logger.info(
@@ -457,7 +457,7 @@ def docker_handler(database_config, action, gangadir):
     if not checkDocker():
         raise Exception("Docker seems to not be installed on the system.")
     if action not in ["start", "quit"]:
-        raise NotImplementedError(f"Illegal Opertion on container")
+        raise NotImplementedError("Illegal Opertion on container")
 
     container_client = docker.from_env()
     if action == "start":
