@@ -13,8 +13,15 @@ class DiracProcess(Process):
         self.env = env
 
     def initialize_dirac_api(self):
-        from DIRAC.Core.Utilities.DIRACScript import DIRACScript as Script  # type: ignore
-        Script.parseCommandLine(ignoreErrors=False)
+        with open('diraclog.log', 'a') as f:
+            f.write('Attempting to intialize DIRAC\n')
+            try:
+                from DIRAC.Core.Base.Script import parseCommandLine  # type: ignore
+                parseCommandLine(ignoreErrors=False)
+                f.write('DIRAC Initialized')
+            except Exception as e:
+                f.write('DIRAC initialization failed: \n')
+                f.write(f"{str(e)}\n")
 
     def run(self):
         def send_result(event, id, lock, future):
@@ -22,17 +29,32 @@ class DiracProcess(Process):
                 self.task_result_dict[id] = future.result()
                 event.set()
 
-        if self.env:
-            for var_name, value in self.env.items():
-                os.environ[var_name] = value
+        with open('diraclog.log', 'w') as f:
+            f.write('Attempting to set environment\n')
+            if self.env:
+                try:
+                    for var_name, value in self.env.items():
+                        os.environ[var_name.decode()] = value.decode()
+                except Exception as e:
+                    f.write('Environment setting failed: \n')
+                    f.write(f"{str(e)}\n")
 
-        self.initialize_dirac_api()
-        executor = ThreadPoolExecutor()
-        lock = Lock()
-        while True:
-            is_done, task_id, cmd, args_dict = self.task_queue.get()
-            future = executor.submit(self.run_dirac_command, cmd, args_dict)
-            future.add_done_callback(functools.partial(send_result, is_done, task_id, lock))
+            with open('diraclog.log', 'w') as f:
+                f.write(f"CURRENT PID: {os.getpid()}\n")
+                f.write('TARGET ENV:\n')
+                f.write(str(self.env))
+                f.write('\nCURRENT PATH:\n')
+                f.write(os.getenv('PATH'))
+                f.write("\n")
+
+            self.initialize_dirac_api()
+
+            executor = ThreadPoolExecutor()
+            lock = Lock()
+            while True:
+                is_done, task_id, cmd, args_dict = self.task_queue.get()
+                future = executor.submit(self.run_dirac_command, cmd, args_dict)
+                future.add_done_callback(functools.partial(send_result, is_done, task_id, lock))
 
     def run_dirac_command(self, cmd, args_dict):
         from DIRAC.Interfaces.API.Dirac import Dirac  # type: ignore
