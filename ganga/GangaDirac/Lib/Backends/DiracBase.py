@@ -1568,7 +1568,7 @@ class DiracBase(IBackend):
         for j in master_jobs_to_update:
             j.updateMasterJobStatus()
 
-        DiracBase.requeue_dirac_finished_jobs(requeue_job_list, finalised_statuses)
+        await DiracBase.requeue_dirac_finished_jobs(requeue_job_list, finalised_statuses)
 
     @staticmethod
     async def updateMonitoringInformation(jobs):
