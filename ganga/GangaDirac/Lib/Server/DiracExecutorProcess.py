@@ -16,8 +16,12 @@ class DiracProcess(Process):
     def set_process_env(self):
         if self.env:
             # Convert dict of bytes to strings if necessary
-            if isinstance(list(self.env.keys())[0], bytes):
-                self.env = {key.decode('ascii'): self.env.get(key).decode() for key in self.env.keys()}
+            for key, val in self.env.copy().items():
+                try:
+                    self.env[key.decode()] = val.decode()
+                    del self.env[key]
+                except AttributeError:
+                    pass
 
             for var_name, value in self.env.items():
                 os.environ[var_name] = value
