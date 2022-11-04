@@ -9,6 +9,7 @@ from GangaCore.Core.exceptions import TerminationSignalException
 class DiracProcess(Process):
     def __init__(self, task_queue, task_result_dict, env=None):
         super(Process, self).__init__()
+        self.daemon = True
         self.task_queue = task_queue
         self.task_result_dict = task_result_dict
         self.env = env
