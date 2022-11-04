@@ -8,7 +8,6 @@ from GangaCore.GPIDev.Credentials import credential_store
 from GangaCore.Utility.logging import getLogger
 
 from .DiracExecutorProcess import DiracProcess
-from GangaCore.Utility.logging import getLogger
 
 
 logger = getLogger()
@@ -61,7 +60,7 @@ class AsyncDiracManager(metaclass=Singleton):
             env=dirac_env)
         dirac_process.start()
 
-        logger.debug(f"DIRAC process started with PID {dirac_process.pid}")
+        print(f"DIRAC process started with PID {dirac_process.pid}")
         self.active_processes[env_hash] = dirac_process
 
     def parse_command_result(self, result, cmd, return_raw_dict=False):
@@ -93,25 +92,26 @@ class AsyncDiracManager(metaclass=Singleton):
         if not self.is_dirac_process_active(env_hash):
             self.start_dirac_process(dirac_env)
 
-        try:
-            task_id = uuid.uuid4()
-            task_done = self.manager.AioEvent()
-            await self.task_queues[env_hash].coro_put((task_done, task_id, cmd, args_dict))
+        # try:
+        task_id = uuid.uuid4()
+        task_done = self.manager.AioEvent()
+        await self.task_queues[env_hash].coro_put((task_done, task_id, cmd, args_dict))
 
-            await task_done.coro_wait()
-            dirac_result = self.task_result_dicts[env_hash].get(task_id)
-            del self.task_result_dicts[env_hash][task_id]
+        await task_done.coro_wait()
+        dirac_result = self.task_result_dicts[env_hash].get(task_id)
+        del self.task_result_dicts[env_hash][task_id]
 
-            returnable = self.parse_command_result(dirac_result, str(cmd), return_raw_dict)
-            logger.debug(f'Executed DIRAC command {cmd} with result {returnable}')
-            return returnable
-        except RuntimeError:
-            logger.error('Attempted to add asyncio task after Ganga shutdown. Returning...')
-            return {'OK': False, 'Message': 'The event loop has shut down'}
-            
+        returnable = self.parse_command_result(dirac_result, str(cmd), return_raw_dict)
+        print(f'Executed DIRAC command {cmd} with result {returnable}')
+        return returnable
+        # except RuntimeError:
+        #     print('Attempted to add asyncio task after Ganga shutdown. Returning...')
+        #     self.kill_dirac_processes()
+        #     return {'OK': False, 'Message': 'The event loop has shut down'}
+
     def kill_dirac_processes(self):
         for process in self.active_processes.values():
             process.terminate()
             process.join()
-            logger.debug(f"Terminated DIRAC executor process with pid {process.pid}")
+            print(f"Terminated DIRAC executor process with pid {process.pid}")
         self.active_processes = None
