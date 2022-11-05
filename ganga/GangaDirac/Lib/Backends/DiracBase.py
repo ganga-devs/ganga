@@ -1579,6 +1579,15 @@ class DiracBase(IBackend):
         # for processing from last time. These should be put back on queue without
         # querying dirac again. Their signature is status = running and job.backend.status
         # already set to Done or Failed etc.
+        def split_jobs_into_chunks(jobs):
+            try:
+                blocks_of_size = configDirac['numParallelJobs']
+            except Exception as err:
+                logger.debug("Problem with PollThread Config, defaulting to block size of 25 in DIRAC updateMon...")
+                logger.debug("Error: %s" % err)
+                blocks_of_size = 25
+
+            return [jobs[i:i + blocks_of_size] for i in range(0, len(jobs), blocks_of_size)]
 
         jobs = [stripProxy(j) for j in jobs]
 
@@ -1600,11 +1609,13 @@ class DiracBase(IBackend):
 
         try:
             # Split all the monitorable jobs into groups based on the
-            # credential used to communicate with DIRAC
+            # credential used to communicate with DIRAC and max number of monitorable DIRAC jobs (read from config)
             for requeue_jobs_group in group_jobs_by_backend_credential(requeue_jobs):
-                await DiracBase.requeue_dirac_finished_jobs(requeue_jobs_group, finalised_statuses)
+                for job_chunk in split_jobs_into_chunks(requeue_jobs_group):
+                    await DiracBase.requeue_dirac_finished_jobs(job_chunk, finalised_statuses)
             for monitor_jobs_group in group_jobs_by_backend_credential(monitor_jobs):
-                await DiracBase.monitor_dirac_running_jobs(monitor_jobs_group, finalised_statuses)
+                for job_chunk in split_jobs_into_chunks(monitor_jobs_group):
+                    await DiracBase.monitor_dirac_running_jobs(job_chunk, finalised_statuses)
         except GangaDiracError as err:
             logger.warning("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
             logger.debug(err)

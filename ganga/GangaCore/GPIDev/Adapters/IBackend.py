@@ -441,15 +441,6 @@ class IBackend(GangaObject):
 
             return monitorable_subjob_ids
 
-        # Only process 10 files from the backend at once
-        # blocks_of_size = 10
-        poll_config = getConfig('PollThread')
-        try:
-            blocks_of_size = poll_config['numParallelJobs']
-        except Exception as err:
-            logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
-            logger.debug("Error: %s" % err)
-            blocks_of_size = 5
         # Separate different backends implicitly
         simple_jobs = {}
         for j in jobs:
@@ -460,35 +451,20 @@ class IBackend(GangaObject):
                 if not monitorable_subjob_ids:
                     continue
 
-                monitorable_blocks = []
-                temp_block = []
+                # If the monitoring function was running at the start of the function but has since stopped, break.
+                if (was_monitoring_running and monitoring_component and not monitoring_component.enabled
+                        or not monitoring_component):
+                    break
 
-                for this_sj_id in monitorable_subjob_ids:
-                    temp_block.append(this_sj_id)
-                    if len(temp_block) == blocks_of_size:
-                        monitorable_blocks.append(temp_block)
-                        temp_block = []
+                try:
+                    subjobs_to_monitor = []
+                    for sj_id in monitorable_subjob_ids:
+                        subjobs_to_monitor.append(j.subjobs[sj_id])
 
-                if temp_block:
-                    monitorable_blocks.append(temp_block)
-                    temp_block = []
-
-                for this_block in monitorable_blocks:
-
-                    # If the monitoring function was running at the start of the function but has since stopped, break.
-                    if (was_monitoring_running and monitoring_component and not monitoring_component.enabled
-                            or not monitoring_component):
-                        break
-
-                    try:
-                        subjobs_to_monitor = []
-                        for sj_id in this_block:
-                            subjobs_to_monitor.append(j.subjobs[sj_id])
-
-                        task = j.backend.updateMonitoringInformation
-                        monitoring_component.run_monitoring_task(task, subjobs_to_monitor)
-                    except Exception as err:
-                        logger.error("Monitoring Error: %s" % err)
+                    task = j.backend.updateMonitoringInformation
+                    monitoring_component.run_monitoring_task(task, subjobs_to_monitor)
+                except Exception as err:
+                    logger.error("Monitoring Error: %s" % err)
 
                 j.updateMasterJobStatus()
 

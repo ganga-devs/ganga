@@ -44,6 +44,9 @@ if not _after_bootstrap:
     configDirac.addOption('MaxDiracBulkJobs', 500,
                           'The Maximum allowed number of bulk submitted jobs before Ganga intervenes')
 
+    configDirac.addOption('numParallelJobs', 100,
+                          'The Maximum allowed number of Jobs to update the status for in parallel')
+
     configDirac.addOption('failed_sandbox_download', True, 'Automatically download sandbox for failed jobs?')
 
     configDirac.addOption('load_default_Dirac_backend', True,
