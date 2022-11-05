@@ -173,3 +173,4 @@ class AsyncMonitoringService(GangaThread):
         self.thread_executor.shutdown()
         self._cleanup_scheduled_tasks()
         self.loop.stop()
+        exit(0)
