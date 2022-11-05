@@ -37,9 +37,7 @@ class AsyncMonitoringService(GangaThread):
 
     def run(self):
         asyncio.set_event_loop(self.loop)
-        self.enabled = True
         self.thread_executor = ThreadPoolExecutor(max_workers=THREAD_POOL_SIZE)
-        self._check_active_backends()
         self.loop.run_forever()
 
     def _check_active_backends(self, job_slice=None):
