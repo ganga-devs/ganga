@@ -149,7 +149,7 @@ class RepositoryError(GangaException):
             logger.error("Shutting Down Repository_runtime")
             from GangaCore.Runtime import Repository_runtime
             Repository_runtime.shutdown()
-        except:
+        except BaseException:
             logger.error("Unable to disable Internal services, they may have already been disabled!")
 
 
