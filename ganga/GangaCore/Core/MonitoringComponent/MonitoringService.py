@@ -147,6 +147,17 @@ class AsyncMonitoringService(GangaThread):
         for task in scheduled_tasks:
             task.cancel()
 
+    def _cleanup_dirty_jobs(self):
+        """
+        Check for jobs that may have been interrupted for completing and revert them back to the
+        submitted status.
+        """
+        for job_id in self.registry_slice.ids():
+            j = stripProxy(stripProxy(self.registry_slice(job_id)))
+            status = lazyLoadJobStatus(j)
+            if status == 'completing':
+                j.status = 'submitted'
+
     def disable(self):
         if not self.alive:
             log.error("Cannot disable monitoring loop. It has already been stopped")
@@ -162,6 +173,7 @@ class AsyncMonitoringService(GangaThread):
             return False
         self.enabled = True
         self.thread_executor = ThreadPoolExecutor(max_workers=THREAD_POOL_SIZE)
+        self._cleanup_dirty_jobs()
         self.loop.call_soon_threadsafe(self._check_active_backends)
         return True
 
