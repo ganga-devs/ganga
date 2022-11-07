@@ -194,7 +194,8 @@ class GangaKeyError(GangaException, KeyError):
 
 class GangaTypeError(GangaException, TypeError):
     """
-    Class analogous to GangaKeyError. This class wraps TypeError so that users are prevented from seeing stack traces from known good exceptions thrown in Ganga code.
+    Class analogous to GangaKeyError. This class wraps TypeError so that users are prevented from seeing stack traces
+    from known good exceptions thrown in Ganga code.
     """
 
     def __init__(self, *args, **kwds):
