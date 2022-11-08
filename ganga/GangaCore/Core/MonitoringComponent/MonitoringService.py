@@ -40,7 +40,7 @@ class AsyncMonitoringService(GangaThread):
         self.thread_executor = ThreadPoolExecutor(max_workers=THREAD_POOL_SIZE)
         self.loop.run_forever()
 
-    def _check_active_backends(self, job_slice=None):
+    def _check_active_backends(self, job_slice=None, completion_event=None):
         if not self.enabled:
             return
 
@@ -75,6 +75,10 @@ class AsyncMonitoringService(GangaThread):
             if backend_name not in previously_active_backends:
                 log.debug(f'Adding {backend_name} to list of backends to monitor.')
                 self._check_backend(backend_obj)
+
+        if job_slice and not found_active_backends:
+            self.disable()
+            return
 
         self._log_backend_summary(found_active_backends)
         self._cleanup_finished_backends(previously_active_backends, found_active_backends)
@@ -167,14 +171,23 @@ class AsyncMonitoringService(GangaThread):
         self.enabled = False
         return True
 
-    def enable(self):
+    def run_monitoring(self, job_slice):
+        if self.enabled:
+            log.error('On demand monitoring requested but the monitoring thread is already running')
+            return
+        if not job_slice:
+            log.error('On demand monitoring requested but no jobs to monitor have been provided')
+            return
+        self.enable(job_slice=job_slice)
+
+    def enable(self, job_slice=None):
         if not self.alive:
             log.error("Cannot start monitoring loop. It has already been stopped")
             return False
         self.enabled = True
         self.thread_executor = ThreadPoolExecutor(max_workers=THREAD_POOL_SIZE)
         self._cleanup_dirty_jobs()
-        self.loop.call_soon_threadsafe(self._check_active_backends)
+        self.loop.call_soon_threadsafe(self._check_active_backends, job_slice)
         return True
 
     def stop(self):
@@ -183,3 +196,4 @@ class AsyncMonitoringService(GangaThread):
         self.thread_executor.shutdown()
         self._cleanup_scheduled_tasks()
         self.loop.stop()
+        exit(0)
