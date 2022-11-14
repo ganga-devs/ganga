@@ -77,7 +77,10 @@ class AsyncMonitoringService(GangaThread):
                 self._check_backend(backend_obj)
 
         self._log_backend_summary(found_active_backends)
-        self._cleanup_finished_backends(previously_active_backends, found_active_backends)
+
+        if previously_active_backends:
+            self._cleanup_finished_backends(previously_active_backends, found_active_backends)
+
         self.loop.call_later(POLL_RATE, self._check_active_backends)
 
     def _log_backend_summary(self, active_backends):
@@ -128,6 +131,11 @@ class AsyncMonitoringService(GangaThread):
         # Check for backends which have no more jobs to monitor and trigger their cleanup.
         for backend, jobs in previously_active_backends.items():
             if backend not in found_active_backends:
+                for job in jobs:
+                    if job.status == 'completing':
+                        self.loop.call_later(1, self._cleanup_finished_backends,
+                                             previously_active_backends, found_active_backends)
+                        return
                 log.debug(f'Removing {getName(backend)} from active backends')
                 backend_obj = lazyLoadJobBackend(jobs[0])
                 self._cleanup_backend(backend_obj)

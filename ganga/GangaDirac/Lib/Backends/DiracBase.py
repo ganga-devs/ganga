@@ -1058,6 +1058,11 @@ class DiracBase(IBackend):
         # malformed job output?
 
     @staticmethod
+    def tear_down_monitoring():
+        dm = AsyncDiracManager()
+        dm.kill_dirac_processes()
+
+    @staticmethod
     @require_disk_space
     async def _internal_job_finalisation(job, updated_dirac_status):
         """
@@ -1311,6 +1316,8 @@ class DiracBase(IBackend):
         jobs = [stripProxy(j) for j in theseJobs]
         manager = AsyncDiracManager()
         for job in jobs:
+            if not monitoring_component.enabled:
+                break
             monitoring_component.loop.create_task(manager.execute(
                 finished_job,
                 args_dict={

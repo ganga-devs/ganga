@@ -3,6 +3,7 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Lock, Process
+from GangaCore.Core.exceptions import TerminationSignalException
 
 
 class DiracProcess(Process):
@@ -42,6 +43,10 @@ class DiracProcess(Process):
         from DIRAC.Core.Base.Script import parseCommandLine  # type: ignore
         parseCommandLine(ignoreErrors=False)
 
+    def handle_termination(self):
+        self.executor.shutdown()
+        exit(0)
+
     def run(self):
         def send_result(event, id, lock, future):
             with lock:
@@ -50,13 +55,15 @@ class DiracProcess(Process):
 
         self.set_process_env()
         self.initialize_dirac_api()
-
-        executor = ThreadPoolExecutor()
+        self.executor = ThreadPoolExecutor()
         lock = Lock()
         while True:
-            is_done, task_id, cmd, args_dict = self.task_queue.get()
-            future = executor.submit(self.run_dirac_command, cmd, args_dict)
-            future.add_done_callback(functools.partial(send_result, is_done, task_id, lock))
+            try:
+                is_done, task_id, cmd, args_dict = self.task_queue.get()
+                future = self.executor.submit(self.run_dirac_command, cmd, args_dict)
+                future.add_done_callback(functools.partial(send_result, is_done, task_id, lock))
+            except TerminationSignalException:
+                self.handle_termination()
 
     def run_dirac_command(self, cmd, args_dict):
         from DIRAC.Interfaces.API.Dirac import Dirac  # type: ignore

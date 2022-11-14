@@ -59,8 +59,9 @@ class AsyncDiracManager(metaclass=Singleton):
             task_result_dict=self.task_result_dicts[env_hash],
             env=dirac_env)
         dirac_process.start()
+
         logger.debug(f"DIRAC process started with PID {dirac_process.pid}")
-        self.active_processes[env_hash] = dirac_process.pid
+        self.active_processes[env_hash] = dirac_process
 
     def parse_command_result(self, result, cmd, return_raw_dict=False):
         if isinstance(result, dict):
@@ -79,8 +80,8 @@ class AsyncDiracManager(metaclass=Singleton):
     def is_dirac_process_active(self, env_hash):
         if env_hash not in self.active_processes:
             return False
-        pid = self.active_processes[env_hash]
-        if not psutil.pid_exists(pid):
+        process = self.active_processes[env_hash]
+        if not psutil.pid_exists(process.pid):
             return False
         return True
 
@@ -104,5 +105,13 @@ class AsyncDiracManager(metaclass=Singleton):
             logger.debug(f'Executed DIRAC command {cmd} with result {returnable}')
             return returnable
         except RuntimeError:
-            logger.error('Attempted to add asyncio task after Ganga shutdown. Returning...')
+            logger.warn('Attempted to add asyncio task after Ganga shutdown. Returning...')
+            self.kill_dirac_processes()
             return {'OK': False, 'Message': 'The event loop has shut down'}
+
+    def kill_dirac_processes(self):
+        for process in self.active_processes.values():
+            process.terminate()
+            process.join()
+            logger.debug(f"Terminated DIRAC executor process with pid {process.pid}")
+        self.active_processes = None
