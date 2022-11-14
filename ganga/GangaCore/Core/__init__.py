@@ -46,15 +46,15 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     config.overrideDefaultValue('autostart', interactive_session)
 
     # has the user changed monitoring autostart from the default? if so, warn them
-    # if config['autostart'] != interactive_session:
-    #     if config['autostart']:
-    #         getLogger().warning('Monitoring loop enabled (the default setting for a batch session is disabled)')
-    #     else:
-    #         getLogger().warning('Monitoring loop disabled (the default setting for an interactive session is enabled)')
+    if config['autostart'] != interactive_session:
+        if config['autostart']:
+            getLogger().warning('Monitoring loop enabled (the default setting for a batch session is disabled)')
+        else:
+            getLogger().warning('Monitoring loop disabled (the default setting for an interactive session is enabled)')
 
     # Enable job monitoring if requested
-    # if config['autostart']:
-    #     monitoring_component.enableMonitoring()
+    if config['autostart']:
+        monitoring_component.enable()
 
     # export the runMonitoring function to the public interface
     if not my_interface:
