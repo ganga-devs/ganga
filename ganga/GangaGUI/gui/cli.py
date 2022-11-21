@@ -134,7 +134,7 @@ def main(host,port,flask_port,internal_port):
     app.config["cmd"] = [args.command] + shlex.split(args.cmd_args)
     green = "\033[92m"
     end = "\033[0m"
-    log_format = green + "pyxtermjs > " + end + "%(levelname)s (%(funcName)s:%(lineno)s) %(message)s"
+    log_format = green + "ganga-cli > " + end + "%(levelname)s (%(funcName)s:%(lineno)s) %(message)s"
     logging.basicConfig(
         format=log_format,
         stream=sys.stdout,
