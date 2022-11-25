@@ -704,7 +704,7 @@ def gaudiRun_script_template():
     """
     Script to return the contents of the command to be executed on the worker node
     """
-    script_template = """#!/usr/bin/env python
+    script_template = """#!/usr/bin/env python3
 '''Script to run Executable application'''
 from __future__ import print_function
 from os import listdir, environ, pathsep, getcwd, system
