@@ -58,7 +58,7 @@ def genDataFiles(job):
         inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file, data_str))
     else:
         inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file,
-                            '#dummy_data_file\n' + LHCbDataset().optionsString()))
+                                       '#dummy_data_file\n' + LHCbDataset().optionsString()))
 
     return inputsandbox
 
@@ -94,7 +94,13 @@ def getScriptName(app):
         app (Job): This is the app object which contains everything useful for generating the code
     """
     job = app.getJobObject()
-    return "_".join((getName(app), getConfig('Configuration')['user'], 'Job', job.getFQID('.'), _pseudo_session_id, 'script')) + '.py'
+    return "_".join(
+        (getName(app),
+         getConfig('Configuration')['user'],
+         'Job',
+         job.getFQID('.'),
+         _pseudo_session_id,
+         'script')) + '.py'
 
 
 def generateWNScript(commandline, app):
@@ -107,9 +113,16 @@ def generateWNScript(commandline, app):
     job = app.getJobObject()
     exe_script_name = getScriptName(app)
 
-    return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
-                                                                      OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, '    ')),
-                      subdir='jobScript', executable=True)
+    return FileBuffer(
+        name=exe_script_name,
+        contents=script_generator(
+            gaudiRun_script_template(),
+            COMMAND=commandline,
+            OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(
+                job,
+                '    ')),
+        subdir='jobScript',
+        executable=True)
 
 
 def collectPreparedFiles(app):
@@ -257,7 +270,7 @@ class GaudiExecRTHandler(IRuntimeHandler):
 
         # If we are getting the metadata we need to make sure the summary.xml
         # is added to the output sandbox if not there already.
-        if app.getMetadata and not 'summary.xml' in output_sand:
+        if app.getMetadata and 'summary.xml' not in output_sand:
             output_sand += ['summary.xml']
 
         # NB with inputfiles the mechanics of getting the inputfiled to the
@@ -526,8 +539,9 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
-        # If we are getting the metadata we need to make sure the summary.xml is added to the output sandbox if not there already.
-        if app.getMetadata and not 'summary.xml' in outputsandbox:
+        # If we are getting the metadata we need to make sure the summary.xml is
+        # added to the output sandbox if not there already.
+        if app.getMetadata and 'summary.xml' not in outputsandbox:
             outputsandbox += ['summary.xml']
 
         # Check a previously uploaded input is there in case of a job copy
@@ -618,7 +632,8 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
                     inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
             else:
                 logger.error(
-                    "Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
+                    "Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" %
+                    getName(file_))
                 raise ApplicationConfigurationError("Unsupported filetype: %s with DIRAC backend" % getName(file_))
 
         master_job = job.master or job
@@ -762,7 +777,7 @@ if __name__ == '__main__':
     # Opening pleasantries
     print("Hello from GaudiExec")
     print("Arrived at workernode: %s" % getcwd())
-    print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
+    print(r"#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
     print("")
 
     print("CWD: %s" % getcwd())
@@ -793,7 +808,7 @@ if __name__ == '__main__':
 
     # Final pleasantries
     print("")
-    print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
+    print(r"#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
     print("Goodbye from GaudiExec")
 
     sys.exit(rc)
