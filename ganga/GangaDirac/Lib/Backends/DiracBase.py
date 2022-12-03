@@ -12,7 +12,7 @@ import tempfile
 import time
 from subprocess import CalledProcessError, check_output
 
-from GangaCore.Core import monitoring_component
+import asyncio
 from GangaCore.Core.exceptions import (BackendError, GangaDiskSpaceError,
                                        GangaFileError, GangaKeyError,
                                        IncompleteJobSubmissionError)
@@ -1071,6 +1071,10 @@ class DiracBase(IBackend):
             job (Job): Thi is the job we want to finalise
             updated_dirac_status (str): String representing the Ganga finalisation state of the job failed/completed
         """
+        if job.status == 'completing':
+            logger.warn('Attempted to finalise a job that is already completing, returning...')
+            return
+
         if job.backend.finaliseOnMaster and job.master and updated_dirac_status == 'completed':
             job.updateStatus('completing')
             allComplete = True
@@ -1263,6 +1267,7 @@ class DiracBase(IBackend):
                     job.updateStatus('running')
                 if job.status in ['completed', 'killed', 'removed']:
                     break
+
                 await DiracBase._internal_job_finalisation(job, updated_dirac_status)
                 break
 
@@ -1291,6 +1296,8 @@ class DiracBase(IBackend):
 
     @staticmethod
     def finalise_jobs(allJobs, downloadSandbox=True):
+        from GangaCore.Core import monitoring_component
+
         """
         Finalise the jobs given. This downloads the output sandboxes, gets the final Dirac stati, completion times etc.
         Everything is done in one DIRAC process for maximum speed. This is also done in parallel for maximum speed.
@@ -1429,6 +1436,8 @@ class DiracBase(IBackend):
 
     # @staticmethod
     async def requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses):
+        from GangaCore.Core import monitoring_component
+
         """
         Method used to requeue jobs whih are in the finalized state of some form, finished/failed/etc
         Args:
@@ -1436,6 +1445,7 @@ class DiracBase(IBackend):
             finalised_statuses (dict): Dict of the Dirac statuses vs the Ganga statuses after running
         """
         # requeue existing completed job
+        job_ids = [job.id for job in requeue_jobs]
         for j in requeue_jobs:
             if j.been_queued:
                 continue
@@ -1448,11 +1458,14 @@ class DiracBase(IBackend):
                 j.been_queued = False
                 continue
             else:
-                await DiracBase.job_finalisation(j, finalised_statuses[j.backend.status])
+                monitoring_component.loop.create_task(
+                    DiracBase.job_finalisation(j, finalised_statuses[j.backend.status]))
 
     # @trace_and_save
     @staticmethod
     async def monitor_dirac_running_jobs(monitor_jobs, finalised_statuses):
+        from GangaCore.Core import monitoring_component
+
         """
         Method to update the configuration of jobs which are in a submitted/running state in Ganga&Dirac
         Args:
