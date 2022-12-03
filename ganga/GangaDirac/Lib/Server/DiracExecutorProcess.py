@@ -3,6 +3,7 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Lock, Process
+
 from GangaCore.Core.exceptions import TerminationSignalException
 
 
@@ -45,7 +46,7 @@ class DiracProcess(Process):
 
     def handle_termination(self):
         self.executor.shutdown()
-        exit(0)
+        sys.exit(0)
 
     def run(self):
         def send_result(event, id, lock, future):
