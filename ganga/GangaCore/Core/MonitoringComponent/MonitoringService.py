@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from concurrent.futures import ThreadPoolExecutor
 import functools
 import traceback
@@ -109,13 +110,12 @@ class AsyncMonitoringService(GangaThread):
             return
 
         job_slice = self.active_backends[backend_name]
-        log.debug(f'Checking backend {backend_name}')
         backend.master_updateMonitoringInformation(job_slice)
         self._schedule_next_backend_check(backend)
 
     def _schedule_next_backend_check(self, backend):
         backend_name = getName(backend)
-        if backend in config:
+        if backend_name in config:
             pRate = config[backend_name]
         else:
             pRate = config['default_backend_poll_rate']
@@ -164,6 +164,10 @@ class AsyncMonitoringService(GangaThread):
             j = stripProxy(stripProxy(self.registry_slice(job_id)))
             status = lazyLoadJobStatus(j)
             if status == 'completing':
+                if j.subjobs:
+                    for sj in j.subjobs:
+                        if sj.status == 'completing':
+                            sj.status = 'submitted'
                 j.status = 'submitted'
 
     def disable(self):
@@ -191,4 +195,4 @@ class AsyncMonitoringService(GangaThread):
         self.thread_executor.shutdown()
         self._cleanup_scheduled_tasks()
         self.loop.stop()
-        exit(0)
+        sys.exit(0)
