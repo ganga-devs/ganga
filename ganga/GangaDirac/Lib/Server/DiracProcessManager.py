@@ -114,4 +114,4 @@ class AsyncDiracManager(metaclass=Singleton):
             process.terminate()
             process.join()
             logger.debug(f"Terminated DIRAC executor process with pid {process.pid}")
-        self.active_processes = None
+        self.active_processes = {}
