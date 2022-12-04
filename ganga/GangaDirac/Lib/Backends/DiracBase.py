@@ -1071,10 +1071,6 @@ class DiracBase(IBackend):
             job (Job): Thi is the job we want to finalise
             updated_dirac_status (str): String representing the Ganga finalisation state of the job failed/completed
         """
-        if job.status == 'completing':
-            logger.warn('Attempted to finalise a job that is already completing, returning...')
-            return
-
         if job.backend.finaliseOnMaster and job.master and updated_dirac_status == 'completed':
             job.updateStatus('completing')
             allComplete = True
@@ -1434,8 +1430,8 @@ class DiracBase(IBackend):
             # Set the status of the subjob
             sj.updateStatus(statusmapping[statusList['Value'][sj.backend.id]['Status']])
 
-    # @staticmethod
-    async def requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses):
+    @staticmethod
+    def requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses):
         from GangaCore.Core import monitoring_component
 
         """
@@ -1458,6 +1454,7 @@ class DiracBase(IBackend):
                 j.been_queued = False
                 continue
             else:
+                j.been_queued = True
                 monitoring_component.loop.create_task(
                     DiracBase.job_finalisation(j, finalised_statuses[j.backend.status]))
 
@@ -1581,7 +1578,7 @@ class DiracBase(IBackend):
         for j in master_jobs_to_update:
             j.updateMasterJobStatus()
 
-        await DiracBase.requeue_dirac_finished_jobs(requeue_job_list, finalised_statuses)
+        DiracBase.requeue_dirac_finished_jobs(requeue_job_list, finalised_statuses)
 
     @staticmethod
     async def updateMonitoringInformation(jobs):
@@ -1632,7 +1629,7 @@ class DiracBase(IBackend):
             # credential used to communicate with DIRAC and max number of monitorable DIRAC jobs (read from config)
             for requeue_jobs_group in group_jobs_by_backend_credential(requeue_jobs):
                 for job_chunk in split_jobs_into_chunks(requeue_jobs_group):
-                    await DiracBase.requeue_dirac_finished_jobs(job_chunk, finalised_statuses)
+                    DiracBase.requeue_dirac_finished_jobs(job_chunk, finalised_statuses)
             for monitor_jobs_group in group_jobs_by_backend_credential(monitor_jobs):
                 for job_chunk in split_jobs_into_chunks(monitor_jobs_group):
                     await DiracBase.monitor_dirac_running_jobs(job_chunk, finalised_statuses)
