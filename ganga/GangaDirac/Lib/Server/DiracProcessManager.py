@@ -2,7 +2,8 @@ import os
 import uuid
 import psutil
 
-from aioprocessing import AioManager, AioQueue
+from aioprocessing import AioManager
+from multiprocessing import Queue
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, getDiracEnv
 from GangaCore.GPIDev.Credentials import credential_store
 from GangaCore.Utility.logging import getLogger
@@ -29,7 +30,6 @@ class AsyncDiracManager(metaclass=Singleton):
         self.task_queues = {}
         self.task_result_dicts = {}
         self.active_processes = {}
-        self.task_queue = AioQueue()
 
     def prepare_process_env(self, env=None, cred_req=None):
         if env is None:
@@ -52,7 +52,7 @@ class AsyncDiracManager(metaclass=Singleton):
         self.manager = AioManager()
         self.task_result_dict = self.manager.dict()
         env_hash = self.hash_dirac_env(dirac_env)
-        self.task_queues[env_hash] = AioQueue()
+        self.task_queues[env_hash] = Queue()
         self.task_result_dicts[env_hash] = self.manager.dict()
         dirac_process = DiracProcess(
             task_queue=self.task_queues[env_hash],
@@ -95,7 +95,7 @@ class AsyncDiracManager(metaclass=Singleton):
         try:
             task_id = uuid.uuid4()
             task_done = self.manager.AioEvent()
-            await self.task_queues[env_hash].coro_put((task_done, task_id, cmd, args_dict))
+            self.task_queues[env_hash].put((task_done, task_id, cmd, args_dict))
 
             await task_done.coro_wait()
             dirac_result = self.task_result_dicts[env_hash].get(task_id)
