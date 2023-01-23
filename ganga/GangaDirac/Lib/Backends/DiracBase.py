@@ -322,7 +322,7 @@ class DiracBase(IBackend):
                                             % (remaining, uploaded_expiry.strftime('%d/%m/%Y')))
             else:
                 logger.warning('Uploaded Dirac credential has only %s days remaining (expires on %s).'
-                               'To submit jobs you need a credential with at least 3 weeks of validy.'
+                               'To submit jobs you need a credential with at least 3 weeks of validity.'
                                'Get a new grid certificate to be able to keep submitting jobs.'
                                % (remaining, uploaded_expiry.strftime('%d/%m/%Y')))
 
