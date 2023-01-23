@@ -314,11 +314,17 @@ class DiracBase(IBackend):
         # Check the uploaded proxy has plenty of time left
         uploaded_expiry = datetime.datetime.strptime(cred.uploadedExpiryDate(), '%Y/%m/%d %H:%M')
         remaining = (uploaded_expiry - datetime.datetime.now()).days
-        if remaining < 21:
-            raise BackendError('Dirac', 'Uploaded Dirac credential has only %s days remaining (expires on %s).'
-                                        'To submit jobs you need a credential with at least 3 weeks of validity.'
-                                        'To resolve this get a new grid certificate.'
-                                        % (remaining, uploaded_expiry.strftime('%d/%m/%Y')))
+        if remaining < 28:
+            if remaining < 21:
+                raise BackendError('Dirac', 'Uploaded Dirac credential has only %s days remaining (expires on %s).'
+                                            'To submit jobs you need a credential with at least 3 weeks of validity.'
+                                            'To resolve this get a new grid certificate.'
+                                            % (remaining, uploaded_expiry.strftime('%d/%m/%Y')))
+            else:
+                logger.warning('Uploaded Dirac credential has only %s days remaining (expires on %s).'
+                               'To submit jobs you need a credential with at least 3 weeks of validy.'
+                               'Get a new grid certificate to be able to keep submitting jobs.'
+                               % (remaining, uploaded_expiry.strftime('%d/%m/%Y')))
 
         tmp_dir = tempfile.mkdtemp()
         # Loop over the processes and create the master script for each one.
