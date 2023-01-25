@@ -1,5 +1,4 @@
 import asyncio
-import sys
 from concurrent.futures import ThreadPoolExecutor
 import functools
 import traceback
@@ -163,12 +162,12 @@ class AsyncMonitoringService(GangaThread):
         for job_id in self.registry_slice.ids():
             j = stripProxy(stripProxy(self.registry_slice(job_id)))
             status = lazyLoadJobStatus(j)
-            if status == 'completing':
-                if j.subjobs:
-                    for sj in j.subjobs:
-                        if sj.status == 'completing':
-                            sj.status = 'submitted'
-                j.status = 'submitted'
+            if not j.subjobs and status == 'completing':
+                j.status = 'running'
+            if j.subjobs:
+                for sj in j.subjobs:
+                    if sj.status == 'completing':
+                        sj.status = 'running'
 
     def disable(self):
         if not self.alive:
@@ -195,4 +194,3 @@ class AsyncMonitoringService(GangaThread):
         self.thread_executor.shutdown()
         self._cleanup_scheduled_tasks()
         self.loop.stop()
-        sys.exit(0)
