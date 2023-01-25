@@ -74,6 +74,9 @@ class DiracProcess(Process):
             except Empty:
                 time.sleep(0.05)
                 pass
+            except RuntimeError:
+                self.logger.exception('DIRAC subprocess: Tried to submit after the interpreter shutdown. Returning.')
+                break
             except Exception:
                 self.logger.exception(traceback.format_exc())
 
