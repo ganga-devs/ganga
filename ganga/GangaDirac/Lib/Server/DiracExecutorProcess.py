@@ -1,17 +1,19 @@
 import functools
 import os
+from queue import Empty
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Lock, Process
-
-from GangaCore.Core.exceptions import TerminationSignalException
+import time
+import traceback
 
 
 class DiracProcess(Process):
-    def __init__(self, task_queue, task_result_dict, env=None):
+    def __init__(self, task_queue, task_result_dict, stop_event, env=None):
         super(Process, self).__init__()
         self.daemon = True
         self.task_queue = task_queue
+        self.stop_event = stop_event
         self.task_result_dict = task_result_dict
         self.env = env
 
@@ -58,13 +60,18 @@ class DiracProcess(Process):
         self.initialize_dirac_api()
         self.executor = ThreadPoolExecutor()
         lock = Lock()
-        while True:
+        while not self.stop_event.is_set():
             try:
-                is_done, task_id, cmd, args_dict = self.task_queue.get()
+                task_id, cmd, args_dict = self.task_queue.get_nowait()
                 future = self.executor.submit(self.run_dirac_command, cmd, args_dict)
-                future.add_done_callback(functools.partial(send_result, is_done, task_id, lock))
-            except TerminationSignalException:
-                self.handle_termination()
+                future.add_done_callback(functools.partial(send_result, task_id, lock))
+            except Empty:
+                time.sleep(0.05)
+                pass
+            except Exception:
+                self.logger.exception(traceback.format_exc())
+
+        self.handle_termination()()
 
     def run_dirac_command(self, cmd, args_dict):
         from DIRAC.Interfaces.API.Dirac import Dirac  # type: ignore

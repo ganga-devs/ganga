@@ -7,16 +7,7 @@ Attributes:
     monitoring_component (JobRegistry_Monitor): Global variable that is set to the single global monitoring thread. Set
         in the bootstrap function.
 """
-import asyncio
-import signal
-from GangaCore.Core.exceptions import TerminationSignalException
-
-
 monitoring_component = None
-
-
-def handle_sigterm(signum, frame):
-    raise TerminationSignalException
 
 
 def bootstrap(reg_slice, interactive_session, my_interface=None):
@@ -40,14 +31,12 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     from GangaCore.Runtime.GPIexport import exportToInterface
     from GangaCore.Utility.Config import getConfig
     from GangaCore.Utility.logging import getLogger
+
     global monitoring_component
 
     # start the monitoring loop
     monitoring_component = AsyncMonitoringService(registry_slice=reg_slice)
-    # monitoring_component = JobRegistry_Monitor(registry_slice=reg_slice)
     monitoring_component.start()
-    # Register global SIGTERM handler which raises the appropriate exception
-    signal.signal(signal.SIGTERM, handle_sigterm)
 
     # override the default monitoring autostart value with the setting from interactive session
     config = getConfig("PollThread")

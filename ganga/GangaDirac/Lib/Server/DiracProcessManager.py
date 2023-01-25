@@ -3,7 +3,7 @@ import uuid
 import psutil
 
 from aioprocessing import AioManager
-from multiprocessing import Queue
+from multiprocessing import Queue, Event
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, getDiracEnv
 from GangaCore.GPIDev.Credentials import credential_store
 from GangaCore.Utility.logging import getLogger
@@ -29,7 +29,9 @@ class AsyncDiracManager(metaclass=Singleton):
         self.manager = None
         self.task_queues = {}
         self.task_result_dicts = {}
+        self.stop_events = {}
         self.active_processes = {}
+        self.processes_killed = False
 
     def prepare_process_env(self, env=None, cred_req=None):
         if env is None:
@@ -53,10 +55,12 @@ class AsyncDiracManager(metaclass=Singleton):
         self.task_result_dict = self.manager.dict()
         env_hash = self.hash_dirac_env(dirac_env)
         self.task_queues[env_hash] = Queue()
+        self.stop_events[env_hash] = Event()
         self.task_result_dicts[env_hash] = self.manager.dict()
         dirac_process = DiracProcess(
             task_queue=self.task_queues[env_hash],
             task_result_dict=self.task_result_dicts[env_hash],
+            stop_event=self.stop_events[env_hash],
             env=dirac_env)
         dirac_process.start()
 
@@ -110,8 +114,13 @@ class AsyncDiracManager(metaclass=Singleton):
             return {'OK': False, 'Message': 'The event loop has shut down'}
 
     def kill_dirac_processes(self):
-        for process in self.active_processes.values():
-            process.terminate()
+        if self.processes_killed:
+            return
+        if not self.active_processes:
+            return
+        for env_hash, process in self.active_processes.items():
+            self.stop_events[env_hash].set()
             process.join()
             logger.debug(f"Terminated DIRAC executor process with pid {process.pid}")
         self.active_processes = {}
+        self.processes_killed = True
