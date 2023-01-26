@@ -97,6 +97,7 @@ install_requires = [
     'Flask-SocketIO==4.3.1',
     'Werkzeug==2.0.3',
     'SQLAlchemy==1.3.19',
+    'UltraDict==0.0.6',
     "docker",
     "pymongo",
     "gdown",
