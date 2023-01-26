@@ -165,6 +165,8 @@ class AsyncMonitoringService(GangaThread):
             if not j.subjobs and status == 'completing':
                 j.status = 'running'
             if j.subjobs:
+                if j.status == 'completing':
+                    j.status = 'running'
                 for sj in j.subjobs:
                     if sj.status == 'completing':
                         sj.status = 'running'
