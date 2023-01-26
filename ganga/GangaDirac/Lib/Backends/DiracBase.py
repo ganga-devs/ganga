@@ -1526,8 +1526,7 @@ class DiracBase(IBackend):
         # 03:20
         def split_jobs_into_chunks(jobs):
             try:
-                # blocks_of_size = configDirac['numParallelJobs']
-                blocks_of_size = 1000
+                blocks_of_size = configDirac['numParallelJobs']
             except Exception as err:
                 logger.debug("Problem with PollThread Config, defaulting to block size of 25 in DIRAC updateMon...")
                 logger.debug("Error: %s" % err)
