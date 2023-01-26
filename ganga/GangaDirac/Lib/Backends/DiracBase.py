@@ -1562,8 +1562,8 @@ class DiracBase(IBackend):
                 for job_chunk in split_jobs_into_chunks(monitor_jobs_group):
                     await DiracBase.monitor_dirac_running_jobs(job_chunk, finalised_statuses)
         except GangaDiracError:
-            logger.error("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
-            logger.error(traceback.format_exc())
+            logger.warn("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
+            logger.debug(traceback.format_exc())
 
 
 def finalise_jobs_func(jobs, getSandbox=True):
