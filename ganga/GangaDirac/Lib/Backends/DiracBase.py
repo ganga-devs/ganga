@@ -1144,7 +1144,9 @@ class DiracBase(IBackend):
                     'outputDir': output_path,
                     'unpack': job.backend.unpackOutputSandbox,
                     'downloadSandbox': job.backend.downloadSandbox
-                })
+                },
+                cred_req=job.backend.credential_requirements
+            )
 
             if result is None:
                 return
@@ -1423,7 +1425,7 @@ class DiracBase(IBackend):
         statusmapping = configDirac['statusmapping']
 
         dm = AsyncDiracManager()
-        result = await dm.execute(dirac_status, args_dict={'job_ids': dirac_job_ids, 'statusmapping': statusmapping})
+        result = await dm.execute(dirac_status, args_dict={'job_ids': dirac_job_ids, 'statusmapping': statusmapping}, cred_req=monitor_jobs[0].backend.credential_requirements)
         # result, bulk_state_result = execute('monitorJobs(%s, %s)' % (repr(dirac_job_ids), repr(
         #     statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements, new_subprocess=True)
 

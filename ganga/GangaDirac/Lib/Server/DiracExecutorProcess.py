@@ -75,11 +75,8 @@ class DiracProcess(Process):
                 time.sleep(0.05)
                 pass
             except RuntimeError:
-                self.logger.exception('DIRAC subprocess: Tried to submit after the interpreter shutdown. Returning.')
-                break
-            except Exception:
-                self.logger.exception(traceback.format_exc())
-
+                self.logger.warn('DIRAC subprocess: Tried to submit after the interpreter shutdown. Returning...')
+                self.handle_termination()
         self.handle_termination()
 
     def run_dirac_command(self, cmd, args_dict):
