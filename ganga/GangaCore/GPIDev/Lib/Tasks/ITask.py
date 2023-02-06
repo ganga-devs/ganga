@@ -305,7 +305,7 @@ class ITask(GangaObject):
 
     def table(self):
         from GangaCore.Core.GangaRepository import getRegistryProxy
-        t = getRegistryProxy('tasks').table(id=self.id)
+        getRegistryProxy('tasks').table(id=self.id)
 
     def overview(self, status=''):
         """ Show an overview of the Task """
