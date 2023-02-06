@@ -1,5 +1,0 @@
-myJob = Job()
-myJob.backend = SAGA()
-
-myJob.name = "My first Ganga job"
-myJob.submit()
