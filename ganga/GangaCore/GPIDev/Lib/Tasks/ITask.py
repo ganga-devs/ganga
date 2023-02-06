@@ -238,7 +238,7 @@ class ITask(GangaObject):
         jobslice = JobRegistrySlice("tasks(%i).getJobs()" % (self.id))
         for trf in self.transforms:
             for jid in trf.getJobs():
-                jobslice.objects[getJobByID(jid).fqid] = stripProxy(getJobByID(jid))
+                jobslice.objects[getJobByID(jid).id] = stripProxy(getJobByID(jid))
 
         return JobRegistrySliceProxy(jobslice)
 
