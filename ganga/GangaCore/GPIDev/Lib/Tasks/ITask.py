@@ -39,14 +39,32 @@ class ITask(GangaObject):
         'status': SimpleItem(defvalue='new', protected=1, doc='Status - new, running, pause or completed', typelist=[str]),
         'float': SimpleItem(defvalue=0, copyable=1, doc='Number of Jobs run concurrently', typelist=[int]),
         'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1),
-        'creation_date': SimpleItem(defvalue="19700101", copyable=0, protected=1, doc='Creation date of the task', typelist=[str]),
+        'creation_date': SimpleItem(defvalue="19700101", copyable=0, protected=1, doc='Creation date of the task',
+                                    typelist=[str]),
         'check_all_trfs': SimpleItem(defvalue=True, doc='Check all Transforms during each monitoring loop cycle'),
     })
 
     _category = 'tasks'
     _name = 'ITask'
-    _exportmethods = ['run', 'appendTransform', 'overview', 'getJobs', 'remove', 'clone', 'pause', 'check', 'setBackend', 'setParameter',
-                      'insertTransform', 'removeTransform', 'table', 'resetUnitsByStatus', 'removeUnusedJobs', 'n_all', 'n_status', 'n_all']
+    _exportmethods = [
+        'run',
+        'appendTransform',
+        'overview',
+        'getJobs',
+        'remove',
+        'clone',
+        'pause',
+        'check',
+        'setBackend',
+        'setParameter',
+        'insertTransform',
+        'removeTransform',
+        'table',
+        'resetUnitsByStatus',
+        'removeUnusedJobs',
+        'n_all',
+        'n_status',
+        'n_all']
 
     _tasktype = "ITask"
 
@@ -125,7 +143,7 @@ class ITask(GangaObject):
                 "Task is still running. Please pause before removing!")
             return
 
-        if not remove_jobs in [True, False]:
+        if remove_jobs not in [True, False]:
             logger.info("You want to remove the task %i named '%s'." %
                         (self.id, self.name))
             logger.info(
@@ -186,7 +204,8 @@ class ITask(GangaObject):
         if self.status != "completed":
             if self.float == 0:
                 logger.warning(
-                    "The 'float', the number of jobs this task may run, is still zero. Type 'tasks(%i).float = 5' to allow this task to submit 5 jobs at a time" % self.id)
+                    "The 'float', the number of jobs this task may run, is still zero. "
+                    "Type 'tasks(%i).float = 5' to allow this task to submit 5 jobs at a time" % self.id)
             try:
                 for tf in self.transforms:
                     if tf.status != "completed":
@@ -286,11 +305,11 @@ class ITask(GangaObject):
 
     def table(self):
         from GangaCore.Core.GangaRepository import getRegistryProxy
-        t = getRegistryProxy('tasks').table(id=self.id)
+        getRegistryProxy('tasks').table(id=self.id)
 
     def overview(self, status=''):
         """ Show an overview of the Task """
-        if status and not status in ['bad', 'hold', 'running', 'completed', 'new']:
+        if status and status not in ['bad', 'hold', 'running', 'completed', 'new']:
             logger.error(
                 "Not a valid status for unitOverview. Possible options are: 'bad', 'hold', 'running', 'completed', 'new'.")
             return
@@ -299,7 +318,8 @@ class ITask(GangaObject):
         print('')
         print(" " * 41 + "Active\tSub\tRun\tComp\tFail\tMinor\tMajor")
         for trfid in range(0, len(self.transforms)):
-            print("----------------------------------------------------------------------------------------------------------------------")
+            print("--------------------------------------------------------------------------------------"
+                  "--------------------------------")
             print("----   Transform %d:  %s" % (trfid, self.transforms[trfid].name))
             print('')
             self.transforms[trfid].overview(status)
