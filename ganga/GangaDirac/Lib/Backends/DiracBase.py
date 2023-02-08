@@ -36,7 +36,7 @@ from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Server.DiracNewCommands import finished_job, getStateTime, getOutputSandbox
 from GangaDirac.Lib.Server.DiracNewCommands import status as dirac_status
-from GangaDirac.Lib.Server.DiracProcessManager import AsyncDiracManager
+from GangaDirac.DiracProcessManager import AsyncDiracManager
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 
 

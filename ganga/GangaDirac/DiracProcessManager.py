@@ -9,9 +9,8 @@ from UltraDict.Exceptions import AlreadyClosed
 from multiprocessing import Queue, Event
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, getDiracEnv
 from GangaCore.GPIDev.Credentials import credential_store
+from .Lib.Server.DiracExecutorProcess import DiracProcess
 from GangaCore.Utility.logging import getLogger
-
-from .DiracExecutorProcess import DiracProcess
 
 
 logger = getLogger()
@@ -27,6 +26,7 @@ class Singleton(type):
 
 
 class AsyncDiracManager(metaclass=Singleton):
+
     def __init__(self):
         self.task_queues = {}
         self.task_result_dicts = {}
