@@ -138,7 +138,7 @@ def postBootstrapHook():
     configDirac.setSessionValue('noInputDataBannedSites', [])
     configDirac.setSessionValue('RequireDefaultSE', False)
     configDirac.setSessionValue('proxyInitCmd', 'lhcb-proxy-init')
-    configDirac.setSessionValue('proxyInfoCmd', 'dirac-proxy-info')
+    configDirac.setSessionValue('proxyInfoCmd', 'lhcb-proxy-info')
 
     configOutput.setSessionValue('FailJobIfNoOutputMatched', 'False')
 
