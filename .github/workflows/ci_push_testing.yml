@@ -191,6 +191,7 @@ jobs:
         run: |
           yum install -y centos-release-scl-rh
           yum install -y rh-python38-python rh-python38-python-pip python3-devel
+          yum install -y gcc
       - name: Install dependencies
         run: |
           /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
@@ -233,6 +234,7 @@ jobs:
         run: |
           yum install -y centos-release-scl-rh
           yum install -y rh-python38-python rh-python38-python-pip python3-devel
+          yum install -y gcc
       - name: Install dependencies
         run: |
           /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
