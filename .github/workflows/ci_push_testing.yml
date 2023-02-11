@@ -190,7 +190,7 @@ jobs:
       - name: Set up Python 3
         run: |
           yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip python3-devel
+          yum install -y rh-python38-python rh-python38-python-pip rh-python38-python-devel
           yum install -y gcc
       - name: Install dependencies
         run: |
@@ -233,12 +233,12 @@ jobs:
       - name: Set up Python 3
         run: |
           yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip python3-devel
+          yum install -y rh-python38-python rh-python38-python-pip rh-python38-python-devel
           yum install -y gcc
       - name: Install dependencies
         run: |
           /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev,Dirac]
+   -e .[dev,Dirac]
       - name: Install Robot certificate
         env: # Or as an environment variable
           ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
