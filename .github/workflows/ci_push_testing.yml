@@ -238,7 +238,7 @@ jobs:
       - name: Install dependencies
         run: |
           /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-   -e .[dev,Dirac]
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev,Dirac]
       - name: Install Robot certificate
         env: # Or as an environment variable
           ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
