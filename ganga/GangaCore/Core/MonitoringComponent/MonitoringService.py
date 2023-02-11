@@ -194,5 +194,12 @@ class AsyncMonitoringService(GangaThread):
         self.alive = False
         self.enabled = False
         self.thread_executor.shutdown()
+        try:
+            for backend_name, active_jobs in self.active_backends.items():
+                log.debug(f'Cleaning up {backend_name} before monitoring shutdown')
+                backend_obj = lazyLoadJobBackend(active_jobs[0])
+                self._cleanup_backend(backend_obj)
+        except Exception as err:
+            log.error(err)
         self._cleanup_scheduled_tasks()
         self.loop.stop()
