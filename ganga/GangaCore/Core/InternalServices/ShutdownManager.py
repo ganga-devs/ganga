@@ -10,19 +10,16 @@ import atexit
 # Ganga imports
 from GangaCore.Core.GangaThread import GangaThreadPool
 from GangaCore.Core.GangaThread.WorkerThreads import _global_queues, shutDownQueues
-from GangaCore.Core import monitoring_component
 from GangaCore.Core.InternalServices import Coordinator
 from GangaCore.Runtime import Repository_runtime, bootstrap
 from GangaCore.Utility import stacktracer
 from GangaCore.Utility.logging import getLogger, requires_shutdown, final_shutdown
 from GangaCore.Utility.Config import setConfigOption
-from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace, _purge_actions_queue,\
-    stop_and_free_thread_pool
 from GangaCore.GPIDev.Lib.Tasks import stopTasks
 from GangaCore.GPIDev.Credentials import CredentialStore
 from GangaCore.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
-from GangaDirac.DiracProcessManager import AsyncDiracManager
 from GangaDirac.BOOT import stopDiracProcess
+from GangaDirac.Lib.Server.DiracProcessManager import AsyncDiracManager
 
 # Globals
 logger = getLogger()
@@ -51,6 +48,8 @@ def _protected_ganga_exitfuncs():
 
 
 def _unprotected_ganga_exitfuncs():
+    from GangaCore.Core import monitoring_component
+
     """Run all exit functions from plugins and internal services in the correct order
 
     Go over all plugins and internal services and call the appropriate shutdown functions in the correct order. Because
@@ -70,17 +69,6 @@ def _unprotected_ganga_exitfuncs():
         except Exception as err:
             logger.exception("Exception raised while stopping GUI: {}".format(err))
 
-    # Stop the monitoring loop from iterating further
-    if monitoring_component is not None:
-        try:
-            getStackTrace()
-            if monitoring_component.alive:
-                monitoring_component.disableMonitoring()
-                monitoring_component.stop()
-                monitoring_component.join()
-        except Exception as err:
-            logger.exception("Exception raised while stopping the monitoring: %s" % err)
-
     # Terminate the Dirac server thread if it is running
     try:
         dm = AsyncDiracManager()
@@ -89,18 +77,19 @@ def _unprotected_ganga_exitfuncs():
     except Exception as err:
         logger.exception("Exception raised while stopping the Dirac process: %s" % err)
 
+    # Stop the monitoring loop from iterating further
+    if monitoring_component is not None:
+        try:
+            if monitoring_component.alive:
+                monitoring_component.stop()
+                monitoring_component.join()
+        except Exception as err:
+            logger.exception("Exception raised while stopping the monitoring: %s" % err)
     # Stop the tasks system from running
     try:
         stopTasks()
     except Exception as err:
         logger.exception("Exception raised while stopping Tasks: %s" % err)
-
-    # purge the monitoring queues
-    try:
-        _purge_actions_queue()
-        stop_and_free_thread_pool()
-    except Exception as err:
-        logger.exception("Exception raised while purging monitoring queues: %s" % err)
 
     # Freeze queues
     try:
