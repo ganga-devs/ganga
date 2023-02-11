@@ -891,7 +891,7 @@ except Exception:
     pwd_nam = pwd.getpwnam(user)
 
 groupid = grp.getgrgid(pwd_nam.pw_gid).gr_name
-groupnames = {'z5': 'lhcb', 'zp': 'atlas', 'zh': 'cms', 'vl': 'na62'}
+groupnames = {'z5': 'lhcb', 'zh': 'cms'}
 groupname = groupnames.get(groupid, 'undefined')
 
 try:
@@ -903,12 +903,10 @@ except KeyError:
 
 # From:
 # http://eos.cern.ch/index.php?option=com_content&view=article&id=87:using-eos-at-cern&catid=31:general&Itemid=41
-protoByExperiment = {'atlas': 'root://eosatlas.cern.ch',
-                     'cms': 'root://eocms.cern.ch',
+protoByExperiment = {'cms': 'root://eocms.cern.ch',
                      'lhcb': 'root://eoslhcb.cern.ch',
                      'alice': 'root://eosalice.cern.ch',
                      # These last 2 are guesses based on the standard
-                     'na62': 'root://eosna62.cern.ch',
                      'undefined': 'root://eos.cern.ch'}
 defaultMassStorageProto = protoByExperiment[groupname]
 

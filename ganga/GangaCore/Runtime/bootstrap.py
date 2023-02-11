@@ -1289,7 +1289,6 @@ under certain conditions; type license() for details.
 #
 # Revision 1.71.4.22  2008/04/03 12:55:45  kuba
 # importing core plugins before initEnvironment(), this fixes
-# bug #35146: GangaAtlas is not starting due to gridshell call in __init__.py
 #
 # Revision 1.71.4.21  2008/04/01 14:08:03  roma
 # automatic config file template generation (Vladimir)

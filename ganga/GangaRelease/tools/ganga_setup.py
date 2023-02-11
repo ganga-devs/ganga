@@ -150,8 +150,6 @@ def main():
         setupcmds = { 'lhcb' : { 'sh': """export PATH=%(PATH)s ; export GANGA_CONFIG_PATH=%(INSTALL_PREFIX)s/config/GangaLHCbRoot.ini:%(INSTALL_PREFIX)s/config/GangaLHCb.ini:GangaLHCb/LHCb.ini""",
                                                                 'csh': """setenv PATH %(PATH)s ; setenv GANGA_CONFIG_PATH %(INSTALL_PREFIX)s/config/GangaLHCbRoot.ini:%(INSTALL_PREFIX)s/config/GangaLHCb.ini:GangaLHCb/LHCb.ini"""
                                         },
-                                        'atlas' : { 'sh': """alias ganga=%(BIN_DIR)s/ganga ; export GANGA_CONFIG_PATH=%(INSTALL_PREFIX)s/config/GangaAtlas%(NEWER44)s.ini:GangaAtlas/Atlas.ini""",
-                                                        'csh': """alias ganga %(BIN_DIR)s/ganga ; setenv GANGA_CONFIG_PATH %(INSTALL_PREFIX)s/config/GangaAtlas%(NEWER44)s.ini:GangaAtlas/Atlas.ini""" },
                                         'generic' : { 'sh':"""alias ganga=%(BIN_DIR)s/ganga""",
                                                                 'csh':"""alias ganga %(BIN_DIR)s/ganga""" }
                                         }
@@ -161,12 +159,6 @@ def main():
                         'INSTALL_PREFIX' : prefixStr,
                         'BIN_DIR' : '%s/%s/bin' % (prefixStr,versionStr)}
         
-        #temporary hack for ATLAS: set a different CERN specific GangaAtlas.ini files for versions newer than 4.4.0-beta1
-        #to be removed when all users migrate to Ganga 4.4
-        if _relcmp(versionStr,'4.4.0-beta1')<0:         
-                vars['NEWER44']='' # use %(INSTALL_PREFIX)s/config/GangaAtlas.ini
-        else:           
-                vars['NEWER44']='-v44' # use %(INSTALL_PREFIX)s/config/GangaAtlas-v44.ini
                 
         print setupcmds[experiment][shellStr]%vars
         

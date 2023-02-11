@@ -220,7 +220,7 @@ Notifier
 The notifier is an object which will email you about your jobs upon completion. The default behaviour is to email
 when master jobs have finished and when subjobs have failed. Emails are not sent upon failure if the auto-resubmit
 feature is used. Important note: Emails will only be sent when ganga is running, and so the Notifier is only useful
-if you have ganga running in the background (e.g. screen session, ``GangaService``). To make a notifier, just do
+if you have ganga running in the background (e.g. screen session). To make a notifier, just do
 something like:
 
 .. literalinclude:: ../../ganga/GangaCore/test/GPI/TutorialTests.py

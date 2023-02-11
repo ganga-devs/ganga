@@ -2365,34 +2365,6 @@ class Job(GangaObject):
 
             super(Job, self).__setattr__(attr, value)
 
-        elif attr == 'backend':
-
-            # Temporary polution of Atlas stuff to (almost) transparently
-            # switch from Panda to Jedi
-            configPanda = None
-            if value is not None and getName(value) == "Panda":
-                configPanda = GangaCore.Utility.Config.getConfig('Panda')
-
-            if configPanda and not configPanda['AllowDirectSubmission']:
-                logger.error(
-                    "Direct Panda submission now deprecated - Please switch to Jedi() backend and remove any splitter.")
-                from GangaPanda.Lib.Jedi import Jedi
-
-                new_value = Jedi()
-
-                # copy over attributes where possible
-                for attr in ['site', 'extOutFile', 'libds', 'accessmode', 'forcestaged', 'individualOutDS', 'bexec', 'nobuild']:
-                    setattr(new_value, attr, copy.deepcopy(getattr(value, attr)))
-
-                for attr in ['long', 'cloud', 'anyCloud', 'memory', 'cputime', 'corCheck', 'notSkipMissing', 'excluded_sites',
-                             'excluded_clouds', 'express', 'enableJEM', 'configJEM', 'enableMerge', 'configMerge', 'usecommainputtxt',
-                             'rootver', 'overwriteQueuedata', 'overwriteQueuedataConfig']:
-                    setattr(new_value.requirements, attr, copy.deepcopy(getattr(value.requirements, attr)))
-
-                super(Job, self).__setattr__('backend', new_value)
-            else:
-                new_value = stripProxy(runtimeEvalString(self, attr, value))
-                super(Job, self).__setattr__('backend', new_value)
         elif attr.startswith('_'):
             # If it's an internal attribute then just pass it on
             super(Job, self).__setattr__(attr, value)

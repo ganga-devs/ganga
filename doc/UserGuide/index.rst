@@ -22,7 +22,6 @@ you encounter any problems!
     Queues
     Tasks
     PurePythonUsage
-    GangaService
     DevelopingNewApplication
 
 
