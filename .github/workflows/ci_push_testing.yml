@@ -216,9 +216,9 @@ jobs:
           DIRAC_VERSION=v7r2p10
           ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
           source ~/dirac_ui/bashrc
-          dirac-proxy-init -x
+          echo abcd | dirac-proxy-init -x -p
           dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
-          dirac-proxy-init -g gridpp_user -M
+          echo abcd | dirac-proxy-init -p -g gridpp_user -M
       - name: Test with pytest
         run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
 
@@ -258,9 +258,9 @@ jobs:
           DIRAC_VERSION=v7r2p10
           ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
           source ~/dirac_ui/bashrc
-          dirac-proxy-init -x
+          echo abcd | dirac-proxy-init -x -p
           dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
-          dirac-proxy-init -g gridpp_user -M
+          echo abcd | dirac-proxy-init -p -g gridpp_user -M
       - name: Install gangarc file
         run: |
           echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc
@@ -351,7 +351,7 @@ jobs:
           GANGA_CONFIG_FILE: ~/.gangarc
         run: |
           source /cvmfs/lhcb.cern.ch/lib/LbEnv 2>&1
-          lhcb-proxy-init
+          echo abcd | lhcb-proxy-init -p
           . ~/venv/bin/activate
           python3 -m pytest --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/GPI
 
