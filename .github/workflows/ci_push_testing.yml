@@ -216,9 +216,15 @@ jobs:
           DIRAC_VERSION=v7r2p10
           ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
           source ~/dirac_ui/bashrc
-          echo abcd | dirac-proxy-init -x -p
+          mkdir ~/.proxy
+          DIRAC_PROXY_INIT=`which dirac-proxy-init`
+          export PATH=~/.proxy:"$PATH"
+          echo "#!/bin/sh\necho abcd | $DIRAC_PROXY_INIT -p \$@" > ~/.proxy/dirac-proxy-init
+          which dirac-proxy-init
+          cat ~/.proxy/dirac-proxy-init
+          dirac-proxy-init -x
           dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
-          echo abcd | dirac-proxy-init -p -g gridpp_user -M
+          dirac-proxy-init -g gridpp_user -M
       - name: Test with pytest
         run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
 
