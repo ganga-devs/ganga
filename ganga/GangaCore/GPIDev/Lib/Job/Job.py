@@ -61,7 +61,8 @@ def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
     # Returns an object which corresponds to an attribute from a Job, or matches it's default equivalent without triggering a load from disk
     # i.e. lazy loading a Dirac backend will return a raw Dirac() object and lazy loading the status will return the status string
     # These are all evaluated from the strings in the index file for the job.
-    # dont_eval lets the method know a string is expected to be returned and not evaluated so nothing is evaluated against the GPI
+    # dont_eval lets the method know a string is expected to be returned and
+    # not evaluated so nothing is evaluated against the GPI
 
     this_job = stripProxy(raw_job)
 
@@ -115,12 +116,14 @@ class JobInfo(GangaObject):
     """ Additional job information.
         Partially implemented
     """
-    _schema = Schema(Version(0, 1), {
-        'submit_counter': SimpleItem(defvalue=0, protected=1, doc="job submission/resubmission counter"),
-        'monitor': ComponentItem('monitor', defvalue=None, load_default=0, comparable=0, optional=1, doc="job monitor instance"),
-        'uuid': SimpleItem(defvalue='', protected=1, comparable=0, doc='globally unique job identifier'),
-        'monitoring_links': SimpleItem(defvalue=[], typelist=[tuple], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links")
-    })
+    _schema = Schema(
+        Version(
+            0, 1), {
+            'submit_counter': SimpleItem(
+                defvalue=0, protected=1, doc="job submission/resubmission counter"), 'monitor': ComponentItem(
+                    'monitor', defvalue=None, load_default=0, comparable=0, optional=1, doc="job monitor instance"), 'uuid': SimpleItem(
+                        defvalue='', protected=1, comparable=0, doc='globally unique job identifier'), 'monitoring_links': SimpleItem(
+                            defvalue=[], typelist=[tuple], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links")})
 
     _category = 'jobinfos'
     _name = 'JobInfo'
@@ -794,7 +797,10 @@ class Job(GangaObject):
             stats = self.subjobs.getAllSJStatus()
         else:
             stats = [sj.status for sj in self.subjobs]
-        return "%s/%s/%s/%s" % (stats.count('running'), stats.count('failed') + stats.count('failed_frozen') + stats.count('killed'), stats.count('completing'), stats.count('completed') + stats.count('completed_frozen'))
+        return "%s/%s/%s/%s" % (stats.count('running'),
+                                stats.count('failed') + stats.count('failed_frozen') + stats.count('killed'),
+                                stats.count('completing'),
+                                stats.count('completed') + stats.count('completed_frozen'))
 
     def updateMasterJobStatus(self):
         """
@@ -1502,7 +1508,7 @@ class Job(GangaObject):
             raise JobError("resplit not provided with a splitter!")
         if not self.master:
             raise JobError("You can only resplit subjobs!")
-        if not self.status in ['completed', 'failed', 'killed']:
+        if self.status not in ['completed', 'failed', 'killed']:
             raise JobError("You can only resplit subjobs in the failed, killed or completed status!")
 
         mJob = self.master
@@ -1655,8 +1661,12 @@ class Job(GangaObject):
         from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 
         try:
-            assert(self.subjobs in [[], GangaList()] or (
-                (isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobJsonList)) and len(self.subjobs) == 0))
+            assert(
+                self.subjobs in [[], GangaList()] or (
+                    (isType(
+                        self.subjobs, JobRegistrySliceProxy) or isType(
+                        self.subjobs, SubJobJsonList)) and len(
+                        self.subjobs) == 0))
         except AssertionError:
             raise JobManagerError("Number of subjobs in the job is inconsistent so not submitting the job")
 
@@ -2171,7 +2181,9 @@ class Job(GangaObject):
 
         if not supports_master_resubmit and backend:
             raise JobError(
-                '%s backend does not support changing of backend parameters at resubmission (optional backend argument is not supported)' % getName(self.backend))
+                '%s backend does not support changing of backend parameters at resubmission (optional backend argument is not supported)' %
+                getName(
+                    self.backend))
 
         def check_changability(obj1, obj2):
             # check if the only allowed attributes have been modified
@@ -2416,8 +2428,11 @@ class JobTemplate(Job):
     _name = 'JobTemplate'
 
     _schema = Job._schema.inherit_copy()
-    _schema.datadict["status"] = SimpleItem('template', protected=1, checkset='_checkset_status',
-                                            doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"')
+    _schema.datadict["status"] = SimpleItem(
+        'template',
+        protected=1,
+        checkset='_checkset_status',
+        doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"')
 
     default_registry = 'templates'
 
