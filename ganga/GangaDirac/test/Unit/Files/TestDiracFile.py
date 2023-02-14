@@ -25,6 +25,7 @@ def df():
     f.locations = ['location']
     f.guid = 'guid'
     getConfig('defaults_DiracProxy').setSessionValue('group', 'gridpp_user')
+    getConfig('defaults_DiracProxy').setSessionValue('encodeDefaultProxyFileName', 'False')
     getConfig('DIRAC').setSessionValue('DiracEnvSource', '~/dirac_ui/bashrc')
     yield f
     clear_config()
