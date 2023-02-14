@@ -219,7 +219,8 @@ jobs:
           mkdir ~/.proxy
           DIRAC_PROXY_INIT=`which dirac-proxy-init`
           export PATH=~/.proxy:"$PATH"
-          echo "#!/bin/sh\necho abcd | $DIRAC_PROXY_INIT -p \$@" > ~/.proxy/dirac-proxy-init
+          printf "#!/bin/sh\necho abcd | $DIRAC_PROXY_INIT -p \$@" > ~/.proxy/dirac-proxy-init\n
+          chmod +x ~/.proxy/dirac-proxy-init
           which dirac-proxy-init
           cat ~/.proxy/dirac-proxy-init
           dirac-proxy-init -x
