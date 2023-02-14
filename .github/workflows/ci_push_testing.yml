@@ -221,13 +221,13 @@ jobs:
           export PATH=~/.proxy:"$PATH"
           printf '#!/bin/sh\necho abcd | '"$DIRAC_PROXY_INIT"' -p $@ \n' > ~/.proxy/dirac-proxy-init
           chmod +x ~/.proxy/dirac-proxy-init
-          which dirac-proxy-init
-          cat ~/.proxy/dirac-proxy-init
           dirac-proxy-init -x
           dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
           dirac-proxy-init -g gridpp_user -M
       - name: Test with pytest
-        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
+        run: |
+          export PATH=~/.proxy:"$PATH"
+          /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
 
   dirac-integration:
     name: GangaDirac Integration
