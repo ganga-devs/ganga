@@ -900,7 +900,7 @@ under certain conditions; type license() for details.
         logger.debug("Import plugins")
         try:
             # load Ganga system plugins...
-            from GangaCore.Runtime import plugins
+            pass
         except Exception as x:
             logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', x)
             logger.exception(x)
