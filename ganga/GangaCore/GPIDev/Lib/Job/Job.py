@@ -2113,9 +2113,9 @@ class Job(GangaObject):
             try:
                 if not force:
                     self._kill(transition_update=False)
-            except GangaException as x:
+            except GangaException:
                 log_user_exception(logger, debug=True)
-            except Exception as x:
+            except Exception:
                 log_user_exception(logger)
                 logger.warning('unhandled exception in j.kill(), job id=%s', self.id)
 
@@ -2163,7 +2163,7 @@ class Job(GangaObject):
                         doit_sj(wsp_output.remove)
                         wsp_debug = sj.getDebugWorkspace(create=False)
                         doit_sj(wsp_debug.remove)
-            except KeyError as err:
+            except KeyError:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
                 pass
@@ -2195,7 +2195,7 @@ class Job(GangaObject):
                 if hasattr(self.application, 'is_prepared') and self.application.__getattribute__('is_prepared'):
                     if self.application.is_prepared is not True:
                         self.application.decrementShareCounter(self.application.is_prepared)
-            except KeyError as err:
+            except KeyError:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
                 pass
@@ -2633,7 +2633,7 @@ class Job(GangaObject):
         # Fix some objects losing parent knowledge
         src_dict = other_job.__dict__
         for key, val in src_dict.items():
-            this_attr = getattr(other_job, key)
+            getattr(other_job, key)
 
 
 class JobTemplate(Job):
