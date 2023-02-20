@@ -496,13 +496,8 @@ under certain conditions; type license() for details.
         from GangaCore.Utility.Config.Config import getConfig
         logger = getLogger('ReleaseNotes')
         if getConfig('Configuration')['ReleaseNotes'] is True:
-            packages = map(
-                lambda x: 'ganga/ganga/'
-                + x,
-                filter(
-                    lambda x: x != '',
-                    ['GangaCore']
-                    + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
+            packages = map(lambda x: 'ganga/ganga/' + x, filter(lambda x: x != '',
+                           ['GangaCore'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
             pathname = os.path.join(os.path.dirname(__file__), '..', '..',
                                     'GangaRelease', 'ReleaseNotes-%s' % _gangaVersion)
 
@@ -900,7 +895,7 @@ under certain conditions; type license() for details.
         logger.debug("Import plugins")
         try:
             # load Ganga system plugins...
-            pass
+            from GangaCore.Runtime import plugins
         except Exception as x:
             logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', x)
             logger.exception(x)
