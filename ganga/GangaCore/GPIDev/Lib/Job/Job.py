@@ -759,7 +759,7 @@ class Job(GangaObject):
         def __init__(self, *states):
             self.states = {}
             for s in states:
-                assert(s.state not in self)
+                assert (s.state not in self)
                 self[s.state] = s
 
     status_graph = {'new': Transitions(State('submitting', 'j.submit()', hook='monitorSubmitting_hook'),
@@ -1315,7 +1315,7 @@ class Job(GangaObject):
         """
 
         pathStart = filename.split(os.sep)[0]
-        if(self.status in ['running', 'submitted']) and (pathStart != ".."):
+        if (self.status in ['running', 'submitted']) and (pathStart != ".."):
             subjob_num = len(self.subjobs)
             if subjob_num == 0:
                 self.backend.peek(filename=filename, command=command)
@@ -1886,7 +1886,7 @@ class Job(GangaObject):
         from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 
         try:
-            assert(
+            assert (
                 self.subjobs in [[], GangaList()] or (
                     (isType(
                         self.subjobs, JobRegistrySliceProxy) or isType(
