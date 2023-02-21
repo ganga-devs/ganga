@@ -90,7 +90,7 @@ install_requires=[
     'gunicorn>=20.0.4',
     'Flask-Login>=0.5.0',
     'Flask-SocketIO==4.3.1',
-    'Werkzeug==2.0.3',
+    'Werkzeug==2.2.3',
     'SQLAlchemy==1.3.19',
     "docker",
     "pymongo",
