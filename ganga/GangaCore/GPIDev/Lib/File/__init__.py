@@ -25,7 +25,6 @@ def getFileConfigKeys():
     keys = list(getConfig('Output').options.keys())
     keys.remove('PostProcessLocationsFileName')
     keys.remove('ForbidLegacyInput')
-    keys.remove('ForbidLegacyOutput')
     keys.remove('AutoRemoveFilesWithJob')
     keys.remove('AutoRemoveFileTypes')
     keys.remove('FailJobIfNoOutputMatched')

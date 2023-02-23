@@ -2558,10 +2558,6 @@ class Job(GangaObject):
 
             if value != []:
 
-                if getConfig('Output')['ForbidLegacyOutput']:
-                    logger.error('Use of job.outputsandbox is forbidden, please use job.outputfiles')
-                    return
-
                 if self.outputfiles:
                     logger.error('job.outputfiles is set, you can\'t set job.outputsandbox')
                     return
@@ -2583,10 +2579,6 @@ class Job(GangaObject):
         elif attr == 'outputdata':
 
             if value is not None:
-
-                if getConfig('Output')['ForbidLegacyOutput']:
-                    logger.error('Use of job.outputdata is forbidden, please use job.outputfiles')
-                    return
 
                 if self.outputfiles:
                     logger.error('job.outputfiles is set, you can\'t set job.outputdata')

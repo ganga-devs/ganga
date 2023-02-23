@@ -1,6 +1,6 @@
 # System Imports
 import os
-import re
+# import re
 import inspect
 import getpass
 import subprocess
@@ -121,8 +121,8 @@ conf_config.addOption('used_versions_path', '~/.cache/Ganga/',
                       'Path to the directory to store the file listing the used ganga versions')
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
                       ('Location of local job repositories and workspaces. '
-                      'Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point '
-                      'to the shared file system directory.'), filter=GangaCore.Utility.Config.expandvars)
+                       'Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point '
+                       'to the shared file system directory.'), filter=GangaCore.Utility.Config.expandvars)
 conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML, Database')
 conf_config.addOption('lockingStrategy', 'UNIX',
                       'Type of locking strategy which can be used. UNIX or FIXED . default = UNIX')
@@ -234,9 +234,12 @@ gpi_config.addOption('job_submit_keep_on_fail', False,
 poll_config = makeConfig('PollThread', 'background job status monitoring and output retrieval')
 poll_config.addOption('repeat_messages', False,
                       'if 0 then log only once the errors for a given backend and do not repeat them anymore')
-poll_config.addOption('autostart', True, ('enable monitoring automatically at startup, '
-                                          'in script mode monitoring disabled by default, in interactive mode it is enabled'),
-                       type=type(True))  # enable monitoring on startup
+poll_config.addOption(
+    'autostart',
+    True,
+    ('enable monitoring automatically at startup, '
+     'in script mode monitoring disabled by default, in interactive mode it is enabled'),
+    type=type(True))  # enable monitoring on startup
 poll_config.addOption('autostart_monThreads', True, 'enable populating of the monitoring worker threads')
 poll_config.addOption('enable_multiThreadMon', True, 'enable multiple threads to be used for running monitoring tasks')
 poll_config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
@@ -568,7 +571,7 @@ pbs_config.addOption('queue_name', 'PBS_QUEUE', "Name of environment with queue 
 pbs_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 pbs_config.addOption('submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
-pbs_config.addOption('submit_res_pattern', '^(?P<id>\\d*)\.pbs\\s*',
+pbs_config.addOption('submit_res_pattern', r'^(?P<id>\d*)\.pbs\s*',
                      "String pattern for replay from the submit command")
 
 pbs_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
@@ -730,9 +733,10 @@ slurm_config.addOption('timeout', 600,
                         'Heartbeat is touched every 30s so do not set this below 120 or so.'))
 
 # illegal substring substition in job names
-slurm_config.addOption('jobnamesubstitution', [
-], ("A list containing (1) a regular expression used to substitute illegal substrings in a job name, "
-"and (2) the substring to replace such occurences with."))
+slurm_config.addOption('jobnamesubstitution',
+                       [],
+                       ("A list containing (1) a regular expression used to substitute illegal substrings in a job name, "
+                        "and (2) the substring to replace such occurences with."))
 
 
 # ------------------------------------------------
@@ -771,9 +775,6 @@ output_config.addOption('PostProcessLocationsFileName', '__postprocesslocations_
 
 output_config.addOption('FailJobIfNoOutputMatched', True,
                         'if True, a job will be marked failed if output is asked for but not found.')
-
-output_config.addOption('ForbidLegacyOutput', True,
-                        'if True, writing to the job outputdata and outputsandbox fields will be forbidden')
 
 output_config.addOption('ForbidLegacyInput', True, 'if True, writing to the job inputsandbox field will be forbidden')
 

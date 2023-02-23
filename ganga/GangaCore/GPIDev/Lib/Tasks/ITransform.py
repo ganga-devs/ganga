@@ -14,45 +14,197 @@ import time
 import os
 from GangaCore.GPIDev.Lib.Tasks.ITask import addInfoString
 from GangaCore.GPIDev.Lib.Tasks.common import getJobByID
-from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-from GangaCore.GPIDev.Lib.File.File import File
+# from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+# from GangaCore.GPIDev.Lib.File.File import File
 
 logger = getLogger()
 
 
 class ITransform(GangaObject):
-    _schema = Schema(Version(1, 0), {
-        'status': SimpleItem(defvalue='new', protected=1, copyable=1, doc='Status - running, pause or completed', typelist=[str]),
-        'name': SimpleItem(defvalue='Simple Transform', doc='Name of the transform (cosmetic)', typelist=[str]),
-        'application': ComponentItem('applications', defvalue=None, optional=1, load_default=False, doc='Application of the Transform.'),
-        'inputsandbox': FileItem(defvalue=[], sequence=1, doc="list of File objects shipped to the worker node "),
-        'outputsandbox': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc="list of filenames or patterns shipped from the worker node"),
-        'backend': ComponentItem('backends', defvalue=None, optional=1, load_default=False, doc='Backend of the Transform.'),
-        'splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter used on each unit of the Transform.'),
-        'postprocessors': ComponentItem('postprocessor', defvalue=None, doc='list of postprocessors to run after job has finished'),
-        'merger': ComponentItem('mergers', defvalue=None, hidden=1, copyable=0, load_default=0, optional=1, doc='Merger to be done over all units when complete.'),
-        'unit_merger': ComponentItem('mergers', defvalue=None, load_default=0, optional=1, doc='Merger to be copied and run on each unit separately.'),
-        'copy_output': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, doc='The dataset to copy all units output to, e.g. Grid dataset -> Local Dataset'),
-        'unit_copy_output': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, doc='The dataset to copy each individual unit output to, e.g. Grid dataset -> Local Dataset'),
-        'run_limit': SimpleItem(defvalue=8, doc='Number of times a partition is tried to be processed.', protected=1, typelist=[int]),
-        'minor_run_limit': SimpleItem(defvalue=3, doc='Number of times a unit can be resubmitted', protected=1, typelist=[int]),
-        'major_run_limit': SimpleItem(defvalue=3, doc='Number of times a junit can be rebrokered', protected=1, typelist=[int]),
-        'units': ComponentItem('units', defvalue=[], sequence=1, copyable=1, doc='list of units'),
-        'inputdata': ComponentItem('datasets', defvalue=[], sequence=1, protected=1, optional=1, load_default=False, doc='Input datasets to run over'),
-        'outputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Output dataset template'),
-        'inputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will act as input files for a job"),
-        'outputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
-        'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1),
-        'rebroker_on_job_fail': SimpleItem(defvalue=True, doc='Rebroker if too many minor resubs'),
-        'abort_loop_on_submit': SimpleItem(defvalue=True, doc='Break out of the Task Loop after submissions'),
-        'required_trfs': SimpleItem(defvalue=[], typelist=[int], sequence=1, doc="IDs of transforms that must complete before this unit will start. NOTE DOESN'T COPY OUTPUT DATA TO INPUT DATA. Use TaskChainInput Dataset for that."),
-        'chain_delay': SimpleItem(defvalue=0, doc='Minutes delay between a required/chained unit completing and starting this one', protected=0, typelist=[int]),
-        'submit_with_threads': SimpleItem(defvalue=False, doc='Use Ganga Threads for submission'),
-        'max_active_threads': SimpleItem(defvalue=10, doc='Maximum number of Ganga Threads to use. Note that the number of simultaneous threads is controlled by the queue system (default is 5)'),
-        'info': SimpleItem(defvalue=[], typelist=[str], protected=1, sequence=1, doc="Info showing status transitions and unit info"),
-        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Transform', typelist=[int]),
-        # 'force_single_unit' : SimpleItem(defvalue=False, doc='Force all input data into one Unit'),
-    })
+    _schema = Schema(
+        Version(1, 0),
+        {
+            'status': SimpleItem(
+                defvalue='new',
+                protected=1,
+                copyable=1,
+                doc='Status - running, pause or completed',
+                typelist=[str]
+            ),
+            'name': SimpleItem(
+                defvalue='Simple Transform',
+                doc='Name of the transform (cosmetic)',
+                typelist=[str]
+            ),
+            'application': ComponentItem(
+                'applications',
+                defvalue=None,
+                optional=1,
+                load_default=False,
+                doc='Application of the Transform.'
+            ),
+            'inputsandbox': FileItem(
+                defvalue=[],
+                sequence=1,
+                doc="list of File objects shipped to the worker node "
+            ),
+            'outputsandbox': SimpleItem(
+                defvalue=[],
+                typelist=[str],
+                sequence=1,
+                doc="list of filenames or patterns shipped from the worker node"
+            ),
+            'backend': ComponentItem(
+                'backends',
+                defvalue=None,
+                optional=1,
+                load_default=False,
+                doc='Backend of the Transform.'
+            ),
+            'splitter': ComponentItem(
+                'splitters',
+                defvalue=None,
+                optional=1,
+                load_default=False,
+                doc='Splitter used on each unit of the Transform.'
+            ),
+            'postprocessors': ComponentItem(
+                'postprocessor',
+                defvalue=None,
+                doc='list of postprocessors to run after job has finished'
+            ),
+            'merger': ComponentItem(
+                'mergers',
+                defvalue=None,
+                hidden=1,
+                copyable=0,
+                load_default=0,
+                optional=1,
+                doc='Merger to be done over all units when complete.'
+            ),
+            'unit_merger': ComponentItem(
+                'mergers',
+                defvalue=None,
+                load_default=0,
+                optional=1,
+                doc='Merger to be copied and run on each unit separately.'
+            ),
+            'copy_output': ComponentItem(
+                'datasets',
+                defvalue=None,
+                load_default=0,
+                optional=1,
+                doc='The dataset to copy all units output to, e.g. Grid dataset -> Local Dataset'
+            ),
+            'unit_copy_output': ComponentItem(
+                'datasets',
+                defvalue=None,
+                load_default=0,
+                optional=1,
+                doc='The dataset to copy each individual unit output to, e.g. Grid dataset -> Local Dataset'
+            ),
+            'run_limit': SimpleItem(
+                defvalue=8,
+                doc='Number of times a partition is tried to be processed.',
+                protected=1,
+                typelist=[int]
+            ),
+            'minor_run_limit': SimpleItem(
+                defvalue=3,
+                doc='Number of times a unit can be resubmitted',
+                protected=1,
+                typelist=[int]
+            ),
+            'major_run_limit': SimpleItem(
+                defvalue=3,
+                doc='Number of times a junit can be rebrokered',
+                protected=1,
+                typelist=[int]
+            ),
+            'units': ComponentItem(
+                'units',
+                defvalue=[],
+                sequence=1,
+                copyable=1,
+                doc='list of units'
+            ),
+            'inputdata': ComponentItem(
+                'datasets',
+                defvalue=[],
+                sequence=1,
+                protected=1,
+                optional=1,
+                load_default=False,
+                doc='Input datasets to run over'
+            ),
+            'outputdata': ComponentItem(
+                'datasets',
+                defvalue=None,
+                optional=1,
+                load_default=False,
+                doc='Output dataset template'
+            ),
+            'inputfiles': GangaFileItem(
+                defvalue=[],
+                sequence=1,
+                doc="list of file objects that will act as input files for a job"
+            ),
+            'outputfiles': GangaFileItem(
+                defvalue=[],
+                sequence=1,
+                doc="list of OutputFile objects to be copied to all jobs"
+            ),
+            'metadata': ComponentItem(
+                'metadata',
+                defvalue=MetadataDict(),
+                doc='the metadata',
+                protected=1
+            ),
+            'rebroker_on_job_fail': SimpleItem(
+                defvalue=True,
+                doc='Rebroker if too many minor resubs'
+            ),
+            'abort_loop_on_submit': SimpleItem(
+                defvalue=True,
+                doc='Break out of the Task Loop after submissions'
+            ),
+            'required_trfs': SimpleItem(
+                defvalue=[],
+                typelist=[int],
+                sequence=1,
+                doc="IDs of transforms that must complete before this unit will start. "
+                "NOTE DOESN'T COPY OUTPUT DATA TO INPUT DATA. Use TaskChainInput Dataset for that."
+            ),
+            'chain_delay': SimpleItem(
+                defvalue=0,
+                doc='Minutes delay between a required/chained unit completing and starting this one',
+                protected=0,
+                typelist=[int]
+            ),
+            'submit_with_threads': SimpleItem(
+                defvalue=False,
+                doc='Use Ganga Threads for submission'
+            ),
+            'max_active_threads': SimpleItem(
+                defvalue=10,
+                doc='Maximum number of Ganga Threads to use. '
+                'Note that the number of simultaneous threads is controlled by the queue system (default is 10)'
+            ),
+            'info': SimpleItem(
+                defvalue=[],
+                typelist=[str],
+                protected=1,
+                sequence=1,
+                doc="Info showing status transitions and unit info"
+            ),
+            'id': SimpleItem(
+                defvalue=-1,
+                protected=1,
+                doc='ID of the Transform',
+                typelist=[int]
+            ),
+            # 'force_single_unit' : SimpleItem(defvalue=False, doc='Force all input data into one Unit'),
+        })
 
     _category = 'transforms'
     _name = 'ITransform'
@@ -125,7 +277,6 @@ class ITransform(GangaObject):
 
 
 # Special methods:
-
 
     def __init__(self):
         super(ITransform, self).__init__()
@@ -222,9 +373,14 @@ class ITransform(GangaObject):
         for unit in self.units:
             unit_status[unit.status] += 1
 
-        info_str = "Unit overview: %i units, %i new, %i hold, %i running, %i completed, %i bad. to_sub %i" % (len(self.units), unit_status["new"], unit_status["hold"],
-                                                                                                              unit_status["running"], unit_status["completed"],
-                                                                                                              unit_status["bad"], self._getParent().n_tosub())
+        info_str = "Unit overview: %i units, %i new, %i hold, %i running, %i completed, %i bad. to_sub %i" % (
+            len(self.units),
+            unit_status["new"],
+            unit_status["hold"],
+            unit_status["running"],
+            unit_status["completed"],
+            unit_status["bad"],
+            self._getParent().n_tosub())
 
         addInfoString(self, info_str)
 
@@ -238,7 +394,6 @@ class ITransform(GangaObject):
                 unit.start_time = time.time() + self.chain_delay * 60 - 1
 
         # loop over units and update them ((re)submits will be called here)
-        old_status = self.status
         unit_status_list = []
 
         # find submissions first
@@ -358,7 +513,7 @@ class ITransform(GangaObject):
         """Pause the task - the background thread will not submit new jobs from this task"""
         if self.status != "completed":
             self.updateStatus("pause")
-            #self.status = "pause"
+            # self.status = "pause"
             task = self._getParent()
             if task:
                 task.updateStatus()
@@ -445,7 +600,8 @@ class ITransform(GangaObject):
         # create copies of the Copy Output DS and add Unit name to path
         self.units[unit_id].copy_output = self.unit_copy_output.clone()
         self.units[unit_id].copy_output.local_location = os.path.join(
-            self.unit_copy_output.local_location, self.units[unit_id].name.replace(":", "_").replace(" ", "").replace(",", "_"))
+            self.unit_copy_output.local_location,
+            self.units[unit_id].name.replace(":", "_").replace(" ", "").replace(",", "_"))
 
     def __setattr__(self, attr, value):
 
@@ -490,11 +646,6 @@ class ITransform(GangaObject):
 
             if value != []:
 
-                if getConfig('Output')['ForbidLegacyOutput']:
-                    logger.error(
-                        'Use of ITransform.outputsandbox is forbidden, please use ITransform.outputfiles')
-                    return
-
                 if self.outputfiles != []:
                     logger.error(
                         'ITransform.outputfiles is set, you can\'t set ITransform.outputsandbox')
@@ -521,11 +672,6 @@ class ITransform(GangaObject):
         elif attr == 'outputdata':
 
             if value is not None:
-
-                if getConfig('Output')['ForbidLegacyOutput']:
-                    logger.error(
-                        'Use of ITransform.outputdata is forbidden, please use ITransform.outputfiles')
-                    return
 
                 if self.outputfiles != []:
                     logger.error(
