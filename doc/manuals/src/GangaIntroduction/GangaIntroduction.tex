@@ -6,7 +6,6 @@
 \def\python {\textsc{Python}\xspace}
 \def\ipython {\textsc{IPython}\xspace}
 \def\lhcb {LHC{\em b\/}\xspace}
-\def\Atlas {Atlas\xspace}
 \def\davinci {\textsc{DaVinci}\xspace}
 \def\majorv {5}
 \def\minorv {0\xspace}
@@ -96,7 +95,7 @@ sequence. For exmaple \texttt{jobs[-1]} gives the last job.
 run locally and in an distributed environment. It helps in the creation and
 configuration of analysis job, submission of the jobs and finally monitors job
 status and take care of saving any output. \ganga particularly aims to help
-with setting up jobs that run the main ATLAS and \lhcb applications, all of
+with setting up jobs that run the main \LHCb applications, all of
 which have been developed in the Gaudi C++ framework, and are configured by
 options files.
 
@@ -115,7 +114,7 @@ At CERN you will find \ganga installed in the directory
 /afs/cern.ch/sw/ganga/install/5.0.x/bin
 \end{verbatim}
 
-For detailed setup and installation procedure for \Atlas and \lhcb see \url{http://cern.ch/ganga/user}.
+For detailed setup and installation procedure for \LHCb see \url{http://cern.ch/ganga/user}.
 
 \begin{seealso}
   If you are not familiar with \python the following URL will be a big help:
@@ -499,7 +498,7 @@ the prompt) and reenter you will find all your jobs again.
 \ganga is implemented as a small core that provides you with the syntax as
 well as the functionality of storing and retrieving jobs. Everything else is
 achieved through particular plugins. Many of these are experiment specific
-(like Athena jobs for ATLAS and \davinci jobs for \lhcb) so only a few general
+(like Athena jobs for \davinci jobs for \lhcb) so only a few general
 ones will be described here. Look in the specific manuals for experiment
 specific plugins.
 
@@ -575,7 +574,7 @@ backend as in the examples above. For a complicated analysis job this is far
 from trivial though. To help on this \ganga provides a set of specific
 application backends. For \lhcb there are applications for all the standard
 \textsc{Gaudi} jobs (\textsc{Gauss}, \textsc{Bool}, \textsc{Brunel},
-\textsc{DaVinci}) while for ATLAS there is an \textsc{Athena} application.
+\textsc{DaVinci}).
 
 Too see the applications that are available in your current \ganga session
 simply type \texttt{plugins('applications')}. Notice that the output will depend on the
@@ -1615,11 +1614,6 @@ are available in {\tt ganga/ganga/GangaCore/scripts} directory in each \ganga re
 
 CVS \ganga scripts via the Web:
 \seeurl{http://isscvs.cern.ch/cgi-bin/viewcvs-all.cgi/ganga/ganga/GangaCore/scripts/?cvsroot=ganga}{}
-
-Atlas defines the {\tt athena} script for simplified submission of Athena jobs in {\tt ganga/ganga/GangaAtlas/scripts}.
-
-CVS \ganga Atlas scripts via the Web:
-\seeurl{http://isscvs.cern.ch/cgi-bin/cvsweb.cgi/ganga/ganga/GangaAtlas/scripts/?cvsroot=ganga}{}
 \end{seealso}
 
 The configuration  option {\tt [Configuration]  SCRIPTS_PATH } defines
@@ -1699,10 +1693,9 @@ section of a default configuration file is shown below.
 # Normally you should not worry about it.
 # If an element of the path is just a name (like in the example below)
 # then the plugins will be loaded using current python path. This means that
-# some packages such as GangaAtlas or GangaLHCb may be taken from the release area
+# some packages such as GangaLHCb may be taken from the release area
 # Examples:
-#RUNTIME_PATH = GangaAtlas
-#RUNTIME_PATH = GangaLHCb:GangaAtlas
+#RUNTIME_PATH = GangaLHCb
 :
 :
 #=======================================================================
@@ -1727,7 +1720,7 @@ The environment  variable GANGA_CONFIG_PATH specifies  the sequence of
 configuration   files  which   are  loaded   {\it  before}   the  user
 configuration  file.  These  files contain  the your  group  and local
 sitre settings.   The experiment-related settings are  defined in {\tt
-python/GangaLHCb/LHCb.ini} and {\tt python/GangaAtlas/Atlas.ini}.
+python/GangaLHCb/LHCb.ini}.
 
 \subsection{Configuration in GPI}
 
@@ -2024,7 +2017,7 @@ configures one of the existing plugins for your specific jobs.
   \seeurl{http://ganga.web.cern.ch/ganga/work/Ganga4/survival/tut/tut.html}{}
 \end{seealso}
 
-The \lhcb and ATLAS extensions are implemented as plugins to the \ganga core
+The \LHCb extensions are implemented as plugins to the \ganga core
 so you can use them as examples for how to develop your own plugin. Please get
 in contact with the development team if you need help.
 
@@ -2141,17 +2134,6 @@ The main changes in Ganga 5.0 release:
 \item type checking of job parameters and configuration options
 \end{itemize}
 
-\subsubsection{\Atlas}
-The main changes for \Atlas experiment include:
-\begin{itemize}
-\item Athena
-\begin{itemize}
-\item DQ2Dataset and all other routine support multiple datasets
-\texttt{j.inputdata.dataset=['datasetname1','datasetname2']}
-\item \texttt{DQ2Dataset.type='DQ2_COPY'} Copies input files and starts athena on the worker node one-by-one
-\item many small updates and bug-fixes
-\end{itemize}
-
 \item AthenaMC
 \begin{itemize}
 \item Added new production mode, template, to cover all transformations that
@@ -2191,8 +2173,6 @@ Compared to the last production release \ganga-4.1 the following new features ar
 \item new GangaPlotter utility and support for Root application and Interactive/PBS/SGE backends
 \item \lhcb bookkeeping database browser (enable with GangaLHCb and GangaGUI in the RUNTIME_PATH)
 \item \lhcb optimization in Dirac submission (shared sandboxes)
-\item Atlas DDM/DQ2 dataset integration and complete support for Athena analysis
-\item Atlas support for private Monte-Carlo productions (AthenaMC)
 \end{itemize}
 
 \subsection{New featues in \ganga-4.1}

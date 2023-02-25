@@ -208,7 +208,7 @@ jobs:
           chmod 400 ~/.globus/userkey.pem
       - name: Install DIRAC UI
         run: |
-          yum install -y git wget
+          yum install -y git wget which
           mkdir ~/dirac_ui
           cd ~/dirac_ui
           wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
@@ -217,11 +217,17 @@ jobs:
           DIRAC_VERSION=v7r2p10
           ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
           source ~/dirac_ui/bashrc
+          mkdir ~/.proxy
+          DIRAC_PROXY_INIT=`which dirac-proxy-init`
+          export PATH=~/.proxy:"$PATH"
+          printf '#!/bin/sh\necho abcd | '"$DIRAC_PROXY_INIT"' -p $@ \n' > ~/.proxy/dirac-proxy-init
+          chmod +x ~/.proxy/dirac-proxy-init
           dirac-proxy-init -x
           dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
           dirac-proxy-init -g gridpp_user -M
       - name: Test with pytest
-        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
+        run: |
+          /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
 
   dirac-integration:
     name: GangaDirac Integration
@@ -251,7 +257,7 @@ jobs:
           chmod 400 ~/.globus/userkey.pem
       - name: Install DIRAC UI
         run: |
-          yum install -y git wget
+          yum install -y git wget which
           mkdir ~/dirac_ui
           cd ~/dirac_ui
           wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
@@ -260,6 +266,11 @@ jobs:
           DIRAC_VERSION=v7r2p10
           ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
           source ~/dirac_ui/bashrc
+          mkdir ~/.proxy
+          DIRAC_PROXY_INIT=`which dirac-proxy-init`
+          export PATH=~/.proxy:"$PATH"
+          printf '#!/bin/sh\necho abcd | '"$DIRAC_PROXY_INIT"' -p $@ \n' > ~/.proxy/dirac-proxy-init
+          chmod +x ~/.proxy/dirac-proxy-init
           dirac-proxy-init -x
           dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
           dirac-proxy-init -g gridpp_user -M
@@ -267,7 +278,7 @@ jobs:
         run: |
           echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc
           echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ~/.gangarc
-          echo -e "[defaults_DiracProxy]\ngroup=gridpp_user" >> ~/.gangarc
+          echo -e "[defaults_DiracProxy]\ngroup=gridpp_user\nencodeDefaultProxyFileName=False" >> ~/.gangarc
       - name: Test with pytest
         env:
           GANGA_CONFIG_FILE: ~/.gangarc
@@ -353,7 +364,7 @@ jobs:
           GANGA_CONFIG_FILE: ~/.gangarc
         run: |
           source /cvmfs/lhcb.cern.ch/lib/LbEnv 2>&1
-          lhcb-proxy-init
+          echo abcd | lhcb-proxy-init -p
           . ~/venv/bin/activate
           python3 -m pytest --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/GPI
 
