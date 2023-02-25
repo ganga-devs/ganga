@@ -6,7 +6,7 @@ import traceback
 from GangaCore.Core.GangaRepository.Registry import RegistryKeyError, RegistryLockError
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
-from GangaCore.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus
+from GangaCore.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobObject, lazyLoadJobStatus
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 
@@ -160,15 +160,16 @@ class AsyncMonitoringService(GangaThread):
         submitted status.
         """
         for job_id in self.registry_slice.ids():
-            j = stripProxy(stripProxy(self.registry_slice(job_id)))
+            j = stripProxy(self.registry_slice(job_id))
             status = lazyLoadJobStatus(j)
-            if not j.subjobs and status == 'completing':
+            subjobs = lazyLoadJobObject(j, 'subjobs')
+            if not subjobs and status == 'completing':
                 j.status = 'running'
-            if j.subjobs:
-                if j.status == 'completing':
+            if subjobs:
+                if status == 'completing':
                     j.status = 'running'
                 for sj in j.subjobs:
-                    if sj.status == 'completing':
+                    if lazyLoadJobStatus(sj) == 'completing':
                         sj.status = 'running'
 
     def disable(self):
