@@ -14,8 +14,6 @@ import time
 import os
 from GangaCore.GPIDev.Lib.Tasks.ITask import addInfoString
 from GangaCore.GPIDev.Lib.Tasks.common import getJobByID
-# from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
-# from GangaCore.GPIDev.Lib.File.File import File
 
 logger = getLogger()
 
