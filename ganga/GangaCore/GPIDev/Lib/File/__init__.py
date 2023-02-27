@@ -93,7 +93,7 @@ def string_file_shortcut(v, item):
                 try:
                     from GangaDirac.Lib.Files.DiracFile import DiracFile
                     return stripProxy(DiracFile._proxyClass(v))
-                except:
+                except BaseException:
                     GangaCore.Utility.logging.log_unknown_exception()
                     pass
 
