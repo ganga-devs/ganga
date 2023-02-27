@@ -73,7 +73,7 @@ def findOutputFileTypeByFileName(filename):
         #    filename, str(matchKeys), matchKeys[-1]))
         return matchKeys[-1]
     else:
-        #logger.debug("File name pattern %s is not matched" % filename)
+        # logger.debug("File name pattern %s is not matched" % filename)
         return None
 
 
