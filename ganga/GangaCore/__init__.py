@@ -1,6 +1,5 @@
 # System Imports
 import os
-# import re
 import inspect
 import getpass
 import subprocess
