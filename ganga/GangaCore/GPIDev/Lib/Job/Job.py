@@ -168,15 +168,6 @@ class JobInfo(GangaObject):
         self.submit_counter += 1
 
 
-def _outputfieldCopyable():
-    if 'ForbidLegacyOutput' in getConfig('Output'):
-        if getConfig('Output')['ForbidLegacyOutput']:
-            outputfieldCopyable = 0
-    else:
-        outputfieldCopyable = 1
-    return outputfieldCopyable
-
-
 class Job(GangaObject):
 
     """Job is an interface for submision, killing and querying the jobs :-).
@@ -250,7 +241,7 @@ class Job(GangaObject):
                 defvalue=[],
                 typelist=[str],
                 sequence=1,
-                copyable=_outputfieldCopyable(),
+                copyable=False,
                 doc="list of filenames or patterns shipped from the worker node"
             ),
             'info': ComponentItem(
@@ -353,7 +344,7 @@ class Job(GangaObject):
                 defvalue=None,
                 load_default=0,
                 optional=1,
-                copyable=_outputfieldCopyable(),
+                copyable=False,
                 doc='dataset definition '
                 '(typically this is specific either to an application, a site or the virtual organization'
             ),
@@ -2567,10 +2558,6 @@ class Job(GangaObject):
 
             if value != []:
 
-                if getConfig('Output')['ForbidLegacyOutput']:
-                    logger.error('Use of job.outputsandbox is forbidden, please use job.outputfiles')
-                    return
-
                 if self.outputfiles:
                     logger.error('job.outputfiles is set, you can\'t set job.outputsandbox')
                     return
@@ -2592,10 +2579,6 @@ class Job(GangaObject):
         elif attr == 'outputdata':
 
             if value is not None:
-
-                if getConfig('Output')['ForbidLegacyOutput']:
-                    logger.error('Use of job.outputdata is forbidden, please use job.outputfiles')
-                    return
 
                 if self.outputfiles:
                     logger.error('job.outputfiles is set, you can\'t set job.outputdata')
