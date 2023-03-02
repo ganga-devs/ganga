@@ -1,5 +1,6 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from itertools import chain
 import functools
 import traceback
 
@@ -159,12 +160,17 @@ class AsyncMonitoringService(GangaThread):
         Check for jobs that may have been interrupted for completing and revert them back to the
         submitted status.
         """
-        for job_id in self.registry_slice.ids():
-            j = stripProxy(self.registry_slice(job_id))
+        running_slice = self.registry_slice.select(status='running')
+        completing_slice = self.registry_slice.select(status='completing')
+        submitted_slice = self.registry_slice.select(status='submitted')
+
+        for job in chain(running_slice, completing_slice, submitted_slice):
+            j = stripProxy(self.registry_slice(job.id))
             status = lazyLoadJobStatus(j)
             subjobs = lazyLoadJobObject(j, 'subjobs')
             if not subjobs and status == 'completing':
                 j.status = 'running'
+                continue
             if subjobs:
                 if status == 'completing':
                     j.status = 'running'
