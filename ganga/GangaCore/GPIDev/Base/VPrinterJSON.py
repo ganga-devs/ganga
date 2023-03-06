@@ -60,6 +60,9 @@ def full_print_json(obj, out=None, interactive=False):
 
     _obj = stripProxy(obj)
 
+    # wrap everything in {"output" : ... }
+    print("{\"output\" : ", file=out)
+
     if isType(_obj, GangaList):
         obj_len = len(_obj)
         if obj_len == 0:
@@ -80,15 +83,14 @@ def full_print_json(obj, out=None, interactive=False):
             outString += ", ".join(outStringList)
             outString += "]"
             print(outString, end=" ", file=out)
-        return
-
-    if isProxy(obj) and isinstance(_obj, GangaObject):
+    elif isProxy(obj) and isinstance(_obj, GangaObject):
         sio = StringIO()
         runProxyMethod(obj, "printTreeJSON", sio, interactive)
         print(sio.getvalue(), end=" ", file=out)
     else:
         print(wrapStringInQuotes(str(_obj)), end=" ", file=out)
 
+    print("}", file=out)
 
 class VPrinterJSON(object):
     # Arguments:
