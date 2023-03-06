@@ -184,6 +184,10 @@ def manualExportToGPI(my_interface=None):
     from GangaCore.GPIDev.Base.VPrinter import full_print
     exportToInterface(my_interface, 'full_print', full_print, 'Functions')
 
+    # export full_print_json
+    from GangaCore.GPIDev.Base.VPrinterJSON import full_print_json
+    exportToInterface(my_interface, 'full_print_json', full_print_json, 'Functions')
+
     import GangaCore.GPIDev.Lib.Config
     exportToInterface(my_interface, 'config', GangaCore.GPIDev.Lib.Config.config,
                       'Objects', 'access to Ganga configuration')

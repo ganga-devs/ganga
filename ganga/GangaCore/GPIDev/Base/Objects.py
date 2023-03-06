@@ -29,7 +29,7 @@ from GangaCore.Utility.Profiling import cpu_profiler, mem_profiler, call_counter
 
 
 def _getName(obj):
-    """ Return the name of an object based on what we prioritise 
+    """ Return the name of an object based on what we prioritise
     Name is defined as the first in the list of:
     obj._name, obj.__name__, obj.__class__.__name__ or str(obj)
     Args:
@@ -212,10 +212,20 @@ class Node(object, metaclass=abc.ABCMeta):
         This method will print a full tree which contains a full description of the class which of interest
         Args:
             f (stream): file-like output stream
-            sel (str): Selection to display 
+            sel (str): Selection to display
         """
         from GangaCore.GPIDev.Base.VPrinter import VPrinter
         self.accept(VPrinter(f, sel))
+
+    def printTreeJSON(self, f=None, sel=''):
+        """
+        This method will print a full tree which contains a full description of the class which of interest
+        Args:
+            f (stream): file-like output stream
+            sel (str): Selection to display
+        """
+        from GangaCore.GPIDev.Base.VPrinterJSON import VPrinterJSON
+        self.accept(VPrinterJSON(f, sel))
 
     def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection='', interactive=False):
         """If this method is overridden, the following should be noted:
