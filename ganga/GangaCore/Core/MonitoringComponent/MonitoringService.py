@@ -21,7 +21,7 @@ async def log_exceptions(awaitable):
     try:
         return await awaitable
     except Exception:
-        traceback.print_exc()
+        log.warn(traceback.format_exc())
 
 
 class AsyncMonitoringService(GangaThread):
