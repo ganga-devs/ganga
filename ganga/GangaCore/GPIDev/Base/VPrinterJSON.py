@@ -133,7 +133,7 @@ class VPrinterJSON(object):
             print(
                 '{ "type" : ',
                 wrapStringInQuotes(node._schema.name),
-                ',\n"attributes:" : {',
+                ',\n"attributes" : {',
                 file=self.out,
             )
         else:
