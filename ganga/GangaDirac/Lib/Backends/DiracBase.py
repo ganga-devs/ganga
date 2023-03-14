@@ -1,6 +1,6 @@
 # \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """The Ganga backendhandler for the Dirac system."""
-
+ 
 # \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import re
@@ -639,7 +639,7 @@ class DiracBase(IBackend):
                                         re.S).search(script).group(0)
             else:
                 newScript += re.compile(r'%s.*?%s' %
-                                       (start, r"resultdict.update\({sjNo : result\['Value'\]}\)"),
+                                        (start, r"resultdict.update\({sjNo : result\['Value'\]}\)"),
                                         re.S).search(script).group(0)
             newScript += '\noutput(resultdict)'
 
