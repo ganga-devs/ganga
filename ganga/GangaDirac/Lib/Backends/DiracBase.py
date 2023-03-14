@@ -1208,9 +1208,8 @@ class DiracBase(IBackend):
             job.updateStatus('failed')
             if job.master:
                 job.master.updateMasterJobStatus()
-
             # if requested try downloading outputsandbox anyway
-            if configDirac['failed_sandbox_download'] and not job.backend.status == 'Killed':
+            if configDirac['failed_sandbox_download'] and not job.backend.status in ['Killed', 'Unknown: No status for Job']:
                 execute("getOutputSandbox(%d,'%s', %s)" % (job.backend.id, job.getOutputWorkspace().getPath(),
                         job.backend.unpackOutputSandbox), cred_req=job.backend.credential_requirements)
         else:
