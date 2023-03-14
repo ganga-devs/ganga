@@ -639,7 +639,8 @@ class DiracBase(IBackend):
                                         re.S).search(script).group(0)
             else:
                 newScript += re.compile(r'%s.*?%s' %
-                                        (start, r"resultdict.update\({sjNo : result\['Value'\]}\)"), re.S).search(script).group(0)
+                                       (start, r"resultdict.update\({sjNo : result\['Value'\]}\)"),
+                                        re.S).search(script).group(0)
             newScript += '\noutput(resultdict)'
 
             # Modify the new script with the user settings
