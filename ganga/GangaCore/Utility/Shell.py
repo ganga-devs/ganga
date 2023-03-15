@@ -121,7 +121,6 @@ class Shell(object):
             execute('source {0} {1}'.format(setup, " ".join(setup_args)), shell=True, env=self.env, update_env=True)
 
         else:
-            env = os.environ
             self.env = os.environ 
 
         self.dirname = None
@@ -144,7 +143,7 @@ class Shell(object):
         if not soutfile:
             soutfile = tempfile.NamedTemporaryFile(mode='w+t', suffix='.out', delete=False).name
 
-        logger.info('Running shell command: %s' % cmd)
+        logger.debug('Running shell command: %s' % cmd)
         try:
             t0 = time.time()
             already_killed = False

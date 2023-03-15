@@ -139,8 +139,6 @@ def read_env_cache(cache_filename):
     logger.debug('Reading DIRAC cache file at %s', cache_filename)
     with open(cache_filename, 'r') as cache_file:
         env = json.load(cache_file)
-    # Convert unicode strings to byte strings
-#    env = dict((k.encode('utf-8'), v.encode('utf-8')) for k, v in env.items())
     return env
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
