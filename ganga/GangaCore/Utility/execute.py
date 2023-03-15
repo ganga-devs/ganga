@@ -36,7 +36,7 @@ def env_update_script(indent=''):
 import os
 import pickle as pickle
 with os.fdopen(###FD_WRITE###,'wb') as envpipe:
-    pickle.dump(dict(os.environ), envpipe, 2)
+    pickle.dump(os.environ, envpipe, 2)
 '''
     from GangaCore.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
