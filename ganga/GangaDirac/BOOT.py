@@ -87,7 +87,9 @@ def startDiracProcess():
     dirac_process.stdin.close()
 
     data = ''
-    # We have to wait a little bit for the subprocess to start the server so we try until the connection stops being refused. Set a limit of one minute.
+    # We have to wait a little bit for the subprocess to start the server so
+    # we try until the connection stops being refused. Set a limit of one
+    # minute.
     connection_timeout = time.time() + 60
     started = False
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -143,7 +145,7 @@ def diracAPI_interactive(connection_attempts=5):
         try:
             runClient()
             break
-        except:
+        except BaseException:
             if i == (connection_attempts - 1):
                 excpt = traceback.format_exc()
         finally:
@@ -197,7 +199,7 @@ def dumpObject(object, filename):
     try:
         with open(os.path.expandvars(os.path.expanduser(filename)), 'wb') as f:
             pickle.dump(stripProxy(object), f)
-    except:
+    except BaseException:
         logger.error("Problem when dumping file '%s': %s" % (filename, traceback.format_exc()))
 
 
@@ -214,7 +216,7 @@ def loadObject(filename):
     try:
         with open(os.path.expandvars(os.path.expanduser(filename)), 'rb') as f:
             r = pickle.load(f)
-    except:
+    except BaseException:
         logger.error("Problem when loading file '%s': %s" % (filename, traceback.format_exc()))
     else:
         return addProxy(r)
