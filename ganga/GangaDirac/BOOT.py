@@ -78,7 +78,6 @@ def startDiracProcess():
     dirac_process.stdin.write(str(rand_hash).encode("utf-8"))
     dirac_process.stdin.close()
 
-    data = ''
     # We have to wait a little bit for the subprocess to start the server so
     # we try until the connection stops being refused. Set a limit of one
     # minute.
@@ -114,6 +113,7 @@ def stopDiracProcess():
         dirac_process.kill()
         running_dirac_process = False
 
+
 exportToGPI('stopDiracProcess', stopDiracProcess, 'Functions')
 
 
@@ -140,6 +140,7 @@ def diracAPI_interactive(connection_attempts=5):
         finally:
             i += 1
     return excpt
+
 
 exportToGPI('diracAPI_interactive', diracAPI_interactive, 'Functions')
 
