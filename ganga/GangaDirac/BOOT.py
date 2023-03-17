@@ -8,15 +8,9 @@ import pickle
 import uuid
 from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
-from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
-#from GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
-#from GangaCore.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 logger = getLogger()
-#user_threadpool       = WorkerThreadPool()
-#monitoring_threadpool = WorkerThreadPool()
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
 def diracAPI(cmd, timeout=60, cred_req=None):
@@ -47,8 +41,6 @@ def diracAPI(cmd, timeout=60, cred_req=None):
 
 
 exportToGPI('diracAPI', diracAPI, 'Functions')
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 running_dirac_process = False
 dirac_process = None
@@ -97,7 +89,7 @@ def startDiracProcess():
         try:
             s.connect((HOST, PORT))
             started = True
-        except socket.error as serr:
+        except socket.error:
             time.sleep(1)
     if not started:
         raise GangaDiracError("Failed to start the Dirac server process!")
@@ -106,9 +98,8 @@ def startDiracProcess():
     dirac_command = dirac_command + getDiracCommandIncludes()
     dirac_command = dirac_command + end_trans
     s.sendall(dirac_command.encode("utf-8"))
-    data = s.recv(1024)
+    s.recv(1024)
     s.close()
-
 
 exportToGPI('startDiracProcess', startDiracProcess, 'Functions')
 
@@ -123,7 +114,6 @@ def stopDiracProcess():
         dirac_process.kill()
         running_dirac_process = False
 
-
 exportToGPI('stopDiracProcess', stopDiracProcess, 'Functions')
 
 
@@ -137,7 +127,6 @@ def diracAPI_interactive(connection_attempts=5):
     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
     getQueues().add(execute("execfile('%s')" % serverpath, timeout=None, shell=False))
 
-    # time.sleep(1)
     sys.stdout.write("\nType 'q' or 'Q' or 'exit' or 'exit()' to quit but NOT ctrl-D")
     i = 0
     excpt = None
@@ -152,10 +141,7 @@ def diracAPI_interactive(connection_attempts=5):
             i += 1
     return excpt
 
-
 exportToGPI('diracAPI_interactive', diracAPI_interactive, 'Functions')
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
 def diracAPI_async(cmd, timeout=120):
@@ -167,8 +153,6 @@ def diracAPI_async(cmd, timeout=120):
 
 
 exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
 def getDiracFiles():
@@ -185,8 +169,6 @@ def getDiracFiles():
 
 
 exportToGPI('getDiracFiles', getDiracFiles, 'Functions')
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
 def dumpObject(object, filename):
@@ -223,5 +205,3 @@ def loadObject(filename):
 
 
 exportToGPI('loadObject', loadObject, 'Functions')
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
