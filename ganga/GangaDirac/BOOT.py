@@ -74,7 +74,7 @@ def startDiracProcess():
     # Pass the port no as an argument to the popen
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'DiracProcess.py')
     popen_cmd = ['python', serverpath, str(PORT)]
-    dirac_process = subprocess.Popen(popen_cmd, env=getDiracEnv(), stdin=subprocess.PIPE)
+    dirac_process = subprocess.Popen(popen_cmd, env=getDiracEnv(), stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     global running_dirac_process
     running_dirac_process = (dirac_process.pid, PORT)
 
