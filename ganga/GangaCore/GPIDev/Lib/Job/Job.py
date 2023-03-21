@@ -2053,8 +2053,8 @@ class Job(GangaObject):
 
         if this_job_status == 'completing':
             msg = ('job %s is completing (may be downloading output), '
-            'do force_status("failed") and then remove() again' % self.getFQID(
-                '.'))
+                   'do force_status("failed") and then remove() again' % self.getFQID(
+                       '.'))
             logger.error(msg)
             raise JobError(msg)
 
