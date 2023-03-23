@@ -48,12 +48,16 @@ def load_config_files():
     """
     from GangaCore.Utility.Config import getConfig, setSessionValuesFromFiles
     from GangaCore.Runtime import GangaProgram
+
+    user_config = os.environ.get('GANGA_CONFIG_FILE') or os.path.expanduser('~/.gangarc')
+    config_files = GangaProgram.get_config_files(user_config)
+
     system_vars = {}
-    for opt in getConfig('System'):
-        system_vars[opt] = getConfig('System')[opt]
-        user_config = os.environ.get('GANGA_CONFIG_FILE') or os.path.expanduser('~/.gangarc')
-        config_files = GangaProgram.get_config_files(user_config)
-        setSessionValuesFromFiles(config_files, system_vars)
+    syscfg = getConfig('System')  
+    for opt in syscfg:
+        system_vars[opt] = syscfg[opt]
+
+    setSessionValuesFromFiles(config_files, system_vars)
 
 
 def clear_config():
