@@ -53,7 +53,7 @@ def load_config_files():
     config_files = GangaProgram.get_config_files(user_config)
 
     system_vars = {}
-    syscfg = getConfig('System')  
+    syscfg = getConfig('System')
     for opt in syscfg:
         system_vars[opt] = syscfg[opt]
 
