@@ -7,7 +7,7 @@ import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
-_gangaVersion = '8.4.2'
+_gangaVersion = '8.6.4'
 
 def version():
     return _gangaVersion
