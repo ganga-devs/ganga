@@ -116,7 +116,8 @@ inputfile =
                     'nd280ver':'',
                     'custom_list':'',
                     'db_time':'',
-                    'database_P6':''}
+                    'database_P6':'',
+                    'magnet_ecal_production6':''}
 
     ## Ignore options - options that are not essential and can be overlooked
     common_options_ignore={'comment':'','midas_file':'',
@@ -125,7 +126,8 @@ inputfile =
                            'version_number':'',
                            'custom_list':'',
                            'db_time':'',
-                           'database_P6':''}
+                           'database_P6':'',
+                           'magnet_ecal_production6':''}
 
     ### Raw Data Options: Dictionary of options specific to Raw data processing cfg files
     raw_options={ 'midas_file':'',
@@ -409,6 +411,12 @@ inputfile =
                 configfile += "num_events = " + self.options['num_events'] + "\n"
             configfile += "\n"
 
+        ### Geometry - if needed
+        if self.options['magnet_ecal_production6']:
+            configfile += '[geometry]\n'
+            configfile += 'magnet_ecal_production6 = ' + self.options['magnet_ecal_production6'] + '\n'
+            configfile += "\n"
+
         ### Analysis if corresponding options are present
         if self.options['enable_modules'] or self.options['disable_modules'] or \
                self.options['production'] or self.options['save_geometry']:
@@ -497,7 +505,12 @@ inputfile =
         ### Geometry
         configfile += "[geometry]\n"
         configfile += "baseline = " + self.options['baseline'] + "\n"
-        configfile += "p0d_water_fill = " + self.options['p0d_water_fill'] + "\n\n"
+        configfile += "p0d_water_fill = " + self.options['p0d_water_fill'] + "\n"
+        if self.options['magnet_ecal_production6']:
+            configfile += 'magnet_ecal_production6 = ' \
+                + self.options['magnet_ecal_production6']  + "\n"
+
+        configfile += "\n"
 
         ### nd280mc
         configfile += "[nd280mc]\n"
@@ -590,7 +603,12 @@ inputfile =
         ### Geometry
         configfile += "[geometry]\n"
         configfile += "baseline = " + self.options['baseline'] + "\n"
-        configfile += "p0d_water_fill = " + self.options['p0d_water_fill'] + "\n\n"
+        configfile += "p0d_water_fill = " + self.options['p0d_water_fill'] + "\n"
+        if self.options['magnet_ecal_production6']:
+            configfile += 'magnet_ecal_production6 = ' \
+                + self.options['magnet_ecal_production6']  + "\n"
+
+        configfile += "\n"
 
         ### Neutrino
         configfile += "[neutrino]\n"
