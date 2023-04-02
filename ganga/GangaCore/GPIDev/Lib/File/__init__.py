@@ -25,7 +25,6 @@ def getFileConfigKeys():
     keys = list(getConfig('Output').options.keys())
     keys.remove('PostProcessLocationsFileName')
     keys.remove('ForbidLegacyInput')
-    keys.remove('ForbidLegacyOutput')
     keys.remove('AutoRemoveFilesWithJob')
     keys.remove('AutoRemoveFileTypes')
     keys.remove('FailJobIfNoOutputMatched')
@@ -74,7 +73,7 @@ def findOutputFileTypeByFileName(filename):
         #    filename, str(matchKeys), matchKeys[-1]))
         return matchKeys[-1]
     else:
-        #logger.debug("File name pattern %s is not matched" % filename)
+        # logger.debug("File name pattern %s is not matched" % filename)
         return None
 
 
@@ -94,7 +93,7 @@ def string_file_shortcut(v, item):
                 try:
                     from GangaDirac.Lib.Files.DiracFile import DiracFile
                     return stripProxy(DiracFile._proxyClass(v))
-                except:
+                except BaseException:
                     GangaCore.Utility.logging.log_unknown_exception()
                     pass
 

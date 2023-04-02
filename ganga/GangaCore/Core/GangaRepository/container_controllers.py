@@ -1,8 +1,6 @@
 # TODO: Add progress bars, when pulling docker containers (stream logs to show progress?)
 
 import os
-import time
-import sys
 import docker
 import subprocess
 import gdown
@@ -13,9 +11,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.Config.Config import ConfigError
 from GangaCore.Utility.Virtualization import (
     checkDocker, checkUDocker,
-    checkSingularity, installUdocker
-)
-from GangaCore.Utility.Config import get_unique_name, get_unique_port
+    checkSingularity)
 from GangaCore.Utility.Decorators import repeat_while_none
 
 logger = logging.getLogger()
@@ -43,7 +39,6 @@ def mongo_processes():
     """
     Lists all the running processes on the system
     """
-    status_command = "ps -aux | grep mongod"
     output = subprocess.Popen(
         ['ps', 'aux'],
         stdout=subprocess.PIPE
@@ -238,7 +233,7 @@ def native_handler(database_config, action, gangadir):
     2. Database cannot be shut by ganga, citing the same reasons as above.
     """
     if action not in ["start", "quit"]:
-        raise NotImplementedError(f"Illegal Opertion on container")
+        raise NotImplementedError("Illegal Opertion on container")
     if action == "start":
         logger.info("Native Database detection, skipping startup")
     else:
@@ -279,14 +274,14 @@ def singularity_handler(database_config, action, gangadir):
     if not checkSingularity():
         raise Exception("Singularity seems to not be installed on the system.")
     if action not in ["start", "quit"]:
-        raise NotImplementedError(f"Illegal Opertion on container")
+        raise NotImplementedError("Illegal Opertion on container")
 
     has_correct_hash = check_sif_file_hash(sif_file)
     if not has_correct_hash:
         import sys
         logger.fatal((
-            f"sif_file at {sif_file} does not match the expected hash." +
-            " Delete it to automatically download the correct file."
+            f"sif_file at {sif_file} does not match the expected hash."
+            + " Delete it to automatically download the correct file."
         ))
         sys.exit(1)
 
@@ -318,7 +313,7 @@ def singularity_handler(database_config, action, gangadir):
                             if log['s'] == "E":
                                 logger.error(
                                     f"Singularity container could not start because of: {log['attr']['error']}")
-                except:
+                except BaseException:
                     pass
                 import sys
                 sys.exit(1)
@@ -354,17 +349,20 @@ def udocker_handler(database_config, action, gangadir):
     action: The action to be performed using the handler
     """
 
+    import shutil
+
+    fname = shutil.which('udocker') or os.path.join(os.path.expanduser("~"), "udocker", "bin", "udocker")
     bind_loc = create_mongodir(gangadir=gangadir)
     container_loc = os.path.join(
         UDOCKER_LOC, ".udocker", "containers", database_config["containerName"]
     )
-    stop_container = f"udocker rm {database_config['containerName']}"
+    stop_container = f"{fname} rm {database_config['containerName']}"
 
-    create_container = f"""udocker create \
+    create_container = f"""{fname} create \
     --name={database_config['containerName']} \
     {database_config['baseImage']}"""
 
-    start_container = f"""udocker run \
+    start_container = f"""{fname} run \
     --volume={bind_loc}/db:/data/db \
     --publish={database_config['port']}:27017 \
     {database_config['containerName']} --logpath mongod-ganga.log
@@ -374,7 +372,7 @@ def udocker_handler(database_config, action, gangadir):
         # if checkUDocker():
         raise Exception("Udocker seems to not be installed on the system.")
     if action not in ["start", "quit"]:
-        raise NotImplementedError(f"Illegal Opertion on container")
+        raise NotImplementedError("Illegal Opertion on container")
 
     if not os.path.exists(container_loc):
         logger.info(
@@ -459,7 +457,7 @@ def docker_handler(database_config, action, gangadir):
     if not checkDocker():
         raise Exception("Docker seems to not be installed on the system.")
     if action not in ["start", "quit"]:
-        raise NotImplementedError(f"Illegal Opertion on container")
+        raise NotImplementedError("Illegal Opertion on container")
 
     container_client = docker.from_env()
     if action == "start":
