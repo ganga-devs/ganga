@@ -518,11 +518,11 @@ class VTree(object):
         it = None
         if tag is not None:
             if str(type([])) in str(type(tag)):
-                it = self.__element__.getiterator()
+                it = self.__element__.iter()
             else:
-                it = self.__element__.getiterator(tag)
+                it = self.__element__.iter(tag)
         else:
-            it = self.__element__.getiterator()
+            it = self.__element__.iter()
         list = []
         for child in it:
             if self.__is__(child, tag, attrib, value):
@@ -763,7 +763,7 @@ class Schema(object):
                     self.__type_remove_namespace__[self.__uri__ + i] = i.lower()
                     self.__type_remove_namespace__[self.__ns__ + i] = i.lower()
 
-                for e in rt.getiterator(self.__uri__ + "element"):
+                for e in rt.iter(self.__uri__ + "element"):
                     try:
                         self.__tags__.add(e.attrib['name'])
                         # print 'adding tagelement'
@@ -774,7 +774,7 @@ class Schema(object):
                             self.__root__ = e.attrib['name']
                     except KeyError:
                         pass
-                for e in rt.getiterator(self.__uri__ + "simpleType"):
+                for e in rt.iter(self.__uri__ + "simpleType"):
                     try:
                         self.__types__.add(e.attrib['name'])
                         # print 'adding typelement'
@@ -782,7 +782,7 @@ class Schema(object):
                         # print 'added typelement'
                     except KeyError:
                         pass
-                for e in rt.getiterator(self.__uri__ + "complexType"):
+                for e in rt.iter(self.__uri__ + "complexType"):
                     try:
                         self.__types__.add(e.attrib['name'])
                         # print 'adding typelement'
@@ -790,7 +790,7 @@ class Schema(object):
                         # print 'added typelement'
                     except KeyError:
                         pass
-                for e in rt.getiterator(self.__uri__ + "attribute"):
+                for e in rt.iter(self.__uri__ + "attribute"):
                     try:
                         self.__attribs__.add(e.attrib['name'])
                         # print 'adding attribelement'
@@ -808,7 +808,7 @@ class Schema(object):
         # all entries must have type or base from list
         rt = self.__tree__.getroot()
         if rt:
-            for e in rt.getiterator():
+            for e in rt.iter():
                 if self.__uri__ not in e.tag:
                     __ElementTree__.dump(e)
                     raise NameError("unknown element, without namespace " + e.tag)
@@ -861,7 +861,7 @@ class Schema(object):
         except KeyError:
             # print 'not simple type, looking at children'
             try:
-                for ec in e.getiterator():
+                for ec in e.iter():
                     if 'restriction' in ec.tag or 'extension' in ec.tag:
                         # print 'found restriction'
                         try:
@@ -872,7 +872,7 @@ class Schema(object):
                     elif 'sequence' in ec.tag:
                         # print 'found sequence'
                         atype = []
-                        for ecc in ec.getiterator():
+                        for ecc in ec.iter():
                             if 'element' in ecc.tag:
                                 atype.append(self.__etype__(ecc))
                         # print 'returning', atype
@@ -980,7 +980,7 @@ class Schema(object):
             raise NameError(str(tag) + ' tag is not in the schema')
         enums = []
         for pref in [self.__ns__, self.__uri__]:
-            for ec in ele.getiterator(pref + 'enumeration'):
+            for ec in ele.iter(pref + 'enumeration'):
                 try:
                     enums.append(ec.attrib['value'])
                 except KeyError:
@@ -1013,9 +1013,9 @@ class Schema(object):
             if tag in self.__basetypes__:
                 return False
             raise NameError(str(tag) + ' tag is not in the schema')
-        for e in ele.getiterator(self.__ns__ + compound):
+        for e in ele.iter(self.__ns__ + compound):
             return True
-        for e in ele.getiterator(self.__uri__ + compound):
+        for e in ele.iter(self.__uri__ + compound):
             # print 'iterated'
             return True
         for atype in self.__types__:
@@ -1366,7 +1366,7 @@ class Schema(object):
                 return False
             raise NameError(str(tag) + ' tag is not in the schema')
         for pref in [self.__ns__, self.__uri__]:
-            for ec in ele.getiterator(pref + 'enumeration'):
+            for ec in ele.iter(pref + 'enumeration'):
                 return True
         for atype in self.__types__:
             if self.__etype__(ele) == atype:  # ele.attrib['type']==atype:
@@ -1439,7 +1439,7 @@ class Schema(object):
             raise NameError(str(tag) + ' tag is not in the schema')
         # print 'looking for tag'
         for pref in [self.__ns__, self.__uri__]:
-            for ec in ele.getiterator(pref + 'attribute'):
+            for ec in ele.iter(pref + 'attribute'):
                 for find in ['name', 'ref']:
                     try:
                         if ec.attrib[find] == att:
@@ -1464,7 +1464,7 @@ class Schema(object):
             raise NameError(str(tag) + ' tag is not in the schema')
         # print 'looking for tag'
         for pref in [self.__ns__, self.__uri__]:
-            for ec in ele.getiterator(pref + 'whiteSpace'):
+            for ec in ele.iter(pref + 'whiteSpace'):
                 # print 'iterating'
                 try:
                     self.__whitespace_cache__[tag] = ec.attrib['value']
@@ -1495,7 +1495,7 @@ class Schema(object):
             raise NameError(str(tag) + ' tag is not in the schema')
 
         for pref in [self.__ns__, self.__uri__]:
-            for ec in ele.getiterator(pref + 'attribute'):
+            for ec in ele.iter(pref + 'attribute'):
                 for find in ['name', 'ref']:
                     # print 'iterating'
                     try:
@@ -1526,7 +1526,7 @@ class Schema(object):
         # if self.Tag_isRoot(tag):
         #    atts=self.__rootattribs__.keys
         for pref in [self.__ns__, self.__uri__]:
-            for ec in ele.getiterator(pref + 'attribute'):
+            for ec in ele.iter(pref + 'attribute'):
                 for find in ['name', 'ref']:
                     try:
                         atts.append(ec.attrib[find])
@@ -1559,7 +1559,7 @@ class Schema(object):
         child = []
         # I iterate over everything looking for elements
         for pref in [self.__ns__, self.__uri__]:
-            for ec in ele.getiterator(pref + 'element'):
+            for ec in ele.iter(pref + 'element'):
                 if 'name' in ec.attrib:
                     if ec.attrib['name'] == tag:
                         continue
@@ -1601,7 +1601,7 @@ class Schema(object):
         if ele is None:
             raise NameError(str(tag) + ' tag is not allowed children')
         for pref in [self.__ns__, self.__uri__]:
-            for ec in ele.getiterator(pref + 'element'):
+            for ec in ele.iter(pref + 'element'):
                 try:
                     if ec.attrib['name'] == child:
                         # print 'found child'
