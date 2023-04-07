@@ -945,8 +945,8 @@ class Schema(object):
     def __list2str__(self, list):
         '''internal method cast a list to a string separated by spaces'''
         rets = ''
-        for l in list:
-            rets += str(l) + ' '
+        for _l in list:
+            rets += str(_l) + ' '
         return rets.rstrip()
 
     def __constraint__(self, tag, constr):
@@ -1425,7 +1425,7 @@ class Schema(object):
         '''is this attribute required?'''
         try:
             if self.Tag_isRoot(tag) and att in self.__rootattribs__:
-                return(att == list(self.__rootattribs__.keys())[0])
+                return (att == list(self.__rootattribs__.keys())[0])
 
             ele = self.__attribelement__[att]
             if ele.attrib['use'] == 'required':
