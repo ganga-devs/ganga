@@ -210,7 +210,8 @@ inputfile =
     # MC
     mc_options = {'module_list_cmt': 'nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
                   'module_list_git': 'nd280Geant4Sim detResponseSim eventCalibMC eventRecon eventAnalysis',
-                  'inputfile': '/lustre/ific.uv.es/sw/t2k.org/nd280Soft/nd280computing/processing_scripts/oa_nt_beam_90210013-0100_3ravbul66rum_numc_000_prod004magnet201011waterb.root',
+                  'inputfile': ('/lustre/ific.uv.es/sw/t2k.org/nd280Soft/nd280computing/processing_scripts/'
+                                'oa_nt_beam_90210013-0100_3ravbul66rum_numc_000_prod004magnet201011waterb.root'),
                   'run_number': '90210000',
                   'subrun': '0',
                   'baseline': '2010-11',
@@ -553,7 +554,8 @@ inputfile =
             if self.options['nd280ver'][0] == 'v':
                 configfile += "module_list = sandPropagate nd280MC elecSim oaCalibMC  oaRecon oaAnalysis\n"
             else:
-                configfile += "module_list = sandPropagate nd280Geant4Sim detResponseSim eventCalibMC  eventRecon eventAnalysis\n"
+                configfile += ("module_list = sandPropagate nd280Geant4Sim detResponseSim eventCalibMC  "
+                               "eventRecon eventAnalysis\n")
 
             configfile += "inputfile = " + self.options['inputfile'] + "\n\n"
         else:
