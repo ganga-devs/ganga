@@ -223,7 +223,7 @@ def execute(command,
         cred_req (ICredentialRequirement): What credentials does this call need
         new_subprocess(bool): Do we want to do this in a fresh subprocess or just connect to the DIRAC server process?
     """
-
+    print('wassup')
     if cwd is None:
         # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
         # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed

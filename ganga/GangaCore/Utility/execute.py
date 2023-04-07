@@ -183,7 +183,7 @@ def execute(command,
         eval_includes (str): An string used to construct an environment which, if passed, is used to eval the stdout into a python object
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
     """
-
+    print('aaaaaaaa')
     if update_env and env is None:
         raise GangaException('Cannot update the environment if None given.')
 
@@ -199,18 +199,19 @@ def execute(command,
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
             command_update, env_file_pipes = env_update_script()
+            print('command_update: ', command_update)
             command += ''';python -c "import base64;exec(base64.b64decode(%s))"''' % base64.b64encode(
-                command_update.encode("utf-8"))
+                command_update)
 
     # Some minor changes to cleanup the getting of the env
     if env is None:
         env = os.environ
-
+    print('about to p')
     # Construct the object which will contain the environment we want to run the command in
     p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          universal_newlines=True, close_fds=False)
-
+    print('setup p')
     # This is where we store the output
     thread_output = {}
 
@@ -225,12 +226,12 @@ def execute(command,
         update_pkl_thread = update_thread(pkl_file_pipes, thread_output, pkl_output_key, require_output=False)
 
     # Execute the main command of interest
-    logger.debug("Executing Command:\n'%s'" % str(command))
+    logger.info("Executing Command:\n'%s'" % str(command))
     stdout, stderr = p.communicate(command)
 
     # Close the timeout watching thread
-    logger.debug("stdout: %s" % stdout)
-    logger.debug("stderr: %s" % stderr)
+    logger.info("stdout: %s" % stdout)
+    logger.info("stderr: %s" % stderr)
 
     timer.cancel()
     if timeout is not None:
