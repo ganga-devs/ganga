@@ -140,22 +140,11 @@ class RTHandler(IRuntimeHandler):
         return c
 
 
-class LCGRTHandler(IRuntimeHandler):
-    def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
-        from GangaCore.Lib.LCG import LCGJobConfig
-
-        c = LCGJobConfig(app.exe, app.inputs, app.args, app.outputs, app.envs)
-        c.monitoring_svc = mc['GangaTutorial']
-
-        return c
-
-
 allHandlers.add('PrimeFactorizer', 'LSF', RTHandler)
 allHandlers.add('PrimeFactorizer', 'Local', RTHandler)
 allHandlers.add('PrimeFactorizer', 'PBS', RTHandler)
 allHandlers.add('PrimeFactorizer', 'SGE', RTHandler)
 allHandlers.add('PrimeFactorizer', 'Condor', RTHandler)
-allHandlers.add('PrimeFactorizer', 'LCG', LCGRTHandler)
 allHandlers.add('PrimeFactorizer', 'TestSubmitter', RTHandler)
 allHandlers.add('PrimeFactorizer', 'Interactive', RTHandler)
 allHandlers.add('PrimeFactorizer', 'Batch', RTHandler)

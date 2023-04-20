@@ -165,13 +165,6 @@ class RTHandler(IRuntimeHandler):
         from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         return StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
-        
-
-class LCGRTHandler(IRuntimeHandler):
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from GangaCore.Lib.LCG import LCGJobConfig
-
-        return LCGJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -187,12 +180,8 @@ allHandlers.add('TRExPlusOAAnalysis','PBS', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','SGE', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','Slurm', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','Condor', RTHandler)
-allHandlers.add('TRExPlusOAAnalysis','LCG', LCGRTHandler)
 allHandlers.add('TRExPlusOAAnalysis','gLite', gLiteRTHandler)
 allHandlers.add('TRExPlusOAAnalysis','TestSubmitter', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','Interactive', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','Batch', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis','Cronus', RTHandler)
-allHandlers.add('TRExPlusOAAnalysis','Remote', LCGRTHandler)
-allHandlers.add('TRExPlusOAAnalysis','CREAM', LCGRTHandler)
-

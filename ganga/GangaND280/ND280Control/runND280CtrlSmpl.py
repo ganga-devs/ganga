@@ -155,13 +155,6 @@ class RTHandler(IRuntimeHandler):
 
         c = StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
         return c
-        
-
-class LCGRTHandler(IRuntimeHandler):
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from GangaCore.Lib.LCG import LCGJobConfig
-
-        return LCGJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -177,12 +170,8 @@ allHandlers.add('runND280CtrlSmpl','PBS', RTHandler)
 allHandlers.add('runND280CtrlSmpl','SGE', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Slurm', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Condor', RTHandler)
-allHandlers.add('runND280CtrlSmpl','LCG', LCGRTHandler)
 allHandlers.add('runND280CtrlSmpl','gLite', gLiteRTHandler)
 allHandlers.add('runND280CtrlSmpl','TestSubmitter', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Interactive', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Batch', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Cronus', RTHandler)
-allHandlers.add('runND280CtrlSmpl','Remote', LCGRTHandler)
-allHandlers.add('runND280CtrlSmpl','CREAM', LCGRTHandler)
-

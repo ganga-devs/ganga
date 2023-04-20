@@ -135,13 +135,6 @@ class RTHandler(IRuntimeHandler):
         from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         return StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
-        
-
-class LCGRTHandler(IRuntimeHandler):
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from GangaCore.Lib.LCG import LCGJobConfig
-
-        return LCGJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -157,12 +150,8 @@ allHandlers.add('Highland','PBS', RTHandler)
 allHandlers.add('Highland','SGE', RTHandler)
 allHandlers.add('Highland','Slurm', RTHandler)
 allHandlers.add('Highland','Condor', RTHandler)
-allHandlers.add('Highland','LCG', LCGRTHandler)
 allHandlers.add('Highland','gLite', gLiteRTHandler)
 allHandlers.add('Highland','TestSubmitter', RTHandler)
 allHandlers.add('Highland','Interactive', RTHandler)
 allHandlers.add('Highland','Batch', RTHandler)
 allHandlers.add('Highland','Cronus', RTHandler)
-allHandlers.add('Highland','Remote', LCGRTHandler)
-allHandlers.add('Highland','CREAM', LCGRTHandler)
-

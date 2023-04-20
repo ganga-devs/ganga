@@ -615,8 +615,7 @@ class ITransform(GangaObject):
                         'ITransform.outputsandbox is set, you can\'t set ITransform.outputfiles')
                     return
 
-            # reduce duplicate values here, leave only duplicates for LCG,
-            # where we can have replicas
+            # reduce duplicate values here
             uniqueValuesDict = []
             uniqueValues = []
 
@@ -624,8 +623,6 @@ class ITransform(GangaObject):
                 key = '%s%s' % (getName(val), val.namePattern)
                 if key not in uniqueValuesDict:
                     uniqueValuesDict.append(key)
-                    uniqueValues.append(val)
-                elif getName(val) == 'LCGSEFile':
                     uniqueValues.append(val)
 
             super(ITransform, self).__setattr__(attr, uniqueValues)

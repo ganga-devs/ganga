@@ -214,7 +214,7 @@ default_plugins_cfg = makeConfig('Plugins', '''General control of plugin mechani
 Set the default plugin in a given category.
 For example:
 default_applications = DaVinci
-default_backends = LCG
+default_backends = Dirac
 ''')
 
 # ------------------------------------------------
@@ -253,7 +253,6 @@ poll_config.addOption('update_thread_pool_size', 5,
 poll_config.addOption('default_backend_poll_rate', 30,
                       'Default rate for polling job status in the thread pool. This is the default value for all backends.')
 poll_config.addOption('Local', 10, 'Poll rate for Local backend.')
-poll_config.addOption('LCG', 30, 'Poll rate for LCG backend.')
 poll_config.addOption('Condor', 30, 'Poll rate for Condor backend.')
 poll_config.addOption('gLite', 30, 'Poll rate for gLite backend.')
 poll_config.addOption('LSF', 20, 'Poll rate for LSF backend.')
@@ -327,17 +326,9 @@ assoc_config.addOption('tgz', 'file-roller &', 'Command for opening tar files.')
 # ------------------------------------------------
 # Root
 root_config = makeConfig('ROOT', "Options for Root backend")
-# Not needed when we can't do option substitution internally but support it at the .gangarc level!!!!! 27-09-2015 rcurrie
-# config.addOption('lcgpath', getLCGRootPath(),
-#                    'Path of the LCG release that the ROOT project and it\'s externals are taken from')
 root_config.addOption('arch', 'x86_64-slc6-gcc48-opt', 'Architecture of ROOT')
-# Auto-Interporatation doesn't appear to work when setting the default value
-# config.addOption('location', '${lcgpath}/ROOT/${version}/${arch}/', 'Location of ROOT')
 root_config.addOption('location', '%s/ROOT/6.04.02/x86_64-slc6-gcc48-opt' % getLCGRootPath(), 'Location of ROOT')
 root_config.addOption('path', '', 'Set to a specific ROOT version. Will override other options.')
-# Doesn't appear to work see above ^^^
-# config.addOption('pythonhome', '${lcgpath}/Python/${pythonversion}/${arch}/',
-#                    'Location of the python used for execution of PyROOT script')
 root_config.addOption('pythonhome', '%s/Python/2.7.9.p1/x86_64-slc6-gcc48-opt' %
                       getLCGRootPath(), 'Location of the python used for execution of PyROOT script')
 root_config.addOption('pythonversion', '2.7.9.p1', "Version number of python used for execution python ROOT script")
@@ -350,111 +341,6 @@ local_config.addOption('remove_workdir', True,
                        'remove automatically the local working directory when the job completed')
 local_config.addOption(
     'location', None, 'The location where the workdir will be created. If None it defaults to the value of $TMPDIR')
-
-# ------------------------------------------------
-# LCG
-lcg_config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
-# gproxy_config = getConfig('GridProxy_Properties')
-
-lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                     'sets the LCG-UI environment setup script for the GLITE middleware',
-                     filter=GangaCore.Utility.Config.expandvars)
-
-lcg_config.addOption('VirtualOrganisation', '',
-                     'sets the name of the grid virtual organisation')
-
-lcg_config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
-                     filter=GangaCore.Utility.Config.expandvars)
-
-lcg_config.addOption(
-    'AllowedCEs', '', 'sets allowed computing elements by a regular expression')
-lcg_config.addOption(
-    'ExcludedCEs', '', 'sets excluded computing elements by a regular expression')
-
-lcg_config.addOption(
-    'GLITE_WMS_WMPROXY_ENDPOINT', '', 'sets the WMProxy service to be contacted')
-lcg_config.addOption('GLITE_ALLOWED_WMS_LIST', [], '')
-
-lcg_config.addOption('MyProxyServer', 'myproxy.cern.ch', 'sets the myproxy server')
-lcg_config.addOption('RetryCount', 3, 'sets maximum number of job retry')
-lcg_config.addOption(
-    'ShallowRetryCount', 10, 'sets maximum number of job shallow retry')
-
-lcg_config.addOption(
-    'Rank', '', 'sets the ranking rule for picking up computing element')
-lcg_config.addOption('ReplicaCatalog', '', 'sets the replica catalogue server')
-lcg_config.addOption('StorageIndex', '', 'sets the storage index')
-
-lcg_config.addOption(
-    'DefaultSE', 'srm.cern.ch', 'sets the default storage element')
-lcg_config.addOption('DefaultSRMToken', '',
-                     'sets the space token for storing temporary files (e.g. oversized input sandbox)')
-lcg_config.addOption(
-    'DefaultLFC', 'prod-lfc-shared-central.cern.ch', 'sets the file catalogue server')
-lcg_config.addOption('BoundSandboxLimit', 10 * 1024 * 1024,
-                     ('sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded '
-                      'to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\''))
-
-lcg_config.addOption('Requirements', 'GangaCore.Lib.LCG.LCGRequirements',
-                     'sets the full qualified class name for other specific LCG job requirements')
-
-lcg_config.addOption('SandboxCache', 'GangaCore.Lib.LCG.LCGSandboxCache',
-                     'sets the full qualified class name for handling the oversized input sandbox')
-
-lcg_config.addOption('GliteBulkJobSize', 50,
-                     'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
-
-lcg_config.addOption('SubmissionThread', 10,
-                     'sets the number of concurrent threads for job submission to gLite WMS')
-
-lcg_config.addOption(
-    'SubmissionTimeout', 300, 'sets the gLite job submission timeout in seconds')
-
-lcg_config.addOption('StatusPollingTimeout', 300,
-                     'sets the gLite job status polling timeout in seconds')
-
-lcg_config.addOption('OutputDownloaderThread', 10,
-                     'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
-
-lcg_config.addOption('SandboxTransferTimeout', 60,
-                     'sets the transfer timeout of the oversized input sandbox')
-
-lcg_config.addOption(
-    'JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
-
-lcg_config.addOption('MatchBeforeSubmit', False,
-                     ('sets to True will do resource matching before submitting jobs, '
-                      'jobs without any matched resources will fail the submission'))
-
-lcg_config.addOption('IgnoreGliteScriptHeader', False,
-                     ('sets to True will load script-based glite-wms-* commands forcely with current python, '
-                      'a trick for 32/64 bit compatibility issues.'))
-
-# add ARC specific configuration options
-# lcg_config.addOption('ArcInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
-# lcg_config.addOption('ArcOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
-lcg_config.addOption('ArcWaitTimeBeforeStartingMonitoring', 240,
-                     'Time (s) to wait after submission before starting to monitor ARC jobs to ensure they are in the system')
-lcg_config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml",
-                     ('File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. '
-                      'Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.'))
-lcg_config.addOption('ArcConfigFile', "",
-                     ('Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config '
-                      'file is specified and the default (~/arc/client.conf) is used'))
-lcg_config.addOption('ArcCopyCommand', 'arcget',
-                     'sets the copy command for ARC when dealing with sandboxes')
-# lcg_config.addOption('ArcPrologue','','sets the prologue script')
-# lcg_config.addOption('ArcEpilogue','','sets the epilogue script')
-
-# add CREAM specific configuration options
-lcg_config.addOption('CreamInputSandboxBaseURI', '',
-                     'sets the baseURI for getting the input sandboxes for the job')
-lcg_config.addOption('CreamOutputSandboxBaseURI', '',
-                     'sets the baseURI for putting the output sandboxes for the job')
-lcg_config.addOption('CreamCopyCommand', 'gfal-copy-url',
-                     'sets the copy command for CREAM when dealing with sandboxes')
-# lcg_config.addOption('CreamPrologue','','sets the prologue script')
-# lcg_config.addOption('CreamEpilogue','','sets the epilogue script')
 
 # ------------------------------------------------
 # GridSimulator
@@ -801,29 +687,6 @@ output_config.addOption('LocalFile',
                          'uploadOptions': LocalUpOpt},
                         LocalFileExt)
 
-
-# LCGSEFILE
-
-LCGSEBakPost = {'LSF': 'client',
-                'PBS': 'client',
-                'SGE': 'client',
-                'Slurm': 'client',
-                'Condor': 'client',
-                'LCG': 'WN',
-                'CREAM': 'WN',
-                'ARC': 'WN',
-                'Local': 'WN',
-                'Interactive': 'WN'
-                }
-LCGSEUpOpt = {'LFC_HOST': 'lfc-dteam.cern.ch', 'dest_SRM': 'srm-public.cern.ch'}
-LCGSEFileExt = docstr_Ext % ('LCG SE', 'LCG')
-
-output_config.addOption('LCGSEFile',
-                        {'fileExtensions': ['*.root', '*.asd'],
-                         'backendPostprocess': LCGSEBakPost,
-                         'uploadOptions': LCGSEUpOpt},
-                        LCGSEFileExt)
-
 # DiracFile
 # TODO MOVE ME TO GANGADIRAC!!!
 # Should this be in Core or elsewhere?
@@ -833,8 +696,6 @@ diracBackPost = {'Dirac': 'submit',
                  'SGE': 'WN',
                  'Slurm': 'WN',
                  'Condor': 'WN',
-                 'LCG': 'WN',
-                 'CREAM': 'WN',
                  'ARC': 'WN',
                  'Local': 'WN',
                  'Interactive': 'WN'}
@@ -855,7 +716,6 @@ GoogleFileBackPost = {'Dirac': 'client',
                       'SGE': 'client',
                       'Slurm': 'client',
                       'Condor': 'client',
-                      'LCG': 'client',
                       'CREAM': 'client',
                       'ARC': 'client',
                       'Local': 'client',
@@ -927,7 +787,6 @@ massStorageBackendPost = {'LSF': 'WN',
                           'Condor': 'WN',
                           'SGE': 'WN',
                           'Slurm': 'WN',
-                          'LCG': 'client',
                           'CREAM': 'client',
                           'ARC': 'client',
                           'Local': 'WN',
@@ -942,7 +801,6 @@ output_config.addOption('MassStorageFile',
                         massStorageFileExt)
 
 sharedFileBackendPost = {'LSF': 'WN',
-                         'LCG': 'client',
                          'ARC': 'client',
                          'Dirac': 'client',
                          'PBS': 'WN',

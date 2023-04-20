@@ -185,13 +185,6 @@ class RTHandler(IRuntimeHandler):
         from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         return StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
-        
-
-class LCGRTHandler(IRuntimeHandler):
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from GangaCore.Lib.LCG import LCGJobConfig
-
-        return LCGJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -207,12 +200,8 @@ allHandlers.add('RecoPlusVFT','PBS', RTHandler)
 allHandlers.add('RecoPlusVFT','SGE', RTHandler)
 allHandlers.add('RecoPlusVFT','Slurm', RTHandler)
 allHandlers.add('RecoPlusVFT','Condor', RTHandler)
-allHandlers.add('RecoPlusVFT','LCG', LCGRTHandler)
 allHandlers.add('RecoPlusVFT','gLite', gLiteRTHandler)
 allHandlers.add('RecoPlusVFT','TestSubmitter', RTHandler)
 allHandlers.add('RecoPlusVFT','Interactive', RTHandler)
 allHandlers.add('RecoPlusVFT','Batch', RTHandler)
 allHandlers.add('RecoPlusVFT','Cronus', RTHandler)
-allHandlers.add('RecoPlusVFT','Remote', LCGRTHandler)
-allHandlers.add('RecoPlusVFT','CREAM', LCGRTHandler)
-

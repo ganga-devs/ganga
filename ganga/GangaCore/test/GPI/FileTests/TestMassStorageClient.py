@@ -29,7 +29,7 @@ class TestMassStorageClient(GangaUnitTest):
     MassStorageTestConfig = {'defaultProtocol': 'file://',
                              'fileExtensions': [''],
                              'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
-                             'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
+                             'backendPostprocess': {'LSF': 'client', 'ARC': 'client', 'Dirac': 'client',
                                                     'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
 
     _ext = '.root'

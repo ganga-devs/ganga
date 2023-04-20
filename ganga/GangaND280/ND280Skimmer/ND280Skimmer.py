@@ -177,12 +177,6 @@ class RTHandler(IRuntimeHandler):
         return StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
         
 
-class LCGRTHandler(IRuntimeHandler):
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from GangaCore.Lib.LCG import LCGJobConfig
-
-        return LCGJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
-
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from GangaCore.Lib.gLite import gLiteJobConfig
@@ -197,12 +191,8 @@ allHandlers.add('ND280RecoSkimmer','PBS', RTHandler)
 allHandlers.add('ND280RecoSkimmer','SGE', RTHandler)
 allHandlers.add('ND280RecoSkimmer','Slurm', RTHandler)
 allHandlers.add('ND280RecoSkimmer','Condor', RTHandler)
-allHandlers.add('ND280RecoSkimmer','LCG', LCGRTHandler)
 allHandlers.add('ND280RecoSkimmer','gLite', gLiteRTHandler)
 allHandlers.add('ND280RecoSkimmer','TestSubmitter', RTHandler)
 allHandlers.add('ND280RecoSkimmer','Interactive', RTHandler)
 allHandlers.add('ND280RecoSkimmer','Batch', RTHandler)
 allHandlers.add('ND280RecoSkimmer','Cronus', RTHandler)
-allHandlers.add('ND280RecoSkimmer','Remote', LCGRTHandler)
-allHandlers.add('ND280RecoSkimmer','CREAM', LCGRTHandler)
-
