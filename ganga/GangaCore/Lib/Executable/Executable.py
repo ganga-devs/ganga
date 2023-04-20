@@ -239,27 +239,6 @@ class RTHandler(IRuntimeHandler):
                               convertIntToStringArgs(app.args), stripProxy(app).getJobObject().outputsandbox, app.env)
         return c
 
-
-class LCGRTHandler(IRuntimeHandler):
-
-    def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
-        from GangaCore.Lib.LCG import LCGJobConfig
-
-        prepared_exe = app.exe
-        if app.is_prepared is not None:
-            shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
-                                       'shared', getConfig('Configuration')['user'])
-            if isinstance(app.exe, str):
-                prepared_exe = app.exe
-            elif isinstance(app.exe, File):
-                logger.info("Submitting a prepared application; taking any input files from %s" % (
-                    app.is_prepared.name))
-                prepared_exe = File(os.path.join(
-                    os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
-
-        return LCGJobConfig(prepared_exe, app._getParent().inputsandbox, convertIntToStringArgs(app.args), app._getParent().outputsandbox, app.env)
-
-
 class gLiteRTHandler(IRuntimeHandler):
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
@@ -287,15 +266,11 @@ allHandlers.add('Executable', 'Local', RTHandler)
 allHandlers.add('Executable', 'PBS', RTHandler)
 allHandlers.add('Executable', 'SGE', RTHandler)
 allHandlers.add('Executable', 'Condor', RTHandler)
-allHandlers.add('Executable', 'LCG', LCGRTHandler)
 allHandlers.add('Executable', 'gLite', gLiteRTHandler)
 allHandlers.add('Executable', 'TestSubmitter', RTHandler)
 allHandlers.add('Executable', 'Interactive', RTHandler)
 allHandlers.add('Executable', 'Batch', RTHandler)
 allHandlers.add('Executable', 'Cronus', RTHandler)
-allHandlers.add('Executable', 'Remote', LCGRTHandler)
-allHandlers.add('Executable', 'CREAM', LCGRTHandler)
-allHandlers.add('Executable', 'ARC', LCGRTHandler)
 allHandlers.add('Executable', 'Slurm', RTHandler)
 
 

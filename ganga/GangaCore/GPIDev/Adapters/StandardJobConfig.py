@@ -13,7 +13,7 @@ logger = getLogger()
 class StandardJobConfig(object):
 
     """
-    StandardJobConfig defines a standard input for many of the handlers: LSF, Localhost,LCG.
+    StandardJobConfig defines a standard input for many of the handlers: LSF, Localhost.
     It corresponds to a simplified JDL definition: specification of executable, arguments and input sandbox.
     Executable and arguments may be specified either as strings or File objects. In the second case they are
     automatically added to the input sandbox list.

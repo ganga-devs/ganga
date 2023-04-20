@@ -182,13 +182,6 @@ class RTHandler(IRuntimeHandler):
         from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         return StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
-        
-
-class LCGRTHandler(IRuntimeHandler):
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from GangaCore.Lib.LCG import LCGJobConfig
-
-        return LCGJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -204,12 +197,8 @@ allHandlers.add('VFT_make_ana','PBS', RTHandler)
 allHandlers.add('VFT_make_ana','SGE', RTHandler)
 allHandlers.add('VFT_make_ana','Slurm', RTHandler)
 allHandlers.add('VFT_make_ana','Condor', RTHandler)
-allHandlers.add('VFT_make_ana','LCG', LCGRTHandler)
 allHandlers.add('VFT_make_ana','gLite', gLiteRTHandler)
 allHandlers.add('VFT_make_ana','TestSubmitter', RTHandler)
 allHandlers.add('VFT_make_ana','Interactive', RTHandler)
 allHandlers.add('VFT_make_ana','Batch', RTHandler)
 allHandlers.add('VFT_make_ana','Cronus', RTHandler)
-allHandlers.add('VFT_make_ana','Remote', LCGRTHandler)
-allHandlers.add('VFT_make_ana','CREAM', LCGRTHandler)
-

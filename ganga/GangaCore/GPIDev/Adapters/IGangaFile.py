@@ -15,7 +15,7 @@ regex = re.compile(r'[*?\[\]]')
 
 class IGangaFile(GangaObject):
 
-    """IGangaFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, LocalFile, etc 
+    """IGangaFile represents base class for output files, such as MassStorageFile, DiracFile, LocalFile, etc
     """
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(
         defvalue="", doc='pattern of the file name')})

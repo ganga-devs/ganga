@@ -115,7 +115,7 @@ class TestObjectConfig(GangaGPITestCase):
 ##        jobConfig = getConfig( "Job_Properties" )
 
 # first set something legal
-# jobConfig.setSessionOption("backend","LCG")
+# jobConfig.setSessionOption("backend","Dirac")
 ##        job1 = Job()
 
 # now something illegal

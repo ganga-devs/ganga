@@ -409,7 +409,7 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
               "         Transform Backend      : " + c("tf.backend"))
         print('')
         print(" Set parameter in all applications       : " + c("t.setParameter(my_software_version='1.42.0')"))
-        print(" Set backend for all transforms          : " + c("t.setBackend(backend) , p.e. t.setBackend(LCG())"))
+        print(" Set backend for all transforms          : " + c("t.setBackend(backend) , p.e. t.setBackend(Dirac())"))
         print(" Limit on how often jobs are resubmitted : " + c("tf.run_limit = 4"))
         print(" Manually change the status of partitions: " + c("tf.setPartitionStatus(partition, 'status')"))
         print('')

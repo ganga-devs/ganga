@@ -172,13 +172,6 @@ class RTHandler(IRuntimeHandler):
         from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         return StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
-        
-
-class LCGRTHandler(IRuntimeHandler):
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from GangaCore.Lib.LCG import LCGJobConfig
-
-        return LCGJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -194,12 +187,8 @@ allHandlers.add('oaReconPlusoaAnalysis','PBS', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','SGE', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','Slurm', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','Condor', RTHandler)
-allHandlers.add('oaReconPlusoaAnalysis','LCG', LCGRTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','gLite', gLiteRTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','TestSubmitter', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','Interactive', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','Batch', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis','Cronus', RTHandler)
-allHandlers.add('oaReconPlusoaAnalysis','Remote', LCGRTHandler)
-allHandlers.add('oaReconPlusoaAnalysis','CREAM', LCGRTHandler)
-

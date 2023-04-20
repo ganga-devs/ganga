@@ -6,7 +6,6 @@ from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
 
 from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
 from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
-from GangaCore.GPIDev.Lib.File.LCGSEFile import LCGSEFile
 from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
 
 import GangaCore.Utility.logging
@@ -86,9 +85,6 @@ def string_file_shortcut(v, item):
             if key == 'MassStorageFile':
                 from .MassStorageFile import MassStorageFile
                 return stripProxy(MassStorageFile._proxyClass(v))
-            elif key == 'LCGSEFile':
-                from .LCGSEFile import LCGSEFile
-                return stripProxy(LCGSEFile._proxyClass(v))
             elif key == 'DiracFile':
                 try:
                     from GangaDirac.Lib.Files.DiracFile import DiracFile
