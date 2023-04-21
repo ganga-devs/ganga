@@ -364,7 +364,6 @@ class JobTime(GangaObject):
 
     def printdetails(self, subjob=None):
         """Prints backend details to screen by calling details() and printing the returned dictionary."""
-        j = self.getJobObject()
         if subjob == "all":
             # the warning and action taken below are pretty annoying, but I was
             # unsure how to deal with the request to print the details for all
@@ -384,8 +383,6 @@ class JobTime(GangaObject):
         The runtime is calculated as the duration between the job entering the 'running' state and the job
         entering the 'completed' state.
         """
-        end_list = ["killed", "completed", "failed"]
-        end_stamps = {}
 
         # if master job, sum:
         j = self.getJobObject()
@@ -427,7 +424,6 @@ class JobTime(GangaObject):
         """
         j = self.getJobObject()
         if j.subjobs:
-            start_list = []
             end_list = []
             for jobs in j.subjobs:
                 end_list.append(jobs.time.timestamps["submitted"])
