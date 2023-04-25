@@ -24,7 +24,7 @@ def test_voms_proxy_life_cycle(gpi):
     assert credential_store[VomsProxy()]
     assert os.path.isfile(cred.location)
 
-    assert cred.vo == getConfig('LCG')['VirtualOrganisation']
+    assert cred.vo == getConfig('GridShell')['VirtualOrganisation']
 
     cred.destroy()
     assert not cred.is_valid()
@@ -36,6 +36,6 @@ def test_voms_proxy_life_cycle(gpi):
         _ = credential_store[VomsProxy()]
 
     default_cred = credential_store.create(VomsProxy())
-    explicit_default_cred = credential_store.create(VomsProxy(vo=getConfig('LCG')['VirtualOrganisation']))
+    explicit_default_cred = credential_store.create(VomsProxy(vo=getConfig('GridShell')['VirtualOrganisation']))
     assert explicit_default_cred == default_cred
-    assert credential_store[VomsProxy(vo=getConfig('LCG')['VirtualOrganisation'])]
+    assert credential_store[VomsProxy(vo=getConfig('GridShell')['VirtualOrganisation'])]
