@@ -343,6 +343,23 @@ local_config.addOption(
     'location', None, 'The location where the workdir will be created. If None it defaults to the value of $TMPDIR')
 
 # ------------------------------------------------
+# GridShell
+gridshell_config = makeConfig('GridShell', 'Gridshell configuration parameters')
+
+gridshell_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
+                     'sets the LCG-UI environment setup script for the GLITE middleware',
+                     filter=GangaCore.Utility.Config.expandvars)
+gridshell_config.addOption('VirtualOrganisation', '',
+                     'sets the name of the grid virtual organisation')
+gridshell_config.addOption(
+    'GLITE_WMS_WMPROXY_ENDPOINT', '', 'sets the WMProxy service to be contacted')
+gridshell_config.addOption('GLITE_ALLOWED_WMS_LIST', [], '')
+
+gridshell_config.addOption('IgnoreGliteScriptHeader', False,
+                     ('sets to True will load script-based glite-wms-* commands forcely with current python, '
+                      'a trick for 32/64 bit compatibility issues.'))
+
+# ------------------------------------------------
 # GridSimulator
 gridsim_config = makeConfig('GridSimulator', 'Grid Simulator configuration parameters')
 

@@ -180,8 +180,8 @@ class VomsProxy(ICredentialRequirement):
         Construct a voms proxy requirement and assign the default vo from the config if none has been provided
         """
         super(VomsProxy, self).__init__(**kwargs)
-        if 'vo' not in kwargs and getConfig('LCG')['VirtualOrganisation']:
-            self.vo = getConfig('LCG')['VirtualOrganisation']
+        if 'vo' not in kwargs and getConfig('GridShell')['VirtualOrganisation']:
+            self.vo = getConfig('GridShell')['VirtualOrganisation']
 
     def encoded(self):
         """
