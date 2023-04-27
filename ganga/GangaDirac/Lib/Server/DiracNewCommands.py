@@ -37,8 +37,6 @@ def diracCommand(f):
         except Exception as err:
             # Catch __ALL__ errors and report them back to Ganga
             # STDERR is lost in normal running so this will have to do!
-            print('error occurreeedd')
-            print_exc()
             output_dict['OK'] = False
             output_dict['Message'] = 'Error: %s' % str(err)
 
