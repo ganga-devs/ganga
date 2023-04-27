@@ -1073,7 +1073,7 @@ class DiracBase(IBackend):
 
     @staticmethod
     @require_disk_space
-    def _internal_job_finalisation(job, updated_dirac_status):
+    async def _internal_job_finalisation(job, updated_dirac_status):
         """
         This method performs the main job finalisation
         Args:
@@ -1093,10 +1093,10 @@ class DiracBase(IBackend):
                 DiracBase.finalise_jobs(job.master.subjobs, job.master.backend.downloadSandbox)
 
         if updated_dirac_status == 'completed':
-            monitoring_component.loop.create_task(DiracBase.complete_dirac_job(job))
+            await DiracBase.complete_dirac_job(job)
 
         elif updated_dirac_status == 'failed':
-            monitoring_component.loop.create_task(DiracBase.finalise_failed_job(job))
+            await DiracBase.finalise_failed_job(job)
 
         else:
             logger.error("Job #%s Unexpected dirac status '%s' encountered" % (job.getFQID('.'), updated_dirac_status))
@@ -1271,47 +1271,52 @@ class DiracBase(IBackend):
             now = time.time()
             logger.debug('Job ' + job.fqid + ' Time for complete update : ' + str(now - start))
         except GangaDiracError as err:
-            logger.warn("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
-            logger.warn(err)
+            print("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
+            print(err)
         except Exception as err:
-            logger.warn("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
-            logger.warn(err)
+            print("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
+            print(err)
 
     @staticmethod
-    def job_finalisation(job, updated_dirac_status):
+    async def job_finalisation(job, updated_dirac_status):
         """
         Attempt to finalise the job given and auto-retry 5 times on error
         Args:
             job (Job): Job object to finalise
             updated_dirac_status (str): The Ganga status to update the job to, i.e. failed/completed
         """
+        from GangaCore.Core import monitoring_component
+
         count = 1
         limit = 5
         sleep_length = 2.5
 
         while count != limit:
 
-            try:
-                count += 1
-                # Check status is sane before we start
-                if job.status != "running" and (job.status not in ['completed', 'killed', 'removed']):
-                    job.updateStatus('submitted')
-                    job.updateStatus('running')
-                if job.status in ['completed', 'killed', 'removed']:
-                    break
-
-                DiracBase._internal_job_finalisation(job, updated_dirac_status)
+            # try:
+            count += 1
+            # Check status is sane before we start
+            if job.status != "running" and (job.status not in ['completed', 'killed', 'removed']):
+                job.updateStatus('submitted')
+                job.updateStatus('running')
+            if job.status in ['completed', 'killed', 'removed']:
                 break
 
-            except GangaDiskSpaceError:
-                # If the user runs out of disk space for the job to completing so its not monitored any more.
-                # Print a helpful message.
-                job.force_status('failed')
-                raise GangaDiskSpaceError(
-                    "Cannot finalise job %s. No disk space available!"
-                    "Clear some space and the do j.backend.reset() to try again." % job.getFQID('.'))
+            job.been_queued = True
+            task = monitoring_component.loop.create_task(DiracBase._internal_job_finalisation(job, updated_dirac_status)) 
+            await task
+            err = task.exception()
+            if not err:
+                break
+            else:
 
-            except Exception as err:
+                if type(err) is GangaDiskSpaceError:
+                    # If the user runs out of disk space for the job to completing so its not monitored any more.
+                    # Print a helpful message.
+                    job.force_status('failed')
+                    raise GangaDiskSpaceError(
+                        "Cannot finalise job %s. No disk space available!"
+                        "Clear some space and then do j.backend.reset() to try again." % job.getFQID('.'))
 
                 logger.warning("An error occured finalising job: %s" % job.getFQID('.'))
                 logger.warning("Attempting again (%s of %s) after %s-sec delay" %
@@ -1323,8 +1328,6 @@ class DiracBase(IBackend):
                     raise
 
             time.sleep(sleep_length)
-
-        job.been_queued = False
 
     @staticmethod
     def finalise_jobs(allJobs, downloadSandbox=True):
@@ -1390,7 +1393,8 @@ class DiracBase(IBackend):
                 continue
             else:
                 j.been_queued = True
-                DiracBase.job_finalisation(j, finalised_statuses[j.backend.status])
+                monitoring_component.loop.create_task(
+                    DiracBase.job_finalisation(j, finalised_statuses[j.backend.status]))
 
     # @trace_and_save
     @staticmethod
