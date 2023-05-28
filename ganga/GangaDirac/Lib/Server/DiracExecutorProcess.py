@@ -19,7 +19,7 @@ class DiracProcess(Process):
         self.logger = logger
         self.task_result_dict = UltraDict(name=task_result_dict_name, auto_unlink=True)
         self.env = env
-        sys.stdout = LoggerWriter(logger, logging.INFO)
+        sys.stdout = LoggerWriter(logger, logging.DEBUG)
         sys.stderr = LoggerWriter(logger, logging.WARN)
 
     def set_process_env(self):
