@@ -61,6 +61,7 @@ class AsyncDiracManager(metaclass=Singleton):
                 task_queue=self.task_queues[env_hash],
                 task_result_dict_name=self.task_result_dicts[env_hash].name,
                 stop_event=self.stop_events[env_hash],
+                logger=logger,
                 env=dirac_env)
             dirac_process.start()
             logger.debug(f"DIRAC process started with PID {dirac_process.pid}")

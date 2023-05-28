@@ -1,23 +1,26 @@
 import functools
+import logging
 import os
 from queue import Empty
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Process, log_to_stderr
+from multiprocessing import Process
 import time
 import traceback
 from UltraDict import UltraDict
 
 
 class DiracProcess(Process):
-    def __init__(self, task_queue, task_result_dict_name, stop_event, env=None):
+    def __init__(self, task_queue, task_result_dict_name, stop_event, logger, env=None):
         super(Process, self).__init__()
         self.daemon = True
         self.task_queue = task_queue
         self.stop_event = stop_event
+        self.logger = logger
         self.task_result_dict = UltraDict(name=task_result_dict_name, auto_unlink=True)
         self.env = env
-        self.logger = log_to_stderr()
+        sys.stdout = LoggerWriter(logger, logging.INFO)
+        sys.stderr = LoggerWriter(logger, logging.WARN)
 
     def set_process_env(self):
         if self.env:
@@ -85,3 +88,20 @@ class DiracProcess(Process):
         args_dict['dirac'] = dirac
         return_value = cmd(**args_dict)
         return return_value
+
+
+class LoggerWriter:
+    """
+    This is a simple class implementing the basic methods to replace the subprocess stdout and stderr streams
+    and pipe their outputs to Ganga's main logging module.
+    """
+    def __init__(self, logger, level=logging.INFO):
+        self.logger = logger
+        self.level = level
+
+    def write(self, message):
+        if message != '\n':
+            self.logger.log(self.level, message)
+
+    def flush(self):
+        pass
