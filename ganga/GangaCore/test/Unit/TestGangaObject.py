@@ -219,7 +219,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
         values.
         """
         o = ThreadedTestGangaObject()
-        random.seed(time.gmtime())
+        random.seed()
 
         def write_read(thread_number):
             rand = random.Random()
@@ -250,7 +250,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
         o = ThreadedTestGangaObject()
         o.b = SimpleGangaObject()
         child = o.b
-        random.seed(time.gmtime())
+        random.seed()
 
         def write_read(thread_number):
             rand = random.Random()
