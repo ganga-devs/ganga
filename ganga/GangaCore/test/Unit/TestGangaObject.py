@@ -44,7 +44,7 @@ class TestGangaObject(unittest.TestCase):
             raise Exception("didn't expect to have a Job")
         except AssertionError:
             pass
-        except:
+        except BaseException:
             raise
 
     def test_attribute_filter__set__(self):
