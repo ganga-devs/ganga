@@ -572,7 +572,7 @@ pbs_config.addOption('queue_name', 'PBS_QUEUE', "Name of environment with queue 
 pbs_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 pbs_config.addOption('submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
-pbs_config.addOption('submit_res_pattern', '^(?P<id>\\d*)[.]pbs\\s*',
+pbs_config.addOption('submit_res_pattern', r'^(?P<id>\d*)\.pbs\s*',
                      "String pattern for replay from the submit command")
 
 pbs_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
@@ -735,9 +735,10 @@ slurm_config.addOption('timeout', 600,
                         'heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.'))
 
 # illegal substring substition in job names
-slurm_config.addOption('jobnamesubstitution', [
-], ("A list containing (1) a regular expression used to substitute illegal substrings in a job name, "
-    "and (2) the substring to replace such occurences with."))
+slurm_config.addOption('jobnamesubstitution',
+                       [],
+                       ("A list containing (1) a regular expression used to substitute illegal substrings in a job name, "
+                        "and (2) the substring to replace such occurences with."))
 
 
 # ------------------------------------------------
@@ -777,9 +778,6 @@ output_config.addOption('PostProcessLocationsFileName', '__postprocesslocations_
 
 output_config.addOption('FailJobIfNoOutputMatched', True,
                         'if True, a job will be marked failed if output is asked for but not found.')
-
-output_config.addOption('ForbidLegacyOutput', True,
-                        'if True, writing to the job outputdata and outputsandbox fields will be forbidden')
 
 output_config.addOption('ForbidLegacyInput', True, 'if True, writing to the job inputsandbox field will be forbidden')
 

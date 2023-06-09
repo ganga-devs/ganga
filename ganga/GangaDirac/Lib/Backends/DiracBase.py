@@ -211,11 +211,11 @@ class DiracBase(IBackend):
             raise BackendError('Dirac', err_msg)
 
         idlist = result
-        if type(idlist) is list:
+        if isinstance(idlist, list):
             return self._setup_bulk_subjobs(idlist, dirac_script)
 
         self.id = idlist
-        return type(self.id) == int
+        return isinstance(self.id, int)
 
     def _addition_sandbox_content(self, subjobconfig):
         '''any additional files that should be sent to dirac
@@ -588,7 +588,7 @@ class DiracBase(IBackend):
                 _key = key[3:]
             else:
                 _key = key
-            if type(value) is str:
+            if isinstance(value, str):
                 template = '%s.set%s("%s")\n'
             else:
                 template = '%s.set%s(%s)\n'
@@ -647,10 +647,12 @@ class DiracBase(IBackend):
             # Check if the original script included the check for the dirac output
             if "result[\'Message\']" in script:
                 newScript += re.compile(r'%s.*?%s' % (start,
-                                        r"resultdict.update\({sjNo : result\['Message'\]}\)"), re.S).search(script).group(0)
+                                                      r"resultdict.update\({sjNo : result\['Message'\]}\)"),
+                                        re.S).search(script).group(0)
             else:
-                newScript += re.compile(r'%s.*?%s' % (start,
-                                        r"resultdict.update\({sjNo : result\['Value'\]}\)"), re.S).search(script).group(0)
+                newScript += re.compile(r'%s.*?%s' %
+                                        (start, r"resultdict.update\({sjNo : result\['Value'\]}\)"),
+                                        re.S).search(script).group(0)
             newScript += '\noutput(resultdict)'
 
             # Modify the new script with the user settings
@@ -665,7 +667,7 @@ class DiracBase(IBackend):
                     _key = key[3:]
                 else:
                     _key = key
-                if type(value) is str:
+                if isinstance(value, str):
                     template = '%s.set%s("%s")\n'
                 else:
                     template = '%s.set%s(%s)\n'
@@ -866,10 +868,10 @@ class DiracBase(IBackend):
         if j.subjobs:
             for sj in j.subjobs:
                 lfns.extend([f.lfn for f in outputfiles_iterator(sj, DiracFile)
-                            if f.lfn != '' and (names is None or f.namePattern in names)])
+                             if f.lfn != '' and (names is None or f.namePattern in names)])
         else:
             lfns.extend([f.lfn for f in outputfiles_iterator(j, DiracFile)
-                        if f.lfn != '' and (names is None or f.namePattern in names)])
+                         if f.lfn != '' and (names is None or f.namePattern in names)])
 
         reps = getReplicas(lfns)
         if not len(reps.keys()) == len(set(lfns)):
@@ -885,10 +887,10 @@ class DiracBase(IBackend):
         if j.subjobs:
             for sj in j.subjobs:
                 suceeded.extend([download(f, sj, True) for f in outputfiles_iterator(sj, DiracFile)
-                                if f.lfn != '' and (names is None or f.namePattern in names)])
+                                 if f.lfn != '' and (names is None or f.namePattern in names)])
         else:
             suceeded.extend([download(f, j, False) for f in outputfiles_iterator(j, DiracFile)
-                            if f.lfn != '' and (names is None or f.namePattern in names)])
+                             if f.lfn != '' and (names is None or f.namePattern in names)])
 
         # Check we have successfully downloaded everything
         successes = [x for x in suceeded if x is not None]
@@ -1225,7 +1227,7 @@ class DiracBase(IBackend):
                                                                                     info.get(
                                                                                         'LFN', 'Error Getting LFN!'),
                                                                                     str(info.get('LOCATIONS',
-                                                                                        ['NotAvailable'])),
+                                                                                                 ['NotAvailable'])),
                                                                                     info.get('GUID', 'NotAvailable')
                                                                                     )
                             # logger.debug("DiracFileData: %s" % str(DiracFileData))

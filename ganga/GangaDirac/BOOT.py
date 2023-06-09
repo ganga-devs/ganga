@@ -11,7 +11,6 @@ from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 logger = getLogger()
-# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ #
 
 
 def diracAPI(cmd, timeout=60, cred_req=None):
@@ -43,8 +42,6 @@ def diracAPI(cmd, timeout=60, cred_req=None):
 
 exportToGPI('diracAPI', diracAPI, 'Functions')
 
-# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ #
-
 running_dirac_process = False
 dirac_process = None
 dirac_process_ids = None
@@ -69,7 +66,7 @@ def startDiracProcess():
     # Pass the port no as an argument to the popen
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'DiracOldProcess.py')
     popen_cmd = ['python', serverpath, str(PORT)]
-    dirac_process = subprocess.Popen(popen_cmd, env=getDiracEnv(), stdin=subprocess.PIPE)
+    dirac_process = subprocess.Popen(popen_cmd, env=getDiracEnv(), stdin=subprocess.PIPE, stdout=subprocess.DEVNULL)
     global running_dirac_process
     running_dirac_process = (dirac_process.pid, PORT)
 
@@ -131,7 +128,6 @@ def diracAPI_interactive(connection_attempts=5):
     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
     getQueues().add(execute("execfile('%s')" % serverpath, timeout=None, shell=False))
 
-    # time.sleep(1)
     sys.stdout.write("\nType 'q' or 'Q' or 'exit' or 'exit()' to quit but NOT ctrl-D")
     i = 0
     excpt = None
@@ -149,8 +145,6 @@ def diracAPI_interactive(connection_attempts=5):
 
 exportToGPI('diracAPI_interactive', diracAPI_interactive, 'Functions')
 
-# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ #
-
 
 def diracAPI_async(cmd, timeout=120):
     '''
@@ -161,8 +155,6 @@ def diracAPI_async(cmd, timeout=120):
 
 
 exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
-
-# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ #
 
 
 def getDiracFiles():
@@ -179,8 +171,6 @@ def getDiracFiles():
 
 
 exportToGPI('getDiracFiles', getDiracFiles, 'Functions')
-
-# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ #
 
 
 def dumpObject(object, filename):
@@ -217,5 +207,3 @@ def loadObject(filename):
 
 
 exportToGPI('loadObject', loadObject, 'Functions')
-
-# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ #
