@@ -235,7 +235,7 @@ class Localhost(IBackend):
             return None
 
         for line in f:
-            if checkstr in l:
+            if checkstr in line:
                 pos = line.find(checkstr)
                 timestr = line[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
                 try:
@@ -273,7 +273,7 @@ class Localhost(IBackend):
 
         job = self.getJobObject()
         # print str(job.backend_output_postprocess)
-        mon = job.getMonitoringService()
+        job.getMonitoringService()
         import GangaCore.Core.Sandbox as Sandbox
         from GangaCore.GPIDev.Lib.File import File
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
@@ -378,7 +378,7 @@ class Localhost(IBackend):
 
             # waitpid to avoid zombies. This always returns an error
             try:
-                ws = os.waitpid(wrapper_pid, 0)
+                os.waitpid(wrapper_pid, 0)
             except OSError:
                 pass
 

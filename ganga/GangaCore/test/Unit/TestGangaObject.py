@@ -7,8 +7,7 @@ import random
 import threading
 import time
 
-from GangaCore.GPIDev.Base import GangaObject
-from GangaCore.GPIDev.Base.Objects import GangaObject, Node, ObjectMetaclass
+from GangaCore.GPIDev.Base.Objects import Node, ObjectMetaclass
 from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 
 
@@ -52,13 +51,13 @@ class TestGangaObject(unittest.TestCase):
 
     def testCopy(self):
         from copy import deepcopy
-        myTestObj = deepcopy(self.obj)
+        deepcopy(self.obj)
 
     def test_readonly(self):
         self.obj._readonly()
 
     def testClone(self):
-        temp = self.obj.clone()
+        self.obj.clone()
 
     def testCopyFrom(self):
         temp = GangaObject()
