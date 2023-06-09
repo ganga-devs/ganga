@@ -8,6 +8,7 @@ import inspect
 import multiprocessing
 import uuid
 import shutil
+import signal
 import sys
 
 from pathlib import Path
@@ -327,7 +328,7 @@ class Localhost(IBackend):
             try:
                 groupid = os.getpgid(wrapper_pid)
                 logger.debug(f"Wrapper for {job.getFQID('.')} has gid {groupid} and pid {self.wrapper_pid}")
-                subprocess.run(['kill', '-9', f'-{groupid}'])
+                os.killpg(groupid, signal.SIGKILL)
             except OSError as x:
                 logger.warning('While killing wrapper script for job %s: pid=%d, %s',
                                job.getFQID('.'), self.wrapper_pid, str(x))
