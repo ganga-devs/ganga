@@ -49,7 +49,7 @@ def test_job_assignment(gpi):
     j.application.exe = "sleep"
     j.application.args = ['myarg']
     j.backend = gpi.Local()
-    j.backend.CE = "my.ce"
+    j.backend.batchsize = 999
     j.inputdata = gpi.GangaDataset()
     j.inputdata.files = [gpi.LocalFile("*.txt")]
     j.inputfiles = [gpi.LocalFile("*.txt")]
@@ -65,7 +65,7 @@ def test_job_assignment(gpi):
     assert j.application.exe == "sleep"
     assert j.application.args == ["myarg"]
     assert isType(j.backend, gpi.Local)
-    assert j.backend.CE == "my.ce"
+    assert j.backend.batchsize == 999
     assert isType(j.inputdata, gpi.GangaDataset)
     assert len(j.inputdata.files) == 1
     assert isType(j.inputdata.files[0], gpi.LocalFile)
@@ -92,8 +92,8 @@ def test_job_copy(gpi):
     j = gpi.Job()
     j.application.exe = "sleep"
     j.application.args = ['myarg']
-    j.backend = gpi.Interactive()
-    j.backend.CE = "my.ce"
+    j.backend = gpi.Local()
+    j.backend.batchsize = 999
     j.inputdata = gpi.GangaDataset()
     j.inputdata.files = [gpi.LocalFile("*.txt")]
     j.inputfiles = [gpi.LocalFile("*.txt")]
@@ -109,8 +109,8 @@ def test_job_copy(gpi):
     assert isType(j2, gpi.Job)
     assert j2.application.exe == "sleep"
     assert j2.application.args == ["myarg"]
-    assert isType(j2.backend, gpi.Interactive)
-    assert j2.backend.CE == "my.ce"
+    assert isType(j2.backend, gpi.Local)
+    assert j2.backend.batchsize == 999
     assert isType(j2.inputdata, gpi.GangaDataset)
     assert len(j2.inputdata.files) == 1
     assert isType(j2.inputdata.files[0], gpi.LocalFile)
