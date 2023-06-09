@@ -7,7 +7,7 @@ import random
 import threading
 import time
 
-from GangaCore.GPIDev.Base.Objects import Node, ObjectMetaclass
+from GangaCore.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass
 from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 
 

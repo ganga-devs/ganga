@@ -119,7 +119,7 @@ class Localhost(IBackend):
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
 
-        super().master_submit(rjobs, subjobconfigs, 
+        super().master_submit(rjobs, subjobconfigs,
                               masterjobconfig, keep_going, self.force_parallel)
 
         scriptPath = self.prepare_master_script(rjobs)
@@ -378,7 +378,7 @@ class Localhost(IBackend):
 
             # waitpid to avoid zombies. This always returns an error
             try:
-                os.waitpid(wrapper_pid, 0)
+                ws = os.waitpid(wrapper_pid, 0)
             except OSError:
                 pass
 
