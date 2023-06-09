@@ -378,7 +378,7 @@ class Localhost(IBackend):
 
             # waitpid to avoid zombies. This always returns an error
             try:
-                ws = os.waitpid(wrapper_pid, 0)
+                os.waitpid(wrapper_pid, 0)
             except OSError:
                 pass
 
