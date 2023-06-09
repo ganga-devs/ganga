@@ -19,8 +19,8 @@ class TestLocalFileClient(GangaUnitTest):
     # This sets up a LocalFileConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     LocalFileConfig = {'fileExtensions': [''],
                        'uploadOptions': {},
-                       'backendPostprocess': {'LSF': 'client', 'ARC': 'client', 'Dirac': 'client',
-                                              'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
+                       'backendPostprocess': {'LSF': 'client', 'Dirac': 'client',
+                                              'PBS': 'client', 'Interactive': 'client', 'Local': 'client'}}
 
     _ext = '.root'
 

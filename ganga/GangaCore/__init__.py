@@ -692,8 +692,6 @@ LocalPost = {'Local': 'client',
              'Slurm': 'client',
              'PBS': 'client',
              'Condor': 'client',
-             'CREAM': 'client',
-             'ARC': 'client',
              'Dirac': 'client'
              }
 LocalUpOpt = {}
@@ -713,7 +711,6 @@ diracBackPost = {'Dirac': 'submit',
                  'SGE': 'WN',
                  'Slurm': 'WN',
                  'Condor': 'WN',
-                 'ARC': 'WN',
                  'Local': 'WN',
                  'Interactive': 'WN'}
 diracFileExts = docstr_Ext % ('DIRAC', 'DIRAC')
@@ -733,8 +730,6 @@ GoogleFileBackPost = {'Dirac': 'client',
                       'SGE': 'client',
                       'Slurm': 'client',
                       'Condor': 'client',
-                      'CREAM': 'client',
-                      'ARC': 'client',
                       'Local': 'client',
                       'Interactive': 'client'}
 GoogleFileExts = docstr_Ext % ('GoogleDrive', 'Google')
@@ -804,8 +799,6 @@ massStorageBackendPost = {'LSF': 'WN',
                           'Condor': 'WN',
                           'SGE': 'WN',
                           'Slurm': 'WN',
-                          'CREAM': 'client',
-                          'ARC': 'client',
                           'Local': 'WN',
                           'Interactive': 'client',
                           'Dirac': 'client'}
@@ -818,15 +811,13 @@ output_config.addOption('MassStorageFile',
                         massStorageFileExt)
 
 sharedFileBackendPost = {'LSF': 'WN',
-                         'ARC': 'client',
                          'Dirac': 'client',
                          'PBS': 'WN',
                          'SGE': 'WN',
                          'Slurm': 'WN',
                          'Condor': 'WN',
                          'Interactive': 'client',
-                         'Local': 'WN',
-                         'CREAM': 'client'}
+                         'Local': 'WN'}
 
 output_config.addOption('SharedFile',
                         {'fileExtensions': [''],
