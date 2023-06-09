@@ -29,8 +29,8 @@ class TestMassStorageWN(GangaUnitTest):
     MassStorageTestConfig = {'defaultProtocol': 'file://',
                              'fileExtensions': [''],
                              'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
-                             'backendPostprocess': {'LSF': 'WN', 'ARC': 'client', 'Dirac': 'client',
-                                                    'PBS': 'WN', 'Interactive': 'client', 'Local': 'WN', 'CREAM': 'client'}}
+                             'backendPostprocess': {'LSF': 'WN', 'Dirac': 'client',
+                                                    'PBS': 'WN', 'Interactive': 'client', 'Local': 'WN'}}
 
     standardFormat = '{jid}/{fname}'
     extendedFormat = '{jid}/{sjid}/{fname}'

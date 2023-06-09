@@ -31,8 +31,8 @@ class TestMassStorageGetPut(GangaUnitTest):
     MassStorageTestConfig = {'defaultProtocol': 'file://',
                              'fileExtensions': [''],
                              'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir -p'},
-                             'backendPostprocess': {'LSF': 'client', 'ARC': 'client', 'Dirac': 'client',
-                                                    'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
+                             'backendPostprocess': {'LSF': 'client', 'Dirac': 'client',
+                                                    'PBS': 'client', 'Interactive': 'client', 'Local': 'client'}}
 
     def setUp(self):
         """
