@@ -12,7 +12,7 @@ cd /cvmfs/ganga.cern.ch/Ganga/install
 
 pip install --upgrade pip setuptools
 
-pip install git+https://github.com/ganga-devs/ganga.git@$1#egg=ganga[LHCb] 
+pip install ganga[LHCb]@git+https://github.com/ganga-devs/ganga.git@$1
 
 sed -i "23i\
 lib_string = '/cvmfs/sft.cern.ch/lcg/views/LCG_100/x86_64-centos7-gcc9-opt/lib64:/cvmfs/sft.cern.ch/lcg/views/LCG_100/x86_64-centos7-gcc9-opt/lib:/cvmfs/sft.cern.ch/lcg/releases/gcc/9.2.0-afc57/x86_64-centos7/lib:/cvmfs/sft.cern.ch/lcg/releases/gcc/9.2.0-afc57/x86_64-centos7/lib64'\n\
