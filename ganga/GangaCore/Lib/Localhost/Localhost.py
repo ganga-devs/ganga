@@ -1,6 +1,4 @@
 import os
-import re
-import errno
 import subprocess
 import datetime
 import time
@@ -11,7 +9,6 @@ import shutil
 import signal
 import sys
 
-from pathlib import Path
 from os.path import join, dirname, abspath, isdir, isfile
 
 import GangaCore.Utility.logic
@@ -22,7 +19,7 @@ import GangaCore.Utility.Virtualization
 
 from GangaCore.GPIDev.Adapters.IBackend import IBackend
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
-from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
+from GangaCore.GPIDev.Base.Proxy import getName
 from GangaCore.GPIDev.Lib.File import FileBuffer
 from GangaCore.GPIDev.Lib.File import FileUtils
 
@@ -122,8 +119,8 @@ class Localhost(IBackend):
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
 
-        rcode = super().master_submit(rjobs, subjobconfigs,
-                                      masterjobconfig, keep_going, self.force_parallel)
+        super().master_submit(rjobs, subjobconfigs, 
+                              masterjobconfig, keep_going, self.force_parallel)
 
         scriptPath = self.prepare_master_script(rjobs)
         self.run(scriptPath)
@@ -131,8 +128,7 @@ class Localhost(IBackend):
         return 1
 
     def submit(self, jobconfig, master_input_sandbox):
-        job = self.getJobObject()
-        prepared = self.preparejob(jobconfig, master_input_sandbox)
+        self.preparejob(jobconfig, master_input_sandbox)
         self.actualCE = GangaCore.Utility.util.hostname()
         return 1
 
@@ -215,8 +211,6 @@ class Localhost(IBackend):
            These are converted into datetime objects and returned to the user.
         """
         j = self.getJobObject()
-        end_list = ['completed', 'failed']
-        d = {}
         checkstr = ''
 
         if status == 'running':
@@ -240,10 +234,10 @@ class Localhost(IBackend):
             logger.debug('unable to open file %s', p)
             return None
 
-        for l in f:
+        for line in f:
             if checkstr in l:
-                pos = l.find(checkstr)
-                timestr = l[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
+                pos = line.find(checkstr)
+                timestr = line[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
                 try:
                     t = datetime.datetime(
                         *(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
@@ -318,7 +312,10 @@ class Localhost(IBackend):
 
         script = script.replace('###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
 
-        from GangaCore.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles, getWNCodeForInputdataListCreation
+        from GangaCore.GPIDev.Lib.File.OutputFileManager import (getWNCodeForOutputSandbox,
+                                                                 getWNCodeForOutputPostprocessing,
+                                                                 getWNCodeForDownloadingInputFiles,
+                                                                 getWNCodeForInputdataListCreation)
         from GangaCore.Utility.Config import getConfig
         jobidRepr = repr(job.getFQID('.'))
 
@@ -456,8 +453,7 @@ class Localhost(IBackend):
                         j.backend.wrapper_pid = wrapper_pid
                     if pid:
                         j.backend.id = pid
-                        #logger.info('Local job %s status changed to running, pid=%d',j.getFQID('.'),pid)
-                        j.updateStatus('running')  # bugfix: 12194
+                        j.updateStatus('running')
                 exitcode = get_exit_code(statusfile)
                 with open(statusfile) as status_file:
                     logger.debug('status file: %s %s', statusfile, status_file.read())
@@ -478,10 +474,5 @@ class Localhost(IBackend):
                     j.updateStatus('completed')
                 else:
                     j.updateStatus('failed')
-
-                #logger.info('Local job %s finished with exitcode %d',j.getFQID('.'),exitcode)
-
-                # if j.outputdata:
-                # j.outputdata.fill()
 
                 j.backend.remove_workdir()

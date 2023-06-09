@@ -122,8 +122,9 @@ class _ExcThread(threading.Thread):
 class MultiThreadedTestCase(unittest.TestCase):
     """
     This is a specialisation of the ``unittest.TestCase`` to provide a function which can run multiple threads at once.
-    These sorts of stress tests work best if each thread is relatively long-lived so make sure they either call a long-running function or loop many times within the function.
-    In your ``test_foo`` function you should define one or more functions which you want to be run in threads and then pass them to ``self.run_threads``.
+    These sorts of stress tests work best if each thread is relatively long-lived so make sure they either call a
+    long-running function or loop many times within the function. In your ``test_foo`` function you should define
+    one or more functions which you want to be run in threads and then pass them to ``self.run_threads``.
     Each function should take a single argument which is the thread number
 
     For example::
@@ -141,13 +142,15 @@ class MultiThreadedTestCase(unittest.TestCase):
                 self.run_threads([a, b])
 
     The timeout duration and the number of parallel threads to run can be customised
-    and any exception raised by the thread will be correctly propagated to the main thread with correct traceback for test failure reporting.
+    and any exception raised by the thread will be correctly propagated to the main
+    thread with correct traceback for test failure reporting.
     """
 
     def run_threads(self, functions=None, num_threads=50, timeout=60):
         """
         Args:
-            functions: a list of functions which will be randomly chosen to run in threads. They will take one argument which is an integer thread id
+            functions: a list of functions which will be randomly chosen to run in threads.
+                       They will take one argument which is an integer thread id
             num_threads: the number of total threads to run for this test case
             timeout: When joining the threads at the end, how long to have as a timeout on each one.
         Raises:
