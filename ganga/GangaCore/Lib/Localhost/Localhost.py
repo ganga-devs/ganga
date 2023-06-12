@@ -229,27 +229,23 @@ class Localhost(IBackend):
         try:
             p = join(j.outputdir, '__jobstatus__')
             logger.debug("Opening output file at: %s", p)
-            f = open(p)
+            with open(p) as f:
+                for l in f:
+                    if checkstr in l:
+                        pos = l.find(checkstr)
+                        timestr = l[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
+                        try:
+                            t = datetime.datetime(
+                                *(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
+                        except ValueError:
+                            logger.debug(
+                                "Value Error in file: '%s': string does not match required format.", p)
+                            return None
+                        return t
         except IOError:
             logger.debug('unable to open file %s', p)
             return None
-
-        for line in f:
-            if checkstr in line:
-                pos = line.find(checkstr)
-                timestr = line[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
-                try:
-                    t = datetime.datetime(
-                        *(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
-                except ValueError:
-                    logger.debug(
-                        "Value Error in file: '%s': string does not match required format.", p)
-                    return None
-                return t
-
-        f.close()
-        logger.debug(
-            "Reached the end of getStateTime('%s'). Returning None.", status)
+        logger.debug("Reached the end of getStateTime('%s'). Returning None.", status)
         return None
 
     def timedetails(self):
