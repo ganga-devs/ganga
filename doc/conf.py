@@ -60,7 +60,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Ganga'
-copyright = u'2016, Ganga Developers'
+copyright = u'2023, Ganga Developers'
 author = u'Ganga Developers'
 
 from GangaCore import _gangaVersion
