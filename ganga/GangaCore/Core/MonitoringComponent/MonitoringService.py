@@ -209,4 +209,4 @@ class AsyncMonitoringService(GangaThread):
         except Exception as err:
             log.error(err)
         self._cleanup_scheduled_tasks()
-        self.loop.stop()
+        self.loop.call_soon_threadsafe(self.loop.stop)
