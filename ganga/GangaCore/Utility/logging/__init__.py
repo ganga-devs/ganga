@@ -149,6 +149,7 @@ class SafeRotatingFileHandler(logging.handlers.RotatingFileHandler):
 
     def handleError(self, record):
         private_logger.error('Error writing to the log file.')
+        private_logger.error(traceback.format_exc())
 
 
 def _set_formatter(handler, this_format=None):

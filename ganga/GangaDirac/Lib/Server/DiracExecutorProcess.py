@@ -64,7 +64,10 @@ class DiracProcess(Process):
             with self.task_result_dict.lock:
                 if future.cancelled():
                     return
-                self.task_result_dict[id] = future.result()
+                try:
+                    self.task_result_dict[id] = future.result()
+                except Exception as err:
+                    self.logger.error(err)
 
         self.set_process_env()
         self.initialize_dirac_api()

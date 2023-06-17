@@ -12,7 +12,7 @@ import tempfile
 import time
 from subprocess import CalledProcessError, check_output
 import traceback
-
+from UltraDict.Exceptions import AlreadyClosed
 from GangaCore.Core.exceptions import (BackendError, GangaDiskSpaceError,
                                        GangaFileError, GangaKeyError,
                                        IncompleteJobSubmissionError)
@@ -1155,15 +1155,18 @@ class DiracBase(IBackend):
                 },
                 cred_req=job.backend.credential_requirements
             )
-
             if result is None:
                 return
-
-            job.backend.normCPUTime, \
-                getSandboxResult, \
-                file_info_dict, \
-                completeTimeResult, \
-                app_status = result
+            # if not result['OK']:
+            #     raise GangaDiracError(result['Message'])
+            try:
+                job.backend.normCPUTime, \
+                    getSandboxResult, \
+                    file_info_dict, \
+                    completeTimeResult, \
+                    app_status = result
+            except ValueError:
+                raise GangaDiracError('Got different sandbox parameters than expected')
 
             now = time.time()
             logger.debug('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
@@ -1272,12 +1275,15 @@ class DiracBase(IBackend):
                 job.master.updateMasterJobStatus()
             now = time.time()
             logger.debug('Job ' + job.fqid + ' Time for complete update : ' + str(now - start))
+        except AlreadyClosed:
+            logger.warn('Shared memory DIRAC result dictionary closed due to Ganga exiting...')
         except GangaDiracError as err:
-            print("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
-            print(err)
+            logger.error("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
+            logger.error(err)
         except Exception as err:
-            print("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
-            print(err)
+            logger.error("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
+            logger.error(err)
+            return
 
     @staticmethod
     async def job_finalisation(job, updated_dirac_status):
@@ -1305,13 +1311,16 @@ class DiracBase(IBackend):
                 break
 
             job.been_queued = True
-            task = monitoring_component.loop.create_task(DiracBase._internal_job_finalisation(job, updated_dirac_status)) 
+            task = monitoring_component.loop.create_task(
+                DiracBase._internal_job_finalisation(job, updated_dirac_status))
             await task
             err = task.exception()
+
             if not err:
                 break
             else:
-
+                if type(err) is AlreadyClosed:
+                    return
                 if type(err) is GangaDiskSpaceError:
                     # If the user runs out of disk space for the job to completing so its not monitored any more.
                     # Print a helpful message.
@@ -1320,9 +1329,9 @@ class DiracBase(IBackend):
                         "Cannot finalise job %s. No disk space available!"
                         "Clear some space and then do j.backend.reset() to try again." % job.getFQID('.'))
 
-                logger.warning("An error occured finalising job: %s" % job.getFQID('.'))
-                logger.warning("Attempting again (%s of %s) after %s-sec delay" %
-                               (str(count), str(limit), str(sleep_length)))
+                logger.warn("An error occured finalising job: %s" % job.getFQID('.'))
+                logger.warn("Attempting again (%s of %s) after %s-sec delay" %
+                            (str(count), str(limit), str(sleep_length)))
                 if count == limit:
                     logger.error("Unable to finalise job %s after %s retries due to error:\n%s" %
                                  (job.getFQID('.'), str(count), str(err)))
@@ -1330,6 +1339,8 @@ class DiracBase(IBackend):
                     raise
 
             time.sleep(sleep_length)
+
+        job.been_queued = False
 
     @staticmethod
     def finalise_jobs(allJobs, downloadSandbox=True):

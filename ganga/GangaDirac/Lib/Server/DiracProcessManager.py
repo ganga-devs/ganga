@@ -109,11 +109,10 @@ class AsyncDiracManager(metaclass=Singleton):
             returnable = self.parse_command_result(dirac_result, return_raw_dict, env_hash)
             logger.debug(f'Executed DIRAC command {cmd} with args {str(args_dict)} and result {returnable}')
             return returnable
-        except (AlreadyClosed, RuntimeError):
+        except AlreadyClosed:
             logger.warn('Tried to access shared DIRAC executor memory after interpreter shutdown.',
                         'This may happen when exiting Ganga while a DIRAC job is completing')
             self.kill_dirac_processes()
-            return {'OK': False, 'Message': 'The event loop has shut down'}
         except Exception as err:
             raise GangaDiracError(err)
 
@@ -129,6 +128,7 @@ class AsyncDiracManager(metaclass=Singleton):
     def kill_dirac_processes(self):
         if self.processes_killed:
             return
+        self.processes_killed = True
         if not self.active_processes:
             return
         for env_hash, process in self.active_processes.items():
@@ -136,4 +136,3 @@ class AsyncDiracManager(metaclass=Singleton):
             process.join()
             logger.debug(f"Terminated DIRAC executor process with pid {process.pid}")
         self.active_processes = {}
-        self.processes_killed = True
