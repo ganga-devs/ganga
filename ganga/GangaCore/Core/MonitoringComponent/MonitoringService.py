@@ -2,14 +2,16 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
 import functools
+import shutil
 import traceback
 
 from GangaCore.Core.GangaRepository.Registry import RegistryKeyError, RegistryLockError
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
-from GangaCore.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobObject, lazyLoadJobStatus
+from GangaCore.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
+from GangaCore.GPIDev.Lib.Job.utils import lazyLoadJobObject
 
 config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
@@ -142,6 +144,8 @@ class AsyncMonitoringService(GangaThread):
 
     def _cleanup_backend(self, backend):
         backend_name = getName(backend)
+        if backend_name not in self.scheduled_backend_checks:
+            return
         for timer_handle in self.scheduled_backend_checks[backend_name]:
             timer_handle.cancel()
         del self.scheduled_backend_checks[backend_name]
@@ -169,6 +173,7 @@ class AsyncMonitoringService(GangaThread):
             status = lazyLoadJobStatus(j)
             subjobs = lazyLoadJobObject(j, 'subjobs')
             if not subjobs and status == 'completing':
+                self._remove_dirty_outputdir(j)
                 j.status = 'running'
                 continue
             if subjobs:
@@ -176,7 +181,18 @@ class AsyncMonitoringService(GangaThread):
                     j.status = 'running'
                 for sj in j.subjobs:
                     if lazyLoadJobStatus(sj) == 'completing':
+                        self._remove_dirty_outputdir(sj)
                         sj.status = 'running'
+
+    def _remove_dirty_outputdir(self, job):
+        if not job.outputdir:
+            log.warn(f'Tried to reset sandbox download for job {job.id} due to dirty state but found no outputdir')
+            return
+        try:
+            shutil.rmtree(job.outputdir)
+            log.debug(f'Removed outputdir {job.outputdir} due to dirty state.')
+        except FileNotFoundError:
+            log.warn(f'Tried to reset sandbox download for job {job.id} due to dirty state but found no outputdir')
 
     def disable(self):
         if not self.alive:
