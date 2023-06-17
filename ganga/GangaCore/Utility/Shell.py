@@ -176,10 +176,10 @@ class Shell(object):
                 logger.warning('<end of first %d bytes of output>', BYTES)
         else:
             # write to output anyways
-            with open(soutfile, "w") as sout_file:
+            with open(soutfile, "wb") as sout_file:
                 sout_file.write(output)
-        finally:
-            return rc, soutfile, m is None
+
+        return rc, soutfile, m is None
 
     def cmd1(self, cmd, allowed_exit=None, capture_stderr=False, timeout=None, mention_outputfile_on_errors=False):
         """Executes an OS command and captures the stderr and stdout which are returned as a string
