@@ -1,13 +1,15 @@
-import os
+import errno
 import glob
+import os
 import re
 import shutil
+from fnmatch import fnmatch
+
 from GangaCore.Core.exceptions import GangaFileError
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Proxy import getName
-from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.logging import getLogger
-from fnmatch import fnmatch
 
 logger = getLogger()
 regex = re.compile(r'[*?\[\]]')
@@ -15,10 +17,12 @@ regex = re.compile(r'[*?\[\]]')
 
 class IGangaFile(GangaObject):
 
-    """IGangaFile represents base class for output files, such as MassStorageFile, DiracFile, LocalFile, etc
-    """
-    _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(
-        defvalue="", doc='pattern of the file name')})
+    """IGangaFile represents base class for output files, such as MassStorageFile, DiracFile, LocalFile, etc"""
+
+    _schema = Schema(
+        Version(1, 1),
+        {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name')},
+    )
     _category = 'gangafiles'
     _name = 'IGangaFile'
     _hidden = 1
@@ -41,7 +45,7 @@ class IGangaFile(GangaObject):
 
     def get(self):
         """
-        Retrieves locally all files that were uploaded before that 
+        Retrieves locally all files that were uploaded before that
         Order of priority about where a file is going to be placed are:
             1) The localDir as defined in the schema. (Exceptions thrown if this doesn't exist)
             2) The Job outpudir of the parent job if the localDir is not defined.
@@ -49,27 +53,37 @@ class IGangaFile(GangaObject):
         """
         if self.localDir:
             if not os.path.isdir(self.localDir):
-                msg = "Folder '%s' doesn't exist. Please construct this before 'get'-ing a file." % self.localDir
+                msg = (
+                    "Folder '%s' doesn't exist. Please construct this before 'get'-ing a file."
+                    % self.localDir
+                )
                 raise GangaFileError(msg)
             to_location = self.localDir
         else:
             try:
                 to_location = self.getJobObject().outputdir
             except AssertionError:
-                msg = "%s: Failed to get file object. Please set the `localDir` parameter and try again. e.g. file.localDir=os.getcwd();file.get()" % getName(self)
+                msg = (
+                    f"{getName(self)}: Failed to get file object. "
+                    f"Please set the `localDir` parameter and try again."
+                    f"e.g. file.localDir=os.getcwd();file.get()"
+                )
                 logger.debug("localDir value: %s" % self.localDir)
                 logger.debug("parent: %s" % self._getParent())
                 raise GangaFileError(msg)
 
-        # FIXME CANNOT perform a remote globbing here in a nice way so have to just perform a copy when dealing with wildcards
+        # FIXME CANNOT perform a remote globbing here in a nice way
+        # so have to just perform a copy when dealing with wildcards
         if not os.path.isfile(os.path.join(to_location, self.namePattern)):
             returnable = self.copyTo(to_location)
             if not self.localDir:
                 self.localDir = to_location
             return returnable
         else:
-            logger.debug("File: %s already exists, not performing copy" %
-                         (os.path.join(to_location, self.namePattern), ))
+            logger.debug(
+                "File: %s already exists, not performing copy"
+                % (os.path.join(to_location, self.namePattern),)
+            )
             return True
 
     def getSubFiles(self, process_wildcards=False):
@@ -113,13 +127,19 @@ class IGangaFile(GangaObject):
         """
         if not isinstance(targetPath, str) and targetPath:
             raise GangaFileError("Cannot perform a copyTo with no given targetPath!")
-        if regex.search(self.namePattern) is None\
-                and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
-
+        if regex.search(self.namePattern) is None and os.path.isfile(
+            os.path.join(self.localDir, self.namePattern)
+        ):
             if not os.path.isfile(os.path.join(targetPath, self.namePattern)):
-                shutil.copy(os.path.join(self.localDir, self.namePattern), os.path.join(targetPath, self.namePattern))
+                shutil.copy(
+                    os.path.join(self.localDir, self.namePattern),
+                    os.path.join(targetPath, self.namePattern),
+                )
             else:
-                logger.debug("Already found file: %s" % os.path.join(targetPath, self.namePattern))
+                logger.debug(
+                    "Already found file: %s"
+                    % os.path.join(targetPath, self.namePattern)
+                )
 
             return True
 
@@ -135,7 +155,9 @@ class IGangaFile(GangaObject):
         """
         raise NotImplementedError
 
-    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
+    def getWNInjectedScript(
+        self, outputFiles, indent, patternsToZip, postProcessLocationsFP
+    ):
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """
@@ -167,7 +189,6 @@ class IGangaFile(GangaObject):
         return to_match == self
 
     def execSyscmdSubprocess(self, cmd):
-
         import subprocess
 
         exitcode = -999
@@ -175,8 +196,13 @@ class IGangaFile(GangaObject):
         mystderr = ''
 
         try:
-            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE, stdin=subprocess.DEVNULL)
+            child = subprocess.Popen(
+                cmd,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.DEVNULL,
+            )
             (mystdout, mystderr) = child.communicate()
             exitcode = child.returncode
         finally:
@@ -203,12 +229,12 @@ class IGangaFile(GangaObject):
         """
 
         # check for subfiles
-        if (hasattr(self, 'subfiles') and len(self.subfiles) > 0):
+        if hasattr(self, 'subfiles') and len(self.subfiles) > 0:
             # we have subfiles so we must have actual files associated
             return True
 
         # check for locations
-        if (hasattr(self, 'locations') and len(self.locations) > 0):
+        if hasattr(self, 'locations') and len(self.locations) > 0:
             return True
 
         return False
@@ -227,7 +253,8 @@ class IGangaFile(GangaObject):
         This method cleans up the client space after performing a put of a file after a job has completed
         """
 
-        # For all other file types (not LocalFile) The file in the outputdir is temporary waiting for Ganga to pass it to the storage solution
+        # For all other file types (not LocalFile) The file in the outputdir is temporary
+        # waiting for Ganga to pass it to the storage solution
         job = self.getJobObject()
 
         for f in glob.glob(os.path.join(job.outputdir, self.namePattern)):
