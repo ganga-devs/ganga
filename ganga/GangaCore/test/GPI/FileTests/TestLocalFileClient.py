@@ -16,7 +16,8 @@ class TestLocalFileClient(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-    # This sets up a LocalFileConfiguration which works by placing a file on local storage somewhere we can test using standard tools
+    # This sets up a LocalFileConfiguration which works by placing a file on
+    # local storage somewhere we can test using standard tools
     LocalFileConfig = {'fileExtensions': [''],
                        'uploadOptions': {},
                        'backendPostprocess': {'LSF': 'client', 'Dirac': 'client',

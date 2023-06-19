@@ -25,12 +25,22 @@ class TestMassStorageClientInput(GangaUnitTest):
     # Where on local storage we want to have our 'MassStorage solution'
     outputFilePath = '/tmp/Test' + _getName(fileClass) + 'Input'
 
-    # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
-    MassStorageTestConfig = {'defaultProtocol': 'file://',
-                             'fileExtensions': [''],
-                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir -p'},
-                             'backendPostprocess': {'LSF': 'client', 'Dirac': 'client',
-                                                    'PBS': 'client', 'Interactive': 'client', 'Local': 'client'}}
+    # This sets up a MassStorageConfiguration which works by placing a file on
+    # local storage somewhere we can test using standard tools
+    MassStorageTestConfig = {
+        'defaultProtocol': 'file://',
+        'fileExtensions': [''],
+        'uploadOptions': {
+            'path': outputFilePath,
+            'cp_cmd': 'cp',
+            'ls_cmd': 'ls',
+            'mkdir_cmd': 'mkdir -p'},
+        'backendPostprocess': {
+            'LSF': 'client',
+            'Dirac': 'client',
+            'PBS': 'client',
+            'Interactive': 'client',
+            'Local': 'client'}}
 
     def setUp(self):
         """

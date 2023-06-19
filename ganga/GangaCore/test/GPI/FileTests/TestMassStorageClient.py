@@ -25,7 +25,8 @@ class TestMassStorageClient(GangaUnitTest):
     # Where on local storage we want to have our 'MassStorage solution'
     outputFilePath = '/tmp/Test' + _getName(fileClass) + 'Client'
 
-    # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
+    # This sets up a MassStorageConfiguration which works by placing a file on
+    # local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
                              'fileExtensions': [''],
                              'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
@@ -108,7 +109,7 @@ class TestMassStorageClient(GangaUnitTest):
 
         for sj in j.subjobs:
             output_dir = stripProxy(sj).getOutputWorkspace(create=False).getPath()
-            assert os.path.isdir(output_dir) == True
+            assert os.path.isdir(output_dir)
 
             # Check that the files have been removed from the output worker dir
             for input_f in j.inputfiles:

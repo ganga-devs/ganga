@@ -18,7 +18,7 @@ def test_job_kill(gpi):
         try:
             j.kill()
             return False, "should raise JobError"
-        except:
+        except BaseException:
             return True
 
     # cannot kill a job with status "new"
