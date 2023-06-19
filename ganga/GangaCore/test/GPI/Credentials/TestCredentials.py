@@ -2,7 +2,6 @@ import os
 
 import pytest
 
-from GangaCore.GPIDev.Base.Proxy import stripProxy
 from GangaCore.testlib.mark import external
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility import logging

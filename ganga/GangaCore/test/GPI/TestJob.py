@@ -1,12 +1,10 @@
-
-
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType
 
 from GangaCore.testlib.monitoring import run_until_completed
 
 
 def test_job_create(gpi):
-    j = gpi.Job()
+    gpi.Job()
 
 
 def test_job_kill(gpi):
@@ -18,7 +16,7 @@ def test_job_kill(gpi):
         try:
             j.kill()
             return False, "should raise JobError"
-        except:
+        except Exception:
             return True
 
     # cannot kill a job with status "new"
