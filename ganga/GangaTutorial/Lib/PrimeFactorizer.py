@@ -6,14 +6,15 @@
 
 import os
 import shutil
+
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from GangaCore.GPIDev.Schema import *
-from GangaCore.Utility.Config import getConfig
-from GangaCore.GPIDev.Lib.File import File, ShareDir
-from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Base.Proxy import getName
+from GangaCore.GPIDev.Lib.File import File, ShareDir
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 
@@ -23,11 +24,34 @@ class PrimeFactorizer(IPrepareApp):
     PrimeFactorizer application -- factorize any arbitrary number into prime numbers.
     """
 
-    _schema = Schema(Version(1, 1), {
-        'number': SimpleItem(defvalue=1, sequence=0, typelist=['int', 'long'], doc='The number to be factorized.'),
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes'),
-    })
+    _schema = Schema(
+        Version(1, 1),
+        {
+            'number': SimpleItem(
+                defvalue=1,
+                sequence=0,
+                typelist=['int', 'long'],
+                doc='The number to be factorized.',
+            ),
+            'is_prepared': SimpleItem(
+                defvalue=None,
+                strict_sequence=0,
+                visitable=1,
+                copyable=1,
+                hidden=0,
+                typelist=[None, ShareDir],
+                protected=0,
+                comparable=1,
+                doc='Location of shared resources. Presence of this attribute implies the application has been prepared.',
+            ),
+            'hash': SimpleItem(
+                defvalue=None,
+                typelist=[None, str],
+                hidden=0,
+                doc='MD5 hash of the string representation of applications preparable attributes',
+            ),
+        },
+    )
 
     _category = 'applications'
     _name = 'PrimeFactorizer'
@@ -40,8 +64,6 @@ class PrimeFactorizer(IPrepareApp):
 
     def configure(self, masterappconfig):
         from GangaCore.GPI import TUTDIR
-        from GangaCore.Core.exceptions import ApplicationConfigurationError
-        import os.path
 
         # the prime number factorizer executable
         self.exe = File(TUTDIR + '/Lib/primes/prime_factor.py')
@@ -50,7 +72,7 @@ class PrimeFactorizer(IPrepareApp):
         try:
             job = self.getJobObject()
             prime_tables = job.inputdata.get_dataset()
-        except:
+        except Exception:
             pass
 
         # the arguments of the executable
@@ -77,7 +99,9 @@ class PrimeFactorizer(IPrepareApp):
 
         if (self.is_prepared is not None) and not force:
             raise ApplicationPrepareError(
-                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.'
+                % getName(self)
+            )
 
         # lets use the same criteria as the configure() method for checking file existence & sanity
         # this will bail us out of prepare if there's somthing odd with the job config - like the executable
@@ -89,7 +113,7 @@ class PrimeFactorizer(IPrepareApp):
 
         try:
             # copy any 'preparable' objects into the shared directory
-            send_to_sharedir = self.copyPreparables()
+            self.copyPreparables()
             # add the newly created shared directory into the metadata system
             # if the app is associated with a persisted object
             self.checkPreparedHasParent(self)
@@ -105,12 +129,11 @@ class PrimeFactorizer(IPrepareApp):
             if isinstance(self.exe, str):
                 logger.debug("exe is a string so no copying")
             elif not os.path.exists(source):
-                logger.debug("Error copying exe: %s to input workspace" %
-                             str(source))
+                logger.debug("Error copying exe: %s to input workspace" % str(source))
             else:
                 try:
                     parent_job = self.getJobObject()
-                except:
+                except Exception:
                     parent_job = None
                     pass
                 if parent_job is not None:
@@ -126,7 +149,7 @@ class PrimeFactorizer(IPrepareApp):
 
 
 # FIXME: a cleaner solution, which is integrated with type information in schemas should be used automatically
-#config = getConfig('GangaTutorial_Properties')
+# config = getConfig('GangaTutorial_Properties')
 mc = getConfig('MonitoringServices')
 mc.addOption('GangaTutorial', None, '')
 
@@ -154,7 +177,7 @@ allHandlers.add('PrimeFactorizer', 'Batch', RTHandler)
 
 
 class NGRTHandler(IRuntimeHandler):
-
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         from GangaNG.Lib.NG import NGJobConfig
+
         return NGJobConfig(app.exe, app.inputs, app.args, app.outputs, app.envs)
