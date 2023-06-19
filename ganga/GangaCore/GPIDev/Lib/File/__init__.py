@@ -1,21 +1,15 @@
-from GangaCore.GPIDev.Lib.File.Configure import getSharedPath
-
-from GangaCore.GPIDev.Lib.File.File import File
-from GangaCore.GPIDev.Lib.File.File import ShareDir
-from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
-
-from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
-from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
-from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
+import fnmatch
 
 import GangaCore.Utility.logging
-
-from GangaCore.GPIDev.Base.Proxy import stripProxy
 from GangaCore.GPIDev.Base.Filters import allComponentFilters
-from GangaCore.Utility.Config import getConfig, ConfigError
-
-
-import fnmatch
+from GangaCore.GPIDev.Base.Proxy import stripProxy
+from GangaCore.GPIDev.Lib.File.Configure import getSharedPath
+from GangaCore.GPIDev.Lib.File.File import File, ShareDir
+from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
+from GangaCore.GPIDev.Lib.File.GoogleFile import GoogleFile
+from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
+from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile
+from GangaCore.Utility.Config import ConfigError, getConfig
 
 logger = GangaCore.Utility.logging.getLogger()
 
@@ -31,7 +25,6 @@ def getFileConfigKeys():
 
 
 def decodeExtensionKeys():
-
     outputfilesConfig = {}
 
     keys = getFileConfigKeys()
@@ -53,7 +46,6 @@ def decodeExtensionKeys():
 
 
 def findOutputFileTypeByFileName(filename):
-
     matchKeys = []
 
     outputfilesConfig = decodeExtensionKeys()
@@ -84,10 +76,12 @@ def string_file_shortcut(v, item):
         if key is not None:
             if key == 'MassStorageFile':
                 from .MassStorageFile import MassStorageFile
+
                 return stripProxy(MassStorageFile._proxyClass(v))
             elif key == 'DiracFile':
                 try:
                     from GangaDirac.Lib.Files.DiracFile import DiracFile
+
                     return stripProxy(DiracFile._proxyClass(v))
                 except BaseException:
                     GangaCore.Utility.logging.log_unknown_exception()
@@ -99,3 +93,13 @@ def string_file_shortcut(v, item):
 
 
 allComponentFilters['gangafiles'] = string_file_shortcut
+
+__all__ = (
+    "getSharedPath",
+    "File",
+    "ShareDir",
+    "FileBuffer",
+    "GoogleFile",
+    "LocalFile",
+    "MassStorageFile",
+)

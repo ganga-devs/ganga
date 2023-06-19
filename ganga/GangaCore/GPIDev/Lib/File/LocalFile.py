@@ -1,11 +1,9 @@
-
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: LocalFile.py,v 0.1 2011-09-29 15:40:00 idzhunov Exp $
 ##########################################################################
 
-import copy
 import errno
 import glob
 import os
@@ -28,21 +26,39 @@ regex = re.compile(r'[*?\[\]]')
 
 class LocalFile(IGangaFile):
 
-    """LocalFile represents base class for output files, such as MassStorageFile, etc
-    """
-    _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
-                                     'localDir': SimpleItem(defvalue="", doc='local dir where the file is stored, used from get and put methods'),
-                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
-                                                               sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
-                                     'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-                                     })
+    """LocalFile represents base class for output files, such as MassStorageFile, etc"""
+
+    _schema = Schema(
+        Version(1, 1),
+        {
+            'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
+            'localDir': SimpleItem(
+                defvalue="",
+                doc='local dir where the file is stored, used from get and put methods',
+            ),
+            'subfiles': ComponentItem(
+                category='gangafiles',
+                defvalue=[],
+                hidden=1,
+                sequence=1,
+                copyable=0,
+                doc="collected files from the wildcard namePattern",
+            ),
+            'compressed': SimpleItem(
+                defvalue=False,
+                typelist=[bool],
+                protected=0,
+                doc='wheather the output file should be compressed before sending somewhere',
+            ),
+        },
+    )
     _category = 'gangafiles'
     _name = "LocalFile"
     _exportmethods = ["get", "put", "location", "remove", "accessURL"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
-        """ name is the name of the output file that is going to be processed
-            in some way defined by the derived class
+        """name is the name of the output file that is going to be processed
+        in some way defined by the derived class
         """
         super(LocalFile, self).__init__()
 
@@ -60,7 +76,10 @@ class LocalFile(IGangaFile):
             self.namePattern = path.basename(namePattern.name)
             self.localDir = path.dirname(namePattern.name)
         else:
-            logger.error("Unkown type: %s . Cannot Create LocalFile from this!" % type(namePattern))
+            logger.error(
+                "Unkown type: %s . Cannot Create LocalFile from this!"
+                % type(namePattern)
+            )
 
     def __setattr__(self, attr, value):
         """
@@ -89,7 +108,10 @@ class LocalFile(IGangaFile):
 
     def __repr__(self):
         """Get the representation of the file."""
-        return "LocalFile(namePattern='%s', localDir='%s')" % (self.namePattern, self.localDir)
+        return "LocalFile(namePattern='%s', localDir='%s')" % (
+            self.namePattern,
+            self.localDir,
+        )
 
     def location(self):
         return self.getFilenameList()
@@ -115,7 +137,6 @@ class LocalFile(IGangaFile):
             fileName = path.join(self.localDir, fileName)
 
         for currentFile in glob.glob(path.join(sourceDir, fileName)):
-
             base_name = path.basename(currentFile)
 
             d = LocalFile(base_name)
@@ -124,7 +145,6 @@ class LocalFile(IGangaFile):
             self.subfiles.append(d)
 
     def processWildcardMatches(self):
-
         if self.subfiles:
             return self.subfiles
 
@@ -139,8 +159,10 @@ class LocalFile(IGangaFile):
 
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(path.join(sourceDir, fileName)):
-                d = LocalFile(namePattern=path.basename(
-                    currentFile), localDir=path.dirname(currentFile))
+                d = LocalFile(
+                    namePattern=path.basename(currentFile),
+                    localDir=path.dirname(currentFile),
+                )
                 d.compressed = self.compressed
 
                 self.subfiles.append(d)
@@ -154,7 +176,10 @@ class LocalFile(IGangaFile):
                 filelist.append(path.join(f.localDir, f.namePattern))
         else:
             if path.exists(path.join(self.localDir, self.namePattern)):
-                logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
+                logger.debug(
+                    "File: %s found, Setting localDir: %s"
+                    % (self.namePattern, self.localDir)
+                )
 
             filelist.append(path.join(self.localDir, self.namePattern))
 
@@ -185,12 +210,13 @@ class LocalFile(IGangaFile):
         return False
 
     def remove(self):
-
         for this_file in self.getFilenameList():
             _actual_delete = False
             keyin = None
             while keyin is None:
-                keyin = input("Do you want to remove the LocalFile: %s ? ([y]/n) " % this_file)
+                keyin = input(
+                    "Do you want to remove the LocalFile: %s ? ([y]/n) " % this_file
+                )
                 if keyin.lower() in ['y', '']:
                     _actual_delete = True
                 elif keyin.lower() == 'n':
@@ -200,17 +226,21 @@ class LocalFile(IGangaFile):
                     keyin = None
             if _actual_delete:
                 if not path.exists(this_file):
-                    logger.warning(
-                        "File %s did not exist, can't delete" % this_file)
+                    logger.warning("File %s did not exist, can't delete" % this_file)
                 else:
                     logger.info("Deleting: %s" % this_file)
 
                     import time
-                    remove_filename = this_file + "_" + str(time.time()) + '__to_be_deleted_'
+
+                    remove_filename = (
+                        this_file + "_" + str(time.time()) + '__to_be_deleted_'
+                    )
                     try:
                         os.rename(this_file, remove_filename)
                     except Exception:
-                        logger.warning("Error in first stage of removing file: %s" % this_file)
+                        logger.warning(
+                            "Error in first stage of removing file: %s" % this_file
+                        )
                         remove_filename = this_file
 
                     try:
@@ -244,7 +274,8 @@ class LocalFile(IGangaFile):
         """
         # This is useful for placing the LocalFile in a subdir at the end of a job
 
-        # FIXME this method should be written to work with some other parameter than localDir for job outputs but for now this 'works'
+        # FIXME this method should be written to work with some other parameter than localDir
+        # for job outputs but for now this 'works'
         if self.localDir:
             try:
                 job = self.getJobObject()
@@ -256,8 +287,10 @@ class LocalFile(IGangaFile):
             if path.isfile(path.join(job.outputdir, self.namePattern)):
                 if not path.exists(path.join(job.outputdir, self.localDir)):
                     os.makedirs(path.join(job.outputdir, self.localDir))
-                shutil.copy(path.join(job.outputdir, self.namePattern),
-                            path.join(job.outputdir, self.localDir, self.namePattern))
+                shutil.copy(
+                    path.join(job.outputdir, self.namePattern),
+                    path.join(job.outputdir, self.localDir, self.namePattern),
+                )
 
     def cleanUpClient(self):
         """
@@ -267,7 +300,6 @@ class LocalFile(IGangaFile):
         pass
 
     def getWNScriptDownloadCommand(self, indent):
-
         # create symlink
         shortScript = """
 # create symbolic links for LocalFiles
@@ -276,14 +308,18 @@ for f in ###FILELIST###:
         os.symlink(f, os.path.basename(f))
 """
         from GangaCore.GPIDev.Lib.File import FileUtils
+
         shortScript = FileUtils.indentScript(shortScript, '###INDENT###')
 
-        shortScript = shortScript.replace('###FILELIST###', "%s" % self.getFilenameList())
+        shortScript = shortScript.replace(
+            '###FILELIST###', "%s" % self.getFilenameList()
+        )
 
         return shortScript
 
-    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
-
+    def getWNInjectedScript(
+        self, outputFiles, indent, patternsToZip, postProcessLocationsFP
+    ):
         cp_template = """
 ###INDENT###os.system("###CP_COMMAND###")
 """
