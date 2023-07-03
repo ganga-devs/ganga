@@ -8,6 +8,7 @@ import uuid
 import shutil
 import signal
 import sys
+import re
 
 from aiofile import async_open
 from pathlib import Path
