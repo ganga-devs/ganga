@@ -13,10 +13,10 @@ jobs:
       - uses: actions/checkout@v1
         with:
           fetch-depth: 0
-      - name: Set up Python 3.8
+      - name: Set up Python 3.11
         uses: actions/setup-python@v1
         with:
-          python-version: 3.8
+          python-version: 3.11
 
       - name: Get changed files
         id: changed-files
@@ -87,16 +87,17 @@ jobs:
     name: GangaCore Unit
     needs: lint
     runs-on: ubuntu-latest
-    container: centos:7
     steps:
       - uses: actions/checkout@v1
-      - name: Set up Python 3
-        run: |
-          yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.11
       - name: Install dependencies
         run: |
-          /opt/rh/rh-python38/root/usr/bin/python -m venv ~/venv
+          python -m venv ~/venv
           . ~/venv/bin/activate
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -e .[dev]
@@ -109,48 +110,40 @@ jobs:
     name: GangaCore Integration
     needs: core-unit
     runs-on: ubuntu-latest
-    container: centos:7
-
-    services:
-      mongodb:
-        image: mongo
-        ports:
-          - 27017:27017
 
     steps:
       - uses: actions/checkout@v1
-      - name: Set up Python 3
-        run: |
-          yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.11
       - name: Install dependencies
         run: |
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e .[dev]
       - name: Test with pytest
-        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/GPI
-        env:
-          GANGA_GITHUB_HOST: True
-          MONGODB_HOST: mongodb
-          MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+        run: python -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/GPI
 
   gui:
     name: GangaGUI tests
     needs: lint
     runs-on: ubuntu-latest
-    container: centos:7
     steps:
       - uses: actions/checkout@v1
-      - name: Set up Python 3
-        run: |
-          yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.11
       - name: Install dependencies
         run: |
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e .[dev]
       - name: Test with pytest
-        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaGUI ganga/GangaGUI/test
+        run: python -m pytest --cov-report term-missing --cov ganga/GangaGUI ganga/GangaGUI/test
 
   condor:
     name: Condor
