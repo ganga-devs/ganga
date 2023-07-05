@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import copy
@@ -16,11 +15,19 @@ class TestLocalFileClient(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-    # This sets up a LocalFileConfiguration which works by placing a file on local storage somewhere we can test using standard tools
-    LocalFileConfig = {'fileExtensions': [''],
-                       'uploadOptions': {},
-                       'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
-                                              'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
+    # This sets up a LocalFileConfiguration which works by placing a file on local storage
+    # somewhere we can test using standard tools
+    LocalFileConfig = {
+        'fileExtensions': [''],
+        'uploadOptions': {},
+        'backendPostprocess': {
+            'LSF': 'client',
+            'Dirac': 'client',
+            'PBS': 'client',
+            'Interactive': 'client',
+            'Local': 'client',
+        },
+    }
 
     _ext = '.root'
 
@@ -28,25 +35,28 @@ class TestLocalFileClient(GangaUnitTest):
         """
         Configure the LocalFile for the test
         """
-        extra_opts = [('PollThread', 'autostart', 'False'),
-                      ('Local', 'remove_workdir', 'False'),
-                      ('TestingFramework', 'AutoCleanup', 'False'),
-                      ('Output', 'LocalFile', self.LocalFileConfig),
-                      ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        extra_opts = [
+            ('PollThread', 'autostart', 'False'),
+            ('Local', 'remove_workdir', 'False'),
+            ('TestingFramework', 'AutoCleanup', 'False'),
+            ('Output', 'LocalFile', self.LocalFileConfig),
+            ('Output', 'FailJobIfNoOutputMatched', 'True'),
+        ]
         super(TestLocalFileClient, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
     def cleanUp():
-        """ Cleanup the current temp jobs """
+        """Cleanup the current temp jobs"""
 
         from GangaCore.GPI import jobs
+
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
 
     @classmethod
     def tearDownTest(cls):
-        """ Cleanup the current temp objects """
+        """Cleanup the current temp objects"""
         for file_ in TestLocalFileClient._managed_files:
             if os.path.isfile(file_):
                 os.unlink(file_)
@@ -97,7 +107,6 @@ class TestLocalFileClient(GangaUnitTest):
             assert len(sj.outputfiles) == 2
 
     def test_c_testCopy(self):
-
         from GangaCore.GPI import jobs, LocalFile
 
         j = jobs[-1]
@@ -106,7 +115,9 @@ class TestLocalFileClient(GangaUnitTest):
 
         assert len(j2.outputfiles) == 1
 
-        assert j2.outputfiles[0] == LocalFile(namePattern='*' + TestLocalFileClient._ext)
+        assert j2.outputfiles[0] == LocalFile(
+            namePattern='*' + TestLocalFileClient._ext
+        )
 
         assert len(j2.inputfiles) == 2
 

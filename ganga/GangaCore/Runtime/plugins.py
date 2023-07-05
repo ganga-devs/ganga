@@ -38,9 +38,6 @@ import GangaCore.Lib.Notebook
 logger.debug("Loading LocalHost")
 import GangaCore.Lib.Localhost
 
-logger.debug("Loading LCG")
-import GangaCore.Lib.LCG
-
 logger.debug("Loading Condor")
 import GangaCore.Lib.Condor
 
