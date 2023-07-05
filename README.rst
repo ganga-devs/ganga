@@ -34,4 +34,4 @@ to create a simple local job which runs an executable which simply prints some t
 Documentation
 -------------
 
-[User guide and developer documentation](https://ganga.readthedocs.io/en/latest/index.html)
+`User guide and developer documentation <https://ganga.readthedocs.io/en/latest/index.html>`_
