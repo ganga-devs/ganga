@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import queue
-import subprocess
 import traceback
 import threading
 import collections
+
 from GangaCore.Core.exceptions import GangaException, GangaTypeError
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.execute import execute
 from GangaCore.GPIDev.Base.Proxy import getName
 
 from collections import namedtuple
@@ -18,7 +19,7 @@ timeout = 0.1 if timeout == None else timeout
 logger = getLogger()
 QueueElement = namedtuple('QueueElement', ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
 CommandInput = namedtuple('CommandInput', ['command', 'timeout', 'env', 'cwd',
-                          'shell', 'python_setup', 'eval_includes', 'update_env'])
+                          'shell', 'python_setup', 'update_env'])
 
 
 class FunctionInput(namedtuple('FunctionInput', ['function', 'args', 'kwargs'])):
@@ -126,7 +127,7 @@ class WorkerThreadPool(object):
                         these_args = (these_args, )
                     result = item.command_input.function(*these_args, **item.command_input.kwargs)
                 else:
-                    result = subprocess.check_output([*item.command_input], shell=True, text=True)
+                    result = execute(*item.command_input)
             except Exception as e:
                 if issubclass(type(e), GangaException):
                     logger.error("%s" % e)
@@ -197,7 +198,7 @@ class WorkerThreadPool(object):
 
     def add_process(self,
                     command, timeout=None, env=None, cwd=None, shell=False,
-                    python_setup='', eval_includes=None, update_env=False, priority=5,
+                    python_setup='', update_env=False, priority=5,
                     callback_func=None, callback_args=(), callback_kwargs={},
                     fallback_func=None, fallback_args=(), fallback_kwargs={},
                     name=None):
@@ -211,7 +212,7 @@ class WorkerThreadPool(object):
             return
         self.__queue.put(QueueElement(priority=priority,
                                       command_input=CommandInput(
-                                          command, timeout, env, cwd, shell, python_setup, eval_includes, update_env),
+                                          command, timeout, env, cwd, shell, python_setup, update_env),
                                       callback_func=FunctionInput(
                                           callback_func, callback_args, callback_kwargs),
                                       fallback_func=FunctionInput(fallback_func, fallback_args, fallback_kwargs), name=name
