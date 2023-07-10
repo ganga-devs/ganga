@@ -5,6 +5,7 @@ import os
 import tempfile
 import gzip
 import shutil
+import subprocess
 from GangaCore.GPIDev.Base.Proxy import stripProxy
 from GangaCore.GPIDev.Schema import SimpleItem, Schema, Version
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
@@ -14,7 +15,6 @@ from .GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
 from GangaCore.GPIDev.Lib.File import File
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 import GangaCore.Utility.Config
-from GangaCore.Utility.execute import execute
 from GangaCore.GPIDev.Lib.File import ShareDir
 from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Base.Proxy import getName
@@ -69,7 +69,7 @@ class GaudiBase(IPrepareApp):
     _schema = Schema(Version(0, 1), schema)
     _hidden = 1
 
-    
+
     #def __init__(self):
     #    super(GaudiBase, self).__init__(None)
 
@@ -155,9 +155,9 @@ class GaudiBase(IPrepareApp):
                     logger.debug("%s" % str(err))
                     return
 
-        execute('getpack %s' % options,
+        subprocess.run(f'getpack {options}',
                 shell=True,
-                timeout=None,
+                check=False,
                 env=self.getenv(False),
                 cwd=self.user_release_area)
 
@@ -169,9 +169,9 @@ class GaudiBase(IPrepareApp):
     def projectCMD(self, command):
         """Eecute a given command at the top level of a requested project."""
 
-        execute('%s' % command,
+        subprocess.run(f'{command}',
                 shell=True,
-                timeout=None,
+                check=False,
                 env=self.getenv(False),
                 cwd=self.user_release_area)
 
@@ -184,9 +184,9 @@ class GaudiBase(IPrepareApp):
             logger.warning("Cannot Use this in combination with cmake!")
             return
 
-        execute('cmt %s' % command,
+        subprocess.run(f'cmt {command}',
                 shell=True,
-                timeout=None,
+                check=False,
                 env=self.getenv(False),
                 cwd=self.user_release_area)
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import queue
+import subprocess
 import traceback
 import threading
 import collections
 from GangaCore.Core.exceptions import GangaException, GangaTypeError
 from GangaCore.Core.GangaThread import GangaThread
-from GangaCore.Utility.execute import execute
 from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Base.Proxy import getName
@@ -126,7 +126,7 @@ class WorkerThreadPool(object):
                         these_args = (these_args, )
                     result = item.command_input.function(*these_args, **item.command_input.kwargs)
                 else:
-                    result = execute(*item.command_input)
+                    result = subprocess.check_output([*item.command_input], shell=True, text=True)
             except Exception as e:
                 if issubclass(type(e), GangaException):
                     logger.error("%s" % e)

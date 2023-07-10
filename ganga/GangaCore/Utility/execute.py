@@ -114,35 +114,6 @@ def __reader(pipes, output_ns, output_var, require_output):
                 logger.error('Error getting output stream from command: %s', err)
 
 
-def __timeout_func(process, timed_out):
-    """ This function is used to kill functions which are timing out behind the scenes and taking longer than a
-    threshold time to execute.
-    Args:
-        process (class): This is a subprocess class which knows of the pid of wrapping thread around the command we want to kill
-        timed_out (Event): A threading event to be set when the command has timed out
-    """
-
-    if process.returncode is None:
-        timed_out.set()
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except Exception as e:
-            logger.error("Exception trying to kill process: %s" % e)
-
-
-def start_timer(p, timeout):
-    """ Function to construct and return the timer thread and timed_out
-    Args:
-        p (object): This is the subprocess object which will be used to run the command of interest
-        timeout (int): This is the timeout in seconds after which the command will be killed
-    """
-    # Start the background thread to catch timeout events
-    timed_out = threading.Event()
-    timer = threading.Timer(timeout, __timeout_func, args=(p, timed_out))
-    timer.daemon = True
-    if timeout is not None:
-        timer.start()
-    return timer, timed_out
 
 
 def update_thread(pipes, thread_output, output_key, require_output):
@@ -167,7 +138,6 @@ def execute(command,
             cwd=None,
             shell=True,
             python_setup='',
-            eval_includes=None,
             update_env=False,
             ):
     """
@@ -180,7 +150,6 @@ def execute(command,
         cwd (str): This is the cwd the command is to be executed within.
         shell (bool): True for a bash command to be executed, False for a command to be executed within Python
         python_setup (str): A python command to be executed beore the main command is
-        eval_includes (str): An string used to construct an environment which, if passed, is used to eval the stdout into a python object
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
     """
 
@@ -214,9 +183,6 @@ def execute(command,
     # This is where we store the output
     thread_output = {}
 
-    # Start the timer thread used to kill commands which have likely stalled
-    timer, timed_out = start_timer(p, timeout)
-
     if update_env:
         env_output_key = 'env_output'
         update_env_thread = update_thread(env_file_pipes, thread_output, env_output_key, require_output=True)
@@ -232,9 +198,13 @@ def execute(command,
     logger.debug("stdout: %s" % stdout)
     logger.debug("stderr: %s" % stderr)
 
-    timer.cancel()
-    if timeout is not None:
-        timer.join()
+    try:
+        # if this returns, the process completed
+        p.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        p.terminate()
+        return 'Command timed out!'
+
 
     # Finish up and decide what to return
     if stderr != '':
@@ -242,8 +212,6 @@ def execute(command,
         # even though it works
         logger.debug(stderr)
 
-    if timed_out.isSet():
-        return 'Command timed out!'
 
     # Decode any pickled objects from disk
     if update_env:
@@ -257,7 +225,7 @@ def execute(command,
             logger.error("stderr: %s" % stderr)
             raise RuntimeError("Missing update env after running command")
 
-    if not shell and not eval_includes:
+    if not shell:
         update_pkl_thread.join()
         if pkl_output_key in thread_output:
             return thread_output[pkl_output_key]
@@ -285,12 +253,6 @@ def execute(command,
 
     if not stdout_temp:
         local_ns = locals()
-        if isinstance(eval_includes, str):
-            try:
-                exec(eval_includes, {}, local_ns)
-            except:
-                logger.debug("Failed to eval the env, can't eval stdout")
-                pass
         if isinstance(stdout, str) and stdout:
             try:
                 stdout_temp = eval(stdout, {}, local_ns)

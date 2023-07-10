@@ -62,9 +62,9 @@ def test_execute_output():
 
     # Test printout works with the right includes
     d1 = execute('print(datetime.datetime(2013,12,12))', python_setup='import datetime',
-                 eval_includes='import datetime', shell=False)
+                 shell=False)
     d2 = execute('print(repr(datetime.datetime(2013,12,12)))',
-                 python_setup='import datetime', eval_includes='import datetime', shell=False)
+                 python_setup='import datetime', shell=False)
     assert not hasattr(d1, 'month')
     assert isinstance(d1, str)
     assert hasattr(d2, 'month')
