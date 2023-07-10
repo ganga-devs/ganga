@@ -192,18 +192,16 @@ def execute(command,
 
     # Execute the main command of interest
     logger.debug("Executing Command:\n'%s'" % str(command))
-    stdout, stderr = p.communicate(command)
+
+    try:
+        stdout, stderr = p.communicate(command, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        p.terminate()
+        return 'Command timed out!'
 
     # Close the timeout watching thread
     logger.debug("stdout: %s" % stdout)
     logger.debug("stderr: %s" % stderr)
-
-    try:
-        # if this returns, the process completed
-        p.wait(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        p.terminate()
-        return 'Command timed out!'
 
 
     # Finish up and decide what to return
