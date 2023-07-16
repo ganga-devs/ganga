@@ -110,8 +110,9 @@ class AsyncDiracManager(metaclass=Singleton):
             logger.debug(f'Executed DIRAC command {cmd} with args {str(args_dict)} and result {returnable}')
             return returnable
         except AlreadyClosed:
-            logger.warn('Tried to access shared DIRAC executor memory after interpreter shutdown.',
-                        'This may happen when exiting Ganga while a DIRAC job is completing')
+            msg = """Tried to access shared DIRAC executor memory after interpreter shutdown.
+            This may happen when exiting Ganga while a DIRAC job is completing"""
+            logger.warn(msg)
             self.kill_dirac_processes()
         except Exception as err:
             raise GangaDiracError(err)
