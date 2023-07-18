@@ -81,7 +81,7 @@ install_requires = [
     'jedi==0.17.2',
     'httplib2>=0.8',
     'aiofile==3.7.4',
-    'aiohttp==3.8.5',
+    'aiohttp==3.8.4',
     'absl-py>=0.1.2',
     'google-api-python-client',
     'google-auth-httplib2',
