@@ -177,7 +177,8 @@ def _make_file_handler(logfile, logfile_size):
     global file_handler
     if logfile:
         try:
-            # This guarantees the logfile exists before we setup the handler, we've seen strange intermittent bugs if this isn't done
+            # This guarantees the logfile exists before we setup the handler, we've
+            # seen strange intermittent bugs if this isn't done
             with open(logfile, 'w'):
                 pass
             new_file_handler = SafeRotatingFileHandler(logfile, maxBytes=logfile_size, backupCount=1)

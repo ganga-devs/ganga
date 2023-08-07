@@ -1319,9 +1319,9 @@ class DiracBase(IBackend):
             if not err:
                 break
             else:
-                if type(err) is AlreadyClosed:
+                if isinstance(err, AlreadyClosed):
                     return
-                if type(err) is GangaDiskSpaceError:
+                if isinstance(err, GangaDiskSpaceError):
                     # If the user runs out of disk space for the job to completing so its not monitored any more.
                     # Print a helpful message.
                     job.force_status('failed')
