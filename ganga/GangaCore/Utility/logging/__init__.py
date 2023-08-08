@@ -583,13 +583,15 @@ def force_global_level(level):
             _set_formatter(cached_screen_handler, 'DEBUG')
         if direct_screen_handler is not None:
             _set_formatter(direct_screen_handler, 'DEBUG')
-        for l in _allLoggers:
-            for this_handler in _allLoggers[l].handlers:
+        for logger in _allLoggers:
+            for this_handler in _allLoggers[logger].handlers:
                 _set_formatter(this_handler, 'DEBUG')
 
 
 def log_user_exception(logger=None, debug=False):
-    """ Log a user exception based upon a given position in the code. This is used internally despite the name and is not exposed to usersi """
+    """ Log a user exception based upon a given position in the code.
+    This is used internally despite the name and is not exposed to users
+    """
     buf = io.StringIO()
     traceback.print_exc(file=buf)
     banner = 10 * '-' + ' error in user/extension code ' + 10 * '-'
