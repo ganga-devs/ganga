@@ -1,14 +1,11 @@
-
 import os
 import shutil
-import copy
 import tempfile
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.testlib.file_utils import generate_unique_temp_file
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Base.Proxy import stripProxy, addProxy
-from GangaTest.Framework.utils import sleep_until_completed
 from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
 from GangaCore.GPIDev.Base.Objects import _getName
 
@@ -27,60 +24,77 @@ class TestMassStorageGetPut(GangaUnitTest):
     # Where on local storage we want to have our 'MassStorage solution'
     outputFilePath = '/tmp/Test' + _getName(fileClass) + 'GetPut'
 
-    # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
-    MassStorageTestConfig = {'defaultProtocol': 'file://',
-                             'fileExtensions': [''],
-                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir -p'},
-                             'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
-                                                    'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
+    # This sets up a MassStorageConfiguration which works by placing a file on local storage
+    # somewhere we can test using standard tools
+    MassStorageTestConfig = {
+        'defaultProtocol': 'file://',
+        'fileExtensions': [''],
+        'uploadOptions': {
+            'path': outputFilePath,
+            'cp_cmd': 'cp',
+            'ls_cmd': 'ls',
+            'mkdir_cmd': 'mkdir -p',
+        },
+        'backendPostprocess': {
+            'LSF': 'client',
+            'Dirac': 'client',
+            'PBS': 'client',
+            'Interactive': 'client',
+            'Local': 'client',
+        },
+    }
 
     def setUp(self):
         """
         Configure the MassStorageFile for the test
         """
-        extra_opts = [('PollThread', 'autostart', 'False'),
-                      ('Local', 'remove_workdir', 'False'),
-                      ('TestingFramework', 'AutoCleanup', 'False'),
-                      ('Output', _getName(self.fileClass), self.MassStorageTestConfig),
-                      ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        extra_opts = [
+            ('PollThread', 'autostart', 'False'),
+            ('Local', 'remove_workdir', 'False'),
+            ('TestingFramework', 'AutoCleanup', 'False'),
+            ('Output', _getName(self.fileClass), self.MassStorageTestConfig),
+            ('Output', 'FailJobIfNoOutputMatched', 'True'),
+        ]
         super(TestMassStorageGetPut, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
     def cleanUp():
-        """ Cleanup the current temp jobs """
+        """Cleanup the current temp jobs"""
 
         from GangaCore.GPI import jobs
+
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
 
     @classmethod
     def setUpTest(cls):
-        """ This creates a safe place to put the files into 'mass-storage' """
+        """This creates a safe place to put the files into 'mass-storage'"""
         cls.outputFilePath = tempfile.mkdtemp()
         cls.MassStorageTestConfig['uploadOptions']['path'] = cls.outputFilePath
 
     @classmethod
     def tearDownTest(cls):
-        """ Cleanup the current temp objects """
+        """Cleanup the current temp objects"""
 
         pass
-#        for file_ in cls._temp_files:
-#            if os.path.isfile(file_):
-#                os.unlink(file_)
-#            else:
-#                print("ERROR REMOVING FILE: '%s'" % str(file_))
-#        cls._temp_files = []
-#
-#        for file_ in cls._managed_files:
-#            file__  = os.path.join(cls.outputFilePath, file_.namePattern)
-#            if os.path.isfile(file__):
-#                os.unlink(file__)
-#            else:
-#                print("ERROR REMOVING FILE: '%s'" % str(file__))
-#        cls._managed_files = []
-#
-#        shutil.rmtree(cls.outputFilePath, ignore_errors=True)
+
+    #        for file_ in cls._temp_files:
+    #            if os.path.isfile(file_):
+    #                os.unlink(file_)
+    #            else:
+    #                print("ERROR REMOVING FILE: '%s'" % str(file_))
+    #        cls._temp_files = []
+    #
+    #        for file_ in cls._managed_files:
+    #            file__  = os.path.join(cls.outputFilePath, file_.namePattern)
+    #            if os.path.isfile(file__):
+    #                os.unlink(file__)
+    #            else:
+    #                print("ERROR REMOVING FILE: '%s'" % str(file__))
+    #        cls._managed_files = []
+    #
+    #        shutil.rmtree(cls.outputFilePath, ignore_errors=True)
 
     def test_a_test_put(self):
         """Test that a job can be submitted with inputfiles in the input"""
@@ -150,7 +164,7 @@ class TestMassStorageGetPut(GangaUnitTest):
         self.cleanUp()
 
     def test_c_test_copyTo(self):
-        """ Test the new copyTo interface"""
+        """Test the new copyTo interface"""
 
         tmpdir = tempfile.mkdtemp()
 
@@ -164,4 +178,5 @@ class TestMassStorageGetPut(GangaUnitTest):
 
 class TestSharedFileGetPut(TestMassStorageGetPut):
     """Testing the get/put/copyTo methods of SharedFile"""
+
     fileClass = addProxy(SharedFile)

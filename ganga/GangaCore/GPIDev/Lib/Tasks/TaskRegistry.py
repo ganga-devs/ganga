@@ -1,17 +1,27 @@
-
+import sys
 import time
 import traceback
-import sys
-import GangaCore.GPIDev.Lib.Registry.RegistrySlice
-from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
-from GangaCore.Core.GangaRepository.Registry import RegistryError, RegistryKeyError, RegistryAccessError, RegistryFlusher
-from GangaCore.GPIDev.Base.Proxy import stripProxy, getName, isType
-from GangaCore.Utility.ColourText import ANSIMarkup, overview_colours, status_colours, fgcol
 
+import GangaCore.GPIDev.Lib.Registry.RegistrySlice
+from GangaCore.Core.GangaRepository.Registry import (
+    RegistryAccessError,
+    RegistryFlusher,
+    RegistryKeyError,
+)
+from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
+from GangaCore.Utility.ColourText import (
+    ANSIMarkup,
+    fgcol,
+    overview_colours,
+    status_colours,
+)
 from GangaCore.Utility.logging import getLogger
+
 logger = getLogger()
 
 from GangaCore.Utility.Config import getConfig
+
 config = getConfig('Tasks')
 
 if getConfig('Configuration')["repositorytype"] in ["Database", "CentralDatabase"]:
@@ -28,9 +38,7 @@ str_bad = markup("bad", overview_colours["bad"])
 
 
 class TaskRegistry(Registry):
-
     def __init__(self, name, doc):
-
         super(TaskRegistry, self).__init__(name, doc)
 
         self._main_thread = None
@@ -57,8 +65,9 @@ class TaskRegistry(Registry):
         return c
 
     def _thread_main(self):
-        """ This is an internal function; the main loop of the background thread """
+        """This is an internal function; the main loop of the background thread"""
         from GangaCore.Core.GangaRepository import getRegistry
+
         while getRegistry("jobs").hasStarted() is not True:
             time.sleep(0.1)
             if self._main_thread is None or self._main_thread.should_stop():
@@ -66,7 +75,10 @@ class TaskRegistry(Registry):
 
         while True:
             from GangaCore.Core import monitoring_component
-            if (not monitoring_component is None and monitoring_component.enabled) or config['ForceTaskMonitoring']:
+
+            if (
+                monitoring_component is not None and monitoring_component.enabled
+            ) or config['ForceTaskMonitoring']:
                 break
             time.sleep(0.1)
             if self._main_thread is None or self._main_thread.should_stop():
@@ -86,11 +98,11 @@ class TaskRegistry(Registry):
 
         # Main loop
         while self._main_thread is not None and not self._main_thread.should_stop():
-
             # If monitoring is enabled (or forced for Tasks) loop over each one and update
-            if (config['ForceTaskMonitoring'] or monitoring_component.enabled) and not config['disableTaskMon']:
+            if (
+                config['ForceTaskMonitoring'] or monitoring_component.enabled
+            ) and not config['disableTaskMon']:
                 for tid in self.ids():
-
                     logger.debug("Running over tid: %s" % str(tid))
 
                     try:
@@ -99,10 +111,16 @@ class TaskRegistry(Registry):
 
                     except Exception as x:
                         logger.error(
-                            "Exception occurred in task monitoring loop: %s %s\nThe offending task was paused." % (x.__class__, x))
+                            "Exception occurred in task monitoring loop: %s %s\nThe offending task was paused."
+                            % (x.__class__, x)
+                        )
                         type_, value_, traceback_ = sys.exc_info()
-                        logger.error("Full traceback:\n %s" % ' '.join(
-                            traceback.format_exception(type_, value_, traceback_)))
+                        logger.error(
+                            "Full traceback:\n %s"
+                            % ' '.join(
+                                traceback.format_exception(type_, value_, traceback_)
+                            )
+                        )
                         p.pause()
 
                     if self._main_thread.should_stop():
@@ -111,7 +129,10 @@ class TaskRegistry(Registry):
                 if self._main_thread.should_stop():
                     break
 
-            logger.debug("TaskRegistry Sleeping for: %s seconds" % str(config['TaskLoopFrequency']))
+            logger.debug(
+                "TaskRegistry Sleeping for: %s seconds"
+                % str(config['TaskLoopFrequency'])
+            )
 
             # Sleep interruptible for 10 seconds
             for i in range(0, int(config['TaskLoopFrequency'] * 100)):
@@ -120,9 +141,10 @@ class TaskRegistry(Registry):
                 time.sleep(0.01)
 
     def startup(self):
-        """ Start a background thread that periodically run()s"""
+        """Start a background thread that periodically run()s"""
         super(TaskRegistry, self).startup()
         from GangaCore.Core.GangaThread import GangaThread
+
         self._main_thread = GangaThread(name="GangaTasks", target=self._thread_main)
         self._main_thread.start()
 
@@ -144,18 +166,20 @@ from GangaCore.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 
 
 class TaskRegistrySlice(RegistrySlice):
-
     def __init__(self, name):
         super(TaskRegistrySlice, self).__init__(name, display_prefix="tasks")
-        from GangaCore.Utility.ColourText import Foreground, Background, Effects
+        from GangaCore.Utility.ColourText import Effects, Foreground
+
         fg = Foreground()
         fx = Effects()
-        bg = Background()
-        self.status_colours = {'new': fx.normal,
-                               'submitted': fg.orange,
-                               'running': fg.green,
-                               'completed': fg.blue,
-                               'failed': fg.red}
+        # bg = Background()
+        self.status_colours = {
+            'new': fx.normal,
+            'submitted': fg.orange,
+            'running': fg.green,
+            'completed': fg.blue,
+            'failed': fg.red,
+        }
         self.fx = fx
         self._proxyClass = TaskRegistrySliceProxy
 
@@ -166,8 +190,7 @@ class TaskRegistrySlice(RegistrySlice):
         return self.objects[id]
 
     def __call__(self, id):
-        """ Retrieve a job by id.
-        """
+        """Retrieve a job by id."""
         t = type(id)
         if t is int:
             try:
@@ -179,21 +202,19 @@ class TaskRegistrySlice(RegistrySlice):
         elif t is list:
             ids = id.split(".")
         else:
-            raise RegistryAccessError(
-                'Expected a job id: int, (int,int), or "int.int"')
+            raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
 
         if not len(ids) in [1, 2]:
             raise RegistryAccessError(
-                'Too many ids in the access tuple, 2-tuple (job,subjob) only supported')
+                'Too many ids in the access tuple, 2-tuple (job,subjob) only supported'
+            )
 
         try:
             ids = [int(id) for id in ids]
         except TypeError:
-            raise RegistryAccessError(
-                'Expeted a job id: int, (int,int), or "int.int"')
+            raise RegistryAccessError('Expeted a job id: int, (int,int), or "int.int"')
         except ValueError:
-            raise RegistryAccessError(
-                'Expected a job id: int, (int,int), or "int.int"')
+            raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
 
         try:
             j = self.objects[ids[0]]
@@ -205,7 +226,8 @@ class TaskRegistrySlice(RegistrySlice):
                 return j.transforms[ids[1]]
             except IndexError:
                 raise RegistryKeyError(
-                    'Transform %s not found' % ('.'.join([str(id) for id in ids])))
+                    'Transform %s not found' % ('.'.join([str(id) for id in ids]))
+                )
         else:
             return j
 
@@ -219,7 +241,11 @@ class TaskRegistrySlice(RegistrySlice):
         self.do_collective_operation(keep_going, 'pause')
 
 
-from GangaCore.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
+from GangaCore.GPIDev.Lib.Registry.RegistrySliceProxy import (
+    RegistrySliceProxy,
+    _unwrap,
+    _wrap,
+)
 
 
 class TaskRegistrySliceProxy(RegistrySliceProxy):
@@ -241,23 +267,23 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
     """
 
     def remove(self, keep_going=True):
-        """ Remove all tasks."""
+        """Remove all tasks."""
         return stripProxy(self).remove(keep_going=keep_going)
 
     def run(self, keep_going=True):
-        """ Run all tasks."""
+        """Run all tasks."""
         return stripProxy(self).run(keep_going=keep_going)
 
     def pause(self, keep_going=True):
-        """ Pause all tasks."""
+        """Pause all tasks."""
         return stripProxy(self).pause(keep_going=keep_going)
 
     def copy(self, keep_going=True):
-        """ Copy all tasks. """
+        """Copy all tasks."""
         return JobRegistrySliceProxy(stripProxy(self).copy(keep_going=keep_going))
 
     def select(self, minid=None, maxid=None, **attrs):
-        """ Select a subset of tasks. Examples:
+        """Select a subset of tasks. Examples:
         tasks.select(10): select tasks with ids higher or equal to 10;
         tasks.select(10,20) select tasks with ids in 10,20 range (inclusive);
         tasks.select(status='completed') select all tasks with status completed;
@@ -266,10 +292,12 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         unwrap_attrs = {}
         for a in attrs:
             unwrap_attrs[a] = _unwrap(attrs[a])
-        return TaskRegistrySliceProxy(stripProxy(self).select(minid, maxid, **unwrap_attrs))
+        return TaskRegistrySliceProxy(
+            stripProxy(self).select(minid, maxid, **unwrap_attrs)
+        )
 
     def __call__(self, x):
-        """ Access individual job. Examples:
+        """Access individual job. Examples:
         tasks(10) : get job with id 10 or raise exception if it does not exist.
         tasks((10,2)) : get transform number 2 of task 10 if exist or raise exception.
         tasks('10.2')) : same as above
@@ -277,7 +305,7 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         return _wrap(stripProxy(self).__call__(x))
 
     def __getitem__(self, x):
-        """ Get a job by positional index. Examples:
+        """Get a job by positional index. Examples:
         tasks[-1] : get last job,
         tasks[0] : get first job,
         tasks[1] : get second job.
@@ -294,23 +322,49 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         """Prints an overview over the currently running tasks"""
         if GangaCore.GPIDev.Lib.Registry.RegistrySlice.config["tasks_show_help"]:
             self.help(short=True)
-            GangaCore.GPIDev.Lib.Registry.RegistrySlice.config.setUserValue("tasks_show_help", False)
+            GangaCore.GPIDev.Lib.Registry.RegistrySlice.config.setUserValue(
+                "tasks_show_help", False
+            )
             print("To show this help message again, type 'tasks.help()'.")
             print('')
-            print(" The following is the output of " + markup("tasks.table()", fgcol("blue")))
+            print(
+                " The following is the output of "
+                + markup("tasks.table()", fgcol("blue"))
+            )
 
         lenfstring = 0
         flist = []
-        for thing in GangaCore.GPIDev.Lib.Registry.RegistrySlice.config["tasks_columns"]:
-            width = GangaCore.GPIDev.Lib.Registry.RegistrySlice.config["tasks_columns_width"][thing]
+        for thing in GangaCore.GPIDev.Lib.Registry.RegistrySlice.config[
+            "tasks_columns"
+        ]:
+            width = GangaCore.GPIDev.Lib.Registry.RegistrySlice.config[
+                "tasks_columns_width"
+            ][thing]
             lenfstring += width
             flist.append("%" + str(width) + "s ")
 
         fstring = "|".join(flist)
         fstring += '\n'
         lenfstring += 27
-        ds = fstring % ("#", "Type", "Name", "State", "Comment", "%4s: %4s/ %4s/ %4s/ %4s/ %4s/ %4s/ %4s" % ("Jobs", markup("done", overview_colours["completed"]), " " + markup("run", overview_colours["running"]), " " + markup(
-            "subd", overview_colours["submitted"]), " " + markup("attd", overview_colours["attempted"]), markup("fail", overview_colours["failed"]), markup("hold", overview_colours["hold"]), " " + markup("bad", overview_colours["bad"])), "Float")
+        ds = fstring % (
+            "#",
+            "Type",
+            "Name",
+            "State",
+            "Comment",
+            "%4s: %4s/ %4s/ %4s/ %4s/ %4s/ %4s/ %4s"
+            % (
+                "Jobs",
+                markup("done", overview_colours["completed"]),
+                " " + markup("run", overview_colours["running"]),
+                " " + markup("subd", overview_colours["submitted"]),
+                " " + markup("attd", overview_colours["attempted"]),
+                markup("fail", overview_colours["failed"]),
+                markup("hold", overview_colours["hold"]),
+                " " + markup("bad", overview_colours["bad"]),
+            ),
+            "Float",
+        )
         ds += "-" * lenfstring + "\n"
 
         from GangaCore.GPIDev.Lib.Tasks import ITask
@@ -321,17 +375,60 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
             iterable_list = list(stripProxy(self).objects.values())
 
         for p in iterable_list:
-
             if isType(p, ITask):
-                stat = "%4i: %4i/ %4i/  %4i/    --/ %4i/ %4i/ %4i" % (p.n_all(), p.n_status("completed"), p.n_status(
-                    "running"), p.n_status("submitted"), p.n_status("failed"), p.n_status("hold"), p.n_status("bad"))
-                ds += markup(fstring % (p.id, getName(p), p.name[0:GangaCore.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']
-                             ['Name']], p.status, p.comment, stat, p.float), status_colours[p.status])
+                stat = "%4i: %4i/ %4i/  %4i/    --/ %4i/ %4i/ %4i" % (
+                    p.n_all(),
+                    p.n_status("completed"),
+                    p.n_status("running"),
+                    p.n_status("submitted"),
+                    p.n_status("failed"),
+                    p.n_status("hold"),
+                    p.n_status("bad"),
+                )
+                ds += markup(
+                    fstring
+                    % (
+                        p.id,
+                        getName(p),
+                        p.name[
+                            0: GangaCore.GPIDev.Lib.Registry.RegistrySlice.config[
+                                'tasks_columns_width'
+                            ]['Name']
+                        ],
+                        p.status,
+                        p.comment,
+                        stat,
+                        p.float,
+                    ),
+                    status_colours[p.status],
+                )
             else:
-                stat = "%4i: %4i/ %4i/    --/  %4i/ %4i/ %4i/ %4i" % (p.n_all(), p.n_status("completed"), p.n_status(
-                    "running"), p.n_status("attempted"), p.n_status("failed"), p.n_status("hold"), p.n_status("bad"))
-                ds += markup(fstring % (p.id, getName(p), p.name[0:GangaCore.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']
-                             ['Name']], p.status, p.comment, stat, p.float), status_colours[p.status])
+                stat = "%4i: %4i/ %4i/    --/  %4i/ %4i/ %4i/ %4i" % (
+                    p.n_all(),
+                    p.n_status("completed"),
+                    p.n_status("running"),
+                    p.n_status("attempted"),
+                    p.n_status("failed"),
+                    p.n_status("hold"),
+                    p.n_status("bad"),
+                )
+                ds += markup(
+                    fstring
+                    % (
+                        p.id,
+                        getName(p),
+                        p.name[
+                            0: GangaCore.GPIDev.Lib.Registry.RegistrySlice.config[
+                                'tasks_columns_width'
+                            ]['Name']
+                        ],
+                        p.status,
+                        p.comment,
+                        stat,
+                        p.float,
+                    ),
+                    status_colours[p.status],
+                )
 
             if short is True:
                 continue
@@ -340,21 +437,65 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
                 t = p.transforms[ti]
 
                 if isType(p, ITask):
-                    stat = "%4i: %4i/ %4i/ %4i/     --/ %4i/ %4i/ %4s" % (t.n_all(), t.n_status("completed"), t.n_status(
-                        "running"), t.n_status("submitted"), t.n_status("failed"), t.n_status("hold"), t.n_status("bad"))
-                    ds += "\n" + markup(fstring % ("%i.%i" % (p.id, ti), getName(
-                        t), t.name[0:GangaCore.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], t.status, "", stat, ""), status_colours[t.status])
+                    stat = "%4i: %4i/ %4i/ %4i/     --/ %4i/ %4i/ %4s" % (
+                        t.n_all(),
+                        t.n_status("completed"),
+                        t.n_status("running"),
+                        t.n_status("submitted"),
+                        t.n_status("failed"),
+                        t.n_status("hold"),
+                        t.n_status("bad"),
+                    )
+                    ds += "\n" + markup(
+                        fstring
+                        % (
+                            "%i.%i" % (p.id, ti),
+                            getName(t),
+                            t.name[
+                                0: GangaCore.GPIDev.Lib.Registry.RegistrySlice.config[
+                                    'tasks_columns_width'
+                                ]['Name']
+                            ],
+                            t.status,
+                            "",
+                            stat,
+                            "",
+                        ),
+                        status_colours[t.status],
+                    )
                 else:
-                    stat = "%4i: %4i/ %4i/     --/ %4i/ %4i/ %4i/ %4s" % (t.n_all(), t.n_status("completed"), t.n_status(
-                        "running"), t.n_status("attempted"), t.n_status("failed"), t.n_status("hold"), t.n_status("bad"))
-                    ds += "zn" + markup(fstring % ("%i.%i" % (p.id, ti), getName(
-                        t), t.name[0:GangaCore.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], t.status, "", stat, ""), status_colours[t.status])
+                    stat = "%4i: %4i/ %4i/     --/ %4i/ %4i/ %4i/ %4s" % (
+                        t.n_all(),
+                        t.n_status("completed"),
+                        t.n_status("running"),
+                        t.n_status("attempted"),
+                        t.n_status("failed"),
+                        t.n_status("hold"),
+                        t.n_status("bad"),
+                    )
+                    ds += "zn" + markup(
+                        fstring
+                        % (
+                            "%i.%i" % (p.id, ti),
+                            getName(t),
+                            t.name[
+                                0: GangaCore.GPIDev.Lib.Registry.RegistrySlice.config[
+                                    'tasks_columns_width'
+                                ]['Name']
+                            ],
+                            t.status,
+                            "",
+                            stat,
+                            "",
+                        ),
+                        status_colours[t.status],
+                    )
 
             ds += "-" * lenfstring + "\n"
 
         return ds + "\n"
 
-    #_display = __str__
+    # _display = __str__
     def _display(self):
         return self.__str__(True)
 
@@ -367,53 +508,131 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
     def help(self, short=False):
         """Print a short introduction and 'cheat sheet' for the Ganga Tasks package"""
         print('')
-        print(markup(" *** Ganga Tasks: Short Introduction and 'Cheat Sheet' ***", fgcol("blue")))
+        print(
+            markup(
+                " *** Ganga Tasks: Short Introduction and 'Cheat Sheet' ***",
+                fgcol("blue"),
+            )
+        )
         print('')
-        print(markup("Definitions: ", fgcol("red")) +
-              "'Partition' - A unit of processing, for example processing a file or processing some events from a file")
-        print("             'Transform' - A group of partitions that have a common Ganga Application and Backend.")
-        print("             'Task'      - A group of one or more 'Transforms' that can have dependencies on each other")
+        print(
+            markup("Definitions: ", fgcol("red"))
+            + "'Partition' - A unit of processing, for example processing a file or processing some events from a file"
+        )
+        print(
+            "             'Transform' - A group of partitions that have a common Ganga Application and Backend."
+        )
+        print(
+            "             'Task'      - A group of one or more 'Transforms' that can have dependencies on each other"
+        )
         print('')
         print(markup("Possible status values for partitions:", fgcol("red")))
-        print(' * "' + markup("ready", overview_colours["ready"]) + '"    - ready to be executed ')
-        print(' * "' + markup("hold", overview_colours["hold"]) + '"     - dependencies not completed')
-        print(' * "' + markup("running", overview_colours["running"]) +
-              '"  - at least one job tries to process this partition')
-        print(' * "' + markup("attempted", overview_colours["attempted"]) +
-              '"- tasks tried to process this partition, but has not yet succeeded')
-        print(' * "' + markup("failed", overview_colours["failed"]) +
-              '"   - tasks failed to process this partition several times')
-        print(' * "' + markup("bad", overview_colours["bad"]) +
-              '"      - this partition is excluded from further processing and will not be used as input to subsequent transforms')
+        print(
+            ' * "'
+            + markup("ready", overview_colours["ready"])
+            + '"    - ready to be executed '
+        )
+        print(
+            ' * "'
+            + markup("hold", overview_colours["hold"])
+            + '"     - dependencies not completed'
+        )
+        print(
+            ' * "'
+            + markup("running", overview_colours["running"])
+            + '"  - at least one job tries to process this partition'
+        )
+        print(
+            ' * "'
+            + markup("attempted", overview_colours["attempted"])
+            + '"- tasks tried to process this partition, but has not yet succeeded'
+        )
+        print(
+            ' * "'
+            + markup("failed", overview_colours["failed"])
+            + '"   - tasks failed to process this partition several times'
+        )
+        print(
+            ' * "'
+            + markup("bad", overview_colours["bad"])
+            + '"      - this partition is excluded from further processing and will not \
+            be used as input to subsequent transforms'
+        )
         print(' * "' + markup("completed", overview_colours["completed"]) + '" ')
         print('')
 
         def c(s):
             return markup(s, fgcol("blue"))
+
         print(markup("Important commands:", fgcol("red")))
-        print(" Get a quick overview     : " + c("tasks") +
-              "                  Get a detailed view    : " + c("tasks.table()"))
-        print(" Access an existing task  : " + c("t = tasks(id)") +
-              "          Remove a Task          : " + c("tasks(id).remove()"))
-        print(" Create a new (MC) Task   : " + c("t = MCTask()") +
-              "           Copy a Task            : " + c("nt = t.copy()"))
-        print(" Show task configuration  : " + c("t.info()") +
-              "               Show processing status : " + c("t.overview()"))
-        print(" Set the float of a Task  : " + c("t.float = 100") +
-              "          Set the name of a task : " + c("t.name = 'My Own Task v1'"))
-        print(" Start processing         : " + c("t.run()") +
-              "                Pause processing       : " + c("t.pause()"))
-        print(" Access Transform id N    : " + c("tf = t.transforms[N]") + "   Pause processing of tf : " + c(
-            "tf.pause()") + "  # This command is reverted by using t.run()")
-        print(" Transform Application    : " + c("tf.application") +
-              "         Transform Backend      : " + c("tf.backend"))
+        print(
+            " Get a quick overview     : "
+            + c("tasks")
+            + "                  Get a detailed view    : "
+            + c("tasks.table()")
+        )
+        print(
+            " Access an existing task  : "
+            + c("t = tasks(id)")
+            + "          Remove a Task          : "
+            + c("tasks(id).remove()")
+        )
+        print(
+            " Create a new (MC) Task   : "
+            + c("t = MCTask()")
+            + "           Copy a Task            : "
+            + c("nt = t.copy()")
+        )
+        print(
+            " Show task configuration  : "
+            + c("t.info()")
+            + "               Show processing status : "
+            + c("t.overview()")
+        )
+        print(
+            " Set the float of a Task  : "
+            + c("t.float = 100")
+            + "          Set the name of a task : "
+            + c("t.name = 'My Own Task v1'")
+        )
+        print(
+            " Start processing         : "
+            + c("t.run()")
+            + "                Pause processing       : "
+            + c("t.pause()")
+        )
+        print(
+            " Access Transform id N    : "
+            + c("tf = t.transforms[N]")
+            + "   Pause processing of tf : "
+            + c("tf.pause()")
+            + "  # This command is reverted by using t.run()"
+        )
+        print(
+            " Transform Application    : "
+            + c("tf.application")
+            + "         Transform Backend      : "
+            + c("tf.backend")
+        )
         print('')
-        print(" Set parameter in all applications       : " + c("t.setParameter(my_software_version='1.42.0')"))
-        print(" Set backend for all transforms          : " + c("t.setBackend(backend) , p.e. t.setBackend(LCG())"))
+        print(
+            " Set parameter in all applications       : "
+            + c("t.setParameter(my_software_version='1.42.0')")
+        )
+        print(
+            " Set backend for all transforms          : "
+            + c("t.setBackend(backend) , p.e. t.setBackend(Dirac())")
+        )
         print(" Limit on how often jobs are resubmitted : " + c("tf.run_limit = 4"))
-        print(" Manually change the status of partitions: " + c("tf.setPartitionStatus(partition, 'status')"))
+        print(
+            " Manually change the status of partitions: "
+            + c("tf.setPartitionStatus(partition, 'status')")
+        )
         print('')
-        print(" For an ATLAS Monte Carlo Production Example and specific help type: " + c("MCTask?"))
+        print(
+            " For an ATLAS Monte Carlo Production Example and specific help type: "
+            + c("MCTask?")
+        )
         print(" For an ATLAS Analysis Example and help type: " + c("AnaTask?"))
         print('')
 
@@ -422,5 +641,10 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
             print("ADVANCED COMMANDS:")
             print("Add Transform  at position N      : t.insertTransform(N, transform)")
             print("Remove Transform  at position N   : t.removeTransform(N)")
-            print("Set Transform Application         : tf.application = TaskApp() #This Application must be a 'Task Version' of the usual application")
-            print("   Adding Task Versions of Applications is easy, contact the developers to request an inclusion")
+            print(
+                "Set Transform Application         : tf.application = TaskApp() #This \
+                Application must be a 'Task Version' of the usual application"
+            )
+            print(
+                "   Adding Task Versions of Applications is easy, contact the developers to request an inclusion"
+            )

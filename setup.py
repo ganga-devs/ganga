@@ -81,8 +81,7 @@ install_requires = [
     'jedi==0.17.2',
     'httplib2>=0.8',
     'aiofile==3.7.4',
-    'aiohttp==3.8.1',
-    'aioprocessing>=2.0.1',
+    'aiohttp==3.8.4',
     'absl-py>=0.1.2',
     'google-api-python-client',
     'google-auth-httplib2',
@@ -119,7 +118,9 @@ setup(name='ganga',
       extras_require={
           'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],
           'profiler': ['memory_profiler'],
-          'LHCb': ['LbDevTools']},
+          'Dirac': ['UltraDict'],
+          'LHCb': ['LbDevTools']
+      },
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
           'Programming Language :: Python :: 3.8',

@@ -1,8 +1,12 @@
+import asyncio
 import os
+import traceback
 import uuid
 import psutil
 
-from aioprocessing import AioManager, AioQueue
+from UltraDict import UltraDict
+from UltraDict.Exceptions import AlreadyClosed
+from multiprocessing import Queue, Event
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, getDiracEnv
 from GangaCore.GPIDev.Credentials import credential_store
 from GangaCore.Utility.logging import getLogger
@@ -24,12 +28,11 @@ class Singleton(type):
 
 class AsyncDiracManager(metaclass=Singleton):
     def __init__(self):
-        self.dirac_process = None
-        self.manager = None
         self.task_queues = {}
         self.task_result_dicts = {}
+        self.stop_events = {}
         self.active_processes = {}
-        self.task_queue = AioQueue()
+        self.processes_killed = False
 
     def prepare_process_env(self, env=None, cred_req=None):
         if env is None:
@@ -49,21 +52,24 @@ class AsyncDiracManager(metaclass=Singleton):
         return hash(frozenset(dirac_env.items()))
 
     def start_dirac_process(self, dirac_env=None):
-        self.manager = AioManager()
-        self.task_result_dict = self.manager.dict()
         env_hash = self.hash_dirac_env(dirac_env)
-        self.task_queues[env_hash] = AioQueue()
-        self.task_result_dicts[env_hash] = self.manager.dict()
-        dirac_process = DiracProcess(
-            task_queue=self.task_queues[env_hash],
-            task_result_dict=self.task_result_dicts[env_hash],
-            env=dirac_env)
-        dirac_process.start()
+        self.task_queues[env_hash] = Queue()
+        self.stop_events[env_hash] = Event()
+        try:
+            self.task_result_dicts[env_hash] = UltraDict(recurse=False, auto_unlink=True)
+            dirac_process = DiracProcess(
+                task_queue=self.task_queues[env_hash],
+                task_result_dict_name=self.task_result_dicts[env_hash].name,
+                stop_event=self.stop_events[env_hash],
+                logger=logger,
+                env=dirac_env)
+            dirac_process.start()
+            logger.debug(f"DIRAC process started with PID {dirac_process.pid}")
+            self.active_processes[env_hash] = dirac_process
+        except Exception:
+            logger.exception(traceback.format_exc())
 
-        logger.debug(f"DIRAC process started with PID {dirac_process.pid}")
-        self.active_processes[env_hash] = dirac_process
-
-    def parse_command_result(self, result, cmd, return_raw_dict=False):
+    def parse_command_result(self, result, return_raw_dict=False, env_hash=None):
         if isinstance(result, dict):
             if return_raw_dict:
                 # If the output is a dictionary return and it has been requested, then return it
@@ -94,24 +100,40 @@ class AsyncDiracManager(metaclass=Singleton):
 
         try:
             task_id = uuid.uuid4()
-            task_done = self.manager.AioEvent()
-            await self.task_queues[env_hash].coro_put((task_done, task_id, cmd, args_dict))
+            logger.debug(f'Executing command {str(cmd)}...')
+            self.task_queues[env_hash].put((task_id, cmd, args_dict))
 
-            await task_done.coro_wait()
-            dirac_result = self.task_result_dicts[env_hash].get(task_id)
-            del self.task_result_dicts[env_hash][task_id]
+            task_results_dict = self.task_result_dicts[env_hash]
+            dirac_result = await self.get_task_result(task_id, task_results_dict)
 
-            returnable = self.parse_command_result(dirac_result, str(cmd), return_raw_dict)
-            logger.debug(f'Executed DIRAC command {cmd} with result {returnable}')
+            returnable = self.parse_command_result(dirac_result, return_raw_dict, env_hash)
+            logger.debug(f'Executed DIRAC command {cmd} with args {str(args_dict)} and result {returnable}')
             return returnable
-        except RuntimeError:
-            logger.warn('Attempted to add asyncio task after Ganga shutdown. Returning...')
+        except AlreadyClosed:
+            msg = """Tried to access shared DIRAC executor memory after interpreter shutdown.
+            This may happen when exiting Ganga while a DIRAC job is completing"""
+            logger.warn(msg)
             self.kill_dirac_processes()
-            return {'OK': False, 'Message': 'The event loop has shut down'}
+        except Exception as err:
+            raise GangaDiracError(err)
+
+    async def get_task_result(self, task_id, result_dict):
+        while not result_dict.closed and task_id not in result_dict:
+            await asyncio.sleep(0.3)
+        if result_dict.closed:
+            raise AlreadyClosed('Tried to access shared dict after it was already closed!')
+        else:
+            result = result_dict.get(task_id)
+        return result
 
     def kill_dirac_processes(self):
-        for process in self.active_processes.values():
-            process.terminate()
+        if self.processes_killed:
+            return
+        self.processes_killed = True
+        if not self.active_processes:
+            return
+        for env_hash, process in self.active_processes.items():
+            self.stop_events[env_hash].set()
             process.join()
             logger.debug(f"Terminated DIRAC executor process with pid {process.pid}")
-        self.active_processes = None
+        self.active_processes = {}

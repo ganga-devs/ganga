@@ -2,7 +2,6 @@ import os
 import datetime
 import time
 from functools import wraps
-from traceback import print_exc
 import traceback
 # from ganga.GangaDirac.Lib.Server.DiracDefinition import diracCommand
 
@@ -37,8 +36,6 @@ def diracCommand(f):
         except Exception as err:
             # Catch __ALL__ errors and report them back to Ganga
             # STDERR is lost in normal running so this will have to do!
-            print('error occurreeedd')
-            print_exc()
             output_dict['OK'] = False
             output_dict['Message'] = 'Error: %s' % str(err)
 

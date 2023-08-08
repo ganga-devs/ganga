@@ -1,6 +1,8 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from itertools import chain
 import functools
+import shutil
 import traceback
 
 from GangaCore.Core.GangaRepository.Registry import RegistryKeyError, RegistryLockError
@@ -9,6 +11,7 @@ from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
 from GangaCore.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
+from GangaCore.GPIDev.Lib.Job.utils import lazyLoadJobObject
 
 config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
@@ -20,7 +23,7 @@ async def log_exceptions(awaitable):
     try:
         return await awaitable
     except Exception:
-        traceback.print_exc()
+        log.warn(traceback.format_exc())
 
 
 class AsyncMonitoringService(GangaThread):
@@ -109,13 +112,12 @@ class AsyncMonitoringService(GangaThread):
             return
 
         job_slice = self.active_backends[backend_name]
-        log.debug(f'Checking backend {backend_name}')
         backend.master_updateMonitoringInformation(job_slice)
         self._schedule_next_backend_check(backend)
 
     def _schedule_next_backend_check(self, backend):
         backend_name = getName(backend)
-        if backend in config:
+        if backend_name in config:
             pRate = config[backend_name]
         else:
             pRate = config['default_backend_poll_rate']
@@ -142,6 +144,8 @@ class AsyncMonitoringService(GangaThread):
 
     def _cleanup_backend(self, backend):
         backend_name = getName(backend)
+        if backend_name not in self.scheduled_backend_checks:
+            return
         for timer_handle in self.scheduled_backend_checks[backend_name]:
             timer_handle.cancel()
         del self.scheduled_backend_checks[backend_name]
@@ -160,11 +164,35 @@ class AsyncMonitoringService(GangaThread):
         Check for jobs that may have been interrupted for completing and revert them back to the
         submitted status.
         """
-        for job_id in self.registry_slice.ids():
-            j = stripProxy(stripProxy(self.registry_slice(job_id)))
+        running_slice = self.registry_slice.select(status='running')
+        completing_slice = self.registry_slice.select(status='completing')
+        submitted_slice = self.registry_slice.select(status='submitted')
+
+        for job in chain(running_slice, completing_slice, submitted_slice):
+            j = stripProxy(self.registry_slice(job.id))
             status = lazyLoadJobStatus(j)
-            if status == 'completing':
-                j.status = 'submitted'
+            subjobs = lazyLoadJobObject(j, 'subjobs')
+            if not subjobs and status == 'completing':
+                self._remove_dirty_outputdir(j)
+                j.status = 'running'
+                continue
+            if subjobs:
+                if status == 'completing':
+                    j.status = 'running'
+                for sj in j.subjobs:
+                    if lazyLoadJobStatus(sj) == 'completing':
+                        self._remove_dirty_outputdir(sj)
+                        sj.status = 'running'
+
+    def _remove_dirty_outputdir(self, job):
+        if not job.outputdir:
+            log.warn(f'Tried to reset sandbox download for job {job.id} due to dirty state but found no outputdir')
+            return
+        try:
+            shutil.rmtree(job.outputdir)
+            log.debug(f'Removed outputdir {job.outputdir} due to dirty state.')
+        except FileNotFoundError:
+            log.warn(f'Tried to reset sandbox download for job {job.id} due to dirty state but found no outputdir')
 
     def disable(self):
         if not self.alive:
@@ -189,6 +217,12 @@ class AsyncMonitoringService(GangaThread):
         self.alive = False
         self.enabled = False
         self.thread_executor.shutdown()
+        try:
+            for backend_name, active_jobs in self.active_backends.items():
+                log.debug(f'Cleaning up {backend_name} before monitoring shutdown')
+                backend_obj = lazyLoadJobBackend(active_jobs[0])
+                self._cleanup_backend(backend_obj)
+        except Exception as err:
+            log.error(err)
         self._cleanup_scheduled_tasks()
-        self.loop.stop()
-        exit(0)
+        self.loop.call_soon_threadsafe(self.loop.stop)
