@@ -1082,8 +1082,6 @@ class DiracBase(IBackend):
             job (Job): Thi is the job we want to finalise
             updated_dirac_status (str): String representing the Ganga finalisation state of the job failed/completed
         """
-        from GangaCore.Core import monitoring_component
-
         if job.backend.finaliseOnMaster and job.master and updated_dirac_status == 'completed':
             job.updateStatus('completing')
             allComplete = True
@@ -1448,12 +1446,10 @@ class DiracBase(IBackend):
         statusmapping = configDirac['statusmapping']
 
         dm = AsyncDiracManager()
-        result = await dm.execute(dirac_status, args_dict={'job_ids': dirac_job_ids, 'statusmapping': statusmapping}, cred_req=monitor_jobs[0].backend.credential_requirements)
-        # result, bulk_state_result = execute('monitorJobs(%s, %s)' % (repr(dirac_job_ids), repr(
-        #     statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements, new_subprocess=True)
-
-        # result = results[0]
-        # bulk_state_result = results[1]
+        result = await dm.execute(dirac_status,
+                                  args_dict={'job_ids': dirac_job_ids,
+                                             'statusmapping': statusmapping},
+                                  cred_req=monitor_jobs[0].backend.credential_requirements)
 
         if len(result) != len(ganga_job_status):
             logger.warning('Dirac monitoring failed for %s, result = %s' % (str(dirac_job_ids), str(result)))
