@@ -2,7 +2,6 @@ import os
 import datetime
 import time
 from functools import wraps
-from traceback import print_exc
 import traceback
 # from ganga.GangaDirac.Lib.Server.DiracDefinition import diracCommand
 

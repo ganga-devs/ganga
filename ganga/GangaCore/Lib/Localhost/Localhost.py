@@ -11,7 +11,6 @@ import sys
 import re
 
 from aiofile import async_open
-from pathlib import Path
 from os.path import join, dirname, abspath, isdir, isfile
 
 import GangaCore.Utility.logic
@@ -233,10 +232,10 @@ class Localhost(IBackend):
             p = join(j.outputdir, '__jobstatus__')
             logger.debug("Opening output file at: %s", p)
             with open(p) as f:
-                for l in f:
-                    if checkstr in l:
-                        pos = l.find(checkstr)
-                        timestr = l[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
+                for line in f:
+                    if checkstr in line:
+                        pos = line.find(checkstr)
+                        timestr = line[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
                         try:
                             t = datetime.datetime(
                                 *(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))

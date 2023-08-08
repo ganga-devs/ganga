@@ -16,7 +16,7 @@ from GangaCore.Runtime import Repository_runtime, bootstrap
 from GangaCore.Utility import stacktracer
 from GangaCore.Utility.logging import getLogger, requires_shutdown, final_shutdown
 from GangaCore.Utility.Config import setConfigOption
-from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace, _purge_actions_queue,\
+from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace, _purge_actions_queue, \
     stop_and_free_thread_pool
 from GangaCore.GPIDev.Lib.Tasks import stopTasks
 from GangaCore.GPIDev.Credentials import CredentialStore
