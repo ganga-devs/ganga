@@ -82,8 +82,8 @@ class Condor(IBackend):
         "globusscheduler": SimpleItem(defvalue="", doc="Globus scheduler to be used (required for Condor-G submission)"),
         "globus_rsl": SimpleItem(defvalue="",
                                  doc="Globus RSL settings (for Condor-G submission)"),
-        "spool": SimpleItem(defvalue=True, doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd.
-                                                 Required for EOS, see: http://batchdocs.web.cern.ch/batchdocs/troubleshooting/eos_submission.html"),
+        "spool": SimpleItem(defvalue=True, doc=("Spool all required input files, job event log, and proxy over the connection to the condor_schedd.
+                                                 Required for EOS, see: http://batchdocs.web.cern.ch/batchdocs/troubleshooting/eos_submission.html")),
         "accounting_group": SimpleItem(defvalue='', doc="Provide an accounting group for this job."),
         "cdf_options": SimpleItem(defvalue={}, doc="Additional options to set in the CDF file given by a dictionary")
     })
