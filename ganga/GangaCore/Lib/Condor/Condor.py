@@ -82,7 +82,8 @@ class Condor(IBackend):
         "globusscheduler": SimpleItem(defvalue="", doc="Globus scheduler to be used (required for Condor-G submission)"),
         "globus_rsl": SimpleItem(defvalue="",
                                  doc="Globus RSL settings (for Condor-G submission)"),
-        "spool": SimpleItem(defvalue=True, doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd. Required for EOS, see: http://batchdocs.web.cern.ch/batchdocs/troubleshooting/eos_submission.html"),
+        "spool": SimpleItem(defvalue=True, doc="Spool all required input files, job event log, and proxy over the connection to the condor_schedd.
+                                                 Required for EOS, see: http://batchdocs.web.cern.ch/batchdocs/troubleshooting/eos_submission.html"),
         "accounting_group": SimpleItem(defvalue='', doc="Provide an accounting group for this job."),
         "cdf_options": SimpleItem(defvalue={}, doc="Additional options to set in the CDF file given by a dictionary")
     })
@@ -155,13 +156,6 @@ class Condor(IBackend):
                           or False otherwise"""
 
         job = self.getJobObject()
-
-        # Is this a subjob?
-        if job.master:
-            inpDir = job.master.getInputWorkspace().getPath()
-
-        else:
-            inpDir = job.getInputWorkspace().getPath()
 
         outDir = job.getOutputWorkspace().getPath()
 
@@ -301,7 +295,6 @@ class Condor(IBackend):
             utilFiles.append(virtualizationutils)
 
         inbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + utilFiles)
-        inpDir = job.getInputWorkspace().getPath()
         outDir = job.getOutputWorkspace().getPath()
 
         infileList = []
@@ -620,7 +613,8 @@ class Condor(IBackend):
                 "setCondorDateFormat cannot determine date format: '%s'", dateString)
 
     def getCondorDate(self, dateString, timeString):
-        """Helper function to unify the condor date format according to the format obtained in setCondorDateFormat and stored in _condorDateFormat
+        """Helper function to unify the condor date format according to the format obtained in setCondorDateFormat
+           and stored in _condorDateFormat
 
            Depending on the version of condor, the format of the date is different:
                If there are only two date elements, the condorLog doesn't tell you the year so we guess the closest one to now.
@@ -646,8 +640,6 @@ class Condor(IBackend):
            These are converted into datetime objects and returned to the user.
         """
         j = self.getJobObject()
-        end_list = ['completed', 'failed']
-        d = {}
         checkstr = ''
 
         if status == 'submitted':
@@ -673,8 +665,8 @@ class Condor(IBackend):
             logger.debug('unable to open file %s', p)
             return None
 
-        for l in f:
-            splitLine = l.split()
+        for _l in f:
+            splitLine = _l.split()
             if len(splitLine) > 0 and checkstr == splitLine[0]:
                 if not self._condorDateFormat:
                     self.setCondorDateFormat(splitLine[2])
