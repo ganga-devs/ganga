@@ -133,7 +133,7 @@ class Condor(IBackend):
         this_job = htcondor.Submit(cdfDict)
         # Now setup the submission
         schedd = htcondor.Schedd()
-        stati = schedd.submit(this_job, itemdata = iter(sjDict))
+        stati = schedd.submit(this_job, itemdata=iter(sjDict))
 
         cluster_id = stati.cluster()
         process_id = stati.first_proc()
@@ -189,7 +189,7 @@ class Condor(IBackend):
         this_job = htcondor.Submit(cdfDict)
         # Now setup the submission
         schedd = htcondor.Schedd()
-        stati = schedd.submit(this_job, itemdata = iter(sjDict))
+        stati = schedd.submit(this_job, itemdata=iter(sjDict))
 
         cluster_id = stati.cluster()
         process_id = stati.first_proc()
@@ -313,11 +313,11 @@ class Condor(IBackend):
         exeCmd = [exeString] + quotedArgList
 
         for filePath in inbox:
-            if not filePath in infileList:
+            if filePath not in infileList:
                 infileList.append(filePath)
 
         for filePath in master_input_sandbox:
-            if not filePath in infileList:
+            if filePath not in infileList:
                 infileList.append(filePath)
 
         fileList = []
@@ -632,7 +632,9 @@ class Condor(IBackend):
                 result = result.replace(self._condorDateFormat[1], "/")
             if self._condorDateFormat[0] == 2:
                 year = datetime.datetime.now().year
-                if datetime.datetime.strptime(str(year) + "/" + result + ' ' + timeString, "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
+                if datetime.datetime.strptime(
+                        str(year) + "/" + result + ' ' + timeString,
+                        "%Y/%m/%d %H:%M:%S") > datetime.datetime.now():
                     year = year - 1
                 result = str(year) + "/" + result
         return result
