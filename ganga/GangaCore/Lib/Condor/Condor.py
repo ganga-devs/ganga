@@ -134,8 +134,6 @@ class Condor(IBackend):
         # Now setup the submission
         schedd = htcondor.Schedd()
         stati = schedd.submit(this_job, itemdata = iter(sjDict))
-#        with schedd.transaction() as txn:
-#            stati = this_job.queue_with_itemdata(txn, itemdata=iter(sjDict))
 
         cluster_id = stati.cluster()
         process_id = stati.first_proc()
@@ -192,8 +190,6 @@ class Condor(IBackend):
         # Now setup the submission
         schedd = htcondor.Schedd()
         stati = schedd.submit(this_job, itemdata = iter(sjDict))
-#        with schedd.transaction() as txn:
-#            stati = this_job.queue_with_itemdata(txn, itemdata=iter(sjDict))
 
         cluster_id = stati.cluster()
         process_id = stati.first_proc()
