@@ -45,11 +45,11 @@ servicesEnabled = True
 def _diskSpaceChecker():
     """
     the callback function used internally by Monitoring Component
-    Reads and calls the checking function provided in the configuration. 
+    Reads and calls the checking function provided in the configuration.
     If this checking function returns "False" the internal services are disabled making Ganga read-only:
     e.g:
     [PollThread]
-    DiskSpaceChecker =  
+    DiskSpaceChecker =
         import commands
         diskusage = commands.getoutput('df -l -P %s/workspace' % config['Configuration']['gangadir'])
         used  = diskusage.splitlines()[1].split()[4] # get disk usage (in %)
@@ -188,7 +188,7 @@ def enableInternalServices():
 def checkInternalServices(errMsg='Internal services disabled. Job registry is read-only.'):
     """
     Check the state of internal services and return a ReadOnlyObjectError exception
-    in case the state is disabled.    
+    in case the state is disabled.
     """
 
     global servicesEnabled

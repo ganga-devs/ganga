@@ -37,16 +37,62 @@ class DummyRemote(IBackend):
 
     The job is run in the workdir (usually in /tmp).
     """
-    _schema = Schema(Version(1, 2), {'id': SimpleItem(defvalue=-1, protected=1, copyable=0, doc='Process id.'),
-                                     'status': SimpleItem(defvalue=None, typelist=[None, str], protected=1, copyable=0, hidden=1, doc='*NOT USED*'),
-                                     'exitcode': SimpleItem(defvalue=None, typelist=[int, None], protected=1, copyable=0, doc='Process exit code.'),
-                                     'workdir': SimpleItem(defvalue='', protected=1, copyable=0, doc='Working directory.'),
-                                     'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Hostname where the job was submitted.'),
-                                     'wrapper_pid': SimpleItem(defvalue=-1, typelist=['int', 'list'], protected=1, copyable=0, hidden=1, doc='(internal) process id(s) of the execution wrapper(s)'),
-                                     'nice': SimpleItem(defvalue=0, doc='adjust process priority using nice -n command'),
-                                     'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel'),
-                                     'batchsize': SimpleItem(defvalue=-1, typelist=[int], doc='Run a maximum of this number of subjobs in parallel. If value is negative use number of available CPUs')
-                                     })
+    _schema = Schema(
+        Version(
+            1,
+            2),
+        {
+            'id': SimpleItem(
+                defvalue=-1,
+                protected=1,
+                copyable=0,
+                doc='Process id.'),
+            'status': SimpleItem(
+                defvalue=None,
+                typelist=[
+                    None,
+                    str],
+                protected=1,
+                copyable=0,
+                hidden=1,
+                doc='*NOT USED*'),
+            'exitcode': SimpleItem(
+                defvalue=None,
+                typelist=[
+                    int,
+                    None],
+                protected=1,
+                copyable=0,
+                doc='Process exit code.'),
+            'workdir': SimpleItem(
+                defvalue='',
+                protected=1,
+                copyable=0,
+                doc='Working directory.'),
+            'actualCE': SimpleItem(
+                defvalue='',
+                protected=1,
+                copyable=0,
+                doc='Hostname where the job was submitted.'),
+            'wrapper_pid': SimpleItem(
+                defvalue=-1,
+                typelist=[
+                    'int',
+                    'list'],
+                protected=1,
+                copyable=0,
+                hidden=1,
+                doc='(internal) process id(s) of the execution wrapper(s)'),
+            'nice': SimpleItem(
+                defvalue=0,
+                doc='adjust process priority using nice -n command'),
+            'force_parallel': SimpleItem(
+                defvalue=False,
+                doc='should jobs really be submitted in parallel'),
+            'batchsize': SimpleItem(
+                defvalue=-1,
+                typelist=[int],
+                doc='Run a maximum of this number of subjobs in parallel. If value is negative use number of available CPUs')})
     _category = 'backends'
     _name = 'DummyRemote'
 
@@ -60,7 +106,7 @@ class DummyRemote(IBackend):
     def prepare_master_script(self, rjobs):
         job = self.getJobObject()
         wrkspace = job.getInputWorkspace()
-        if not job.splitter is None:
+        if job.splitter is not None:
             bs = self.batchsize
             if (bs < 0):
                 bs = multiprocessing.cpu_count()
@@ -138,7 +184,7 @@ class DummyRemote(IBackend):
             logger.error('cannot start a job process: %s', str(x))
             return 0
         oldid = self.wrapper_pid
-        if type(oldid) == int:
+        if isinstance(oldid, int):
             oldid = [oldid]
             if oldid[0] == -1:
                 self.wrapper_pid = [process.pid]
@@ -319,7 +365,7 @@ class DummyRemote(IBackend):
         job = self.getJobObject()
 
         pids = self.wrapper_pid
-        if type(pids) == int:
+        if isinstance(pids, int):
             pids = [pids]
 
         if pids[0] < 0:
