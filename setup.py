@@ -99,7 +99,6 @@ install_requires = [
     "docker",
     "pymongo",
     "gdown",
-    "UltraDict"
 ]
 if sys.platform != 'darwin':
     install_requires.append("htcondor")
