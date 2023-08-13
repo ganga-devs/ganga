@@ -4,16 +4,17 @@
 # $Id: StandardJobConfig.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
 
-from GangaCore.Utility.logging import getLogger
 import os
-import copy
+
+from GangaCore.Utility.logging import getLogger
+
 logger = getLogger()
 
 
 class StandardJobConfig(object):
 
     """
-    StandardJobConfig defines a standard input for many of the handlers: LSF, Localhost,LCG.
+    StandardJobConfig defines a standard input for many of the handlers: LSF, Localhost.
     It corresponds to a simplified JDL definition: specification of executable, arguments and input sandbox.
     Executable and arguments may be specified either as strings or File objects. In the second case they are
     automatically added to the input sandbox list.
@@ -29,12 +30,15 @@ class StandardJobConfig(object):
 
     def __init__(self, exe=None, inputbox=None, args=None, outputbox=None, env=None, sharedarea=None):
         """
-        exe - executable string to be run on the worker node or a File object to be shipped as executable script to the worker node
-        args - list of strings which are passed as arguments to the executable string or File objects which are automatically added to the sandbox
+        exe - executable string to be run on the worker node or a File object to be shipped as \
+        executable script to the worker node
+        args - list of strings which are passed as arguments to the executable string or File \
+        objects which are automatically added to the sandbox
         inputbox - list of additional File or FileBuffer objects which go to the sandbox
         outputbox - list of additional files which should be returned by the sandbox
 
-        The constructor does processValues() automatically so the construction of the object may failed with exceptions raised by that method.
+        The constructor does processValues() automatically so the construction of the object \
+        may failed with exceptions raised by that method.
         Notes for derived classes:
           - this constructor should be called at the end of the derived constructor.
           - you may freely add new attributes as long as you they do not start with _
@@ -137,7 +141,7 @@ class StandardJobConfig(object):
                     fn = _get_path_in_sandbox(a)
                     self.__args_strings.append(fn)
                     self.__all_inputbox.append(a)
-                except AttributeError as x:
+                except AttributeError:
                     s = "cannot process argument %s, it is neither File nor string" % repr(
                         a)
                     logger.error(s)
@@ -166,7 +170,8 @@ class StandardJobConfig(object):
 # obsoleted jobConfig.getExeCmdString() method
 #
 # Revision 1.6  2007/08/24 15:55:02  moscicki
-# added executable flag to the file, ganga will set the executable mode of the app.exe file (in the sandbox only, the original file is not touched), this is to solve feature request #24452
+# added executable flag to the file, ganga will set the executable mode of the app.exe file
+# (in the sandbox only, the original file is not touched), this is to solve feature request #24452
 #
 # Revision 1.5  2006/08/07 12:09:06  moscicki
 # bug #18271 bug fix from V.Romanovski
