@@ -13,11 +13,13 @@
    Test suite for use of config settings to override GangaObject defaults
 """
 
-from GangaTest.Framework.tests import GangaGPITestCase
-from GangaCore.Utility.Config import ConfigError
-from GangaCore.Utility.Plugin.GangaPlugin import PluginManagerError
-
+from GangaCore.GPI import Executable, Job
+from GangaCore.Lib.Batch.Batch import LSF
+from GangaCore.Utility.Config import ConfigError, getConfig
 from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.Plugin.GangaPlugin import PluginManagerError
+from GangaTest.Framework.tests import GangaGPITestCase
+
 logger = getLogger(modulename=True)
 
 
@@ -39,7 +41,6 @@ class TestObjectConfig(GangaGPITestCase):
             getConfig(c).revertToSessionOptions()
 
     def test001_SimpleItems(self):
-
         # Set config values for Executable attributes
         exeConfig = getConfig("defaults_Executable")
         testArgs = ["arg1", "arg2", "arg3"]
@@ -49,12 +50,11 @@ class TestObjectConfig(GangaGPITestCase):
 
         # Perform checks
         myExecutable = Executable()
-        assert(myExecutable.args == testArgs)
-        assert(myExecutable.exe == testExe)
+        assert myExecutable.args == testArgs
+        assert myExecutable.exe == testExe
         return None
 
     def test002_ComponentItems(self):
-
         # Set the LSF queue attribute
         testQueue1 = "myQueue1"
         lsfConfig = getConfig("defaults_LSF")
@@ -66,7 +66,7 @@ class TestObjectConfig(GangaGPITestCase):
 
         try:
             jobConfig.setUserValue("backend.queue", "myQueue2")
-            assert(0)
+            assert 0
         except ConfigError as x:
             logger.error(x)
 
@@ -74,25 +74,24 @@ class TestObjectConfig(GangaGPITestCase):
         lsf = LSF()
         job = Job()
         job.backend = lsf
-        assert(lsf.queue == testQueue1)
-        assert(job.backend._impl._name == "LSF")
-        assert(job.backend.queue == testQueue1)
+        assert lsf.queue == testQueue1
+        assert job.backend._impl._name == "LSF"
+        assert job.backend.queue == testQueue1
 
         return None
 
     def test003_failures(self):
-
         exe1 = Executable()
         exeConfig = getConfig("defaults_Executable")
 
         try:
             exeConfig.setUserValue("not_existing_args", ['something_wrong'])
-            assert(0)
+            assert 0
         except ConfigError as x:
             logger.error(x)
 
         exe2 = Executable()
-        assert(exe2.args == exe1.args)
+        assert exe2.args == exe1.args
 
         job1 = Job()
         jobConfig = getConfig("defaults_Job")
@@ -100,7 +99,7 @@ class TestObjectConfig(GangaGPITestCase):
         try:
             jobConfig.setUserValue("backend", "NOT_EXISTING_BACKEND")
             jobConfig.setUserValue("backend.queue", "x")
-            assert(0)
+            assert 0
         except (ConfigError, PluginManagerError) as x:
             logger.error(x)
 
@@ -109,23 +108,24 @@ class TestObjectConfig(GangaGPITestCase):
         logger.info(job1.backend)
         logger.info(job2.backend)
 
-        assert(job1.backend == job2.backend)
+        assert job1.backend == job2.backend
+
 
 # def test004_failureBackup(self):
-##        jobConfig = getConfig( "Job_Properties" )
+#         jobConfig = getConfig( "Job_Properties" )
 
 # first set something legal
-# jobConfig.setSessionOption("backend","LCG")
-##        job1 = Job()
+# jobConfig.setSessionOption("backend","Dirac")
+#         job1 = Job()
 
 # now something illegal
-##        jobConfig.setUserValue("backend", "NOT_EXISTING_BACKEND")
-##        jobConfig.setUserValue("backend.queue", "x")
-##        job2 = Job()
+#         jobConfig.setUserValue("backend", "NOT_EXISTING_BACKEND")
+#         jobConfig.setUserValue("backend.queue", "x")
+#         job2 = Job()
 
 # job2 is expected to have backend
 
 # print job1.backend
 # print job2.backend
 
-##        assert(job1.backend == job2.backend)
+#         assert(job1.backend == job2.backend)
