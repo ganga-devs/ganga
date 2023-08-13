@@ -120,13 +120,15 @@ class VTree(object):
         
     def __children__(self):
         '''list the existing children'''
-        list=[]
+        childlist=[]
         for c in self.__element__:
-            list.append(c.tag)
-        return list
+            childlist.append(c.tag)
+        return childlist
+
     def __repr__(self):
         '''how to print this object'''
         return self.__str__()
+
     def __str__(self):
         '''how to print this object'''
         ret= 'VTree-'+self.tag()+': '
@@ -478,12 +480,12 @@ class VTree(object):
         multiple tags are ORED.
         multiple attributes are ANDED
         '''
-        it=self.__element__.iter()
-        list=[]
+        it=list(self.__element__)
+        childlist=[]
         for child in it:
             if self.__is__(child,tag,attrib,value):
-                list.append(VTree(child,self.__schema__,self,False))
-        return list
+                childlist.append(VTree(child,self.__schema__,self,False))
+        return childlist
     
     def find(self, tag=None, attrib=None, value=None):
         '''return a list of the elements with the given tags, attributes and values.
@@ -512,7 +514,7 @@ class VTree(object):
         def_e=__ElementTree__.Element(ele.tag,ele.attrib)
         def_e.text=ele.text
         def_e.tail=ele.tail
-        for c in ele:
+        for c in list(ele):
             def_e.append(self.__clone_element__(c))
         return def_e
     
@@ -681,7 +683,7 @@ class Schema(object):
         
         #check children
         kiddic={}
-        for child in element:
+        for child in list(element):
             if child.tag in kiddic:
                 kiddic[child.tag]=kiddic[child.tag]+1
             else:
