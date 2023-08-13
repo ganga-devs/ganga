@@ -122,10 +122,10 @@ class VTree(object):
 
     def __children__(self):
         '''list the existing children'''
-        list = []
+        childlist = []
         for c in list(self.__element__):
-            list.append(c.tag)
-        return list
+            childlist.append(c.tag)
+        return childlist
 
     def __repr__(self):
         '''how to print this object'''
