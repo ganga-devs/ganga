@@ -944,11 +944,11 @@ class Schema(object):
         raise TypeError('do not no how to convert to type ' + atype)
         return None
 
-    def __list2str__(self, list):
+    def __list2str__(self, inlist):
         '''internal method cast a list to a string separated by spaces'''
         rets = ''
-        for l in list:
-            rets += str(l) + ' '
+        for _l in inlist:
+            rets += str(_l) + ' '
         return rets.rstrip()
 
     def __constraint__(self, tag, constr):
@@ -1426,7 +1426,7 @@ class Schema(object):
         '''is this attribute required?'''
         try:
             if self.Tag_isRoot(tag) and att in self.__rootattribs__:
-                return(list(att == self.__rootattribs__.keys())[0])
+                return (list(att == self.__rootattribs__.keys())[0])
 
             ele = self.__attribelement__[att]
             if ele.attrib['use'] == 'required':

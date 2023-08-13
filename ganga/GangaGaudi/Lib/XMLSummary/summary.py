@@ -60,7 +60,7 @@ except (ImportError, IOError):
 #    __schema__=imp.load_module('schema',__os__.path.expanduser(__os__.path.expandvars(path)))
 #    return
 
-#from __schema_module__ import *
+# from __schema_module__ import *
 
 __default_schema__ = '$XMLSUMMARYBASEROOT/xml/XMLSummary.xsd'
 __file_tag__ = 'file'
@@ -286,7 +286,7 @@ class Summary(__schema__.VTree):
 
     def isFailure(self):
         """the opposite of isSuccess, negates what is stored by the success tag"""
-        return (self.children('success')[0].value() == False)
+        return (self.children('success')[0].value() is False)
 
     def set_step(self, step="initialize", success=False):
         """ Set the step entry, and the success entry """
@@ -434,9 +434,9 @@ class Summary(__schema__.VTree):
                 self.__file_dict__[mother].clear()
                 for amother in self.children(mother):
                     for file in amother.children():
-                        if(file.attrib('name') != ""):
+                        if (file.attrib('name') != ""):
                             self.__file_dict__[mother][file.attrib('name')] = file
-                        if(file.attrib('GUID') != ""):
+                        if (file.attrib('GUID') != ""):
                             self.__file_dict__[mother][file.attrib('GUID')] = file
         return self.__file_dict__
 
