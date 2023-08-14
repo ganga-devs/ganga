@@ -1,13 +1,11 @@
 import time
 import re
 import itertools
-from GangaCore.Core.exceptions import GangaException, BackendError
-#from GangaDirac.BOOT       import dirac_ganga_server
+from GangaCore.Core.exceptions import BackendError
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaCore.Utility.logging import getLogger
-from GangaCore.GPIDev.Base.Proxy import stripProxy
 logger = getLogger()
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ #
 
 
 def result_ok(result):
@@ -16,29 +14,29 @@ def result_ok(result):
     '''
     if result is None:
         return False
-    elif type(result) is not dict:
+    elif not isinstance(result, dict):
         return False
     else:
         output = result.get('OK', False)
         return output
 
 
-def get_result(command, exception_message=None, eval_includes=None, retry_limit=5, credential_requirements=None):
+def get_result(command, exception_message=None, retry_limit=5, credential_requirements=None):
     '''
     This method returns the object from the result of running the given command against DIRAC.
     Args:
         command (str): This is the command we want to get the output from
         exception_message (str): This is the message we want to display if the command fails
-        eval_includes (str): This is optional extra objects to include when evaluating the output from the command
         retry_limit (int): This is the number of times to retry the command if it initially fails
-        credential_requirements (ICredentialRequirement): This is the optional credential which is to be used for this DIRAC session
+        credential_requirements (ICredentialRequirement): This is the optional credential \
+        which is to be used for this DIRAC session
     '''
 
     retries = 0
     while retries < retry_limit:
 
         try:
-            return execute(command, eval_includes=eval_includes, cred_req=credential_requirements)
+            return execute(command, cred_req=credential_requirements)
         except GangaDiracError as err:
             logger.error(exception_message)
             logger.debug("Sleeping for 5 additional seconds to reduce possible overloading")
@@ -111,7 +109,7 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
         output.append(func(f, *fargs, **fkwargs))
     return output
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ #
 
 
 def ifilter_chain(selection_pred, *iterables):
@@ -137,11 +135,11 @@ def listFiles(baseDir, minAge=None, credential_requirements=None):
     param baseDir: Top directory to begin search
     type baseDir: string
     param minAge: minimum age of files to be returned
-    type minAge: string, "%w:%d:%H" 
+    type minAge: string, "%w:%d:%H"
     '''
 
     if minAge:
-        r = re.compile('\d:\d:\d')
+        r = re.compile(r'\d:\d:\d')
         if not r.match(minAge):
             logger.error("Provided min age is not in the right format '%w:%d:H'")
             return
@@ -213,7 +211,7 @@ exportToGPI('getAccessURLs', getAccessURLs, 'Functions')
 def getReplicas(inSet, credential_requirements=None):
     """
     Return a dict of files and their replicas.
-    lfns can be a string, a list or something with 
+    lfns can be a string, a list or something with
     """
     # Start off with some checks
     lfns = []
