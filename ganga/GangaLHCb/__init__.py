@@ -14,7 +14,6 @@ from GangaCore.Utility.Config.Config import _after_bootstrap
 from GangaCore.Utility.logging import getLogger
 
 from GangaCore.Runtime.GPIexport import exportToGPI
-from GangaCore.Utility.execute import execute
 from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
@@ -25,7 +24,7 @@ logger = getLogger()
 def guessPlatform():
     defaultPlatform = 'x86_64-centos7-gcc8-opt'
     cmd = '. /cvmfs/lhcb.cern.ch/lib/LbEnv &> /dev/null && python3 -c "import json, os; print(json.dumps(dict(os.environ.copy())))"'
-    env = execute(cmd)
+    env = subprocess.check_output(cmd, shell=True, text=True)
     if isinstance(env, str):
         try:
             env = json.loads(env)

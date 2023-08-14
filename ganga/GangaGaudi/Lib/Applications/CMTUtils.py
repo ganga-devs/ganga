@@ -1,4 +1,4 @@
-from GangaCore.Utility.execute import execute
+import subprocess
 import GangaCore.Utility.logging
 import os
 
@@ -132,11 +132,11 @@ def make(self, argument=''):
     from GangaCore.Utility.Config import getConfig
     config = getConfig('GAUDI')
 
-    execute('cmt broadcast %s %s' % (config['make_cmd'], argument),
-            shell=True,
-            timeout=None,
-            env=self.getenv(False),
-            cwd=self.user_release_area)
+    subprocess.run(f'cmt broadcast {config["make_cmd"]} {argument}',
+                   shell=True,
+                   check=False,
+                   env=self.getenv(False),
+                   cwd=self.user_release_area)
 
 
 def cmt(self, command):
@@ -144,9 +144,8 @@ def cmt(self, command):
        application. Will execute the command "cmt <command>" after the
        proper configuration. Do not include the word "cmt" yourself."""
 
-    execute('cmt %s' % command,
-            shell=True,
-            timeout=None,
-            env=self.getenv(False),
-            cwd=self.user_release_area)
-
+    subprocess.run(f'cmt {command}',
+                   shell=True,
+                   check=False,
+                   env=self.getenv(False),
+                   cwd=self.user_release_area)

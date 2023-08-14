@@ -54,18 +54,11 @@ def test_execute_output():
     # Test straight printout doesn't work without includes, stdout as str
     # returned by default
     d1 = execute('import datetime\nprint(datetime.datetime(2013,12,12))', shell=False)
-    d2 = execute('import datetime\nrepr(datetime.datetime(2013,12,12))', shell=False)
     assert not hasattr(d1, 'month')
     assert isinstance(d1, str)
-    assert not hasattr(d2, 'month')
-    assert isinstance(d2, str)
 
     # Test printout works with the right includes
     d1 = execute('print(datetime.datetime(2013,12,12))', python_setup='import datetime',
-                 eval_includes='import datetime', shell=False)
-    d2 = execute('print(repr(datetime.datetime(2013,12,12)))',
-                 python_setup='import datetime', eval_includes='import datetime', shell=False)
+                 shell=False)
     assert not hasattr(d1, 'month')
     assert isinstance(d1, str)
-    assert hasattr(d2, 'month')
-    assert d2.month == 12

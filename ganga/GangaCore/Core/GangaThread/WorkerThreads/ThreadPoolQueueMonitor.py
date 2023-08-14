@@ -1,4 +1,3 @@
-
 import collections
 from GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
 from GangaCore.Utility.Config import getConfig
@@ -59,7 +58,7 @@ class ThreadPoolQueueMonitor(object):
     def _display_element(self, item):
         if hasattr(item, 'name') and item.name is not None:
             return item.name
-        elif type(item.command_input[0]) != str:
+        elif not isinstance(item.command_input[0], str):
             return getName(item.command_input[0])
         else:
             return item.command_input[0]
@@ -122,7 +121,7 @@ class ThreadPoolQueueMonitor(object):
         _user_queue = [i for i in self._user_threadpool.get_queue()]
         queue_size = len(_user_queue)
         _actually_purge = False
-        if force == True:
+        if force:
             _actually_purge = True
         if queue_size > 0 and not force:
             keyin = None
@@ -154,7 +153,7 @@ class ThreadPoolQueueMonitor(object):
 
         queue_size = len(_monitor_queue)
         _actually_purge = False
-        if force == True:
+        if force:
             _actually_purge = True
         if queue_size > 0 and not force:
             keyin = None
@@ -190,13 +189,13 @@ class ThreadPoolQueueMonitor(object):
         Note:
         ----
 
-        Unlike with the queues.addProcess (where the overhead in starting up the processes 
+        Unlike with the queues.addProcess (where the overhead in starting up the processes
         take a few seconds) code executes immediately when reported using monitoring
         command queues
 
         args:
         ----
-                   worker_code = Any python callable object to run on thread 
+                   worker_code = Any python callable object to run on thread
                    args        = Any args for the callable object given here
                                  as a tuple
                    kwargs      = Any kwargs for the callable object given here
@@ -240,7 +239,6 @@ class ThreadPoolQueueMonitor(object):
                    env=None,
                    cwd=None,
                    shell=False,
-                   eval_includes=None,
                    update_env=False,
                    priority=5,
                    callback_func=None,
@@ -266,16 +264,12 @@ class ThreadPoolQueueMonitor(object):
 
         args:
         ----
-                   command         = The command to run as a string 
+                   command         = The command to run as a string
                    timeout         = timeout for the command as int or None
                    env             = environment to run command in as dict or None
                    cwd             = working dir to run command in as string
                    shell           = True/False whether to interpret the
                                      command as a python or shell command
-                   eval_includes   = This is a string that will be exec'ed before
-                                     trying to eval the stdout. This allows for the
-                                     the user to import certain libs before attempting
-                                     to parse the output.
                    update_env      = Boolean value determining if the value of env should
                                      be updated with the environment after running the
                                      command.
@@ -283,15 +277,15 @@ class ThreadPoolQueueMonitor(object):
                                      queue with lower number = higher priority.
                                      This then should be an int normally 0-9
                    callback_func   = Any python callable object. This is called
-                                     once the command has finished running (or 
+                                     once the command has finished running (or
                                      timed out) and must take at least one arg.
-                                     This first arg will be the stdout of the 
+                                     This first arg will be the stdout of the
                                      executed command. This arg will be the
-                                     result of unpickling stdout, falling back to 
+                                     result of unpickling stdout, falling back to
                                      eval(stdout) such that '{}' will
                                      become a dict. Fall back to str representation
                                      if the eval fails.
-                   callback_args   = Any additional args to the callback_func 
+                   callback_args   = Any additional args to the callback_func
                                      are specified here as a tuple
                    callback_kwargs = kwargs for the callback_func are given here
                                      as a dict.
@@ -299,12 +293,12 @@ class ThreadPoolQueueMonitor(object):
                                      if the command execution throws an exception.
                                      The function must take at least one arg that
                                      will be the exception that was thrown.
-                   fallback_args   = Any additional args to the fallback_func 
+                   fallback_args   = Any additional args to the fallback_func
                                      are specified here as a tuple
                    fallback_kwargs = kwargs for the fallback_func are given here
                                      as a dict.
         """
-        if type(command) != type(''):
+        if not isinstance(command, type('')):
             logger.error("Input command must be of type 'string'")
             return
 
@@ -318,7 +312,6 @@ class ThreadPoolQueueMonitor(object):
                                           env=env,
                                           cwd=cwd,
                                           shell=shell,
-                                          eval_includes=eval_includes,
                                           update_env=update_env,
                                           priority=priority,
                                           callback_func=callback_func,
