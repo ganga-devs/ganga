@@ -1,4 +1,3 @@
-
 import collections
 from GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
 from GangaCore.Utility.Config import getConfig

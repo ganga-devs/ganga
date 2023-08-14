@@ -3,7 +3,6 @@ import base64
 import subprocess
 import threading
 import pickle as pickle
-import signal
 from copy import deepcopy
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Utility.logging import getLogger
@@ -57,7 +56,8 @@ def python_wrapper(command, python_setup='', update_env=False, indent=''):
         python_setup (str): This is some python code to be executed before the python code in question (aka a script header.
         update_env (bool): Contol whether we want to capture the env after running
         indent (str): This allows for an indent to be applied to the script so it can be placed inside other python scripts
-    This returns the file handler objects for the env_update_script, the python wrapper itself and the script which has been generated to be run
+    This returns the file handler objects for the env_update_script, the python wrapper itself
+    and the script which has been generated to be run
     """
     fdread, fdwrite = os.pipe()
     os.set_inheritable(fdwrite, True)
@@ -144,7 +144,8 @@ def execute(command,
     This will execute an external python command when shell=False or an external bash command when shell=True
     Args:
         command (str): This is the command that we want to execute in string format
-        timeout (int): This is the timeout which we want to assign to a function and it will be killed if it runs for longer than n seconds
+        timeout (int): This is the timeout which we want to assign to a function \
+        and it will be killed if it runs for longer than n seconds
         env (dict): This is the environment to use for launching the new command
         cwd (str): This is the cwd the command is to be executed within.
         shell (bool): True for a bash command to be executed, False for a command to be executed within Python

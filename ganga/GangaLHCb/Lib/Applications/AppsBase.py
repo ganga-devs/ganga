@@ -2,8 +2,6 @@
 # in all cases with the relavent app name (DaVinci, Gauss etc...)
 import os
 import tempfile
-import pprint
-import sys
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps, guess_version, available_packs
@@ -18,7 +16,6 @@ from GangaCore.Utility.files import expandfilename
 from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 import GangaCore.Utility.logging
-import subprocess
 import pickle
 logger = GangaCore.Utility.logging.getLogger()
 
@@ -194,7 +191,7 @@ class AppName(Gaudi):
                 optsfiles.append(fileitem)
             else:
                 optsfiles.append(fileitem.name)
-        #optsfiles = [fileitem.name for fileitem in self.optsfile]
+        # optsfiles = [fileitem.name for fileitem in self.optsfile]
         # add on XML summary
 
         extraopts = ''

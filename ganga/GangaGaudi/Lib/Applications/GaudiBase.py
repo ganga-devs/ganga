@@ -1,16 +1,14 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ #
 '''Parent for all Gaudi and GaudiPython applications in LHCb.'''
 
 import os
-import tempfile
 import gzip
-import shutil
 import subprocess
 from GangaCore.GPIDev.Base.Proxy import stripProxy
 from GangaCore.GPIDev.Schema import SimpleItem, Schema, Version
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import GangaCore.Utility.logging
-from GangaCore.Utility.files import expandfilename, fullpath
+from GangaCore.Utility.files import expandfilename
 from .GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
 from GangaCore.GPIDev.Lib.File import File
 from GangaCore.Core.exceptions import ApplicationConfigurationError

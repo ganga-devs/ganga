@@ -243,7 +243,8 @@ class WorkerThreadPool(object):
 
     def worker_status(self):
         """
-        Returns a informatative tuple containing the threads name, current command it's working on and the timeout for that command.
+        Returns a informatative tuple containing the threads name,
+        current command it's working on and the timeout for that command.
         """
         return [(w.gangaName, w._command, w._timeout) for w in self.__worker_threads]
 
@@ -271,7 +272,7 @@ class WorkerThreadPool(object):
             w.join()
             # FIXME NEED TO CALL AN OPTIONAL CLEANUP FUCNTION HERE IF THREAD IS STOPPED
             # w.unregister()
-            #del w
+            # del w
         self.__worker_threads = []
         return
 
