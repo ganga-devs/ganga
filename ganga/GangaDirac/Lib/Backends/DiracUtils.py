@@ -16,7 +16,7 @@ def result_ok(result):
     '''
     if result is None:
         return False
-    elif type(result) is not dict:
+    elif not isinstance(result, dict):
         return False
     else:
         output = result.get('OK', False)
@@ -140,7 +140,7 @@ def listFiles(baseDir, minAge=None, credential_requirements=None):
     '''
 
     if minAge:
-        r = re.compile('\d:\d:\d')
+        r = re.compile(r'\d:\d:\d')
         if not r.match(minAge):
             logger.error("Provided min age is not in the right format '%w:%d:H'")
             return

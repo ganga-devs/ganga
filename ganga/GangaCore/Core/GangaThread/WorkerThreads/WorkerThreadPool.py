@@ -14,12 +14,12 @@ from GangaCore.GPIDev.Base.Proxy import getName
 from collections import namedtuple
 
 timeout = getConfig('Queues')['ShutDownTimeout']
-timeout = 0.1 if timeout == None else timeout
+timeout = 0.1 if timeout is None else timeout
 
 logger = getLogger()
 QueueElement = namedtuple('QueueElement', ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
 CommandInput = namedtuple('CommandInput', ['command', 'timeout', 'env', 'cwd',
-                          'shell', 'python_setup', 'update_env'])
+                                           'shell', 'python_setup', 'update_env'])
 
 
 class FunctionInput(namedtuple('FunctionInput', ['function', 'args', 'kwargs'])):

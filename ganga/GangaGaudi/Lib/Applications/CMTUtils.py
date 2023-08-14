@@ -133,10 +133,10 @@ def make(self, argument=''):
     config = getConfig('GAUDI')
 
     subprocess.run(f'cmt broadcast {config["make_cmd"]} {argument}',
-                shell=True,
-                check=False,
-                env=self.getenv(False),
-                cwd=self.user_release_area)
+                   shell=True,
+                   check=False,
+                   env=self.getenv(False),
+                   cwd=self.user_release_area)
 
 
 def cmt(self, command):
@@ -145,8 +145,7 @@ def cmt(self, command):
        proper configuration. Do not include the word "cmt" yourself."""
 
     subprocess.run(f'cmt {command}',
-                shell=True,
-                check=False,
-                env=self.getenv(False),
-                cwd=self.user_release_area)
-
+                   shell=True,
+                   check=False,
+                   env=self.getenv(False),
+                   cwd=self.user_release_area)

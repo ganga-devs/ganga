@@ -105,15 +105,14 @@ def __reader(pipes, output_ns, output_var, require_output):
     os.close(pipes[1])
     with os.fdopen(pipes[0], 'rb') as read_file:
         try:
-            # rcurrie this deepcopy hides a strange bug that the wrong dict is sometimes returned from here. Remove at your own risk
+            # rcurrie this deepcopy hides a strange bug that the wrong dict is
+            # sometimes returned from here. Remove at your own risk
             output_ns[output_var] = deepcopy(pickle.load(read_file))
         except UnicodeDecodeError:
             output_ns[output_var] = deepcopy(bytes2string(pickle.load(read_file, encoding="bytes")))
         except Exception as err:
             if require_output:
                 logger.error('Error getting output stream from command: %s', err)
-
-
 
 
 def update_thread(pipes, thread_output, output_key, require_output):
@@ -203,13 +202,11 @@ def execute(command,
     logger.debug("stdout: %s" % stdout)
     logger.debug("stderr: %s" % stderr)
 
-
     # Finish up and decide what to return
     if stderr != '':
         # this is still debug as using the environment from dirac default_env maked a stderr message dump out
         # even though it works
         logger.debug(stderr)
-
 
     # Decode any pickled objects from disk
     if update_env:

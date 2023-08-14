@@ -131,7 +131,7 @@ class AppName(Gaudi):
             os.close(temp_fd)
             return temp_filename
 
-        if type(optsfiles) != type([]):
+        if not isinstance(optsfiles, type([])):
             optsfiles = [optsfiles]
 
         # use a dummy file to keep the parser happy
@@ -190,7 +190,7 @@ class AppName(Gaudi):
     def _get_parser(self):
         optsfiles = []
         for fileitem in self.optsfile:
-            if type(fileitem) is str:
+            if isinstance(fileitem, str):
                 optsfiles.append(fileitem)
             else:
                 optsfiles.append(fileitem.name)
