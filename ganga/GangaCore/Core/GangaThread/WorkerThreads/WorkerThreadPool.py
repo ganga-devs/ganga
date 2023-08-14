@@ -14,12 +14,12 @@ from GangaCore.GPIDev.Base.Proxy import getName
 from collections import namedtuple
 
 timeout = getConfig('Queues')['ShutDownTimeout']
-timeout = 0.1 if timeout == None else timeout
+timeout = 0.1 if timeout is None else timeout
 
 logger = getLogger()
 QueueElement = namedtuple('QueueElement', ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
 CommandInput = namedtuple('CommandInput', ['command', 'timeout', 'env', 'cwd',
-                          'shell', 'python_setup', 'update_env'])
+                                           'shell', 'python_setup', 'update_env'])
 
 
 class FunctionInput(namedtuple('FunctionInput', ['function', 'args', 'kwargs'])):
@@ -243,7 +243,8 @@ class WorkerThreadPool(object):
 
     def worker_status(self):
         """
-        Returns a informatative tuple containing the threads name, current command it's working on and the timeout for that command.
+        Returns a informatative tuple containing the threads name,
+        current command it's working on and the timeout for that command.
         """
         return [(w.gangaName, w._command, w._timeout) for w in self.__worker_threads]
 
@@ -271,7 +272,7 @@ class WorkerThreadPool(object):
             w.join()
             # FIXME NEED TO CALL AN OPTIONAL CLEANUP FUCNTION HERE IF THREAD IS STOPPED
             # w.unregister()
-            #del w
+            # del w
         self.__worker_threads = []
         return
 

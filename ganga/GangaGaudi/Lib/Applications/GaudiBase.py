@@ -1,16 +1,14 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ #
 '''Parent for all Gaudi and GaudiPython applications in LHCb.'''
 
 import os
-import tempfile
 import gzip
-import shutil
 import subprocess
 from GangaCore.GPIDev.Base.Proxy import stripProxy
 from GangaCore.GPIDev.Schema import SimpleItem, Schema, Version
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import GangaCore.Utility.logging
-from GangaCore.Utility.files import expandfilename, fullpath
+from GangaCore.Utility.files import expandfilename
 from .GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
 from GangaCore.GPIDev.Lib.File import File
 from GangaCore.Core.exceptions import ApplicationConfigurationError
@@ -69,8 +67,7 @@ class GaudiBase(IPrepareApp):
     _schema = Schema(Version(0, 1), schema)
     _hidden = 1
 
-
-    #def __init__(self):
+    # def __init__(self):
     #    super(GaudiBase, self).__init__(None)
 
     def _get_default_version(self, gaudi_app):
@@ -79,7 +76,7 @@ class GaudiBase(IPrepareApp):
     def _get_default_platform(self):
         return get_user_platform(self)
 
-    #def _init(self, set_ura):
+    # def _init(self, set_ura):
     def _init(self):
         if self.appname is None:
             raise ApplicationConfigurationError("appname is None")
@@ -87,7 +84,7 @@ class GaudiBase(IPrepareApp):
             self.version = self._get_default_version(self.appname)
         if (not self.platform):
             self.platform = self._get_default_platform()
-        #if not set_ura:
+        # if not set_ura:
         #    return
         if not self.user_release_area:
             expanded = os.path.expandvars("$User_release_area")
@@ -156,10 +153,10 @@ class GaudiBase(IPrepareApp):
                     return
 
         subprocess.run(f'getpack {options}',
-                shell=True,
-                check=False,
-                env=self.getenv(False),
-                cwd=self.user_release_area)
+                       shell=True,
+                       check=False,
+                       env=self.getenv(False),
+                       cwd=self.user_release_area)
 
     def make(self, argument=''):
         """Build the code in the release area the application object points to."""
@@ -170,10 +167,10 @@ class GaudiBase(IPrepareApp):
         """Eecute a given command at the top level of a requested project."""
 
         subprocess.run(f'{command}',
-                shell=True,
-                check=False,
-                env=self.getenv(False),
-                cwd=self.user_release_area)
+                       shell=True,
+                       check=False,
+                       env=self.getenv(False),
+                       cwd=self.user_release_area)
 
     def cmt(self, command):
         """Execute a cmt command in the cmt user area pointed to by the
@@ -185,10 +182,10 @@ class GaudiBase(IPrepareApp):
             return
 
         subprocess.run(f'cmt {command}',
-                shell=True,
-                check=False,
-                env=self.getenv(False),
-                cwd=self.user_release_area)
+                       shell=True,
+                       check=False,
+                       env=self.getenv(False),
+                       cwd=self.user_release_area)
 
     def unprepare(self, force=False):
         self._unregister()
@@ -258,16 +255,24 @@ class GaudiBase(IPrepareApp):
         # commented out here as inherrited from this class with extended
         # perpare
 
-        fillPackedSandbox(InstallArea, os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name))
+        fillPackedSandbox(
+            InstallArea,
+            os.path.join(
+                share_dir,
+                'inputsandbox',
+                '_input_sandbox_%s.tar' %
+                self.is_prepared.name))
 
     def _register(self, force):
         if (self.is_prepared is not None) and (force is not True):
-            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (getName(self)))
+            raise Exception(
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.' %
+                (getName(self)))
 
         try:
             logger.info('Job %s: Preparing %s application.' % (stripProxy(self).getJobObject().getFQID('.'), getName(self)))
         except AssertionError as err:
-            ## No Job associated with Object!!
+            # No Job associated with Object!!
             logger.info("Preparing %s application." % getName(self))
         self.is_prepared = ShareDir()
 
@@ -277,5 +282,3 @@ class GaudiBase(IPrepareApp):
 
     def configure(self, appmasterconfig):
         raise NotImplementedError
-
-

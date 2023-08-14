@@ -1,4 +1,3 @@
-
 import collections
 from GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
 from GangaCore.Utility.Config import getConfig
@@ -59,7 +58,7 @@ class ThreadPoolQueueMonitor(object):
     def _display_element(self, item):
         if hasattr(item, 'name') and item.name is not None:
             return item.name
-        elif type(item.command_input[0]) != str:
+        elif not isinstance(item.command_input[0], str):
             return getName(item.command_input[0])
         else:
             return item.command_input[0]
@@ -122,7 +121,7 @@ class ThreadPoolQueueMonitor(object):
         _user_queue = [i for i in self._user_threadpool.get_queue()]
         queue_size = len(_user_queue)
         _actually_purge = False
-        if force == True:
+        if force:
             _actually_purge = True
         if queue_size > 0 and not force:
             keyin = None
@@ -154,7 +153,7 @@ class ThreadPoolQueueMonitor(object):
 
         queue_size = len(_monitor_queue)
         _actually_purge = False
-        if force == True:
+        if force:
             _actually_purge = True
         if queue_size > 0 and not force:
             keyin = None
@@ -299,7 +298,7 @@ class ThreadPoolQueueMonitor(object):
                    fallback_kwargs = kwargs for the fallback_func are given here
                                      as a dict.
         """
-        if type(command) != type(''):
+        if not isinstance(command, type('')):
             logger.error("Input command must be of type 'string'")
             return
 

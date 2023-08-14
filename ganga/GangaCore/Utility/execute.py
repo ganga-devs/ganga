@@ -3,7 +3,6 @@ import base64
 import subprocess
 import threading
 import pickle as pickle
-import signal
 from copy import deepcopy
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Utility.logging import getLogger
@@ -57,7 +56,8 @@ def python_wrapper(command, python_setup='', update_env=False, indent=''):
         python_setup (str): This is some python code to be executed before the python code in question (aka a script header.
         update_env (bool): Contol whether we want to capture the env after running
         indent (str): This allows for an indent to be applied to the script so it can be placed inside other python scripts
-    This returns the file handler objects for the env_update_script, the python wrapper itself and the script which has been generated to be run
+    This returns the file handler objects for the env_update_script, the python wrapper itself
+    and the script which has been generated to be run
     """
     fdread, fdwrite = os.pipe()
     os.set_inheritable(fdwrite, True)
@@ -105,15 +105,14 @@ def __reader(pipes, output_ns, output_var, require_output):
     os.close(pipes[1])
     with os.fdopen(pipes[0], 'rb') as read_file:
         try:
-            # rcurrie this deepcopy hides a strange bug that the wrong dict is sometimes returned from here. Remove at your own risk
+            # rcurrie this deepcopy hides a strange bug that the wrong dict is
+            # sometimes returned from here. Remove at your own risk
             output_ns[output_var] = deepcopy(pickle.load(read_file))
         except UnicodeDecodeError:
             output_ns[output_var] = deepcopy(bytes2string(pickle.load(read_file, encoding="bytes")))
         except Exception as err:
             if require_output:
                 logger.error('Error getting output stream from command: %s', err)
-
-
 
 
 def update_thread(pipes, thread_output, output_key, require_output):
@@ -145,7 +144,8 @@ def execute(command,
     This will execute an external python command when shell=False or an external bash command when shell=True
     Args:
         command (str): This is the command that we want to execute in string format
-        timeout (int): This is the timeout which we want to assign to a function and it will be killed if it runs for longer than n seconds
+        timeout (int): This is the timeout which we want to assign to a function \
+        and it will be killed if it runs for longer than n seconds
         env (dict): This is the environment to use for launching the new command
         cwd (str): This is the cwd the command is to be executed within.
         shell (bool): True for a bash command to be executed, False for a command to be executed within Python
@@ -203,13 +203,11 @@ def execute(command,
     logger.debug("stdout: %s" % stdout)
     logger.debug("stderr: %s" % stderr)
 
-
     # Finish up and decide what to return
     if stderr != '':
         # this is still debug as using the environment from dirac default_env maked a stderr message dump out
         # even though it works
         logger.debug(stderr)
-
 
     # Decode any pickled objects from disk
     if update_env:
