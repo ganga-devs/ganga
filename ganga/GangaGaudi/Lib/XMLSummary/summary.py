@@ -162,11 +162,11 @@ class Summary(__schema__.VTree):
         filename and GUID are the file to find/create
         status is a new status to set
         the number of events is taken from addevents'''
-        if filename is "":
+        if filename == "":
             filename=None
-        if GUID is "":
+        if GUID == "":
             GUID=None
-        if status is "":
+        if status == "":
             status=None
             
         if filename is None and GUID is None:
