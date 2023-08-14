@@ -1,13 +1,11 @@
 import time
 import re
 import itertools
-from GangaCore.Core.exceptions import GangaException, BackendError
-#from GangaDirac.BOOT       import dirac_ganga_server
+from GangaCore.Core.exceptions import BackendError
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaCore.Utility.logging import getLogger
-from GangaCore.GPIDev.Base.Proxy import stripProxy
 logger = getLogger()
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def result_ok(result):
@@ -31,7 +29,7 @@ def get_result(command, exception_message=None, eval_includes=None, retry_limit=
         exception_message (str): This is the message we want to display if the command fails
         eval_includes (str): This is optional extra objects to include when evaluating the output from the command
         retry_limit (int): This is the number of times to retry the command if it initially fails
-        credential_requirements (ICredentialRequirement): This is the optional credential which is to be used for this DIRAC session
+        credential_requirements (ICredentialRequirement): This is the optional credential to be used for this DIRAC session
     '''
 
     retries = 0
@@ -111,7 +109,7 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
         output.append(func(f, *fargs, **fkwargs))
     return output
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def ifilter_chain(selection_pred, *iterables):
