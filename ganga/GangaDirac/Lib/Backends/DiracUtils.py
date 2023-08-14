@@ -70,7 +70,7 @@ def get_parametric_datasets(dirac_script_lines):
         # return API_line.find('.setParametricInputData(') >= 0
 
     parametric_line = list(filter(parametric_input_filter, dirac_script_lines))
-    if len(parametric_line) is 0:
+    if len(parametric_line) == 0:
         raise BackendError(
             'Dirac', 'No "setParametricInputData()" lines in dirac API')
     if len(parametric_line) > 1:
@@ -237,7 +237,7 @@ def getReplicas(inSet, credential_requirements=None):
 exportToGPI('getReplicas', getReplicas, 'Functions')
 
 
-def removeLFNs(lfns, credential_requirements=None):
+def removeLFNs(inSet, credential_requirements=None):
     """
     Remove a list o lfns from Dirac storage
     """
@@ -254,10 +254,10 @@ def removeLFNs(lfns, credential_requirements=None):
             'You must supply, an LFN as a string, a list of LFNs or a GangaDataset with getLFNs() implemented')
 
     res = execute('removeFile(%s)' % str(lfns), cred_req=credential_requirements)
-    if isinstance(lfns, list) and not len(reps['Successful'].keys()) == len(lfns):
-        logger.warning("Not successfully removed all files! The following failed: %s" % reps['Failed'].keys())
+    if isinstance(lfns, list) and not len(res['Successful'].keys()) == len(lfns):
+        logger.warning("Not successfully removed all files! The following failed: %s" % res['Failed'].keys())
 
-    return reps['Successful']
+    return res['Successful']
 
 
 exportToGPI('removeLFNs', removeLFNs, 'Functions')
