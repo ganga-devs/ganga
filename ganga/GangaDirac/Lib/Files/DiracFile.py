@@ -269,19 +269,19 @@ class DiracFile(IGangaFile):
 
         # Attempt to spend too long loading un-needed objects into memory in
         # order to read job status
-        if name is 'lfn':
+        if name == 'lfn':
             if not self.lfn:
                 logger.warning("Do NOT have an LFN, for file: %s" % self.namePattern)
                 logger.warning("If file exists locally try first using the method put()")
             return object.__getattribute__(self, 'lfn')
         elif name in ['guid', 'locations']:
             if configDirac['DiracFileAutoGet']:
-                if name is 'guid':
+                if name == 'guid':
                     if self.guid:
                         if self.lfn:
                             self.getMetadata()
                             return object.__getattribute__(self, 'guid')
-                elif name is 'locations':
+                elif name == 'locations':
                     if self.locations == []:
                         if self.lfn:
                             self.getMetadata()
