@@ -2,24 +2,22 @@ import copy
 import os
 import datetime
 import inspect
-import hashlib
 import re
 import os.path
 import random
 import glob
-from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
+from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
 from GangaCore.GPIDev.Lib.File import FileUtils
-from GangaCore.GPIDev.Lib.Job.Job import Job
 from GangaCore.Utility.files import expandfilename
 from GangaCore.Core.exceptions import GangaFileError
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaDiracError
 import GangaCore.Utility.Config
 from GangaCore.Runtime.GPIexport import exportToGPI
 from GangaCore.GPIDev.Credentials import require_credential
-from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy, DiracProxyInfo
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxyInfo
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
@@ -131,22 +129,29 @@ class DiracFile(IGangaFile):
     """
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
                                      'localDir': SimpleItem(defvalue=None, copyable=1, typelist=['str', 'type(None)'],
-                                                            doc='local dir where the file is stored, used from get and put methods'),
+                                                            doc='local dir where the file is stored, '
+                                                                'used from get and put methods'),
                                      'locations': SimpleItem(defvalue=[], copyable=1, typelist=['str'], sequence=1,
                                                              doc="list of SE locations where the outputfiles are uploaded"),
                                      'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0,
-                                                              doc='wheather the output file should be compressed before sending somewhere'),
+                                                              doc='Should the output file be compressed '
+                                                                  'before sending somewhere'),
                                      'lfn': SimpleItem(defvalue='', copyable=1, typelist=['str'],
-                                                       doc='return the logical file name/set the logical file name to use if not '
-                                                       'using wildcards in namePattern'),
-                                     'remoteDir': SimpleItem(defvalue="", doc='remote directory where the LFN is to be placed within '
-                                                             'this is the relative path of the LFN which is put between the user LFN base and the filename.'),
+                                                       doc='return the logical file name/set the logical file name to use '
+                                                       'if not using wildcards in namePattern'),
+                                     'remoteDir': SimpleItem(defvalue="", doc='remote directory where the LFN is to be placed'
+                                                             'this is the relative path of the LFN '
+                                                             'which is put between the user LFN base and the filename.'),
                                      'guid': SimpleItem(defvalue='', copyable=1, typelist=['str'],
-                                                        doc='return the GUID/set the GUID to use if not using wildcards in the namePattern.'),
-                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], sequence=1, copyable=0,  # hidden=1,
-                                                               typelist=['GangaDirac.Lib.Files.DiracFile'], doc="collected files from the wildcard namePattern"),
-                                     'defaultSE': SimpleItem(defvalue='', copyable=1, doc="defaultSE where the file is to be accessed from or uploaded to"),
-                                     'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
+                                                        doc='return/set GUID to use if not using wildcards in namePattern.'),
+                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], sequence=1, copyable=0,
+                                                               # hidden=1,
+                                                               typelist=['GangaDirac.Lib.Files.DiracFile'],
+                                                               doc="collected files from the wildcard namePattern"),
+                                     'defaultSE': SimpleItem(defvalue='', copyable=1,
+                                                        doc="defaultSE where the file is to be accessed from or uploaded to"),
+                                     'failureReason': SimpleItem(defvalue="", protected=1, copyable=0,
+                                                        doc='reason for the upload failure'),
                                      'credential_requirements': ComponentItem('CredentialRequirement', defvalue='DiracProxy'),
                                      })
 
@@ -415,7 +420,7 @@ class DiracFile(IGangaFile):
             logger.info('Removing file %s' % self.lfn)
         else:
             logger.debug('Removing file %s' % self.lfn)
-        stdout = execute('removeFile("%s")' % self.lfn, cred_req=self.credential_requirements)
+        execute('removeFile("%s")' % self.lfn, cred_req=self.credential_requirements)
 
         self.lfn = ""
         self.locations = []
@@ -432,7 +437,7 @@ class DiracFile(IGangaFile):
             raise GangaFileError("No replica at supplied SE: %s" % SE)
         try:
             logger.info("Removing replica at %s for LFN %s" % (SE, self.lfn))
-            stdout = execute('removeReplica("%s", "%s")' % (self.lfn, SE), cred_req=self.credential_requirements)
+            execute('removeReplica("%s", "%s")' % (self.lfn, SE), cred_req=self.credential_requirements)
             self.locations.remove(SE)
         except GangaDiracError as err:
             raise err
@@ -460,7 +465,7 @@ class DiracFile(IGangaFile):
         if self.guid != ret.get('Successful', {}).get(self.lfn, {}).get('GUID', False):
             self.guid = ret['Successful'][self.lfn]['GUID']
 
-        reps = self.getReplicas()
+        self.getReplicas()
         ret['Successful'][self.lfn].update({'replicas': self.locations})
 
         return ret
@@ -531,7 +536,7 @@ class DiracFile(IGangaFile):
                 try:
                     self._storedReplicas = execute('getReplicas("%s")' %
                                                    self.lfn, cred_req=self.credential_requirements)
-                except GangaDiracError as err:
+                except GangaDiracError:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
                     self._storedReplicas = {}
                     raise
@@ -588,7 +593,7 @@ class DiracFile(IGangaFile):
                 return [self.lfn]
         else:
             # 1 LFN per DiracFile
-            LFNS = []
+            LFNs = []
             for this_file in self.subfiles:
                 these_LFNs = this_file.location()
                 for this_url in these_LFNs:
