@@ -631,8 +631,7 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
-        execute('getFile("%s", destDir="%s")' %
-                         (self.lfn, to_location), cred_req=self.credential_requirements)
+        execute('getFile("%s", destDir="%s")' % (self.lfn, to_location), cred_req=self.credential_requirements)
 
         if self.namePattern == "":
             name = os.path.basename(self.lfn)
@@ -659,8 +658,7 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        execute('replicateFile("%s", "%s", "%s")' %
-                         (self.lfn, destSE, sourceSE), cred_req=self.credential_requirements)
+        execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE), cred_req=self.credential_requirements)
 
         if destSE not in self.locations:
             self.locations.append(destSE)
@@ -801,7 +799,7 @@ class DiracFile(IGangaFile):
             try:
                 stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, os.path.join(sourceDir, name),
                                                                  str([storage_elements[0]])),
-                                                                 cred_req=self.credential_requirements)
+                                 cred_req=self.credential_requirements)
             except GangaDiracError as err:
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), err))
                 failureReason = "Error in uploading file '%s' : '%s'" % (os.path.basename(name), err)
