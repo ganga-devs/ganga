@@ -25,7 +25,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
 configDirac = getConfig('DIRAC')
 logger = getLogger()
-regex = re.compile('[*?\[\]]')
+regex = re.compile(r'[*?\[\]]')
 
 global stored_list_of_sites
 stored_list_of_sites = []
@@ -381,7 +381,9 @@ class DiracFile(IGangaFile):
             for line in all_lines:
                 logger.debug("This line: %s" % line)
                 if line.startswith('DiracFile'):
-                    if self.dirac_line_processor(line, self, os.path.dirname(postprocessLocationsPath)) and regex.search(self.namePattern) is None:
+                    if self.dirac_line_processor(
+                            line, self, os.path.dirname(postprocessLocationsPath)) and regex.search(
+                            self.namePattern) is None:
                         logger.error("Error processing line:\n%s\nAND: namePattern: %s is NOT matched" %
                                      (str(line), str(self.namePattern)))
                     else:
@@ -597,8 +599,8 @@ class DiracFile(IGangaFile):
     def accessURL(self, thisSE='', protocol=''):
         """
         Attempt to find an accessURL which corresponds to the specified SE. If no SE is specified then
-        return a random one from all the replicas. Also use the specified protocol - if none then use 
-        the default. 
+        return a random one from all the replicas. Also use the specified protocol - if none then use
+        the default.
         """
         lfns = []
         if len(self.subfiles) == 0:
@@ -793,7 +795,7 @@ class DiracFile(IGangaFile):
                          (lfn, os.path.join(sourceDir, name), str([storage_elements[0]])))
             try:
                 stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, os.path.join(sourceDir, name),
-                                 str([storage_elements[0]])), cred_req=self.credential_requirements)
+                                                                 str([storage_elements[0]])), cred_req=self.credential_requirements)
             except GangaDiracError as err:
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), err))
                 failureReason = "Error in uploading file '%s' : '%s'" % (os.path.basename(name), err)
@@ -836,7 +838,7 @@ class DiracFile(IGangaFile):
                 self.locations = lfn_out.get('allDiracSE', '')
                 self.guid = guid
 
-        if replicate == True:
+        if replicate:
 
             if len(outputFiles) == 1 or len(outputFiles) == 0:
                 storage_elements.pop(0)
@@ -934,7 +936,8 @@ for f in glob.glob('###NAME_PATTERN###'):
                 script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (
                     this_file.namePattern, lfn_base, str(isCompressed))
 
-        if stripProxy(self)._parent is not None and stripProxy(self).getJobObject() and getName(stripProxy(self).getJobObject().backend) != 'Dirac':
+        if stripProxy(self)._parent is not None and stripProxy(self).getJobObject(
+        ) and getName(stripProxy(self).getJobObject().backend) != 'Dirac':
             script_env = self._getDiracEnvStr()
         else:
             script_env = str(None)
