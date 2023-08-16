@@ -149,9 +149,10 @@ class DiracFile(IGangaFile):
                                                                typelist=['GangaDirac.Lib.Files.DiracFile'],
                                                                doc="collected files from the wildcard namePattern"),
                                      'defaultSE': SimpleItem(defvalue='', copyable=1,
-                                                        doc="defaultSE where the file is to be accessed from or uploaded to"),
+                                                             doc="defaultSE where the file is to be accessed from"
+                                                                 "or uploaded to"),
                                      'failureReason': SimpleItem(defvalue="", protected=1, copyable=0,
-                                                        doc='reason for the upload failure'),
+                                                                 doc='reason for the upload failure'),
                                      'credential_requirements': ComponentItem('CredentialRequirement', defvalue='DiracProxy'),
                                      })
 
@@ -342,7 +343,7 @@ class DiracFile(IGangaFile):
             d.locations = locations
             d.localDir = localPath
             dirac_file.subfiles.append(d)
-            #dirac_line_processor(line, d)
+            # dirac_line_processor(line, d)
             return False
 
         #   This is the case that an individual file was requested
@@ -572,15 +573,15 @@ class DiracFile(IGangaFile):
                 return
             if self.locations != list(reps[self.lfn].keys()):
                 self.locations = list(reps[self.lfn].keys())
-            #logger.debug( "locations: %s" % str( self.locations ) )
+            # logger.debug( "locations: %s" % str( self.locations ) )
             # deep copy just before wer change it incase we're pointing to the
             # data stored in original from a copy
             if self._have_copied:
                 self._remoteURLs = copy.deepcopy(self._remoteURLs)
             for site in self.locations:
-                #logger.debug( "site: %s" % str( site ) )
+                # logger.debug( "site: %s" % str( site ) )
                 self._remoteURLs[site] = reps[self.lfn][site]
-                #logger.debug("Adding _remoteURLs[site]: %s" % str(self._remoteURLs[site]))
+                # logger.debug("Adding _remoteURLs[site]: %s" % str(self._remoteURLs[site]))
 
     def location(self):
         """
@@ -630,7 +631,7 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
-        stdout = execute('getFile("%s", destDir="%s")' %
+        execute('getFile("%s", destDir="%s")' %
                          (self.lfn, to_location), cred_req=self.credential_requirements)
 
         if self.namePattern == "":
@@ -658,7 +659,7 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        stdout = execute('replicateFile("%s", "%s", "%s")' %
+        execute('replicateFile("%s", "%s", "%s")' %
                          (self.lfn, destSE, sourceSE), cred_req=self.credential_requirements)
 
         if destSE not in self.locations:
@@ -691,11 +692,11 @@ class DiracFile(IGangaFile):
         upload failed.
         """
 
-        if self.lfn != "" and force == False and lfn == '':
+        if self.lfn != "" and force is False and lfn == '':
             logger.warning("Warning you're about to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (
                 self.namePattern, self.lfn))
 
-        if (lfn != '' and self.lfn != '') and force == False:
+        if (lfn != '' and self.lfn != '') and force is False:
             logger.warning("Warning you're attempting to put this DiracFile: %s" % self.namePattern)
             logger.warning("It currently has an LFN associated with it: %s" % self.lfn)
             logger.warning("Will continue and attempt to upload to: %s" % lfn)
@@ -793,14 +794,14 @@ class DiracFile(IGangaFile):
             d.namePattern = os.path.basename(name)
             d.compressed = self.compressed
             d.localDir = sourceDir
-            stderr = ''
             stdout = ''
             logger.info('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
             logger.debug('execute: uploadFile("%s", "%s", %s)' %
                          (lfn, os.path.join(sourceDir, name), str([storage_elements[0]])))
             try:
                 stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, os.path.join(sourceDir, name),
-                                                                 str([storage_elements[0]])), cred_req=self.credential_requirements)
+                                                                 str([storage_elements[0]])),
+                                                                 cred_req=self.credential_requirements)
             except GangaDiracError as err:
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), err))
                 failureReason = "Error in uploading file '%s' : '%s'" % (os.path.basename(name), err)
@@ -872,7 +873,8 @@ class DiracFile(IGangaFile):
 download_script=b'''\n###DOWNLOAD_SCRIPT###'''
 import subprocess
 dirac_env=###DIRAC_ENV###
-subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=True, env=dirac_env, stdin=subprocess.PIPE).communicate(download_script)
+subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''',
+                 shell=True, env=dirac_env, stdin=subprocess.PIPE).communicate(download_script)
 """
         script = '\n'.join([str(indent + str(line)) for line in script.split('\n')])
 
