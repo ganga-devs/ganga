@@ -27,7 +27,7 @@ class Notebook(IPrepareApp):
 
     """Notebook application -- execute Jupyter notebooks.
 
-    All cells in the notebooks given as inputfiles will be evaluated 
+    All cells in the notebooks given as inputfiles will be evaluated
     and the results returned in the same notebooks.
 
     A simple example is
@@ -46,14 +46,55 @@ class Notebook(IPrepareApp):
     simply be unpacked and available.
 
     """
-    _schema = Schema(Version(1, 0), {
-        'version': SimpleItem(preparable=1, defvalue=None, typelist=[None, int], doc="Version of the notebook. If None, it will be assumed that it is the latest one."),
-        'timeout': SimpleItem(preparable=1, defvalue=None, typelist=[None, int], doc="Timeout in seconds for executing a notebook. If None, the default value will be taken."),
-        'kernel': SimpleItem(preparable=1, defvalue='python2', doc="The kernel to use for the notebook execution. Depending on configuration, python3, Root and R might be available."),
-        'regexp': SimpleItem(preparable=1, defvalue=[r'.+\.ipynb$'], typelist=["str"], sequence=1, strict_sequence=0, doc="Regular expression for the inputfiles to match for executing."),
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes')
-    })
+
+    _schema = Schema(
+        Version(1, 0),
+        {
+            'version': SimpleItem(
+                preparable=1,
+                defvalue=None,
+                typelist=[None, int],
+                doc="Version of the notebook. If None, it will be assumed that it is the latest one.",
+            ),
+            'timeout': SimpleItem(
+                preparable=1,
+                defvalue=None,
+                typelist=[None, int],
+                doc="Timeout in seconds for executing a notebook. If None, the default value will be taken.",
+            ),
+            'kernel': SimpleItem(
+                preparable=1,
+                defvalue='python2',
+                doc="The kernel to use for the notebook execution. \
+                Depending on configuration, python3, Root and R might be available.",
+            ),
+            'regexp': SimpleItem(
+                preparable=1,
+                defvalue=[r'.+\.ipynb$'],
+                typelist=["str"],
+                sequence=1,
+                strict_sequence=0,
+                doc="Regular expression for the inputfiles to match for executing.",
+            ),
+            'is_prepared': SimpleItem(
+                defvalue=None,
+                strict_sequence=0,
+                visitable=1,
+                copyable=1,
+                hidden=0,
+                typelist=[None, ShareDir],
+                protected=0,
+                comparable=1,
+                doc='Location of shared resources. Presence of this attribute implies the application has been prepared.',
+            ),
+            'hash': SimpleItem(
+                defvalue=None,
+                typelist=[None, str],
+                hidden=0,
+                doc='MD5 hash of the string representation of applications preparable attributes',
+            ),
+        },
+    )
     _category = 'applications'
     _name = 'Notebook'
     _exportmethods = ['prepare', 'unprepare']
@@ -103,9 +144,11 @@ class Notebook(IPrepareApp):
         if force:
             self.unprepare()
 
-        if (self.is_prepared is not None):
+        if self.is_prepared is not None:
             raise ApplicationPrepareError(
-                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.'
+                % getName(self)
+            )
 
         logger.info('Preparing %s application.' % getName(self))
         self.is_prepared = ShareDir()
@@ -121,7 +164,7 @@ class Notebook(IPrepareApp):
 
             self.post_prepare()
 
-        except Exception as err:
+        except Exception:
             self.unprepare()
             raise
 
@@ -132,9 +175,16 @@ class NotebookRTHandler(IRuntimeHandler):
     """Empty runtime handler for notebooks"""
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
-
         from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-        return StandardJobConfig('python', None, ['notebook_wrapper_generated.py'], None, None, [app.is_prepared.path()])
+
+        return StandardJobConfig(
+            'python',
+            None,
+            ['notebook_wrapper_generated.py'],
+            None,
+            None,
+            [app.is_prepared.path()],
+        )
 
 
 allHandlers.add('Notebook', 'LSF', NotebookRTHandler)
@@ -142,11 +192,8 @@ allHandlers.add('Notebook', 'Local', NotebookRTHandler)
 allHandlers.add('Notebook', 'PBS', NotebookRTHandler)
 allHandlers.add('Notebook', 'SGE', NotebookRTHandler)
 allHandlers.add('Notebook', 'Condor', NotebookRTHandler)
-allHandlers.add('Notebook', 'LCG', NotebookRTHandler)
 allHandlers.add('Notebook', 'gLite', NotebookRTHandler)
 allHandlers.add('Notebook', 'TestSubmitter', NotebookRTHandler)
 allHandlers.add('Notebook', 'Interactive', NotebookRTHandler)
 allHandlers.add('Notebook', 'Batch', NotebookRTHandler)
 allHandlers.add('Notebook', 'Remote', NotebookRTHandler)
-allHandlers.add('Notebook', 'CREAM', NotebookRTHandler)
-allHandlers.add('Notebook', 'ARC', NotebookRTHandler)

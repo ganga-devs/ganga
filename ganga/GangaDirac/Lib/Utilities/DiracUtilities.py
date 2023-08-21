@@ -198,8 +198,6 @@ def execute(command,
             env=None,
             cwd=None,
             shell=False,
-            python_setup='',
-            eval_includes=None,
             update_env=False,
             return_raw_dict=False,
             cred_req=None,
@@ -216,8 +214,6 @@ def execute(command,
         env (dict): an optional environment to execute the DIRAC code in
         cwd (str): an optional string to a valid path where this code should be executed
         shell (bool): Should this code be executed in a new shell environment
-        python_setup (str): Optional extra code to pass to python when executing
-        eval_includes (???): TODO document me
         update_env (bool): Should this modify the given env object with the env after the command has executed
         return_raw_dict(bool): Should we return the raw dict from the DIRAC interface or parse it here
         cred_req (ICredentialRequirement): What credentials does this call need
@@ -277,8 +273,7 @@ def execute(command,
                 env = getDiracEnv()
             else:
                 env = getDiracEnv(cred_req.dirac_env)
-        if python_setup == '':
-            python_setup = getDiracCommandIncludes()
+        python_setup = getDiracCommandIncludes()
 
         if cred_req is not None:
             env['X509_USER_PROXY'] = credential_store[cred_req].location
@@ -291,7 +286,6 @@ def execute(command,
                                       cwd=cwd_,
                                       shell=shell,
                                       python_setup=python_setup,
-                                      eval_includes=eval_includes,
                                       update_env=update_env)
 
         # If the time
