@@ -5,7 +5,8 @@ from GangaCore.Core.exceptions import BackendError
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaCore.Utility.logging import getLogger
 logger = getLogger()
-# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ #
 
 
 def result_ok(result):
@@ -21,22 +22,22 @@ def result_ok(result):
         return output
 
 
-def get_result(command, exception_message=None, eval_includes=None, retry_limit=5, credential_requirements=None):
+def get_result(command, exception_message=None, retry_limit=5, credential_requirements=None):
     '''
     This method returns the object from the result of running the given command against DIRAC.
     Args:
         command (str): This is the command we want to get the output from
         exception_message (str): This is the message we want to display if the command fails
-        eval_includes (str): This is optional extra objects to include when evaluating the output from the command
         retry_limit (int): This is the number of times to retry the command if it initially fails
-        credential_requirements (ICredentialRequirement): This is the optional credential to be used for this DIRAC session
+        credential_requirements (ICredentialRequirement): This is the optional credential \
+        which is to be used for this DIRAC session
     '''
 
     retries = 0
     while retries < retry_limit:
 
         try:
-            return execute(command, eval_includes=eval_includes, cred_req=credential_requirements)
+            return execute(command, cred_req=credential_requirements)
         except GangaDiracError as err:
             logger.error(exception_message)
             logger.debug("Sleeping for 5 additional seconds to reduce possible overloading")
@@ -109,7 +110,7 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
         output.append(func(f, *fargs, **fkwargs))
     return output
 
-# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ #
 
 
 def ifilter_chain(selection_pred, *iterables):

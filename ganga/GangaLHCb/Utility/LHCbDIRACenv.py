@@ -2,10 +2,10 @@ import json
 import os
 from os.path import join, expanduser
 from optparse import OptionValueError
+import subprocess
 
 from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache
 import GangaCore.Utility.Config
-from GangaCore.Utility.execute import execute
 from GangaCore.Utility.logging import getLogger
 from GangaCore.Core.exceptions import PluginError
 
@@ -40,7 +40,7 @@ def store_dirac_environment():
         '. /cvmfs/lhcb.cern.ch/lib/LbEnv &>/dev/null && '
         f'lb-dirac {requestedVersion} python -c "import json, os; print(json.dumps(dict(os.environ)))"'
     )
-    env = execute(cmd, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
+    env = subprocess.check_output(cmd, shell=True, text=True, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
 
     if isinstance(env, str):
         try:
