@@ -40,15 +40,9 @@ def store_dirac_environment():
         '. /cvmfs/lhcb.cern.ch/lib/LbEnv &>/dev/null && '
         f'lb-dirac {requestedVersion} python -c "import json, os; print(json.dumps(dict(os.environ)))"'
     )
-<<<<<<< HEAD
-    print('cmd: ', cmd)
-    env = execute(cmd, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
-    print('env;: ', env)
-=======
 
     env = subprocess.check_output(cmd, shell=True, text=True, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
 
->>>>>>> 70b0e739e25999de76665bf1a8a00c703027f600
     if isinstance(env, str):
         try:
             env = json.loads(env)
@@ -63,4 +57,3 @@ def store_dirac_environment():
         raise PluginError
     logger.info(f"Using LHCbDirac version {requestedVersion}")
     os.environ['GANGADIRACENVIRONMENT'] = fname
-    print('stored')
