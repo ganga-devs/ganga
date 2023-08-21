@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import tempfile
@@ -25,12 +24,25 @@ class TestMassStorageWN(GangaUnitTest):
     # Where on local storage we want to have our 'MassStorage solution'
     outputFilePath = '/tmp/Test' + _getName(fileClass) + 'WN'
 
-    # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
-    MassStorageTestConfig = {'defaultProtocol': 'file://',
-                             'fileExtensions': [''],
-                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
-                             'backendPostprocess': {'LSF': 'WN', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
-                                                    'PBS': 'WN', 'Interactive': 'client', 'Local': 'WN', 'CREAM': 'client'}}
+    # This sets up a MassStorageConfiguration which works by placing a file on local storage
+    # somewhere we can test using standard tools
+    MassStorageTestConfig = {
+        'defaultProtocol': 'file://',
+        'fileExtensions': [''],
+        'uploadOptions': {
+            'path': outputFilePath,
+            'cp_cmd': 'cp',
+            'ls_cmd': 'ls',
+            'mkdir_cmd': 'mkdir',
+        },
+        'backendPostprocess': {
+            'LSF': 'WN',
+            'Dirac': 'client',
+            'PBS': 'WN',
+            'Interactive': 'client',
+            'Local': 'WN',
+        },
+    }
 
     standardFormat = '{jid}/{fname}'
     extendedFormat = '{jid}/{sjid}/{fname}'
@@ -40,31 +52,38 @@ class TestMassStorageWN(GangaUnitTest):
         """
         Configure the MassStorageFile for the test
         """
-        extra_opts = [('PollThread', 'autostart', 'False'),
-                      ('Local', 'remove_workdir', 'False'),
-                      ('TestingFramework', 'AutoCleanup', 'False'),
-                      ('Output', _getName(self.fileClass), TestMassStorageWN.MassStorageTestConfig),
-                      ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        extra_opts = [
+            ('PollThread', 'autostart', 'False'),
+            ('Local', 'remove_workdir', 'False'),
+            ('TestingFramework', 'AutoCleanup', 'False'),
+            (
+                'Output',
+                _getName(self.fileClass),
+                TestMassStorageWN.MassStorageTestConfig,
+            ),
+            ('Output', 'FailJobIfNoOutputMatched', 'True'),
+        ]
         super(TestMassStorageWN, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
     def cleanUp():
-        """ Cleanup the current job objects """
+        """Cleanup the current job objects"""
 
         from GangaCore.GPI import jobs
+
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
 
     @classmethod
     def setUpTest(cls):
-        """ This creates a safe place to put the files into 'mass-storage' """
+        """This creates a safe place to put the files into 'mass-storage'"""
         cls.outputFilePath = tempfile.mkdtemp()
         cls.MassStorageTestConfig['uploadOptions']['path'] = cls.outputFilePath
 
     @classmethod
     def tearDownTest(cls):
-        """ Cleanup the current temp objects """
+        """Cleanup the current temp objects"""
         for file_ in cls._managed_files:
             if os.path.isfile(file_):
                 os.unlink(file_)
@@ -78,7 +97,7 @@ class TestMassStorageWN(GangaUnitTest):
         """Test the ability to submit a job with some LocalFiles"""
 
         MassStorageFile = self.fileClass
-        from GangaCore.GPI import jobs, Job, LocalFile
+        from GangaCore.GPI import Job, LocalFile
 
         _ext = '.txt'
 
@@ -87,7 +106,11 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1)]
-        j.outputfiles = [MassStorageFile(namePattern='*' + _ext, outputfilenameformat=self.standardFormat)]
+        j.outputfiles = [
+            MassStorageFile(
+                namePattern='*' + _ext, outputfilenameformat=self.standardFormat
+            )
+        ]
         j.submit()
 
         for f in j.outputfiles:
@@ -136,7 +159,11 @@ class TestMassStorageWN(GangaUnitTest):
         j = Job()
         j.inputfiles = [LocalFile(file_1)]
         j.splitter = ArgSplitter(args=[[_] for _ in range(0, TestMassStorageWN.sj_len)])
-        j.outputfiles = [MassStorageFile(namePattern='*' + _ext, outputfilenameformat=self.extendedFormat)]
+        j.outputfiles = [
+            MassStorageFile(
+                namePattern='*' + _ext, outputfilenameformat=self.extendedFormat
+            )
+        ]
         j.submit()
 
         for f in j.outputfiles:
@@ -182,8 +209,12 @@ class TestMassStorageWN(GangaUnitTest):
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2), LocalFile(file_3)]
         j.splitter = ArgSplitter(args=[[_] for _ in range(0, TestMassStorageWN.sj_len)])
-        j.outputfiles = [MassStorageFile(namePattern='*' + _ext, outputfilenameformat='{jid}/{sjid}/{fname}'),
-                         MassStorageFile(namePattern='*' + _ext2)]
+        j.outputfiles = [
+            MassStorageFile(
+                namePattern='*' + _ext, outputfilenameformat='{jid}/{sjid}/{fname}'
+            ),
+            MassStorageFile(namePattern='*' + _ext2),
+        ]
         j.submit()
 
     def test_f_MultiUpload(self):
@@ -199,8 +230,12 @@ class TestMassStorageWN(GangaUnitTest):
 
         for i in range(TestMassStorageWN.sj_len):
             # Check that the subfiles were expended correctly
-            assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
-            assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[1]).subfiles) == 1
+            assert (
+                len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
+            )
+            assert (
+                len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[1]).subfiles) == 1
+            )
             # Check we have the correct total number of files
             assert len(j.subjobs[i].outputfiles) == 3
             output_dir = os.path.join(self.outputFilePath, str(j.id), str(i))
@@ -226,7 +261,11 @@ class TestMassStorageWN(GangaUnitTest):
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
         j.splitter = ArgSplitter(args=[[_] for _ in range(0, TestMassStorageWN.sj_len)])
-        j.outputfiles = [MassStorageFile(namePattern='*' + _ext, outputfilenameformat=self.customOutputFormat)]
+        j.outputfiles = [
+            MassStorageFile(
+                namePattern='*' + _ext, outputfilenameformat=self.customOutputFormat
+            )
+        ]
 
         for f in j.outputfiles:
             assert f.outputfilenameformat == self.customOutputFormat
@@ -249,9 +288,13 @@ class TestMassStorageWN(GangaUnitTest):
 
         for i in range(TestMassStorageWN.sj_len):
             # Check that we correctly have expanded the wildcard still
-            assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
+            assert (
+                len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
+            )
             assert len(j.subjobs[i].outputfiles) == 2
-            file_prep = os.path.join(self.outputFilePath, str(j.id) + '_' + str(i) + '_')
+            file_prep = os.path.join(
+                self.outputFilePath, str(j.id) + '_' + str(i) + '_'
+            )
             # Check that the files were placed in the correct place on storage
             print(("Found: %s" % str(os.listdir(self.outputFilePath))))
             for f in j.subjobs[i].outputfiles:
@@ -264,4 +307,5 @@ class TestMassStorageWN(GangaUnitTest):
 
 class TestSharedWN(TestMassStorageWN):
     """Testing SharedFile when completing a file"""
+
     fileClass = addProxy(SharedFile)

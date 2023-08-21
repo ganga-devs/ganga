@@ -3,7 +3,6 @@ import base64
 import subprocess
 import threading
 import pickle as pickle
-import signal
 from copy import deepcopy
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.Utility.logging import getLogger
@@ -57,7 +56,8 @@ def python_wrapper(command, python_setup='', update_env=False, indent=''):
         python_setup (str): This is some python code to be executed before the python code in question (aka a script header.
         update_env (bool): Contol whether we want to capture the env after running
         indent (str): This allows for an indent to be applied to the script so it can be placed inside other python scripts
-    This returns the file handler objects for the env_update_script, the python wrapper itself and the script which has been generated to be run
+    This returns the file handler objects for the env_update_script, the python wrapper itself
+    and the script which has been generated to be run
     """
     fdread, fdwrite = os.pipe()
     os.set_inheritable(fdwrite, True)
@@ -105,44 +105,14 @@ def __reader(pipes, output_ns, output_var, require_output):
     os.close(pipes[1])
     with os.fdopen(pipes[0], 'rb') as read_file:
         try:
-            # rcurrie this deepcopy hides a strange bug that the wrong dict is sometimes returned from here. Remove at your own risk
+            # rcurrie this deepcopy hides a strange bug that the wrong dict is
+            # sometimes returned from here. Remove at your own risk
             output_ns[output_var] = deepcopy(pickle.load(read_file))
         except UnicodeDecodeError:
             output_ns[output_var] = deepcopy(bytes2string(pickle.load(read_file, encoding="bytes")))
         except Exception as err:
             if require_output:
                 logger.error('Error getting output stream from command: %s', err)
-
-
-def __timeout_func(process, timed_out):
-    """ This function is used to kill functions which are timing out behind the scenes and taking longer than a
-    threshold time to execute.
-    Args:
-        process (class): This is a subprocess class which knows of the pid of wrapping thread around the command we want to kill
-        timed_out (Event): A threading event to be set when the command has timed out
-    """
-
-    if process.returncode is None:
-        timed_out.set()
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except Exception as e:
-            logger.error("Exception trying to kill process: %s" % e)
-
-
-def start_timer(p, timeout):
-    """ Function to construct and return the timer thread and timed_out
-    Args:
-        p (object): This is the subprocess object which will be used to run the command of interest
-        timeout (int): This is the timeout in seconds after which the command will be killed
-    """
-    # Start the background thread to catch timeout events
-    timed_out = threading.Event()
-    timer = threading.Timer(timeout, __timeout_func, args=(p, timed_out))
-    timer.daemon = True
-    if timeout is not None:
-        timer.start()
-    return timer, timed_out
 
 
 def update_thread(pipes, thread_output, output_key, require_output):
@@ -167,7 +137,6 @@ def execute(command,
             cwd=None,
             shell=True,
             python_setup='',
-            eval_includes=None,
             update_env=False,
             ):
     """
@@ -175,12 +144,12 @@ def execute(command,
     This will execute an external python command when shell=False or an external bash command when shell=True
     Args:
         command (str): This is the command that we want to execute in string format
-        timeout (int): This is the timeout which we want to assign to a function and it will be killed if it runs for longer than n seconds
+        timeout (int): This is the timeout which we want to assign to a function \
+        and it will be killed if it runs for longer than n seconds
         env (dict): This is the environment to use for launching the new command
         cwd (str): This is the cwd the command is to be executed within.
         shell (bool): True for a bash command to be executed, False for a command to be executed within Python
         python_setup (str): A python command to be executed beore the main command is
-        eval_includes (str): An string used to construct an environment which, if passed, is used to eval the stdout into a python object
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
     """
     print('aaaaaaaa')
@@ -215,9 +184,6 @@ def execute(command,
     # This is where we store the output
     thread_output = {}
 
-    # Start the timer thread used to kill commands which have likely stalled
-    timer, timed_out = start_timer(p, timeout)
-
     if update_env:
         env_output_key = 'env_output'
         update_env_thread = update_thread(env_file_pipes, thread_output, env_output_key, require_output=True)
@@ -226,25 +192,28 @@ def execute(command,
         update_pkl_thread = update_thread(pkl_file_pipes, thread_output, pkl_output_key, require_output=False)
 
     # Execute the main command of interest
+<<<<<<< HEAD
     logger.info("Executing Command:\n'%s'" % str(command))
     stdout, stderr = p.communicate(command)
+=======
+    logger.debug("Executing Command:\n'%s'" % str(command))
+
+    try:
+        stdout, stderr = p.communicate(command, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        p.terminate()
+        return 'Command timed out!'
+>>>>>>> 70b0e739e25999de76665bf1a8a00c703027f600
 
     # Close the timeout watching thread
     logger.info("stdout: %s" % stdout)
     logger.info("stderr: %s" % stderr)
-
-    timer.cancel()
-    if timeout is not None:
-        timer.join()
 
     # Finish up and decide what to return
     if stderr != '':
         # this is still debug as using the environment from dirac default_env maked a stderr message dump out
         # even though it works
         logger.debug(stderr)
-
-    if timed_out.isSet():
-        return 'Command timed out!'
 
     # Decode any pickled objects from disk
     if update_env:
@@ -258,7 +227,7 @@ def execute(command,
             logger.error("stderr: %s" % stderr)
             raise RuntimeError("Missing update env after running command")
 
-    if not shell and not eval_includes:
+    if not shell:
         update_pkl_thread.join()
         if pkl_output_key in thread_output:
             return thread_output[pkl_output_key]
@@ -286,12 +255,6 @@ def execute(command,
 
     if not stdout_temp:
         local_ns = locals()
-        if isinstance(eval_includes, str):
-            try:
-                exec(eval_includes, {}, local_ns)
-            except:
-                logger.debug("Failed to eval the env, can't eval stdout")
-                pass
         if isinstance(stdout, str) and stdout:
             try:
                 stdout_temp = eval(stdout, {}, local_ns)

@@ -13,10 +13,10 @@ jobs:
       - uses: actions/checkout@v1
         with:
           fetch-depth: 0
-      - name: Set up Python 3.8
+      - name: Set up Python 3.11
         uses: actions/setup-python@v1
         with:
-          python-version: 3.8
+          python-version: 3.11
 
       - name: Get changed files
         id: changed-files
@@ -87,16 +87,17 @@ jobs:
     name: GangaCore Unit
     needs: lint
     runs-on: ubuntu-latest
-    container: centos:7
     steps:
       - uses: actions/checkout@v1
-      - name: Set up Python 3
-        run: |
-          yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.11
       - name: Install dependencies
         run: |
-          /opt/rh/rh-python38/root/usr/bin/python -m venv ~/venv
+          python -m venv ~/venv
           . ~/venv/bin/activate
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -e .[dev]
@@ -109,48 +110,40 @@ jobs:
     name: GangaCore Integration
     needs: core-unit
     runs-on: ubuntu-latest
-    container: centos:7
-
-    services:
-      mongodb:
-        image: mongo
-        ports:
-          - 27017:27017
 
     steps:
       - uses: actions/checkout@v1
-      - name: Set up Python 3
-        run: |
-          yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.11
       - name: Install dependencies
         run: |
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e .[dev]
       - name: Test with pytest
-        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/GPI
-        env:
-          GANGA_GITHUB_HOST: True
-          MONGODB_HOST: mongodb
-          MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
+        run: python -m pytest --cov-report term-missing --cov ganga/GangaCore/Core --cov ganga/GangaCore/GPI --cov ganga/GangaCore/GPIDev --cov ganga/GangaCore/Lib --cov ganga/GangaCore/Runtime --cov ganga/GangaCore/PACKAGE.py --cov ganga/GangaCore/Utility --cov ganga/GangaCore/__init__.py ganga/GangaCore/test/GPI
 
   gui:
     name: GangaGUI tests
     needs: lint
     runs-on: ubuntu-latest
-    container: centos:7
     steps:
       - uses: actions/checkout@v1
-      - name: Set up Python 3
-        run: |
-          yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.11
       - name: Install dependencies
         run: |
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e .[dev]
       - name: Test with pytest
-        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaGUI ganga/GangaGUI/test
+        run: python -m pytest --cov-report term-missing --cov ganga/GangaGUI ganga/GangaGUI/test
 
   condor:
     name: Condor
@@ -212,8 +205,7 @@ jobs:
           cd ~/dirac_ui
           wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
           chmod u+x dirac-install
-          DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
-          DIRAC_VERSION=v7r2p10
+          DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7-8]r.*[^\\]]" | grep -m1 -v -e "pre"`
           ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
           source ~/dirac_ui/bashrc
           mkdir ~/.proxy
@@ -365,110 +357,3 @@ jobs:
           echo abcd | lhcb-proxy-init -p
           . ~/venv/bin/activate
           python3 -m pytest --cov-report term-missing --cov ganga/GangaLHCb ganga/GangaLHCb/test/GPI
-
-  controller-tests:
-    name: Database Controller Tests
-    needs: lint
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Set up Go 1.16.4
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.16.4
-        id: go
-      - name: Check out code for the container build
-        uses: actions/checkout@v1
-
-      - name: Set up Python 3
-        run: |
-          sudo apt-get install -y python3
-          sudo apt-get install -y python3-pip
-
-      - name: Python3 Install dependencies
-        run: |
-          pip3 install --upgrade pip setuptools wheel
-          pip3 install -e .[dev]
-          pip3 install pymongo pytest gdown
-
-      - name: Singularity Install Dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y \
-            build-essential \
-            libssl-dev \
-            uuid-dev \
-            libgpgme11-dev \
-            squashfs-tools \
-            libseccomp-dev \
-            pkg-config
-
-      - name: Singularity Install
-        env:
-          SINGULARITY_VERSION: 3.7.3
-        run: |
-          export GOPATH=/tmp/go
-          mkdir -p $GOPATH
-          sudo mkdir -p /usr/local/var/singularity/mnt && \
-          mkdir -p $GOPATH/src/github.com/sylabs && \
-          cd $GOPATH/src/github.com/sylabs && \
-          wget -qO- https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz | \
-          tar xzv && \
-          cd singularity && \
-          ./mconfig -p /usr/local && \
-          make -C builddir && \
-          sudo make -C builddir install
-      - name: Singularity Download MongoDB
-        run: singularity pull docker://mongo:latest
-
-      - name: uDocker Installation
-        run: |
-          python3 -m pip install udocker
-      - name: uDocker Download MongoDB
-        run: |
-          udocker pull mongo:latest
-
-      - name: Docker Download MongoDB
-        run: docker pull mongo:latest
-
-      - name: Test Container Controllers
-        run: |
-          python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core ganga/GangaCore/test/gangaDB/db_controllers/TestContainerHandler.py
-        env:
-          # To force usage of docker controller
-          GANGA_GITHUB_HOST: False
-          MONGODB_HOST: mongodb
-          MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}
-
-  db-unit:
-    name: Database Testing
-    runs-on: ubuntu-latest
-    needs: lint
-    container: mongo
-    services:
-      mongodb:
-        image: mongo
-        ports:
-          - 27017:27017
-
-    steps:
-      - name: Check out code for the container build
-        uses: actions/checkout@v1
-
-      - name: Update packages
-        run: apt update -y
-
-      - name: Set up Python 3
-        run: |
-          apt install -y python3
-          apt install -y python3-pip
-
-      - name: Install dependencies
-        run: |
-          pip3 install --upgrade pip setuptools wheel
-          pip3 install -e .[dev]
-      - name: Testing GangaDB
-        run: |
-          python3 -m pytest --cov-report term-missing --cov ganga/GangaCore/Core ganga/GangaCore/test/gangaDB/db_testing
-        env:
-          GANGA_GITHUB_HOST: True
-          MONGODB_HOST: mongodb
-          MONGODB_PORT: ${{ job.services.mongodb.ports[27017] }}

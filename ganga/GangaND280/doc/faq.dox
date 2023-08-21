@@ -36,7 +36,7 @@ of a job into a specific directory locally.
 You must first edit your <i>.gangarc</i> to define the <i>SharedFile</i> main output directory
 and the shell commands it needs:
 \code
-SharedFile = {'fileExtensions': ['*.root'], 'uploadOptions': {'path': '/home/me/T2K/Data', 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'}, 'backendPostprocess': {'LSF': 'WN', 'LCG': 'client', 'Interactive': 'WN', 'Localhost': 'client', 'CREAM': 'client'}}
+SharedFile = {'fileExtensions': ['*.root'], 'uploadOptions': {'path': '/home/me/T2K/Data', 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'}, 'backendPostprocess': {'LSF': 'WN', 'LCG': 'client', 'Interactive': 'WN', 'Localhost'}}
 \endcode
 Then your job <i>j</i> must have <i>SharedFile</i> as <i>outputfiles</i>:
 \code
