@@ -120,7 +120,7 @@ class Shell(object):
             execute('source {0} {1}'.format(setup, " ".join(setup_args)), shell=True, env=self.env, update_env=True)
 
         else:
-            self.env = os.environ 
+            self.env = os.environ
 
         self.dirname = None
 
