@@ -222,6 +222,7 @@ def execute(command,
     if cwd is None:
         # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
         # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed
+
         cwd_ = tempfile.mkdtemp()
     else:
         # We know were whe want to run, lets just run there

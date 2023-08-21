@@ -152,6 +152,7 @@ def execute(command,
         python_setup (str): A python command to be executed beore the main command is
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
     """
+
     if update_env and env is None:
         raise GangaException('Cannot update the environment if None given.')
 
@@ -173,10 +174,12 @@ def execute(command,
     # Some minor changes to cleanup the getting of the env
     if env is None:
         env = os.environ
+
     # Construct the object which will contain the environment we want to run the command in
     p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          universal_newlines=True, close_fds=False)
+
     # This is where we store the output
     thread_output = {}
 

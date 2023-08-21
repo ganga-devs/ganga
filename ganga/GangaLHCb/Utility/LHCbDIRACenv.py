@@ -40,7 +40,6 @@ def store_dirac_environment():
         '. /cvmfs/lhcb.cern.ch/lib/LbEnv &>/dev/null && '
         f'lb-dirac {requestedVersion} python -c "import json, os; print(json.dumps(dict(os.environ)))"'
     )
-
     env = subprocess.check_output(cmd, shell=True, text=True, env={"PATH": '/usr/bin:/bin', "HOME": os.environ.get("HOME")})
 
     if isinstance(env, str):
