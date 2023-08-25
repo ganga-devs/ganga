@@ -17,6 +17,7 @@ from GangaCore.GPIDev.Credentials.VomsProxy import VomsProxyInfo
 from GangaCore.Utility.Shell import Shell
 
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
+from GangaDirac.BOOT import stopDiracProcess
 
 logger = GangaCore.Utility.logging.getLogger()
 
@@ -69,6 +70,10 @@ class DiracProxyInfo(VomsProxyInfo):
         else:
             logger.debug('Grid proxy {path} created. Valid for {time}'.format(
                 path=self.location, time=self.time_left()))
+
+        # Now stop any running Dirac server processes
+        stopDiracProcess()
+
 
     @property
     def shell(self):
