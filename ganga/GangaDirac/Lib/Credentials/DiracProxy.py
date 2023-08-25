@@ -74,7 +74,6 @@ class DiracProxyInfo(VomsProxyInfo):
         # Now stop any running Dirac server processes
         stopDiracProcess()
 
-
     @property
     def shell(self):
         """
