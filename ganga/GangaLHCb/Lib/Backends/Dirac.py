@@ -34,7 +34,8 @@ class Dirac(DiracBase):
             for f in j.inputfiles.get(DiracFile):
                 if f.lfn == '':
                     raise GangaException(
-                        'Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' % f.namePattern)
+                        'Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' %
+                        f.namePattern)
                 else:
                     input_sandbox.append('LFN:' + f.lfn)
         return input_sandbox
@@ -103,7 +104,9 @@ def filterLFNsBySE(lfns, site):
         import GangaCore.Runtime.Repository_runtime
         GangaCore.Runtime.Repository_runtime.updateLocksNow()
     outLFNs = []
-    # reps is a dict of dicts of dicts with keys the index from the thread, 'Successful', LFN, then the SEs, then the values are the PFNs. Pick out the LFNs we want
+    # reps is a dict of dicts of dicts with keys the index from the thread,
+    # 'Successful', LFN, then the SEs, then the values are the PFNs. Pick out
+    # the LFNs we want
     for _index in reps.keys():
         for _lfn, _replicas in reps[_index]['Successful'].items():
             if site in _replicas.keys():
