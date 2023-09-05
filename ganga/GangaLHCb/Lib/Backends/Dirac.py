@@ -60,15 +60,6 @@ class Dirac(DiracBase):
             return
         return result.get('Value', {})
 
-    def getOutputDataLFNs(self):
-        """Get a list of outputdata that has been uploaded by Dirac. Excludes
-        the outputsandbox if it is there."""
-        lfns = super(Dirac, self).getOutputDataLFNs()
-        ds = LHCbDataset()
-        for f in lfns:
-            ds.files.append(DiracFile(lfn=f))
-        return GPIProxyObjectFactory(ds)
-
     def getOutputData(self, outputDir=None, names=None, force=False):
         """Retrieve data stored on SE to outputDir (default=job output workspace).
         If names=None, then all outputdata is downloaded otherwise names should
