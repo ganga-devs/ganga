@@ -4,6 +4,7 @@ on: pull_request_target
 
 jobs:
   approve:
+    name: Approval
     runs-on: ubuntu-latest
     steps:
     - name: Approve
