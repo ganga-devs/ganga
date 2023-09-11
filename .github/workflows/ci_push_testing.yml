@@ -1,8 +1,6 @@
 name: CI Push Testing
 
-on: 
-  pull_request_target:
-    branches: [ develop ]
+on: pull_request_target
 
 jobs:
   approve:
