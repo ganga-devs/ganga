@@ -916,6 +916,7 @@ class DiracBase(IBackend):
             lfns.extend([f.lfn for f in outputfiles_iterator(j, DiracFile) if f.lfn != ''])
         return lfns
 
+    @require_credential
     def getOutputDataAccessURLs(self):
         """Retrieve the list of accessURLs assigned to outputdata for a job"""
         return getAccessURLs(self.getOutputDataLFNs())

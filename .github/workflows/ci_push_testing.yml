@@ -1,17 +1,31 @@
 name: CI Push Testing
 
-on: [pull_request]
+on:
+  pull_request_target:
+    branches: [ develop ]
 
 jobs:
+  approve:
+    name: Approval
+    runs-on: ubuntu-latest
+    steps:
+    - name: Approve
+      run: echo For security reasons, all pull requests need to be approved first before running any automated CI.
+
+  
   lint:
     name: Linting
     runs-on: ubuntu-latest
+    needs: [approve]
+    environment:
+      name: Integrate Pull Request
     continue-on-error: true
     outputs:
       files_to_lint: ${{ steps.flake8.outputs.files_to_lint }}
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - name: Set up Python 3.11
         uses: actions/setup-python@v1
@@ -58,7 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Run autopep8
         id: autopep8
@@ -88,8 +102,9 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - name: Set up Python 3.11
         uses: actions/setup-python@v1
@@ -112,8 +127,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - name: Set up Python 3.11
         uses: actions/setup-python@v1
@@ -131,8 +147,9 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - name: Set up Python 3.11
         uses: actions/setup-python@v1
@@ -151,7 +168,9 @@ jobs:
     runs-on: ubuntu-latest
     container: htcondor/mini:el7
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up Python 3
         run: |
           yum install -y centos-release-scl-rh
@@ -179,7 +198,9 @@ jobs:
     runs-on: ubuntu-latest
     container: centos:7
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up Python 3
         run: |
           yum install -y centos-release-scl-rh
@@ -227,7 +248,9 @@ jobs:
     runs-on: ubuntu-latest
     container: centos:7
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up Python 3
         run: |
           yum install -y centos-release-scl-rh
@@ -297,7 +320,9 @@ jobs:
           mkdir -p /cvmfs/sft.cern.ch
           mount -t cvmfs lhcb.cern.ch /cvmfs/lhcb.cern.ch
           mount -t cvmfs sft.cern.ch /cvmfs/sft.cern.ch
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Install virtualenv and dependencies
         run: |
           /cvmfs/sft.cern.ch/lcg/releases/LCG_100/Python/3.8.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
@@ -340,7 +365,9 @@ jobs:
           echo "$ROBOT_KEY" > ~/.globus/userkey.pem
           chmod 644 ~/.globus/usercert.pem
           chmod 400 ~/.globus/userkey.pem
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Install virtualenv and dependencies
         run: |
           /cvmfs/sft.cern.ch/lcg/releases/LCG_100/Python/3.8.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
