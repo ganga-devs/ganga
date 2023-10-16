@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: ref check
-      run: echo ${{github.repository}}
+      run: echo ${{github.event.pull_request.head.repo.full_name}}
 
   approve:
     name: Approval
