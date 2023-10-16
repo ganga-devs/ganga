@@ -5,16 +5,9 @@ on:
     branches: [ develop ]
 
 jobs:
-  checkref:
-    name: check ref
-    runs-on: ubuntu-latest
-    steps:
-    - name: ref check
-      run: echo ${{github.event.pull_request.head.repo.full_name}}
-
   approve:
     name: Approval
-    if:  github.repository != 'ganga-devs/gangs'
+    if:  ${{github.event.pull_request.head.repo.full_name != 'ganga-devs/ganga'}}
     runs-on: ubuntu-latest
     environment:
       name: Integrate Pull Request
