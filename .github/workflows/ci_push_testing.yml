@@ -7,7 +7,7 @@ on:
 jobs:
   approve:
     name: Approval
-    if:  startsWith(github.ref, 'ganga-devs/**') != true
+    if:  github.repository != 'ganga-devs/gangs'
     runs-on: ubuntu-latest
     environment:
       name: Integrate Pull Request
