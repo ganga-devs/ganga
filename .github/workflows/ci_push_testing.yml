@@ -19,7 +19,7 @@ jobs:
     name: status check
     runs-on: ubuntu-latest
     needs: [approve]
-    if: always()
+    if: skipped()
     steps:
     - name: check
       run: echo ${{needs.approve.result}}
