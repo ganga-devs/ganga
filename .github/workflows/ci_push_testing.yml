@@ -70,6 +70,7 @@ jobs:
     if: startsWith(github.head_ref, 'autopep8-patches') == false && needs.lint.outputs.files_to_lint != ''
     runs-on: ubuntu-latest
     needs: lint
+    if: always() && !failure() && !cancelled()
     steps:
       - uses: actions/checkout@v3
         with:
@@ -101,7 +102,7 @@ jobs:
   core-unit:
     name: GangaCore Unit
     needs: lint
-    if: failure()
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -126,6 +127,7 @@ jobs:
   core-integration:
     name: GangaCore Integration
     needs: core-unit
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
 
     steps:
@@ -147,6 +149,7 @@ jobs:
   gui:
     name: GangaGUI tests
     needs: lint
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -167,6 +170,7 @@ jobs:
   condor:
     name: Condor
     needs: lint
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container: htcondor/mini:el7
     steps:
@@ -197,6 +201,7 @@ jobs:
   dirac-unit:
     name: GangaDirac Unit
     needs: lint
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container: centos:7
     steps:
@@ -246,6 +251,7 @@ jobs:
   dirac-integration:
     name: GangaDirac Integration
     needs: dirac-unit
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container: centos:7
     steps:
@@ -304,6 +310,7 @@ jobs:
   lhcb-unit:
     name: GangaLHCb Unit
     needs: lint
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container:
       image: centos:7
@@ -337,6 +344,7 @@ jobs:
   lhcb-integration:
     name: GangaLHCb Integration
     needs: lhcb-unit
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     container:
       image: centos:7
