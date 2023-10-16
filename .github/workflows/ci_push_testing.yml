@@ -5,6 +5,13 @@ on:
     branches: [ develop ]
 
 jobs:
+  checkref:
+    name: check ref
+    runs-on: ubuntu-latest
+    steps:
+    - name: ref check
+      run: echo ${{github.repository}}
+
   approve:
     name: Approval
     if:  github.repository != 'ganga-devs/gangs'
