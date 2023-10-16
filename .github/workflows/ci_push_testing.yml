@@ -101,6 +101,7 @@ jobs:
   core-unit:
     name: GangaCore Unit
     needs: lint
+    if: failure()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
