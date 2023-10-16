@@ -20,6 +20,7 @@ jobs:
     name: Linting
     runs-on: ubuntu-latest
     needs: [approve]
+    if: ${{ needs.approve.result == 'success' || needs.approve.result == 'skipped'}}
     continue-on-error: true
     outputs:
       files_to_lint: ${{ steps.flake8.outputs.files_to_lint }}
