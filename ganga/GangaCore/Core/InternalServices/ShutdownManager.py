@@ -10,13 +10,13 @@ import atexit
 # Ganga imports
 from GangaCore.Core.GangaThread import GangaThreadPool
 from GangaCore.Core.GangaThread.WorkerThreads import _global_queues, shutDownQueues
-from GangaCore.Core import monitoring_component
+
 from GangaCore.Core.InternalServices import Coordinator
 from GangaCore.Runtime import Repository_runtime, bootstrap
 from GangaCore.Utility import stacktracer
 from GangaCore.Utility.logging import getLogger, requires_shutdown, final_shutdown
 from GangaCore.Utility.Config import setConfigOption
-from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace, _purge_actions_queue,\
+from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace, _purge_actions_queue, \
     stop_and_free_thread_pool
 from GangaCore.GPIDev.Lib.Tasks import stopTasks
 from GangaCore.GPIDev.Credentials import CredentialStore
@@ -70,13 +70,17 @@ def _unprotected_ganga_exitfuncs():
             logger.exception("Exception raised while stopping GUI: {}".format(err))
 
     # Stop the monitoring loop from iterating further
+    from GangaCore.Core import monitoring_component
+
     if monitoring_component is not None:
         try:
             getStackTrace()
             if monitoring_component.alive:
-                monitoring_component.disableMonitoring()
+                logger.debug('Disabling and joining monitoring thread...')
+                monitoring_component.disable()
                 monitoring_component.stop()
                 monitoring_component.join()
+                logger.debug('Monitoring thread stopped')
         except Exception as err:
             logger.exception("Exception raised while stopping the monitoring: %s" % err)
 

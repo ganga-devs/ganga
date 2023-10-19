@@ -6,7 +6,6 @@
 
 import itertools
 import os
-import time
 from collections import defaultdict
 
 import GangaCore.Utility.logging
@@ -14,8 +13,6 @@ from GangaCore.Utility.logic import implies
 from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.Utility.Config import getConfig
 from GangaCore.GPIDev.Schema import Schema, Version
-from GangaCore.GPIDev.Lib.Dataset import GangaDataset
-from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
 from GangaCore.GPIDev.Credentials import credential_store, needed_credentials
 from GangaCore.Core.exceptions import (
@@ -109,7 +106,7 @@ class IBackend(GangaObject):
         in the following way:
 
         def master_submit(self,masterjobconfig,subjobconfigs,keep_going):
-           ... 
+           ...
            do_some_processsing_of(masterjobconfig)
            ...
            return IBackend.master_submit(self,subjobconfigs,masterjobconfig,keep_joing)
@@ -130,7 +127,7 @@ class IBackend(GangaObject):
 
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
-        assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
+        assert implies(rjobs, len(subjobconfigs) == len(rjobs))
 
         incomplete = 0
         incomplete_subjobs = []
@@ -151,8 +148,6 @@ class IBackend(GangaObject):
 
             from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 
-            threads_before = getQueues().totalNumIntThreads()
-
             for sc, sj in zip(subjobconfigs, rjobs):
 
                 b = sj.backend
@@ -161,19 +156,24 @@ class IBackend(GangaObject):
                 if hasattr(b, 'credential_requirements') and b.credential_requirements is not None:
                     from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
                     try:
-                        cred = credential_store[b.credential_requirements]
+                        credential_store[b.credential_requirements]
                     except GangaKeyError:
                         credential_store.create(b.credential_requirements)
 
                 fqid = sj.getFQID('.')
                 # FIXME would be nice to move this to the internal threads not user ones
-                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox,
-                                                                                        fqid, logger), callback_func=self._successfulSubmit, callback_args=(sj, incomplete_subjobs))
+                getQueues()._monitoring_threadpool.add_function(
+                    self._parallel_submit,
+                    (b, sj, sc, master_input_sandbox, fqid, logger),
+                    callback_func=self._successfulSubmit,
+                    callback_args=(sj, incomplete_subjobs)
+                )
 
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs:
-                    if sj.status not in ["submitted", "failed", "completed", "running", "completing"] and sj.getFQID('.') not in incomplete_subjobs:
+                    if sj.status not in ["submitted", "failed", "completed", "running",
+                                         "completing"] and sj.getFQID('.') not in incomplete_subjobs:
                         has_submitted = False
                         break
                 return has_submitted
@@ -247,7 +247,8 @@ class IBackend(GangaObject):
             create_sandbox = job.createPackedInputSandbox
         if masterjobconfig:
             if hasattr(job.application, 'is_prepared') and isType(job.application.is_prepared, ShareDir):
-                def sharedir_pred(f): return f.name.find(job.application.is_prepared.name) > -1
+                def sharedir_pred(f):
+                    return f.name.find(job.application.is_prepared.name) > -1
                 sharedir_files = filter(sharedir_pred, masterjobconfig.getSandboxFiles())
                 nonsharedir_files = itertools.filterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
             # ATLAS use bool to bypass the prepare mechanism and some ATLAS
@@ -292,8 +293,8 @@ class IBackend(GangaObject):
     def master_resubmit(self, rjobs, backend=None):
         """ Resubmit (previously submitted) job. Configuration phase is skipped.
         Default implementation works is an emulated-bulk operation.
-        If you override this method for bulk optimization then make sure that you call updateMasterJobStatus() on the master job,
-        so the master job will be monitored by the monitoring loop.
+        If you override this method for bulk optimization then make sure that you call updateMasterJobStatus() on the
+        master job, so the master job will be monitored by the monitoring loop.
         """
         from GangaCore.Utility.logging import log_user_exception
         incomplete = 0
@@ -415,89 +416,55 @@ class IBackend(GangaObject):
         """
 
         from GangaCore.Core import monitoring_component
-        was_monitoring_running = monitoring_component and monitoring_component.isEnabled(False)
+        was_monitoring_running = monitoring_component and monitoring_component.enabled
 
         logger.debug("Running Monitoring for Jobs: %s" % [j.getFQID('.') for j in jobs])
 
-        # Only process 10 files from the backend at once
-        #blocks_of_size = 10
-        poll_config = getConfig('PollThread')
-        try:
-            blocks_of_size = poll_config['numParallelJobs']
-        except Exception as err:
-            logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
-            logger.debug("Error: %s" % err)
-            blocks_of_size = 5
+        def __get_monitorable_subjob_ids(job_main):
+            monitorable_subjob_ids = []
+
+            if isType(job_main.subjobs, SubJobJsonList):
+                cache = job_main.subjobs.getAllCachedData()
+                for sj_id in range(0, len(job_main.subjobs)):
+                    if cache[sj_id]['status'] in ['submitted', 'running']:
+                        if job_main.subjobs.isLoaded(sj_id):
+                            # SJ may have changed from cache in memory
+                            this_sj = job_main.subjobs(sj_id)
+                            if this_sj.status in ['submitted', 'running']:
+                                monitorable_subjob_ids.append(sj_id)
+                        else:
+                            monitorable_subjob_ids.append(sj_id)
+            else:
+                for sj in job_main.subjobs:
+                    if sj.status in ['submitted', 'running']:
+                        monitorable_subjob_ids.append(sj.id)
+
+            return monitorable_subjob_ids
+
         # Separate different backends implicitly
         simple_jobs = {}
-
-        multiThreadMon = poll_config['enable_multiThreadMon']
-
-        # FIXME Add some check for (sub)jobs which are in a transient state but
-        # are not locked by an active session of ganga
-
-        queues = getQueues()
-
         for j in jobs:
             # All subjobs should have same backend
             if len(j.subjobs) > 0:
-                #logger.info("Looking for sj")
-                monitorable_subjob_ids = []
-
-                if isType(j.subjobs, SubJobJsonList):
-                    cache = j.subjobs.getAllCachedData()
-                    for sj_id in range(0, len(j.subjobs)):
-                        if cache[sj_id]['status'] in ['submitted', 'running']:
-                            if j.subjobs.isLoaded(sj_id):
-                                # SJ may have changed from cache in memory
-                                this_sj = j.subjobs(sj_id)
-                                if this_sj.status in ['submitted', 'running']:
-                                    monitorable_subjob_ids.append(sj_id)
-                            else:
-                                monitorable_subjob_ids.append(sj_id)
-                else:
-                    for sj in j.subjobs:
-                        if sj.status in ['submitted', 'running']:
-                            monitorable_subjob_ids.append(sj.id)
-
-                #logger.info('Monitoring subjobs: %s', monitorable_subjob_ids)
+                monitorable_subjob_ids = __get_monitorable_subjob_ids(j)
 
                 if not monitorable_subjob_ids:
                     continue
 
-                # logger.info("Dividing")
+                # If the monitoring function was running at the start of the function but has since stopped, break.
+                if (was_monitoring_running and monitoring_component and not monitoring_component.enabled
+                        or not monitoring_component):
+                    break
 
-                monitorable_blocks = []
-                temp_block = []
+                try:
+                    subjobs_to_monitor = []
+                    for sj_id in monitorable_subjob_ids:
+                        subjobs_to_monitor.append(j.subjobs[sj_id])
 
-                for this_sj_id in monitorable_subjob_ids:
-                    temp_block.append(this_sj_id)
-                    if len(temp_block) == blocks_of_size:
-                        monitorable_blocks.append(temp_block)
-                        temp_block = []
-
-                if temp_block:
-                    monitorable_blocks.append(temp_block)
-                    temp_block = []
-
-                for this_block in monitorable_blocks:
-
-                    # If the monitoring function was running at the start of the function but has since stopped, break.
-                    if was_monitoring_running and monitoring_component and not monitoring_component.isEnabled(False) or not monitoring_component:
-                        break
-
-                    try:
-                        subjobs_to_monitor = []
-                        for sj_id in this_block:
-                            subjobs_to_monitor.append(j.subjobs[sj_id])
-                        if multiThreadMon:
-                            if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
-                                queues._addSystem(j.backend.updateMonitoringInformation,
-                                                  args=(subjobs_to_monitor,), name="Backend Monitor")
-                        else:
-                            j.backend.updateMonitoringInformation(subjobs_to_monitor)
-                    except Exception as err:
-                        logger.error("Monitoring Error: %s" % err)
+                    task = j.backend.updateMonitoringInformation
+                    monitoring_component.run_monitoring_task(task, subjobs_to_monitor)
+                except Exception as err:
+                    logger.error("Monitoring Error: %s" % err)
 
                 j.updateMasterJobStatus()
 
@@ -509,28 +476,12 @@ class IBackend(GangaObject):
 
         if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
-                logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
-                if multiThreadMon:
-                    if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
-                        queues._addSystem(stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation,
-                                          args=(simple_jobs[this_backend],), name="Backend Monitor")
-                else:
-                    stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(
-                        simple_jobs[this_backend])
+                jobs = simple_jobs[this_backend]
+                logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in jobs]))
+                task = stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation
+                monitoring_component.run_monitoring_task(task, jobs)
 
         logger.debug("Finished Monitoring request")
-
-        if not multiThreadMon:
-            return
-
-        loop = True
-        while loop:
-            for stat in queues._monitoring_threadpool.worker_status():
-                loop = False
-                if stat[0] is not None and stat[0].startswith("Backend Monitor"):
-                    loop = True
-                    break
-            time.sleep(1.)
 
     @staticmethod
     def updateMonitoringInformation(jobs):
@@ -543,9 +494,16 @@ class IBackend(GangaObject):
 
         raise NotImplementedError
 
+    @staticmethod
+    def tear_down_monitoring():
+        """ This method may be called by the monitoring service when
+        a backend no longer requires monitoring so that any resources
+        used can be freed.
+        """
+        raise NotImplementedError
+
 
 def group_jobs_by_backend_credential(jobs):
-    # type: (List[Job]) -> List[List[Job]]
     """
     Split a list of jobs based on the credential required by their backends.
 

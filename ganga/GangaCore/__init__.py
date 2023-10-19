@@ -642,6 +642,7 @@ gridshell_config.addOption(
 )
 gridshell_config.addOption('GLITE_ALLOWED_WMS_LIST', [], '')
 
+
 gridshell_config.addOption(
     'IgnoreGliteScriptHeader',
     False,
@@ -697,12 +698,14 @@ gridsim_config.addOption(
     ),
 )
 
-# config.addOption('bulk_submit_time','random.uniform(1,2)',('python expression which returns the time it takes (in seconds) '
+# config.addOption('bulk_submit_time','random.uniform(1,2)',
+#                   ('python expression which returns the time it takes (in seconds) '
 #        'to complete the submission of a single job within the Grid.native_master_submit() command'))
 # config.addOption('bulk_submit_failure_rate',0.0,'probabilty that the Grid.native_master_submit() fails')
 
-# config.addOption('bulk_cancel_time','random.uniform(1,2)',('python expression which returns the time it takes (in seconds) '
-#        'to complete the cancellation of a single job within the Grid.native_master_cancel() command'))
+# config.addOption('bulk_cancel_time','random.uniform(1,2)',
+#                   ('python expression which returns the time it takes (in seconds) '
+#        '            to complete the cancellation of a single job within the Grid.native_master_cancel() command'))
 # config.addOption('bulk_cancel_failure_rate',0.0,'probabilty that the Grid.native_master_cancel() fails')
 
 gridsim_config.addOption(
@@ -941,6 +944,7 @@ sge_config.addOption(
 )
 
 sge_config.addOption('kill_str', 'qdel %s', "String used to kill job")
+
 sge_config.addOption(
     'kill_res_pattern',
     '(has registered the job +\\d+ +for deletion)|(denied: job +"\\d+" +does not exist)',
@@ -1080,6 +1084,7 @@ if not jobnumid in scratchDir: scratchDir = scratchDir+"_"+jobnumid
 os.chdir("/tmp/")
 os.system("rm -rf "+scratchDir)
 '''
+
 slurm_config.addOption(
     'postexecute',
     tempstr,
@@ -1150,6 +1155,7 @@ e.g: {'datasets':{'lhcbdatasets':lhcbFilter, 'testdatasets':testFilter}...}
 
 # ------------------------------------------------
 # Output
+
 output_config = makeConfig(
     "Output", "configuration section for postprocessing the output"
 )
@@ -1483,6 +1489,7 @@ disp_config.addOption(
 # display default values for task list
 markup = ANSIMarkup()
 str_done = markup("done", overview_colours["completed"])
+
 disp_config.addOption(
     'tasks_columns',
     ("id", "Type", "Name", "State", "Comment", "Jobs", str_done),

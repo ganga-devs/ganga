@@ -97,7 +97,8 @@ _allLoggers = {}
 # the guessing algorithm may be modified by passing the frame object (to emulate a different physical location of the logger)
 # this is only useful for special usage such as IBackend base class
 def getLogger(name=None, modulename=None):
-    """ get a logger depending on if the modulename is 1/0 and if the name of the logger is provided, see _getLogger for more details"""
+    """ get a logger depending on if the modulename is 1/0 and if the name of the logger is provided.
+    See _getLogger for more details"""
     return _getLogger(name, modulename)
 
 
@@ -149,6 +150,7 @@ class SafeRotatingFileHandler(logging.handlers.RotatingFileHandler):
 
     def handleError(self, record):
         private_logger.error('Error writing to the log file.')
+        private_logger.error(traceback.format_exc())
 
 
 def _set_formatter(handler, this_format=None):
@@ -176,7 +178,8 @@ def _make_file_handler(logfile, logfile_size):
     global file_handler
     if logfile:
         try:
-            # This guarantees the logfile exists before we setup the handler, we've seen strange intermittent bugs if this isn't done
+            # This guarantees the logfile exists before we setup the handler, we've
+            # seen strange intermittent bugs if this isn't done
             with open(logfile, 'w'):
                 pass
             new_file_handler = SafeRotatingFileHandler(logfile, maxBytes=logfile_size, backupCount=1)
@@ -206,7 +209,8 @@ def _make_file_handler(logfile, logfile_size):
 
 # set the loglevel for a logger to a given string value (example: "DEBUG")
 def _set_log_level(logger, value):
-    """ Sets the log level for this logger. When in info, only display INFO/WARNING/... etc the value is the level to set, must be a standard Python logging level """
+    """ Sets the log level for this logger. When in info, only display INFO/WARNING/... etc the value is the level to set.
+    Must be a standard Python logging level """
 
     global _global_level
 
@@ -222,7 +226,8 @@ def _set_log_level(logger, value):
 
 # reflect all user changes immediately
 def post_config_handler(opt, value):
-    """ This is called after a config has been set upon startup in the Schema, make the changes here immediate, change 1 option (opt) to 1 value """
+    """ This is called after a config has been set upon startup in the Schema,
+    make the changes here immediate, change 1 option (opt) to 1 value """
 
     if config is not None and '_customFormat' in config and config['_customFormat'] != "":
         for k in _formats.keys():
@@ -232,7 +237,6 @@ def post_config_handler(opt, value):
         _format, colour = config['_format'], config['_colour']
 
     if opt in ['_format', '_customFormat']:
-        badConfig = False
         if opt == "_customFormat":
             if config is not None:
                 value = config['_format']
@@ -280,7 +284,8 @@ lookup_frame_names = {}
 
 
 def _guess_module_logger_name(modulename, frame=None):
-    """Gues the Module name from the current frame or from a given frame if specified. If module == 1 return full name, else trim module name"""
+    """Gues the Module name from the current frame or from a given frame if specified.
+    If module == 1 return full name, else trim module name"""
     # find the filename of the calling module
     if frame is None:
         # assuming 2 nested calls to the module boundary!
@@ -295,7 +300,7 @@ def _guess_module_logger_name(modulename, frame=None):
         this__file__ = frame.f_globals['__file__']
         if this__file__ in lookup_frame_names:
             del frame
-            return lookup_frame_names[this_file]
+            return lookup_frame_names[this__file__]
         else:
             should_store = True
     else:
@@ -369,7 +374,8 @@ class flushAtIPythonPrompt(object):
 
     def __str__(self):
         """ This str method returns an empty string bug calls for the FlushedMemoryHandler to flush it's cache.
-        When an object of this type is placed within the IPython prompt it's rendered into a string and so calls this function """
+        When an object of this type is placed within the IPython prompt,
+        it's rendered into a string and so calls this function """
         from GangaCore.Utility.logging import cached_screen_handler
         cached_screen_handler.flush()
         return ''
@@ -387,7 +393,8 @@ class FlushedMemoryHandler(_MemHandler):
     def shouldFlush(self, record):
         """
         Right here is where we make the decision on what to buffer or not in the logger in the interactive mode.
-        The only thread we don't want to buffer is the MainThread. All other threads are supporting threads and not of primary interest.
+        The only thread we don't want to buffer is the MainThread.
+        All other threads are supporting threads and not of primary interest.
         The exception to this is when the MemHandler says we flush as we want to always flush then.
         """
         # Errors should be dumped in the correct place with the correct context
@@ -477,8 +484,8 @@ def bootstrap(internal=False, handler=None):
         return
 
     private_logger = getLogger('GangaCore.Utility.logging')
-    #_set_log_level(private_logger, 'CRITICAL')
-    #main_logger = _getLogger('Ganga',_roothandler=1,handler=handler)
+    # _set_log_level(private_logger, 'CRITICAL')
+    # main_logger = _getLogger('Ganga',_roothandler=1,handler=handler)
 
     private_logger.debug('bootstrap')
 
@@ -562,8 +569,8 @@ bootstrap(internal=True)
 def force_global_level(level):
     """ Force the global logging level to be set to level. In the case of DEBUG change the formatting to reflect this """
     if level is not None:
-        for l in _allLoggers:
-            _set_log_level(_allLoggers[l], level)
+        for _l in _allLoggers:
+            _set_log_level(_allLoggers[_l], level)
 
         global _global_level
         _global_level = level
@@ -576,13 +583,15 @@ def force_global_level(level):
             _set_formatter(cached_screen_handler, 'DEBUG')
         if direct_screen_handler is not None:
             _set_formatter(direct_screen_handler, 'DEBUG')
-        for l in _allLoggers:
-            for this_handler in _allLoggers[l].handlers:
+        for logger in _allLoggers:
+            for this_handler in _allLoggers[logger].handlers:
                 _set_formatter(this_handler, 'DEBUG')
 
 
 def log_user_exception(logger=None, debug=False):
-    """ Log a user exception based upon a given position in the code. This is used internally despite the name and is not exposed to usersi """
+    """ Log a user exception based upon a given position in the code.
+    This is used internally despite the name and is not exposed to users
+    """
     buf = io.StringIO()
     traceback.print_exc(file=buf)
     banner = 10 * '-' + ' error in user/extension code ' + 10 * '-'

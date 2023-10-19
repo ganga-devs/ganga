@@ -92,15 +92,9 @@ def _diskSpaceChecker():
 
 
 def disableMonitoringService():
-
-    # disable the mon loop
-    log.debug("Shutting down the main monitoring loop")
-    from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
-    _purge_actions_queue()
-    stop_and_free_thread_pool()
     log.debug("Disabling the central Monitoring")
     from GangaCore.Core import monitoring_component
-    monitoring_component.disableMonitoring()
+    monitoring_component.disable()
 
 
 def disableInternalServices():
@@ -155,11 +149,7 @@ def disableInternalServices():
 
 def enableMonitoringService():
     from GangaCore.Core import monitoring_component
-    monitoring_component.alive = True
-    monitoring_component.enableMonitoring()
-    from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool, ThreadPool
-    if not ThreadPool or len(ThreadPool) == 0:
-        _makeThreadPool()
+    monitoring_component.enable()
     global servicesEnabled
     servicesEnabled = True
 

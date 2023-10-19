@@ -24,16 +24,15 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
             it to GangaCore.GPI
     """
     # Must do some Ganga imports here to avoid circular importing
-    from GangaCore import GANGA_SWAN_INTEGRATION
-    from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import \
-        JobRegistry_Monitor
-    from GangaCore.Runtime.GPIexport import exportToInterface
+    from GangaCore.Core.MonitoringComponent.MonitoringService import AsyncMonitoringService
     from GangaCore.Utility.Config import getConfig
+    from GangaCore.Runtime.GPIexport import exportToInterface
     from GangaCore.Utility.logging import getLogger
+
     global monitoring_component
 
     # start the monitoring loop
-    monitoring_component = JobRegistry_Monitor(reg_slice)
+    monitoring_component = AsyncMonitoringService(registry_slice=reg_slice)
     monitoring_component.start()
 
     # override the default monitoring autostart value with the setting from interactive session
@@ -49,13 +48,11 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
 
     # Enable job monitoring if requested
     if config['autostart']:
-        monitoring_component.enableMonitoring()
+        monitoring_component.enable()
 
     # export the runMonitoring function to the public interface
     if not my_interface:
         import GangaCore.GPI
         my_interface = GangaCore.GPI
 
-    exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
-    if GANGA_SWAN_INTEGRATION:
-        exportToInterface(my_interface, 'reloadJob', monitoring_component.reloadJob, 'Functions')
+    exportToInterface(my_interface, 'runMonitoring', monitoring_component.enable, 'Functions')
