@@ -118,8 +118,8 @@ class MonitoringWorkerThread(GangaThread):
         # import sys
         # sys.settrace(_trace)
         while not self.should_stop():
-            log.debug("%s waiting..." % threading.currentThread())
-            #setattr(threading.currentThread(), 'action', None)
+            log.debug("%s waiting..." % threading.current_thread())
+            #setattr(threading.current_thread(), 'action', None)
 
             heartbeat_times[self._thread_name] = time.time()
 
@@ -133,9 +133,9 @@ class MonitoringWorkerThread(GangaThread):
             if self.should_stop():
                 break
 
-            #setattr(threading.currentThread(), 'action', action)
+            #setattr(threading.current_thread(), 'action', action)
             log.debug("Qin's size is currently: %d" % Qin.qsize())
-            log.debug("%s running..." % threading.currentThread())
+            log.debug("%s running..." % threading.current_thread())
             self._currently_running_command = True
             if not isType(action, JobAction):
                 continue
@@ -794,7 +794,7 @@ class JobRegistry_Monitor(GangaThread):
 
             log.debug("Waking up Main Loop")
             # wake up the mon loop
-            self.__mainLoopCond.notifyAll()
+            self.__mainLoopCond.notify_all()
 
         log.debug("Waiting to execute steps")
         # wait to execute the steps
@@ -829,7 +829,7 @@ class JobRegistry_Monitor(GangaThread):
             log.debug('Monitoring loop enabled')
             # Start backend update timeout checking.
             self.setCallbackHook(UpdateDict.timeoutCheck, {'thisDict': self.updateDict_ts}, True)
-            self.__mainLoopCond.notifyAll()
+            self.__mainLoopCond.notify_all()
 
         return True
 
@@ -865,7 +865,7 @@ class JobRegistry_Monitor(GangaThread):
 
             log.debug('Monitoring loop disabled')
             # wake up the monitoring loop
-            self.__mainLoopCond.notifyAll()
+            self.__mainLoopCond.notify_all()
 
         if was_enabled is True and self._runningNow:
             log.info("Some tasks are still running on Monitoring Loop")
@@ -910,7 +910,7 @@ class JobRegistry_Monitor(GangaThread):
             log.error("stopIter error: %s" % str(err))
         try:
             # wake up the monitoring loop
-            self.__mainLoopCond.notifyAll()
+            self.__mainLoopCond.notify_all()
         except Exception as err:
             log.error("Monitoring Stop Error: %s" % str(err))
         finally:
@@ -1082,13 +1082,13 @@ class JobRegistry_Monitor(GangaThread):
 
         log.debug("\n\n_checkBackend\n\n")
 
-        currentThread = threading.currentThread()
+        current_thread = threading.current_thread()
         # timeout mechanism may have acquired the lock to impose delay.
         lock.acquire()
         self._runningNow = True
 
         try:
-            log.debug("[Update Thread %s] Lock acquired for %s" % (currentThread, getName(backendObj)))
+            log.debug("[Update Thread %s] Lock acquired for %s" % (current_thread, getName(backendObj)))
             #alljobList_fromset = IList(filter(lambda x: x.status in ['submitted', 'running'], jobListSet), self.stopIter)
             # print alljobList_fromset
             #masterJobList_fromset = IList(filter(lambda x: (x.master is not None) and (x.status in ['submitting']), jobListSet), self.stopIter)
@@ -1106,7 +1106,7 @@ class JobRegistry_Monitor(GangaThread):
             self.updateDict_ts.clearEntry(getName(backendObj))
             try:
                 log.debug("[Update Thread %s] Updating %s with %s." %
-                          (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
+                          (current_thread, getName(backendObj), [x.id for x in jobList_fromset]))
 
                 tested_backends = []
 
@@ -1176,7 +1176,7 @@ class JobRegistry_Monitor(GangaThread):
                 return
 
             # FIXME THIS METHOD DOES NOT EXIST
-            #log.debug("[Update Thread %s] Flushing registry %s." % (currentThread, [x.id for x in jobList_fromset]))
+            #log.debug("[Update Thread %s] Flushing registry %s." % (current_thread, [x.id for x in jobList_fromset]))
             # FIXME THIS RETURNS A REGISTRYSLICE OBJECT NOT A REGISTRY, IS THIS CORRECT? SHOULD WE FLUSH
             # COMMENTING OUT AS IT SIMPLY WILL NOT RUN/RESOLVE!
             # this concerns me - rcurrie
@@ -1190,7 +1190,7 @@ class JobRegistry_Monitor(GangaThread):
             log.debug("Monitoring Loop Error: %s" % str(err))
         finally:
             lock.release()
-            log.debug("[Update Thread %s] Lock released for %s." % (currentThread, getName(backendObj)))
+            log.debug("[Update Thread %s] Lock released for %s." % (current_thread, getName(backendObj)))
             self._runningNow = False
 
         log.debug("Finishing _checkBackend")
@@ -1340,7 +1340,7 @@ class JobRegistry_Monitor(GangaThread):
 
 ######## THREAD POOL DEBUGGING ###########
 def _trace(frame, event, arg):
-    setattr(threading.currentThread(), '_frame', frame)
+    setattr(threading.current_thread(), '_frame', frame)
 
 
 def getStackTrace():
