@@ -54,7 +54,7 @@ class GoogleFile(IGangaFile):
                                                   doc='reason for the upload failure'),
                       'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0,
                                                doc='wheather the output file should be compressed before sending somewhere'),
-                      'downloadURL': SimpleItem(defvalue="", copyable=1, protected=1,
+                      'downloadURL': SimpleItem(defvalue="", copyable=1, protected=0,
                                                 doc='download URL assigned to the file upon upload to GoogleDrive'),
                       'id': SimpleItem(defvalue="", copyable=1, hidden=1, protected=1,
                                        doc='GoogleFile ID assigned to file  on upload to GoogleDrive'),
