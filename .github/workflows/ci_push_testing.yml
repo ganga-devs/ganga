@@ -69,7 +69,7 @@ jobs:
 
   autofix_pr:
     name: Create autopep8 PR
-    if: startsWith(github.head_ref, 'autopep8-patches') == false && needs.lint.outputs.files_to_lint != ''
+    if: always() && !failure() && !cancelled() && startsWith(github.head_ref, 'autopep8-patches') == false && needs.lint.outputs.files_to_lint != ''
     runs-on: ubuntu-latest
     needs: lint
     steps:
