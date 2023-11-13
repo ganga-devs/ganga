@@ -90,7 +90,7 @@ class TraceDumper(threading.Thread):
         self.daemon = True
 
     def run(self):
-        while not self.stop_requested.isSet():
+        while not self.stop_requested.is_set():
             time.sleep(self.interval)
             if self.auto or not os.path.isfile(self.path):
                 self.stacktraces()
