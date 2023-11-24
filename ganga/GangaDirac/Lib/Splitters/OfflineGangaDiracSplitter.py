@@ -316,6 +316,13 @@ def lookUpLFNReplicas(inputs, ignoremissing):
     for _lfn in inputs:
         LFNdict[_lfn.lfn] = _lfn
 
+    lfnset = set(allLFNs)
+    del_list = list(allLFNs)
+    for _l in lfnset:
+        del_list.remove(_l)
+    if len(del_list)>0:
+        raise SplitterError("Duplicate LFNs found, check your inputdata! %s" % del_list)
+
     # Request the replicas for all LFN 'LFN_parallel_limit' at a time to not overload the
     # server and give some feedback as this is going on
     global LFN_parallel_limit
