@@ -79,7 +79,7 @@ jobs:
 
       - name: Run autopep8
         id: autopep8
-        uses: peter-evans/autopep8@v1
+        uses: peter-evans/autopep8@v2.0.0
         with:
           args: --exit-code --recursive --in-place --aggressive --aggressive ${{ needs.lint.outputs.files_to_lint }}
 
@@ -91,13 +91,14 @@ jobs:
           echo ::set-output name=pr-number::"$PR_NUMBER"
       - name: Create Pull Request
         if: steps.autopep8.outputs.exit-code == 2
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v5.0.2
         with:
           commit-message: autopep8 action fixes
           title: "PEP8 fixes for PR #${{ steps.vars.outputs.pr-number }} (${{ github.head_ref }}) by autopep8"
           body: This is an auto-generated PR with fixes by autopep8 for the ${{ steps.vars.outputs.branch-name }} branch.
           labels: autopep8, automated pr
           branch: ${{ steps.vars.outputs.branch-name }}
+          base: $ {{ github.base_ref }}
           token: ${{ secrets.WORKFLOW }}
 
   core-unit:
