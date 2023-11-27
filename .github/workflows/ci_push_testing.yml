@@ -87,7 +87,7 @@ jobs:
         id: vars
         run: |
           echo ::set-output name=branch-name::"autopep8-patches/${{ github.head_ref }}"
-          PR_NUMBER=`echo ${{ github.event.pull_request.head.ref_name }} | cut -f 1 -d '/'`
+          PR_NUMBER=`echo ${{ github.event.pull_request.ref_name }} | cut -f 1 -d '/'`
           echo ::set-output name=pr-number::"$PR_NUMBER"
       - name: Create Pull Request
         if: steps.autopep8.outputs.exit-code == 2
