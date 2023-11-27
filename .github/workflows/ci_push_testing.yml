@@ -98,7 +98,7 @@ jobs:
           body: This is an auto-generated PR with fixes by autopep8 for the ${{ steps.vars.outputs.branch-name }} branch.
           labels: autopep8, automated pr
           branch: ${{ steps.vars.outputs.branch-name }}
-          base: $ {{ github.base_ref }}
+          base: ${{ github.base_ref }}
           token: ${{ secrets.WORKFLOW }}
 
   core-unit:
