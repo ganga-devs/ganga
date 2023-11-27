@@ -62,7 +62,7 @@ jobs:
               fi
             fi
           done
-          echo "::set-output name=files_to_lint::$files_to_lint";
+          echo "files_to_lint=$files_to_lint" >> $GITHUB_OUTPUT
       - name: Fail on linting violations
         if: steps.flake8.outputs.files_to_lint != ''
         run: exit 1
@@ -86,9 +86,9 @@ jobs:
       - name: Set autopep8 branch name
         id: vars
         run: |
-          echo ::set-output name=branch-name::"autopep8-patches/${{ github.head_ref }}"
+          echo "branch-name=autopep8-patches/${{ github.head_ref }}" >> $GITHUB_OUTPUT
           PR_NUMBER=`echo ${{ github.event.pull_request.number }} | cut -f 1 -d '/'`
-          echo ::set-output name=pr-number::"$PR_NUMBER"
+          echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
       - name: Create Pull Request
         if: steps.autopep8.outputs.exit-code == 2
         uses: peter-evans/create-pull-request@v5.0.2
