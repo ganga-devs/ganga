@@ -87,7 +87,7 @@ jobs:
         id: vars
         run: |
           echo "branch-name=autopep8-patches/${{ github.head_ref }}" >> $GITHUB_OUTPUT
-          PR_NUMBER=`echo ${{ github.ref_name }} | cut -f 1 -d '/'`
+          PR_NUMBER=`echo ${{ github.event.pull_request.number }} | cut -f 1 -d '/'`
           echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
       - name: Create Pull Request
         if: steps.autopep8.outputs.exit-code == 2
@@ -95,7 +95,7 @@ jobs:
         with:
           commit-message: autopep8 action fixes
           title: "PEP8 fixes for PR #${{ steps.vars.outputs.pr-number }} (${{ github.head_ref }}) by autopep8"
-          body: This is an auto-generated PR with fixes by autopep8 for the ${{ steps.vars.outputs.branch-name }} branch.
+          body: This is an auto-generated PR with fixes by autopep8 for the ${{ github.head_ref }} branch.
           labels: autopep8, automated pr
           branch: ${{ steps.vars.outputs.branch-name }}
           base: ${{ github.base_ref }}
