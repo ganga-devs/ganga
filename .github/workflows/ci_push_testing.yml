@@ -94,10 +94,10 @@ jobs:
         uses: peter-evans/create-pull-request@v5.0.2
         with:
           commit-message: autopep8 action fixes
-          title: "PEP8 fixes for PR #${{ steps.vars.outputs.pr-number }} (${{ github.head_ref }}) by autopep8"
+          title: "PEP8 fixes for PR #${{ github.event.pull_request.number }} (${{ github.head_ref }}) by autopep8"
           body: This is an auto-generated PR with fixes by autopep8 for the ${{ github.head_ref }} branch.
           labels: autopep8, automated pr
-          branch: ${{ steps.vars.outputs.branch-name }}
+          branch: "autopep8-patches/${{ github.head_ref }}"
           base: ${{ github.base_ref }}
           token: ${{ secrets.WORKFLOW }}
 
