@@ -18,15 +18,15 @@ class GangaThread(Thread):
 
     __slots__ = ('__should_stop_flag', '__critical', '_lock', 'gangaName')
 
-    def __init__(self, name, auto_register=True, critical=True, **kwds):
+    def __init__(self, name,auto_register=True, critical=True, **kwds):
 
-        self.gangaName = str(name)  # want to copy actual not by ref!
+        self.gangaName=str(name)  # want to copy actual not by ref!
         name = 'GANGA_Update_Thread_%s' % name
 
         Thread.__init__(self, args=list(), name=name, **kwds)
         self.setDaemon(True)
-        self.__should_stop_flag = False
-        self.__critical = critical
+        self.__should_stop_flag      = False
+        self.__critical=critical
 
         if auto_register:
             tpool = GangaThreadPool.getInstance()
