@@ -2,6 +2,7 @@ import functools
 import logging
 import os
 from queue import Empty
+import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Process
@@ -39,17 +40,29 @@ class DiracProcess(Process):
                 dirac_location = self.env['DIRACOS']
                 sys.base_exec_prefix = dirac_location
                 sys.base_prefix = dirac_location
-                paths = [f'{dirac_location}/lib/python39.zip',
-                         f'{dirac_location}/lib/python3.9',
-                         f'{dirac_location}/lib/python3.9/lib-dynload',
-                         f'{dirac_location}/lib/python3.9/site-packages']
+                paths = self.get_dirac_cvmfs_path()
                 for path in paths:
                     if path not in sys.path:
                         sys.path.insert(1, path)
 
     def initialize_dirac_api(self):
-        from DIRAC.Core.Base.Script import parseCommandLine  # type: ignore
-        parseCommandLine(ignoreErrors=False)
+        try:
+            from DIRAC.Core.Base.Script import parseCommandLine  # type: ignore
+            parseCommandLine(ignoreErrors=False)
+        except Exception:
+            self.logger.exception(traceback.format_exc())
+
+    def get_dirac_cvmfs_path(self):
+        diracos = self.env['DIRACOS']
+        python_version_regex = re.compile('python[2-3].[0-9]+$')
+        for name in os.listdir(f"{diracos}/lib"):
+            if python_version_regex.match(name) and name != 'python3.1':
+                python_version = name
+        paths = [f'{diracos}/lib/{python_version.replace(".", "")}.zip',
+                f'{diracos}/lib/{python_version}',
+                f'{diracos}/lib/{python_version}/lib-dynload',
+                f'{diracos}/lib/{python_version}/site-packages']
+        return paths
 
     def handle_termination(self):
         try:
