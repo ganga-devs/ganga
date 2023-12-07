@@ -77,7 +77,7 @@ pythonPackages.append('ganga/GangaGUI')
 
 install_requires=[
     'ipython>=5.0.0',
-    'jedi==0.17.2',
+    'jedi>=0.17.2',
     'httplib2>=0.8',
     'absl-py>=0.1.2',
     'google-api-python-client',
@@ -121,6 +121,7 @@ setup(name='ganga',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
           'Programming Language :: Python :: 3.10',
+          'Programming Language :: Python :: 3.11'
       ],
       include_package_data=True,
       package_data={'GangaCore': ['Runtime/HEAD_CONFIG.INI'], 'GangaRelease':['ReleaseNotes-*', 'tools/check-new-ganga.py', 'tools/ganga-cvmfs-install.sh', 'tools/ganga-cvmfs-install-dev.sh'], 'GangaGUI':['gui/templates/*.html', 'gui/static/css/main.css', 'gui/static/js/*.js']},
