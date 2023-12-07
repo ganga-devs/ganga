@@ -4,7 +4,6 @@ import datetime
 import os
 import re
 import subprocess
-import sys
 from getpass import getpass
 from glob import glob
 
