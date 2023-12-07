@@ -28,7 +28,7 @@ class AfsTokenInfo(ICredentialInfo):
     should_warn = False
 
     info_pattern = re.compile(
-        r"^User's \(AFS ID \d*\) tokens for (?P<id>\w*@\S*) \[Expires (?P<expires>.*)\]$", re.MULTILINE)
+        r"^User's \(AFS ID \d*\) (rxkad )?tokens for ((?P<id>\w*@)?\S*) \[Expires (?P<expires>.*)\]$", re.MULTILINE)
 
     __slots__ = ('shell', 'cache', 'initial_requirements')
 
@@ -129,6 +129,21 @@ class AfsTokenInfo(ICredentialInfo):
                 soonest = expires
 
         return soonest
+
+    def exists(self):
+         # type: () -> bool
+        """
+        Does the credential exist
+        """
+        info = self.info
+        matches = re.finditer(AfsTokenInfo.info_pattern, info)
+        if not matches:
+            return False
+        all_tokens = [_m for _m in matches]
+        if len(all_tokens) > 0:
+            return True
+        else:
+            return False
 
     def default_location(self):
         """
