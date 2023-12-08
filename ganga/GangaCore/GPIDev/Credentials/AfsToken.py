@@ -4,7 +4,6 @@ import datetime
 import os
 import re
 import subprocess
-import sys
 from getpass import getpass
 from glob import glob
 
@@ -131,7 +130,7 @@ class AfsTokenInfo(ICredentialInfo):
         return soonest
 
     def exists(self):
-         # type: () -> bool
+        # type: () -> bool
         """
         Does the credential exist
         """
