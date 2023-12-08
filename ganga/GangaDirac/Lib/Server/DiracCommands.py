@@ -10,7 +10,12 @@ def getJobGroupJobs(jg):
 @diracCommand
 def kill(id):
     ''' Kill a given DIRAC Job ID within DIRAC '''
-    return dirac.killJob(id)
+    stat_results = dirac.getJobStatus(id)
+    stat = stat_results['Value'][id].get('Status', None)
+    if stat == 'Waiting':
+        return dirac.deleteJob(id)
+    else:
+        return dirac.killJob(id)
 
 
 @diracCommand

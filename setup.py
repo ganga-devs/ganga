@@ -78,7 +78,7 @@ pythonPackages.append('ganga/GangaGUI')
 
 install_requires = [
     'ipython>=5.0.0',
-    'jedi==0.17.2',
+    'jedi>=0.17.2',
     'httplib2>=0.8',
     'aiofile==3.7.4',
     'aiohttp==3.8.4',
@@ -126,6 +126,7 @@ setup(name='ganga',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
           'Programming Language :: Python :: 3.10',
+          'Programming Language :: Python :: 3.11'
       ],
       include_package_data=True,
       package_data={

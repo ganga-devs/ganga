@@ -35,7 +35,9 @@ jobs:
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@v24
+        uses: tj-actions/changed-files@v40.2.0
+        with:
+          base_sha: ${{ github.event.pull_request.head.sha }}
 
       - name: Install dependencies
         run: |
@@ -60,14 +62,14 @@ jobs:
               fi
             fi
           done
-          echo "::set-output name=files_to_lint::$files_to_lint";
+          echo "files_to_lint=$files_to_lint" >> $GITHUB_OUTPUT
       - name: Fail on linting violations
         if: steps.flake8.outputs.files_to_lint != ''
         run: exit 1
 
   autofix_pr:
     name: Create autopep8 PR
-    if: startsWith(github.head_ref, 'autopep8-patches') == false && needs.lint.outputs.files_to_lint != ''
+    if: always() && !failure() && !cancelled() && startsWith(github.head_ref, 'autopep8-patches') == false && needs.lint.outputs.files_to_lint != ''
     runs-on: ubuntu-latest
     needs: lint
     steps:
@@ -77,25 +79,26 @@ jobs:
 
       - name: Run autopep8
         id: autopep8
-        uses: peter-evans/autopep8@v1
+        uses: peter-evans/autopep8@v2.0.0
         with:
           args: --exit-code --recursive --in-place --aggressive --aggressive ${{ needs.lint.outputs.files_to_lint }}
 
       - name: Set autopep8 branch name
         id: vars
         run: |
-          echo ::set-output name=branch-name::"autopep8-patches/${{ github.head_ref }}"
-          PR_NUMBER=`echo ${{ github.ref_name }} | cut -f 1 -d '/'`
-          echo ::set-output name=pr-number::"$PR_NUMBER"
+          echo "branch-name=autopep8-patches/${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          PR_NUMBER=`echo ${{ github.event.pull_request.number }} | cut -f 1 -d '/'`
+          echo "pr-number=$PR_NUMBER" >> $GITHUB_OUTPUT
       - name: Create Pull Request
         if: steps.autopep8.outputs.exit-code == 2
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v5.0.2
         with:
           commit-message: autopep8 action fixes
-          title: "PEP8 fixes for PR #${{ steps.vars.outputs.pr-number }} (${{ github.head_ref }}) by autopep8"
-          body: This is an auto-generated PR with fixes by autopep8 for the ${{ steps.vars.outputs.branch-name }} branch.
+          title: "PEP8 fixes for PR #${{ github.event.pull_request.number }} (${{ github.head_ref }}) by autopep8"
+          body: This is an auto-generated PR with fixes by autopep8 for the ${{ github.head_ref }} branch.
           labels: autopep8, automated pr
-          branch: ${{ steps.vars.outputs.branch-name }}
+          branch: "autopep8-patches/${{ github.head_ref }}"
+          base: ${{ github.base_ref }}
           token: ${{ secrets.WORKFLOW }}
 
   core-unit:
