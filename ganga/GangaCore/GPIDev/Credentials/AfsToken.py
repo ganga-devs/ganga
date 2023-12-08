@@ -27,7 +27,7 @@ class AfsTokenInfo(ICredentialInfo):
     should_warn = False
 
     info_pattern = re.compile(
-        r"^User's \(AFS ID \d*\) tokens for (?P<id>\w*@\S*) \[Expires (?P<expires>.*)\]$", re.MULTILINE)
+        r"^User's \(AFS ID \d*\) (rxkad )?tokens for ((?P<id>\w*@)?\S*) \[Expires (?P<expires>.*)\]$", re.MULTILINE)
 
     __slots__ = ('shell', 'cache', 'initial_requirements')
 
