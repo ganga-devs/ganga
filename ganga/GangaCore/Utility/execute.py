@@ -35,7 +35,7 @@ def env_update_script(indent=''):
 import os
 import pickle as pickle
 with os.fdopen(###FD_WRITE###,'wb') as envpipe:
-    pickle.dump(dict(os.environ), envpipe, 2)
+    pickle.dump(os.environ, envpipe, 2)
 '''
     from GangaCore.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
@@ -152,37 +152,47 @@ def execute(command,
         python_setup (str): A python command to be executed beore the main command is
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
     """
+    print('gexecute')
 
     if update_env and env is None:
         raise GangaException('Cannot update the environment if None given.')
 
     if not shell:
+        print('not shell')
         # We want to run a python command inside a small Python wrapper
         stream_command = 'python -'
         command, pkl_file_pipes, env_file_pipes = python_wrapper(command, python_setup, update_env)
     else:
+        print('else')
         # We want to run a shell command inside a _NEW_ shell environment.
         # i.e. What I run here I expect to behave in the same way from the command line after I exit Ganga
         stream_command = "bash "
         if update_env:
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
+            print('about to script')
             command_update, env_file_pipes = env_update_script()
+            print('scripted, ',command_update)
+            print('command: ', command)
             command += ''';python -c "import base64;exec(base64.b64decode(%s))"''' % base64.b64encode(
-                command_update.encode("utf-8"))
+                command_update)
+#            command = '''%s;python -c "import base64;exec("""%s""")"''' %  (command, command_update)
 
+            print('command plus')
+    print('pre minor changes')
     # Some minor changes to cleanup the getting of the env
     if env is None:
         env = os.environ
 
     # Construct the object which will contain the environment we want to run the command in
+    print('about to subprocess')
     p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          universal_newlines=True, close_fds=False)
 
     # This is where we store the output
     thread_output = {}
-
+    print('updateing')
     if update_env:
         env_output_key = 'env_output'
         update_env_thread = update_thread(env_file_pipes, thread_output, env_output_key, require_output=True)
@@ -191,9 +201,10 @@ def execute(command,
         update_pkl_thread = update_thread(pkl_file_pipes, thread_output, pkl_output_key, require_output=False)
 
     # Execute the main command of interest
-    logger.debug("Executing Command:\n'%s'" % str(command))
+    logger.info("Executing Command:\n'%s'" % str(command))
 
     try:
+        print('trying to comminicate')
         stdout, stderr = p.communicate(command, timeout=timeout)
     except subprocess.TimeoutExpired:
         p.terminate()

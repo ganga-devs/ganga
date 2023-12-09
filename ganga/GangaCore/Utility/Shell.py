@@ -116,13 +116,13 @@ class Shell(object):
         """
 
         if setup is not None:
-            self.env = dict(os.environ)
+            self.env = os.environ
             execute('source {0} {1}'.format(setup, " ".join(setup_args)), shell=True, env=self.env, update_env=True)
 
         else:
             # bug #44334: Ganga/Utility/Shell.py does not save environ
-            env = dict(os.environ)
-            self.env = expand_vars(env)
+            self.env = os.environ
+#            self.env = expand_vars(env)
 
         self.dirname = None
 
