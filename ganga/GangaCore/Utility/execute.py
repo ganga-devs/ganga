@@ -168,6 +168,8 @@ def execute(command,
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
             command_update, env_file_pipes = env_update_script()
+            print('scripted, ', command_update)
+            print('command: ', command)
             command += ''';python -c "import base64;exec(base64.b64decode(%s))"''' % base64.b64encode(
                 command_update.encode("utf-8"))
 
