@@ -182,6 +182,7 @@ def execute(command,
 
     # This is where we store the output
     thread_output = {}
+
     if update_env:
         env_output_key = 'env_output'
         update_env_thread = update_thread(env_file_pipes, thread_output, env_output_key, require_output=True)

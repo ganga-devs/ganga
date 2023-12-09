@@ -89,7 +89,6 @@ def get_env(env_source):
         dict: the environment
 
     """
-
     logger.debug('Running DIRAC source command %s', env_source)
     env = os.environ
     gexecute.execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
@@ -220,6 +219,7 @@ def execute(command,
         cred_req (ICredentialRequirement): What credentials does this call need
         new_subprocess(bool): Do we want to do this in a fresh subprocess or just connect to the DIRAC server process?
     """
+
     if cwd is None:
         # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
         # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed
@@ -279,6 +279,7 @@ def execute(command,
             env['X509_USER_PROXY'] = credential_store[cred_req].location
             if os.getenv('KRB5CCNAME'):
                 env['KRB5CCNAME'] = os.getenv('KRB5CCNAME')
+
         returnable = gexecute.execute(command,
                                       timeout=timeout,
                                       env=env,
