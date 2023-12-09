@@ -120,9 +120,7 @@ class Shell(object):
             execute('source {0} {1}'.format(setup, " ".join(setup_args)), shell=True, env=self.env, update_env=True)
 
         else:
-            # bug #44334: Ganga/Utility/Shell.py does not save environ
             self.env = os.environ
-#            self.env = expand_vars(env)
 
         self.dirname = None
 

@@ -90,13 +90,11 @@ def get_env(env_source):
 
     """
 
-    logger.info('Running DIRAC source command %s', env_source)
+    logger.debug('Running DIRAC source command %s', env_source)
     env = os.environ
     gexecute.execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
-    print('hello')
     if not any(key.startswith('DIRAC') for key in env):
         fake_dict = {}
-        print('err')
         with open(env_source) as _env:
             for _line in _env.readlines():
                 split_val = _line.split('=')
@@ -139,11 +137,9 @@ def read_env_cache(cache_filename):
         dict: the cached environment
 
     """
-    logger.info('Reading DIRAC cache file at %s', cache_filename)
+    logger.debug('Reading DIRAC cache file at %s', cache_filename)
     with open(cache_filename, 'r') as cache_file:
         env = json.load(cache_file)
-    # Convert unicode strings to byte strings
-#    env = dict((k.encode('utf-8'), v.encode('utf-8')) for k, v in env.items())
     return env
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -224,7 +220,6 @@ def execute(command,
         cred_req (ICredentialRequirement): What credentials does this call need
         new_subprocess(bool): Do we want to do this in a fresh subprocess or just connect to the DIRAC server process?
     """
-    print('execute')
     if cwd is None:
         # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
         # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed
@@ -236,7 +231,6 @@ def execute(command,
     from GangaDirac.BOOT import startDiracProcess
     returnable = ''
     if not new_subprocess:
-        print('aa')
         with Dirac_Exec_Lock:
             # First check if a Dirac process is running
             from GangaDirac.BOOT import running_dirac_process
@@ -274,13 +268,10 @@ def execute(command,
             returnable = eval(out)
 
     else:
-        print('bb')
         if env is None:
             if cred_req is None:
-                print('cc')
                 env = getDiracEnv()
             else:
-                print('dd')
                 env = getDiracEnv(cred_req.dirac_env)
         python_setup = getDiracCommandIncludes()
 
@@ -288,7 +279,6 @@ def execute(command,
             env['X509_USER_PROXY'] = credential_store[cred_req].location
             if os.getenv('KRB5CCNAME'):
                 env['KRB5CCNAME'] = os.getenv('KRB5CCNAME')
-        print('about to gexecute')
         returnable = gexecute.execute(command,
                                       timeout=timeout,
                                       env=env,

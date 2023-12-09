@@ -47,7 +47,7 @@ class DiracProxyInfo(VomsProxyInfo):
             CredentialRenewalError: If the renewal process returns a non-zero value
         """
         group_command = ''
-        logger.info('require ' + self.initial_requirements.group)
+        logger.debug('require ' + self.initial_requirements.group)
         if self.initial_requirements.group:
             group_command = '--group %s --VOMS' % self.initial_requirements.group
         validTime_command = ''
@@ -61,10 +61,9 @@ class DiracProxyInfo(VomsProxyInfo):
                     'Supplied time for validation not of correct format "HH:MM". Failed to create DIRAC proxy')
         command = getConfig('DIRAC')['proxyInitCmd'] + \
             ' --strict --out "%s" %s %s' % (self.location, group_command, validTime_command)
-        logger.info(command)
+        logger.debug(command)
         self.shell.env['X509_USER_PROXY'] = self.location
         try:
-            print('about to check call')
             self.shell.check_call(command)
         except subprocess.CalledProcessError:
             raise CredentialRenewalError('Failed to create DIRAC proxy')
