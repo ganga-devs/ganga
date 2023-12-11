@@ -155,6 +155,7 @@ def execute(command,
 
     if update_env and env is None:
         raise GangaException('Cannot update the environment if None given.')
+
     if not shell:
         # We want to run a python command inside a small Python wrapper
         stream_command = 'python -'
@@ -167,17 +168,18 @@ def execute(command,
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
             command_update, env_file_pipes = env_update_script()
-            command_bytes = command_update.encode("utf-8")
             command += ''';python -c "import base64;exec(base64.b64decode(%s))"''' % base64.b64encode(
-                command_bytes)
+                command_update.encode("utf-8"))
 
     # Some minor changes to cleanup the getting of the env
     if env is None:
         env = os.environ
+
     # Construct the object which will contain the environment we want to run the command in
     p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          universal_newlines=True, close_fds=False)
+
     # This is where we store the output
     thread_output = {}
 
