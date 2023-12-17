@@ -127,10 +127,10 @@ class GaudiExec(IPrepareApp):
 
         ./run python OptsFileWrapper.py
 
-    Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options
-    in the global namespace
-    The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before
-    executing this one.
+    Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes
+    options in the global namespace
+    The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files
+    before executing this one.
 
     If you want an argument after the run command then use the 'run_args' option. It takes a list of the arguments to use.
     For example
@@ -149,8 +149,10 @@ class GaudiExec(IPrepareApp):
 
     j.application.getMetadata = True
 
-    This will add some options to running the job to create a summary.xml file which is downloaded in the output sandbox and parsed by ganga.
-    Ganga will also merge the summary.xml files using the Gaudi XML merging script for each subjob to create the metadata for the whole job.
+    This will add some options to running the job to create a summary.xml file which is downloaded in the output
+    sandbox and parsed by ganga.
+    Ganga will also merge the summary.xml files using the Gaudi XML merging script for each subjob to create the
+    metadata for the whole job.
 
     ========================
     Use subjob id in options
@@ -173,11 +175,13 @@ class GaudiExec(IPrepareApp):
         'options': GangaFileItem(defvalue=[], sequence=1,
                                  doc='List of files which contain the options I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1,
-                                       doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
+                                       doc='This stores the pre-uploaded input for the job so that it gets to the WN'),
         'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0,
-                                          doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
+                                          doc='This file stores the uploaded scripts which are generated from this'\
+                                              'app to run on the WN'),
         'useGaudiRun': SimpleItem(defvalue=True,
-                                  doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
+                                  doc='Should \'options\' be run as "python options.py data.py"\
+                                      'rather than "gaudirun.py options.py data.py"'),
         'platform': SimpleItem(defvalue=configLHCb['defaultPlatform'], typelist=[str],
                                doc='Platform the application was built for'),
         'autoDBtags': SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
@@ -189,15 +193,19 @@ class GaudiExec(IPrepareApp):
                                doc='A list of arguments to pass to the lb-run script at run time. i.e. --quiet'),
         'getMetadata': SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
         'nMakeCores': SimpleItem(defvalue=1,
-                                 doc='Number of cores to be provided via the "-j" option to the "make" command when building the ganga-input-sandbox'),
+                                 doc='Number of cores to be provided via the "-j" option to the "make" command'\
+                                     'when building the ganga-input-sandbox'),
 
         # Prepared job object
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
-                                  doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0,
+                                  typelist=[None, ShareDir], protected=0, comparable=1,
+                                  doc='Location of shared resources. Presence of this attribute implies the'\
+                                      ' application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=1,
                            doc='MD5 hash of the string representation of applications preparable attributes'),
         'envVars': SimpleItem(defvalue=None, typelist=[None, dict], hidden=1,
-                              doc='A dict to store the environment variable "XMLSUMMARYBASEROOT" for use when merging the XML summary'),
+                              doc='A dict to store the environment variable "XMLSUMMARYBASEROOT"'\
+                                  ' for use when merging the XML summary'),
     })
     _category = 'applications'
     _name = 'GaudiExec'
