@@ -180,7 +180,7 @@ class GaudiExec(IPrepareApp):
                                           doc='This file stores the uploaded scripts which are generated from this'\
                                               'app to run on the WN'),
         'useGaudiRun': SimpleItem(defvalue=True,
-                                  doc='Should \'options\' be run as "python options.py data.py"\
+                                  doc='Should \'options\' be run as "python options.py data.py"'\
                                       'rather than "gaudirun.py options.py data.py"'),
         'platform': SimpleItem(defvalue=configLHCb['defaultPlatform'], typelist=[str],
                                doc='Platform the application was built for'),
