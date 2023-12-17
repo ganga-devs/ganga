@@ -1,9 +1,8 @@
-from os import rename, path, makedirs, chdir, unlink, listdir, chmod
+from os import rename, path, unlink, listdir, chmod
 from os import stat as os_stat
 import random
 import tempfile
 import time
-import subprocess
 import shutil
 import tarfile
 import threading
@@ -25,7 +24,6 @@ from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.files import expandfilename, fullpath
 from GangaCore.Utility.Config import getConfig
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.Backends.DiracBase import DiracBase
 
 from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampContent, gaudiPythonWrapper
 
@@ -69,7 +67,8 @@ class GaudiExec(IPrepareApp):
     j=Job(application=prepareGaudiExec('DaVinci','v41r3'));
 
     This creates a new application env within 'cmtuser' (this is configurable) and returns a GaudiExec object for Ganga to use.
-    This is equivalent to running over a released application when you don't want to check out any private code or make any code changes.
+    This is equivalent to running over a released application when you don't want to check out any private code
+    or make any code changes.
 
     =============
     Requirements:
@@ -87,13 +86,15 @@ class GaudiExec(IPrepareApp):
         make ganga-input-sandbox
     NB:
     The output from this command can be quite large and Ganga will save it to disk and store it at least once per (master) job
-    If your build target is large I would advise that you consider placing your gangadir in your AFS workspace where there is more storage available
+    If your build target is large I would advise that you consider placing your gangadir in your AFS workspace
+    where there is more storage available
 
     ======
     Usage:
     ======
 
-    This application needs to be configured with the absolute directory of the project and the options you want to pass to gaudirun.py
+    This application needs to be configured with the absolute directory of the project and the options
+    you want to pass to gaudirun.py
 
     e.g.
 
@@ -126,10 +127,13 @@ class GaudiExec(IPrepareApp):
 
         ./run python OptsFileWrapper.py
 
-    Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace
-    The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before executing this one.
+    Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options
+    in the global namespace
+    The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before
+    executing this one.
 
-    If you want an argument after the run command then use the 'run_args' option. It takes a list of the arguments to use. For example
+    If you want an argument after the run command then use the 'run_args' option. It takes a list of the arguments to use.
+    For example
 
         j.application.run_args = ['--quiet']
 
@@ -145,41 +149,55 @@ class GaudiExec(IPrepareApp):
 
     j.application.getMetadata = True
 
-    This will add some options to running the job to create a summary.xml file which is downloaded in the output sandbox and parsed by ganga. Ganga will also
-    merge the summary.xml files using the Gaudi XML merging script for each subjob to create the metadata for the whole job.
+    This will add some options to running the job to create a summary.xml file which is downloaded in the output sandbox and parsed by ganga.
+    Ganga will also merge the summary.xml files using the Gaudi XML merging script for each subjob to create the metadata for the whole job.
 
     ========================
     Use subjob id in options
     ========================
 
-    The GaudiExec application sets an environment variable 'ganga_jobid' when it runs. This is the id of the job. This can then be used in your job options:
+    The GaudiExec application sets an environment variable 'ganga_jobid' when it runs. This is the id of the job.
+    This can then be used in your job options:
 
     import os
     jobid = os.getenv('ganga_jobid')
 
-    For example the outputfile of each subjob can be labelled with the subjob number, useful in case you want to further process your outputfiles on the grid.
+    For example the outputfile of each subjob can be labelled with the subjob number, useful in case you want to further
+    process your outputfiles on the grid.
 
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
-        'directory': SimpleItem(defvalue='', typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
-        'options': GangaFileItem(defvalue=[], sequence=1, doc='List of files which contain the options I want to pass to gaudirun.py'),
-        'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
-        'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
-        'useGaudiRun': SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
-        'platform': SimpleItem(defvalue=configLHCb['defaultPlatform'], typelist=[str], doc='Platform the application was built for'),
+        'directory': SimpleItem(defvalue='', typelist=[None, str], comparable=1,
+                                doc='A path to the project that you\'re wanting to run.'),
+        'options': GangaFileItem(defvalue=[], sequence=1,
+                                 doc='List of files which contain the options I want to pass to gaudirun.py'),
+        'uploadedInput': GangaFileItem(defvalue=None, hidden=1,
+                                       doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
+        'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0,
+                                          doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
+        'useGaudiRun': SimpleItem(defvalue=True,
+                                  doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
+        'platform': SimpleItem(defvalue=configLHCb['defaultPlatform'], typelist=[str],
+                               doc='Platform the application was built for'),
         'autoDBtags': SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
-        'extraOpts': SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
-        'extraArgs': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
-        'run_args': SimpleItem(defvalue=[], typelist=[list], doc='A list of arguments to pass to the lb-run script at run time. i.e. --quiet'),
+        'extraOpts': SimpleItem(defvalue='', typelist=[str],
+                                doc='An additional string which is to be added to \'options\' when submitting the job'),
+        'extraArgs': SimpleItem(defvalue=[], typelist=[str], sequence=1,
+                                doc='Extra runtime arguments which are passed to the code running on the WN'),
+        'run_args': SimpleItem(defvalue=[], typelist=[list],
+                               doc='A list of arguments to pass to the lb-run script at run time. i.e. --quiet'),
         'getMetadata': SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
-        'nMakeCores': SimpleItem(defvalue=1, doc='Number of cores to be provided via the "-j" option to the "make" command when building the ganga-input-sandbox'),
+        'nMakeCores': SimpleItem(defvalue=1,
+                                 doc='Number of cores to be provided via the "-j" option to the "make" command when building the ganga-input-sandbox'),
 
         # Prepared job object
         'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
                                   doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
-        'envVars': SimpleItem(defvalue=None, typelist=[None, dict], hidden=1, doc='A dict to store the environment variable "XMLSUMMARYBASEROOT" for use when merging the XML summary'),
+        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=1,
+                           doc='MD5 hash of the string representation of applications preparable attributes'),
+        'envVars': SimpleItem(defvalue=None, typelist=[None, dict], hidden=1,
+                              doc='A dict to store the environment variable "XMLSUMMARYBASEROOT" for use when merging the XML summary'),
     })
     _category = 'applications'
     _name = 'GaudiExec'
@@ -250,8 +268,6 @@ class GaudiExec(IPrepareApp):
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
         try:
-            # copy any 'preparable' objects into the shared directory
-            send_to_sharedir = self.copyPreparables()
             # add the newly created shared directory into the metadata system
             # if the app is associated with a persisted object
             self.checkPreparedHasParent(self)
