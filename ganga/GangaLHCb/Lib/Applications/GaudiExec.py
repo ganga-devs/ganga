@@ -81,7 +81,7 @@ class GaudiExec(IPrepareApp):
     cd $SOMEPATH
     lb-dev DaVinci v40r2
     cd $SOMEPATH/DaVinciDev_v40r2
-    getpack 
+    getpack
 
     This program will perform the following command to `prepare` the application before submission:
         make ganga-input-sandbox
@@ -108,7 +108,7 @@ class GaudiExec(IPrepareApp):
 
     prepare_cmake_app(myApp, myVer, myPath, myGetpack)
 
-    The argument 'nMakeCores' allows to set the number of cores allowed for make-ing the ganga-input-sandbox (default = 1). 
+    The argument 'nMakeCores' allows to set the number of cores allowed for make-ing the ganga-input-sandbox (default = 1).
 
     =============
     How it works:
@@ -126,7 +126,7 @@ class GaudiExec(IPrepareApp):
 
         ./run python OptsFileWrapper.py
 
-    Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace 
+    Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace
     The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before executing this one.
 
     If you want an argument after the run command then use the 'run_args' option. It takes a list of the arguments to use. For example
@@ -282,7 +282,8 @@ class GaudiExec(IPrepareApp):
                     opts_file = new_file
                 else:
                     raise ApplicationConfigurationError(
-                        "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
+                        "Opts file type %s not yet supported please contact Ganga devs if you require this support" %
+                        getName(opts_file))
             self.post_prepare()
 
         except Exception as err:
@@ -404,20 +405,23 @@ class GaudiExec(IPrepareApp):
                     loc = path.join(share_path, path.basename(this_opt))
                     if not path.exists(loc):
                         raise ApplicationConfigurationError(
-                            "Application previously configure but option file %s not found in the sharedir. Unprepare and resubmit." % path.basename(this_opt))
+                            "Application previously configure but option file %s not found in the sharedir. Unprepare and resubmit." %
+                            path.basename(this_opt))
                     new_opts.append(LocalFile(loc))
                 elif isinstance(this_opt, LocalFile):
                     loc = path.join(share_path, this_opt.namePattern)
                     if not path.exists(loc):
                         raise ApplicationConfigurationError(
-                            "Application previously configure but option file %s not found in the sharedir. Unprepare and resubmit." % this_opt.namePattern)
+                            "Application previously configure but option file %s not found in the sharedir. Unprepare and resubmit." %
+                            this_opt.namePattern)
                     new_opts.append(LocalFile(loc))
                 elif isinstance(this_opt, DiracFile):
                     new_opts.append(this_opt)
                 else:
                     logger.error("opts: %s" % self.options)
                     raise ApplicationConfigurationError(
-                        "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+                        "Opts file type %s not yet supported please contact Ganga devs if you require this support" %
+                        getName(this_opt))
             if new_opts or self.extraOpts:
                 return new_opts
             else:
@@ -433,7 +437,8 @@ class GaudiExec(IPrepareApp):
                     new_opt = LocalFile(this_opt)
                     this_opt = new_opt
                 if isinstance(this_opt, LocalFile):
-                    # FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
+                    # FIXME LocalFile should return the basename and folder in 2 attibutes so
+                    # we can piece it together, now it doesn't
                     full_path = path.join(this_opt.localDir, this_opt.namePattern)
                     if not path.exists(full_path):
                         raise ApplicationConfigurationError(
@@ -443,7 +448,8 @@ class GaudiExec(IPrepareApp):
                 else:
                     logger.error("opts: %s" % self.options)
                     raise ApplicationConfigurationError(
-                        "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+                        "Opts file type %s not yet supported please contact Ganga devs if you require this support" %
+                        getName(this_opt))
 
             if self.options or self.extraOpts:
                 return self.options
@@ -456,18 +462,22 @@ class GaudiExec(IPrepareApp):
         Return the script which wraps the running command in a correct environment
         """
         if isLbEnv:
-            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && export BINARY_TAG={PLATFORM} && export CMTCONFIG={PLATFORM} && '.format(
+                PLATFORM=self.platform)
         else:
-            return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+            return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (
+                self.platform, self.platform)
 
     def getWNEnvScript(self, isLbEnv):
         """
         Return the script to setup the correct env on a WN
         """
         if isLbEnv:
-            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && export BINARY_TAG={PLATFORM} && export CMTCONFIG={PLATFORM} && '.format(
+                PLATFORM=self.platform)
         else:
-            return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+            return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (
+                self.platform, self.platform)
 
     def execCmd(self, cmd):
         """
@@ -507,7 +517,8 @@ class GaudiExec(IPrepareApp):
         logger.debug("Running: %s" % cmd_file.name)
 
         # I would have preferred to execute all commands against inside `./run` so we have some sane behaviour
-        # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
+        # but this requires a build to have been run before we can use this
+        # command reliably... so we're just going to be explicit
 
         if not path.isfile(path.join(self.directory, 'build.%s' % self.platform, 'run')):
             initialCommand = 'export CMTCONFIG=%s && source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && make -j%s' % (
@@ -636,7 +647,8 @@ class GaudiExec(IPrepareApp):
         """
         Return the wrapper script which is used to run GaudiPython type jobs on the WN
         """
-        # FIXME should there be a more central definition of 'data.py' string to rename this for all of LHCb if it ever changes for LHCbDirac
+        # FIXME should there be a more central definition of 'data.py' string to
+        # rename this for all of LHCb if it ever changes for LHCbDirac
         from ..RTHandlers.GaudiExecRTHandlers import GaudiExecDiracRTHandler
 
         all_names = [this_o.namePattern for this_o in self.options]
