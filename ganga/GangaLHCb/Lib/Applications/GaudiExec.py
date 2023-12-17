@@ -456,7 +456,7 @@ class GaudiExec(IPrepareApp):
         Return the script which wraps the running command in a correct environment
         """
         if isLbEnv:
-            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && export BINARY_TAG={PLATFORM} && export CMTCONFIG={PLATFORM} && '.format(PLATFORM = self.platform)
         else:
             return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
@@ -465,7 +465,7 @@ class GaudiExec(IPrepareApp):
         Return the script to setup the correct env on a WN
         """
         if isLbEnv:
-            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && ' % (self.platform)
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && export BINARY_TAG={PLATFORM} && export CMTCONFIG={PLATFORM} && '.format(PLATFORM = self.platform)
         else:
             return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
@@ -513,8 +513,8 @@ class GaudiExec(IPrepareApp):
             initialCommand = 'export CMTCONFIG=%s && source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && make -j%s' % (
                 self.platform, self.platform, self.nMakeCores)
             if isLbEnv:
-                initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh -c %s && make -j%s' % (
-                    self.platform, self.nMakeCores)
+                initialCommand = 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && export BINARY_TAG=%s && export CMTCONFIG=%s && make -j%s' % (
+                    self.platform, self.platform, self.nMakeCores)
             rc, stdout, stderr = _exec_cmd(initialCommand, self.directory)
             if rc != 0:
                 logger.error("Failed to perform initial make on a Cmake based project")
