@@ -433,14 +433,14 @@ class GaudiExec(IPrepareApp):
                     loc = path.join(share_path, path.basename(this_opt))
                     if not path.exists(loc):
                         raise ApplicationConfigurationError(
-                            "Application previously configure but option file %s not found in the sharedir."\
+                            "Application previously configure but option file %s not found in the sharedir."
                             " Unprepare and resubmit." % path.basename(this_opt))
                     new_opts.append(LocalFile(loc))
                 elif isinstance(this_opt, LocalFile):
                     loc = path.join(share_path, this_opt.namePattern)
                     if not path.exists(loc):
                         raise ApplicationConfigurationError(
-                            "Application previously configured but option file %s not found in the sharedir."\
+                            "Application previously configured but option file %s not found in the sharedir."
                             " Unprepare and resubmit." % this_opt.namePattern)
                     new_opts.append(LocalFile(loc))
                 elif isinstance(this_opt, DiracFile):
