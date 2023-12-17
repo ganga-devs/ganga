@@ -286,12 +286,14 @@ class GaudiExec(IPrepareApp):
                 if isinstance(opts_file, LocalFile):
                     if opts_file.namePattern == 'data.py':
                         raise ApplicationConfigurationError(
-                            "Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
+                            "Options file should not be named data.py to avoid conflict with generated inputdata file."\
+                            " Please rename your options and submit again.")
                     self.copyIntoPrepDir(path.join(opts_file.localDir, path.basename(opts_file.namePattern)))
                 elif isinstance(opts_file, DiracFile):
                     if opts_file.namePattern == 'data.py':
                         raise ApplicationConfigurationError(
-                            "Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
+                            "Options file should not be named data.py to avoid conflict with generated inputdata file."\
+                            " Please rename your options and submit again.")
                     # NB safe to put it here as should have expressly setup a path for this job by now.
                     # We cannot _not_ place this here based upon the backend.
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
@@ -300,7 +302,8 @@ class GaudiExec(IPrepareApp):
                 elif isinstance(opts_file, str):
                     if 'data.py' in opts_file:
                         raise ApplicationConfigurationError(
-                            "Options file should not be named data.py to avoid conflict with generated inputdata file. Please rename your options and submit again.")
+                            "Options file should not be named data.py to avoid conflict with generated inputdata file."\
+                            " Please rename your options and submit again.")
                     new_file = LocalFile(opts_file)
                     self.copyIntoPrepDir(path.join(new_file.localDir, path.basename(new_file.namePattern)))
                     opts_file = new_file
@@ -335,7 +338,8 @@ class GaudiExec(IPrepareApp):
 
     def constructExtraFiles(self, job):
         """
-        This constructs or appends to an uncompressed archive containing all of the opts files which are required to run on the grid
+        This constructs or appends to an uncompressed archive containing all of the opts files
+        which are required to run on the grid
         Args:
             job (Job): The parent job of this application, we don't care if it's unique or not
         """
@@ -429,15 +433,15 @@ class GaudiExec(IPrepareApp):
                     loc = path.join(share_path, path.basename(this_opt))
                     if not path.exists(loc):
                         raise ApplicationConfigurationError(
-                            "Application previously configure but option file %s not found in the sharedir. Unprepare and resubmit." %
-                            path.basename(this_opt))
+                            "Application previously configure but option file %s not found in the sharedir."\
+                            " Unprepare and resubmit." % path.basename(this_opt))
                     new_opts.append(LocalFile(loc))
                 elif isinstance(this_opt, LocalFile):
                     loc = path.join(share_path, this_opt.namePattern)
                     if not path.exists(loc):
                         raise ApplicationConfigurationError(
-                            "Application previously configure but option file %s not found in the sharedir. Unprepare and resubmit." %
-                            this_opt.namePattern)
+                            "Application previously configured but option file %s not found in the sharedir."\
+                            " Unprepare and resubmit." % this_opt.namePattern)
                     new_opts.append(LocalFile(loc))
                 elif isinstance(this_opt, DiracFile):
                     new_opts.append(this_opt)
@@ -486,8 +490,8 @@ class GaudiExec(IPrepareApp):
         Return the script which wraps the running command in a correct environment
         """
         if isLbEnv:
-            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && export BINARY_TAG={PLATFORM} && export CMTCONFIG={PLATFORM} && '.format(
-                PLATFORM=self.platform)
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && export BINARY_TAG={PLATFORM}'\
+                   ' && export CMTCONFIG={PLATFORM} && '.format(PLATFORM=self.platform)
         else:
             return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (
                 self.platform, self.platform)
@@ -497,15 +501,16 @@ class GaudiExec(IPrepareApp):
         Return the script to setup the correct env on a WN
         """
         if isLbEnv:
-            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && export BINARY_TAG={PLATFORM} && export CMTCONFIG={PLATFORM} && '.format(
-                PLATFORM=self.platform)
+            return 'source /cvmfs/lhcb.cern.ch/lib/LbEnv && export BINARY_TAG={PLATFORM}'\
+                   ' && export CMTCONFIG={PLATFORM} && '.format(PLATFORM=self.platform)
         else:
             return 'export CMTCONFIG=%s; source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh --cmtconfig=%s && ' % (
                 self.platform, self.platform)
 
     def execCmd(self, cmd):
         """
-        This method executes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
+        This method executes a command within the namespace of the project.
+        The cmd is placed in a bash script which is executed within the env.
         This will adopt the platform associated with this application.
 
         e.g. The following will execute a 'make' command within the given project dir
@@ -574,7 +579,8 @@ class GaudiExec(IPrepareApp):
     def buildGangaTarget(self):
         """
         This builds the ganga target 'ganga-input-sandbox' for the project defined by self.directory
-        This returns the absolute path to the file after it has been created. It will fail if things go wrong or the file fails to generate
+        This returns the absolute path to the file after it has been created.
+        It will fail if things go wrong or the file fails to generate
         """
         logger.info("Make-ing target '%s'     (This may take a few minutes depending on the size of your project)" %
                     GaudiExec.build_target)
