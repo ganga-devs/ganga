@@ -1,14 +1,18 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import inspect
 from GangaCore import _gangaVersion
 import GangaCore.Utility.Virtualization
 from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import (dirac_inputdata,
+                                                     mangle_job_name,
+                                                     diracAPI_script_settings,
+                                                     API_nullifier)
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
-from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from GangaCore.GPIDev.Lib.File.OutputFileManager import (getWNCodeForOutputPostprocessing,
+                                                         getWNCodeForInputdataListCreation)
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from GangaCore.Core.exceptions import ApplicationConfigurationError, GangaFileError
@@ -22,7 +26,7 @@ from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, di
 logger = getLogger()
 config = getConfig('DIRAC')
 configLHCb = getConfig('LHCb')
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 class ExeDiracRTHandler(IRuntimeHandler):
@@ -31,7 +35,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
 
     def master_prepare(self, app, appmasterconfig):
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
-        if type(app.exe) == File:
+        if isinstance(app.exe, File):
             input_dir = app.getJobObject().getInputWorkspace().getPath()
             exefile = os.path.join(input_dir, os.path.basename(app.exe.name))
             if not os.path.exists(exefile):
@@ -63,16 +67,16 @@ class ExeDiracRTHandler(IRuntimeHandler):
         commandline = []
         commandline.append(app.exe)
         if isType(app.exe, File):
-            #logger.info("app: %s" % str(app.exe.name))
-            #fileName = os.path.join(get_share_path(app), os.path.basename(app.exe.name))
-            #logger.info("EXE: %s" % str(fileName))
+            # logger.info("app: %s" % str(app.exe.name))
+            # fileName = os.path.join(get_share_path(app), os.path.basename(app.exe.name))
+            # logger.info("EXE: %s" % str(fileName))
             # inputsandbox.append(File(name=fileName))
             inputsandbox.append(app.exe)
             commandline[0] = os.path.join('.', os.path.basename(app.exe.name))
         commandline.extend([str(arg) for arg in app.args])
         logger.debug('Command line: %s: ', commandline)
 
-        #exe_script_path = os.path.join(job.getInputWorkspace().getPath(), "exe-script.py")
+        # exe_script_path = os.path.join(job.getInputWorkspace().getPath(), "exe-script.py")
         exe_script_name = 'exe-script.py'
 
         logger.debug("Setting Command to be: '%s'" % repr(commandline))
@@ -150,17 +154,17 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         GANGA_VERSION=_gangaVersion,
                                         )
 
-        #logger.info("dirac_script: %s" % dirac_script)
+        # logger.info("dirac_script: %s" % dirac_script)
 
-        #logger.info("inbox: %s" % str(unique(inputsandbox)))
-        #logger.info("outbox: %s" % str(unique(outputsandbox)))
+        # logger.info("inbox: %s" % str(unique(inputsandbox)))
+        # logger.info("outbox: %s" % str(unique(outputsandbox)))
 
         return StandardJobConfig(dirac_script,
                                  inputbox=unique(inputsandbox),
                                  outputbox=unique(outputsandbox))
 
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def exe_script_template():
@@ -221,7 +225,7 @@ sys.exit(rc)
 """
     return script_template
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
