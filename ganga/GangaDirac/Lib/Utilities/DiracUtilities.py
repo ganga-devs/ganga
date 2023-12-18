@@ -90,7 +90,7 @@ def get_env(env_source):
 
     """
     logger.debug('Running DIRAC source command %s', env_source)
-    env = dict(os.environ)
+    env = os.environ
     gexecute.execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
     if not any(key.startswith('DIRAC') for key in env):
         fake_dict = {}
@@ -139,8 +139,6 @@ def read_env_cache(cache_filename):
     logger.debug('Reading DIRAC cache file at %s', cache_filename)
     with open(cache_filename, 'r') as cache_file:
         env = json.load(cache_file)
-    # Convert unicode strings to byte strings
-    env = dict((k.encode('utf-8'), v.encode('utf-8')) for k, v in env.items())
     return env
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
