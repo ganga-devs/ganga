@@ -4,14 +4,20 @@ import inspect
 import GangaCore.Utility.Virtualization
 from GangaCore import _gangaVersion
 from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import (dirac_inputdata, 
+                                                     mangle_job_name, 
+                                                     diracAPI_script_template,
+                                                     diracAPI_script_settings,
+                                                     API_nullifier,
+                                                     dirac_outputfile_jdl)
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
-from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing, getWNCodeForInputdataListCreation
+from GangaCore.GPIDev.Lib.File.OutputFileManager import (getWNCodeForOutputPostprocessing, 
+                                                         getWNCodeForInputdataListCreation)
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.Core.exceptions import ApplicationConfigurationError, GangaFileError
 from GangaCore.GPIDev.Lib.File import File, FileBuffer
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
@@ -43,7 +49,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data, parametricinput_data = dirac_inputdata(app)
-#        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job = stripProxy(app).getJobObject()
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
