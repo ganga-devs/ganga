@@ -8,7 +8,7 @@ from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouput
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
-from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing, getWNCodeForInputdataListCreation
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from GangaCore.Core.exceptions import ApplicationConfigurationError, GangaFileError
@@ -89,7 +89,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
         contents = script_generator(contents,
                                     COMMAND=repr(commandline),
                                     PYTHONDIR=repr(PYTHON_DIR),
-                                    OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, ''))
+                                    OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, ''),
+                                    CREATEINPUTDATALIST=getWNCodeForInputdataListCreation(job, ''))
 
         inputsandbox.append(FileBuffer(name=exe_script_name, contents=contents, executable=True))
 
@@ -191,6 +192,9 @@ if isinstance(execmd, str):
 if isinstance(execmd, list):
     if path.isfile(path.abspath(execmd[0])):
         execmd[0] = path.abspath(execmd[0])
+
+# create inputdata list
+###CREATEINPUTDATALIST###
 
 ###VIRTUALIZATION###
 
