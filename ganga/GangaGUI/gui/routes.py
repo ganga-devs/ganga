@@ -102,8 +102,7 @@ plugins = {}
 
 
 # Execute before first request
-@gui.before_first_request
-def initial_run():
+with app.app_context():
     """
     This function runs before first request. It stores actions and plugins information from the ganga. It create default session cookies. If WEB_CLI is also started then it also starts a Ganga session.
     """
