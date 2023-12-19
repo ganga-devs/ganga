@@ -4,8 +4,8 @@ import inspect
 import GangaCore.Utility.Virtualization
 from GangaCore import _gangaVersion
 from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import (dirac_inputdata, 
-                                                     mangle_job_name, 
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import (dirac_inputdata,
+                                                     mangle_job_name,
                                                      diracAPI_script_template,
                                                      diracAPI_script_settings,
                                                      API_nullifier,
@@ -13,7 +13,7 @@ from GangaDirac.Lib.RTHandlers.DiracRTHUtils import (dirac_inputdata,
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
-from GangaCore.GPIDev.Lib.File.OutputFileManager import (getWNCodeForOutputPostprocessing, 
+from GangaCore.GPIDev.Lib.File.OutputFileManager import (getWNCodeForOutputPostprocessing,
                                                          getWNCodeForInputdataListCreation)
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
