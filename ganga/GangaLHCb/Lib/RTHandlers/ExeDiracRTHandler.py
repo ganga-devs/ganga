@@ -4,11 +4,15 @@ import inspect
 from GangaCore import _gangaVersion
 import GangaCore.Utility.Virtualization
 from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import (dirac_inputdata, 
+                                                     mangle_job_name, 
+                                                     diracAPI_script_settings, 
+                                                     API_nullifier)
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
-from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from GangaCore.GPIDev.Lib.File.OutputFileManager import (getWNCodeForOutputPostprocessing, 
+                                                         getWNCodeForInputdataListCreation)
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from GangaCore.Core.exceptions import ApplicationConfigurationError, GangaFileError
@@ -18,7 +22,6 @@ from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.util import unique
 from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, dirac_outputfile_jdl
 logger = getLogger()
 config = getConfig('DIRAC')
 configLHCb = getConfig('LHCb')
@@ -45,7 +48,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data, parametricinput_data = dirac_inputdata(app)
-#        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job = stripProxy(app).getJobObject()
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
@@ -89,7 +91,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
         contents = script_generator(contents,
                                     COMMAND=repr(commandline),
                                     PYTHONDIR=repr(PYTHON_DIR),
-                                    OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, ''))
+                                    OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, ''),
+                                    CREATEINPUTDATALIST=getWNCodeForInputdataListCreation(job, ''))
 
         inputsandbox.append(FileBuffer(name=exe_script_name, contents=contents, executable=True))
 
@@ -191,6 +194,9 @@ if isinstance(execmd, str):
 if isinstance(execmd, list):
     if path.isfile(path.abspath(execmd[0])):
         execmd[0] = path.abspath(execmd[0])
+
+# create inputdata list
+###CREATEINPUTDATALIST###
 
 ###VIRTUALIZATION###
 
