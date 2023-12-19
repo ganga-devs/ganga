@@ -94,53 +94,8 @@ status_color = {
 ALLOWED_EXTENSIONS = {"txt", "py"}
 
 # Variables to globally store plugins and actions
-actions = {}
-plugins = {}
-
-
-# ******************** Run Before First Request ******************** #
-
-
-# Execute before first request
-with app.app_context():
-    """
-    This function runs before first request. It stores actions and plugins information from the ganga. It create default session cookies. If WEB_CLI is also started then it also starts a Ganga session.
-    """
-
-    global actions = {}
-    global plugins = {}
-
-    # Start ganga if WEB_CLI mode is True
-    if gui.config['WEB_CLI'] is True:
-        start_ganga(gui.config['INTERNAL_PORT'], args=gui.config["GANGA_ARGS"])
-        session["WEB_CLI"] = True
-    elif gui.config['INTERNAL_PORT'] is None:
-        gui.config['INTERNAL_PORT'] = os.environ['INTERNAL_PORT']
-
-    # If user is authenticated, log them out. This happens after a fresh start of the GUI server.
-    if current_user.is_authenticated:
-        logout_user()
-
-    # Create user session defaults
-    create_session_defaults()
-
-    # Check if internal server is online, exit after 20s of retrying
-    if not ping_internal():
-        print("INTERNAL SERVER UNAVAILABLE, TERMINATING...")
-        sys.exit(1)
-
-    # Get job actions and plugins information from ganga
-    try:
-        # Get actions and plugins data once
-        actions = query_internal_api("/internal/jobs/actions", "get")
-        plugins = query_internal_api("/internal/plugins", "get")
-    except Exception as err:
-        flash(str(err), "danger")
-        return redirect(url_for("dashboard"))
-
-
-# ******************** View Routes ******************** #
-
+global actions
+global plugins
 
 # Login View
 @gui.route("/login", methods=["GET", "POST"])
@@ -1941,6 +1896,39 @@ def start_web_cli(host: str, port: int, internal_port: int, log_output=True, gan
     gui.config["WEB_CLI"] = True
     gui.config["GANGA_ARGS"] = ganga_args
     socketio.run(gui, host=host, port=port, log_output=log_output)  # TODO
+
+# ******************** Run Before First Request ******************** #
+    """
+    This function runs before first request. It stores actions and plugins information from the ganga. It create default session cookies. If WEB_CLI is also started then it also starts a Ganga session.
+    """
+
+    # Start ganga if WEB_CLI mode is True
+    if gui.config['WEB_CLI'] is True:
+        start_ganga(gui.config['INTERNAL_PORT'], args=gui.config["GANGA_ARGS"])
+        session["WEB_CLI"] = True
+    elif gui.config['INTERNAL_PORT'] is None:
+        gui.config['INTERNAL_PORT'] = os.environ['INTERNAL_PORT']
+
+    # If user is authenticated, log them out. This happens after a fresh start of the GUI server.
+    if current_user.is_authenticated:
+        logout_user()
+
+    # Create user session defaults
+    create_session_defaults()
+
+    # Check if internal server is online, exit after 20s of retrying
+    if not ping_internal():
+        print("INTERNAL SERVER UNAVAILABLE, TERMINATING...")
+        sys.exit(1)
+
+    # Get job actions and plugins information from ganga
+    try:
+        # Get actions and plugins data once
+        actions = query_internal_api("/internal/jobs/actions", "get")
+        plugins = query_internal_api("/internal/plugins", "get")
+    except Exception as err:
+        flash(str(err), "danger")
+        return redirect(url_for("dashboard"))
 
 
 # ******************** Shutdown Function ******************** #
