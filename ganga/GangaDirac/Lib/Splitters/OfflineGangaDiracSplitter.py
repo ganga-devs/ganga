@@ -491,6 +491,15 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
         check_count = check_count + len(i)
 
     if check_count != len(inputs) - len(bad_lfns):
+        #First check if there are duplicates causing this problem
+        allLFNs = [_lfn.lfn for _lfn in inputs]
+        lfnset = set(allLFNs)
+        del_list = list(allLFNs)
+        for _l in lfnset:
+            del_list.remove(_l)
+        if len(del_list)>0:
+            raise SplitterError("Duplicate LFNs found, check your inputdata! %s" % del_list)
+
         logger.error("SERIOUS SPLITTING ERROR!!!!!")
         logger.warning("%s != %s - %s" % (check_count, len(inputs), len(bad_lfns)))
         logger.warning("inputs:\n%s" % str(inputs))

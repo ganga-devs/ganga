@@ -8,7 +8,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/cvmfs/sft.cern.ch/lcg/releases/LCG_100/
 
 . bin/activate
 
-pip install --upgrade git+https://github.com/ganga-devs/ganga.git@develop#egg=ganga[LHCb] 
+pip install --upgrade ganga[LHCb]@git+https://github.com/ganga-devs/ganga.git@develop
 
 
 sed -i "23i\

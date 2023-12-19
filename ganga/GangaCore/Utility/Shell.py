@@ -37,8 +37,6 @@ import os
 import re
 import stat
 import tempfile
-import time
-import signal
 import subprocess
 
 from GangaCore.Utility.execute import execute
@@ -51,7 +49,8 @@ def expand_vars(env):
     """
     This function takes a raw dictionary which describes the environment and sanitizes it slightly
     This makes some attempt to take multi-line aliases and functions and make then into single line strings.
-    At best we don't like bash functions being assigned to variables here but we shouldn't crash when some users have bad a env
+    At best we don't like bash functions being assigned to variables here but we shouldn't crash when some users
+    have bad a env
     Args:
         env (dict): dictionary describing the environment which is to be sanitized
     """
@@ -116,14 +115,9 @@ class Shell(object):
             setup_args (list): list of strings which are executed directly with a ' ' character spacing
         """
 
+        self.env = os.environ
         if setup is not None:
-            self.env = dict(os.environ)
             execute('source {0} {1}'.format(setup, " ".join(setup_args)), shell=True, env=self.env, update_env=True)
-
-        else:
-            # bug #44334: Ganga/Utility/Shell.py does not save environ
-            env = dict(os.environ)
-            self.env = expand_vars(env)
 
         self.dirname = None
 
@@ -142,74 +136,43 @@ class Shell(object):
         if allowed_exit is None:
             allowed_exit = [0]
 
+        rc = 0
+        m = None
+
         if not soutfile:
             soutfile = tempfile.NamedTemporaryFile(mode='w+t', suffix='.out', delete=False).name
 
         logger.debug('Running shell command: %s' % cmd)
         try:
-            t0 = time.time()
-            already_killed = False
-            timeout0 = timeout
-            launcher = ['/bin/sh', '-c']
-            args = ['%s > %s 2>&1' % (cmd, soutfile)]
-            command = launcher
-            for i in args:
-                command.append(i)
-            this_cwd = os.path.abspath(os.getcwd())
-            if not os.path.exists(this_cwd):
-                this_cwd = os.path.abspath(tempfile.gettempdir())
-            logger.debug("Using CWD: %s" % this_cwd)
+            output = subprocess.check_output(cmd, timeout=timeout, stderr=subprocess.PIPE, env=self.env, shell=True)
+        except subprocess.CalledProcessError as err:
+            rc = err.returncode
+            error_message = err.stderr.decode()
 
-            process = subprocess.Popen(command, env=self.env, cwd=this_cwd, stdin=subprocess.DEVNULL)
-            pid = process.pid
-            while True:
-                wpid, sts = os.waitpid(pid, os.WNOHANG)
-                if wpid != 0:
-                    if os.WIFSIGNALED(sts):
-                        rc = -os.WTERMSIG(sts)
-                        break
-                    elif os.WIFEXITED(sts):
-                        rc = os.WEXITSTATUS(sts)
-                        break
-                if timeout and time.time() - t0 > timeout:
-                    logger.warning('Command interrupted - timeout %ss reached: %s', timeout0, cmd)
-                    if already_killed:
-                        sig = signal.SIGKILL
-                    else:
-                        sig = signal.SIGTERM
-                    logger.debug('killing process %d with signal %d', pid, sig)
-                    os.kill(pid, sig)
-                    t0 = time.time()
-                    # wait just 5 seconds before killing with SIGKILL
-                    timeout = 5
-                    already_killed = True
-                time.sleep(0.05)
+            # write the error to file
+            with open(soutfile, "w") as sout_file:
+                sout_file.write(error_message)
 
-        except OSError as e:
-            if e.errno == 10:
-                rc = process.returncode
-                logger.debug("Process has already exitted which will throw a 10")
-                logger.debug("Exit status is: %s" % rc)
+            if rc not in allowed_exit:
+                logger.debug(f"command failed because {error_message}")
+
+                raw_cmd = cmd.split()[0]
+                m = re.search(f"{raw_cmd}: not found", error_message)
             else:
-                logger.warning('Problem with shell command: %s, %s', e.errno, e.strerror)
-                rc = 255
+                logger.warning(f"command failed with rc {rc} but is still considered a success")
+                # write output to file
+                with open(soutfile, "ab") as sout_file:
+                    sout_file.write(err.stdout)
 
-        BYTES = 4096
-        if rc not in allowed_exit:
-            logger.warning('exit status [%d] of command %s', rc, cmd)
             if mention_outputfile_on_errors:
+                BYTES = 4096
                 logger.warning('full output is in file: %s', soutfile)
-                with open(soutfile) as sout_file:
-                    logger.warning('<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
+                logger.warning(f'<first {BYTES} bytes of output>\n{err.stdout[:BYTES]}')
                 logger.warning('<end of first %d bytes of output>', BYTES)
-
-        # FIXME /bin/sh might have also other error messages
-        m = None
-        if rc != 0:
-            with open(soutfile) as sout_file:
-                m = re.search('command not found\n', sout_file.read())
-            if m:
-                logger.warning('command %s not found', cmd)
+        else:
+            # write to output anyways
+            with open(soutfile, "wb") as sout_file:
+                sout_file.write(output)
 
         return rc, soutfile, m is None
 
@@ -243,29 +206,35 @@ class Shell(object):
 
     def system(self, cmd, allowed_exit=None, stderr_file=None):
         """Execute on OS command. Useful for interactive commands. Stdout and Stderr are not
-        caputured and are passed on the caller.
+        captured and are passed on the caller.
 
         stderr_capture may specify a name of a file to which stderr is redirected.
 
         Args:
             cmd (str): command to be executed in a shell
             allowed_exit (list): list of numerical rc which are deemed successful when checking the function output. Def [0]
-            capture_stderr (None): unused, kept for API compatability?
+            stderr_file (str): file path to write output to
         """
         if allowed_exit is None:
             allowed_exit = [0]
 
         logger.debug('Calling shell command: %s' % cmd)
 
-        if stderr_file:
-            cmd += " 2> %s" % stderr_file
-
         try:
-            rc = subprocess.call(['/bin/sh', '-c', cmd], env=self.env)
-        except OSError as e:
-            logger.warning(
-                'Problem with shell command: %s, %s', e.errno, e.strerror)
-            rc = 255
+            subprocess.check_output(cmd, stderr=subprocess.PIPE, env=self.env, shell=True)
+        except subprocess.CalledProcessError as exc:
+            rc = exc.returncode
+            if rc not in allowed_exit:
+                logger.warning(
+                    f'Problem with shell command: returned with rc {exc.returncode} and stderr {exc.stderr.decode()}'
+                )
+            else:
+                logger.info(
+                    f'command succeeded with rc {rc} and output {exc.output.decode()}'
+                )
+            if stderr_file:
+                with open(stderr_file, "wb") as f:
+                    f.write(exc.stderr)
         return rc
 
     def wrapper(self, cmd, preexecute=None):

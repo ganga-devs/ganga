@@ -53,7 +53,7 @@ def constructShell():
         except KeyError:
             pass
 
-    config = getConfig('LCG')
+    config = getConfig('GridShell')
 
     # 1. check if the GLITE_SETUP is changed by user -> take the user's value as session value
     # 2. else check if GLITE_LOCATION is defined as env. variable -> do nothing (ie. create shell without any lcg setup)
