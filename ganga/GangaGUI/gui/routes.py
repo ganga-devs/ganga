@@ -82,9 +82,9 @@ def load_user(user_id):
 status_color = {
     "new": "info",
     "completed": "success",
-    "completed_frozen" : "success",
+    "completed_frozen": "success",
     "failed": "danger",
-    "failed_frozen" : "danger",
+    "failed_frozen": "danger",
     "running": "primary",
     "submitted": "secondary",
     "killed": "warning"
@@ -143,6 +143,8 @@ def initial_run():
 
 
 # Login View
+
+
 @gui.route("/login", methods=["GET", "POST"])
 def login():
     """
@@ -259,8 +261,10 @@ def config_page():
 
     return render_template("config.html", title="Config", full_config_info=full_config_info, config_info=config_info)
 
-#Edit gangarc
-@gui.route("/config_edit",methods=["GET", "POST"])
+# Edit gangarc
+
+
+@gui.route("/config_edit", methods=["GET", "POST"])
 @login_required
 def edit_config_page():
     """
@@ -277,7 +281,8 @@ def edit_config_page():
         with open(gui_rc, "rt") as f2:
             ganga_config = f2.read()
     return render_template("config_edit.html", title="Edit gangarc", ganga_config=ganga_config)
-    
+
+
 @login_required
 # Create view
 @gui.route("/create", methods=["GET", "POST"])
@@ -830,6 +835,7 @@ def credentials_page():
 
     return render_template('credentials.html', credential_info_list=credentials_info)
 
+
 @gui.route("/queue", methods=["GET"])
 @login_required
 def queue_page():
@@ -845,6 +851,8 @@ def queue_page():
     return render_template('queue.html', queue_info_list=queue_info)
 
 # Plugins view
+
+
 @gui.route('/plugins')
 @login_required
 def plugins_page():
@@ -1096,7 +1104,7 @@ def token_required(f):
             return jsonify({"success": False, "message": "Token is expired"}), 401
         except jwt.InvalidTokenError:
             return jsonify({"success": False, "message": "Token is invalid"}), 401
-        except:
+        except BaseException:
             return jsonify({"success": False, "message": "Could not verify token"}), 401
 
         return f(current_api_user, *args, **kwargs)
@@ -1536,6 +1544,7 @@ def jobs_statistics_endpoint(current_api_user):
 
     return jsonify(statistics)
 
+
 @gui.route("/api/queue", methods=["GET"])
 @token_required
 def queue_endpoint(current_api_user):
@@ -1548,16 +1557,18 @@ def queue_endpoint(current_api_user):
 
     return jsonify(queue_info)
 
-@gui.route("/api/queue/chart", methods=["GET","POST"])
+
+@gui.route("/api/queue/chart", methods=["GET", "POST"])
 def queue_chart_endpoint():
 
-    
     chart_info = query_internal_api("/internal/queue/data", "get")
     response = make_response(json.dumps(chart_info))
     response.content_type = 'application/json'
     return response
 
 # Job incomplete ids API - GET Method
+
+
 @gui.route("/api/jobs/incomplete_ids", methods=["GET"])
 @token_required
 def jobs_incomplete_ids_endpoint(current_api_user):
@@ -1868,7 +1879,7 @@ def ping_internal():
             ping = query_internal_api("/ping", "get")
             if ping is True:
                 return True
-        except:
+        except BaseException:
             time.sleep(2)
 
         print("Internal API server not online (mostly because Ganga is booting up), retrying...")
@@ -1888,7 +1899,8 @@ def start_ganga(internal_port: int, args: str = ""):
     (child_pid, fd) = pty.fork()
 
     if child_pid == 0:
-        # This is the child process fork. Anything printed here will show up in the pty, including the output of this subprocess
+        # This is the child process fork. Anything printed here will show up in
+        # the pty, including the output of this subprocess
         ganga_env = os.environ.copy()
         ganga_env["WEB_CLI"] = "True"
         ganga_env["INTERNAL_PORT"] = str(internal_port)
