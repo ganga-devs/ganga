@@ -160,7 +160,7 @@ Normally you should not worry about it.
 If an element of the path is just a name (like in the example below)
 then the plugins will be loaded using current python path. This means that
 some packages such as GangaTest may be taken from the release area.""",
-    examples="""RUNTIME_PATH = GangaGUI
+    examples="""RUNTIME_PATH = GangaDirac
 RUNTIME_PATH = /my/SpecialExtensions:GangaTest""",
 )
 
@@ -696,14 +696,6 @@ gridsim_config.addOption(
         '(also for subjob in bulk emulation)'
     ),
 )
-
-# config.addOption('bulk_submit_time','random.uniform(1,2)',('python expression which returns the time it takes (in seconds) '
-#        'to complete the submission of a single job within the Grid.native_master_submit() command'))
-# config.addOption('bulk_submit_failure_rate',0.0,'probabilty that the Grid.native_master_submit() fails')
-
-# config.addOption('bulk_cancel_time','random.uniform(1,2)',('python expression which returns the time it takes (in seconds) '
-#        'to complete the cancellation of a single job within the Grid.native_master_cancel() command'))
-# config.addOption('bulk_cancel_failure_rate',0.0,'probabilty that the Grid.native_master_cancel() fails')
 
 gridsim_config.addOption(
     'job_id_resolved_time',
