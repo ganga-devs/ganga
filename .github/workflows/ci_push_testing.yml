@@ -160,11 +160,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Set up Python 3
         run: |
-          dnf install -y python3.11
-      - name: Install dependencies
+          dnf install -y python3.11 python3.11-pip
+          /usr/bin/python3.11 -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip setuptools wheel
+      - name: Install source
         run: |
-          /usr/bin/python3.11 -m pip install --upgrade pip setuptools wheel
-          /usr/bin/python3.11 -m pip install -e .[dev]
+          python -m pip install -e .[dev]
       - name: Start Condor
         run: |
           /start.sh > start.stdout &
