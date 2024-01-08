@@ -89,6 +89,7 @@ install_requires = [
 if sys.platform != 'darwin':
     install_requires.append("htcondor")
 
+
 setup(
     name='ganga',
     description='Job management tool',
@@ -132,4 +133,4 @@ setup(
     cmdclass={
         'tests': RunTestsCommand,
     },
-    )
+)
