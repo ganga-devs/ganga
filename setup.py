@@ -77,24 +77,11 @@ pythonPackages.append('ganga/GangaRelease')
 
 install_requires = [
     'ipython>=5.0.0',
-    'jedi>=0.17.2',
-    'httplib2>=0.8',
-    'aiofile>=3.7.4',
-    'aiohttp>=3.8.4',
     'absl-py>=0.1.2',
     'google-api-python-client',
     'google-auth-httplib2',
     'google-auth-oauthlib',
     'requests>=2.23.0',
-    'Flask>=1.1.2',
-    'psutil',
-    'PyJWT~=2.4.0',
-    'Flask-SQLAlchemy>=2.4.3',
-    'gunicorn>=20.0.4',
-    'Flask-Login>=0.5.0',
-    'Flask-SocketIO==4.3.1',
-    'Werkzeug==2.0.3',
-    'SQLAlchemy==1.3.19',
     "docker",
     "pymongo",
     "gdown",
@@ -102,41 +89,42 @@ install_requires = [
 if sys.platform != 'darwin':
     install_requires.append("htcondor")
 
-setup(name='ganga',
-      description='Job management tool',
-      long_description=readme(),
-      url='https://github.com/ganga-devs/ganga',
-      version=version(),
-      author='Ganga Developers',
-      author_email='project-ganga-developers@cern.ch',
-      license='GPL v2',
-      scripts=['bin/ganga'],
-      package_dir={
-          'ganga': 'ganga',
-          'GangaRelease': 'ganga/GangaRelease'},
-      packages=pythonPackages,
-      install_requires=install_requires,
-      extras_require={
-          'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],
-          'profiler': ['memory_profiler'],
-          'Dirac': ['UltraDict'],
-          'LHCb': ['LbDevTools']
-      },
-      classifiers=[
-          'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-          'Programming Language :: Python :: 3.8',
-          'Programming Language :: Python :: 3.9',
-          'Programming Language :: Python :: 3.10',
-          'Programming Language :: Python :: 3.11'
-      ],
-      include_package_data=True,
-      package_data={
-          'GangaCore': ['Runtime/HEAD_CONFIG.INI'],
-          'GangaRelease': [
-              'ReleaseNotes-*',
-              'tools/check-new-ganga.py',
-              'tools/ganga-cvmfs-install.sh',
-              'tools/ganga-cvmfs-install-dev.sh']},
+setup(
+    name='ganga',
+    description='Job management tool',
+    long_description=readme(),
+    url='https://github.com/ganga-devs/ganga',
+    version=version(),
+    author='Ganga Developers',
+    author_email='project-ganga-developers@cern.ch',
+    license='GPL v2',
+    scripts=[
+        'bin/ganga'],
+    package_dir={
+        'ganga': 'ganga',
+        'GangaRelease': 'ganga/GangaRelease'},
+    packages=pythonPackages,
+    install_requires=install_requires,
+    extras_require={
+        'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],
+        'profiler': ['memory_profiler'],
+        'Dirac': ['UltraDict'],
+        'LHCb': ['LbDevTools']},
+    classifiers=[
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11'
+    ],
+    include_package_data=True,
+    package_data={
+        'GangaCore': ['Runtime/HEAD_CONFIG.INI'],
+        'GangaRelease': [
+            'ReleaseNotes-*',
+            'tools/check-new-ganga.py',
+            'tools/ganga-cvmfs-install.sh',
+            'tools/ganga-cvmfs-install-dev.sh']},
       cmdclass={
           'tests': RunTestsCommand,
       },
