@@ -166,6 +166,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
       - name: Install source
         run: |
+          source venv/bin/activate
           python -m pip install -e .[dev]
       - name: Start Condor
         run: |
