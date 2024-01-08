@@ -106,7 +106,12 @@ setup(
     packages=pythonPackages,
     install_requires=install_requires,
     extras_require={
-        'dev': ['coverage', 'pytest', 'pytest-cov', 'pytest-pylint', 'pytest-mock'],
+        'dev': [
+            'coverage',
+            'pytest',
+            'pytest-cov',
+            'pytest-pylint',
+            'pytest-mock'],
         'profiler': ['memory_profiler'],
         'Dirac': ['UltraDict'],
         'LHCb': ['LbDevTools']},
@@ -115,8 +120,7 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11'
-    ],
+        'Programming Language :: Python :: 3.11'],
     include_package_data=True,
     package_data={
         'GangaCore': ['Runtime/HEAD_CONFIG.INI'],
@@ -125,7 +129,7 @@ setup(
             'tools/check-new-ganga.py',
             'tools/ganga-cvmfs-install.sh',
             'tools/ganga-cvmfs-install-dev.sh']},
-      cmdclass={
-          'tests': RunTestsCommand,
-      },
-      )
+    cmdclass={
+        'tests': RunTestsCommand,
+    },
+    )
