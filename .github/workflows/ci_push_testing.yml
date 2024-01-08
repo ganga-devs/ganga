@@ -163,7 +163,7 @@ jobs:
           dnf install -y python3.11 python3.11-pip
           /usr/bin/python3.11 -m venv venv
           source venv/bin/activate
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip setuptools wheel pytest
       - name: Install source
         run: |
           source venv/bin/activate
@@ -175,9 +175,10 @@ jobs:
           condor_status
       - name: Test with pytest
         run: |
+          source venv/bin/activate
           pwd
           find . -exec chown submituser:submituser {} \;
-          su submituser -s /usr/bin/python3.11 -- -m pytest --cov-report term-missing --cov ganga/GangaCore/Lib/Condor ganga/GangaCore/test/Condor
+          su submituser -s python -- -m pytest --cov-report term-missing --cov ganga/GangaCore/Lib/Condor ganga/GangaCore/test/Condor
           condor_status
           condor_q
 
