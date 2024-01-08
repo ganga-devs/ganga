@@ -16,8 +16,9 @@ from GangaCore.Runtime import Repository_runtime, bootstrap
 from GangaCore.Utility import stacktracer
 from GangaCore.Utility.logging import getLogger, requires_shutdown, final_shutdown
 from GangaCore.Utility.Config import setConfigOption
-from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace, _purge_actions_queue, \
-    stop_and_free_thread_pool
+from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import (getStackTrace,
+                                                                      _purge_actions_queue,
+                                                                      stop_and_free_thread_pool)
 from GangaCore.GPIDev.Lib.Tasks import stopTasks
 from GangaCore.GPIDev.Credentials import CredentialStore
 from GangaCore.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
@@ -59,15 +60,6 @@ def _unprotected_ganga_exitfuncs():
 
     # Set the disk timeout to 1 sec, sacrifice stability for quicker exit
     setConfigOption('Configuration', 'DiskIOTimeout', 1)
-
-    # Stop APIServerThread - GangaGUI
-    from GangaGUI import guistate
-    if guistate.get_api_server() is not None:
-        from GangaGUI.start import stop_gui
-        try:
-            stop_gui()
-        except Exception as err:
-            logger.exception("Exception raised while stopping GUI: {}".format(err))
 
     # Stop the monitoring loop from iterating further
     from GangaCore.Core import monitoring_component

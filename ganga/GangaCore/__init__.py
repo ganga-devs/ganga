@@ -160,7 +160,7 @@ Normally you should not worry about it.
 If an element of the path is just a name (like in the example below)
 then the plugins will be loaded using current python path. This means that
 some packages such as GangaTest may be taken from the release area.""",
-    examples="""RUNTIME_PATH = GangaGUI
+    examples="""RUNTIME_PATH = GangaDirac
 RUNTIME_PATH = /my/SpecialExtensions:GangaTest""",
 )
 

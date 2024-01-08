@@ -73,7 +73,6 @@ class RunTestsCommand(Command):
 
 pythonPackages = find_packages('./')
 pythonPackages.append('ganga/GangaRelease')
-pythonPackages.append('ganga/GangaGUI')
 
 
 install_requires = [
@@ -111,8 +110,10 @@ setup(name='ganga',
       author='Ganga Developers',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',
-      scripts=['bin/ganga', 'bin/ganga-gui'],
-      package_dir={'ganga': 'ganga', 'GangaRelease': 'ganga/GangaRelease', 'GangaGUI': 'ganga/GangaGUI'},
+      scripts=['bin/ganga'],
+      package_dir={
+          'ganga': 'ganga',
+          'GangaRelease': 'ganga/GangaRelease'},
       packages=pythonPackages,
       install_requires=install_requires,
       extras_require={
@@ -135,8 +136,7 @@ setup(name='ganga',
               'ReleaseNotes-*',
               'tools/check-new-ganga.py',
               'tools/ganga-cvmfs-install.sh',
-              'tools/ganga-cvmfs-install-dev.sh'],
-          'GangaGUI': ['gui/templates/*.html', 'gui/static/css/main.css', 'gui/static/js/*.js']},
+              'tools/ganga-cvmfs-install-dev.sh']},
       cmdclass={
           'tests': RunTestsCommand,
       },
