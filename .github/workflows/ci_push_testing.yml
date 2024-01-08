@@ -178,7 +178,7 @@ jobs:
           source venv/bin/activate
           pwd
           find . -exec chown submituser:submituser {} \;
-          su submituser -s python -- -m pytest --cov-report term-missing --cov ganga/GangaCore/Lib/Condor ganga/GangaCore/test/Condor
+          su submituser -s $(pwd)/venv/bin/python -- -m pytest --cov-report term-missing --cov ganga/GangaCore/Lib/Condor ganga/GangaCore/test/Condor
           condor_status
           condor_q
 
