@@ -199,7 +199,7 @@ jobs:
       - name: Install dependencies
         run: |
           /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev,Dirac]
       - name: Install Robot certificate
         env: # Or as an environment variable
           ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
@@ -249,7 +249,7 @@ jobs:
       - name: Install dependencies
         run: |
           /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev]
+          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev,Dirac]
       - name: Install Robot certificate
         env: # Or as an environment variable
           ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
@@ -319,7 +319,7 @@ jobs:
           /cvmfs/sft.cern.ch/lcg/releases/LCG_100/Python/3.8.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
           . ~/venv/bin/activate
           python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m pip install -e .[dev,LHCb]
+          python3 -m pip install -e .[dev,LHCb,Dirac]
       - name: Test with pytest
         run: |
           . ~/venv/bin/activate
@@ -365,7 +365,7 @@ jobs:
           /cvmfs/sft.cern.ch/lcg/releases/LCG_100/Python/3.8.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
           . ~/venv/bin/activate
           python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m pip install -e .[dev,LHCb]
+          python3 -m pip install -e .[dev,LHCb,Dirac]
       - name: Install gangarc file
         run: |
           echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac:GangaGaudi:GangaLHCb" > ~/.gangarc
