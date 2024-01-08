@@ -77,6 +77,9 @@ pythonPackages.append('ganga/GangaRelease')
 
 install_requires = [
     'ipython>=5.0.0',
+    'jedi>=0.17.2',
+    'aiofile>=3.7.4',
+    'aiohttp>=3.8.4',
     'absl-py>=0.1.2',
     'google-api-python-client',
     'google-auth-httplib2',
