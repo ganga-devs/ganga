@@ -195,7 +195,8 @@ jobs:
       - name: Set up Python 3
         run: |
           yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip
+          yum install -y rh-python38-python rh-python38-python-pip rh-python38-python-devel
+          yum install -y gcc
       - name: Install dependencies
         run: |
           /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
@@ -245,7 +246,8 @@ jobs:
       - name: Set up Python 3
         run: |
           yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip
+          yum install -y rh-python38-python rh-python38-python-pip rh-python38-python-devel
+          yum install -y gcc
       - name: Install dependencies
         run: |
           /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
@@ -364,6 +366,8 @@ jobs:
         run: |
           /cvmfs/sft.cern.ch/lcg/releases/LCG_100/Python/3.8.6/x86_64-centos7-gcc9-opt/bin/python3 -m venv ~/venv
           . ~/venv/bin/activate
+          yum install -y glibc-devel
+          export CC=/cvmfs/sft.cern.ch/lcg/releases/gcc/7.3.0/x86_64-centos7/bin/gcc
           python3 -m pip install --upgrade pip setuptools wheel
           python3 -m pip install -e .[dev,LHCb,Dirac]
       - name: Install gangarc file
