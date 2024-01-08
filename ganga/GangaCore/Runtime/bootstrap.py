@@ -273,15 +273,12 @@ under certain conditions; type license() for details.
         parser.add_option("-i", dest="force_interactive", action="store_true",
                           help='enter interactive mode after running script')
 
-        parser.add_option("--webgui", dest="webgui", action="store_true", default='False',
-                          help='starts web GUI monitoring server')
-
         parser.add_option("--config", dest="config_file", action="store", metavar="FILE", default=None,
                           help=('read user configuration from FILE, overrides the GANGA_CONFIG_FILE environment variable. '
                                 'Default: ~/.gangarc'))
 
         parser.add_option("--config-path", dest='config_path', action="store", default=None,
-                          help=('site/experiment config customization path, overrides GANGA_CONFIG_PATH environment variable. '
+                          help=('site/experiment config customization path, overrides GANGA_CONFIG_PATH.'
                                 'The relative paths are resolved wrt to the release directory. '
                                 'To use a specific file you should specify the absolute path. Default: None'))
 
@@ -314,7 +311,8 @@ under certain conditions; type license() for details.
                                'to setup runtime plugin modules (affects LD_LIBRARY_PATH)')
 
         parser.add_option("--test", dest='TEST', action="store_true", default=False,
-                          help=('run Ganga test(s) using internal test-runner. It requires GangaTest package to be installed. '
+                          help=('run Ganga test(s) using internal test-runner. '
+                                'It requires GangaTest package to be installed.'
                                 'Usage example: *ganga --test Ganga/old_test/MyTestcase* . '
                                 'Refer to [TestingFramework] section in Ganga config for more '
                                 'information on how to configure the test runner.'))
@@ -1017,10 +1015,6 @@ under certain conditions; type license() for details.
         logger.debug("Entering run")
 
         sys.path.insert(0, '')
-
-        if self.options.webgui is True:
-            from GangaGUI.start import start_gui
-            start_gui()
 
         if local_ns is None:
             import __main__
