@@ -55,9 +55,6 @@ def standardSetup():
     for p in list(pathsToAdd):
         sys.path.insert(0, os.path.join(p, 'ganga'))
 
-    from GangaCore.PACKAGE import standardSetup
-    standardSetup()
-
 
 try:
     standardSetup()
