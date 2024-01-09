@@ -1,5 +1,5 @@
 
-class PackageSet
+class PackageSetup:
 
 def checkPythonVersion(minVersion, minHexVersion):
     """Function to check that the Python version number is greater
