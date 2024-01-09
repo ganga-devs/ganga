@@ -69,10 +69,7 @@ def start_ganga(gangadir_for_test, repositorytype="LocalXML", extra_opts=[], ext
         gangadir_for_test (str): This is the directory which the GangaUnitTest is to be run, a new gangadir has been created per test to avoid collisions
         extra_opts (list): A list of tuples which are used to pass command line style options to Ganga
     """
-
-    import GangaCore.PACKAGE
-    GangaCore.PACKAGE.standardSetup()
-
+    
     # End taken from the ganga binary
 
     import GangaCore.Runtime
