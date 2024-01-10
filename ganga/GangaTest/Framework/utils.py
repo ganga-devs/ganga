@@ -1,6 +1,3 @@
-import sys
-import os
-
 from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
@@ -48,19 +45,13 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
 
     current_status = None
     while j.status != state and timeout > 0:
-        if not monitoring_component.isEnabled():
-            monitoring_component.runMonitoring(jobs=jobs.select(j.id, j.id))
-        else:
-            monitoring_component.alive = True
-            monitoring_component.enabled = True
-            monitoring_component.steps = -1
-            monitoring_component.__updateTimeStamp = 0
-            monitoring_component.__sleepCounter = -0.5
+        if not monitoring_component.enabled:
+            monitoring_component.enable()
         if verbose and j.status != current_status:
             logger.info("Job %s: status = %s" % (str(j.id), str(j.status)))
         if current_status is None:
             current_status = j.status
-        if type(break_states) == type([]) and j.status in break_states:
+        if isinstance(break_states, type([])) and j.status in break_states:
             logger.info("Job finished with status: %s" % j.status)
             return False
         sleep(sleep_period)
@@ -70,13 +61,22 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
     logger.info("Timeout: %s" % str(timeout))
     try:
         j._getRegistry().updateLocksNow()
-    except:
+    except BaseException:
         pass
     return j.status == state
 
 
 def sleep_until_completed(j, timeout=None, sleep_period=1, verbose=False):
-    return sleep_until_state(j, timeout, 'completed', ['new', 'killed', 'failed', 'unknown', 'removed'], verbose=verbose, sleep_period=sleep_period)
+    return sleep_until_state(j,
+                             timeout,
+                             'completed',
+                             ['new',
+                              'killed',
+                              'failed',
+                              'unknown',
+                              'removed'],
+                             verbose=verbose,
+                             sleep_period=sleep_period)
 
 
 def is_job_state(j, states=None, break_states=None):
@@ -87,7 +87,7 @@ def is_job_state(j, states=None, break_states=None):
         return True
     else:
         if break_states:
-            if type(break_states) == type([]):
+            if isinstance(break_states, type([])):
                 assert (j.status not in break_states), 'Job did not complete (Status = %s)' % j.status
                 return False
         else:
@@ -132,5 +132,5 @@ failureException = unittest.TestCase.failureException
 try:
     from GangaCore.Utility.Config import getConfig
     config = getConfig('TestingFramework')
-except:  # if we are outside Ganga, use a simple dict
+except BaseException:  # if we are outside Ganga, use a simple dict
     config = {}

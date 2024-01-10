@@ -31,7 +31,6 @@
 """
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
-from GangaCore.GPIDev.Base.Proxy import getName
 
 from GangaCore.GPIDev.Credentials import credential_store
 from GangaCore.GPIDev.Credentials.AfsToken import AfsToken
@@ -45,11 +44,11 @@ servicesEnabled = True
 def _diskSpaceChecker():
     """
     the callback function used internally by Monitoring Component
-    Reads and calls the checking function provided in the configuration. 
+    Reads and calls the checking function provided in the configuration.
     If this checking function returns "False" the internal services are disabled making Ganga read-only:
     e.g:
     [PollThread]
-    DiskSpaceChecker =  
+    DiskSpaceChecker =
         import commands
         diskusage = commands.getoutput('df -l -P %s/workspace' % config['Configuration']['gangadir'])
         used  = diskusage.splitlines()[1].split()[4] # get disk usage (in %)
@@ -60,7 +59,8 @@ def _diskSpaceChecker():
         config = getConfig('PollThread')
 
         if config['DiskSpaceChecker']:
-            def _checker(): return True
+            def _checker():
+                return True
             try:
                 # create the checker
                 from GangaCore.Runtime import _prog
@@ -92,15 +92,9 @@ def _diskSpaceChecker():
 
 
 def disableMonitoringService():
-
-    # disable the mon loop
-    log.debug("Shutting down the main monitoring loop")
-    from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
-    _purge_actions_queue()
-    stop_and_free_thread_pool()
     log.debug("Disabling the central Monitoring")
     from GangaCore.Core import monitoring_component
-    monitoring_component.disableMonitoring()
+    monitoring_component.disable()
 
 
 def disableInternalServices():
@@ -109,7 +103,7 @@ def disableInternalServices():
           * monitoring loop
           * registry/repository and workspace (or GPI entierly)
     Currently this method is called whenever:
-          * one of the managed credentials (AFS token or Grid Proxy) is detected as beeing *invalid* by the monitoring component
+          * one of the managed credentials (AFS token or Grid Proxy) is detected as being *invalid* by the monitoring component
           * the user is running out of space
     """
 
@@ -118,8 +112,8 @@ def disableInternalServices():
 
     # MOVED TO THE END OF THE SHUTDOWN SO THAT WE NEVER ACCESS A REPO BEFORE WE ARE FINISHED!
     # flush the registries
-    #log.debug("Coordinator Shutting Down Repository_runtime")
-    #from GangaCore.Runtime import Repository_runtime
+    # log.debug("Coordinator Shutting Down Repository_runtime")
+    # from GangaCore.Runtime import Repository_runtime
     # Repository_runtime.shutdown()
 
     global servicesEnabled
@@ -135,7 +129,7 @@ def disableInternalServices():
     disableMonitoringService()
 
     # For debugging what services are still alive after being requested to stop before we close the repository
-    #from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
+    # from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
     # getStackTrace()
     # log.info(queues_threadpoolMonitor._display(0))
 
@@ -144,8 +138,8 @@ def disableInternalServices():
     log.info("Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt")
 
     # flush the registries
-    #log.debug( "Coordinator Shutting Down Repository_runtime" )
-    #from GangaCore.Runtime import Repository_runtime
+    # log.debug( "Coordinator Shutting Down Repository_runtime" )
+    # from GangaCore.Runtime import Repository_runtime
     # Repository_runtime.shutdown()
 
     # this will disable any interactions with the registries (implicitly with
@@ -155,11 +149,7 @@ def disableInternalServices():
 
 def enableMonitoringService():
     from GangaCore.Core import monitoring_component
-    monitoring_component.alive = True
-    monitoring_component.enableMonitoring()
-    from GangaCore.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool, ThreadPool
-    if not ThreadPool or len(ThreadPool) == 0:
-        _makeThreadPool()
+    monitoring_component.enable()
     global servicesEnabled
     servicesEnabled = True
 
@@ -198,7 +188,7 @@ def enableInternalServices():
 def checkInternalServices(errMsg='Internal services disabled. Job registry is read-only.'):
     """
     Check the state of internal services and return a ReadOnlyObjectError exception
-    in case the state is disabled.    
+    in case the state is disabled.
     """
 
     global servicesEnabled

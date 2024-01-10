@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import datetime
 import time
@@ -6,18 +7,17 @@ import inspect
 import multiprocessing
 import uuid
 import shutil
-import signal
 import sys
-import re
+import aiohttp
 
-from aiofile import async_open
-from os.path import join, dirname, abspath, isdir, isfile
+from os.path import join, dirname, isdir, isfile
 
 import GangaCore.Utility.logic
 import GangaCore.Utility.util
 import GangaCore.Utility.logging
 import GangaCore.Utility.Config
 import GangaCore.Utility.Virtualization
+import GangaCore.Lib.Localhost as Localhost
 
 from GangaCore.GPIDev.Adapters.IBackend import IBackend
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
@@ -26,10 +26,10 @@ from GangaCore.GPIDev.Lib.File import FileBuffer
 from GangaCore.GPIDev.Lib.File import FileUtils
 
 logger = GangaCore.Utility.logging.getLogger()
-config = GangaCore.Utility.Config.getConfig('Local')
+local_config = GangaCore.Utility.Config.getConfig('Local')
 
 
-class Localhost(IBackend):
+class DummyRemote(IBackend):
 
     """Run jobs in the background on local host.
 
@@ -92,10 +92,14 @@ class Localhost(IBackend):
                 typelist=[int],
                 doc='Run a maximum of this number of subjobs in parallel. If value is negative use number of available CPUs')})
     _category = 'backends'
-    _name = 'Local'
+    _name = 'DummyRemote'
 
     def __init__(self):
-        super(Localhost, self).__init__()
+        from .server import DummyServer
+
+        super(DummyRemote, self).__init__()
+        server = DummyServer()
+        server.start()
 
     def prepare_master_script(self, rjobs):
         job = self.getJobObject()
@@ -106,8 +110,7 @@ class Localhost(IBackend):
                 bs = multiprocessing.cpu_count()
                 logger.info(f'Will run up to {bs} subjobs in parallel')
 
-            script_location = join(dirname(abspath(inspect.getfile(inspect.currentframe()))),
-                                   'LocalHostExec_batch.py.template')
+            script_location = join(dirname(inspect.getfile(Localhost)), 'LocalHostExec_batch.py.template')
             script = FileUtils.loadScript(script_location, '')
             script = script.replace('###BATCHSIZE###', str(bs))
             script = script.replace('###SUBJOBLIST###', str([str(sj.id) for sj in rjobs]))
@@ -122,7 +125,7 @@ class Localhost(IBackend):
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
 
         super().master_submit(rjobs, subjobconfigs,
-                              masterjobconfig, keep_going, self.force_parallel)
+                                      masterjobconfig, keep_going, self.force_parallel)
 
         scriptPath = self.prepare_master_script(rjobs)
         self.run(scriptPath)
@@ -130,6 +133,7 @@ class Localhost(IBackend):
         return 1
 
     def submit(self, jobconfig, master_input_sandbox):
+        self.getJobObject()
         self.preparejob(jobconfig, master_input_sandbox)
         self.actualCE = GangaCore.Utility.util.hostname()
         return 1
@@ -137,7 +141,7 @@ class Localhost(IBackend):
     def cleanworkdir(self):
         if self.workdir == '':
             import tempfile
-            self.workdir = tempfile.mkdtemp(dir=config['location'])
+            self.workdir = tempfile.mkdtemp(dir=local_config['location'])
 
         try:
             shutil.rmtree(self.workdir)
@@ -231,23 +235,27 @@ class Localhost(IBackend):
         try:
             p = join(j.outputdir, '__jobstatus__')
             logger.debug("Opening output file at: %s", p)
-            with open(p) as f:
-                for line in f:
-                    if checkstr in line:
-                        pos = line.find(checkstr)
-                        timestr = line[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
-                        try:
-                            t = datetime.datetime(
-                                *(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
-                        except ValueError:
-                            logger.debug(
-                                "Value Error in file: '%s': string does not match required format.", p)
-                            return None
-                        return t
+            f = open(p)
         except IOError:
             logger.debug('unable to open file %s', p)
             return None
-        logger.debug("Reached the end of getStateTime('%s'). Returning None.", status)
+
+        for _l in f:
+            if checkstr in _l:
+                pos = _l.find(checkstr)
+                timestr = _l[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
+                try:
+                    t = datetime.datetime(
+                        *(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
+                except ValueError:
+                    logger.debug(
+                        "Value Error in file: '%s': string does not match required format.", p)
+                    return None
+                return t
+
+        f.close()
+        logger.debug(
+            "Reached the end of getStateTime('%s'). Returning None.", status)
         return None
 
     def timedetails(self):
@@ -300,11 +308,9 @@ class Localhost(IBackend):
         environment = dict() if jobconfig.env is None else jobconfig.env
 
         import tempfile
-        workdir = tempfile.mkdtemp(dir=config['location'])
+        workdir = tempfile.mkdtemp(dir=local_config['location'])
 
-        script_location = join(dirname(abspath(inspect.getfile(inspect.currentframe()))),
-                               'LocalHostExec.py.template')
-
+        script_location = join(dirname(inspect.getfile(Localhost)), 'LocalHostExec.py.template')
         from GangaCore.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '')
 
@@ -369,7 +375,7 @@ class Localhost(IBackend):
             try:
                 groupid = os.getpgid(wrapper_pid)
                 logger.debug(f"Wrapper for {job.getFQID('.')} has gid {groupid} and pid {self.wrapper_pid}")
-                os.killpg(groupid, signal.SIGKILL)
+                subprocess.run(['kill', '-9', f'-{groupid}'])
             except OSError as x:
                 logger.warning('While killing wrapper script for job %s: pid=%d, %s',
                                job.getFQID('.'), self.wrapper_pid, str(x))
@@ -396,7 +402,7 @@ class Localhost(IBackend):
         return 1
 
     def remove_workdir(self):
-        if config['remove_workdir'] and self.workdir:
+        if local_config['remove_workdir'] and self.workdir:
             import shutil
             try:
                 logger.debug("removing: %s" % self.workdir)
@@ -407,11 +413,31 @@ class Localhost(IBackend):
 
     @staticmethod
     async def updateMonitoringInformation(jobs):
+        test_config = GangaCore.Utility.Config.getConfig('TestDummyRemote')
+        BASE_URL = "http://localhost:5100"
 
-        async def read_status_file(path):
-            async with async_open(path) as statusfile:
-                file = await statusfile.read()
-            return file
+        def finalise_job(job):
+            from GangaCore.Core import monitoring_component
+            monitoring_component.loop.create_task(job_finalisation(job))
+
+        async def job_finalisation(j):
+            await simulate_fetch_output_files()
+            j.updateStatus('completed')
+
+        async def simulate_fetch_output_files():
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{BASE_URL}/outputfile", params={"jid": j.id}) as resp:
+                    if resp:
+                        return True
+
+        async def fetch_status_file(path, job):
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{BASE_URL}/statusfile", params={"path": path, "jid": j.id}) as resp:
+                    if resp.status == 404:
+                        raise IOError
+                    data = await resp.json()
+                    stat = data["stat"]
+                    return stat
 
         def get_exit_code(statusfile):
             m = re.compile(
@@ -443,7 +469,7 @@ class Localhost(IBackend):
             # try to get the application exit code from the status file
             try:
                 statusfile_path = join(outw.getPath(), '__jobstatus__')
-                statusfile = await read_status_file(statusfile_path)
+                statusfile = await fetch_status_file(statusfile_path, j)
 
                 if j.status == 'submitted':
                     pid, wrapper_pid = get_pids(statusfile)
@@ -451,7 +477,7 @@ class Localhost(IBackend):
                         j.backend.wrapper_pid = wrapper_pid
                     if pid:
                         j.backend.id = pid
-                        j.updateStatus('running')
+                        j.updateStatus('running')  # bugfix: 12194
                 exitcode = get_exit_code(statusfile)
             except IOError as x:
                 logger.debug('problem reading status file: %s (%s)', statusfile_path, str(x))
@@ -467,7 +493,11 @@ class Localhost(IBackend):
                 j.backend.exitcode = exitcode
 
                 if exitcode == 0:
-                    j.updateStatus('completed')
+                    if test_config['ENABLE_FINALISATION']:
+                        j.updateStatus('completing')
+                        finalise_job(j)
+                    else:
+                        j.updateStatus('completed')
                 else:
                     j.updateStatus('failed')
 
