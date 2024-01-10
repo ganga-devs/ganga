@@ -1,8 +1,7 @@
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
-from GangaCore.GPIDev.Schema import Schema, Version, ComponentItem
-from GangaCore.Core.exceptions import GangaException, BackendError
+from GangaCore.Core.exceptions import GangaException
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
@@ -34,7 +33,8 @@ class Dirac(DiracBase):
             for f in j.inputfiles.get(DiracFile):
                 if f.lfn == '':
                     raise GangaException(
-                        'Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' % f.namePattern)
+                        'Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' %
+                        f.namePattern)
                 else:
                     input_sandbox.append('LFN:' + f.lfn)
         return input_sandbox
@@ -59,15 +59,6 @@ class Dirac(DiracBase):
             logger.warning('Could not obtain Tier-1 info: %s' % str(result))
             return
         return result.get('Value', {})
-
-    def getOutputDataLFNs(self):
-        """Get a list of outputdata that has been uploaded by Dirac. Excludes
-        the outputsandbox if it is there."""
-        lfns = super(Dirac, self).getOutputDataLFNs()
-        ds = LHCbDataset()
-        for f in lfns:
-            ds.files.append(DiracFile(lfn=f))
-        return GPIProxyObjectFactory(ds)
 
     def getOutputData(self, outputDir=None, names=None, force=False):
         """Retrieve data stored on SE to outputDir (default=job output workspace).
@@ -112,7 +103,9 @@ def filterLFNsBySE(lfns, site):
         import GangaCore.Runtime.Repository_runtime
         GangaCore.Runtime.Repository_runtime.updateLocksNow()
     outLFNs = []
-    # reps is a dict of dicts of dicts with keys the index from the thread, 'Successful', LFN, then the SEs, then the values are the PFNs. Pick out the LFNs we want
+    # reps is a dict of dicts of dicts with keys the index from the thread,
+    # 'Successful', LFN, then the SEs, then the values are the PFNs. Pick out
+    # the LFNs we want
     for _index in reps.keys():
         for _lfn, _replicas in reps[_index]['Successful'].items():
             if site in _replicas.keys():

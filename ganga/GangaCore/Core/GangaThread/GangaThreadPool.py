@@ -38,7 +38,7 @@ class GangaThreadPool(object):
         self.__threads = []
 
     def addServiceThread(self, t):
-        #logger.debug('service thread "%s" added to the GangaThreadPool', t.getName())
+        #logger.debug('service thread "%s" added to the GangaThreadPool', t.name)
         # HERE TO AVOID AN IMPORT ERROR!
         from GangaCore.Core.GangaThread.MTRunner import DuplicateDataItemError
         try:
@@ -47,7 +47,7 @@ class GangaThreadPool(object):
             self.logger.debug("%s" % e)
 
     def delServiceThread(self, t):
-        #logger.debug('service thread "%s" deleted from the GangaThreadPool', t.getName())
+        #logger.debug('service thread "%s" deleted from the GangaThreadPool', t.name)
         try:
             if t in self.__threads:
                 self.__threads.remove(t)
@@ -93,7 +93,7 @@ class GangaThreadPool(object):
         import threading
         shutdown_thread = threading.Thread(target=self.__do_shutdown__, args=(
             self.__threads,), name='GANGA_Update_Thread_shutdown')
-        shutdown_thread.setDaemon(True)
+        shutdown_thread.daemon = True
         shutdown_thread.start()
 
         t_start = time.time()
@@ -223,17 +223,17 @@ class GangaThreadPool(object):
         # Shutdown NON critical threads first as these can cause some critical
         # threads to hang
         for t in reversed(nonCritThreads):
-            logger.debug('shutting down Thread: %s' % t.getName())
+            logger.debug('shutting down Thread: %s' % t.name)
             t.stop()
-            logger.debug('shutdown Thread: %s' % t.getName())
+            logger.debug('shutdown Thread: %s' % t.name)
             # t.unregister()
 
         # Shutdown critical threads now assuming that the non-critical ones
         # have disappeared
         for t in reversed(critThreads):
-            logger.debug('shutting down Thread: %s' % t.getName())
+            logger.debug('shutting down Thread: %s' % t.name)
             t.stop()
-            logger.debug('shutdown Thread: %s' % t.getName())
+            logger.debug('shutdown Thread: %s' % t.name)
             # t.unregister()
 
         #    nonCritThreads = []

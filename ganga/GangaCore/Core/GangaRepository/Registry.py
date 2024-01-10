@@ -241,7 +241,7 @@ class RegistryFlusher(GangaThread):
         """
         Returns if the flusher has stopped as a boolean?
         """
-        return self._stop_event.isSet()
+        return self._stop_event.is_set()
 
     def join(self, *args, **kwargs):
         """

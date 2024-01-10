@@ -2,8 +2,6 @@
 # in all cases with the relavent app name (DaVinci, Gauss etc...)
 import os
 import tempfile
-import pprint
-import sys
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps, guess_version, available_packs
@@ -11,16 +9,13 @@ from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSum
 from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaCore.GPIDev.Schema import SimpleItem
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from GangaCore.Utility.Shell import Shell
 from GangaLHCb.Lib.Applications.PythonOptionsParser import PythonOptionsParser
 from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.files import expandfilename
-from GangaCore.Utility.execute import execute
 from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 import GangaCore.Utility.logging
-import subprocess
 import pickle
 logger = GangaCore.Utility.logging.getLogger()
 
@@ -105,12 +100,12 @@ class AppName(Gaudi):
     def readInputData(self, optsfiles, extraopts=False):
         '''Returns a LHCbDataSet object from a list of options files. The
         optional argument extraopts will decide if the extraopts string inside
-        the application is considered or not. 
+        the application is considered or not.
 
         Usage examples:
         # Create an LHCbDataset object with the data found in the optionsfile
         l=DaVinci(version='v22r0p2').readInputData([\"~/cmtuser/\" \
-        \"DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"]) 
+        \"DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"])
         # Get the data from an options file and assign it to the jobs inputdata
         field
         j.inputdata = j.application.readInputData([\"~/cmtuser/\" \
@@ -120,10 +115,10 @@ class AppName(Gaudi):
         # In this case your extraopts need to be fully parseable by gaudirun.py
         # So you must make sure that you have the proper import statements.
         # e.g.
-        from Gaudi.Configuration import * 
+        from Gaudi.Configuration import *
         # If you mix optionsfiles and extraopts, as usual extraopts may
         # overwright your options
-        # 
+        #
         # Use this to create a new job with data from extraopts of an old job
         j=Job(inputdata=jobs[-1].application.readInputData([],True))
         '''
@@ -133,7 +128,7 @@ class AppName(Gaudi):
             os.close(temp_fd)
             return temp_filename
 
-        if type(optsfiles) != type([]):
+        if not isinstance(optsfiles, type([])):
             optsfiles = [optsfiles]
 
         # use a dummy file to keep the parser happy
@@ -165,7 +160,7 @@ class AppName(Gaudi):
         return FileFunctions.getpack(self, options)
 
     def make(self, argument=None):
-        """Performs a make on the application. The unix exit code is 
+        """Performs a make on the application. The unix exit code is
            returned. Any arguments given are passed onto as in
            dv.make('clean').
         """
@@ -175,7 +170,7 @@ class AppName(Gaudi):
     def cmt(self, command):
         """Execute a cmt command in the cmt user area pointed to by the
         application. Will execute the command "cmt <command>" after the
-        proper configuration. Do not include the word "cmt" yourself. The 
+        proper configuration. Do not include the word "cmt" yourself. The
         unix exit code is returned."""
         if self.newStyleApp is True:
             logger.error("Cannot use this with cmake enabled!")
@@ -192,11 +187,11 @@ class AppName(Gaudi):
     def _get_parser(self):
         optsfiles = []
         for fileitem in self.optsfile:
-            if type(fileitem) is str:
+            if isinstance(fileitem, str):
                 optsfiles.append(fileitem)
             else:
                 optsfiles.append(fileitem.name)
-        #optsfiles = [fileitem.name for fileitem in self.optsfile]
+        # optsfiles = [fileitem.name for fileitem in self.optsfile]
         # add on XML summary
 
         extraopts = ''
