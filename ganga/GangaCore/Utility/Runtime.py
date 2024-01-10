@@ -154,7 +154,7 @@ class RuntimePackage(object):
             # @see Ganga/PACKAGE.py for description of this magic module
             # in this way we enforce any initialization of module is performed
             # (e.g PackageSetup.setPlatform() is called)
-            __import__(self.name + ".PACKAGE")
+            #__import__(self.name + ".PACKAGE")
 
         except ImportError as x:
             logger.warning("cannot import runtime package %s: %s", self.name, str(x))
