@@ -48,14 +48,8 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
 
     current_status = None
     while j.status != state and timeout > 0:
-        if not monitoring_component.isEnabled():
-            monitoring_component.runMonitoring(jobs=jobs.select(j.id, j.id))
-        else:
-            monitoring_component.alive = True
-            monitoring_component.enabled = True
-            monitoring_component.steps = -1
-            monitoring_component.__updateTimeStamp = 0
-            monitoring_component.__sleepCounter = -0.5
+        if not monitoring_component.enabled:
+            monitoring_component.enable()
         if verbose and j.status != current_status:
             logger.info("Job %s: status = %s" % (str(j.id), str(j.status)))
         if current_status is None:

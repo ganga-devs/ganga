@@ -1,19 +1,11 @@
 #!/usr/bin/env python
 import sys
-import os
-import errno
 import socket
 import traceback
 import six
 HOST = 'localhost'  # Standard loopback interface address (localhost)
 PORT = int(sys.argv[1])        # Port to listen on
 rand_hash = six.moves.input()
-import time
-# We have to define an output function as a placeholder here.
-
-
-def output(data):
-    pass
 
 # A function to shutdown an existing processes
 
@@ -43,7 +35,7 @@ class socketWrapper(object):
                 break
             cmd += data
         # Check the random string is in the cmd so we know it came from a trusted source.
-        if not rand_hash in cmd:
+        if rand_hash not in cmd:
             return 'close-connection'
         if cmd == '###BROKEN###':
             return ''
@@ -79,10 +71,10 @@ while True:
 
         try:
             print(eval(cmd))
-        except:
+        except BaseException:
             try:
                 exec(cmd)
-            except:
+            except BaseException:
                 print("Exception raised executing command (cmd) '%s'\n" % cmd)
                 print(traceback.format_exc())
 
