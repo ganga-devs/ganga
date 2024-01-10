@@ -115,7 +115,8 @@ setup(
             'pytest-mock'],
         'profiler': ['memory_profiler'],
         'LHCb': ['LbDevTools'],
-        'Dirac': ['UltraDict']},
+        'Dirac': ['UltraDict',
+                  'psutil']},
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
         'Programming Language :: Python :: 3.8',
