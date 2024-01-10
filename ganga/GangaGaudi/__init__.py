@@ -18,10 +18,10 @@ if not _after_bootstrap:
     configGaudi.addOption('pyFileCollectionDepth', 2, dscrpt)
 
 
-def standardSetup():
+#def standardSetup():
 
-    from . import PACKAGE
-    PACKAGE.standardSetup()
+ #   from . import PACKAGE
+ #  PACKAGE.standardSetup()
 
 
 def loadPlugins(config=None):
