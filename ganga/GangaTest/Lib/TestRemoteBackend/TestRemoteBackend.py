@@ -124,7 +124,7 @@ class DummyRemote(IBackend):
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
 
-        rcode = super().master_submit(rjobs, subjobconfigs,
+        super().master_submit(rjobs, subjobconfigs,
                                       masterjobconfig, keep_going, self.force_parallel)
 
         scriptPath = self.prepare_master_script(rjobs)
@@ -133,8 +133,8 @@ class DummyRemote(IBackend):
         return 1
 
     def submit(self, jobconfig, master_input_sandbox):
-        job = self.getJobObject()
-        prepared = self.preparejob(jobconfig, master_input_sandbox)
+        self.getJobObject()
+        self.preparejob(jobconfig, master_input_sandbox)
         self.actualCE = GangaCore.Utility.util.hostname()
         return 1
 
@@ -217,8 +217,6 @@ class DummyRemote(IBackend):
            These are converted into datetime objects and returned to the user.
         """
         j = self.getJobObject()
-        end_list = ['completed', 'failed']
-        d = {}
         checkstr = ''
 
         if status == 'running':
@@ -281,7 +279,7 @@ class DummyRemote(IBackend):
 
         job = self.getJobObject()
         # print str(job.backend_output_postprocess)
-        mon = job.getMonitoringService()
+        job.getMonitoringService()
         import GangaCore.Core.Sandbox as Sandbox
         from GangaCore.GPIDev.Lib.File import File
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
@@ -384,7 +382,7 @@ class DummyRemote(IBackend):
 
             # waitpid to avoid zombies. This always returns an error
             try:
-                ws = os.waitpid(wrapper_pid, 0)
+                os.waitpid(wrapper_pid, 0)
             except OSError:
                 pass
 
