@@ -44,19 +44,15 @@ def setPlatform(platform):
             "Ganga platform has been already set to: %s" % str(_new_platform))
     # change the global platform used in bootstrap
     import Ganga
-    if GangaCore.PACKAGE._defaultPlatform != platform:
         from GangaCore.Utility.logging import getLogger
         logger = getLogger(modulename=True)
         logger.info('The platform identification string (%s) used to resolve Ganga dependencies has been explicitly set to: %s.'
-                    % (GangaCore.PACKAGE._defaultPlatform, platform))
-    GangaCore.PACKAGE._defaultPlatform = _new_platform = platform
 
 
 def getPlatform():
     """
     Returns the current platform string set for Ganga
     """
-    from GangaCore.PACKAGE import _defaultPlatform
     return _defaultPlatform
 
 
@@ -65,12 +61,8 @@ def setExternalHome(externalHome):
     Set the dir hosting the external packages
     """
     import Ganga
-    GangaCore.PACKAGE._defaultExternalHome = externalHome
-
 
 def getExternalHome():
     """
     Returns the current external home directory set for Ganga
     """
-    from GangaCore.PACKAGE import _defaultExternalHome
-    return _defaultExternalHome
