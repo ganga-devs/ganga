@@ -1,6 +1,5 @@
 import os
 import re
-import errno
 import subprocess
 import datetime
 import time
@@ -11,8 +10,7 @@ import shutil
 import sys
 import aiohttp
 
-from pathlib import Path
-from os.path import join, dirname, abspath, isdir, isfile
+from os.path import join, dirname, isdir, isfile
 
 import GangaCore.Utility.logic
 import GangaCore.Utility.util
@@ -23,7 +21,7 @@ import GangaCore.Lib.Localhost as Localhost
 
 from GangaCore.GPIDev.Adapters.IBackend import IBackend
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
-from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
+from GangaCore.GPIDev.Base.Proxy import getName
 from GangaCore.GPIDev.Lib.File import FileBuffer
 from GangaCore.GPIDev.Lib.File import FileUtils
 
@@ -37,16 +35,62 @@ class DummyRemote(IBackend):
 
     The job is run in the workdir (usually in /tmp).
     """
-    _schema = Schema(Version(1, 2), {'id': SimpleItem(defvalue=-1, protected=1, copyable=0, doc='Process id.'),
-                                     'status': SimpleItem(defvalue=None, typelist=[None, str], protected=1, copyable=0, hidden=1, doc='*NOT USED*'),
-                                     'exitcode': SimpleItem(defvalue=None, typelist=[int, None], protected=1, copyable=0, doc='Process exit code.'),
-                                     'workdir': SimpleItem(defvalue='', protected=1, copyable=0, doc='Working directory.'),
-                                     'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Hostname where the job was submitted.'),
-                                     'wrapper_pid': SimpleItem(defvalue=-1, typelist=['int', 'list'], protected=1, copyable=0, hidden=1, doc='(internal) process id(s) of the execution wrapper(s)'),
-                                     'nice': SimpleItem(defvalue=0, doc='adjust process priority using nice -n command'),
-                                     'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel'),
-                                     'batchsize': SimpleItem(defvalue=-1, typelist=[int], doc='Run a maximum of this number of subjobs in parallel. If value is negative use number of available CPUs')
-                                     })
+    _schema = Schema(
+        Version(
+            1,
+            2),
+        {
+            'id': SimpleItem(
+                defvalue=-1,
+                protected=1,
+                copyable=0,
+                doc='Process id.'),
+            'status': SimpleItem(
+                defvalue=None,
+                typelist=[
+                    None,
+                    str],
+                protected=1,
+                copyable=0,
+                hidden=1,
+                doc='*NOT USED*'),
+            'exitcode': SimpleItem(
+                defvalue=None,
+                typelist=[
+                    int,
+                    None],
+                protected=1,
+                copyable=0,
+                doc='Process exit code.'),
+            'workdir': SimpleItem(
+                defvalue='',
+                protected=1,
+                copyable=0,
+                doc='Working directory.'),
+            'actualCE': SimpleItem(
+                defvalue='',
+                protected=1,
+                copyable=0,
+                doc='Hostname where the job was submitted.'),
+            'wrapper_pid': SimpleItem(
+                defvalue=-1,
+                typelist=[
+                    'int',
+                    'list'],
+                protected=1,
+                copyable=0,
+                hidden=1,
+                doc='(internal) process id(s) of the execution wrapper(s)'),
+            'nice': SimpleItem(
+                defvalue=0,
+                doc='adjust process priority using nice -n command'),
+            'force_parallel': SimpleItem(
+                defvalue=False,
+                doc='should jobs really be submitted in parallel'),
+            'batchsize': SimpleItem(
+                defvalue=-1,
+                typelist=[int],
+                doc='Run a maximum of this number of subjobs in parallel. If value is negative use number of available CPUs')})
     _category = 'backends'
     _name = 'DummyRemote'
 
@@ -60,7 +104,7 @@ class DummyRemote(IBackend):
     def prepare_master_script(self, rjobs):
         job = self.getJobObject()
         wrkspace = job.getInputWorkspace()
-        if not job.splitter is None:
+        if job.splitter is not None:
             bs = self.batchsize
             if (bs < 0):
                 bs = multiprocessing.cpu_count()
@@ -80,7 +124,7 @@ class DummyRemote(IBackend):
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
 
-        rcode = super().master_submit(rjobs, subjobconfigs,
+        super().master_submit(rjobs, subjobconfigs,
                                       masterjobconfig, keep_going, self.force_parallel)
 
         scriptPath = self.prepare_master_script(rjobs)
@@ -89,8 +133,8 @@ class DummyRemote(IBackend):
         return 1
 
     def submit(self, jobconfig, master_input_sandbox):
-        job = self.getJobObject()
-        prepared = self.preparejob(jobconfig, master_input_sandbox)
+        self.getJobObject()
+        self.preparejob(jobconfig, master_input_sandbox)
         self.actualCE = GangaCore.Utility.util.hostname()
         return 1
 
@@ -138,7 +182,7 @@ class DummyRemote(IBackend):
             logger.error('cannot start a job process: %s', str(x))
             return 0
         oldid = self.wrapper_pid
-        if type(oldid) == int:
+        if isinstance(oldid, int):
             oldid = [oldid]
             if oldid[0] == -1:
                 self.wrapper_pid = [process.pid]
@@ -173,8 +217,6 @@ class DummyRemote(IBackend):
            These are converted into datetime objects and returned to the user.
         """
         j = self.getJobObject()
-        end_list = ['completed', 'failed']
-        d = {}
         checkstr = ''
 
         if status == 'running':
@@ -198,10 +240,10 @@ class DummyRemote(IBackend):
             logger.debug('unable to open file %s', p)
             return None
 
-        for l in f:
-            if checkstr in l:
-                pos = l.find(checkstr)
-                timestr = l[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
+        for _l in f:
+            if checkstr in _l:
+                pos = _l.find(checkstr)
+                timestr = _l[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
                 try:
                     t = datetime.datetime(
                         *(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
@@ -237,7 +279,7 @@ class DummyRemote(IBackend):
 
         job = self.getJobObject()
         # print str(job.backend_output_postprocess)
-        mon = job.getMonitoringService()
+        job.getMonitoringService()
         import GangaCore.Core.Sandbox as Sandbox
         from GangaCore.GPIDev.Lib.File import File
         from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
@@ -274,7 +316,10 @@ class DummyRemote(IBackend):
 
         script = script.replace('###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
 
-        from GangaCore.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles, getWNCodeForInputdataListCreation
+        from GangaCore.GPIDev.Lib.File.OutputFileManager import (getWNCodeForOutputSandbox,
+                                                                 getWNCodeForOutputPostprocessing,
+                                                                 getWNCodeForDownloadingInputFiles,
+                                                                 getWNCodeForInputdataListCreation)
         from GangaCore.Utility.Config import getConfig
         jobidRepr = repr(job.getFQID('.'))
 
@@ -319,7 +364,7 @@ class DummyRemote(IBackend):
         job = self.getJobObject()
 
         pids = self.wrapper_pid
-        if type(pids) == int:
+        if isinstance(pids, int):
             pids = [pids]
 
         if pids[0] < 0:
@@ -337,7 +382,7 @@ class DummyRemote(IBackend):
 
             # waitpid to avoid zombies. This always returns an error
             try:
-                ws = os.waitpid(wrapper_pid, 0)
+                os.waitpid(wrapper_pid, 0)
             except OSError:
                 pass
 

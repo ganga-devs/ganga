@@ -11,4 +11,3 @@ config.addOption("SERVER_DEFAULT_DELAY", 0.1, "Artificial delay in seconds")
 config.addOption("ENABLE_FINALISATION", True,
                  "Whether or not to simulate job finalisation via dummy output file download.")
 config.addOption("FINALISATION_DELAY", 10, "Job finalisation simulation delay in seconds.")
-
