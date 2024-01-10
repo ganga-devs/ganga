@@ -1,7 +1,7 @@
 
 def standardSetup():
-    import GangaTest.PACKAGE
-    PACKAGE.standardSetup()
+    #import GangaTest.PACKAGE
+    #PACKAGE.standardSetup()
 
 
 def loadPlugins(config=None):
