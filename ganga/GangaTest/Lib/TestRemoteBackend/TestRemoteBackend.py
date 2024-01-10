@@ -1,6 +1,5 @@
 import os
 import re
-import errno
 import subprocess
 import datetime
 import time
@@ -11,8 +10,7 @@ import shutil
 import sys
 import aiohttp
 
-from pathlib import Path
-from os.path import join, dirname, abspath, isdir, isfile
+from os.path import join, dirname, isdir, isfile
 
 import GangaCore.Utility.logic
 import GangaCore.Utility.util
@@ -23,7 +21,7 @@ import GangaCore.Lib.Localhost as Localhost
 
 from GangaCore.GPIDev.Adapters.IBackend import IBackend
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
-from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
+from GangaCore.GPIDev.Base.Proxy import getName
 from GangaCore.GPIDev.Lib.File import FileBuffer
 from GangaCore.GPIDev.Lib.File import FileUtils
 
@@ -244,10 +242,10 @@ class DummyRemote(IBackend):
             logger.debug('unable to open file %s', p)
             return None
 
-        for l in f:
-            if checkstr in l:
-                pos = l.find(checkstr)
-                timestr = l[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
+        for _l in f:
+            if checkstr in _l:
+                pos = _l.find(checkstr)
+                timestr = _l[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
                 try:
                     t = datetime.datetime(
                         *(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
@@ -320,7 +318,10 @@ class DummyRemote(IBackend):
 
         script = script.replace('###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
 
-        from GangaCore.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles, getWNCodeForInputdataListCreation
+        from GangaCore.GPIDev.Lib.File.OutputFileManager import (getWNCodeForOutputSandbox,
+                                                                 getWNCodeForOutputPostprocessing,
+                                                                 getWNCodeForDownloadingInputFiles,
+                                                                 getWNCodeForInputdataListCreation)
         from GangaCore.Utility.Config import getConfig
         jobidRepr = repr(job.getFQID('.'))
 
