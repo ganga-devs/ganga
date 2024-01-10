@@ -94,10 +94,10 @@ if not _after_bootstrap:
     # _store_root_version()
 
 
-def standardSetup():
+#def standardSetup():
 
-    from . import PACKAGE
-    PACKAGE.standardSetup()
+ #   from . import PACKAGE
+ #   PACKAGE.standardSetup()
 
 
 def loadPlugins(config=None):
