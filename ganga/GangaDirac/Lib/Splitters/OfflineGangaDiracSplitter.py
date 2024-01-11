@@ -5,7 +5,6 @@ from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from copy import deepcopy
 import random
 import time
 import math
@@ -127,7 +126,7 @@ def find_random_site(original_SE_list, banned_SE):
         original_SE_list (list): This is a list of given 'SE'. The same SE may appear more than once!
         banned_SE (list): This is a list of SE which are 'banned' from being selected
     """
-    input_list = deepcopy(original_SE_list)
+    input_list = list(original_SE_list)
     chosen_element = ""
 
     while chosen_element == "" and len(input_list) > 0:
