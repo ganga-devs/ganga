@@ -1,5 +1,4 @@
 from GangaCore.Core.exceptions import SplitterError
-from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
@@ -146,7 +145,8 @@ def getLFNReplicas(allLFNs, index, allLFNData):
     This method gets the location of all replicas for 'allLFNs' and stores the infomation in 'allLFNData'
 
     This is a 'static' method which is called multiple times with the same 'allLFNs' and 'allLFNData' and different index.
-    e.g. This allows Dirac to determine the replicas for ~250LFN all at once rather than for ~40,000 all at once which risks timeouts and other errors
+    e.g. This allows Dirac to determine the replicas for ~250LFN all at once
+    rather than for ~40,000 all at once which risks timeouts and other errors
 
     Args:
         allLFNs (list): This is a list of all LFN which have replicas on the grid
@@ -242,8 +242,6 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
     """
 
     SE_dict = dict()
-    maps_size = 0
-    found = []
 
     logger.info("Calculating site<->SE Mapping")
 
@@ -302,11 +300,13 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
 
 def lookUpLFNReplicas(inputs, ignoremissing):
     """
-    This method launches several worker threads to collect the replica information for all LFNs which are given as inputs and stores this in allLFNData
+    This method launches several worker threads to collect the replica information for all LFNs,
+    which are given as inputs and stores this in allLFNData
     Args:
         inputs (list): This is a list of input DiracFile which are
     Returns:
-        bad_lfns (list): A list of LFN which have no replica information when querying `getReplicasForJobs` from DIRAC
+        bad_lfns (list): A list of LFN which have no replica information when querying
+        `getReplicasForJobs` from DIRAC
     """
     allLFNData = {}
     # Build a useful dictionary and list
@@ -375,8 +375,6 @@ def updateLFNData(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
         upper_limit = (i + 1) * LFN_parallel_limit
         if upper_limit > len(allLFNs):
             upper_limit = len(allLFNs)
-
-        # logger.debug("Updating LFN Physical Locations: [%s:%s] of %s" % (str(i * LFN_parallel_limit), str(upper_limit), str(len(allLFNs))))
 
         for this_lfn in values.keys():
             # logger.debug("LFN: %s" % str(this_lfn))
