@@ -1,6 +1,6 @@
 def getEnvironment(c):
-    import PACKAGE
-    PACKAGE.standardSetup()
+    # import PACKAGE
+    # PACKAGE.standardSetup()
     return {}
 
 

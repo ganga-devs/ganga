@@ -17,7 +17,7 @@ from GangaCore.Core.exceptions import PluginError
 
 from GangaCore.Utility.util import importName
 
-#from GangaCore.Utility.external.ordereddict import oDict
+# from GangaCore.Utility.external.ordereddict import oDict
 from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
 allRuntimes = oDict()
 
@@ -64,7 +64,7 @@ def getScriptPath(name="", searchPath=""):
 def getSearchPath(configPar="SCRIPTS_PATH"):
     """Determine search path from configuration parameter
 
-       Argument: 
+       Argument:
           configPar : Name of configuration parameter defining search path
 
        Return value: Search path"""
@@ -145,7 +145,10 @@ class RuntimePackage(object):
             if self.syspath:
                 if self.modpath.find(self.syspath) == -1:
                     logger.warning(
-                        "runtime '%s' imported from '%s' but specified path is '%s'. You might be getting different code than expected!", self.name, self.modpath, self.syspath)
+                        "runtime '%s' imported from '%s' but specified path is '%s'. You might be getting different code than expected!",
+                        self.name,
+                        self.modpath,
+                        self.syspath)
             else:
                 logger.debug(
                     "runtime package %s imported from %s", self.name, self.modpath)
@@ -154,7 +157,6 @@ class RuntimePackage(object):
             # @see Ganga/PACKAGE.py for description of this magic module
             # in this way we enforce any initialization of module is performed
             # (e.g PackageSetup.setPlatform() is called)
-            __import__(self.name + ".PACKAGE")
 
         except ImportError as x:
             logger.warning("cannot import runtime package %s: %s", self.name, str(x))
@@ -204,7 +206,7 @@ class RuntimePackage(object):
                                             'Ganga'),
                                         file_ext=file_ext,
                                         pickle_files=pickle_files)
-        except:
+        except BaseException:
             logger.debug('failed to load named template registry')
             raise
 

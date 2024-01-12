@@ -70,9 +70,6 @@ def start_ganga(gangadir_for_test, repositorytype="LocalXML", extra_opts=[], ext
         extra_opts (list): A list of tuples which are used to pass command line style options to Ganga
     """
 
-    import GangaCore.PACKAGE
-    GangaCore.PACKAGE.standardSetup()
-
     # End taken from the ganga binary
 
     import GangaCore.Runtime
@@ -206,17 +203,17 @@ def emptyRepositories():
     for j in jobs:
         try:
             j.remove()
-        except:
+        except BaseException:
             pass
     for t in templates:
         try:
             t.remove()
-        except:
+        except BaseException:
             pass
     for t in tasks:
         try:
             t.remove(remove_jobs=True)
-        except:
+        except BaseException:
             pass
     if hasattr(jobs, 'clean'):
         jobs.clean(confirm=True, force=True)
@@ -258,7 +255,7 @@ def stop_ganga(force_cleanup=False):
     logger.info("Shutting Down Internal Services")
 
     # Disable internal services such as monitoring and other tasks
-    #from GangaCore.Core.InternalServices import Coordinator
+    # from GangaCore.Core.InternalServices import Coordinator
     # if Coordinator.servicesEnabled:
     #    Coordinator.disableInternalServices()
     #    Coordinator.servicesEnabled = False
