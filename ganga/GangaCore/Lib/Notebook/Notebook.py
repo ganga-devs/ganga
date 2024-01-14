@@ -64,7 +64,7 @@ class Notebook(IPrepareApp):
             ),
             'kernel': SimpleItem(
                 preparable=1,
-                defvalue='python2',
+                defvalue='python3',
                 doc="The kernel to use for the notebook execution. \
                 Depending on configuration, python3, Root and R might be available.",
             ),
