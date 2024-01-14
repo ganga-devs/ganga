@@ -167,7 +167,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
 
 
 def exe_script_template():
-    script_template = """#!/usr/bin/env python2
+    script_template = """#!/usr/bin/env python3
 '''Script to run Executable application'''
 import sys, os
 import subprocess
