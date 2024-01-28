@@ -1116,12 +1116,19 @@ class DiracBase(IBackend):
 
         # if requested try downloading outputsandbox anyway
         if configDirac['failed_sandbox_download'] and not job.backend.status == 'Killed':
-            dm = AsyncDiracManager()
-            await dm.execute(getOutputSandbox, args_dict={
-                'id': job.backend.id,
-                'outputDir': job.getOutputWorkspace().getPath(),
-                'unpack': job.backend.unpackOutputSandbox
-            }, cred_req=job.backend.credential_requirements)
+            try:
+                dm = AsyncDiracManager()
+                await dm.execute(
+                    getOutputSandbox,
+                    args_dict={
+                        "id": job.backend.id,
+                        "outputDir": job.getOutputWorkspace().getPath(),
+                        "unpack": job.backend.unpackOutputSandbox,
+                    },
+                    cred_req=job.backend.credential_requirements,
+                )
+            except Exception as err:
+                raise GangaDiracError(str(err))
 
     @staticmethod
     async def complete_dirac_job(job):
@@ -1312,7 +1319,12 @@ class DiracBase(IBackend):
             job.been_queued = True
             task = monitoring_component.loop.create_task(
                 DiracBase._internal_job_finalisation(job, updated_dirac_status))
-            await task
+
+            try:
+                await task
+            except GangaDiracError as err:
+                logger.error("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
+                logger.error(err)
             err = task.exception()
 
             if not err:
