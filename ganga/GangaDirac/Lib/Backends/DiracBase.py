@@ -1094,13 +1094,20 @@ class DiracBase(IBackend):
                 DiracBase.finalise_jobs(job.master.subjobs, job.master.backend.downloadSandbox)
 
         if updated_dirac_status == 'completed':
-            await DiracBase.complete_dirac_job(job)
+            try:
+                await DiracBase.complete_dirac_job(job)
+            except Exception as err:
+                raise GangaDiracError(f"Error while finalising job {job.id}: {str(err)}")
 
-        elif updated_dirac_status == 'failed':
-            await DiracBase.finalise_failed_job(job)
+        if updated_dirac_status == 'failed':
+            try:
+                await DiracBase.finalise_failed_job(job)
+            except Exception as err:
+                raise GangaDiracError(f"Error while finalising failed job {job.id}: {str(err)}")
 
         else:
-            logger.error("Job #%s Unexpected dirac status '%s' encountered" % (job.getFQID('.'), updated_dirac_status))
+            if updated_dirac_status not in ['completing', 'failed', 'killed', 'removed', 'completed']:
+                logger.error("Job #%s Unexpected dirac status '%s' encountered" % (job.getFQID('.'), updated_dirac_status))
 
     @staticmethod
     async def finalise_failed_job(job):
@@ -1116,12 +1123,20 @@ class DiracBase(IBackend):
 
         # if requested try downloading outputsandbox anyway
         if configDirac['failed_sandbox_download'] and not job.backend.status == 'Killed':
-            dm = AsyncDiracManager()
-            await dm.execute(getOutputSandbox, args_dict={
-                'id': job.backend.id,
-                'outputDir': job.getOutputWorkspace().getPath(),
-                'unpack': job.backend.unpackOutputSandbox
-            }, cred_req=job.backend.credential_requirements)
+            try:
+                dm = AsyncDiracManager()
+                await dm.execute(
+                    getOutputSandbox,
+                    args_dict={
+                        "id": job.backend.id,
+                        "outputDir": job.getOutputWorkspace().getPath(),
+                        "unpack": job.backend.unpackOutputSandbox,
+                    },
+                    cred_req=job.backend.credential_requirements,
+                )
+            except Exception as err:
+                raise GangaDiracError(str(err))
+    
 
     @staticmethod
     async def complete_dirac_job(job):
@@ -1312,7 +1327,12 @@ class DiracBase(IBackend):
             job.been_queued = True
             task = monitoring_component.loop.create_task(
                 DiracBase._internal_job_finalisation(job, updated_dirac_status))
-            await task
+                
+            try:
+                await task
+            except GangaDiracError as err:
+                logger.error("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
+                logger.error(err)
             err = task.exception()
 
             if not err:
@@ -1335,7 +1355,7 @@ class DiracBase(IBackend):
                     logger.error("Unable to finalise job %s after %s retries due to error:\n%s" %
                                  (job.getFQID('.'), str(count), str(err)))
                     job.force_status('failed')
-                    raise
+                    raise            
 
             time.sleep(sleep_length)
 
@@ -1382,6 +1402,13 @@ class DiracBase(IBackend):
                 }))
 
     @staticmethod
+    def job_exception_handler(job_id, task):
+        exception = task.exception()
+        if exception:
+            # Handle the exception, e.g., log it
+            logger.error(f"Error in DIRAC job {job_id}: {exception}")
+
+    @staticmethod
     def requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses):
         from GangaCore.Core import monitoring_component
 
@@ -1405,8 +1432,9 @@ class DiracBase(IBackend):
                 continue
             else:
                 j.been_queued = True
-                monitoring_component.loop.create_task(
+                task = monitoring_component.loop.create_task(
                     DiracBase.job_finalisation(j, finalised_statuses[j.backend.status]))
+                task.add_done_callback(lambda task, job_id=j.id: DiracBase.job_exception_handler(job_id, task))
 
     # @trace_and_save
     @staticmethod
