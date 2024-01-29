@@ -1,6 +1,6 @@
 FROM centos:7
 LABEL maintainer "Ulrik Egede <ulrik.egede@monash.edu>"
-ARG ganga_version=8.4.2
+ARG ganga_version='8.7.2'
 
 RUN yum -y update && yum install -y wget git python3
 
