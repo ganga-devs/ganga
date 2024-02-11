@@ -17,6 +17,17 @@ import time
 sys.path.insert( 0, '###GANGA_PYTHONPATH###' )
 
 statfileName = os.path.join( '###OUTPUTDIR###', '__jobstatus__' )
+logfile = os.path.join('###OUTPUTDIR###', 'interactive_log.txt')
+
+try:
+    statfile = open(statfileName, 'w')
+    logfile = open(logfile, 'w')
+except IOError as x:
+    print('ERROR: Unable to write status file or log file.')
+    print('ERROR: ', x)
+    raise
+finally:
+    statfile.close()
 try:
    statfile = open( statfileName, 'w' )
 except IOError as x:
