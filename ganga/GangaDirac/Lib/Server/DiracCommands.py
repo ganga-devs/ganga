@@ -52,7 +52,7 @@ def ping(system, service):
 def removeFile(lfn):
     ''' Remove a given LFN from the DFC'''
     ret = {}
-    if type(lfn) is list:
+    if isinstance(lfn, list):
         for l in lfn:
             ret.update(dirac.removeFile(l))
     else:
@@ -165,7 +165,8 @@ def getOutputSandbox(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJ
 
         os.system(
             'for file in $(ls %s/*Ganga_*.log); do ln -s ${file} %s/stdout; break; done' % (outputDir, outputDir))
-    # So the download failed. Maybe the sandbox was oversized and stored on the grid. Check in the job parameters and download it
+    # So the download failed. Maybe the sandbox was oversized and stored on
+    # the grid. Check in the job parameters and download it
     else:
         parameters = dirac.getJobParameters(id)
         if parameters is not None and parameters.get('OK', False):
@@ -222,7 +223,7 @@ def getOutputDataLFNs(id, pipe_out=True):
         if 'UploadedOutputData' in parameters:
             lfn_list = parameters['UploadedOutputData']
             import re
-            lfns = re.split(',\s*', lfn_list)
+            lfns = re.split(',\\s*', lfn_list)
             if sandbox is not None and sandbox in lfns:
                 lfns.remove(sandbox)
             ok = True
@@ -312,7 +313,7 @@ def status(job_ids, statusmapping, pipe_out=True):
             from DIRAC.Core.DISET.RPCClient import RPCClient
             monitoring = RPCClient('WorkloadManagement/JobMonitoring')
             app_status = monitoring.getJobAttributes(_id)['Value']['ApplicationStatus']
-        except:
+        except BaseException:
             app_status = "unknown ApplicationStatus"
 
         status_list.append([minor_status, dirac_status, dirac_site, ganga_status, app_status])
@@ -475,7 +476,7 @@ def listFiles(baseDir, minAge=None):
     withMetaData = False
     cutoffTime = datetime.utcnow()
     import re
-    r = re.compile('\d:\d:\d')
+    r = re.compile('\\d:\\d:\\d')
     if r.match(minAge):
         withMetaData = True
         timeList = minAge.split(':')
