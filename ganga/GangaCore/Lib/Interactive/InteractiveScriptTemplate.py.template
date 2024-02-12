@@ -5,6 +5,7 @@ import glob
 import mimetypes
 import os
 import shutil
+import subprocess
 import sys
 import time
 
@@ -13,88 +14,79 @@ import time
 
 ###WNSANDBOX_SOURCE###
 
+sys.path.insert(0, '###GANGA_PYTHONPATH###')
 
-sys.path.insert( 0, '###GANGA_PYTHONPATH###' )
-
-statfileName = os.path.join( '###OUTPUTDIR###', '__jobstatus__' )
-logfile = os.path.join('###OUTPUTDIR###', 'interactive_log.txt')
+statfileName = os.path.join('###OUTPUTDIR###', '__jobstatus__')
+logfile = os.path.join('###OUTPUTDIR###', 'stdout')
+errfile = os.path.join('###OUTPUTDIR###', 'stderr')
 
 try:
-    statfile = open(statfileName, 'w')
-    logfile = open(logfile, 'w')
-except IOError as x:
+    with open(statfileName, 'w') as statfile, open(logfile, 'wb') as stdout, open(errfile, 'wb') as stderr:
+        idfileName = os.path.join('###OUTPUTDIR###', '__id__')
+        with open(idfileName, 'w') as idfile:
+            timeString = time.strftime('%a %d %b %H:%M:%S %Y', time.gmtime(time.time()))
+            statfile.write('START: ' + timeString + os.linesep)
+
+            if not os.path.exists('###WORKDIR###'):
+                os.makedirs('###WORKDIR###')
+            os.chdir('###WORKDIR###')
+            for inFile in ###IN_BOX###:
+                if mimetypes.guess_type(inFile)[1] in ['gzip', 'bzip2']:
+                    getPackedInputSandbox(inFile)
+                else:
+                    shutil.copy(inFile, os.path.join(os.getcwd(), os.path.basename(inFile)))
+            sys.path.insert(0, os.path.join(os.getcwd(), '_python'))
+
+            ###WN_INPUTFILES###
+
+            ###WN_INPUTDATA###
+
+            for key, value in ###JOBCONFIG_ENV###.items():
+                os.environ[key] = value
+
+            pyCommandList = [
+                'import os',
+                'idfileName = \'%s\'' % idfileName,
+                'idfile = open(idfileName, \'a\')',
+                'idfile.write(\'PID: \' + str(os.getppid()))',
+                'idfile.flush()',
+                'idfile.close()']
+            pyCommandString = ';'.join(pyCommandList)
+
+            commandStr = '\'' + str(r'###EXE_STRING### ###ARG_STRING###') + '\''
+            commandList = [
+                'python -c "%s' % pyCommandString,
+                'os.system(%s)"' % commandStr]
+            commandString = ';'.join(commandList)
+
+            process = subprocess.Popen(commandString, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+
+            while True:
+                output = process.stdout.readline()
+                if output == b'' and process.poll() is not None:
+                    break
+                if output:
+                    print(output.strip().decode('utf-8'))
+                    stdout.write(output)
+                err = process.stderr.readline()
+                if err:
+                    print(err.strip().decode('utf-8'), file=sys.stderr)
+                    stderr.write(err)
+
+            rc = process.poll()
+
+            ###WN_POSTPROCESSING###
+            for patternToZip in ###PATTERNS_TO_ZIP###:
+                for currentFile in glob.glob(patternToZip):
+                    os.system('gzip %s' % currentFile)
+
+            createOutputSandbox(###OUTPUT_SANDBOX_PATTERNS###, None, '###OUTPUTDIR###')
+
+            statfile.write('EXITCODE: ' + str(rc >> 8) + os.linesep)
+            timeString = time.strftime('%a %d %b %H:%M:%S %Y', time.gmtime(time.time()))
+            statfile.write('STOP: ' + timeString + os.linesep)
+            statfile.flush()
+except Exception as x:
     print('ERROR: Unable to write status file or log file.')
     print('ERROR: ', x)
     raise
-finally:
-    statfile.close()
-try:
-   statfile = open( statfileName, 'w' )
-except IOError as x:
-   print('ERROR: Unable to write status file: %s' % statfileName)
-   print('ERROR: ',x)
-   raise
-
-idfileName = os.path.join( '###OUTPUTDIR###', '__id__' )
-try:
-   idfile = open( idfileName, 'w' )
-except IOError as x:
-   print('ERROR: Unable to write id file: %s' % idfileName)
-   print('ERROR: ',x)
-   raise
-finally:
-   idfile.close()
-
-timeString = time.strftime( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )
-statfile.write( 'START: ' + timeString + os.linesep )
-
-if not os.path.exists( '###WORKDIR###'):
-    os.makedirs('###WORKDIR###')
-os.chdir( '###WORKDIR###' )
-for inFile in ###IN_BOX###:
-    if mimetypes.guess_type(inFile)[1] in ['gzip', 'bzip2']:
-        getPackedInputSandbox( inFile )
-    else:
-        shutil.copy(inFile, os.path.join(os.getcwd(), os.path.basename(inFile)))
-sys.path.insert(0, os.path.join(os.getcwd(), '_python'))
-
-###WN_INPUTFILES###
-
-###WN_INPUTDATA###
-
-for key, value in ###JOBCONFIG_ENV###.items():
-   os.environ[ key ] = value
-
-pyCommandList = [
-   'import os',
-   'idfileName = \'%s\'' % idfileName,
-   'idfile = open( idfileName, \'a\' )',
-   'idfile.write( \'PID: \' + str( os.getppid() ) )',
-   'idfile.flush()',
-   'idfile.close()' ]
-pyCommandString = ';'.join( pyCommandList )
-
-commandStr = '\'' + str(r'###EXE_STRING### ###ARG_STRING###') + '\''
-#commandStr = commandStr.replace('"', '\'')
-
-commandList = [
-   'python -c "%s' % pyCommandString,
-   'os.system(%s)"' % commandStr  ]
-commandString = ';'.join( commandList )
-
-result = os.system( '%s' % commandString )
-
-###WN_POSTPROCESSING###
-for patternToZip in ###PATTERNS_TO_ZIP###:
-   for currentFile in glob.glob(patternToZip):
-      os.system('gzip %s' % currentFile)
-
-createOutputSandbox( ###OUTPUT_SANDBOX_PATTERNS###, None, '###OUTPUTDIR###' )
-
-statfile.write( 'EXITCODE: ' + str( result >> 8 ) + os.linesep )
-timeString = time.strftime( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )
-statfile.write( 'STOP: ' + timeString + os.linesep )
-statfile.flush()
-statfile.close()
-
-
