@@ -270,9 +270,6 @@ under certain conditions; type license() for details.
 
         parser = OptionParser(usage, version=_gangaVersion)
 
-        parser.add_option("-i", dest="force_interactive", action="store_true",
-                          help='enter interactive mode after running script')
-
         parser.add_option("--config", dest="config_file", action="store", metavar="FILE", default=None,
                           help=('read user configuration from FILE, overrides the GANGA_CONFIG_FILE environment variable. '
                                 'Default: ~/.gangarc'))
@@ -320,7 +317,7 @@ under certain conditions; type license() for details.
         parser.add_option("--daemon", dest='daemon', action="store_true", default=False,
                           help='run Ganga as service.')
 
-        parser.set_defaults(force_interactive=False, config_file=None,
+        parser.set_defaults(config_file=None,
                             force_loglevel=None, rexec=1, monitoring=1, prompt=1, generate_config=None)
         parser.disable_interspersed_args()
 
@@ -353,11 +350,6 @@ under certain conditions; type license() for details.
             open_file = file_opens(
                 self.options.config_file, 'reading configuration file')
             open_file.close()
-        # we run in the batch mode if a script has been specified and other
-        # options (such as -i) do not force it
-        if len(self.args) > 0:
-            if not self.options.force_interactive:
-                self.interactive = False
 
 # Can't check here if the file is readable, because the path isn't known
 #           file_opens(self.args[0],'reading script')
