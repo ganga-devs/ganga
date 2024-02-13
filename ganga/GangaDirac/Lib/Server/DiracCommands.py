@@ -48,8 +48,8 @@ def removeFile(lfn):
     ''' Remove a given LFN from the DFC'''
     ret = {}
     if isinstance(lfn, list):
-        for l in lfn:
-            ret.update(dirac.removeFile(l))
+        for _l in lfn:
+            ret.update(dirac.removeFile(_l))
     else:
         ret.update(dirac.removeFile(lfn))
     return ret
@@ -248,8 +248,10 @@ def normCPUTime(id, pipe_out=True):
 
 @diracCommand
 def finished_job(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDir=True, downloadSandbox=True):
-    ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, takes arguments such as getOutputSandbox
-    Returns the CPU time of the job as a dict, the output sandbox information in another dict and a dict of the LFN of any uploaded data'''
+    ''' Nesting function to reduce number of calls made against DIRAC when finalising a job,
+    takes arguments such as getOutputSandbox
+    Returns the CPU time of the job as a dict, the output sandbox information in another dict
+    and a dict of the LFN of any uploaded data'''
     out_cpuTime = normCPUTime(id, pipe_out=False)
     if downloadSandbox:
         out_sandbox = getOutputSandbox(id, outputDir, unpack, oversized, noJobDir, pipe_out=False)
@@ -262,7 +264,8 @@ def finished_job(id, outputDir=os.getcwd(), unpack=True, oversized=True, noJobDi
 
 @diracCommand
 def finaliseJobs(inputDict, downloadSandbox=True, oversized=True, noJobDir=True):
-    ''' A function to get the necessaries to finalise a whole bunch of jobs. Returns a dict of job information and a dict of stati.'''
+    ''' A function to get the necessaries to finalise a whole bunch of jobs.
+    Returns a dict of job information and a dict of stati.'''
     returnDict = {}
     statusList = dirac.getJobStatus(list(inputDict))
     for diracID in inputDict:
@@ -280,7 +283,8 @@ def finaliseJobs(inputDict, downloadSandbox=True, oversized=True, noJobDir=True)
 
 @diracCommand
 def status(job_ids, statusmapping, pipe_out=True):
-    '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
+    '''Function to check the statuses and return the Ganga status of a job after looking
+    it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
 
     # return {'OK':True, 'Value':[['WIP', 'WIP', 'WIP', 'WIP', 'WIP']]}
@@ -340,9 +344,9 @@ def getStateTime(id, status, pipe_out=True):
         print("%s" % None)
         return
 
-    for l in L:
-        if checkstr in l[0]:
-            T = datetime.datetime(*(time.strptime(l[3], "%Y-%m-%d %H:%M:%S")[0:6]))
+    for _l in L:
+        if checkstr in _l[0]:
+            T = datetime.datetime(*(time.strptime(_l[3], "%Y-%m-%d %H:%M:%S")[0:6]))
             return T
 
     return None
