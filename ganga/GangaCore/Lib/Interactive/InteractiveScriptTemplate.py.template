@@ -76,7 +76,9 @@ commandString = ';'.join( commandList )
 
 try:
     with open(logfile, 'wb') as stdout, open(errfile, 'wb') as stderr:
-        process = subprocess.Popen(commandString, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        process = subprocess.Popen(commandString, shell=True, 
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, 
+                                stdin=subprocess.PIPE)
 
         while True:
             output = process.stdout.readline()
