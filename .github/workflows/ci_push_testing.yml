@@ -210,6 +210,7 @@ jobs:
           curl -LO https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
           bash DIRACOS-Linux-$(uname -m).sh
           source diracos/diracosrc
+          python -m pip install DIRAC
           mkdir ~/.proxy
           DIRAC_PROXY_INIT=`which dirac-proxy-init`
           export PATH=~/.proxy:"$PATH"
@@ -254,6 +255,7 @@ jobs:
           curl -LO https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
           bash DIRACOS-Linux-$(uname -m).sh
           source diracos/diracosrc
+          python -m pip install DIRAC
           mkdir ~/.proxy
           DIRAC_PROXY_INIT=`which dirac-proxy-init`
           export PATH=~/.proxy:"$PATH"
