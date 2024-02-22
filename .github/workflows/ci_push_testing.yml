@@ -221,10 +221,13 @@ jobs:
           dirac-proxy-init -g gridpp_user -M
       - name: Install dependencies
         run: |
+          source diracos/diracosrc
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -e .[dev,Dirac]
       - name: Test with pytest
         run: |
+          source diracos/diracosrc
+          export PATH=~/.proxy:"$PATH"
           python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
 
   dirac-integration:
@@ -271,6 +274,7 @@ jobs:
           echo -e "[defaults_DiracProxy]\ngroup=gridpp_user\nencodeDefaultProxyFileName=False" >> ~/.gangarc
       - name: Install dependencies
         run: |
+          source diracos/diracosrc
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -e .[dev,Dirac]
       - name: Test with pytest
@@ -279,6 +283,8 @@ jobs:
           GANGA_CONFIG_PATH: GangaDirac/Dirac.ini
           DIRAC_DEPRECATED_FAIL: True
         run: |
+          source diracos/diracosrc
+          export PATH=~/.proxy:"$PATH"
           python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/GPI
 
   lhcb-unit:
