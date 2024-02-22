@@ -83,7 +83,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
 
         virtualization = job.virtualization
         if virtualization:
-            contents = virtualization.modify_script(exe_script_template(), sandbox=False)
+            contents = virtualization.modify_script(exe_script_template(), sandbox=True)
 
             virtualizationutils = File(inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR)
             inputsandbox.append(virtualizationutils)
