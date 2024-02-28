@@ -9,7 +9,7 @@ from GangaCore.Core.GangaRepository.container_controllers import (
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Virtualization import (checkDocker, checkSingularity,
-                                              checkUDocker)
+                                              checkApptainer, checkUDocker)
 
 HOST, PORT = utils.get_host_port()
 
