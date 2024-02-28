@@ -91,6 +91,39 @@ class TestContainerHandler(GangaUnitTest):
     #         )
     #         assert flag is None
 
+    # def test_a2_apptainer_backend_lifetime(self):
+    #     """
+    #     Test the starting and shutdown of udocker container image
+    #     """
+    #     from GangaCore.Core.GangaRepository.container_controllers import apptainer_handler, mongod_exists
+
+    #     database_config = get_database_config(self.gangadir())
+
+    #     if self.installations["apptainer"]:
+    #         # start the apptainer container
+    #         apptainer_handler(
+    #             action="start",
+    #             gangadir=self.gangadir(),
+    #             database_config=database_config
+    #         )
+
+    #         # checking if the container started up
+    #         flag = mongod_exists(
+    #             controller="apptainer", cname=os.path.join(self.gangadir(), "mongo.sif")
+    #         )
+    #         assert flag is not None
+
+    #         # shutting down the container
+    #         apptainer_handler(
+    #             action="quit",
+    #             gangadir=self.gangadir(),
+    #             database_config=database_config
+    #         )
+    #         flag = mongod_exists(
+    #             controller="apptainer", cname=os.path.join(self.gangadir(), "mongo.sif")
+    #         )
+    #         assert flag is None
+
     def test_b_udocker_backend_lifetime(self):
         """
         Test the starting and shutdown of udocker container image
