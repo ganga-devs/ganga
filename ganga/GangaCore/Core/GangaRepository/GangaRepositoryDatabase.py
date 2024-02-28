@@ -490,7 +490,7 @@ class GangaRepositoryLocal(GangaRepository):
                     "No master index information exists, new/blank repository startup is assumed"
                 )
                 return {}
-        except pymongo.errors.ServerSelectionTimeoutError as e:
+        except pymongo.errors.ServerSelectionTimeoutError:
             return None
 
     def _clear_stored_cache(self):
