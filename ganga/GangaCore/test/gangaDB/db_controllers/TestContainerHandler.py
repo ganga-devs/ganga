@@ -131,7 +131,7 @@ class TestContainerHandler(GangaUnitTest):
         database_config = get_database_config(self.gangadir())
 
         if self.installations["udocker"]:
-            # start the singularity container
+            # start the singularity/apptainer container
             udocker_handler(
                 action="start",
                 gangadir=self.gangadir(),
