@@ -243,6 +243,7 @@ def native_handler(database_config, action, gangadir):
         logger.info("Native Database detection, skipping closing")
 
 
+# to be deprecated
 def singularity_handler(database_config, action, gangadir):
     """
     Handle the starting and closing of singularty container for the ganga database.
