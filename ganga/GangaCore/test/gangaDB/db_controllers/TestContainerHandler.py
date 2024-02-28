@@ -35,7 +35,8 @@ class TestContainerHandler(GangaUnitTest):
             "docker": checkDocker(),
             "udocker": checkUDocker(),
             "native": checkNative(),
-            "singularity": checkSingularity()
+            "singularity": checkSingularity(),
+            "apptainer": checkApptainer(),
         }
         super(TestContainerHandler, self).setUp(extra_opts=extra_opts)
 
