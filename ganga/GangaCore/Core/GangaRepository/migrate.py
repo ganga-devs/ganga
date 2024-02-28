@@ -27,7 +27,7 @@ from GangaCore.Core.GangaRepository.container_controllers import (
     native_handler,
     docker_handler,
     udocker_handler,
-    singularity_handler, get_database_config
+    singularity_handler, apptainer_handler, get_database_config
 )
 
 controller_map = {
