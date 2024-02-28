@@ -5,6 +5,20 @@ import tempfile
 
 from GangaCore.Core.exceptions import GangaException
 
+def checkApptainer():
+    """Check whether Apptainer is installed and the current user has right to access
+
+        Return value: True or False"""
+
+    nullOutput = open(os.devnull, 'wb')
+    returnCode = 1
+    try:
+        returnCode = subprocess.call(["apptainer", "--version"], stdout=nullOutput, stderr=nullOutput)
+    except BaseException:
+        pass
+    if returnCode == 0:
+        return True
+    return False
 
 def checkSingularity():
     """Check whether Singularity is installed and the current user has right to access
