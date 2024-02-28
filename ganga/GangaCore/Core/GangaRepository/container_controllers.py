@@ -273,6 +273,10 @@ def singularity_handler(database_config, action, gangadir):
 
     if not checkSingularity():
         raise Exception("Singularity seems to not be installed on the system.")
+    
+    if not checkApptainer():
+        raise Exception("Apptainer seems to not be installed on the system.")
+
     if action not in ["start", "quit"]:
         raise NotImplementedError("Illegal Opertion on container")
 
