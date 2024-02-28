@@ -20,6 +20,7 @@ def checkApptainer():
         return True
     return False
 
+# to be deprecated
 def checkSingularity():
     """Check whether Singularity is installed and the current user has right to access
 
