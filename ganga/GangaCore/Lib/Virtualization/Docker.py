@@ -62,7 +62,7 @@ class Docker(IVirtualization):
 
         extra = extra + """
 
-from Virtualization import checkDocker, checkUDocker, checkSingularity, installUDocker
+from Virtualization import checkDocker, checkUDocker, checkSingularity, checkApptainer, installUDocker
 options = []
 
 if execmd[0].startswith('./'):
