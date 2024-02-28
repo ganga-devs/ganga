@@ -136,12 +136,12 @@ for i in range(3):
     except Exception as x:
         print('Exception occured in downloading Apptainer image: ' + str(buildcommand))
         print('Err was: ' + str(x))
-execmd = [virtualization_binary, '-q', 'exec', '--bind',
+execmd = [virtualization_binary, '-q', 'exec', '--bind', \
           workdir+":"+"/work_dir", "--no-home"] + options + ['apptainer_sandbox'] + execmd
 """
         else:
             extra = extra + """
-execmd = [virtualization_binary, '-q', 'exec', '--bind',
+execmd = [virtualization_binary, '-q', 'exec', '--bind', \
           workdir+":"+"/work_dir", "--no-home"] + options + [virtualization_image] + execmd
 
 """
