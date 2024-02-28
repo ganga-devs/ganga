@@ -11,7 +11,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.Config.Config import ConfigError
 from GangaCore.Utility.Virtualization import (
     checkDocker, checkUDocker,
-    checkSingularity)
+    checkSingularity, checkApptainer)
 from GangaCore.Utility.Decorators import repeat_while_none
 
 logger = logging.getLogger()
