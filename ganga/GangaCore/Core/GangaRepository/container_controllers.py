@@ -148,7 +148,7 @@ def mongod_exists(controller, cname=None):
     Args:
         controller (str): Name of the controller that started the job
     """
-    if controller not in ["udocker", "singularity"]:
+    if controller not in ["udocker", "singularity", "apptainer"]:
         raise NotImplementedError(
             f"Not Implemented for controller of type: {controller}"
         )
