@@ -178,7 +178,7 @@ def mongod_exists_wait(controller, cname=None):
 
 
 def check_sif_file_hash(path):
-    """Check the hash of the sif file used by singularity
+    """Check the hash of the sif file used by singularity/apptainer
     Args:
         path (str): Location of the sif file
     """
