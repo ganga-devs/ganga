@@ -17,12 +17,14 @@ HOST, PORT = utils.get_host_port()
 class TestContainerHandler(GangaUnitTest):
     """
     Init all the database containers and see if they work
-
+    
     FIXME: The error when creating a singularity container in github actions
     errs: FATAL:
     container creation failed: mount /proc/self/fd/5->/usr/local/var/singularity/mnt/session/rootfs error:
     can't mount image /proc/self/fd/5: failed to mount squashfs filesystem: invalid argument
     https://github.com/ganga-devs/ganga/runs/1084178708?check_suite_focus=true
+    
+    Check if similar error occurs with apptainer.
     """
 
     def setUp(self):
