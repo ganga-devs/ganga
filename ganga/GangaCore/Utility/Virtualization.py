@@ -5,6 +5,7 @@ import tempfile
 
 from GangaCore.Core.exceptions import GangaException
 
+
 def checkApptainer():
     """Check whether Apptainer is installed and the current user has right to access
 
@@ -21,6 +22,8 @@ def checkApptainer():
     return False
 
 # to be deprecated
+
+
 def checkSingularity():
     """Check whether Singularity is installed and the current user has right to access
 
