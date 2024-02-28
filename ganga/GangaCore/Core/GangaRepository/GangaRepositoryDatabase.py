@@ -24,6 +24,7 @@ from GangaCore.Core.GangaRepository.container_controllers import (
     docker_handler,
     udocker_handler,
     singularity_handler,
+    apptainer_handler,
     get_database_config
 )
 
