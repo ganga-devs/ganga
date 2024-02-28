@@ -163,6 +163,9 @@ def mongod_exists(controller, cname=None):
                 and cname in proc["environ"]
             ):
                 return proc
+        elif controller == "apptainer":
+            if "APPTAINER_CONTAINER" in proc["environ"] and cname in proc["environ"]:
+                return proc
         elif controller == "singularity":
             if "SINGULARITY_CONTAINER" in proc["environ"] and cname in proc["environ"]:
                 return proc
