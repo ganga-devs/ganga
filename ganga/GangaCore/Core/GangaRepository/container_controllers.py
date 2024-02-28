@@ -376,7 +376,7 @@ def apptainer_handler(database_config, action, gangadir):
     apptainer --quiet run \
     --bind {bind_loc}:/data \
     {sif_file} mongod --port {database_config['port']} --shutdown"""
-    
+
     if not checkApptainer():
         raise Exception("Apptainer seems to not be installed on the system.")
 
@@ -446,6 +446,7 @@ def apptainer_handler(database_config, action, gangadir):
                     message=err.decode() + f"{proc_status}", controller="apptainer"
                 )
             logger.info("Apptainer gangaDB has shutdown")
+
 
 def udocker_handler(database_config, action, gangadir):
     """
