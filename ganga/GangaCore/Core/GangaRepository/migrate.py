@@ -35,6 +35,7 @@ controller_map = {
     "docker": docker_handler,
     "udocker": udocker_handler,
     "singularity": singularity_handler,
+    "apptainer": apptainer_handler,
 }
 
 
