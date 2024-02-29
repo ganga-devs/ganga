@@ -62,6 +62,3 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
-
-# virtual environment
-gangaenv
