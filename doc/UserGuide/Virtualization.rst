@@ -131,7 +131,7 @@ the image from the docker hub.
     j.virtualization = Docker("image:tag")
 
 Ganga will try to run the container using Docker if Docker is availabe in the worker node and if the user has the 
-permission to run docker containers. If not ganga will download `UDocker <https://github.com/indigo-dc/udocker>`_ which provides the ability to run docker containers in userspace. The runmode in Udocker can be changed as seen in the documentation. Using Singualarity or Apptainer as the run mode is not recommended; use the ``Singularity`` or ``Apptainer`` class above instead.
+permission to run docker containers. If not ganga will download `UDocker <https://github.com/indigo-dc/udocker>`_ which provides the ability to run docker containers in userspace. The runmode in Udocker can be changed as seen in the documentation. Using Singualarity as the run mode is not recommended; use the ``Singularity`` or ``Apptainer`` class above instead.
 
 Issues to keep in mind
 ----------------------
