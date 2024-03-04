@@ -19,8 +19,8 @@ Getting your work done like this often means that it gets broken into multiple p
 The idea in Ganga is to take all these problems, provide a Python API for them that allows them to be solved in a clean and programmatic way. In addition, Ganga will provide a service that takes care of monitoring the progress of all tasks that have been submitted. This means that a workflow using Ganga is more like.
 
 * Create your task inside Ganga and test it locally on your desktop;
-* Specify to Ganga how you want you task broken up and the results merged;
+* Specify to Ganga how you want your task broken up and the results merged;
 * Tell Ganga where your task should be executed (Batch, Grid, ...) and submit it;
 * Let Ganga monitor the progress, resubmit failed pieces and merge the results in the end.
 
-Ganga provides a plugin system that allows groups such as HEP collaborations to expand the API with specific applications that will make it easier to run tasks on remote systems (build shared libraries, find configuration files, interact with data bookkeeping). There is also support for running taks inside docker and singularity containers.
+Ganga provides a plugin system that allows groups such as HEP collaborations to expand the API with specific applications that will make it easier to run tasks on remote systems (build shared libraries, find configuration files, interact with data bookkeeping). There is also support for running tasks inside docker and singularity containers.
