@@ -359,6 +359,8 @@ under certain conditions; type license() for details.
             if not self.options.force_interactive:
                 self.interactive = False
 
+        sys.argv = sys.argv[:1]
+
 # Can't check here if the file is readable, because the path isn't known
 #           file_opens(self.args[0],'reading script')
 
