@@ -49,7 +49,7 @@ def indent(s, depth=''):
     """
     Adds `indent` to the beginning of every line
     """
-    return '\n'.join(depth+l for l in s.splitlines())
+    return '\n'.join(depth + l for l in s.splitlines())
 
 
 def reindent(docstring, depth=''):
@@ -84,23 +84,29 @@ def signature(func, name=None):
     for arg, default in arg_pairs:
         full_arg = arg
         if default is not None:
-            full_arg += '='+default
+            full_arg += '=' + default
         arg_strings.append(full_arg)
     # and append args and kwargs if necessary to get
     # arg_strings=['a', 'b', 'a=None', 'd=4', '*args', '**kwargs']
     if varargs is not None:
-        arg_strings.append('*'+varargs)
+        arg_strings.append('*' + varargs)
     if varkw is not None:
-        arg_strings.append('**'+varkw)
+        arg_strings.append('**' + varkw)
 
     # Signature is then 'foo(a, b, c=None, d=4, *args, **kwargs)'
     return '{name}({args})'.format(name=name or func.__name__, args=', '.join(arg_strings))
 
 
 # First we get all objects that are in Ganga.GPI and filter out any non-GangaObjects
-gpi_classes = [stripProxy(o) for name, o in GangaCore.GPI.__dict__.items() if isinstance(o, type) and issubclass(o, GPIProxyObject)]
+gpi_classes = [
+    stripProxy(o) for name,
+    o in GangaCore.GPI.__dict__.items() if isinstance(
+        o,
+        type) and issubclass(
+            o,
+        GPIProxyObject)]
 
-with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
+with open(doc_dir + '/GPI/classes.rst', 'w') as cf:
 
     print('GPI classes', file=cf)
     print('===========', file=cf)
@@ -154,7 +160,7 @@ with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
 
 # Looking through the plugin list helps categorise the GPI objects
 
-with open(doc_dir+'/GPI/plugins.rst', 'w') as pf:
+with open(doc_dir + '/GPI/plugins.rst', 'w') as pf:
     from GangaCore.Utility.Plugin.GangaPlugin import allPlugins
 
     print('Plugins', file=pf)
@@ -163,7 +169,7 @@ with open(doc_dir+'/GPI/plugins.rst', 'w') as pf:
 
     for c, ps in allPlugins.allCategories().items():
         print(c, file=pf)
-        print('-'*len(c), file=pf)
+        print('-' * len(c), file=pf)
         print('', file=pf)
 
         for name, c in ps.items():
@@ -175,7 +181,8 @@ with open(doc_dir+'/GPI/plugins.rst', 'w') as pf:
 print('')
 
 # All objects that are not proxied GangaObjects
-gpi_objects = dict((name, stripProxy(o)) for name, o in GangaCore.GPI.__dict__.items() if stripProxy(o) not in gpi_classes and not name.startswith('__'))
+gpi_objects = dict((name, stripProxy(o)) for name, o in GangaCore.GPI.__dict__.items()
+                   if stripProxy(o) not in gpi_classes and not name.startswith('__'))
 
 # Any objects which are not exposed as proxies (mostly exceptions)
 non_proxy_classes = dict((k, v) for k, v in gpi_objects.items() if inspect.isclass(v))
@@ -186,7 +193,7 @@ callables = dict((k, v) for k, v in gpi_objects.items() if callable(v) and v not
 # Things which were declared as actual functions
 functions = dict((k, v) for k, v in callables.items() if inspect.isfunction(v) or inspect.ismethod(v))
 
-with open(doc_dir+'/GPI/functions.rst', 'w') as ff:
+with open(doc_dir + '/GPI/functions.rst', 'w') as ff:
 
     print('Functions', file=ff)
     print('=========', file=ff)

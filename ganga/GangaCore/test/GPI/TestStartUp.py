@@ -48,7 +48,7 @@ def testStartUp():
         assert os.path.isfile(os.path.join(homeDir, this_file))
 
     # No way known to mimic IPython starting up in a simple way
-    #assert os.path.isdir(os.path.join(homeDir, '.ipython-ganga'))
+    # assert os.path.isdir(os.path.join(homeDir, '.ipython-ganga'))
 
     for this_folder in ['repository', ]:
         assert os.path.isdir(os.path.join(this_dir, this_folder))
