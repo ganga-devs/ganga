@@ -62,7 +62,7 @@ If the image is a private image, the username and password of the deploy token c
     j.virtualization.tokenuser = 'gitlab+deploy-token-123'
     j.virtualization.tokenpassword = 'gftrh84dgel-245^ghHH'
 
-Directories can be mounted from the host to the container using key-value pairs to the mounts option. If the directory is not vailable on the host, a warning will be written to stderr of the job and no mount will be attempted.
+Directories can be mounted from the host to the container using key-value pairs to the mounts option. If the directory is not available on the host, a warning will be written to stderr of the job and no mount will be attempted.
 
 .. code-block:: python
 

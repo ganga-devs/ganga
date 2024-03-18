@@ -12,7 +12,7 @@ We have since migrated away from that and there are two primary ways to get acce
 pip
 ^^^
 
-At its simplest it is possbile to install ganga using the standard Python ``pip`` tool with a simple
+At its simplest it is possible to install ganga using the standard Python ``pip`` tool with a simple
 
 .. code-block:: bash
 
