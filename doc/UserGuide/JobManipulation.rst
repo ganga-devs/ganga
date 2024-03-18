@@ -75,7 +75,7 @@ Removing Jobs
 -------------
 
 As you submit more jobs, your Ganga repository will grow and could become quite large. If you have finished with
-jobs it is good practise to remove them from the repository:
+jobs it is good practice to remove them from the repository:
 
 .. literalinclude:: ../../ganga/GangaCore/test/GPI/TutorialTests.py
     :start-after: # -- JOBMANIPULATION JOBREMOVE START

@@ -212,7 +212,7 @@ To check the ``stdout/stderr`` of a job, you can use the peek method
 
 Copy a job
 ----------
-You can copy and old job, modify its attributes anbd then submit it as a new one
+You can copy and old job, modify its attributes and then submit it as a new one
 
 .. code-block:: python
 
