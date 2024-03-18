@@ -113,7 +113,7 @@ In brief the deepcopy is called  for every object in the tree. At each level the
           the copies are saved in the state dictionary
     3.1.4 state dictionary is saved by calling __setstate__
     3.1.5 deepcopy then iterates over non-copyable properties and reset their values to default       
-          (thus disregarding some object copies which may have been done unnecesserily)
+          (thus disregarding some object copies which may have been done unnecessarily)
 
 4. Additional description of low-level methods
 

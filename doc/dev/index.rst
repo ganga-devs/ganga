@@ -32,7 +32,7 @@ These proxy classes exist for a number of reasons but primarily they are there f
 While a ``GangaObject`` can has as many functions and attributes as it likes,
 only those attributes in the schema and those methods which are explicitly exported will be available to users of the proxy class.
 
-When working on internal Ganga code, you shuold never have to deal with any proxy objects at all.
+When working on internal Ganga code, you should never have to deal with any proxy objects at all.
 Proxies should be added to objects as they are passed to the GPI and should be removed as they are passed back.
 
 Attributes on proxy objects

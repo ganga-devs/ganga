@@ -178,16 +178,16 @@ while the specific/sub aspect is  considered the number of times which
 is implied  by the splitting. So it  is either equal to  the number of
 subjobs or equal to one if no splitting.
 
-The  interfaces   have  been  desigend   in  a  'backwards-compatible'
+The  interfaces   have  been  designed   in  a  'backwards-compatible'
 way. This means that the applications and backends may be used without
 changes  with the  new  base  classes. 
 
 By default splitting is enabled for all "old" applications but it will
-be innefficient (the application  will be configured for each subjob).
+be inefficient (the application  will be configured for each subjob).
 The bulk  submission is emulated  with individual job submission  in a
 loop.
 
-The prototype of base classes and their intrerface will follow soon.
+The prototype of base classes and their interface will follow soon.
 
 
 
