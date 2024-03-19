@@ -23,4 +23,4 @@ The idea in Ganga is to take all these problems, provide a Python API for them t
 * Tell Ganga where your task should be executed (Batch, Grid, ...) and submit it;
 * Let Ganga monitor the progress, resubmit failed pieces and merge the results in the end.
 
-Ganga provides a plugin system that allows groups such as HEP collaborations to expand the API with specific applications that will make it easier to run tasks on remote systems (build shared libraries, find configuration files, interact with data bookkeeping). There is also support for running tasks inside docker and singularity containers.
+Ganga provides a plugin system that allows groups such as HEP collaborations to expand the API with specific applications that will make it easier to run tasks on remote systems (build shared libraries, find configuration files, interact with data bookkeeping). There is also support for running taks inside docker, singularity and apptainer containers.
