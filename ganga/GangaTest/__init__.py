@@ -1,9 +1,4 @@
 
-def standardSetup():
-    import GangaTest.PACKAGE
-    PACKAGE.standardSetup()
-
-
 def loadPlugins(config=None):
     import GangaTest.Framework.runner
     import GangaTest.Lib.GListApp

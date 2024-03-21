@@ -55,7 +55,7 @@ myConfig.addOption('EnableXMLDifferencer', 'False', 'enable/disable xml differen
 # search for local tests lookup
 myConfig.addOption('SearchLocalTests', True, 'search for local tests lookup')
 # search for tests packaged in release (PACKAGE/old_test dir) lookup
-myConfig.addOption('SearchReleaseTests', True, 'search for tests packaged in release (PACKAGE/old_test dir) lookup')
+
 # Coverage output
 myConfig.addOption('CoverageReport', '', 'The file used to save the testing coverage statistics')
 

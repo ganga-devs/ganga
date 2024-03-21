@@ -93,13 +93,6 @@ if not _after_bootstrap:
     store_dirac_environment()
     # _store_root_version()
 
-
-def standardSetup():
-
-    from . import PACKAGE
-    PACKAGE.standardSetup()
-
-
 def loadPlugins(config=None):
     logger.debug("Importing Backends")
     from .Lib import Backends

@@ -25,9 +25,6 @@ def standardSetup():
 
     sys.path.insert(0, gangaDir)
 
-    from GangaCore.PACKAGE import standardSetup
-    standardSetup()
-
 
 standardSetup()
 del standardSetup

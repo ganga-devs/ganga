@@ -22,9 +22,6 @@ from GangaCore.GPIDev.Base.Proxy import GPIProxyObject, stripProxy, getName
 print('Generating GPI documentation')
 
 ## LOADING GANGA ##
-import GangaCore.PACKAGE
-GangaCore.PACKAGE.standardSetup()
-
 import GangaCore.Runtime
 gangadir = os.path.expandvars('$HOME/gangadir_sphinx_dummy')
 this_argv = [

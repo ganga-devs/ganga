@@ -156,12 +156,6 @@ if not _after_bootstrap:
     configDirac.addOption('default_unpackOutputSandbox', True, 'Unpack output sandboxes by default')
 
 
-def standardSetup():
-
-    from . import PACKAGE
-    PACKAGE.standardSetup()
-
-
 def loadPlugins(config=None):
     logger.debug("Loading Backends")
     from .Lib import Backends  # noqa
