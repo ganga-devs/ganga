@@ -1,33 +1,24 @@
-# import ganga
-
-
 import os
-import time
 import pickle
 import pymongo
 
 from GangaCore.Core.GangaRepository.VStreamer import from_file
 from GangaCore.Core.GangaRepository.DStreamer import (
     EmptyGangaObject,
-    index_from_database, index_to_database,
-    object_from_database, object_to_database
+    index_to_database,
+    object_to_database,
 )
 
-from GangaCore.GPIDev.Base.Proxy import getName, addProxy
+from GangaCore.GPIDev.Base.Proxy import getName
 from GangaCore.Runtime.Repository_runtime import getLocalRoot
-from GangaCore.Core.GangaRepository.VStreamer import from_file
-from GangaCore.test.GPI.newXMLTest.utilFunctions import getXMLDir, getXMLFile
+from GangaCore.test.GPI.newXMLTest.utilFunctions import getXMLFile
 
 from GangaCore.Utility.Config import getConfig
-from GangaCore.GPIDev.Base.Proxy import getName, addProxy
-from GangaCore.Runtime.Repository_runtime import getLocalRoot
-from GangaCore.Core.GangaRepository.VStreamer import from_file
-from GangaCore.test.GPI.newXMLTest.utilFunctions import getXMLDir, getXMLFile
 from GangaCore.Core.GangaRepository.container_controllers import (
     native_handler,
     docker_handler,
     udocker_handler,
-    singularity_handler, get_database_config
+    singularity_handler, apptainer_handler, get_database_config
 )
 
 controller_map = {
@@ -35,6 +26,7 @@ controller_map = {
     "docker": docker_handler,
     "udocker": udocker_handler,
     "singularity": singularity_handler,
+    "apptainer": apptainer_handler,
 }
 
 
@@ -46,8 +38,6 @@ def job_migrate(connection):
     job_ids = [i for i in os.listdir(os.path.join(jobs_path, "0xxx"))
                if "index" not in i]
     for idx in sorted(job_ids):
-        # ignore_subs = []
-        ignore_subs = ["subjobs"]
         job_file = getXMLFile(int(idx))
         job_folder = os.path.dirname(job_file)
         jeb, err = from_file(open(job_file, "rb"))

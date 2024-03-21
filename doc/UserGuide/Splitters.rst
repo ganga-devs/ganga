@@ -18,7 +18,7 @@ Core which are detailed below. You can see which splitter are available with
 
 Try it out:
 -----------
-Using the prime factorisation example from the Tutorial plugin (:doc:`TutorialPlugin`). We can split up the factorisation of a very large number up into 5 different tasks.
+Using the prime factorisation example from the Tutorial plugin (:doc:`TutorialPlugin`). We can split up the factorisation of a very large number up into 10 different tasks.
 
 .. code-block:: python
 

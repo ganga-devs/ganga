@@ -46,7 +46,7 @@ at which point it will ask the store for the real credential and then extract th
 A method decorator called :func:`~.require_credential` is provided for use in any class which has a ``credential_requirements`` attribute.
 It will access this attribute, search in the credential store for the appropriate match and raise an error if it is not found.
 This allows any methods on a class (such as a backend's ``submit`` method) to label themselves as using a credential,
-allowing the system to defer asking the user to create the credential until the time it is acually needed.
+allowing the system to defer asking the user to create the credential until the time it is actually needed.
 It is *possible* to use the credentials system without using ``require_credential``
 but it provides a way of explicitly marking "this is the point at which we will ask the user to create the credential."
 

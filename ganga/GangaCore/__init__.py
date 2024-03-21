@@ -1599,7 +1599,7 @@ db_config = makeConfig("DatabaseConfiguration", "Selection of database for ganga
 # db_config.addOption("container_rc", expandvars(
 #     None, '~/gangadir/container.rc'), "The location of container.rc file")
 db_config.addOption(
-    "controller", "docker", "Database Controller [native, docker, udocker, singularity]"
+    "controller", "docker", "Database Controller [native, docker, udocker, singularity, apptainer]"
 )
 db_config.addOption("baseImage", "mongo", "Docker Image for the database")
 # db_config.addOption("containerName", container_name, "the identifier used to tag the docker container")

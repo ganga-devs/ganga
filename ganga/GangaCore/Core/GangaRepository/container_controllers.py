@@ -11,7 +11,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaCore.Utility.Config.Config import ConfigError
 from GangaCore.Utility.Virtualization import (
     checkDocker, checkUDocker,
-    checkSingularity)
+    checkSingularity, checkApptainer)
 from GangaCore.Utility.Decorators import repeat_while_none
 
 logger = logging.getLogger()
@@ -148,7 +148,7 @@ def mongod_exists(controller, cname=None):
     Args:
         controller (str): Name of the controller that started the job
     """
-    if controller not in ["udocker", "singularity"]:
+    if controller not in ["udocker", "singularity", "apptainer"]:
         raise NotImplementedError(
             f"Not Implemented for controller of type: {controller}"
         )
@@ -163,6 +163,9 @@ def mongod_exists(controller, cname=None):
                 and cname in proc["environ"]
             ):
                 return proc
+        elif controller == "apptainer":
+            if "APPTAINER_CONTAINER" in proc["environ"] and cname in proc["environ"]:
+                return proc
         elif controller == "singularity":
             if "SINGULARITY_CONTAINER" in proc["environ"] and cname in proc["environ"]:
                 return proc
@@ -175,7 +178,7 @@ def mongod_exists_wait(controller, cname=None):
 
 
 def check_sif_file_hash(path):
-    """Check the hash of the sif file used by singularity
+    """Check the hash of the sif file used by singularity/apptainer
     Args:
         path (str): Location of the sif file
     """
@@ -240,6 +243,7 @@ def native_handler(database_config, action, gangadir):
         logger.info("Native Database detection, skipping closing")
 
 
+# to be deprecated
 def singularity_handler(database_config, action, gangadir):
     """
     Handle the starting and closing of singularty container for the ganga database.
@@ -273,6 +277,7 @@ def singularity_handler(database_config, action, gangadir):
 
     if not checkSingularity():
         raise Exception("Singularity seems to not be installed on the system.")
+
     if action not in ["start", "quit"]:
         raise NotImplementedError("Illegal Opertion on container")
 
@@ -339,6 +344,108 @@ def singularity_handler(database_config, action, gangadir):
                     message=err.decode() + f"{proc_status}", controller="singularity"
                 )
             logger.info("Singularity gangaDB has shutdown")
+
+
+def apptainer_handler(database_config, action, gangadir):
+    """
+    Handle the starting and closing of singularty container for the ganga database.
+
+    Args:
+        database_config: The config from ganga config
+        action: The action to be performed using the handler
+    """
+    sif_file = os.path.join(gangadir, "mongo.sif")
+
+    if not os.path.isfile(sif_file):
+        download_mongo_sif(gangadir)
+        # raise FileNotFoundError(
+        #     "The mongo.sif file does not exists. " +
+        #     "Please read: https://github.com/ganga-devs/ganga/wiki/GangaDB-User-Guide",
+        #     sif_file,
+        # )
+
+    bind_loc = create_mongodir(gangadir=gangadir)
+    start_container = f"""env MONGO_SIF={sif_file} \
+    apptainer --quiet run \
+    --bind {bind_loc}:/data \
+    {sif_file} mongod \
+    --port {database_config['port']} \
+    --logpath {gangadir}/logs/mongod-ganga.log"""
+
+    stop_container = f"""env MONGO_SIF={sif_file} \
+    apptainer --quiet run \
+    --bind {bind_loc}:/data \
+    {sif_file} mongod --port {database_config['port']} --shutdown"""
+
+    if not checkApptainer():
+        raise Exception("Apptainer seems to not be installed on the system.")
+
+    if action not in ["start", "quit"]:
+        raise NotImplementedError("Illegal Opertion on container")
+
+    has_correct_hash = check_sif_file_hash(sif_file)
+    if not has_correct_hash:
+        import sys
+        logger.fatal((
+            f"sif_file at {sif_file} does not match the expected hash."
+            + " Delete it to automatically download the correct file."
+        ))
+        sys.exit(1)
+
+    if action == "start":
+        proc_status = mongod_exists(controller="apptainer", cname=sif_file)
+        if proc_status is None:
+            logger.debug(
+                f"Starting apptainer container using command: {start_container}")
+            proc = subprocess.Popen(
+                start_container,
+                shell=True,
+                close_fds=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            proc_status = mongod_exists_wait(
+                controller="apptainer", cname=sif_file)
+
+            if proc_status is None:
+                # reading the logs from the file
+                logger.fatal('Problem finding apptainer process')
+                try:
+                    import json
+                    err_string = open(
+                        f"{gangadir}/logs/mongod-ganga.log", "r").read()
+                    for _log in err_string.split("\n"):
+                        if _log:
+                            log = json.loads(_log)
+                            if log['s'] == "E":
+                                logger.error(
+                                    f"Apptainer container could not start because of: {log['attr']['error']}")
+                except BaseException:
+                    pass
+                import sys
+                sys.exit(1)
+            logger.info(
+                f"Apptainer gangaDB started on port: {database_config['port']}"
+            )
+    elif action == "quit":
+        proc_status = mongod_exists(controller="apptainer", cname=sif_file)
+        if proc_status is not None:
+            logger.debug(
+                f"mongod process killed was: {proc_status}")
+            logger.debug("stopping apptainer container using: ",
+                         stop_container)
+            proc = subprocess.Popen(
+                stop_container,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            out, err = proc.communicate()
+            if err:
+                raise ContainerCommandError(
+                    message=err.decode() + f"{proc_status}", controller="apptainer"
+                )
+            logger.info("Apptainer gangaDB has shutdown")
 
 
 def udocker_handler(database_config, action, gangadir):

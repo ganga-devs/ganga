@@ -1,4 +1,6 @@
-import os
+# commented out due the the error mentioned in the class doc
+# import os
+
 import time
 
 import docker
@@ -7,9 +9,8 @@ from GangaCore.Core.GangaRepository.container_controllers import (
     checkNative, docker_handler, get_database_config, mongod_exists,
     udocker_handler)
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.Virtualization import (checkDocker, checkSingularity,
-                                              checkUDocker)
+                                              checkApptainer, checkUDocker)
 
 HOST, PORT = utils.get_host_port()
 
@@ -23,6 +24,8 @@ class TestContainerHandler(GangaUnitTest):
     container creation failed: mount /proc/self/fd/5->/usr/local/var/singularity/mnt/session/rootfs error:
     can't mount image /proc/self/fd/5: failed to mount squashfs filesystem: invalid argument
     https://github.com/ganga-devs/ganga/runs/1084178708?check_suite_focus=true
+
+    Check if similar error occurs with apptainer.
     """
 
     def setUp(self):
@@ -33,7 +36,8 @@ class TestContainerHandler(GangaUnitTest):
             "docker": checkDocker(),
             "udocker": checkUDocker(),
             "native": checkNative(),
-            "singularity": checkSingularity()
+            "singularity": checkSingularity(),
+            "apptainer": checkApptainer(),
         }
         super(TestContainerHandler, self).setUp(extra_opts=extra_opts)
 
@@ -88,6 +92,39 @@ class TestContainerHandler(GangaUnitTest):
     #         )
     #         assert flag is None
 
+    # def test_a2_apptainer_backend_lifetime(self):
+    #     """
+    #     Test the starting and shutdown of udocker container image
+    #     """
+    #     from GangaCore.Core.GangaRepository.container_controllers import apptainer_handler, mongod_exists
+
+    #     database_config = get_database_config(self.gangadir())
+
+    #     if self.installations["apptainer"]:
+    #         # start the apptainer container
+    #         apptainer_handler(
+    #             action="start",
+    #             gangadir=self.gangadir(),
+    #             database_config=database_config
+    #         )
+
+    #         # checking if the container started up
+    #         flag = mongod_exists(
+    #             controller="apptainer", cname=os.path.join(self.gangadir(), "mongo.sif")
+    #         )
+    #         assert flag is not None
+
+    #         # shutting down the container
+    #         apptainer_handler(
+    #             action="quit",
+    #             gangadir=self.gangadir(),
+    #             database_config=database_config
+    #         )
+    #         flag = mongod_exists(
+    #             controller="apptainer", cname=os.path.join(self.gangadir(), "mongo.sif")
+    #         )
+    #         assert flag is None
+
     def test_b_udocker_backend_lifetime(self):
         """
         Test the starting and shutdown of udocker container image
@@ -95,7 +132,7 @@ class TestContainerHandler(GangaUnitTest):
         database_config = get_database_config(self.gangadir())
 
         if self.installations["udocker"]:
-            # start the singularity container
+            # start the singularity/apptainer container
             udocker_handler(
                 action="start",
                 gangadir=self.gangadir(),

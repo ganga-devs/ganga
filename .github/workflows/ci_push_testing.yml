@@ -187,20 +187,14 @@ jobs:
     needs: lint
     if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
-    container: centos:7
+    container: almalinux:9
     steps:
       - uses: actions/checkout@v2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Set up Python 3
+      - name: Set up
         run: |
-          yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip rh-python38-python-devel
-          yum install -y gcc
-      - name: Install dependencies
-        run: |
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev,Dirac]
+          dnf install -y gcc which
       - name: Install Robot certificate
         env: # Or as an environment variable
           ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
@@ -213,14 +207,10 @@ jobs:
           chmod 400 ~/.globus/userkey.pem
       - name: Install DIRAC UI
         run: |
-          yum install -y git wget which
-          mkdir ~/dirac_ui
-          cd ~/dirac_ui
-          wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
-          chmod u+x dirac-install
-          DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7-8]r.*[^\\]]" | grep -m1 -v -e "pre"`
-          ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
-          source ~/dirac_ui/bashrc
+          curl -LO https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
+          bash DIRACOS-Linux-$(uname -m).sh
+          source diracos/diracosrc
+          python -m pip install DIRAC
           mkdir ~/.proxy
           DIRAC_PROXY_INIT=`which dirac-proxy-init`
           export PATH=~/.proxy:"$PATH"
@@ -229,29 +219,30 @@ jobs:
           dirac-proxy-init -x
           dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I
           dirac-proxy-init -g gridpp_user -M
+      - name: Install dependencies
+        run: |
+          source diracos/diracosrc
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e .[dev,Dirac]
       - name: Test with pytest
         run: |
-          /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
+          source diracos/diracosrc
+          export PATH=~/.proxy:"$PATH"
+          python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/Unit
 
   dirac-integration:
     name: GangaDirac Integration
     needs: dirac-unit
     if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
-    container: centos:7
+    container: almalinux:9
     steps:
       - uses: actions/checkout@v2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Set up Python 3
+      - name: Set up
         run: |
-          yum install -y centos-release-scl-rh
-          yum install -y rh-python38-python rh-python38-python-pip rh-python38-python-devel
-          yum install -y gcc
-      - name: Install dependencies
-        run: |
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install --upgrade pip setuptools wheel
-          /opt/rh/rh-python38/root/usr/bin/python -m pip install -e .[dev,Dirac]
+          dnf install -y gcc which
       - name: Install Robot certificate
         env: # Or as an environment variable
           ROBOT_CERT: ${{ secrets.GangaRobot_UserCert }}
@@ -264,15 +255,10 @@ jobs:
           chmod 400 ~/.globus/userkey.pem
       - name: Install DIRAC UI
         run: |
-          yum install -y git wget which
-          mkdir ~/dirac_ui
-          cd ~/dirac_ui
-          wget -np -O dirac-install https://raw.githubusercontent.com/DIRACGrid/management/master/dirac-install.py
-          chmod u+x dirac-install
-          DIRAC_VERSION=`curl -s https://raw.githubusercontent.com/DIRACGrid/DIRAC/integration/release.notes | grep -oP "\\[\\Kv[7]r.*[^\\]]" | grep -m1 -v -e "pre"`
-          DIRAC_VERSION=v7r2p10
-          ./dirac-install -r $DIRAC_VERSION -i 27 -g v14r1
-          source ~/dirac_ui/bashrc
+          curl -LO https://github.com/DIRACGrid/DIRACOS2/releases/latest/download/DIRACOS-Linux-$(uname -m).sh
+          bash DIRACOS-Linux-$(uname -m).sh
+          source diracos/diracosrc
+          python -m pip install DIRAC
           mkdir ~/.proxy
           DIRAC_PROXY_INIT=`which dirac-proxy-init`
           export PATH=~/.proxy:"$PATH"
@@ -283,15 +269,23 @@ jobs:
           dirac-proxy-init -g gridpp_user -M
       - name: Install gangarc file
         run: |
-          echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc
+          echo -e "[DIRAC]\nDiracEnvSource = ~/diracos/diracosrc" > ~/.gangarc
           echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ~/.gangarc
           echo -e "[defaults_DiracProxy]\ngroup=gridpp_user\nencodeDefaultProxyFileName=False" >> ~/.gangarc
+      - name: Install dependencies
+        run: |
+          source diracos/diracosrc
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e .[dev,Dirac]
       - name: Test with pytest
         env:
           GANGA_CONFIG_FILE: ~/.gangarc
           GANGA_CONFIG_PATH: GangaDirac/Dirac.ini
           DIRAC_DEPRECATED_FAIL: True
-        run: /opt/rh/rh-python38/root/usr/bin/python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/GPI
+        run: |
+          source diracos/diracosrc
+          export PATH=~/.proxy:"$PATH"
+          python -m pytest --cov-report term-missing --cov ganga/GangaDirac ganga/GangaDirac/test/GPI
 
   lhcb-unit:
     name: GangaLHCb Unit

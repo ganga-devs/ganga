@@ -46,6 +46,11 @@ The best is to install inside a virtual environment
     # Install Ganga 
     python3 -m pip install ganga
 
+Note that if you want to use the Dirac or LHCb plugins you need to request the necessary dependencies when installing. i.e. for LHCb:
+
+.. code-block:: bash
+    python3 -m pip install [Dirac,LHCb]ganga
+
 To install pip locally if it's not on your system and you don't have admin access please consult: https://pip.pypa.io/en/stable/installing/
 
 Now each time you want to use Ganga in a new shell, you have to activate the virtual environment:
@@ -207,7 +212,7 @@ To check the ``stdout/stderr`` of a job, you can use the peek method
 
 Copy a job
 ----------
-You can copy and old job, modify its attributes anbd then submit it as a new one
+You can copy and old job, modify its attributes and then submit it as a new one
 
 .. code-block:: python
 

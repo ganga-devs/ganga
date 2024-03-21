@@ -4,17 +4,13 @@
 # * locking
 
 import os
-import copy
-import json
 import time
-import docker
 import pymongo
 
 from GangaCore.Utility import logging
-from GangaCore import GANGA_SWAN_INTEGRATION
 from GangaCore.GPIDev.Base.Objects import Node
 from GangaCore.Utility.Config import getConfig
-from GangaCore.Utility.Plugin import PluginManagerError, allPlugins
+from GangaCore.Utility.Plugin import allPlugins
 from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
 from GangaCore.Core.GangaRepository.SessionLock import SessionLockManager, dry_run_unix_locks
 from GangaCore.Core.GangaRepository.FixedLock import FixedLockManager
@@ -24,6 +20,7 @@ from GangaCore.Core.GangaRepository.container_controllers import (
     docker_handler,
     udocker_handler,
     singularity_handler,
+    apptainer_handler,
     get_database_config
 )
 
@@ -56,6 +53,7 @@ controller_map = {
     "docker": docker_handler,
     "udocker": udocker_handler,
     "singularity": singularity_handler,
+    "apptainer": apptainer_handler,
 }
 
 
@@ -173,7 +171,8 @@ class GangaRepositoryLocal(GangaRepository):
                 # Locking has not worked, lets raise an error
                 logger.error("Error: %s" % err)
                 msg = "\n\nUnable to launch due to underlying filesystem not working with unix locks."
-                msg += "Please try launching again with [Configuration]lockingStrategy=FIXED to start Ganga without multiple session support."
+                msg += "Please try launching again with [Configuration]lockingStrategy=FIXED\
+                     to start Ganga without multiple session support."
                 raise RepositoryError(self, msg)
 
             # Locks passed test so lets continue
@@ -491,7 +490,7 @@ class GangaRepositoryLocal(GangaRepository):
                     "No master index information exists, new/blank repository startup is assumed"
                 )
                 return {}
-        except pymongo.errors.ServerSelectionTimeoutError as e:
+        except pymongo.errors.ServerSelectionTimeoutError:
             return None
 
     def _clear_stored_cache(self):
@@ -531,7 +530,7 @@ class GangaRepositoryLocal(GangaRepository):
 
             # this is bad - no or corrupted index but object not loaded yet!
             # Try to load it!
-            if not this_id in self.objects:
+            if this_id not in self.objects:
                 try:
                     logger.debug(
                         "Loading database based Object: %s from %s as indexes were missing"
@@ -571,7 +570,7 @@ class GangaRepositoryLocal(GangaRepository):
                 examples[getName(x)] = str(x)
                 self.known_bad_ids.append(this_id)
                 # add object to incomplete_objects
-                if not this_id in self.incomplete_objects:
+                if this_id not in self.incomplete_objects:
                     logger.error(
                         "Adding: %s to Incomplete Objects to avoid loading it again in future"
                         % this_id
@@ -666,11 +665,14 @@ class GangaRepositoryLocal(GangaRepository):
         If we must actually load the object from database then we end up here.
         This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
         If there are children then a SubJobJsonList is created to manage them.
-        The fn of the job is passed to the SubbJobXMLList and there is some knowledge of if we should be loading the backup passed as well
+        The fn of the job is passed to the SubbJobXMLList and there is some knowledge
+        of if we should be loading the backup passed as well
         Args:
             this_id (int): This is the integer key of the object in the self.objects dict
-            has_children (bool): This contains the result of the decision as to whether this object actually has children
-            tmpobj (GangaObject): This contains the object which has been read in from the fn file
+            has_children (bool): This contains the result of the decision as to whether
+            this object actually has children
+            tmpobj (GangaObject): This contains the object which has been read in from
+            the fn file
         """
 
         # If this_id is not in the objects add the object we got from reading the Json
@@ -684,10 +686,13 @@ class GangaRepositoryLocal(GangaRepository):
 
         obj = self.objects[this_id]
 
-        # If the object was already in the objects (i.e. cache object, replace the schema content wilst avoiding R/O checks and such
-        # The end goal is to keep the object at this_id the same object in memory but to make it closer to tmpobj.
+        # If the object was already in the objects (i.e. cache object, replace the
+        # schema content wilst avoiding R/O checks and such
+        # The end goal is to keep the object at this_id the same object in memory
+        # but to make it closer to tmpobj.
         # TODO investigate changing this to copyFrom
-        # The temp object is from disk so all contents have correctly passed through sanitising via setattr at least once by now so this is safe
+        # The temp object is from disk so all contents have correctly passed
+        # through sanitising via setattr at least once by now so this is safe
         if need_to_copy:
             for key, val in tmpobj._data.items():
                 obj.setSchemaAttribute(key, val)
@@ -733,12 +738,17 @@ class GangaRepositoryLocal(GangaRepository):
 
     def _load_json_from_obj(self, document, this_id):
         """
-        This is the method which will load the job from fn using the fobj using the self.from_file method and _parse_json is called to replace the
-        self.objects[this_id] with the correct attributes. We also preseve knowledge of if we're being asked to load a backup or not
+        This is the method which will load the job from fn using the fobj using the
+        self.from_file method and _parse_json is called to replace the
+        self.objects[this_id] with the correct attributes. We also preseve knowledge
+        of if we're being asked to load a backup or not
+
         Args:
             fn (str): fn This is the name of the file which contains the JSon data
-            this_id (int): This is the key of the object in the objects dict where the output will be stored
-            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' JSon file
+            this_id (int): This is the key of the object in the objects dict where the
+            output will be stored
+            load_backup (bool): This reflects whether we are loading the backup 'data~'
+            or normal 'data' JSon file.
         """
 
         b4 = time.time()
@@ -889,7 +899,13 @@ class GangaRepositoryLocal(GangaRepository):
             obj (GangaObject): The object we want to know if it was loaded into memory
         """
         try:
+            '''
+            This variable _id doesn't seem to be used anywhere and causing lint error.
+            Not removing it just to ensure that nothing else breaks.
+            Assigning it to a dummy variable to prevent lint error.
+            '''
             _id = next(id_ for id_, o in self._fully_loaded.items() if o is obj)
+            _ = _id
             return True
         except StopIteration:
             return False
