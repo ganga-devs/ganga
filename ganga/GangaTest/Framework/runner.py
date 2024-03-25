@@ -94,10 +94,10 @@ def start(config=myConfig, test_selection='GangaCore.test.*', logger=myLogger):
     """
     """
     import os
-    #rtconfig = getConfig('TestingFramework')
+    # rtconfig = getConfig('TestingFramework')
     my_full_path = os.path.abspath(os.path.dirname(__file__))
-    #sys.stdout = UnbufferedStdout(sys.stdout)
-    #sys.stderr = UnbufferedStdout(sys.stderr)
+    # sys.stdout = UnbufferedStdout(sys.stdout)
+    # sys.stderr = UnbufferedStdout(sys.stderr)
 
     # configure Ganga TestLoader
 
@@ -117,7 +117,7 @@ def start(config=myConfig, test_selection='GangaCore.test.*', logger=myLogger):
     # loader args
     pytf_loader_args = []
     pytf_loader_args.append('--loader-args=%s' % config['Config'])
-    #pytf_loader_args.append( '--loader-args=%s/python' %  gangaReleaseTopDir)
+    # pytf_loader_args.append( '--loader-args=%s/python' %  gangaReleaseTopDir)
     pytf_loader_args.append('--loader-args=%s' % gangaReleaseTopDir)
     pytf_loader_args.append('--loader-args=%s' % int(config['ReleaseTesting']))
     # output_dir
@@ -131,7 +131,7 @@ def start(config=myConfig, test_selection='GangaCore.test.*', logger=myLogger):
     # pass the schmema version (if any) to test
     pytf_loader_args.append('--loader-args=%s' % config['SchemaTesting'])
 
-    #print("PYTF path %s config: %s" % (pytf_loader_path, pytf_loader_args))
+    # print("PYTF path %s config: %s" % (pytf_loader_path, pytf_loader_args))
     import sys
     sys.path.append(os.getenv('PYTF_TOP_DIR', '').split(':')[0])
     sys.path.append(os.path.join(os.getenv('PYTF_TOP_DIR', '').split(':')[0], 'pytf'))
@@ -145,7 +145,7 @@ def start(config=myConfig, test_selection='GangaCore.test.*', logger=myLogger):
 
     try:
         rc = runTests.main(logger, runner_args)
-    except:
+    except BaseException:
         rc = -9999
     return rc
 

@@ -137,6 +137,7 @@ class PackageSetup(object):
         return True
 
 
+
 def checkPythonVersion(minVersion, minHexVersion):
     """Function to check that the Python version number is greater
        than the minimum required.

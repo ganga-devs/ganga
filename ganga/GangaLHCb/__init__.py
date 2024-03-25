@@ -94,12 +94,6 @@ if not _after_bootstrap:
     # _store_root_version()
 
 
-def standardSetup():
-
-    from . import PACKAGE
-    PACKAGE.standardSetup()
-
-
 def loadPlugins(config=None):
     logger.debug("Importing Backends")
     from .Lib import Backends
@@ -150,10 +144,10 @@ def postBootstrapHook():
 #
 # This will be nice to re-add once there is lazy loading support passed to the display for the 'jobs' command 09/2015 rcurrie
 #
-#from GangaCore.GPIDev.Lib.Registry.JobRegistry import config as display_config
-#display_config.setSessionValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs', 'application', 'backend', 'backend.actualCE', 'backend.extraInfo', 'comment') )
-#display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
-#display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
+# from GangaCore.GPIDev.Lib.Registry.JobRegistry import config as display_config
+# display_config.setSessionValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs', 'application', 'backend', 'backend.actualCE', 'backend.extraInfo', 'comment') )
+# display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
+# display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
 
     from GangaCore.Core.GangaThread.WorkerThreads import getQueues
     queue = getQueues()
