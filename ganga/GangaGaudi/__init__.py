@@ -9,7 +9,7 @@ logger = getLogger()
 if not _after_bootstrap:
 
     configGaudi = GangaCore.Utility.Config.makeConfig(
-    'GAUDI', 'Generic GAUDI based parameters')
+        'GAUDI', 'Generic GAUDI based parameters')
 
     dscrpt = 'The command used to make a CMT application.'
     configGaudi.addOption('make_cmd', 'make', dscrpt)
@@ -25,11 +25,11 @@ def standardSetup():
 
 
 def loadPlugins(config=None):
-    #import Lib.Backends
-    #import Lib.Checkers
+    # import Lib.Backends
+    # import Lib.Checkers
     pass
-    #import Lib.Applications
-    #import Lib.RTHandlers
-    #import Lib.Datasets
-    #import Lib.Datafiles
-    #import Lib.Splitters
+    # import Lib.Applications
+    # import Lib.RTHandlers
+    # import Lib.Datasets
+    # import Lib.Datafiles
+    # import Lib.Splitters

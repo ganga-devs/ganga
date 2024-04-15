@@ -6,4 +6,3 @@ def getEnvironment(c):
 
 def loadPlugins(c):
     pass
-
