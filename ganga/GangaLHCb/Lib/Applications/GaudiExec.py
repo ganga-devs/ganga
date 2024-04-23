@@ -195,9 +195,9 @@ class GaudiExec(IPrepareApp):
         'nMakeCores': SimpleItem(defvalue=1,
                                  doc='Number of cores to be provided via the "-j" option to the "make" command'\
                                      'when building the ganga-input-sandbox'),
-        'apptainerBuild' : SimpleItem(defvalue=False, doc="Run the build command in apptainer"),
-        'containerLocation' : SimpleItem(defvalue='/cvmfs/cernvm-prod.cern.ch/cvm4',
-                                         doc='Where is the container to use for the build located'),
+        'apptainerBuild': SimpleItem(defvalue=False, doc="Run the build command in apptainer"),
+        'containerLocation': SimpleItem(defvalue='/cvmfs/cernvm-prod.cern.ch/cvm4',
+                                        doc='Where is the container to use for the build located'),
         # Prepared job object
         'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0,
                                   typelist=[None, ShareDir], protected=0, comparable=1,
