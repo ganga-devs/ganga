@@ -71,7 +71,7 @@ sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
 runenv = dict()
 result = subprocess.run(["bash", "-lc", "printenv"], capture_output=True, encoding='utf-8')
-for line in result.stdout.split('\n'):
+for line in result.stdout.split('\\n'):
     varval = line.strip().split('=')
     if len(varval) < 2:
         pass
