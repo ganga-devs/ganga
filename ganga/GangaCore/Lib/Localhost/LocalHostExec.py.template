@@ -69,9 +69,16 @@ gangadir = ###GANGADIR###
 sys.path.insert(0, gangadir)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
-runenv = os.environ.copy()
-for key,value in environment.items():
-    runenv[key] = value
+runenv = dict()
+result = subprocess.run(["bash", "-lc", "printenv"], capture_output=True, encoding='utf-8')
+for line in result.stdout.split('\n'):
+    varval = line.strip().split('=')
+    if len(varval) < 2:
+        pass
+    else:
+        content = ''.join(varval[1:])
+        if not str(content).startswith('() {'):
+            os.environ[varval[0]] = content
 
 outfile=open('stdout','w')
 errorfile=open('stderr','w')
