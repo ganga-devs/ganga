@@ -792,6 +792,19 @@ if __name__ == '__main__':
     # Extract any/_all_ (b/g)zip files on the WN
     extractAllTarFiles('.')
 
+    runenv = dict()
+    result = subprocess.run(["bash", "-lc",
+                             "source /cvmfs/lhcb.cern.ch/lib/LbEnv && printenv"],
+                            capture_output=True, encoding='utf-8')
+    for line in result.stdout.split('\\n'):
+        varval = line.strip().split('=')
+        if len(varval) < 2:
+            pass
+        else:
+            content = ''.join(varval[1:])
+            if not str(content).startswith('() {'):
+                runenv[varval[0]] = content
+
     print("Executing: %s" % '###COMMAND###'+' '+' '.join(sys.argv[1:]))
 
     # Execute the actual command on the WN
