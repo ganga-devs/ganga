@@ -78,7 +78,7 @@ for line in result.stdout.split('\n'):
     else:
         content = ''.join(varval[1:])
         if not str(content).startswith('() {'):
-            os.environ[varval[0]] = content
+            runenv[varval[0]] = content
 
 outfile=open('stdout','w')
 errorfile=open('stderr','w')
