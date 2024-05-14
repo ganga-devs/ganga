@@ -70,7 +70,9 @@ sys.path.insert(0, gangadir)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
 runenv = dict()
-result = subprocess.run(["bash", "-lc", "printenv"], capture_output=True, encoding='utf-8')
+result = subprocess.run(["env -i HOME=\"$HOME\" bash -lc '(set -o posix; set)'"], 
+                        capture_output=True, encoding='utf-8',
+                        shell=True)
 for line in result.stdout.split('\\n'):
     varval = line.strip().split('=')
     if len(varval) < 2:
