@@ -345,6 +345,7 @@ class Condor(IBackend):
             "",
             "workdir = os.getcwd()",
             "execmd = %s" % repr(exeCmd),
+            "runenv = os.environ.copy()",
             "",
             "###VIRTUALIZATION###",
             "",
