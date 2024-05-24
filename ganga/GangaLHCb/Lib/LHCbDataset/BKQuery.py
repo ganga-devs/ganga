@@ -1,4 +1,4 @@
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import datetime
 from GangaCore.Core.exceptions import GangaException
@@ -14,7 +14,7 @@ from GangaCore.Utility.logging import getLogger
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset, LHCbCompressedDataset
 from GangaLHCb.Lib.Backends.Dirac import filterLFNsBySE
 logger = getLogger()
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 class BKQuery(GangaObject):
@@ -124,13 +124,13 @@ RecoToDST-07/90000000/DST" ,
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)
-        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag,
-                                                             self.type, self.startDate, self.endDate, self.selection)
+        cmd = "getDataset('%s','%s','%s','%s','%s','%s', '%s')" % (self.path, self.dqflag,
+                                                                   self.type, self.startDate, self.endDate, self.selection, self.SMOG2)
         from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
         knownLists = [tuple, list, GangaList]
         if isType(self.dqflag, knownLists):
-            cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag,
-                                                               self.type, self.startDate, self.endDate, self.selection)
+            cmd = "getDataset('%s',%s,'%s','%s','%s','%s', '%s')" % (self.path, self.dqflag,
+                                                                     self.type, self.startDate, self.endDate, self.selection, self.SMOG2)
 
         try:
             value = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
@@ -167,13 +167,13 @@ RecoToDST-07/90000000/DST" ,
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)
-        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag,
-                                                             self.type, self.startDate, self.endDate, self.selection)
+        cmd = "getDataset('%s','%s','%s','%s','%s','%s', %s)" % (self.path, self.dqflag,
+                                                                 self.type, self.startDate, self.endDate, self.selection, self.SMOG2)
         from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
         knownLists = [tuple, list, GangaList]
         if isType(self.dqflag, knownLists):
-            cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate,
-                                                               self.endDate, self.selection)
+            cmd = "getDataset('%s',%s,'%s','%s','%s','%s', %s)" % (self.path, self.dqflag, self.type, self.startDate,
+                                                                   self.endDate, self.selection, self.SMOG2)
         result = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
         logger.debug("Finished Running Command")
         files = []
@@ -239,7 +239,7 @@ RecoToDST-07/90000000/DST" ,
 
         return addProxy(ds)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 class BKQueryDict(GangaObject):
@@ -329,4 +329,4 @@ class BKQueryDict(GangaObject):
 
         return addProxy(ds)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

@@ -2,9 +2,9 @@
 # DiracLHCb commands
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
-#def getRootVersions(): output( dirac.getRootVersions() )
+# def getRootVersions(): output( dirac.getRootVersions() )
 
-#def getSoftwareVersions(): output( dirac.getSoftwareVersions() )
+# def getSoftwareVersions(): output( dirac.getSoftwareVersions() )
 
 
 @diracCommand
