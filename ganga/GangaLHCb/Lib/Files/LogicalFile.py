@@ -8,7 +8,7 @@ from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
-
+# noop
 def strip_filename(name):
     if len(name) >= 4 and name[0:4].upper() == 'PFN:':
         msg = 'Can not create LogicalFile from string that begins w/ "PFN:".'\
