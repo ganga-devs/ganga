@@ -158,7 +158,7 @@ class ND280LocalDataset(ND280Dataset):
 
         self._setDirty()
 
-    def get_raw_from_list(self, prfx, list_file):
+    def get_raw_from_list(self, prfx, list_file, exp_name='nd280'):
         """Get the dataset of raw files as listed in a text file as run/subrun combinations."""
 
         logger.info('Reading list file %s ...', list_file)
@@ -178,7 +178,7 @@ class ND280LocalDataset(ND280Dataset):
             run = "%08d" % int(chunks[0])
             sub = "%04d" % int(chunks[1])
             rang = run[:5] + '000_' + run[:5] + '999'
-            file = 'nd280_' + run + '_' + sub + '.daq.mid.gz'
+            file = exp_name + '_' + run + '_' + sub + '.daq.mid.gz'
             self.get_dataset(os.path.join(prfx, rang), file)
 
     def get_kin_range(self, fr, to):
