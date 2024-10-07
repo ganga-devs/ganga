@@ -448,7 +448,7 @@ inputfile =
             logger.error('Please make sure all options stated above are entered')
             return ''
 
-        if not self.options['stage'] in ['base', 'fgd', 'tript', 'all']:
+        if self.options['stage'] not in ['base', 'fgd', 'tript', 'all']:
             logger.error('"stage" options should be one of', ['base', 'fgd', 'tript', 'all'])
             return ''
 
@@ -537,7 +537,7 @@ inputfile =
             logger.error('Please make sure all options stated above are entered')
             return ''
 
-        if not self.options['stage'] in ['neutMC', 'g4anal', 'neutSetup']:
+        if self.options['stage'] not in ['neutMC', 'g4anal', 'neutSetup']:
             logger.error('"stage" options should be one of', ['neutMC', 'g4anal', 'neutSetup'])
             return ''
 

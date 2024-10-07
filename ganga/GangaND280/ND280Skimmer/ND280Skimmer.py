@@ -7,6 +7,8 @@
 Ganga module with classes to skim from reco files a set of events listed in a CSV file.
 """
 
+from os.path import isfile
+import os
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
@@ -15,13 +17,11 @@ from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 
 from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.Utility.files import expandfilename
 
 logger = getLogger()
 
-from os.path import isfile
-
-import os
-from GangaCore.Utility.files import expandfilename
 
 shared_path = os.path.join(
     expandfilename(getConfig('Configuration')['gangadir']),
@@ -76,19 +76,6 @@ class ND280RecoSkimmer(IPrepareApp):
     _name = 'ND280RecoSkimmer'
     _scriptname = None
     _exportmethods = ['prepare']
-    _GUIPrefs = [
-        {'attribute': 'csvfile', 'widget': 'String'},
-        {'attribute': 'cmtsetup', 'widget': 'String'},
-        {'attribute': 'outputfile', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
-
-    _GUIAdvancedPrefs = [
-        {'attribute': 'csvfile', 'widget': 'String'},
-        {'attribute': 'cmtsetup', 'widget': 'String'},
-        {'attribute': 'outputfile', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
 
     def __init__(self):
         super(ND280RecoSkimmer, self).__init__()
@@ -235,8 +222,6 @@ class gLiteRTHandler(IRuntimeHandler):
             app.env,
         )
 
-
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('ND280RecoSkimmer', 'LSF', RTHandler)
 allHandlers.add('ND280RecoSkimmer', 'Local', RTHandler)
