@@ -104,7 +104,7 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
             myVer (str): This is the version of 'myApp' to pass to lb-dev
             myPath (str): This is where lb-dev will be run
             myUse (str): This is a git lb-use which will be run once the lb-dev has executed
-            myFolder (str): This is a git lb-checkout after the lb-use. 
+            myFolder (str): This is a git lb-checkout after the lb-use.
             myBranch (str): This is the branch used for the lb-checkout. Master branch assumed if not specified
     """
 
@@ -120,13 +120,14 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
         raise ApplicationPrepareError(verErr)
 
     platformsAvailable = [_p for _p in verOut.decode().split('\n') if 'opt' in _p]
-    if len(platformsAvailable)==0:
+    if len(platformsAvailable) == 0:
         platformsAvailable = verOut.decode().split('\n')
     platformToUse = platformsAvailable[0]
 
     if not path.exists(full_path + '/' + myApp + 'Dev_' + myVer):
         devStat, devOut, devErr = _exec_cmd(
-            'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && lb-dev %s/%s' % (platformToUse, myApp, myVer), full_path)
+            'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && lb-dev %s/%s' %
+            (platformToUse, myApp, myVer), full_path)
         logger.info("Running lb-dev %s %s with platform %s" % (myApp, myVer, platformToUse))
         if devStat != 0:
             logger.error("lb-dev %s %s failed!" % (myApp, myVer))
@@ -138,14 +139,16 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
     logger.info("Set up App Env at: %s" % dev_dir)
     if myUse:
         lbUse, lbUseOut, lbUseErr = _exec_cmd(
-            'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && git lb-use %s' % (platformToUse, myUse), dev_dir)
+            'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && git lb-use %s' %
+            (platformToUse, myUse), dev_dir)
         logger.info("Running git lb-use %s" % myUse)
         if lbUse != 0:
             logger.error("git lb-use %s failed!" % myUse)
             raise ApplicationPrepareError(lbUseErr)
         if myFolder:
-            chk, chkOut, chkErr = _exec_cmd('source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && git lb-checkout %s/%s %s' % (
-                platformToUse, myUse, myBranch, myFolder), dev_dir)
+            chk, chkOut, chkErr = _exec_cmd(
+                'source /cvmfs/lhcb.cern.ch/lib/LbEnv && source LbLogin.sh --cmtconfig=%s && git lb-checkout %s/%s %s' %
+                (platformToUse, myUse, myBranch, myFolder), dev_dir)
             logger.info("Running git lb-checkout %s/%s %s" % (myUse, myBranch, myFolder))
             if chk != 0:
                 logger.error("git lb-checkout %s/%s %s failed!" % (myUse, myBranch, myFolder))
@@ -164,7 +167,7 @@ def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder=
             myVer (str): This is the version of the app you want
             myPath (str): This is where lb-dev will be run
             myUse (str): This is a git lb-use which will be run once the lb-dev has executed
-            myFolder (str): This is a git lb-checkout for after the lb-use. 
+            myFolder (str): This is a git lb-checkout for after the lb-use.
             myBranch (str) : This is what is appended to the lb-checkout myFolder/myBranch , master assumed if not specified
     """
     path = prepare_cmake_app(myApp, myVer, myPath, myUse, myFolder, myBranch)
