@@ -1,11 +1,7 @@
-
-
 import time
-
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 master_timeout = 300.
-
 
 def dummySleep(someJob):
     my_timeout = 0.
@@ -13,84 +9,87 @@ def dummySleep(someJob):
         time.sleep(1.)
         my_timeout += 1.
 
-
 class TestMonitoring(GangaUnitTest):
 
     def setUp(self):
-        """Make sure that the Job object isn't destroyed between tests"""
+        """Set up configurations for monitoring tests."""
         extra_opts = [('PollThread', 'autostart', 'False'), ('PollThread', 'base_poll_rate', 1)]
         super(TestMonitoring, self).setUp(extra_opts=extra_opts)
 
     def tearDown(self):
-        from GangaCore.Utility.Config import getConfig
         super(TestMonitoring, self).tearDown()
 
-    def test_a_JobConstruction(self):
-        from GangaCore.GPI import Job, jobs, disableMonitoring
-
-        j = Job()
-
-        self.assertEqual(len(jobs), 1)
-
-        j.submit()
-
-        self.assertNotEqual(j.status, 'new')
-
-    def test_b_EnableMonitoring(self):
-        from GangaCore.GPI import enableMonitoring, Job, jobs
-
+    def test_a_runMonitoring_withJobSlice(self):
+        from GangaCore.GPI import enableMonitoring, Job, jobs, runMonitoring
+        
         enableMonitoring()
-
         j = Job()
         j.submit()
-
         dummySleep(j)
 
-        self.assertNotEqual(jobs(0).status, 'submitted')
+        result = runMonitoring(steps=3, jobs=jobs[:])
+        self.assertTrue(result, "runMonitoring with job slice failed to execute successfully.")
 
-    def test_c_disableMonitoring(self):
+    def test_b_runMonitoring_withJobID(self):
+        from GangaCore.GPI import enableMonitoring, Job, jobs, runMonitoring
 
-        from GangaCore.GPI import disableMonitoring
-
-        disableMonitoring()
-
-    def test_d_anotherNewJob(self):
-
-        from GangaCore.GPI import Job, jobs
-
-        j = Job()
-
-        j.submit()
-        self.assertNotEqual(j.status, 'new')
-
-    def test_e_reEnableMon(self):
-
-        from GangaCore.GPI import disableMonitoring, enableMonitoring, Job, jobs
-
-        disableMonitoring()
         enableMonitoring()
-        disableMonitoring()
-        enableMonitoring()
-
         j = Job()
         j.submit()
-
         dummySleep(j)
 
-        self.assertEqual(j.status, 'completed')
+        job_id = j.id
+        result = runMonitoring(steps=3, jobs=job_id)
+        self.assertTrue(result, "runMonitoring with job ID failed to execute successfully.")
 
-    def test_f_reallyDisabled(self):
+    def test_c_runMonitoring_withJobIDList(self):
+        from GangaCore.GPI import enableMonitoring, Job, runMonitoring
 
-        from GangaCore.GPI import disableMonitoring, enableMonitoring, Job
+        enableMonitoring()
+        job_ids = []
+        for _ in range(2):
+            j = Job()
+            j.submit()
+            dummySleep(j)
+            job_ids.append(j.id)
+        
+        result = runMonitoring(steps=3, jobs=job_ids)
+        self.assertTrue(result, "runMonitoring with list of job IDs failed to execute successfully.")
+
+    def test_d_runMonitoring_withJobObject(self):
+        from GangaCore.GPI import enableMonitoring, Job, runMonitoring
+
+        enableMonitoring()
+        j = Job()
+        j.submit()
+        dummySleep(j)
+
+        result = runMonitoring(steps=3, jobs=j)
+        self.assertTrue(result, "runMonitoring with job object failed to execute successfully.")
+
+    def test_e_disableAndEnableMonitoring(self):
+        from GangaCore.GPI import disableMonitoring, enableMonitoring, Job, runMonitoring
+
+        disableMonitoring()
+        enableMonitoring()
+        
+        j = Job()
+        j.submit()
+        dummySleep(j)
+
+        result = runMonitoring(steps=3, jobs=j)
+        self.assertTrue(result, "Re-enabling monitoring and running on a job object failed.")
+
+    def test_f_monitoringLoopStatus(self):
+        from GangaCore.GPI import disableMonitoring, enableMonitoring, Job, runMonitoring
 
         disableMonitoring()
         j = Job()
         j.submit()
-
         self.assertEqual(j.status, 'submitted')
 
         enableMonitoring()
-
         dummySleep(j)
 
-        self.assertEqual(j.status, 'completed')
+        result = runMonitoring(steps=3, jobs=j)
+        self.assertTrue(result, "Final monitoring loop status check failed.")

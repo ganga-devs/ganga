@@ -706,59 +706,80 @@ class JobRegistry_Monitor(GangaThread):
         stripProxy(self.registry_slice).objects.repository.load([i])
         return True
 
-    def runMonitoring(self, jobs=None, steps=1, timeout=300):
+    def runMonitoring(self, steps, timeout, jobs=None):
         """
         Enable/Run the monitoring loop and wait for the monitoring steps completion.
+        
         Parameters:
-          steps:   number of monitoring steps to run
-          timeout: how long to wait for monitor steps termination (seconds)
-          jobs: a registry slice to be monitored (None -> all jobs), it may be passed by the user so ._impl is stripped if needed
+        steps:   number of monitoring steps to run
+        timeout: how long to wait for monitor steps termination (seconds)
+        jobs: a registry slice to be monitored (None -> all jobs), or an int, list of int, or job object
+        
         Return:
-          False, if the loop cannot be started or the timeout occured while waiting for monitoring termination
-          True, if the monitoring steps were successfully executed  
-        Note:         
-          This method is meant to be used in Ganga scripts to request monitoring on demand. 
+        False, if the loop cannot be started or the timeout occurred while waiting for monitoring termination
+        True, if the monitoring steps were successfully executed  
         """
-
+        
         log.debug("runMonitoring")
 
         if GANGA_SWAN_INTEGRATION:
-            # Detect New Jobs from other sessions.
+            # (Existing logic)
             new_jobs = stripProxy(self.registry_slice).objects.repository.update_index(True, True)
             self.newly_discovered_jobs = list(set(self.newly_discovered_jobs) | set(new_jobs))
-            # Only load jobs from disk which are in new state currently.
             for i in self.newly_discovered_jobs:
                 j = stripProxy(self.registry_slice(i))
                 job_status = lazyLoadJobStatus(j)
-                if job_status in ['new']:
+                if job_status == 'new':
                     stripProxy(self.registry_slice).objects.repository.load([i])
 
-        if not isType(steps, int) and steps < 0:
+        # Validate `steps`
+        if not isType(steps, int) or steps <= 0:
             log.warning("The number of monitor steps should be a positive (non-zero) integer")
             return False
 
+        # Check if the monitoring loop is alive and services are enabled
         if not self.alive:
             log.error("Cannot run the monitoring loop. It has already been stopped")
             return False
 
-        # we don not allow the user's request the monitoring loop while the
-        # internal services are stopped
         if not Coordinator.servicesEnabled:
-            log.error("Cannot run the monitoring loop."
-                      "The internal services are disabled (check your credentials or available disk space)")
+            log.error("Cannot run the monitoring loop. The internal services are disabled (check your credentials or available disk space)")
             return False
 
-        # if the monitoring is disabled (e.g. scripts)
         if not self.enabled:
-            # and there are some required cred which are missing
-            # (the monitoring loop does not monitor the credentials so we need to check 'by hand' here)
             _missingCreds = get_needed_credentials()
             if _missingCreds:
-                log.error("Cannot run the monitoring loop. The following credentials are required: %s" % _missingCreds)
+                log.error(f"Cannot run the monitoring loop. The following credentials are required: {_missingCreds}")
                 return False
 
-        #log.debug("jobs: %s" % str(jobs))
-        #log.debug("self.__mainLoopCond: %s" % str(self.__mainLoopCond))
+        # Handle the `jobs` input (new logic to handle int, list, job object)
+        if jobs is not None:
+            if isinstance(jobs, int):
+                # If jobs is a single int, convert it to a slice (equivalent to one job)
+                log.debug(f"Converting job ID {jobs} to a registry slice")
+                m_jobs = self.registry_slice(jobs)
+            elif isinstance(jobs, list):
+                # If jobs is a list of int, ensure all elements are int and convert to registry slice
+                if all(isinstance(job, int) for job in jobs):
+                    log.debug(f"Converting job IDs {jobs} to a registry slice")
+                    m_jobs = [self.registry_slice(job) for job in jobs]
+                else:
+                    log.warning("List must contain integers representing job IDs")
+                    return False
+            elif isinstance(jobs, jobs):
+                # If jobs is a job object, directly assign it
+                log.debug(f"Using job object {jobs}")
+                m_jobs = jobs
+            else:
+                # Handle job slices (existing behavior)
+                from GangaCore.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
+                if not isinstance(jobs, RegistrySlice):
+                    log.warning('jobs argument must be a registry slice, int, list of int, or job object')
+                    return False
+                m_jobs = jobs
+
+            # Pass the new `m_jobs` (registry slice) for further processing
+            self.makeUpdateJobStatusFunction(jobSlice=m_jobs)
 
         with self.__mainLoopCond:
             log.debug('Monitoring loop lock acquired. Enabling mon loop')
@@ -766,49 +787,25 @@ class JobRegistry_Monitor(GangaThread):
                 log.error("The monitoring loop is already running.")
                 return False
 
-            if jobs is not None:
-                m_jobs = jobs
-
-                # additional check if m_jobs is really a registry slice
-                # the underlying code is not prepared to handle correctly the
-                # situation if it is not
-                from GangaCore.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
-                if not isType(m_jobs, RegistrySlice):
-                    log.warning(
-                        'runMonitoring: jobs argument must be a registry slice such as a result of jobs.select() or jobs[i1:i2]')
-                    return False
-
-                #self.registry_slice = m_jobs
-                #log.debug("m_jobs: %s" % str(m_jobs))
-                self.makeUpdateJobStatusFunction(jobSlice=m_jobs)
-
-            log.debug("Enable Loop, Clear Iterators and setCallbackHook")
-            # enable mon loop
+            log.debug("Enable Loop, Clear Iterators, and setCallbackHook")
             self.enabled = True
-            # set how many steps to run
             self.steps = steps
-            # enable job list iterators
             self.stopIter.clear()
-            # Start backend update timeout checking.
             self.setCallbackHook(UpdateDict.timeoutCheck, {'thisDict': self.updateDict_ts}, True)
-
             log.debug("Waking up Main Loop")
-            # wake up the mon loop
             self.__mainLoopCond.notify_all()
 
         log.debug("Waiting to execute steps")
-        # wait to execute the steps
         self.__monStepsTerminatedEvent.wait()
         self.__monStepsTerminatedEvent.clear()
 
         log.debug("Test for timeout")
-        # wait the steps to be executed or timeout to occur
         if not self.__awaitTermination(timeout):
             log.warning("Monitoring loop started but did not complete in the given timeout.")
-            # force loops termination
             self.stopIter.set()
             return False
         return True
+
 
     def enableMonitoring(self):
         """

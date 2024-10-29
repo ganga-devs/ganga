@@ -1,0 +1,7 @@
+#!/home/saad/Documents/Github/ganga/ganga-env/bin/python3
+# EASY-INSTALL-DEV-SCRIPT: 'ganga==8.4.2','ganga'
+__requires__ = 'ganga==8.4.2'
+__import__('pkg_resources').require('ganga==8.4.2')
+__file__ = '/home/saad/Documents/Github/ganga/bin/ganga'
+with open(__file__) as f:
+    exec(compile(f.read(), __file__, 'exec'))
