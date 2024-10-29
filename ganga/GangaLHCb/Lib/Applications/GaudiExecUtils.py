@@ -119,7 +119,10 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
         logger.error("lb-run --list-platforms %s/%s failed!" % (myApp, myVer))
         raise ApplicationPrepareError(verErr)
 
-    platformToUse = verOut.decode().split('\n')[-2]
+    platformsAvailable = [_p for _p in verOut.decode().split('\n') if 'opt' in _p]
+    if len(platformsAvailable)==0:
+        platformsAvailable = verOut.decode().split('\n')
+    platformToUse = platformsAvailable[0]
 
     if not path.exists(full_path + '/' + myApp + 'Dev_' + myVer):
         devStat, devOut, devErr = _exec_cmd(
