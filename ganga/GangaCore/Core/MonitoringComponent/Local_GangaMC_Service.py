@@ -706,51 +706,58 @@ class JobRegistry_Monitor(GangaThread):
         stripProxy(self.registry_slice).objects.repository.load([i])
         return True
 
-    def runMonitoring(self, steps, timeout, jobs=None):
+    def runMonitoring(self, jobs=None, steps=1, timeout=300):
         """
         Enable/Run the monitoring loop and wait for the monitoring steps completion.
-        
         Parameters:
-        steps:   number of monitoring steps to run
-        timeout: how long to wait for monitor steps termination (seconds)
-        jobs: a registry slice to be monitored (None -> all jobs), or an int, list of int, or job object
-        
+          steps:   number of monitoring steps to run
+          timeout: how long to wait for monitor steps termination (seconds)
+          jobs: a registry slice to be monitored (None -> all jobs), it may be passed by the user so ._impl is stripped if needed
         Return:
-        False, if the loop cannot be started or the timeout occurred while waiting for monitoring termination
-        True, if the monitoring steps were successfully executed  
+          False, if the loop cannot be started or the timeout occured while waiting for monitoring termination
+          True, if the monitoring steps were successfully executed
+        Note:
+          This method is meant to be used in Ganga scripts to request monitoring on demand.
         """
-        
+
         log.debug("runMonitoring")
 
         if GANGA_SWAN_INTEGRATION:
-            # (Existing logic)
+            # Detect New Jobs from other sessions.
             new_jobs = stripProxy(self.registry_slice).objects.repository.update_index(True, True)
             self.newly_discovered_jobs = list(set(self.newly_discovered_jobs) | set(new_jobs))
             for i in self.newly_discovered_jobs:
                 j = stripProxy(self.registry_slice(i))
                 job_status = lazyLoadJobStatus(j)
-                if job_status == 'new':
+                if job_status in ['new']:
                     stripProxy(self.registry_slice).objects.repository.load([i])
 
-        # Validate `steps`
         if not isType(steps, int) or steps <= 0:
             log.warning("The number of monitor steps should be a positive (non-zero) integer")
             return False
 
-        # Check if the monitoring loop is alive and services are enabled
         if not self.alive:
             log.error("Cannot run the monitoring loop. It has already been stopped")
             return False
 
+        # we don not allow the user's request the monitoring loop while the
+        # internal services are stopped
         if not Coordinator.servicesEnabled:
-            log.error("Cannot run the monitoring loop. The internal services are disabled (check your credentials or available disk space)")
+            log.error("Cannot run the monitoring loop."
+                      "The internal services are disabled (check your credentials or available disk space)")
             return False
 
+        # if the monitoring is disabled (e.g. scripts)
         if not self.enabled:
+            # and there are some required cred which are missing
+            # (the monitoring loop does not monitor the credentials so we need to check 'by hand' here)
             _missingCreds = get_needed_credentials()
             if _missingCreds:
-                log.error(f"Cannot run the monitoring loop. The following credentials are required: {_missingCreds}")
+                log.error("Cannot run the monitoring loop. The following credentials are required: %s" % _missingCreds)
                 return False
+
+            #log.debug("jobs: %s" % str(jobs))
+            #log.debug("self.__mainLoopCond: %s" % str(self.__mainLoopCond))
 
         # Handle the `jobs` input (new logic to handle int, list, job object)
         if jobs is not None:
@@ -777,7 +784,6 @@ class JobRegistry_Monitor(GangaThread):
                     log.warning('jobs argument must be a registry slice, int, list of int, or job object')
                     return False
                 m_jobs = jobs
-
             # Pass the new `m_jobs` (registry slice) for further processing
             self.makeUpdateJobStatusFunction(jobSlice=m_jobs)
 
