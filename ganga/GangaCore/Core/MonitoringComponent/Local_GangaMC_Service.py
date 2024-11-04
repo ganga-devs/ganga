@@ -773,10 +773,6 @@ class JobRegistry_Monitor(GangaThread):
                 else:
                     log.warning("List must contain integers representing job IDs")
                     return False
-            elif isinstance(jobs, jobs):
-                # If jobs is a job object, directly assign it
-                log.debug(f"Using job object {jobs}")
-                m_jobs = jobs
             else:
                 # Handle job slices (existing behavior)
                 from GangaCore.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
