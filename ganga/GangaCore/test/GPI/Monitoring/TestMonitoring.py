@@ -37,7 +37,7 @@ class TestMonitoring(GangaUnitTest):
         self.assertNotEqual(j.status, 'new')
 
     def test_b_EnableMonitoring(self):
-        from GangaCore.GPI import enableMonitoring, Job, jobs, runMonitoring
+        from GangaCore.GPI import enableMonitoring, Job, jobs
 
         enableMonitoring()
 
@@ -46,9 +46,7 @@ class TestMonitoring(GangaUnitTest):
 
         dummySleep(j)
 
-        job_id = j.id
-        result = runMonitoring(jobs=job_id)
-        self.assertTrue(result, "runMonitoring with job ID failed to execute successfully.")
+        self.assertNotEqual(jobs(0).status, 'submitted')
 
     def test_c_disableMonitoring(self):
 

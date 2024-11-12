@@ -781,7 +781,7 @@ class JobRegistry_Monitor(GangaThread):
                     return False
                 m_jobs = jobs
             # Pass the new `m_jobs` (registry slice) for further processing
-            self.makeUpdateJobStatusFunction(jobSlice=m_jobs)
+        self.makeUpdateJobStatusFunction(jobSlice=m_jobs)
 
         with self.__mainLoopCond:
             log.debug('Monitoring loop lock acquired. Enabling mon loop')
@@ -791,6 +791,7 @@ class JobRegistry_Monitor(GangaThread):
 
             log.debug("Enable Loop, Clear Iterators, and setCallbackHook")
             self.enabled = True
+            # set how many steps to run
             self.steps = steps
             self.stopIter.clear()
             self.setCallbackHook(UpdateDict.timeoutCheck, {'thisDict': self.updateDict_ts}, True)
