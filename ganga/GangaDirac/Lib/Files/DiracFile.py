@@ -131,7 +131,7 @@ class DiracFile(IGangaFile):
                                      'localDir': SimpleItem(defvalue=None, copyable=1, typelist=['str', 'type(None)'],
                                                             doc='local dir where the file is stored, '
                                                                 'used from get and put methods'),
-                                     'locations': SimpleItem(defvalue=[], copyable=1, typelist=['str'], sequence=1,
+                                     'locations': SimpleItem(defvalue=[], copyable=1, typelist=[list], sequence=1,
                                                              doc="list of SE locations where the outputfiles are uploaded"),
                                      'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0,
                                                               doc='Should the output file be compressed '
@@ -832,14 +832,16 @@ class DiracFile(IGangaFile):
             if regex.search(self.namePattern) is not None:
                 d.lfn = lfn
                 d.remoteDir = os.path.dirname(lfn)
-                d.locations = lfn_out.get('allDiracSE', '')
+                if lfn_out.get('DiracSE'):
+                    d.locations.append(lfn_out.get('DiracSE'))
                 d.guid = guid
                 outputFiles.append(d)
                 continue
             else:
                 self.lfn = lfn
                 self.remoteDir = os.path.dirname(lfn)
-                self.locations = lfn_out.get('allDiracSE', '')
+                if lfn_out.get('DiracSE'):
+                    self.locations.append(lfn_out.get('DiracSE'))
                 self.guid = guid
 
         if replicate:
