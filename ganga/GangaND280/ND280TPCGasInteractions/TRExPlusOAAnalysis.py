@@ -15,6 +15,7 @@ from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 shared_path = os.path.join(
     expandfilename(getConfig('Configuration')['gangadir']),
@@ -88,19 +89,6 @@ class TRExPlusOAAnalysis(IPrepareApp):
     _name = 'TRExPlusOAAnalysis'
     _scriptname = None
     _exportmethods = ['prepare']
-    _GUIPrefs = [
-        {'attribute': 'trex_args', 'widget': 'String_List'},
-        {'attribute': 'oaana_args', 'widget': 'String_List'},
-        {'attribute': 'filenamesubstr', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
-
-    _GUIAdvancedPrefs = [
-        {'attribute': 'trex_args', 'widget': 'String_List'},
-        {'attribute': 'oaana_args', 'widget': 'String_List'},
-        {'attribute': 'filenamesubstr', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
 
     def __init__(self):
         super(TRExPlusOAAnalysis, self).__init__()
@@ -231,8 +219,6 @@ class gLiteRTHandler(IRuntimeHandler):
             app.env,
         )
 
-
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('TRExPlusOAAnalysis', 'LSF', RTHandler)
 allHandlers.add('TRExPlusOAAnalysis', 'Local', RTHandler)

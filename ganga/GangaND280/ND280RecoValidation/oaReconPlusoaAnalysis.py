@@ -15,6 +15,7 @@ from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 shared_path = os.path.join(
     expandfilename(getConfig('Configuration')['gangadir']),
@@ -100,23 +101,6 @@ class oaReconPlusoaAnalysis(IPrepareApp):
     _name = 'oaReconPlusoaAnalysis'
     _scriptname = None
     _exportmethods = ['prepare']
-    _GUIPrefs = [
-        {'attribute': 'reco_args', 'widget': 'String_List'},
-        {'attribute': 'anal_args', 'widget': 'String_List'},
-        {'attribute': 'filenamesubstr', 'widget': 'String'},
-        {'attribute': 'reconewstr', 'widget': 'String'},
-        {'attribute': 'analnewstr', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
-
-    _GUIAdvancedPrefs = [
-        {'attribute': 'reco_args', 'widget': 'String_List'},
-        {'attribute': 'anal_args', 'widget': 'String_List'},
-        {'attribute': 'filenamesubstr', 'widget': 'String'},
-        {'attribute': 'reconewstr', 'widget': 'String'},
-        {'attribute': 'analnewstr', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
 
     def __init__(self):
         super(oaReconPlusoaAnalysis, self).__init__()
@@ -245,8 +229,6 @@ class gLiteRTHandler(IRuntimeHandler):
             app.env,
         )
 
-
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('oaReconPlusoaAnalysis', 'LSF', RTHandler)
 allHandlers.add('oaReconPlusoaAnalysis', 'Local', RTHandler)

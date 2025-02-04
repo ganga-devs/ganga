@@ -3,23 +3,20 @@
 #
 ################################################################################
 
-from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
-from GangaCore.GPIDev.Adapters.IChecker import IChecker, IFileChecker
-from GangaCore.GPIDev.Base.Proxy import GPIProxyObject
-from GangaCore.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
-from GangaCore.Utility.Plugin import allPlugins
+from GangaCore.GPIDev.Adapters.IChecker import IFileChecker
+from GangaCore.GPIDev.Schema import SimpleItem
 from GangaCore.Utility.logging import getLogger
 
 import subprocess
-import copy
 import os
-import string
 import shutil
 
 # Simon's post_status - communicates to processing DB
 from . import post_status
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 
 logger = getLogger()
 
@@ -178,7 +175,8 @@ class ND280RDP_Checker(IFileChecker):
 
         logger.info('Result for %s %s %s %s is: %s, %s, %s, %s, %s' %  (self.RUN,self.SUBRUN,self.TRIGTYPE,self.STAGE,self.site,self.ReturnCode,self.Time,self.EventsIn,self.EventsOut))
 
-        if self.range == 0: return # no remote status report for CosMC
+        if self.range == 0: 
+            return # no remote status report for CosMC
 
         if not self.path:
             logger.error("No monitoring info sent because MONDIR is not defined")

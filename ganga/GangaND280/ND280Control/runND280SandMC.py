@@ -17,14 +17,14 @@ from GangaCore.GPIDev.Lib.File import FileBuffer
 from GangaCore.GPIDev.Schema import SimpleItem, Schema, Version
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from . import ND280Configs
 
 shared_path = os.path.join(
     expandfilename(getConfig('Configuration')['gangadir']),
     'shared',
     getConfig('Configuration')['user'],
 )
-
-from . import ND280Configs
 
 
 class runND280SandMC(IPrepareApp):
@@ -82,19 +82,6 @@ class runND280SandMC(IPrepareApp):
     _category = 'applications'
     _name = 'runND280SandMC'
     _exportmethods = ['prepare']
-    _GUIPrefs = [
-        {'attribute': 'args', 'widget': 'String_List'},
-        {'attribute': 'cmtsetup', 'widget': 'String'},
-        {'attribute': 'confopts', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
-
-    _GUIAdvancedPrefs = [
-        {'attribute': 'args', 'widget': 'String_List'},
-        {'attribute': 'cmtsetup', 'widget': 'String'},
-        {'attribute': 'confopts', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
 
     def __init__(self):
         super(runND280SandMC, self).__init__()
@@ -221,8 +208,6 @@ class gLiteRTHandler(IRuntimeHandler):
             app.env,
         )
 
-
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('runND280SandMC', 'LSF', RTHandler)
 allHandlers.add('runND280SandMC', 'Local', RTHandler)

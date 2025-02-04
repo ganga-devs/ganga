@@ -4,6 +4,7 @@
 # Created 16/12/2013
 ################################################################################
 
+import os
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
@@ -12,8 +13,8 @@ from GangaCore.Utility.Config import getConfig
 
 from GangaCore.Core.exceptions import ApplicationConfigurationError
 
-import os
 from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 shared_path = os.path.join(
     expandfilename(getConfig('Configuration')['gangadir']),
@@ -147,24 +148,6 @@ class VFT_make_ana(IPrepareApp):
     _name = 'VFT_make_ana'
     _scriptname = None
     _exportmethods = ['prepare']
-    _GUIPrefs = [
-        {'attribute': 'cmtsetup', 'widget': 'String'},
-        {'attribute': 'tree', 'widget': 'String'},
-        {'attribute': 'ana_custom', 'widget': 'String'},
-        {'attribute': 'ana_output', 'widget': 'String'},
-        {'attribute': 'ana_useropt', 'widget': 'String_List'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
-
-    _GUIAdvancedPrefs = [
-        {'attribute': 'cmtsetup', 'widget': 'String'},
-        {'attribute': 'tree', 'widget': 'String'},
-        {'attribute': 'ana_custom', 'widget': 'String'},
-        {'attribute': 'ana_output', 'widget': 'String'},
-        {'attribute': 'ana_useropt', 'widget': 'String_List'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
-
     def __init__(self):
         super(VFT_make_ana, self).__init__()
 
@@ -262,7 +245,7 @@ class VFT_make_ana(IPrepareApp):
             # }
 
             for key in argDict:
-                if not getattr(self, argDict[key]) is None:
+                if getattr(self, argDict[key]) is not None:
                     args.append(key + '=' + getattr(self, argDict[key]))
 
             for opt in self.pdf_options:
@@ -334,7 +317,6 @@ class gLiteRTHandler(IRuntimeHandler):
         )
 
 
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('VFT_make_ana', 'LSF', RTHandler)
 allHandlers.add('VFT_make_ana', 'Local', RTHandler)

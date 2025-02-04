@@ -15,6 +15,7 @@ from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 shared_path = os.path.join(
     expandfilename(getConfig('Configuration')['gangadir']),
@@ -112,27 +113,6 @@ class RecoPlusVFT(IPrepareApp):
     _name = 'RecoPlusVFT'
     _scriptname = None
     _exportmethods = ['prepare']
-    _GUIPrefs = [
-        {'attribute': 'reco_exe', 'widget': 'File'},
-        {'attribute': 'reco_args', 'widget': 'String_List'},
-        {'attribute': 'vft_exe', 'widget': 'File'},
-        {'attribute': 'vft_args', 'widget': 'String_List'},
-        {'attribute': 'filenamesubstr', 'widget': 'String'},
-        {'attribute': 'reconewstr', 'widget': 'String'},
-        {'attribute': 'vftnewstr', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
-
-    _GUIAdvancedPrefs = [
-        {'attribute': 'reco_exe', 'widget': 'File'},
-        {'attribute': 'reco_args', 'widget': 'String_List'},
-        {'attribute': 'vft_exe', 'widget': 'File'},
-        {'attribute': 'vft_args', 'widget': 'String_List'},
-        {'attribute': 'filenamesubstr', 'widget': 'String'},
-        {'attribute': 'reconewstr', 'widget': 'String'},
-        {'attribute': 'vftnewstr', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
 
     def __init__(self):
         super(RecoPlusVFT, self).__init__()
@@ -272,8 +252,6 @@ class gLiteRTHandler(IRuntimeHandler):
             app.env,
         )
 
-
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('RecoPlusVFT', 'LSF', RTHandler)
 allHandlers.add('RecoPlusVFT', 'Local', RTHandler)
