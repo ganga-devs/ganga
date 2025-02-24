@@ -1,11 +1,5 @@
-from GangaCore.GPIDev.Schema import *
-from GangaCore.GPIDev.Lib.Tasks.common import *
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
-from GangaCore.GPIDev.Lib.Job.Job import JobError
-from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-from GangaCore.Core.exceptions import ApplicationConfigurationError
-from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
-from GangaCore.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
 from GangaCore.Utility.logging import getLogger
 from .ND280Unit_CSVEvtList import ND280Unit_CSVEvtList
 from GangaND280.ND280Dataset.ND280Dataset import ND280LocalDataset

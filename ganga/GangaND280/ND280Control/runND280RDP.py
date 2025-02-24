@@ -17,14 +17,15 @@ from GangaCore.GPIDev.Lib.File import FileBuffer
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.Lib.Virtualization import Apptainer
+from . import ND280Configs
 
 shared_path = os.path.join(
     expandfilename(getConfig('Configuration')['gangadir']),
     'shared',
     getConfig('Configuration')['user'],
 )
-
-from . import ND280Configs
 
 
 class runND280RDP(IPrepareApp):
@@ -75,24 +76,21 @@ class runND280RDP(IPrepareApp):
                 comparable=1,
                 doc='Location of shared resources. Presence of this attribute implies the application has been prepared.',
             ),
+            'container': SimpleItem(
+                defvalue=None, doc='Path to container', typelist=['type(None)', 'str']
+            ),
+            'mounts': SimpleItem(
+                defvalue=[],
+                doc='Container paths to mount',
+                typelist=['str'],
+                sequence=1,
+                strict_sequence=0,
+            ),
         },
     )
     _category = 'applications'
     _name = 'runND280RDP'
     _exportmethods = ['prepare']
-    _GUIPrefs = [
-        {'attribute': 'args', 'widget': 'String_List'},
-        {'attribute': 'cmtsetup', 'widget': 'String'},
-        {'attribute': 'confopts', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
-
-    _GUIAdvancedPrefs = [
-        {'attribute': 'args', 'widget': 'String_List'},
-        {'attribute': 'cmtsetup', 'widget': 'String'},
-        {'attribute': 'confopts', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
 
     def __init__(self):
         super(runND280RDP, self).__init__()
@@ -101,6 +99,12 @@ class runND280RDP(IPrepareApp):
         args = convertIntToStringArgs(self.args)
 
         job = self.getJobObject()
+        if self.container:
+            job.virtualization = Apptainer()
+            job.virtualization.image = self.container
+
+        if len(self.mounts) > 0:
+            job.virtualization.mounts = {mount: mount for mount in self.mounts}
 
         if self.cmtsetup == []:
             raise ApplicationConfigurationError('No cmt setup script given.')
@@ -218,8 +222,6 @@ class gLiteRTHandler(IRuntimeHandler):
             app.env,
         )
 
-
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('runND280RDP', 'LSF', RTHandler)
 allHandlers.add('runND280RDP', 'Local', RTHandler)

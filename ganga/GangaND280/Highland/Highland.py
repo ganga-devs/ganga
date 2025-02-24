@@ -16,6 +16,7 @@ from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 shared_path = os.path.join(
     expandfilename(getConfig('Configuration')['gangadir']),
@@ -82,19 +83,6 @@ class Highland(IPrepareApp):
     _name = 'Highland'
     _scriptname = None
     _exportmethods = ['prepare']
-    _GUIPrefs = [
-        {'attribute': 'exe', 'widget': 'File'},
-        {'attribute': 'args', 'widget': 'String_List'},
-        {'attribute': 'outputfile', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
-
-    _GUIAdvancedPrefs = [
-        {'attribute': 'exe', 'widget': 'File'},
-        {'attribute': 'args', 'widget': 'String_List'},
-        {'attribute': 'outputfile', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
 
     def __init__(self):
         super(Highland, self).__init__()
@@ -191,8 +179,6 @@ class gLiteRTHandler(IRuntimeHandler):
             app.env,
         )
 
-
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('Highland', 'LSF', RTHandler)
 allHandlers.add('Highland', 'Local', RTHandler)

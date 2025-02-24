@@ -1,10 +1,9 @@
 from GangaCore.GPIDev.Schema import *
 from GangaCore.GPIDev.Lib.Tasks.common import *
 from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-import time
 from GangaCore.GPIDev.Lib.Tasks import ITask
 
-########################################################################                                                                                                                                                                     
+########################################################################
 
 class ND280Task(ITask):
     """T2K add-ons for the Task framework"""

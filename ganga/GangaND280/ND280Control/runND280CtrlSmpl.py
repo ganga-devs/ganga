@@ -17,6 +17,7 @@ from GangaCore.GPIDev.Lib.File import FileBuffer
 from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 shared_path = os.path.join(
     expandfilename(getConfig('Configuration')['gangadir']),
@@ -94,19 +95,7 @@ class runND280CtrlSmpl(IPrepareApp):
     _category = 'applications'
     _name = 'runND280CtrlSmpl'
     _exportmethods = ['prepare']
-    _GUIPrefs = [
-        {'attribute': 'args', 'widget': 'String_List'},
-        {'attribute': 'cmtsetup', 'widget': 'String'},
-        {'attribute': 'configfile', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
 
-    _GUIAdvancedPrefs = [
-        {'attribute': 'args', 'widget': 'String_List'},
-        {'attribute': 'cmtsetup', 'widget': 'String'},
-        {'attribute': 'configfile', 'widget': 'String'},
-        {'attribute': 'env', 'widget': 'DictOfString'},
-    ]
     exe = 'runND280CtrlSmpl'
 
     def __init__(self):
@@ -232,8 +221,6 @@ class gLiteRTHandler(IRuntimeHandler):
             app.env,
         )
 
-
-from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('runND280CtrlSmpl', 'LSF', RTHandler)
 allHandlers.add('runND280CtrlSmpl', 'Local', RTHandler)
