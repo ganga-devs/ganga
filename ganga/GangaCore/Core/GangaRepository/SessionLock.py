@@ -16,7 +16,7 @@ import fcntl
 import random
 import datetime
 import getpass
-from pipes import quote
+from shlex import quote
 
 try:
     import pickle as pickle
@@ -342,7 +342,7 @@ class SessionLockManager(object):
 
     """ Class with thread that keeps a global lock file that synchronizes
     ID and counter access across Ganga sessions.
-    DEVELOPER WARNING: On NFS, files that are not locked with lockf (NOT flock) will 
+    DEVELOPER WARNING: On NFS, files that are not locked with lockf (NOT flock) will
     NOT be synchronized across clients, even if a global lock file is used!
     Interface:
         * startup() starts the session, automatically called on init
@@ -574,7 +574,7 @@ class SessionLockManager(object):
 
     @synchronised
     def session_write(self):
-        """ Writes the locked set to the session file. 
+        """ Writes the locked set to the session file.
             The global lock MUST be held for this function to work, although on NFS additional
             locking is done
             Raises RepositoryError if session file is inaccessible """
@@ -656,7 +656,7 @@ class SessionLockManager(object):
 
     @synchronised
     def cnt_write(self):
-        """ Writes the counter to the counter file. 
+        """ Writes the counter to the counter file.
             The global lock MUST be held for this function to work correctly
             Raises OSError if count file is inaccessible """
         finished = False
@@ -691,7 +691,7 @@ class SessionLockManager(object):
     @synchronised
     @global_disk_lock
     def make_new_ids(self, n):
-        """ Locks the next n available ids and returns them as a list 
+        """ Locks the next n available ids and returns them as a list
             Raise RepositoryError on fatal error"""
         # Actualize count
         try:
