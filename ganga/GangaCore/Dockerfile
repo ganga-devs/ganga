@@ -1,8 +1,6 @@
-FROM centos:7
+FROM python:3.11
 LABEL maintainer "Ulrik Egede <ulrik.egede@monash.edu>"
 ARG ganga_version=8.4.2
-
-RUN yum -y update && yum install -y wget git python3
 
 # Add the user UID:1000, GID:1000, home at /home/ganga
 RUN groupadd -r ganga -g 1000 && \
