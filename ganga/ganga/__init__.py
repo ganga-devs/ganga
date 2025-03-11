@@ -10,6 +10,7 @@ from GangaCore import _gangaPythonPath
 import GangaCore.Core
 from GangaCore.Core.GangaRepository import getRegistry
 from GangaCore.Core.InternalServices.ShutdownManager import _protected_ganga_exitfuncs
+from ganga.GangaCore.Utility.Config.Config import ConfigError
 
 logger = getLogger(modulename=True)
 
@@ -67,6 +68,13 @@ manualExportToGPI(ganga)
 ## Registries now add themselves to the Interface in this step
 from GangaCore.Runtime.Repository_runtime import startUpRegistries
 startUpRegistries(ganga)
+
+from GangaCore.Utility.Config import makeConfig
+
+try:
+    makeConfig('TestingFramework', 'Configuration section for internal testing framework')
+except ConfigError as e:
+    logger.warning("TestingFramework config already exists (likely created earlier)")
 
 # ------------------------------------------------------------------------------------
 #  bootstrap core modules
