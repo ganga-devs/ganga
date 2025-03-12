@@ -13,7 +13,7 @@ import glob
 import inspect
 import time
 from fnmatch import fnmatch
-from pipes import quote
+from shlex import quote
 
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
