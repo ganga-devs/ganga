@@ -1,15 +1,13 @@
-FROM registry.access.redhat.com/ubi9/python-311
+FROM almalinux:9
 LABEL maintainer "Ulrik Egede <ulrik.egede@monash.edu>"
 ARG ganga_version=8.4.2
 
-# Switch to root user
-USER root
+RUN dnf install -y python3 python3-pip git
 
 # Add the user UID:1000, GID:1000, home at /home/ganga
 RUN groupadd -r ganga -g 1000 && \
     useradd -u 1000 -r -g ganga -m -d /home/ganga -s /sbin/nologin -c "Ganga user" ganga && \
-    chown -R ganga:ganga /opt/app-root/src && \
-    chmod 755 /home/ganga 
+    chmod 755 /home/ganga
 
 # Set the working directory to ganga home directory
 WORKDIR /home/ganga
@@ -18,7 +16,6 @@ WORKDIR /home/ganga
 RUN python3 -m pip install --upgrade pip setuptools wheel && \
     python3 -m pip install "PySocks!=1.5.7,>=1.5.6" && \
     python3 -m pip install -e git+https://github.com/ganga-devs/ganga.git@$ganga_version#egg=ganga
-
 
 # Specify the user to execute all commands below
 USER ganga
