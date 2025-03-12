@@ -1,2 +1,2 @@
 import ganga.ganga
-from ganga.GangaTest.Framework.utils import sleep_until_completed
+from ganga.GangaCore.Utility.job_monitoring import sleep_until_completed
