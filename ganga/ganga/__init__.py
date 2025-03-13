@@ -10,7 +10,6 @@ from GangaCore import _gangaPythonPath
 import GangaCore.Core
 from GangaCore.Core.GangaRepository import getRegistry
 from GangaCore.Core.InternalServices.ShutdownManager import _protected_ganga_exitfuncs
-from ganga.GangaCore.Utility.Config.Config import ConfigError
 
 logger = getLogger(modulename=True)
 
