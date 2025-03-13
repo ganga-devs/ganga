@@ -69,13 +69,6 @@ manualExportToGPI(ganga)
 from GangaCore.Runtime.Repository_runtime import startUpRegistries
 startUpRegistries(ganga)
 
-from GangaCore.Utility.Config import makeConfig
-
-try:
-    makeConfig('TestingFramework', 'Configuration section for internal testing framework')
-except ConfigError as e:
-    logger.warning("TestingFramework config already exists (likely created earlier)")
-
 # ------------------------------------------------------------------------------------
 #  bootstrap core modules
 interactive = False
