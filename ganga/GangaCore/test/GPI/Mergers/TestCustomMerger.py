@@ -8,7 +8,7 @@ from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
 from GangaCore.GPIDev.Base.Proxy import addProxy
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.testlib.monitoring import run_until_completed, run_until_state
-from GangaTest.Framework.utils import write_file
+from GangaCore.Utility.job_monitoring import write_file
 
 from .CopySplitter import CopySplitter
 

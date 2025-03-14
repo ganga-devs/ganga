@@ -15,7 +15,7 @@ class TestStructure(GangaUnitTest):
     def setUp(self):
         super(TestStructure, self).setUp()
         from GangaCore.GPI import Job, Executable, Local, File, LocalFile
-        from GangaTest.Framework.utils import write_file
+        from GangaCore.Utility.job_monitoring import write_file
 
         self.jobslice = []
         self.file_name = 'id_echo.sh'

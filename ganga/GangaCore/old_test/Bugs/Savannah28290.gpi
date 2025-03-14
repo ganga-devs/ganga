@@ -2,7 +2,7 @@ j = Job(backend=Batch())
 j.application = Executable(exe='sleep',args='100')
 j.submit()
 
-from GangaTest.Framework.utils import sleep_until_state
+from GangaCore.Utility.job_monitoring import sleep_until_state
 
 assert sleep_until_state(j,10,'submitted'), "Can't submit job :( "
 

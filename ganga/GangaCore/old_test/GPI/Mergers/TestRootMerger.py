@@ -8,7 +8,7 @@ import os
 import tempfile
 
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed, write_file
+from GangaCore.Utility.job_monitoring import sleep_until_completed, write_file
 
 
 class TestRootMerger(GangaGPITestCase):

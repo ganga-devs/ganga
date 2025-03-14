@@ -73,7 +73,7 @@ class FailedJobTest(ICheckTest):
         ''' Once the job status has reached the final status, then True.
             ['completed','new','killed','failed','unknown','removed']
         '''
-        from GangaTest.Framework.utils import is_job_finished
+        from GangaCore.Utility.job_monitoring import is_job_finished
         return is_job_finished(self.j)
 
     def checkTest(self):

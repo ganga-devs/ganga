@@ -6,8 +6,8 @@ from GangaTest.Framework.tests import GangaGPITestCase
 from GangaCore.GPI import *
 from GangaCore.old_test import generateUniqueTempFile
 #import GangaDirac.Lib.Server.DiracServer as DiracServer
-# GangaTest.Framework.utils defines some utility methods
-from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
+# GangaCore.Utility.job_monitoring defines some utility methods
+from GangaCore.Utility.job_monitoring import sleep_until_completed, sleep_until_state
 import unittest
 import tempfile
 import os

@@ -1,8 +1,8 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
 from GangaCore.GPI import *
-# GangaTest.Framework.utils defines some utility methods
-# from GangaTest.Framework.utils import file_contains#,
+# GangaCore.Utility.job_monitoring defines some utility methods
+# from GangaCore.Utility.job_monitoring import file_contains#,
 # sleep_until_completed,sleep_until_state
 import unittest
 import tempfile

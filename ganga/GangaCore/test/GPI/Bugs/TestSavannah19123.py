@@ -9,7 +9,7 @@ class TestSavannah19123(GangaUnitTest):
     def test_Savannah19123(self):
         from GangaCore.GPI import Job, Local
 
-        from GangaTest.Framework.utils import sleep_until_state
+        from GangaCore.Utility.job_monitoring import sleep_until_state
 
         # check if stdout and stderr exists or not, flag indicates if files are required to exist or not
 

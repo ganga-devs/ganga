@@ -1,6 +1,6 @@
 from Ganga.Core.exceptions import *
 #from GangaTest.Framework.tests import GangaGPITestCase
-#from GangaTest.Framework.utils import sleep_until_completed
+#from GangaCore.Utility.job_monitoring import sleep_until_completed
 config['Preparable']['unprepare_on_copy']=False
 a=Job()
 a.prepare()

@@ -1,6 +1,6 @@
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Lib.Virtualization import Docker
-from GangaTest.Framework.utils import sleep_until_completed
+from GangaCore.Utility.job_monitoring import sleep_until_completed
 
 
 class TestDocker(GangaUnitTest):

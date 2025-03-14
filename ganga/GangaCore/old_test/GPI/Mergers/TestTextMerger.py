@@ -9,7 +9,7 @@ import tempfile
 
 from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import (file_contains, sleep_until_completed,
+from GangaCore.Utility.job_monitoring import (file_contains, sleep_until_completed,
                                        sleep_until_state, write_file)
 
 

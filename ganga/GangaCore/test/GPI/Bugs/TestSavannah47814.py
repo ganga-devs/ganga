@@ -7,7 +7,7 @@ class TestSavannah47814(GangaUnitTest):
     def test_Savannah47814(self):
         from GangaCore.GPI import Job, Executable
 
-        from GangaTest.Framework.utils import sleep_until_state, file_contains
+        from GangaCore.Utility.job_monitoring import sleep_until_state, file_contains
 
         j = Job()
         j.application = Executable(exe='ThisScriptDoesNotExist')

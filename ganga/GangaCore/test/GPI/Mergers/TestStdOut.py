@@ -12,7 +12,7 @@ class TestStdOut(GangaUnitTest):
         super(TestStdOut, self).setUp()
         from GangaCore.GPI import (Executable, File, Job, Local, LocalFile,
                                    config)
-        from GangaTest.Framework.utils import write_file
+        from GangaCore.Utility.job_monitoring import write_file
 
         config['Mergers']['associate'] = {'stdout': 'RootMerger'}
 

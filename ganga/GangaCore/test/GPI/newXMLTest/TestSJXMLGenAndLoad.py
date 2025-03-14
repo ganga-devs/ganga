@@ -104,7 +104,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         assert newest_update.st_mtime > last_update.st_mtime
 
         enableMonitoring()
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         sleep_until_completed(j)
 
     def test_e_SubJobXMLExists(self):

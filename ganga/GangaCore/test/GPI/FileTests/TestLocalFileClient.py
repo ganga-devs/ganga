@@ -86,7 +86,7 @@ class TestLocalFileClient(GangaUnitTest):
         from GangaCore.GPI import jobs
         from GangaCore.GPIDev.Base.Proxy import stripProxy
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
 
         j = jobs[-1]
 

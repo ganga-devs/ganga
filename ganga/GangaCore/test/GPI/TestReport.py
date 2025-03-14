@@ -8,7 +8,7 @@ class TestReport(GangaUnitTest):
 
     def test_report(self):
         from GangaCore.GPI import Job, LocalFile
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         import os
 
         j = Job()

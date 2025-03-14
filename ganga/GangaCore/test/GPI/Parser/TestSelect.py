@@ -53,7 +53,7 @@ class TestSelect(GangaUnitTest):
         j = Job(splitter=ArgSplitter(args=[[_] for _ in job_names]))
         j.submit()
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         assert sleep_until_completed(j, 60)
 
         mySlice = jobs(j.id).subjobs.select(status="completed")

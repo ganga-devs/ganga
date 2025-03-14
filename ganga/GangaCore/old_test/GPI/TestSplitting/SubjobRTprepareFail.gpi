@@ -1,5 +1,5 @@
 # this is a test in which the second subjob fails to submit because of the runtime handler exception
-from GangaTest.Framework.utils import assert_cannot_submit
+from GangaCore.Utility.job_monitoring import assert_cannot_submit
 j = Job()
 j.backend = TestSubmitter()
 j.application = TestApplication()

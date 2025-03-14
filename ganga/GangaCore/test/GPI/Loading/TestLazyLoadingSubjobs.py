@@ -28,7 +28,7 @@ class TestLazyLoadingSubjobs(GangaUnitTest):
         j.submit()
 
         self.assertEqual(len(j.subjobs), global_subjob_num)
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         sleep_until_completed(j, 60)
 
     def test_b_JobNotLoaded(self):

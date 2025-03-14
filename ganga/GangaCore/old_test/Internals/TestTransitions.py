@@ -37,7 +37,7 @@ from GangaCore.Utility.Plugin import allPlugins
 allPlugins.add(MockExeApplication, 'applications', 'MockExeApplication')
 
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed
+from GangaCore.Utility.job_monitoring import sleep_until_completed
 
 
 class TestTransitions(GangaGPITestCase):

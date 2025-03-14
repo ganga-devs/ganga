@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import sleep_until_state
+from GangaCore.Utility.job_monitoring import sleep_until_state
 
 from Ganga.GPI import *
 

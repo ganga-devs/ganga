@@ -47,7 +47,7 @@ class TestSJSubmit(GangaUnitTest):
         assert len(jobs) == 1
         assert len(jobs(0).subjobs) == TestSJSubmit.n_subjobs
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         sleep_until_completed(jobs(0))
 
         for sj in jobs(0).subjobs:
@@ -66,7 +66,7 @@ class TestSJSubmit(GangaUnitTest):
         # Test that resubmitting a job with SubJobJsonList subjobs doesn't stall
         # Test them with all subjobs completed and resubmitOnlyFailedSubjobs = True
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         sleep_until_completed(jobs(0))
 
         # Test that resubmitting a subjob from SubJobJsonList that subjob doesn't stall
@@ -108,7 +108,7 @@ class TestSJSubmit(GangaUnitTest):
 
         jobs(0).resubmit()
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         sleep_until_completed(jobs(0))
 
         # Test that resubmitting a subjob from SubJobJsonList that subjob doesn't stall
@@ -147,7 +147,7 @@ class TestSJSubmit(GangaUnitTest):
         j.backend = Local(batchsize=TestSJSubmit.n_subjobs)
         j.submit()
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         sleep_until_completed(j)
 
         # Job has ben created, split, run and now exists in Memory (NOT SJXML)
@@ -199,7 +199,7 @@ class TestSJSubmit(GangaUnitTest):
 
     def test_f_testResplit(self):
         from GangaCore.GPI import Job, Local
-        from GangaTest.Framework.utils import (sleep_until_completed,
+        from GangaCore.Utility.job_monitoring import (sleep_until_completed,
                                                sleep_until_state)
         from GangaCore.GPIDev.Lib.Job.Job import JobError
 
