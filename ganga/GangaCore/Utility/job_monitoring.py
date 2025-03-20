@@ -124,3 +124,12 @@ def read_file(filename):
         return "\n%s\n" % f.read()
     finally:
         f.close()
+
+import unittest
+failureException = unittest.TestCase.failureException
+
+try:
+    from GangaCore.Utility.Config import getConfig
+    config = getConfig('TestingFramework')
+except BaseException:  # if we are outside Ganga, use a simple dict
+    config = {} 
