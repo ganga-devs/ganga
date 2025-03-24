@@ -1,8 +1,8 @@
-FROM centos:7
+FROM almalinux:9
 LABEL maintainer "Ulrik Egede <ulrik.egede@monash.edu>"
 ARG ganga_version=8.4.2
 
-RUN yum -y update && yum install -y wget git python3
+RUN dnf update -y && dnf install -y python3 python3-pip git
 
 # Add the user UID:1000, GID:1000, home at /home/ganga
 RUN groupadd -r ganga -g 1000 && \
