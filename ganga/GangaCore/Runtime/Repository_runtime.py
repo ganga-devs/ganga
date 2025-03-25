@@ -179,7 +179,7 @@ def shutdown():
     from GangaCore.Utility.logging import getLogger
     logger = getLogger()
     logger.info('Registry Shutdown')
-    #import traceback
+    # import traceback
     # traceback.print_stack()
 
     # Flush all repos before we shut them down
@@ -205,7 +205,7 @@ def shutdown():
     for itr, registry in enumerate(all_registries):
         thisName = registry.name
         try:
-            if not thisName in started_registries:
+            if thisName not in started_registries:
                 continue
             # in case this is called repeatedly, only call shutdown once
             started_registries.remove(thisName)

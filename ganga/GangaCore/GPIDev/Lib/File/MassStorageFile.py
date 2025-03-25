@@ -387,23 +387,36 @@ class MassStorageFile(IGangaFile):
                     missingKeywords.append(item)
 
             if len(missingKeywords):
-                return (False, 'Error in %s.outputfilenameformat field : missing keywords %s ' % (_getName(self), ','.join(missingKeywords)))
+                return (
+                    False, 'Error in %s.outputfilenameformat field : missing keywords %s ' %
+                    (_getName(self), ','.join(missingKeywords)))
 
             if isSplitJob is False and self.outputfilenameformat.find('{sjid}') > -1:
-                return (False, 'Error in %s.outputfilenameformat field :  job is non-split, but {\'sjid\'} keyword found' % _getName(self))
+                return (
+                    False,
+                    'Error in %s.outputfilenameformat field :  job is non-split, but {\'sjid\'} keyword found' %
+                    _getName(self))
 
             if isJob is False and self.outputfilenameformat.find('{sjid}') > -1:
-                return (False, 'Error in %s.outputfilenameformat field :  no parent job, but {\'sjid\'} keyword found' % _getName(self))
+                return (
+                    False,
+                    'Error in %s.outputfilenameformat field :  no parent job, but {\'sjid\'} keyword found' %
+                    _getName(self))
 
             if isJob is False and self.outputfilenameformat.find('{jid}') > -1:
-                return (False, 'Error in %s.outputfilenameformat field :  no parent job, but {\'jid\'} keyword found' % _getName(self))
+                return (
+                    False,
+                    'Error in %s.outputfilenameformat field :  no parent job, but {\'jid\'} keyword found' %
+                    _getName(self))
 
             invalidUnixChars = ['"', ' ']
             test = self.outputfilenameformat.replace('{jid}', 'a').replace('{sjid}', 'b').replace('{fname}', 'c')
 
             for invalidUnixChar in invalidUnixChars:
                 if test.find(invalidUnixChar) > -1:
-                    return (False, 'Error in %s.outputfilenameformat field :  invalid char %s found' % (_getName(self), invalidUnixChar))
+                    return (
+                        False, 'Error in %s.outputfilenameformat field :  invalid char %s found' %
+                        (_getName(self), invalidUnixChar))
 
         return (True, '')
 
@@ -438,9 +451,13 @@ class MassStorageFile(IGangaFile):
             if outputFile.outputfilenameformat is not None and outputFile.outputfilenameformat != '':
                 outputfilenameformat = outputFile.outputfilenameformat
 
-            massStorageCommands.append(['massstorage', outputFile.namePattern, outputfilenameformat,
-                                        massStorageConfig['mkdir_cmd'], massStorageConfig['cp_cmd'],
-                                        massStorageConfig['ls_cmd'], os.path.expanduser(os.path.expandvars(massStorageConfig['path']))])
+            massStorageCommands.append(['massstorage',
+                                        outputFile.namePattern,
+                                        outputfilenameformat,
+                                        massStorageConfig['mkdir_cmd'],
+                                        massStorageConfig['cp_cmd'],
+                                        massStorageConfig['ls_cmd'],
+                                        os.path.expanduser(os.path.expandvars(massStorageConfig['path']))])
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                        'scripts/MassStorageFileWNScript.py.template')
