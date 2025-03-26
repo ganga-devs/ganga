@@ -1,7 +1,5 @@
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.Lib.Virtualization import Docker
-from GangaCore.Utility.job_monitoring import sleep_until_completed
-
 
 class TestDocker(GangaUnitTest):
     def test_DockerNoImageArg(self):
@@ -13,6 +11,8 @@ class TestDocker(GangaUnitTest):
         it cannot intialize the container with the default Docker image.
         """
         from GangaCore.GPI import Job
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
+        
         j = Job(name="dockertest")
         self.assertEqual(j.name, 'dockertest', "Something wrong with how\
 Job was imported or initialized.")
@@ -32,6 +32,8 @@ passed correctly as an argument.")
         it cannot intialize the container with the desired Docker image.
         """
         from GangaCore.GPI import Job
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
+
         j = Job(name="dockertest")
         self.assertEqual(j.name, 'dockertest', "Something wrong with how\
 Job was imported or initialized.")
@@ -51,6 +53,8 @@ image was not passed correctly as an argument.")
         it cannot intialize the container with the desired Docker image.
         """
         from GangaCore.GPI import Job
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
+
         j = Job(name="dockertest")
         self.assertEqual(j.name, 'dockertest', "Something wrong with how\
 Job was imported or initialized.")
@@ -72,6 +76,8 @@ image was not passed correctly as an argument.")
         and mode.
         """
         from GangaCore.GPI import Job
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
+
         j = Job(name="dockertest")
         self.assertEqual(j.name, 'dockertest', "Something wrong with how\
 Job was imported or initialized.")
