@@ -10,7 +10,7 @@ import os
 import re
 import shutil
 from os import path
-from pipes import quote
+from shlex import quote
 
 import GangaCore.Utility.logging
 from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
