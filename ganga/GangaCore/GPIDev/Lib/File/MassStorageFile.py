@@ -36,18 +36,26 @@ class MassStorageFile(IGangaFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
     """
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
-                                     'localDir': SimpleItem(defvalue="", copyable=1, doc='local dir where the file is stored, used from get and put methods'),
-                                     'joboutputdir': SimpleItem(defvalue="", doc='outputdir of the job with which the outputsandbox file object is associated'),
-                                     'locations': SimpleItem(defvalue=[], copyable=1, typelist=[str], sequence=1, doc="list of locations where the outputfiles are uploaded"),
+                                     'localDir': SimpleItem(defvalue="", copyable=1,
+                                                    doc='local dir where the file is stored, used from get and put methods'),
+                                     'joboutputdir': SimpleItem(defvalue="",
+                                                    doc='outputdir of the job with which the outputsandbox is associated'),
+                                     'locations': SimpleItem(defvalue=[], copyable=1, typelist=[str], sequence=1,
+                                                             doc="list of locations where the outputfiles are uploaded"),
                                      'outputfilenameformat': SimpleItem(defvalue=None, typelist=[str, None], protected=0,
-                                                                        doc="keyword path to where the output should be uploaded, i.e. /some/path/here/{jid}/{sjid}/{fname},\
-                                                        if this field is not set, the output will go in {jid}/{sjid}/{fname} or in {jid}/{fname}\
-                                                        depending on whether the job is split or not"),
-                                     'inputremotedirectory': SimpleItem(defvalue=None, typelist=[str, None], protected=0, doc="Directory on mass storage where the file is stored"),
+                                                                doc="keyword path to where the output should be uploaded,\
+                                                                     i.e. /some/path/here/{jid}/{sjid}/{fname},\
+                                                                     if this field is not set, the output will go in\
+                                                                     {jid}/{sjid}/{fname} or in {jid}/{fname}\
+                                                                     depending on whether the job is split or not"),
+                                     'inputremotedirectory': SimpleItem(defvalue=None, typelist=[str, None], protected=0,
+                                                                    doc="Directory on mass storage where the file is stored"),
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, sequence=1, copyable=0,
                                                                doc="collected files from the wildcard namePattern"),
-                                     'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
-                                     'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere')
+                                     'failureReason': SimpleItem(defvalue="", protected=1, copyable=0,
+                                                                 doc='reason for the upload failure'),
+                                     'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0,
+                                                        doc='whether to compress the output file before sending somewhere')
                                      })
 
     _category = 'gangafiles'
@@ -282,7 +290,6 @@ class MassStorageFile(IGangaFile):
         massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
 
         cp_cmd = massStorageConfig['cp_cmd']
-        ls_cmd = massStorageConfig['ls_cmd']
         massStoragePath = os.path.expanduser(os.path.expandvars(massStorageConfig['path']))
 
         try:
@@ -329,7 +336,9 @@ class MassStorageFile(IGangaFile):
                 finalFilename = self.expandString(filenameStructure, os.path.basename(currentFile))
 
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %
-                                                                           (cp_cmd, quote(currentFile), quote(os.path.join(massStoragePath, finalFilename))))
+                                                                           (cp_cmd, quote(currentFile),
+                                                                            quote(os.path.join(massStoragePath,
+                                                                                  finalFilename))))
 
                 d = copy.deepcopy(self)
                 d.namePattern = os.path.basename(currentFile)

@@ -95,7 +95,7 @@ def checkDiskQuota():
                 logger.error("Or, make sure you have more than %s percent free disk space on: %s" %
                              (100 - partition_critical, data_partition))
                 raise GangaDiskSpaceError("Not Enough Disk Space!!!")
-        except GangaException as err:
+        except GangaException:
             raise
         except Exception as err:
             logger.error("Error checking disk partition: %s" % err)
@@ -129,7 +129,7 @@ def bootstrap():
 
     try:
         checkDiskQuota()
-    except GangaException as err:
+    except GangaException:
         raise
     except Exception as err:
         logger.error("Disk quota check failed due to: %s" % err)
