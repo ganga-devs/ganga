@@ -2,7 +2,7 @@
 Internal initialization of the repositories.
 """
 import re
-from pipes import quote
+from shlex import quote
 import os.path
 from GangaCore.Utility.Config import getConfig, setConfigOption
 from GangaCore.Utility.logging import getLogger
