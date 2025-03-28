@@ -1,6 +1,8 @@
 from GangaCore.Utility.logging import getLogger
-logger = getLogger(modulename=True)
+from GangaCore.Utility.Config import getConfig
 
+logger = getLogger(modulename=True)
+config = getConfig('TestingFramework')
 
 def assert_cannot_submit(j):
     from GangaCore.GPIDev.Lib.Job.Job import JobError
