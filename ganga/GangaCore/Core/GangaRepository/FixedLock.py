@@ -16,7 +16,7 @@ import fcntl
 import random
 import datetime
 import getpass
-from pipes import quote
+from shlex import quote
 
 import pickle as pickle
 
@@ -32,7 +32,7 @@ logger = getLogger()
 
 
 def lock_synch(f):
-    """  
+    """
         This decorator must be attached to a method on a ``Node`` subclass
         It uses the object's lock to make sure that the object is held for the duration of the decorated function
         Args:
