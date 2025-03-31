@@ -1277,8 +1277,8 @@ class JobRegistry_Monitor(GangaThread):
             except CredentialRenewalError:
                 return False
             except Exception as err:
-                logger.error("Unexpected exception!")
-                logger.error("Error: %s" % err)
+                log.error("Unexpected exception!")
+                log.error("Error: %s" % err)
                 return False
             else:
                 return True
