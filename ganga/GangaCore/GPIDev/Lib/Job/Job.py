@@ -554,34 +554,7 @@ class Job(GangaObject):
             return object.__getattribute__(self, name)
 
         if name == "outputfiles":
-            currentOutputFiles = object.__getattribute__(self, name)
-            currentUnCopyableOutputFiles = object.__getattribute__(
-                self, "non_copyable_outputfiles"
-            )
-
-            files = []
-            files2 = []
-
-            for f in currentOutputFiles:
-                if f.containsWildcards() and hasattr(f, "subfiles") and f.subfiles:
-                    files.extend(f.subfiles)
-                else:
-                    files.append(f)
-
-            for f in currentUnCopyableOutputFiles:
-                if f.containsWildcards() and hasattr(f, "subfiles") and f.subfiles:
-                    files2.extend(f.subfiles)
-                else:
-                    files2.append(f)
-
-            files3 = GangaList()
-            files3.extend(files)
-            files3.extend(files2)
-
-            # FIXME THIS SHOULD NOT HAVE TO BE HERE! (It does else we end up with really bad errors and this is wrong!)
-            files3._setParent(self)
-
-            return addProxy(files3)
+            return object.__getattribute__(self, name)
 
         # If we ask for 'inputfiles', return the expanded list of subfiles
         if name == "inputfiles":
