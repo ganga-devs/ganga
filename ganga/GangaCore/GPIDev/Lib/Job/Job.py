@@ -554,7 +554,7 @@ class Job(GangaObject):
             return object.__getattribute__(self, name)
 
         if name == "outputfiles":
-            return object.__getattribute__(self, name)
+            return addProxy(object.__getattribute__(self, name))
 
         # If we ask for 'inputfiles', return the expanded list of subfiles
         if name == "inputfiles":
