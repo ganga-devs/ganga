@@ -34,8 +34,6 @@ class LHCbUnit(IUnit):
         j.inputfiles = copy.deepcopy(self._getParent().inputfiles)
 
         trf = self._getParent()
-        task = trf._getParent()
-        j.inputsandbox = self._getParent().inputsandbox
 
         j.outputfiles = copy.deepcopy(self._getParent().outputfiles)
         if len(self._getParent().postprocessors.process_objects) > 0:
