@@ -197,9 +197,7 @@ class RTHandler(IRuntimeHandler):
 
         c = StandardJobConfig(
             app._scriptname,
-            app._getParent().inputsandbox,
             [],
-            app._getParent().outputsandbox,
             app.env,
         )
         return c
@@ -211,9 +209,7 @@ class gLiteRTHandler(IRuntimeHandler):
 
         return gLiteJobConfig(
             app._scriptname,
-            app._getParent().inputsandbox,
             [],
-            app._getParent().outputsandbox,
             app.env,
         )
 

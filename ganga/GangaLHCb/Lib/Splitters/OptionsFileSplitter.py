@@ -28,7 +28,6 @@ class OptionsFileSplitter(ISplitter):
         j.copyFrom(job)
         j.splitter = None
         j.merger = None
-        j.inputsandbox = []  # master added automatically
         j.inputfiles = []
         j.inputdata = inputdata
 

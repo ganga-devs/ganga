@@ -20,7 +20,7 @@ class TestSplitter(ISplitter):
             j.copyFrom(job)
             j.splitter = None
             j.merger = None
-            j.inputsandbox = []  # master added automatically
+            # j.inputsandbox = []  # master added automatically
             subjobs.append(j)
 
         return subjobs

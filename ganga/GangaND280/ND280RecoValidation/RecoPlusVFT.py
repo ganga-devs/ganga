@@ -136,7 +136,6 @@ class RecoPlusVFT(IPrepareApp):
                 )
 
         # So get the list of filenames get_dataset_filenames() and
-        # create a file containing the list of files and put it in the sandbox
         if job.inputdata is None:
             raise ApplicationConfigurationError(
                 'The inputdata variable is not defined.'
@@ -233,9 +232,7 @@ class RTHandler(IRuntimeHandler):
 
         return StandardJobConfig(
             app._scriptname,
-            app._getParent().inputsandbox,
             [],
-            app._getParent().outputsandbox,
             app.env,
         )
 
@@ -246,9 +243,7 @@ class gLiteRTHandler(IRuntimeHandler):
 
         return gLiteJobConfig(
             app._scriptname,
-            app._getParent().inputsandbox,
             [],
-            app._getParent().outputsandbox,
             app.env,
         )
 
