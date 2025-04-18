@@ -21,20 +21,11 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
     """This is the application runtime handler class for Gaudi applications 
     using the local, interactive and LSF backends."""
 
-    def master_prepare(self, app, appmasterconfig):
-        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig, ['inputsandbox'])
-
-        # add summary.xml
-        outputsandbox += ['summary.xml', '__parsedxmlsummary__']
-
-        return StandardJobConfig(inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
 
         logger.debug("Prepare")
 
-        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job = app.getJobObject()
 
@@ -98,15 +89,13 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
             data_str = data.optionsString()
             if data.hasLFNs():
                 logger.debug("Returning Catalogue")
-                inputsandbox.append(
-                    FileBuffer('catalog.xml', data.getCatalog()))
+
                 cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
                 data_str += cat_opts
 
         logger.debug("Doing splitter_data stuff")
         if hasattr(job, '_splitter_data'):
             data_str += job._splitter_data
-        inputsandbox.append(FileBuffer('data.py', data_str))
 
         logger.debug("Doing GaudiPython stuff")
 
@@ -133,9 +122,7 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
 
         logger.debug("Returning StandardJobConfig")
 
-        return StandardJobConfig(FileBuffer('gaudi-script.py', script, executable=1),
-                                 inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
+        return StandardJobConfig(FileBuffer('gaudi-script.py', script, executable=1))
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

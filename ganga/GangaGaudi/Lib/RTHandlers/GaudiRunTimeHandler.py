@@ -22,25 +22,6 @@ class GaudiRunTimeHandler(IRuntimeHandler):
     """This is the application runtime handler class for Gaudi applications 
     using the local, interactive and LSF backends."""
 
-    def master_prepare(self, app, appmasterconfig):
-        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig, ['inputsandbox'])
-        return StandardJobConfig(inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
-
-    def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
-
-        inputsandbox, outputsandbox = sandbox_prepare(
-            app, appsubconfig, appmasterconfig, jobmasterconfig)
-
-        run_script = self.__create_run_script(app,
-                                              appsubconfig,
-                                              appmasterconfig,
-                                              jobmasterconfig,
-                                              inputsandbox,
-                                              outputsandbox)
-        return StandardJobConfig(FileBuffer('gaudi-script.py', run_script, executable=1),
-                                 inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
 
     def __create_run_script(self,
                             app,
@@ -100,7 +81,8 @@ cmdline = \"\"\"gaudirun.py '
 # run command
 os.system(cmdline)
 """
-        return script, inputsandbox, outputsandbox
+        return script
+
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
