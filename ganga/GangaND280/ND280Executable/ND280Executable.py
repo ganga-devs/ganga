@@ -118,6 +118,7 @@ class ND280Executable(IPrepareApp):
                 self.args.append(self.outputfile)
 
         # So get the list of filenames get_dataset_filenames() and
+        # create a file containing the list of files and put it in the sandbox
         if job.inputdata is None:
             raise ApplicationConfigurationError(
                 'The inputdata variable is not defined.'

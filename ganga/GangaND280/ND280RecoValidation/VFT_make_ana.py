@@ -185,6 +185,7 @@ class VFT_make_ana(IPrepareApp):
             args.append(self.ana_output)
 
         # So get the list of filenames get_dataset_filenames() and
+        # create a file containing the list of files and put it in the sandbox
         if job.inputdata is None:
             raise ApplicationConfigurationError(
                 'The inputdata variable is not defined.'

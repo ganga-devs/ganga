@@ -52,7 +52,10 @@ class ExeDiracRTHandler(IRuntimeHandler):
         commandline = []
         commandline.append(app.exe)
         if isType(app.exe, File):
-
+            # logger.info("app: %s" % str(app.exe.name))
+            # fileName = os.path.join(get_share_path(app), os.path.basename(app.exe.name))
+            # logger.info("EXE: %s" % str(fileName))
+            # inputsandbox.append(File(name=fileName))
             commandline[0] = os.path.join('.', os.path.basename(app.exe.name))
         commandline.extend([str(arg) for arg in app.args])
         logger.debug('Command line: %s: ', commandline)

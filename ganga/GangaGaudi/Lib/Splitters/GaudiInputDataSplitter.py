@@ -48,7 +48,8 @@ class GaudiInputDataSplitter(ISplitter):
         j.merger = None
         j.inputdata = GaudiDataset(files=dataset)
         return j
-
+##         if not j.inputdata: j.inputdata = GaudiDataset(files=dataset)
+# else:               j.inputdata.files = dataset
     def split(self, job):
         logger.debug("split")
         if self.filesPerJob < 1:

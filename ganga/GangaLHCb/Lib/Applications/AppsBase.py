@@ -263,7 +263,11 @@ class AppName(Gaudi):
         fillPackedSandbox([FileBuffer('options.pkl', parser.opts_pkl_str)],
                           os.path.join(share_dir,
                                        '_input_sandbox_%s.tar' % self.is_prepared.name))
+        # FileBuffer(os.path.join(share_path,'options.pkl'),
+        # parser.opts_pkl_str).create()
+        # self.prep_inputbox.append(File(os.path.join(share_dir,'options.pkl')))
 
+        # Check in any input datasets defined in optsfiles and allow them to be
         # read into the
         inputdata = parser.get_input_data()
         if len(inputdata.files) > 0:

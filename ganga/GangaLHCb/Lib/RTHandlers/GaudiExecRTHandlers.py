@@ -536,8 +536,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
 
         for file_ in job.inputfiles:
-
-            # this was elif
             if isinstance(file_, LocalFile):
                 if job.master is not None and file_ not in job.master.inputfiles:
                     shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())

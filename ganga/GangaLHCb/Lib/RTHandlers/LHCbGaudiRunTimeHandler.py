@@ -89,7 +89,6 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
             data_str = data.optionsString()
             if data.hasLFNs():
                 logger.debug("Returning Catalogue")
-
                 cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
                 data_str += cat_opts
 
