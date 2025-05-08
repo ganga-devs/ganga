@@ -915,9 +915,9 @@ class DiracBase(IBackend):
         return lfns
 
     @require_credential
-    def getOutputDataAccessURLs(self):
+    def getOutputDataAccessURLs(self, protocol=''):
         """Retrieve the list of accessURLs assigned to outputdata for a job"""
-        return getAccessURLs(self.getOutputDataLFNs())
+        return getAccessURLs(self.getOutputDataLFNs(), protocol=protocol)
 
     @require_credential
     def debug(self):
