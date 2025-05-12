@@ -168,7 +168,7 @@ class DiracProxyInfo(VomsProxyInfo):
         """
         base_proxy_name = os.getenv('X509_USER_PROXY') or '/tmp/x509up_u' + str(os.getuid())
         encoded_ext = self.initial_requirements.encoded()
-        if encoded_ext:
+        if encoded_ext and encoded_ext not in base_proxy_name:
             return base_proxy_name + ':' + encoded_ext
         else:
             return base_proxy_name
