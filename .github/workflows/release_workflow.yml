@@ -85,7 +85,6 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: |
           echo -e "[distutils]\nindex-servers = pypi\n[pypi]\nusername:${TWINE_USERNAME}\npassword:${TWINE_PASSWORD}" > ~/.pypirc
-          python setup.py register
           python setup.py sdist
           python -m twine upload --skip-existing dist/ganga-*.tar.gz
       - name: Set deployment status failure
