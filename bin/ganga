@@ -68,6 +68,7 @@ except KeyboardInterrupt:
 del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+import ganga
 from GangaCore.Core.exceptions import GangaException
 import GangaCore.Runtime
 GangaCore.Runtime._prog = None
