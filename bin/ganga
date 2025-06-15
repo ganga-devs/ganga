@@ -70,6 +70,10 @@ del standardSetup
 
 import ganga
 from GangaCore.Core.exceptions import GangaException
+from GangaCore.Utility.Deprecation import (
+    enable_deprecation_warnings,
+    disable_deprecation_warnings
+)
 import GangaCore.Runtime
 GangaCore.Runtime._prog = None
 import sys
@@ -87,7 +91,9 @@ def log(level, err):
 
 try:
     # Import GPI and run Ganga
+    disable_deprecation_warnings ()
     GangaCore.Runtime.setupGanga()
+    enable_deprecation_warnings ()
     from GangaCore import GPI
     GangaCore.Runtime._prog.run(GPI.__dict__)
 except KeyboardInterrupt:
