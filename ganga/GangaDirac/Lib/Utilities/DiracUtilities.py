@@ -107,8 +107,6 @@ def get_env(env_source):
             raise RuntimeError("'DIRAC*' not found in environment")
         else:
             return fake_dict
-
-    print(env)
     return env
 
 
