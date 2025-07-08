@@ -107,6 +107,8 @@ def get_env(env_source):
             raise RuntimeError("'DIRAC*' not found in environment")
         else:
             return fake_dict
+
+    print(env)
     return env
 
 
@@ -279,6 +281,10 @@ def execute(command,
             env['X509_USER_PROXY'] = credential_store[cred_req].location
             if os.getenv('KRB5CCNAME'):
                 env['KRB5CCNAME'] = os.getenv('KRB5CCNAME')
+
+        for _e in ['TMP', 'TMPDIR', 'TEMP']:
+            if os.getenv(_e):
+                env[_e] = os.getenv(_e)
 
         returnable = gexecute.execute(command,
                                       timeout=timeout,
