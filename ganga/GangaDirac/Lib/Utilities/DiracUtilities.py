@@ -280,6 +280,10 @@ def execute(command,
             if os.getenv('KRB5CCNAME'):
                 env['KRB5CCNAME'] = os.getenv('KRB5CCNAME')
 
+        for _e in ['TMP', 'TMPDIR', 'TEMP']:
+            if os.getenv(_e):
+                env[_e] = os.getenv(_e)
+
         returnable = gexecute.execute(command,
                                       timeout=timeout,
                                       env=env,
