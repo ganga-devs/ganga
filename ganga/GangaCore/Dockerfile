@@ -1,6 +1,6 @@
 FROM almalinux:9
 LABEL maintainer "Ulrik Egede <ulrik.egede@monash.edu>"
-ARG ganga_version=8.4.2
+ARG ganga_version='8.7.12'
 
 RUN dnf update -y && dnf install -y python3 python3-pip git
 
