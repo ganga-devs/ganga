@@ -7,10 +7,11 @@ DEPRECATION_MESSAGE_TEMPLATE = "Deprecated: {reason} | Removal scheduled: {expir
 
 _deprecation_filter_enable, _deprecation_filter_disable = None, None
 
-def _update_closed_over_var (f: Callable, var_name: str, var_val:Any):
+
+def _update_closed_over_var(f: Callable, var_name: str, var_val: Any):
     """Update a closed over variable"""
-    closure = getattr (f, "__closure__", None)
-    code = getattr (f, "__code__", None)
+    closure = getattr(f, "__closure__", None)
+    code = getattr(f, "__code__", None)
     if closure and code:
         free_var_names = code.co_freevars
 
@@ -44,8 +45,8 @@ def deprecation_deadline(*, expires_on: date, version: str):
         # ensure the object is marked as deprecated
         deprecated_msg = getattr(obj, "__deprecated__", None)
         if not deprecated_msg:
-            raise RuntimeError("This function or class is not marked as deprecated. Use @deprecation_dealine like:\n " +
-            """
+            raise RuntimeError("This function or class is not marked as deprecated. Use @deprecation_dealine like:\n "
+                               + """
         @deprecation_deadline(expires_on=date(2026, 11, 12), version="1.30")
         @deprecated("Use function f instead")
         def g(): pass""")
@@ -57,48 +58,50 @@ def deprecation_deadline(*, expires_on: date, version: str):
         )
         obj.__deprecated__ = err
 
-        if isinstance (obj, type):
-            _update_closed_over_var (obj.__new__, "msg", err)
-            _update_closed_over_var (obj.__init_subclass__, "msg", err)
+        if isinstance(obj, type):
+            _update_closed_over_var(obj.__new__, "msg", err)
+            _update_closed_over_var(obj.__init_subclass__, "msg", err)
         elif callable(obj):
-            _update_closed_over_var (obj, "msg", err)
+            _update_closed_over_var(obj, "msg", err)
         return obj
 
     return decorator
 
-def _get_filter_for_deprecation_warning ():
+
+def _get_filter_for_deprecation_warning():
     for f in warnings.filters:
-        if f [2] == DeprecationWarning:
+        if f[2] == DeprecationWarning:
             return f
     return ()
+
 
 def enable_deprecation_warnings():
     global _deprecation_filter_enable, _deprecation_filter_disable
 
-    f = _get_filter_for_deprecation_warning ()
+    f = _get_filter_for_deprecation_warning()
 
     if f == _deprecation_filter_enable:
         return
 
     if f == _deprecation_filter_disable:
-        warnings.filters.remove (_deprecation_filter_disable)
+        warnings.filters.remove(_deprecation_filter_disable)
         _deprecation_filter_disable = None
 
-    warnings.simplefilter ('always', DeprecationWarning)
-    _deprecation_filter_enable = warnings.filters [0]
+    warnings.simplefilter('always', DeprecationWarning)
+    _deprecation_filter_enable = warnings.filters[0]
 
 
-def disable_deprecation_warnings ():
+def disable_deprecation_warnings():
     global _deprecation_filter_enable, _deprecation_filter_disable
 
-    f = _get_filter_for_deprecation_warning ()
+    f = _get_filter_for_deprecation_warning()
 
     if f == _deprecation_filter_disable:
         return
 
     if f == _deprecation_filter_enable:
-        warnings.filters.remove (_deprecation_filter_enable)
+        warnings.filters.remove(_deprecation_filter_enable)
         _deprecation_filter_enable = None
 
-    warnings.simplefilter ('ignore', DeprecationWarning)
-    _deprecation_filter_disable = warnings.filters [0]
+    warnings.simplefilter('ignore', DeprecationWarning)
+    _deprecation_filter_disable = warnings.filters[0]
