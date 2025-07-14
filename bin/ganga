@@ -9,7 +9,7 @@
 """ Executable for starting Ganga
 
     If a Python script is given as argument then it is executed
-    within the Ganga environment. 
+    within the Ganga environment.
 
     If no argument is given then the Python interpreter is invoked
     within the Ganga environment"""
@@ -19,32 +19,36 @@
 # This is a Copy/Paste logic which must stay in THIS file
 
 from __future__ import print_function
-import sys, os
+import sys
+import os
 import platform
 
 
 if 'LBENV_SOURCED' in os.environ.keys():
-    #If we are in an LbEnv venv we want to supress the iPython warning
+    # If we are in an LbEnv venv we want to supress the iPython warning
     import warnings
-    warnings.filterwarnings("ignore", message="Attempting to work in a virtualenv. If you encounter problems, please install IPython inside the virtualenv.")
-        
-#First make sure we are using a python version above 3.0
+    warnings.filterwarnings(
+        "ignore", message="Attempting to work in a virtualenv. If you encounter problems, please install IPython inside the virtualenv.")
+
+# First make sure we are using a python version above 3.0
 if sys.version_info[0] != 3 or sys.version_info[1] < 6:
     import logging
-    logging.error("Ganga does not support python version %s.%s.%s. Make sure you have a python version >= 3.6 in your path" % (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+    logging.error("Ganga does not support python version %s.%s.%s. Make sure you have a python version >= 3.6 in your path" % (
+        sys.version_info[0], sys.version_info[1], sys.version_info[2]))
     sys.exit(-1)
+
 
 def standardSetup():
     """Function to perform standard setup for Ganga.
-    """   
+    """
     import os.path
 
-    # insert the path to Ganga itself - this is required for the installations without pip 
+    # insert the path to Ganga itself - this is required for the installations without pip
     exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
-    gangaDir = os.path.join(os.path.dirname(exeDir), 'ganga' )
+    gangaDir = os.path.join(os.path.dirname(exeDir), 'ganga')
     sys.path.insert(0, gangaDir)
 
-    #On CVMFS we need to point to the site-packages directory as we don't start the virtualenv
+    # On CVMFS we need to point to the site-packages directory as we don't start the virtualenv
     if exeDir.startswith('/cvmfs/ganga.cern.ch', 0, 20):
         sys.path.insert(0, '/cvmfs/ganga.cern.ch/Ganga/install/micromamba_el9/lib/python3.11/site-packages/')
         if 'glibc2.17' in platform.platform():
@@ -52,9 +56,9 @@ def standardSetup():
         else:
             sys.path.append('/cvmfs/ganga.cern.ch/Ganga/install/condor_install/condor_2_34')
 
-    #This function is needed to add the individual ganga modules to the sys path - awful hack but saved rewriting all the code. This is needed for pip installs
-    pathsToAdd = filter(lambda p : 'ganga' in os.listdir(p),
-                        filter(lambda x : not x=='' and os.path.isdir(x), sys.path))
+    # This function is needed to add the individual ganga modules to the sys path - awful hack but saved rewriting all the code. This is needed for pip installs
+    pathsToAdd = filter(lambda p: 'ganga' in os.listdir(p),
+                        filter(lambda x: not x == '' and os.path.isdir(x), sys.path))
     for p in list(pathsToAdd):
         sys.path.insert(0, os.path.join(p, 'ganga'))
 
@@ -70,24 +74,32 @@ del standardSetup
 
 import ganga
 from GangaCore.Core.exceptions import GangaException
+from GangaCore.Utility.Deprecation import (
+    enable_deprecation_warnings,
+    disable_deprecation_warnings
+)
 import GangaCore.Runtime
 GangaCore.Runtime._prog = None
 import sys
+
 
 def log(level, err):
     # FIXME: for some reason self.logger.critical does not print any
     # messages here
     if level == 'DEBUG':
-        sys.stderr.write(str(err)+'\n')
+        sys.stderr.write(str(err) + '\n')
         import traceback
         traceback.print_exc(file=sys.stderr)
     else:
-        sys.stderr.write(str(err)+'\n')
+        sys.stderr.write(str(err) + '\n')
         sys.stderr.write('(consider --debug option for more information)\n')
+
 
 try:
     # Import GPI and run Ganga
+    disable_deprecation_warnings()
     GangaCore.Runtime.setupGanga()
+    enable_deprecation_warnings()
     from GangaCore import GPI
     GangaCore.Runtime._prog.run(GPI.__dict__)
 except KeyboardInterrupt:
@@ -98,4 +110,3 @@ except GangaException as err:
     if GangaCore.Runtime._prog:
         log(GangaCore.Runtime._prog.options.force_loglevel, err)
     sys.exit(-1)
-
