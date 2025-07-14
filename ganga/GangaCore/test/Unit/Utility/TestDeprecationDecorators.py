@@ -26,6 +26,7 @@ class TestDeprecationDecorators(unittest.TestCase):
         """Test deprecation_deadline decorator with a deprecated function."""
 
         deprecation_reason = "use new_function instead"
+
         @deprecation_deadline(expires_on=date.today(), version=_gangaVersion)
         @deprecated(deprecation_reason)
         def test_deprecated_function():
