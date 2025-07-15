@@ -57,7 +57,7 @@ class TestDeprecationDecorators(unittest.TestCase):
         @deprecated(deprecation_reason)
         class OldDeprecatedClass:
             def __init__(self):
-                self. Value = True
+                self.value = True
 
         expected_msg = DEPRECATION_MESSAGE_TEMPLATE.format(
             reason=deprecation_reason,
