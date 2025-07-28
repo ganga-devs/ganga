@@ -100,7 +100,7 @@ setup(
     version=version(),
     author='Ganga Developers',
     author_email='project-ganga-developers@cern.ch',
-    license='GPL v2',
+    license='GPL-3.0-only',
     scripts=[
         'bin/ganga'],
     package_dir={
@@ -120,7 +120,6 @@ setup(
         'Dirac': ['UltraDict',
                   'psutil']},
     classifiers=[
-        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
