@@ -100,8 +100,7 @@ class runND280RDP(IPrepareApp):
 
         job = self.getJobObject()
         if self.container:
-            job.virtualization = Apptainer()
-            job.virtualization.image = self.container
+            job.virtualization = Apptainer(self.container)
 
         if len(self.mounts) > 0:
             job.virtualization.mounts = {mount: mount for mount in self.mounts}
