@@ -14,6 +14,7 @@ import sys
 import threading
 import time
 import traceback
+from datetime import timezone
 from datetime import datetime
 
 try:
@@ -56,7 +57,7 @@ def stacktraces():
         trace = traceback.format_stack(stack)
         html.append(highlight_trace(''.join(trace)))
 
-    html.append('<small>' + datetime.utcnow().isoformat() + '</small>')
+    html.append('<small>' + datetime.now(timezone.utc).isoformat() + '</small>')
     html.append('</body>')
     html.append('</html>')
 
