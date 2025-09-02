@@ -1216,7 +1216,7 @@ under certain conditions; type license() for details.
         # The customisation of the interactive shell is done in this extension
         cfg.InteractiveShellApp.extensions = ['GangaCore.Runtime.ganga_extension']
 
-        IPython.start_ipython(argv=[], user_ns=local_ns, local_ns=local_ns, module=GangaCore.GPI, config=cfg)
+        IPython.start_ipython(argv=[], user_ns=local_ns, config = cfg)
 
 
 #

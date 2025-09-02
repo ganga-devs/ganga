@@ -1350,7 +1350,7 @@ def getStackTrace():
         status = "Available threads:\n"
 
         for worker in ThreadPool:
-            status = status + "  " + worker.getName() + ":\n"
+            status = status + "  " + worker.name + ":\n"
 
             if hasattr(worker, '_frame'):
                 frame = worker._frame
