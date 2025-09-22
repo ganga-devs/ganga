@@ -110,6 +110,7 @@ setup(
     install_requires=install_requires,
     extras_require={
         'dev': [
+            'jedi',
             'coverage',
             'pytest',
             'pytest-cov',
