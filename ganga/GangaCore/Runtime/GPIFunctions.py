@@ -82,18 +82,19 @@ def plugins(category=None):
 
 
 @deprecation_deadline(expires_on=date(2025, 12, 31), version="8.4.4")
-@deprecated ("use plugins ('category')")
+@deprecated("use plugins ('category')")
 def list_plugins(category):
     """List all plugins in a given category, OBSOLETE: use plugins(category)"""
     raise DeprecationWarning("use plugins('%s')" % category)
 
 
-@deprecated ("use plugins ('applications')")
+@deprecated("use plugins ('applications')")
 def applications():
     """return a list of all available applications, OBSOLETE: use plugins('applications')"""
     raise DeprecationWarning("use plugins('applications')")
 
-@deprecated ("use plugins ('backend')")
+
+@deprecated("use plugins ('backend')")
 def backends():
     """return a list of all available backends, OBSOLETE: use plugins('backends')"""
     raise DeprecationWarning("use plugins('backends')")
