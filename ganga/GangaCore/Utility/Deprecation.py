@@ -43,7 +43,7 @@ def deprecation_deadline(*, expires_on: date, version: str):
 
     Usage:
         from warnings import deprecated
-        from GangaCore.Utilitty.Deprecation import deprecation_deadline
+        from GangaCore.Utility.Deprecation import deprecation_deadline
 
         @deprecation_deadline(expires_on=date(2025, 11, 12), version="1.29")
         @deprecated("use class B instead")
@@ -58,7 +58,7 @@ def deprecation_deadline(*, expires_on: date, version: str):
         # ensure the object is marked as deprecated
         deprecated_msg = getattr(obj, "__deprecated__", None)
         if not deprecated_msg:
-            raise RuntimeError("This function or class is not marked as deprecated. Use @deprecation_dealine like:\n "
+            raise RuntimeError("This function or class is not marked as deprecated. Use @deprecation_deadline like:\n "
                                + """
         from warnings import deprecated
         from GangaCore.Utilitty.Deprecation import deprecation_deadline
@@ -235,7 +235,7 @@ class DeprecationNodeFinder (ast.NodeVisitor):
         self.file_path = file_path
 
     def visit_FunctionDef(self, node):
-        notice = self._check_decorators(node, "function")
+        self._check_decorators(node, "function")
 
     def visit_AsyncFunctionDef(self, node):
         self._check_decorators(node, "function")
@@ -274,8 +274,8 @@ class DeprecationNodeFinder (ast.NodeVisitor):
                     kw = {k: v for k, v in (
                         # Here we use `eval` to extract the arguments because the arguments are either
                         # string literals or use the `date` function imported in this module. If the user
-                        # respect the format defined in the documentation of the deprecation utilies, this
-                        # should extract the correct information.
+                        # respect the format defined in the documentation of the deprecation decorators,
+                        # this should extract the correct information.
                         map(lambda x: (x.arg, eval(ast.unparse(x.value))),
                             deprecation_deadline_dec.keywords))
                           }
