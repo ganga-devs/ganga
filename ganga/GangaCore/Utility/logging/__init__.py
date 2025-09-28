@@ -400,7 +400,7 @@ class FlushedMemoryHandler(_MemHandler):
         # Errors should be dumped in the correct place with the correct context
         if record.levelno > logging.WARNING:
             return True
-        return (threading.currentThread().getName() == "MainThread") or \
+        return (threading.current_thread().name == "MainThread") or \
             _MemHandler.shouldFlush(self, record)
 
 

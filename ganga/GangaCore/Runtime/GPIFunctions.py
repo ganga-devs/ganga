@@ -93,7 +93,7 @@ def applications():
     """return a list of all available applications, OBSOLETE: use plugins('applications')"""
     raise DeprecationWarning("use plugins('applications')")
 
-
+@deprecation_deadline(expires_on=date(2024, 12, 31), version="8.7.4")
 @deprecated("use plugins ('backend')")
 def backends():
     """return a list of all available backends, OBSOLETE: use plugins('backends')"""
