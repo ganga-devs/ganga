@@ -170,7 +170,7 @@ def _is_path_under_dir(child_path, parent_path):
 # We don't index them
 
 
-def find_deprecated_refs(root: Path | str ='.') -> set [str]:
+def find_deprecated_refs(root: Path | str = '.') -> set[str]:
     """
     Locate all the files that use the @deprecated decorator throughout the codebase.
     `root` is the root directory of the project.
@@ -291,7 +291,7 @@ class DeprecationNodeFinder (ast.NodeVisitor):
             self.deprecation_instances.append(DeprecationNotice(**new_deprecation))
 
 
-def extract_deprecation_info(deprecation_refs: set [str], root: Path | str ='.') -> list [DeprecationNotice]:
+def extract_deprecation_info(deprecation_refs: set[str], root: Path | str = '.') -> list[DeprecationNotice]:
     """Extract the deprecation info from the locations provided by find_deprecated_refs.
     Returns a list of DeprecationNotice objects.
     """
@@ -318,11 +318,11 @@ def _convert_notice(notice):
     return data
 
 
-def serialize_deprecations(deprecations: list [DeprecationNotice]) -> str:
+def serialize_deprecations(deprecations: list[DeprecationNotice]) -> str:
     return json.dumps([_convert_notice(notice) for notice in deprecations])
 
 
-def deserialize_deprecations(json_str: str) -> list [DeprecationNotice]:
+def deserialize_deprecations(json_str: str) -> list[DeprecationNotice]:
     data = json.loads(json_str)
     notices = []
     for item in data:
@@ -336,7 +336,7 @@ def deserialize_deprecations(json_str: str) -> list [DeprecationNotice]:
     return notices
 
 
-def generate_deprecation_json_report(root : Path | str ='./') -> str:
+def generate_deprecation_json_report(root: Path | str = './') -> str:
     """Generate a JSON string of all deprecations notices in the codebase
     """
     rr = find_deprecated_refs(root)
