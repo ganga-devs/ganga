@@ -78,7 +78,7 @@ class AsyncMonitoringService(GangaThread):
                 log.debug("RegistryLockError: The job was most likely removed")
                 log.debug("Reg LockError%s" % str(err))
 
-        if job_slice and len(found_active_backends)==0:
+        if job_slice and len(found_active_backends) == 0:
             log.debug("No active backends found with a job slice. Turning off the monitoring loop")
             self.enabled = False
             return
@@ -248,9 +248,9 @@ class AsyncMonitoringService(GangaThread):
           jobs: a registry slice to be monitored (None -> all jobs)
         Return:
           False, if the loop cannot be started or the timeout occured while waiting for monitoring termination
-          True, if the monitoring steps were successfully executed  
-        Note:         
-          This method is meant to be used in Ganga scripts to request monitoring on demand. 
+          True, if the monitoring steps were successfully executed
+        Note:
+          This method is meant to be used in Ganga scripts to request monitoring on demand.
         """
         log.debug("runMonitoring")
         if not self.alive:
