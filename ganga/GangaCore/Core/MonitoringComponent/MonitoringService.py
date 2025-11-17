@@ -8,7 +8,8 @@ import traceback
 from GangaCore.Core.GangaRepository.Registry import RegistryKeyError, RegistryLockError
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
-from GangaCore.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus
+from GangaCore.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus, Job
+from GangaCore.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Lib.Job.utils import lazyLoadJobObject
@@ -47,7 +48,13 @@ class AsyncMonitoringService(GangaThread):
         if not self.enabled:
             return
 
-        if job_slice:
+        if isinstance(job_slice, int):
+            fixed_ids = [job_slice]
+        elif isinstance(job_slice, list):
+            fixed_ids = job_slice
+        elif isinstance(stripProxy(job_slice), Job):
+            fixed_ids = [job_slice.id]
+        elif isinstance(stripProxy(job_slice), RegistrySlice):
             fixed_ids = job_slice.ids()
         else:
             fixed_ids = self.registry_slice.ids()
