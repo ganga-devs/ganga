@@ -639,9 +639,9 @@ class SessionLockManager(object):
                         fcntl.lockf(fd, fcntl.LOCK_UN)
                     fd.close()
 
-                if _output is not None:
-                    self.last_count_access = SessionLockManager.LastCountAccess(os.stat(self.cntfn).st_ctime, _output)
-                    return _output
+            if _output is not None:
+                self.last_count_access = SessionLockManager.LastCountAccess(os.stat(self.cntfn).st_ctime, _output)
+                return _output
 
         except OSError as x:
             if x.errno != errno.ENOENT:
