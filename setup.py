@@ -88,8 +88,10 @@ install_requires = [
     "pymongo",
     "gdown",
 ]
+
+condor_extra = []
 if sys.platform != 'darwin':
-    install_requires.append("htcondor")
+    condor_extra.append('htcondor')
 
 
 setup(
@@ -118,7 +120,8 @@ setup(
         'profiler': ['memory_profiler'],
         'LHCb': ['LbDevTools'],
         'Dirac': ['UltraDict',
-                  'psutil']},
+                  'psutil'],
+        'Condor': condor_extra},
     classifiers=[
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',

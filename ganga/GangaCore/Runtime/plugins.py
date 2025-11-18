@@ -1,3 +1,4 @@
+from GangaCore.Utility.Config.Config import getConfig
 import GangaCore.Utility.logging
 
 logger = GangaCore.Utility.logging.getLogger()
@@ -38,8 +39,9 @@ import GangaCore.Lib.Notebook
 logger.debug("Loading LocalHost")
 import GangaCore.Lib.Localhost
 
-logger.debug("Loading Condor")
-import GangaCore.Lib.Condor
+if 'GangaCore.Condor' in getConfig('Configuration')['RUNTIME_PATH'].split(':'):
+    logger.debug("Loading Condor")
+    import GangaCore.Lib.Condor
 
 logger.debug("Loading Interactive")
 import GangaCore.Lib.Interactive
