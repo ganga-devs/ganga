@@ -1,3 +1,4 @@
+from GangaCore.Utility.Config.Config import getConfig
 import GangaCore.Utility.logging
 
 logger = GangaCore.Utility.logging.getLogger()
