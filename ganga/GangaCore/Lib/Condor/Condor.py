@@ -404,8 +404,6 @@ class Condor(IBackend):
         infileString = ",".join(infileList)
         outfileString = ",".join(jobconfig.outputbox)
 
-        print(outfileString)
-
         cdfDict = \
             {
                 'transfer_input_files': wrapper,
