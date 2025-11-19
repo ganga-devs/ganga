@@ -364,8 +364,8 @@ class Condor(IBackend):
             "wrapperFile.write( 'echo \"\"\\n' )",
             "wrapperFile.write( 'echo \"Hostname: $(hostname -f)\"\\n' )",
             "wrapperFile.write( 'echo \"\\${BASH_ENV}: ${BASH_ENV}\"\\n' )",
-            "wrapperFile.write( 'if ! [ -z \"${BASH_ENV}\" ]; then\\n' )",
-            "wrapperFile.write( '  if ! [ -f \"${BASH_ENV}\" ]; then\\n' )",
+            "wrapperFile.write( 'if ! [ -z \"\\${BASH_ENV}\" ]; then\\n' )",
+            "wrapperFile.write( '  if ! [ -f \"\\${BASH_ENV}\" ]; then\\n' )",
             "wrapperFile.write( '    echo \"*** Warning: "
             + "\\${BASH_ENV} file not found ***\"\\n' )",
             "wrapperFile.write( '  fi\\n' )",
@@ -378,6 +378,9 @@ class Condor(IBackend):
             "result = os.system( './%s' % wrapperName )",
             "os.remove( wrapperName )",
             "",
+            "###OUTPUTUPLOADSPOSTPROCESSING###",
+            "###OUTPUTSANDBOXPOSTPROCESSING###",
+            "",
             "endTime = time.strftime"
               + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
             "print('\\nJob start: ' + startTime)",
@@ -389,11 +392,19 @@ class Condor(IBackend):
 
         if virtualization:
             commandString = virtualization.modify_script(commandString)
+        from GangaCore.GPIDev.Lib.File.OutputFileManager import (getWNCodeForOutputSandbox,
+                                                                 getWNCodeForOutputPostprocessing)
+        jobidRepr = repr(job.getFQID('.'))
+        commandString = commandString.replace('###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, ''))
+        commandString = commandString.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(
+            job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
 
         wrapper = job.getInputWorkspace().writefile(FileBuffer(wrapperName, commandString), executable=1)
 
         infileString = ",".join(infileList)
         outfileString = ",".join(jobconfig.outputbox)
+
+        print(outfileString)
 
         cdfDict = \
             {
