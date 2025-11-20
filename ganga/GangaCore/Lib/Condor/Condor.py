@@ -396,13 +396,16 @@ class Condor(IBackend):
                                                                  getWNCodeForOutputPostprocessing)
         jobidRepr = repr(job.getFQID('.'))
         commandString = commandString.replace('###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, ''))
-        commandString = commandString.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(
-            job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
+#        commandString = commandString.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(
+#            job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
 
         wrapper = job.getInputWorkspace().writefile(FileBuffer(wrapperName, commandString), executable=1)
 
         infileString = ",".join(infileList)
-        outfileString = ",".join(jobconfig.outputbox)
+        outfileString = "stdout,stderr,condorLog,".join(jobconfig.outputbox)
+
+        if "postprocesslocations" in commandString:
+            outfileString = outfileString + ",__postprocesslocations__"
 
         cdfDict = \
             {
@@ -439,7 +442,10 @@ class Condor(IBackend):
         if infileString:
             cdfDict['transfer_input_files'] = cdfDict['transfer_input_files'] + "," + infileString
 
+        print("outfileString: ", outfileString)
+
         if outfileString:
+            print("there is an outfile string")
             cdfDict['transfer_output_files'] = outfileString
 
         return cdfDict
