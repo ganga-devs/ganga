@@ -173,6 +173,7 @@ jobs:
           /start.sh > start.stdout &
           sleep 30
           condor_status
+          condor_credd &
       - name: Test with pytest
         run: |
           source venv/bin/activate
