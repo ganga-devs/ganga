@@ -107,8 +107,9 @@ def disableInternalServices():
           * the user is running out of space
     """
 
-    log.info("Ganga is now attempting to shut down all running processes accessing the repository in a clean manner")
-    log.info(" ... Please be patient! ")
+    # Use DEBUG level for finalisation logs to avoid spam in interactive mode
+    log.debug("Ganga is now attempting to shut down all running processes accessing the repository in a clean manner")
+    log.debug(" ... Please be patient! ")
 
     # MOVED TO THE END OF THE SHUTDOWN SO THAT WE NEVER ACCESS A REPO BEFORE WE ARE FINISHED!
     # flush the registries
@@ -135,7 +136,8 @@ def disableInternalServices():
 
     log.debug("Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services")
 
-    log.info("Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt")
+    # Use DEBUG level for finalisation logs to avoid spam in interactive mode
+    log.debug("Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt")
 
     # flush the registries
     # log.debug( "Coordinator Shutting Down Repository_runtime" )

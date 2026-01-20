@@ -238,9 +238,11 @@ def native_handler(database_config, action, gangadir):
     if action not in ["start", "quit"]:
         raise NotImplementedError("Illegal Opertion on container")
     if action == "start":
-        logger.info("Native Database detection, skipping startup")
+        # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+        logger.debug("Native Database detection, skipping startup")
     else:
-        logger.info("Native Database detection, skipping closing")
+        # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+        logger.debug("Native Database detection, skipping closing")
 
 
 # to be deprecated
@@ -322,7 +324,8 @@ def singularity_handler(database_config, action, gangadir):
                     pass
                 import sys
                 sys.exit(1)
-            logger.info(
+            # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+            logger.debug(
                 f"Singularity gangaDB started on port: {database_config['port']}"
             )
     elif action == "quit":
@@ -343,7 +346,8 @@ def singularity_handler(database_config, action, gangadir):
                 raise ContainerCommandError(
                     message=err.decode() + f"{proc_status}", controller="singularity"
                 )
-            logger.info("Singularity gangaDB has shutdown")
+            # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+            logger.debug("Singularity gangaDB has shutdown")
 
 
 def apptainer_handler(database_config, action, gangadir):
@@ -424,7 +428,8 @@ def apptainer_handler(database_config, action, gangadir):
                     pass
                 import sys
                 sys.exit(1)
-            logger.info(
+            # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+            logger.debug(
                 f"Apptainer gangaDB started on port: {database_config['port']}"
             )
     elif action == "quit":
@@ -445,7 +450,8 @@ def apptainer_handler(database_config, action, gangadir):
                 raise ContainerCommandError(
                     message=err.decode() + f"{proc_status}", controller="apptainer"
                 )
-            logger.info("Apptainer gangaDB has shutdown")
+            # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+            logger.debug("Apptainer gangaDB has shutdown")
 
 
 def udocker_handler(database_config, action, gangadir):
@@ -482,7 +488,8 @@ def udocker_handler(database_config, action, gangadir):
         raise NotImplementedError("Illegal Opertion on container")
 
     if not os.path.exists(container_loc):
-        logger.info(
+        # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+        logger.debug(
             f"Creating udocker container for {database_config['baseImage']}")
         proc = subprocess.Popen(
             create_container,
@@ -529,7 +536,8 @@ def udocker_handler(database_config, action, gangadir):
                     controller="udocker"
                 )
             # out, err = proc.communicate() # DO NOT COMMUNICATE THIS PROCESS
-            logger.info(
+            # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+            logger.debug(
                 f"uDocker gangaDB should have started on port: {database_config['port']}"
             )
     else:
@@ -550,7 +558,8 @@ def udocker_handler(database_config, action, gangadir):
                 raise ContainerCommandError(
                     message=err.decode() + f"{proc_status}", controller="udocker"
                 )
-            logger.info("uDocker gangaDB should have shutdown")
+            # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+            logger.debug("uDocker gangaDB should have shutdown")
 
 
 def docker_handler(database_config, action, gangadir):
@@ -574,7 +583,8 @@ def docker_handler(database_config, action, gangadir):
             )
             if container.status != "running":
                 container.restart()
-                logger.info(
+                # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+                logger.debug(
                     f"Docker gangaDB has started in background at {database_config['port']}"
                 )
             else:
@@ -593,7 +603,8 @@ def docker_handler(database_config, action, gangadir):
                 volumes=[f"{bind_loc}/db:/data/db"],
             )
 
-            logger.info(
+            # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+            logger.debug(
                 f"Docker gangaDB has started in background at {database_config['port']}"
             )
 
@@ -613,7 +624,8 @@ def docker_handler(database_config, action, gangadir):
             )
             container.kill()
             # call the function to get the gangadir here
-            logger.info("Docker gangaDB has been shutdown")
+            # Use DEBUG level for database finalisation logs to avoid spam in interactive mode
+            logger.debug("Docker gangaDB has been shutdown")
         except docker.errors.APIError as e:
             if e.response.status_code == 409:
                 logger.debug(

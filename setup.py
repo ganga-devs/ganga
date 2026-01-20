@@ -53,7 +53,8 @@ class RunTestsCommand(Command):
 
     def run(self):
 
-        cmd = ['py.test']
+        # Changed 'py.test' to 'pytest': pytest is the correct command now, as py.test is deprecated.
+        cmd = ['pytest']
 
         if self.type in ['unit', 'all']:
             cmd.append('ganga/GangaCore/test/Unit')
@@ -68,7 +69,8 @@ class RunTestsCommand(Command):
         if self.xunit:
             cmd.append('--junitxml tests.xml')
 
-        subprocess.check_call(' '.join(cmd), cwd=file_path, shell=True, env=self._get_test_env())
+            # Modified subprocess.check_call
+        subprocess.check_call(cmd, cwd=file_path, shell=True, env=self._get_test_env())
 
 
 pythonPackages = find_packages('./')

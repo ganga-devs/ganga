@@ -110,14 +110,16 @@ def _unprotected_ganga_exitfuncs():
 
     # Shutdown queues
     try:
-        logger.info("Stopping Job processing before shutting down Repositories")
+        # Use DEBUG level for finalisation logs to avoid spam in interactive mode
+        logger.debug("Stopping Job processing before shutting down Repositories")
         shutDownQueues()
     except Exception as err:
         logger.exception("Exception raised while purging shutting down queues: %s" % err)
 
     # shutdown the repositories
     try:
-        logger.info("Shutting Down Ganga Repositories")
+        # Use DEBUG level for finalisation logs to avoid spam in interactive mode
+        logger.debug("Shutting Down Ganga Repositories")
         Repository_runtime.shutdown()
     except Exception as err:
         logger.exception("Exception raised while shutting down repositories: %s" % err)

@@ -868,8 +868,9 @@ class JobRegistry_Monitor(GangaThread):
             self.__mainLoopCond.notify_all()
 
         if was_enabled is True and self._runningNow:
-            log.info("Some tasks are still running on Monitoring Loop")
-            log.info("Please wait for them to finish to avoid data corruption")
+            # Use DEBUG level for finalisation logs to avoid spam in interactive mode
+            log.debug("Some tasks are still running on Monitoring Loop")
+            log.debug("Please wait for them to finish to avoid data corruption")
 
         # while self._runningNow is True:
         #    time.sleep(0.5)
@@ -898,7 +899,8 @@ class JobRegistry_Monitor(GangaThread):
 
         self.__mainLoopCond.acquire()
         if self.enabled:
-            log.info('Stopping the monitoring component...')
+            # Use DEBUG level for finalisation logs to avoid spam in interactive mode
+            log.debug('Stopping the monitoring component...')
             self.alive = False
             self.enabled = False
 
