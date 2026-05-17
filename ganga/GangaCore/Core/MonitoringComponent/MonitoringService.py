@@ -8,7 +8,8 @@ import traceback
 from GangaCore.Core.GangaRepository.Registry import RegistryKeyError, RegistryLockError
 from GangaCore.Core.GangaThread import GangaThread
 from GangaCore.GPIDev.Base.Proxy import getName, stripProxy
-from GangaCore.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus
+from GangaCore.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus, Job
+from GangaCore.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
 from GangaCore.GPIDev.Lib.Job.utils import lazyLoadJobObject
@@ -47,7 +48,13 @@ class AsyncMonitoringService(GangaThread):
         if not self.enabled:
             return
 
-        if job_slice:
+        if isinstance(job_slice, int):
+            fixed_ids = [job_slice]
+        elif isinstance(job_slice, list):
+            fixed_ids = job_slice
+        elif isinstance(stripProxy(job_slice), Job):
+            fixed_ids = [job_slice.id]
+        elif isinstance(stripProxy(job_slice), RegistrySlice):
             fixed_ids = job_slice.ids()
         else:
             fixed_ids = self.registry_slice.ids()
@@ -71,7 +78,7 @@ class AsyncMonitoringService(GangaThread):
                 log.debug("RegistryLockError: The job was most likely removed")
                 log.debug("Reg LockError%s" % str(err))
 
-        if job_slice and len(found_active_backends)==0:
+        if job_slice and len(found_active_backends) == 0:
             log.debug("No active backends found with a job slice. Turning off the monitoring loop")
             self.enabled = False
             return
@@ -241,9 +248,9 @@ class AsyncMonitoringService(GangaThread):
           jobs: a registry slice to be monitored (None -> all jobs)
         Return:
           False, if the loop cannot be started or the timeout occured while waiting for monitoring termination
-          True, if the monitoring steps were successfully executed  
-        Note:         
-          This method is meant to be used in Ganga scripts to request monitoring on demand. 
+          True, if the monitoring steps were successfully executed
+        Note:
+          This method is meant to be used in Ganga scripts to request monitoring on demand.
         """
         log.debug("runMonitoring")
         if not self.alive:
