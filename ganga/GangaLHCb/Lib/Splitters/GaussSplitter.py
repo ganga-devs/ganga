@@ -35,7 +35,6 @@ class GaussSplitter(ISplitter):
         j.copyFrom(job)
         j.splitter = None
         j.merger = None
-        j.inputsandbox = []  # master added automatically
         j.inputfiles = []
         j.inputdata = inputdata
 
@@ -93,7 +92,6 @@ class GaussSplitter(ISplitter):
                 j.application.extraOpts = j.application.extraOpts + '\n' + opts
             else:
                 j._splitter_data = opts
-            # j.inputsandbox.append(File(FileBuffer(path,opts).create().name))
             logger.debug("Creating job %d w/ FirstEventNumber = %d" % (i, first))
             subjobs.append(j)
 

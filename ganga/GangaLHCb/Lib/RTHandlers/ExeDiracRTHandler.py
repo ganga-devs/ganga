@@ -32,21 +32,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
 
     """The runtime handler to run plain executables on the Dirac backend"""
 
-    def master_prepare(self, app, appmasterconfig):
-        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
-        if isinstance(app.exe, File):
-            input_dir = app.getJobObject().getInputWorkspace().getPath()
-            exefile = os.path.join(input_dir, os.path.basename(app.exe.name))
-            if not os.path.exists(exefile):
-                msg = 'Executable: "%s" must exist!' % str(exefile)
-                raise ApplicationConfigurationError(None, msg)
-
-            os.system('chmod +x %s' % exefile)
-        return StandardJobConfig(inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
-        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data, parametricinput_data = dirac_inputdata(app)
 
         job = stripProxy(app).getJobObject()
@@ -69,7 +56,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
             # fileName = os.path.join(get_share_path(app), os.path.basename(app.exe.name))
             # logger.info("EXE: %s" % str(fileName))
             # inputsandbox.append(File(name=fileName))
-            inputsandbox.append(app.exe)
             commandline[0] = os.path.join('.', os.path.basename(app.exe.name))
         commandline.extend([str(arg) for arg in app.args])
         logger.debug('Command line: %s: ', commandline)
@@ -86,7 +72,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
             contents = virtualization.modify_script(exe_script_template(), sandbox=False)
 
             virtualizationutils = File(inspect.getsourcefile(GangaCore.Utility.Virtualization), subdir=PYTHON_DIR)
-            inputsandbox.append(virtualizationutils)
 
         contents = script_generator(contents,
                                     COMMAND=repr(commandline),
@@ -94,7 +79,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                     OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, ''),
                                     CREATEINPUTDATALIST=getWNCodeForInputdataListCreation(job, ''))
 
-        inputsandbox.append(FileBuffer(name=exe_script_name, contents=contents, executable=True))
 
         logger.debug("Script is: %s" % str(contents))
 
@@ -105,7 +89,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
                 for name in this_file.getFilenameList():
                     if not os.path.exists(abspath(expanduser(name))):
                         raise GangaFileError("LocalFile input file %s does not exist!" % name)
-                    inputsandbox.append(File(abspath(expanduser(name))))
             if isinstance(this_file, DiracFile):
                 if not this_file.getReplicas():
                     raise GangaFileError("DiracFile inputfile with LFN %s has no replicas" % this_file.lfn)
@@ -153,14 +136,9 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         GANGA_VERSION=_gangaVersion,
                                         )
 
-        # logger.info("dirac_script: %s" % dirac_script)
 
-        # logger.info("inbox: %s" % str(unique(inputsandbox)))
-        # logger.info("outbox: %s" % str(unique(outputsandbox)))
+        return StandardJobConfig(dirac_script)
 
-        return StandardJobConfig(dirac_script,
-                                 inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
 
 
 # \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

@@ -33,34 +33,6 @@ logger = getLogger()
 _pseudo_session_id = str(uuid.uuid4())
 
 
-def genDataFiles(job):
-    """
-    Generating a data.py file which contains the data we want gaudirun to use
-    Args:
-        job (Job): This is the job object which contains everything useful for generating the code
-    """
-    logger.debug("Doing XML Catalog stuff")
-
-    inputsandbox = []
-
-    data = job.inputdata
-    if data:
-        logger.debug("Returning options String")
-        data_str = data.optionsString()
-        if data.hasLFNs():
-            logger.info("Generating Data catalog for job: %s" % job.fqid)
-            logger.debug("Returning Catalogue")
-            inputsandbox.append(FileBuffer('catalog.xml', data.getCatalog()))
-            cat_opts = ('\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs'
-                        ' = ["xmlcatalog_file:catalog.xml"]\n')
-            data_str += cat_opts
-
-        inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file, data_str))
-    else:
-        inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file,
-                                       '#dummy_data_file\n' + LHCbDataset().optionsString()))
-
-    return inputsandbox
 
 
 def getAutoDBTags(job):
@@ -229,7 +201,6 @@ class GaudiExecRTHandler(IRuntimeHandler):
             logger.warning("This doesn't look like MC! Not automatically adding db tags.")
             app.autoDBtags = False
 
-        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
         if isinstance(app.jobScriptArchive, LocalFile):
             app.jobScriptArchive = None
@@ -238,58 +209,6 @@ class GaudiExecRTHandler(IRuntimeHandler):
 
         scriptArchive = os.path.join(app.jobScriptArchive.localDir, app.jobScriptArchive.namePattern)
 
-        inputsandbox.append(File(name=scriptArchive))
-
-        if app.getMetadata:
-            logger.info("Adding options to make the summary.xml")
-            inputsandbox.append(FileBuffer(
-                'summary.py', "\nfrom Gaudi.Configuration import *"
-                              "\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"))
-
-        if app.autoDBtags:
-            logger.info("Adding options for auto DB tags")
-            inputsandbox.append(FileBuffer('dbTags.py', getAutoDBTags(app.getJobObject())))
-
-        return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
-
-    def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
-        """
-        Prepare the job in order to submit to the Local backend
-        Args:
-            app (GaudiExec): This application is only expected to handle GaudiExec Applications here
-            appconfig (unknown): Output passed from the application configuration call
-            appmasterconfig (unknown): Output passed from the application master_configure call
-            jobmasterconfig (tuple): Output from the master job prepare step
-        """
-
-        job = app.getJobObject()
-
-        # Setup the command which to be run and the input and output
-        input_sand = genDataFiles(job)
-        output_sand = []
-
-        # If we are getting the metadata we need to make sure the summary.xml
-        # is added to the output sandbox if not there already.
-        if app.getMetadata and 'summary.xml' not in output_sand:
-            output_sand += ['summary.xml']
-
-        # NB with inputfiles the mechanics of getting the inputfiled to the
-        # input of the Localhost backend is taken care of for us
-        # We don't have to do anything to get our files when we start running
-        # Also we don't manage the outputfiles here!
-
-        job_command = prepareCommand(app)
-
-        # Generate the script which is to be executed for us on the WN
-        scriptToRun = generateWNScript(job_command, app)
-        input_sand.append(scriptToRun)
-
-        logger.debug("input_sand: %s" % input_sand)
-
-        # It's this authors opinion that the script should be in the PATH on the WN
-        # As it stands policy is that is isn't so we have to call it in a relative way, hence "./"
-        c = StandardJobConfig('./' + os.path.join(scriptToRun.subdir, scriptToRun.name), input_sand, [], output_sand)
-        return c
 
 
 allHandlers.add('GaudiExec', 'Local', GaudiExecRTHandler)
@@ -538,7 +457,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         cred_req = app.getJobObject().backend.credential_requirements
         check_creds(cred_req)
 
-        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
         # If we are getting the metadata we need to make sure the summary.xml is
         # added to the output sandbox if not there already.
@@ -593,7 +511,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         replicateJobFile(app.jobScriptArchive)
 
-        return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         """
@@ -608,28 +525,20 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         check_creds(cred_req)
         # NB this needs to be removed safely
         # Get the inputdata and input/output sandbox in a sorted way
-        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data, parametricinput_data = dirac_inputdata(app)
 
         # We know we don't need this one
-        inputsandbox = []
 
         job = app.getJobObject()
 
         # We can support inputfiles and opts_file here. Locally should be submitted once, remotely can be referenced.
         all_opts_files = app.getOptsFiles(True)
 
-        for opts_file in all_opts_files:
-            if isinstance(opts_file, DiracFile):
-                inputsandbox += ['LFN:' + opts_file.lfn]
-        # Sort out inputfiles we support
+
         for file_ in job.inputfiles:
-            if isinstance(file_, DiracFile):
-                inputsandbox += ['LFN:' + file_.lfn]
-            elif isinstance(file_, LocalFile):
+            if isinstance(file_, LocalFile):
                 if job.master is not None and file_ not in job.master.inputfiles:
                     shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())
-                    inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
             else:
                 logger.error(
                     "Filetype: %s nor currently supported, "
@@ -647,16 +556,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         rep_data = app.uploadedInput.getReplicas()
 
         logger.debug("Replica info: %s" % rep_data)
-
-        inputsandbox += ['LFN:' + app.uploadedInput.lfn]
-        inputsandbox += ['LFN:' + app.jobScriptArchive.lfn]
-
-        # Now add in the missing DiracFiles from the master job
-        for file_ in master_job.inputfiles:
-            if isinstance(file_, DiracFile) and 'LFN:' + file_.lfn not in inputsandbox:
-                inputsandbox += ['LFN:' + file_.lfn]
-
-        logger.debug("Input Sand: %s" % inputsandbox)
 
         logger.debug("input_data: %s" % input_data)
 
@@ -710,7 +609,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
                                         )
 
         # NB
-        # inputsandbox here isn't used by the DIRAC backend as we explicitly define the INPUT_SANDBOX here!
 
         # Return the output needed for the backend to submit this job
         return StandardJobConfig(dirac_script, inputbox=[], outputbox=[])

@@ -121,21 +121,6 @@ class GaudiPython(GaudiBase):
         from . import EnvironFunctions
         return EnvironFunctions._getshell(self)
 
-    def prepare(self, force=False):
-        super(GaudiPython, self).prepare(force)
-        self._check_inputs()
-
-        share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig(
-            'Configuration')['user'], self.is_prepared.name)
-
-        fillPackedSandbox(self.script, os.path.join(share_dir, 'inputsandbox',
-                          '_input_sandbox_%s.tar' % self.is_prepared.name))
-        gzipFile(os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name),
-                 os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name), True)
-        # add the newly created shared directory into the metadata system if
-        # the app is associated with a persisted object
-        self.checkPreparedHasParent(self)
-        self.post_prepare()
 
     def master_configure(self):
         return (None, StandardJobConfig())

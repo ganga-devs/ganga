@@ -33,7 +33,6 @@ class ND280Unit_CSVEvtList(IUnit):
         for f in trf.outputfiles:
             j.outputfiles += [f.clone()]
 
-        j.inputsandbox = trf.inputsandbox
 
         if isinstance(self.eventswanted, str):
             subLines = self.eventswanted
@@ -53,7 +52,6 @@ class ND280Unit_CSVEvtList(IUnit):
         # Create the CSV file for this Unit
         j._impl.getInputWorkspace().writefile(FileBuffer(thiscsv, subLines), executable=0)
         j._impl.application.csvfile = j._impl.getInputWorkspace().getPath() + thiscsv
-        j.inputsandbox.append(j._impl.getInputWorkspace().getPath() + thiscsv)
 
         # Base for the naming of each subjob's output file
         tmpname = os.path.basename(j._impl.application.outputfile)

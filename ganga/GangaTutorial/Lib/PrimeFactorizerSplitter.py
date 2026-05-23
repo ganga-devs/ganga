@@ -36,7 +36,6 @@ class PrimeFactorizerSplitter(ISplitter):
             j.inputdata.table_id_lower = 1
             j.inputdata.table_id_upper = 1
             j.outputdata = job.outputdata
-            j.inputsandbox = job.inputsandbox
             j.outputsandbox = job.outputsandbox
             j.backend = job.backend
             subjobs.append(j)

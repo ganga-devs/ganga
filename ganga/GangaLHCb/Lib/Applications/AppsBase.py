@@ -262,7 +262,6 @@ class AppName(Gaudi):
 
         fillPackedSandbox([FileBuffer('options.pkl', parser.opts_pkl_str)],
                           os.path.join(share_dir,
-                                       'inputsandbox',
                                        '_input_sandbox_%s.tar' % self.is_prepared.name))
         # FileBuffer(os.path.join(share_path,'options.pkl'),
         # parser.opts_pkl_str).create()

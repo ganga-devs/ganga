@@ -78,7 +78,6 @@ class SplitFilesBySize(GaudiInputDataSplitter):
         j.copyFrom(stripProxy(job))
         j.splitter = None
         j.merger = None
-        j.inputsandbox = []  # master added automatically
         j.inputfiles = []
         j.inputdata = LHCbDataset(files=datatmp[:],
                                   persistency=self.persistency,

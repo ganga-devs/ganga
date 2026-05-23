@@ -32,7 +32,6 @@ class ND280Unit(IUnit):
         for f in trf.outputfiles:
             j.outputfiles += [f.clone()]
 
-        j.inputsandbox = trf.inputsandbox
 
         # Sort out the splitter
         if trf.splitter:

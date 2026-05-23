@@ -24,24 +24,11 @@ logger = getLogger()
 
 class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
-    def master_prepare(self, app, appmasterconfig):
-
-        logger.debug("Master Prepare")
-        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig, ['inputsandbox'])
-
-        # add summary.xml
-        outputsandbox += ['summary.xml', '__parsedxmlsummary__']
-
-        logger.debug("Master Prepare LHCbGaudiDiracRunTimeHandler")
-
-        return StandardJobConfig(inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
 
         logger.debug("Prepare")
 
-        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job = stripProxy(app).getJobObject()
 
@@ -61,7 +48,6 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         if hasattr(job, '_splitter_data'):
             data_str += job._splitter_data
-        inputsandbox.append(FileBuffer('data-wrapper.py', data_str))
 
         input_data = []
 
@@ -213,9 +199,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         )
         logger.debug("prepare: LHCbGaudiDiracRunTimeHandler")
 
-        return StandardJobConfig(dirac_script,
-                                 inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
+        return StandardJobConfig(dirac_script)
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
