@@ -42,8 +42,8 @@ import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
-        import htcondor
-        import classad
+        import htcondor2 as htcondor
+        import classad2 as classad
     except ModuleNotFoundError:
         logger.debug("The htcondor module not available for import. This will cause use of the Condor backend to fail.")
 
@@ -119,6 +119,8 @@ class Condor(IBackend):
 
         # Get the credential into the scheduler
         col = htcondor.Collector()
+
+        # Not sure this is needed in new API
         credd = htcondor.Credd()
         if credential_store.matches(AfsToken()):
             credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
@@ -467,8 +469,8 @@ class Condor(IBackend):
             for _proc in id_dict[_cl][1:]:
                 pr_expr_str = pr_expr_str + " || ProcID == %s" % _proc
             pr_expr = classad.ExprTree(pr_expr_str)
-            cl_expr = cl_expr.and_(pr_expr)
-            expr_tree = expr_tree.or_(cl_expr)
+            cl_expr = classad.ExprTree("(%s) && (%s)" % (cl_expr, pr_expr))
+            expr_tree = classad.ExprTree("(%s) || (%s)" % (expr_tree, cl_expr))
 
         # Now query the scheduler with or job list
         schedd = htcondor.Schedd()

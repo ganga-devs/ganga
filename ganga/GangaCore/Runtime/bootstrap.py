@@ -1208,6 +1208,7 @@ under certain conditions; type license() for details.
         banner = ''
         cfg.TerminalInteractiveShell.prompts_class = GangaPrompt
         cfg.TerminalInteractiveShell.banner1 = banner
+        cfg.TerminalInteractiveShell.enable_tip = False
 
         # Setting up the confirmation of exit on Ctrl+D this prompt annoys some users(developers)
         from GangaCore.Utility.Config.Config import getConfig
@@ -1216,7 +1217,7 @@ under certain conditions; type license() for details.
         # The customisation of the interactive shell is done in this extension
         cfg.InteractiveShellApp.extensions = ['GangaCore.Runtime.ganga_extension']
 
-        IPython.start_ipython(argv=[], user_ns=local_ns, local_ns=local_ns, module=GangaCore.GPI, config=cfg)
+        IPython.start_ipython(argv=[], user_ns=local_ns, config=cfg)
 
 
 #

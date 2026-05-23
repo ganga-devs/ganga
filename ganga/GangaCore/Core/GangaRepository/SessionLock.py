@@ -192,10 +192,11 @@ class SessionLockRefresher(GangaThread):
                     now = -999.
             else:
                 if self.repos[index] is not None:
-                    raise RepositoryError(self.repos[index],
-                                          "[SessionFileUpdate] Run: Own session file not found! Possibly deleted by another ganga session.\n\
+                    raise RepositoryError(
+                        self.repos[index], "[SessionFileUpdate] Run: Own session file not found! Possibly deleted by another ganga session.\n\
                     Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
-                    On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" % (this_index_file, x))
+                    On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" %
+                        (this_index_file, x))
                 else:
                     from GangaCore.Core.exceptions import GangaException
                     raise GangaException("Error Opening global .session file for this session: %s" % this_index_file)
@@ -226,7 +227,7 @@ class SessionLockRefresher(GangaThread):
             for f in lock_files:
                 # Determine the session file which controls this lock file
                 asf = f.split(".session")[0] + ".session"
-                if not asf in session_files:
+                if asf not in session_files:
                     os.unlink(os.path.join(self.sdir, f))
         except OSError as x:
             # nothing really important, another process deleted the session
@@ -237,25 +238,25 @@ class SessionLockRefresher(GangaThread):
 
     def numberRepos(self):
         try:
-            assert(len(self.fns) == len(self.repos))
+            assert (len(self.fns) == len(self.repos))
         except AssertionError:
             raise RepositoryError("Number of repos is inconsistent with lock files")
         return len(self.fns)
 
     def addRepo(self, fn, repo):
-        #logger.debug("Adding Repo: %s" % repo )
+        # logger.debug("Adding Repo: %s" % repo )
         self.repos.append(repo)
-        #logger.debug("Adding fn: %s" % fn )
+        # logger.debug("Adding fn: %s" % fn )
         self.fns.append(fn)
 
     def removeRepo(self, fn, repo):
-        #logger.debug("Removing fn: %s" % fn )
+        # logger.debug("Removing fn: %s" % fn )
         self.fns.remove(fn)
-        #logger.debug("Removing fn: %s" % fn )
+        # logger.debug("Removing fn: %s" % fn )
         self.repos.remove(repo)
 
         try:
-            assert(len(self.fns) == len(self.repos))
+            assert (len(self.fns) == len(self.repos))
         except AssertionError:
             raise RepositoryError("Number of repos is inconsistent after removing repo!")
 
@@ -308,7 +309,7 @@ def global_disk_lock(f):
                     try:
                         self.afs_lock_require()
                         break
-                    except:
+                    except BaseException:
                         time.sleep(0.1)
 
                 self.safe_LockCheck()
@@ -377,7 +378,7 @@ class SessionLockManager(object):
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
             session_name = ".".join(
                 [os.uname()[1], str(this_date), "PID", str(os.getpid()), "session"])
-            #session_name = ".".join([os.uname()[1], str(int(time.time()*1000)), str(os.getpid()), "session"])
+            # session_name = ".".join([os.uname()[1], str(int(time.time()*1000)), str(os.getpid()), "session"])
         else:
             session_name = session_lock_refresher.session_name
 
@@ -392,7 +393,7 @@ class SessionLockManager(object):
         self.session_name = session_name
         self.name = name
         self.realpath = realpath
-        #logger.debug( "Initializing SessionLockManager: " + self.fn )
+        # logger.debug( "Initializing SessionLockManager: " + self.fn )
         self._lock = threading.RLock()
         self.last_count_access = None
         self._stored_session_path = {}
@@ -457,7 +458,7 @@ class SessionLockManager(object):
     @synchronised
     def shutdown(self):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
-        #logger.debug( "Shutting Down SessionLockManager, self.fn = %s" % (self.fn) )
+        # logger.debug( "Shutting Down SessionLockManager, self.fn = %s" % (self.fn) )
         # print "Shutting Down SessionLock"
         self.locked = set()
         try:
@@ -508,7 +509,7 @@ class SessionLockManager(object):
                 oldtime = os.stat(lock_file).st_ctime
                 nowtime = time.time()
                 if abs(int(nowtime) - oldtime) > 10:
-                    #logger.debug( "cleaning global lock" )
+                    # logger.debug( "cleaning global lock" )
                     os.system("fs setacl %s %s rlidwka" % (quote(lock_path), getpass.getuser()))
 
             while True:
@@ -527,7 +528,7 @@ class SessionLockManager(object):
                 with open(lock_file, "w"):
                     pass
 
-            #logger.debug("global capture")
+            # logger.debug("global capture")
         except IOError as x:
             raise RepositoryError(self.repo, "IOError on AFS global lock: %s" % (x,))
 
@@ -536,7 +537,7 @@ class SessionLockManager(object):
             lock_path = str(self.lockfn) + '.afs'
             os.system("fs setacl %s %s rlidwka" % (quote(lock_path), getpass.getuser()))
 
-            #logger.debug("global release")
+            # logger.debug("global release")
         except IOError as x:
             raise RepositoryError(self.repo, "IOError on AFS global lock: %s" % (x,))
 
@@ -578,7 +579,7 @@ class SessionLockManager(object):
             The global lock MUST be held for this function to work, although on NFS additional
             locking is done
             Raises RepositoryError if session file is inaccessible """
-        #logger.debug("Openining Session File: %s " % self.fn )
+        # logger.debug("Openining Session File: %s " % self.fn )
         try:
             # If this fails, we want to shutdown the repository (corruption
             # possible)
@@ -603,10 +604,12 @@ class SessionLockManager(object):
                 raise RepositoryError(
                     self.repo, "Error on session file access '%s': %s" % (self.fn, x))
             else:
-                #logger.debug( "File NOT found %s" %self.fn )
-                raise RepositoryError(self.repo, "SessionWrite: Own session file not found! Possibly deleted by another ganga session.\n\
+                # logger.debug( "File NOT found %s" %self.fn )
+                raise RepositoryError(
+                    self.repo, "SessionWrite: Own session file not found! Possibly deleted by another ganga session.\n\
                                     Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
-                                    On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" % (self.fn, x))
+                                    On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" %
+                    (self.fn, x))
         except IOError as x:
             raise RepositoryError(
                 self.repo, "Error on session file locking '%s': %s" % (self.fn, x))
@@ -639,9 +642,9 @@ class SessionLockManager(object):
                         fcntl.lockf(fd, fcntl.LOCK_UN)
                     fd.close()
 
-                if _output is not None:
-                    self.last_count_access = SessionLockManager.LastCountAccess(os.stat(self.cntfn).st_ctime, _output)
-                    return _output
+            if _output is not None:
+                self.last_count_access = SessionLockManager.LastCountAccess(os.stat(self.cntfn).st_ctime, _output)
+                return _output
 
         except OSError as x:
             if x.errno != errno.ENOENT:
@@ -702,7 +705,7 @@ class SessionLockManager(object):
         except OSError:
             raise RepositoryError(self.repo, "Job counter deleted! External modification to repository!")
         if not newcount >= self.count:
-            #raise RepositoryError(self.repo, "Counter value decreased - logic error!")
+            # raise RepositoryError(self.repo, "Counter value decreased - logic error!")
             logger.warning("Internal counter increased - probably the count file was deleted.")
             newcount = self.count
         # someone used force_ids (for example old repository imports)
@@ -738,7 +741,7 @@ class SessionLockManager(object):
     @global_disk_lock
     def lock_ids(self, ids):
 
-        #logger.debug( "locking: %s" % ids)
+        # logger.debug( "locking: %s" % ids)
         ids = set(ids)
         try:
             sessions = [sn for sn in os.listdir(self.sdir) if sn.endswith(self.name + ".locks")]
@@ -751,14 +754,14 @@ class SessionLockManager(object):
             if sf == self.fn:
                 continue
             slocked.update(self.session_read(sf))
-        #logger.debug( "locked: %s" % slocked)
+        # logger.debug( "locked: %s" % slocked)
         ids.difference_update(slocked)
         if not GANGA_SWAN_INTEGRATION:
             # If sharing sessions don't update id to locked.
             self.locked.update(ids)
-        #logger.debug( "stored_lock: %s" % self.locked)
+        # logger.debug( "stored_lock: %s" % self.locked)
         self.session_write()
-        #logger.debug( "list: %s" % list(ids))
+        # logger.debug( "list: %s" % list(ids))
         return list(ids)
 
     @synchronised
@@ -766,7 +769,7 @@ class SessionLockManager(object):
     def release_ids(self, ids):
         self.locked.difference_update(ids)
         self.session_write()
-        #logger.debug( "list: %s" % list(ids))
+        # logger.debug( "list: %s" % list(ids))
         return list(ids)
 
     @synchronised
@@ -854,7 +857,7 @@ class SessionLockManager(object):
         WARNING: This is not nice.
         Returns True on success, False on error."""
         failed = False
-        #sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir, s) == self.gfn]
+        # sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir, s) == self.gfn]
         sessions = [s for s in os.listdir(self.sdir) if s.endswith(
             ".session") and int(str(s).split('.')[-2]) != int(os.getpid())]
         metadata_lock_files = [s for s in os.listdir(self.sdir) if s.endswith("metadata.locks")]
@@ -870,8 +873,8 @@ class SessionLockManager(object):
             try:
                 sf = self._path_helper(session)
                 global session_expiration_timeout
-                if((time.time() - os.stat(sf).st_ctime) > session_expiration_timeout):
-                    if(sf.endswith(".session")):
+                if ((time.time() - os.stat(sf).st_ctime) > session_expiration_timeout):
+                    if (sf.endswith(".session")):
                         logger.debug("Reaping LockFile: %s" % (sf))
                     os.unlink(sf)
             except OSError as x:

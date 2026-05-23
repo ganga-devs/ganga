@@ -23,8 +23,7 @@ class GangaThread(Thread):
         self.gangaName = str(name)  # want to copy actual not by ref!
         name = 'GANGA_Update_Thread_%s' % name
 
-        Thread.__init__(self, args=list(), name=name, **kwds)
-        self.setDaemon(True)
+        Thread.__init__(self, args=list(), name=name, **kwds, daemon=True)
         self.__should_stop_flag = False
         self.__critical = critical
 

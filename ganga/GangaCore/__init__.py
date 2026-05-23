@@ -341,8 +341,8 @@ conf_config.addOption(
 ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration''')
 ipython_config.addOption(
     'colourscheme',
-    'LightBG',
-    'Colour scheme to be used by iPython. Options are LightBG, Linux, Neutral, NoColor',
+    'lightbg',
+    'Colour scheme to be used by iPython. Options are lightbg, Linux, Neutral, NoColor',
 )
 
 # ------------------------------------------------
