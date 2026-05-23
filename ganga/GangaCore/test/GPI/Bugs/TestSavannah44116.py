@@ -7,7 +7,7 @@ class TestSavannah44116(GangaUnitTest):
     def test_Savannah44116(self):
         from GangaCore.GPI import Job, TestApplication, TestSubmitter
 
-        from GangaTest.Framework.utils import sleep_until_state
+        from GangaCore.Utility.job_monitoring import sleep_until_state
 
         j = Job()
         j.application = TestApplication()

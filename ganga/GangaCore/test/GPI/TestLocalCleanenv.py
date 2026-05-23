@@ -5,7 +5,7 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 class TestLocalCleanenv(GangaUnitTest):
     def testLocalCleanenv(self):
         from GangaCore.GPI import Job
-        from GangaTest.Framework.utils import sleep_until_completed, file_contains
+        from GangaCore.Utility.job_monitoring import sleep_until_completed, file_contains
 
         envname = 'LocalCleanenv_sjt5p'
         os.environ[envname] = 'Test'

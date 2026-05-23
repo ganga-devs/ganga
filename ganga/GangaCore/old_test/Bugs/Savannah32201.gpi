@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import failureException
+from GangaCore.Utility.job_monitoring import failureException
 # this test should be run with the monitoring loop disabled
 
 j = Job()

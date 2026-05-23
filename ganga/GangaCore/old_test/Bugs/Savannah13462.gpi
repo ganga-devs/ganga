@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import failureException
+from GangaCore.Utility.job_monitoring import failureException
 
 j = Job(outputfiles = [ LocalFile('stdin'), LocalFile('stdout')])
 

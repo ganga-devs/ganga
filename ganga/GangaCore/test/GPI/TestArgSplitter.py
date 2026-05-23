@@ -4,7 +4,7 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 class TestArgSplitter(GangaUnitTest):
     def testArgSplitter(self):
         from GangaCore.GPI import Job, ArgSplitter
-        from GangaTest.Framework.utils import sleep_until_completed, file_contains
+        from GangaCore.Utility.job_monitoring import sleep_until_completed, file_contains
 
         j = Job()
         j.splitter = ArgSplitter(args=[['1'], ['2'], ['3']])

@@ -3,7 +3,7 @@ from os.path import dirname, join, abspath, exists
 import inspect
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
-from GangaTest.Framework.utils import sleep_until_completed
+from GangaCore.Utility.job_monitoring import sleep_until_completed
 from GangaCore.Core.exceptions import ApplicationPrepareError, ProtectedAttributeError
 
 

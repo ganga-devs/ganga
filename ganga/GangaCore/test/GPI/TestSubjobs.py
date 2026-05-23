@@ -31,7 +31,7 @@ class TestSubjobs(GangaUnitTest):
         Create some subjobs and kill them
         """
         from GangaCore.GPI import Job, GenericSplitter, Local
-        from GangaTest.Framework.utils import sleep_until_state
+        from GangaCore.Utility.job_monitoring import sleep_until_state
         j = Job()
         j.application.exe = "sleep"
         j.splitter = GenericSplitter()
@@ -89,7 +89,7 @@ class TestSubjobs(GangaUnitTest):
                 backend=Local(batchsize=batch))
         j.submit()
         import datetime
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         assert sleep_until_completed(j, 60)
         runtime = j.time.timestamps['backend_final'] - j.time.timestamps['backend_running']
         assert runtime < datetime.timedelta(seconds=int(nsubjobs * sleeptime / batch + 10))

@@ -6,7 +6,7 @@ import pytest
 from GangaCore.GPIDev.Base.Proxy import addProxy
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.testlib.monitoring import run_until_state
-from GangaTest.Framework.utils import sleep_until_state
+from GangaCore.Utility.job_monitoring import sleep_until_state
 
 from .CopySplitter import CopySplitter
 from .MergerTester import MergerTester

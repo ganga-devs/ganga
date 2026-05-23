@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
+from GangaCore.Utility.job_monitoring import sleep_until_completed, sleep_until_state
 import datetime
 
 # Test for checking timestamps for Local backend
@@ -271,7 +271,7 @@ def test_statetime_local(gpi):
 
 def test_timestamp_details_local(gpi):
 
-    from GangaTest.Framework.utils import sleep_until_completed
+    from GangaCore.Utility.job_monitoring import sleep_until_completed
     import datetime
 
     # Without Subjobs -------
@@ -297,7 +297,7 @@ def test_timestamp_details_local(gpi):
 
 def test_subjobs_stamporder_local(gpi):
 
-    from GangaTest.Framework.utils import sleep_until_completed
+    from GangaCore.Utility.job_monitoring import sleep_until_completed
 
     j = gpi.Job(backend=gpi.Local(batchsize=3))
     j.splitter = 'ArgSplitter'
@@ -349,7 +349,7 @@ def test_subjobs_stamporder_local(gpi):
 
 def test_new_subjob_not_overwrite_local(gpi):
 
-    from GangaTest.Framework.utils import sleep_until_completed
+    from GangaCore.Utility.job_monitoring import sleep_until_completed
     import datetime
 
     j = gpi.Job(backend=gpi.Local(batchsize=3))

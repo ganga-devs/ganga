@@ -98,7 +98,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         newest_update = stat(XMLFileName)
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
 
         enableMonitoring()
 
@@ -149,7 +149,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
                 j2 = Job()
                 j2.name = testStr
                 j2.submit()
-                from GangaTest.Framework.utils import sleep_until_completed
+                from GangaCore.Utility.job_monitoring import sleep_until_completed
                 sleep_until_completed(j2)
 
                 to_file(stripProxy(j2), new_temp_file2, ignore_subs)

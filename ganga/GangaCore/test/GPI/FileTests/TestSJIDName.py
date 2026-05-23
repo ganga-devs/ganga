@@ -20,7 +20,7 @@ class TestSJIDName(GangaUnitTest):
         j.outputfiles = [MassStorageFile(outputfilenameformat='/test/{sjid}-{fname}', namePattern='*.txt')]
         j.submit()
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         sleep_until_completed(j)
 
     def test_b_jobResubmit(self):
@@ -29,7 +29,7 @@ class TestSJIDName(GangaUnitTest):
 
         jobs(0).resubmit()
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         sleep_until_completed(jobs(0))
 
     def test_c_onlyCreate(self):
@@ -47,5 +47,5 @@ class TestSJIDName(GangaUnitTest):
 
         jobs(1).submit()
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         sleep_until_completed(jobs(1))

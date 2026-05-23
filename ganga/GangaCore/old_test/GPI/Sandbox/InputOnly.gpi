@@ -3,7 +3,7 @@ j.application.exe='cat'
 j.application.args=[File('input.dat')]
 j.submit()
 
-from GangaTest.Framework.utils import sleep_until_state
+from GangaCore.Utility.job_monitoring import sleep_until_state
 
 sleep_until_state(j,60,'completed')
 

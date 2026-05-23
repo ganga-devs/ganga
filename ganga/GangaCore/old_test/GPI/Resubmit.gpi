@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import sleep_until_completed
+from GangaCore.Utility.job_monitoring import sleep_until_completed
 
 j = Job(application=Executable(exe='sleep', args=['3']))
 j.submit()

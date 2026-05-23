@@ -4,7 +4,7 @@ import tempfile
 
 from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 from GangaCore.testlib.file_utils import generate_unique_temp_file
-from GangaTest.Framework.utils import sleep_until_completed
+from GangaCore.Utility.job_monitoring import sleep_until_completed
 from GangaCore.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
 from GangaCore.GPIDev.Base.Objects import _getName
 from GangaCore.GPIDev.Base.Proxy import addProxy

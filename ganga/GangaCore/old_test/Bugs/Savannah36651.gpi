@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import sleep_until_state,file_contains,failureException
+from GangaCore.Utility.job_monitoring import sleep_until_state,file_contains,failureException
 
 j = Job(application=Executable(exe='sleep',args=['20']))
 

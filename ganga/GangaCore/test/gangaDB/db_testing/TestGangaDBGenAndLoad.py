@@ -69,7 +69,7 @@ class TestGangaDBGenAndLoad(GangaUnitTest):
 
         newest_update = job_json["modified_time"]
 
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
 
         enableMonitoring()
 

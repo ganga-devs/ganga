@@ -5,8 +5,8 @@ from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from GangaCore.Core.exceptions import ApplicationConfigurationError, GangaException
 from GangaCore.GPI import *
 
-# GangaTest.Framework.utils defines some utility methods
-#from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
+# GangaCore.Utility.job_monitoring defines some utility methods
+#from GangaCore.Utility.job_monitoring import sleep_until_completed,sleep_until_state
 import unittest
 import tempfile
 import os

@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import assert_cannot_submit
+from GangaCore.Utility.job_monitoring import assert_cannot_submit
 
 job = Job(application=Executable(exe=File('x')))
 assert(job.application.exe == File('x'))

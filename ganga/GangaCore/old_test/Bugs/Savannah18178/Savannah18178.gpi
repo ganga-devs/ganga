@@ -21,7 +21,7 @@ j.kill()
 
 #time.sleep(2)
 
-from GangaTest.Framework.utils import sleep_until_state
+from GangaCore.Utility.job_monitoring import sleep_until_state
 sleep_until_state(j,10,'killed')
 
 # try to find out if the internal process is still running

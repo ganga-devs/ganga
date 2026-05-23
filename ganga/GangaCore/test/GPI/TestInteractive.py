@@ -4,7 +4,7 @@ from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 class TestInteractiveJobOutput(GangaUnitTest):
     def testInteractiveJobOutput(self):
         from GangaCore.GPI import Job, Executable, Interactive, LocalFile
-        from GangaTest.Framework.utils import sleep_until_completed
+        from GangaCore.Utility.job_monitoring import sleep_until_completed
         import os
 
         app = Executable()

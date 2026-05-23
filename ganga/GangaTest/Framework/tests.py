@@ -226,7 +226,7 @@ class GPIPCheckTestCase(unittest.TestCase):
         return self.description
 
 
-from GangaTest.Framework.utils import is_job_completed
+from GangaCore.Utility.job_monitoring import is_job_completed
 
 
 class ICheckTest(object):

@@ -1,7 +1,7 @@
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
-from GangaTest.Framework.utils import sleep_until_completed
+from GangaCore.Utility.job_monitoring import sleep_until_completed
 
 logger.info('submit original job')
 j = Job()

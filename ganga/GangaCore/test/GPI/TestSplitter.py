@@ -1,6 +1,6 @@
 def test_splitter_exception(gpi):
 
-    from GangaTest.Framework.utils import assert_cannot_submit
+    from GangaCore.Utility.job_monitoring import assert_cannot_submit
 
     j = gpi.Job()
     j.splitter = gpi.TestSplitter()
@@ -12,7 +12,7 @@ def test_splitter_exception(gpi):
 def test_subjob_app_config_fail(gpi):
 
     # This is a test in which the second subjob fails to submit because of the application config exception
-    from GangaTest.Framework.utils import assert_cannot_submit
+    from GangaCore.Utility.job_monitoring import assert_cannot_submit
 
     j = gpi.Job()
     j.backend = gpi.TestSubmitter()
